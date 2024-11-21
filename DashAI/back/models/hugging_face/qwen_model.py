@@ -1,16 +1,16 @@
 from typing import Any
 from llama_cpp import Llama
 
-from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from DashAI.back.models.llm_generation_model import LLMGenerationModel
 
 
-class QwenModel(BaseGenerativeModel):
+class QwenModel(LLMGenerationModel):
     """Llama model for text generation using llama.cpp library."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.model_id = "Qwen/Qwen2-0.5B-Instruct-GGUF"  
-        self.filename = "*q8_0.gguf" 
+        self.model_id = "Qwen/Qwen2-0.5B-Instruct-GGUF"
+        self.filename = "*q8_0.gguf"
 
         self.model = Llama.from_pretrained(
             repo_id=self.model_id, filename=self.filename, verbose=True
