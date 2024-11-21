@@ -30,6 +30,7 @@ from DashAI.back.models import (
     KNeighborsClassifier,
     LogisticRegression,
     OpusMtEnESTransformer,
+    QwenModel,
     RandomForestClassifier,
     ViTTransformer,
 )
@@ -42,6 +43,7 @@ from DashAI.back.tasks import (
     TabularClassificationTask,
     TextClassificationTask,
     TranslationTask,
+    LLMGenerationTask,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,7 @@ INITIAL_COMPONENTS = [
     TextClassificationTask,
     TranslationTask,
     ImageClassificationTask,
+    LLMGenerationTask,
     # Models
     SVC,
     DecisionTreeClassifier,
@@ -65,6 +68,7 @@ INITIAL_COMPONENTS = [
     ViTTransformer,
     OpusMtEnESTransformer,
     BagOfWordsTextClassificationModel,
+    QwenModel,
     # Dataloaders
     CSVDataLoader,
     JSONDataLoader,
