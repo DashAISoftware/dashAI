@@ -136,7 +136,9 @@ async def get_sample(
                     detail="Dataset not found",
                 )
             dataset: DashAIDataset = load_dataset(f"{file_path}/dataset")
-            sample = dataset["train"].sample(n=10)
+            dataset_length = len(dataset["train"])
+            num_samples = 10 if dataset_length > 10 else dataset_length
+            sample = dataset["train"].sample(n=num_samples)
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(

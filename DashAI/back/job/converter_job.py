@@ -6,8 +6,10 @@ from typing import Dict, List, Union
 
 import pandas as pd
 from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict
 from kink import inject
 from pydantic import BaseModel as PydanticBaseModel
+from sqlalchemy import exc
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
@@ -19,6 +21,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     save_dataset,
     to_dashai_dataset,
 )
+from DashAI.back.dependencies.database.models import ConverterList
+from DashAI.back.dependencies.database.models import Dataset as DatasetModel
 from DashAI.back.dependencies.database.models import ConverterList
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
 from DashAI.back.dependencies.registry import ComponentRegistry
@@ -132,6 +136,7 @@ class ConverterListJob(BaseJob):
         # Load dataset
         try:
             dataset_path = f"{dataset.file_path}/dataset"
+            dataset_dict = load_dataset(dataset_path, keep_in_memory=True)
             dataset_dict = load_dataset(dataset_path, keep_in_memory=True)
             if int(target_column_index) < 1 or int(target_column_index) > len(
                 dataset_dict["train"].features

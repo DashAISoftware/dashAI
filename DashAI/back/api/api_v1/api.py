@@ -6,6 +6,8 @@ from DashAI.back.api.api_v1.endpoints import (
     datasets,
     experiments,
     explainers,
+    explorations,
+    explorers,
     jobs,
     predict,
     runs,
@@ -17,6 +19,8 @@ api_router_v1.include_router(components.router, prefix="/component")
 api_router_v1.include_router(datasets.router, prefix="/dataset")
 api_router_v1.include_router(experiments.router, prefix="/experiment")
 api_router_v1.include_router(explainers.router, prefix="/explainer")
+api_router_v1.include_router(explorations.router, prefix="/exploration")
+api_router_v1.include_router(explorers.router, prefix="/explorer")
 api_router_v1.include_router(jobs.router, prefix="/job")
 api_router_v1.include_router(runs.router, prefix="/run")
 api_router_v1.include_router(predict.router, prefix="/predict")
