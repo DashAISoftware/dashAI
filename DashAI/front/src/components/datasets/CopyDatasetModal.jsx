@@ -11,6 +11,15 @@ import {
 } from "@mui/material";
 import { copyDataset } from "../../api/datasets";
 
+/**
+ * Modal to handle copying a dataset or not before modifications if it is used in existing experiments
+ * @param {Object} props
+ * @param {number} props.datasetId - ID of the dataset to modify
+ * @param {Function} props.updateDatasetId - Function to update the dataset ID used in the ConverterTable after copying
+ * @param {boolean} props.open - Whether the modal is open
+ * @param {Function} props.setOpen - Function to set the modal open state
+ * @param {Function} props.modifyDataset - Function to modify the dataset
+ */
 function CopyDatasetModal({
   datasetId,
   updateDatasetId,
@@ -42,6 +51,7 @@ function CopyDatasetModal({
       setOpen(false);
     }
   };
+
   return (
     <Dialog open={open} onClose={() => setOpen(false)}>
       <DialogTitle>Existing experiments</DialogTitle>
@@ -70,6 +80,7 @@ function CopyDatasetModal({
     </Dialog>
   );
 }
+
 CopyDatasetModal.propTypes = {
   datasetId: PropTypes.number.isRequired,
   updateDatasetId: PropTypes.func.isRequired,

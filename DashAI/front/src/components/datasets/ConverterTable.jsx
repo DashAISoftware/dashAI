@@ -9,6 +9,13 @@ import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { parseIndexToRange } from "../../utils/parseRange";
 import ConverterPipelineModal from "./ConverterPipelineModal";
 
+/**
+ * Table to display and manage the list of converters to apply to a dataset
+ * @param {Object} props
+ * @param {number} props.datasetId - ID of the dataset
+ * @param {Array} props.convertersToApply - List of converters to apply
+ * @param {Function} props.setConvertersToApply - Function to update the list of converters to apply
+ */
 const ConverterTable = ({
   datasetId,
   convertersToApply,
@@ -296,6 +303,7 @@ const ConverterTable = ({
 };
 
 ConverterTable.propTypes = {
+  datasetId: PropTypes.number.isRequired,
   convertersToApply: PropTypes.arrayOf(PropTypes.object),
   setConvertersToApply: PropTypes.func,
 };

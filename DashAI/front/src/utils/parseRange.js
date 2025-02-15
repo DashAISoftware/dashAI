@@ -1,5 +1,12 @@
 const rangeRegex = /^(\d+)(-(\d+))*(,(\d+)(-(\d+))*)*$/;
 
+/**
+ * Parses a range string to an array of indexes
+ * @param {string} range - The range string to parse (e.g., "1-3,5,7-9")
+ * @param {number} maxValue - The maximum value allowed for the indexes
+ * @returns {number[]} - An array of indexes
+ * @throws {Error} - If the range string is invalid or contains values greater than maxValue
+ */
 export function parseRangeToIndex(range, maxValue) {
   const indexArray = [];
   if (!rangeRegex.test(range)) {
@@ -30,6 +37,11 @@ export function parseRangeToIndex(range, maxValue) {
   return indexArray;
 }
 
+/**
+ * Parses an array of indexes to a range string
+ * @param {number[]} indexArray - The array of indexes to parse
+ * @returns {string} - A range string (e.g., "1-3,5,7-9")
+ */
 export function parseIndexToRange(indexArray) {
   if (indexArray.length === 0) {
     return "";

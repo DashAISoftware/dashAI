@@ -26,6 +26,16 @@ import BoxWithTitle from "../shared/BoxWithTitle";
 import InputWithDebounce from "../shared/InputWithDebounce";
 import { parseIndexToRange } from "../../utils/parseRange";
 
+/**
+ * Modal to define the scope of a converter
+ * @param {Object} props
+ * @param {string} props.elementToConfigure - Name of the converter or pipeline to configure
+ * @param {Function} props.updateScope - Function to update the scope of the element
+ * @param {Object} props.scopeInitialValues - Initial values of the scope
+ * @param {Object} props.datasetInfo - Information about the dataset
+ * @param {number} props.datasetInfo.total_columns - Total number of columns in the dataset
+ * @param {number} props.datasetInfo.total_rows - Total number of rows in the dataset
+ */
 const ConverterScopeModal = ({
   elementToConfigure,
   updateScope,
@@ -308,11 +318,13 @@ const ConverterScopeModal = ({
   );
 };
 
-export default ConverterScopeModal;
-
 ConverterScopeModal.propTypes = {
   elementToConfigure: PropTypes.string,
   updateScope: PropTypes.func.isRequired,
+  scopeInitialValues: PropTypes.shape({
+    columns: PropTypes.arrayOf(PropTypes.number),
+    rows: PropTypes.arrayOf(PropTypes.number),
+  }).isRequired,
   datasetInfo: PropTypes.shape({
     total_columns: PropTypes.number,
     total_rows: PropTypes.number,
@@ -327,6 +339,4 @@ ConverterScopeModal.defaultProps = {
   },
 };
 
-const Input = styled(TextField)(({ theme }) => ({
-  width: "20vw",
-}));
+export default ConverterScopeModal;

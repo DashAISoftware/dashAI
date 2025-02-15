@@ -17,7 +17,16 @@ import {
   Tooltip,
 } from "@mui/material";
 import { ArrowBackOutlined, Cable } from "@mui/icons-material";
+import PropTypes from 'prop-types';
 
+/**
+ * Modal to manage the pipeline of converters
+ * @param {Object} props
+ * @param {Array} props.converters - List of selected converters to apply
+ * @param {Function} props.setConvertersToApply - Function to update the list of converters to apply
+ * @param {Array} props.existingPipelines - List of existing pipelines
+ * @param {Object} props.converterToAdd - Converter to add to the pipeline
+ */
 const ConverterPipelineModal = ({
   converters,
   setConvertersToApply,
@@ -196,6 +205,13 @@ const ConverterPipelineModal = ({
       </Dialog>
     </React.Fragment>
   );
+};
+
+ConverterPipelineModal.propTypes = {
+  converters: PropTypes.arrayOf(PropTypes.object).isRequired,
+  setConvertersToApply: PropTypes.func.isRequired,
+  existingPipelines: PropTypes.arrayOf(PropTypes.object).isRequired,
+  converterToAdd: PropTypes.object.isRequired,
 };
 
 export default ConverterPipelineModal;

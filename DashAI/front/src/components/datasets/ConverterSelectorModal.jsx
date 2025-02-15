@@ -17,6 +17,11 @@ import useSchema from "../../hooks/useSchema";
 import uuid from "react-uuid";
 import PropTypes from "prop-types";
 
+/**
+ * Modal to select and add a converter to the list of converters to apply
+ * @param {Object} props
+ * @param {Function} props.setConvertersToApply - Function to update the list of converters to apply
+ */
 const ConverterSelectorModal = ({ setConvertersToApply }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [open, setOpen] = useState(false);

@@ -183,6 +183,8 @@ def load_dataset(dataset_path: str, keep_in_memory: bool | None = None) -> Datas
     ----------
     dataset_path : str
         Path where the dataset is stored.
+    keep_in_memory : bool, optional
+        Whether to keep the dataset in memory while loading it, by default None.
 
     Returns
     -------

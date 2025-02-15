@@ -29,6 +29,11 @@ import { ConverterListStatus } from "../../types/converter";
 import { getExperimentsExist } from "../../api/datasets";
 import CopyDatasetModal from "./CopyDatasetModal";
 
+/**
+ * Modal to modify a dataset by applying a list of converters
+ * @param {Object} props
+ * @param {number} props.datasetId - ID of the dataset to modify
+ */
 function ConvertDatasetModal({ datasetId }) {
   const { enqueueSnackbar } = useSnackbar();
   const [open, setOpen] = useState(false);

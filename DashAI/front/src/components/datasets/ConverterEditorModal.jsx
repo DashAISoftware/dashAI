@@ -6,6 +6,13 @@ import FormSchemaDialog from "../shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import { Tooltip, Typography } from "@mui/material";
 
+/**
+ * Modal to set parameters for a converter
+ * @param {Object} props
+ * @param {string} props.converterToConfigure - Name of the converter to configure
+ * @param {Function} props.updateParameters - Function to update the parameters of the converter
+ * @param {Object} props.paramsInitialValues - Initial values of the parameters
+ */
 const ConverterEditorModal = ({
   converterToConfigure,
   updateParameters,

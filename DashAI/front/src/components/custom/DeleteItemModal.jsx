@@ -13,6 +13,11 @@ import {
   Typography,
 } from "@mui/material";
 
+/**
+ * Modal to confirm deletion of an item from the table
+ * @param {Object} props
+ * @param {Function} props.deleteFromTable - Function to delete the item from the table
+ */
 function DeleteItemModal({ deleteFromTable }) {
   const [open, setOpen] = React.useState(false);
   const handleDelete = () => {
