@@ -17,7 +17,7 @@ from DashAI.back.explainability import (
     PartialDependence,
     PermutationFeatureImportance,
 )
-from DashAI.back.job import ExplainerJob, ModelJob, PredictJob
+from DashAI.back.job import DatasetJob, ExplainerJob, ModelJob, PredictJob
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -96,6 +96,7 @@ INITIAL_COMPONENTS = [
     ExplainerJob,
     ModelJob,
     PredictJob,
+    DatasetJob,
     # Explainers
     KernelShap,
     PartialDependence,

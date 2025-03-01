@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import {
   Button,
   Dialog,
@@ -14,32 +13,45 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-
 import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { useSnackbar } from "notistack";
+
 import SelectModelStep from "./SelectModelStep";
 import SelectDatasetStep from "./SelectDatasetStep";
-import EnqueuePrediction from "./EnqueuePrediction";
+import { enqueuePredictionJob, startJobQueue } from "../../api/job";
 
 function PredictionModal({ open, onClose, updatePredictions }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
+  const { enqueueSnackbar } = useSnackbar();
+
   const [activeStep, setActiveStep] = useState(0);
   const [selectedModelId, setSelectedModelId] = useState(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [predictName, setPredictName] = useState("");
   const [trainDataset, setTrainDataset] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const steps = ["Select Model", "Select Dataset"];
 
-  const handleCloseDialog = () => {
+  const resetModal = () => {
     setActiveStep(0);
-    onClose(false);
+    setSelectedModelId(null);
+    setSelectedDatasetId(null);
     setNextEnabled(false);
+    setPredictName("");
+    setTrainDataset(null);
+    setIsSubmitting(false);
+  };
+
+  const handleCloseDialog = () => {
+    resetModal();
+    onClose();
   };
 
   const handleStepButton = (stepIndex) => () => {
@@ -55,8 +67,8 @@ function PredictionModal({ open, onClose, updatePredictions }) {
   };
 
   const handleNextButton = () => {
-    if (activeStep === steps.length) {
-      handleCloseDialog();
+    if (activeStep === steps.length - 1) {
+      submitPredictionJob();
       return;
     }
 
@@ -66,6 +78,46 @@ function PredictionModal({ open, onClose, updatePredictions }) {
 
   const handlePredictNameInput = (name) => {
     setPredictName(name);
+  };
+
+  const submitPredictionJob = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      enqueueSnackbar("Starting prediction job...", {
+        autoHideDuration: 2000,
+      });
+
+      handleCloseDialog();
+
+      await enqueuePredictionJob(
+        selectedModelId,
+        selectedDatasetId,
+        predictName,
+      );
+      enqueueSnackbar("Prediction job enqueued successfully", {
+        variant: "success",
+      });
+
+      updatePredictions();
+
+      await startJobQueue();
+    } catch (error) {
+      console.error("Error submitting prediction job:", error);
+
+      const statusCode = error.response?.status;
+      if (statusCode === 400) {
+        enqueueSnackbar("Invalid dataset", { variant: "error" });
+      } else {
+        enqueueSnackbar("Error submitting prediction job", {
+          variant: "error",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -151,15 +203,6 @@ function PredictionModal({ open, onClose, updatePredictions }) {
             trainDataset={trainDataset}
           />
         )}
-        {activeStep === 2 && (
-          <EnqueuePrediction
-            run_id={selectedModelId}
-            id={selectedDatasetId}
-            json_filename={predictName}
-            onClose={handleCloseDialog}
-            updatePredictions={updatePredictions}
-          />
-        )}
       </DialogContent>
 
       <DialogActions>
@@ -172,9 +215,13 @@ function PredictionModal({ open, onClose, updatePredictions }) {
             autoFocus
             variant="contained"
             color="primary"
-            disabled={!nextEnabled}
+            disabled={!nextEnabled || isSubmitting}
           >
-            {activeStep === 1 ? "Save" : "Next"}
+            {activeStep === 1
+              ? isSubmitting
+                ? "Submitting..."
+                : "Save"
+              : "Next"}
           </Button>
         </ButtonGroup>
       </DialogActions>
