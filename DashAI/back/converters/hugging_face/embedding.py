@@ -65,11 +65,11 @@ class Embedding(HuggingFaceWrapper):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.pooling_strategy = kwargs.get(
-        #     "pooling_strategy", self.SCHEMA.pooling_strategy.default
-        # )
-        self.pooling_strategy = "mean"
-        print("Pooling strategy:", self.pooling_strategy)
+        self.pooling_strategy = kwargs.get("pooling_strategy", "mean")
+        self.model_name = kwargs.get("model_name", "sentence-transformers/all-MiniLM-L6-v2")
+        self.device = kwargs.get("device", "cuda")
+        self.max_length = kwargs.get("max_length", 512)
+        self.batch_size = kwargs.get("batch_size", 32)
         self.model = None
         self.tokenizer = None
 

@@ -169,7 +169,9 @@ class ConverterListJob(BaseJob):
                         converter_name = file[:-3]
                         converter_submodule_inverse_index[converter_name] = submodule
 
-            converters_stored_info: Dict[str, ConverterParams] = converter_list.converters
+            converters_stored_info: Dict[str, ConverterParams] = (
+                converter_list.converters
+            )
             dataset_original_columns = dataset_dict["train"].column_names
 
             # Pairs of converter name and converter params
@@ -274,10 +276,25 @@ class ConverterListJob(BaseJob):
                 # Update dataframe
                 columns_to_drop = df_concatenated.columns[scope_column_indexes]
                 df_concatenated.drop(columns_to_drop, axis=1, inplace=True)
+                
+                # Insert the resulting dataframe columns that have corresponding positions
                 for i, column in enumerate(resulting_dataframe.columns):
-                    df_concatenated.insert(
-                        scope_column_indexes[i], column, resulting_dataframe[column]
-                    )
+                    if i < len(scope_column_indexes):
+                        df_concatenated.insert(
+                            scope_column_indexes[i], column, resulting_dataframe[column]
+                        )
+
+                # Once we've inserted all columns that have positions, concatenate any remaining columns
+                if len(resulting_dataframe.columns) > len(scope_column_indexes):
+                    remaining_columns = resulting_dataframe.columns[len(scope_column_indexes):]
+                    # Create a DataFrame with just the remaining columns
+                    remaining_df = resulting_dataframe[remaining_columns].copy()
+                    # Reset the index to ensure it's unique before concatenating
+                    # or use the index from df_concatenated to ensure alignment
+                    remaining_df.index = df_concatenated.index
+                    # Now concatenate with the fixed index
+                    df_concatenated = pd.concat([df_concatenated, remaining_df], axis=1)
+                
 
                 # Update splits
                 df_train = df_concatenated.iloc[: len(dataset_train)]
