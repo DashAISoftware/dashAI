@@ -4,8 +4,7 @@ import IntegerInput from "../configurableObject/Inputs/IntegerInput";
 import NumberInput from "../configurableObject/Inputs/NumberInput";
 import SelectInput from "../configurableObject/Inputs/SelectInput";
 import TextInput from "../configurableObject/Inputs/TextInput";
-import OptimizeIntegerInput from "../configurableObject/Inputs/IntegerInputOptimize";
-import OptimizeNumberInput from "../configurableObject/Inputs/NumberInputOptimize";
+import ArrayInput from "../configurableObject/Inputs/ArrayInput";
 import PropTypes from "prop-types";
 
 /**
@@ -57,8 +56,16 @@ function FormSchemaField({ objName, paramJsonSchema, field, error }) {
       return <TextInput {...commonProps} />;
     case "boolean":
       return <BooleanInput {...commonProps} />;
+    case "array":
+      return (
+        <ArrayInput
+          {...commonProps}
+          itemType={paramJsonSchema.items?.type || "string"}
+        />
+      );
     case "null" || "undefined":
       return <TextInput {...commonProps} disabled />;
+
     default:
       return null;
   }
