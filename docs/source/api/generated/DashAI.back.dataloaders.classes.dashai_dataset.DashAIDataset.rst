@@ -27,6 +27,7 @@
       ~DashAIDataset.class_encode_column
       ~DashAIDataset.cleanup_cache_files
       ~DashAIDataset.drop_index
+      ~DashAIDataset.export
       ~DashAIDataset.filter
       ~DashAIDataset.flatten
       ~DashAIDataset.flatten_indices
@@ -56,6 +57,7 @@
       ~DashAIDataset.load_faiss_index
       ~DashAIDataset.load_from_disk
       ~DashAIDataset.map
+      ~DashAIDataset.prepare_for_task
       ~DashAIDataset.push_to_hub
       ~DashAIDataset.remove_columns
       ~DashAIDataset.rename_column
@@ -120,6 +122,7 @@
       ~DashAIDataset.size_in_bytes
       ~DashAIDataset.split
       ~DashAIDataset.supervised_keys
+      ~DashAIDataset.task_templates
       ~DashAIDataset.version
    
    
