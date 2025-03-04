@@ -1,27 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import CustomLayout from "../../components/custom/CustomLayout";
 import PredictionTable from "../../components/predictions/PredictionTable";
 import PredictionModal from "../../components/predictions/PredictionModal";
+
 function PredictionPage() {
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
-  const [handleNewPredict, setHandleNewPredict] = useState(false);
+  const [isNewPredictionModalOpen, setIsNewPredictionModalOpen] =
+    useState(false);
+
+  const updatePredictions = useCallback(() => {
+    setUpdateTableFlag(true);
+  }, []);
 
   return (
     <CustomLayout
       title="Prediction Module"
       subtitle="Use a model to make predictions"
     >
-      {/* Trained models table */}
       <PredictionTable
         updateTableFlag={updateTableFlag}
         setUpdateTableFlag={setUpdateTableFlag}
-        handleNewPredict={() => setHandleNewPredict(true)}
+        handleNewPredict={() => setIsNewPredictionModalOpen(true)}
       />
 
       <PredictionModal
-        open={handleNewPredict}
-        onClose={() => setHandleNewPredict(false)}
-        updatePredictions={() => setUpdateTableFlag(true)}
+        open={isNewPredictionModalOpen}
+        onClose={() => setIsNewPredictionModalOpen(false)}
+        updatePredictions={updatePredictions}
       />
     </CustomLayout>
   );

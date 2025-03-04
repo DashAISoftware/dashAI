@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { DataGrid, GridActionsCellItem, GridToolbar } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { Button, Grid, Paper, Typography } from "@mui/material";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import {
   get_metadata_prediction_json,
   delete_prediction as deletePredictionRequest,
@@ -25,24 +24,20 @@ function PredictionTable({
   const [loading, setLoading] = useState(true);
   const [models, setModels] = useState([]);
 
-  const getModels = async () => {
+  const getModels = useCallback(async () => {
     setLoading(true);
     try {
       const uniqueModels = await get_metadata_prediction_json();
       setModels(uniqueModels);
     } catch (error) {
-      enqueueSnackbar("Error when trying to get the predictions");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      enqueueSnackbar("Error when trying to get the predictions", {
+        variant: "error",
+      });
+      console.error("Error fetching predictions:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [enqueueSnackbar]);
 
   const deletePrediction = async (predict_name) => {
     try {
@@ -52,36 +47,30 @@ function PredictionTable({
         variant: "success",
       });
     } catch (error) {
-      enqueueSnackbar("Error when trying to delete the prediction");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      enqueueSnackbar("Error when trying to delete the prediction", {
+        variant: "error",
+      });
+      console.error("Error deleting prediction:", error);
     }
   };
 
-  const createDeleteHandler = React.useCallback(
+  const createDeleteHandler = useCallback(
     (predict_name) => () => {
       deletePrediction(predict_name);
-      setUpdateTableFlag(true);
     },
-    [],
+    [deletePrediction],
   );
 
   useEffect(() => {
     getModels();
-  }, []);
+  }, [getModels]);
 
-  // triggers an update of the table when updateFlag is set to true
   useEffect(() => {
     if (updateTableFlag) {
-      setUpdateTableFlag(false);
       getModels();
+      setUpdateTableFlag(false);
     }
-  }, [updateTableFlag]);
+  }, [updateTableFlag, setUpdateTableFlag, getModels]);
 
   const columns = React.useMemo(
     () => [
@@ -146,7 +135,7 @@ function PredictionTable({
         ],
       },
     ],
-    [],
+    [createDeleteHandler, setUpdateTableFlag],
   );
 
   return (
@@ -177,6 +166,7 @@ function PredictionTable({
                 variant="contained"
                 onClick={() => setUpdateTableFlag(true)}
                 endIcon={<UpdateIcon />}
+                disabled={loading}
               >
                 Update
               </Button>
@@ -185,28 +175,35 @@ function PredictionTable({
         </Grid>
       </Grid>
 
-      {/* Datasets Table */}
-      <DataGrid
-        rows={models}
-        columns={columns}
-        initialstate={{
-          pagination: {
-            paginationmodel: {
-              pagesize: 5,
+      <div style={{ width: "100%", position: "relative" }}>
+        <DataGrid
+          rows={models}
+          columns={columns}
+          initialstate={{
+            pagination: {
+              paginationmodel: {
+                pagesize: 5,
+              },
             },
-          },
-        }}
-        getRowId={(row) => row.id}
-        pageSize={5}
-        sortModel={[{ field: "id", sort: "asc" }]}
-        pageSizeOptions={[5, 10]}
-        disableRowSelectionOnClick
-        autoHeight
-        loading={loading}
-        slots={{
-          toolbar: GridToolbar,
-        }}
-      />
+          }}
+          getRowId={(row) => row.id}
+          pageSize={5}
+          sortModel={[{ field: "id", sort: "asc" }]}
+          pageSizeOptions={[5, 10]}
+          disableRowSelectionOnClick
+          autoHeight
+          loading={loading}
+          slots={{
+            toolbar: GridToolbar,
+            loadingOverlay: LinearProgress,
+          }}
+          sx={{
+            "& .MuiDataGrid-cell:focus": {
+              outline: "none",
+            },
+          }}
+        />
+      </div>
     </Paper>
   );
 }
