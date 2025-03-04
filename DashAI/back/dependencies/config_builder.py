@@ -12,7 +12,6 @@ from DashAI.back.initial_components import get_initial_components
 def build_config_dict(
     local_path: Union[pathlib.Path, None],
     logging_level: Literal["NOTSET", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"],
-    container_type: str,
 ) -> Dict[str, Union[str, int]]:
     """
     Read configuration settings from a default source and updates them based on a
@@ -59,6 +58,6 @@ def build_config_dict(
     config["RUNS_PATH"] = local_path / config["RUNS_PATH"]
     config["FRONT_BUILD_PATH"] = pathlib.Path(config["FRONT_BUILD_PATH"]).absolute()
     config["LOGGING_LEVEL"] = getattr(logging, logging_level)
-    config["INITIAL_COMPONENTS"] = get_initial_components(container_type)
+    config["INITIAL_COMPONENTS"] = get_initial_components()
 
     return config

@@ -1,3 +1,5 @@
+import logging
+
 from DashAI.back.dataloaders import CSVDataLoader, ImageDataLoader, JSONDataLoader
 from DashAI.back.explainability import (
     KernelShap,
@@ -27,56 +29,64 @@ from DashAI.back.tasks import (
     TranslationTask,
 )
 
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
-def get_initial_components(container_type):
-    if container_type == "local":
-        return [
-            # Tasks
-            TabularClassificationTask,
-            TextClassificationTask,
-            TranslationTask,
-            ImageClassificationTask,
-            # Models
-            SVC,
-            DecisionTreeClassifier,
-            DummyClassifier,
-            HistGradientBoostingClassifier,
-            KNeighborsClassifier,
-            LogisticRegression,
-            RandomForestClassifier,
-            DistilBertTransformer,
-            ViTTransformer,
-            OpusMtEnESTransformer,
-            BagOfWordsTextClassificationModel,
-            # Dataloaders
-            CSVDataLoader,
-            JSONDataLoader,
-            ImageDataLoader,
-            # Metrics
-            F1,
-            Accuracy,
-            Precision,
-            Recall,
-            Bleu,
-            # Jobs
-            ExplainerJob,
-            ModelJob,
-            # Explainers
-            KernelShap,
-            PartialDependence,
-            PermutationFeatureImportance,
-        ]
-    elif container_type == "plugins":
+
+def get_initial_components():
+    """
+    Obtiene todos los componentes iniciales, incluyendo los básicos
+    y los plugins instalados.
+
+    Returns
+    -------
+    List[type]
+        Lista de todas las clases de componentes disponibles
+    """
+    # Componentes básicos que siempre deben estar disponibles
+    basic_components = [
+        # Tasks
+        TabularClassificationTask,
+        TextClassificationTask,
+        TranslationTask,
+        ImageClassificationTask,
+        # Models
+        SVC,
+        DecisionTreeClassifier,
+        DummyClassifier,
+        HistGradientBoostingClassifier,
+        KNeighborsClassifier,
+        LogisticRegression,
+        RandomForestClassifier,
+        DistilBertTransformer,
+        ViTTransformer,
+        OpusMtEnESTransformer,
+        BagOfWordsTextClassificationModel,
+        # Dataloaders
+        CSVDataLoader,
+        JSONDataLoader,
+        ImageDataLoader,
+        # Metrics
+        F1,
+        Accuracy,
+        Precision,
+        Recall,
+        Bleu,
+        # Jobs
+        ExplainerJob,
+        ModelJob,
+        # Explainers
+        KernelShap,
+        PartialDependence,
+        PermutationFeatureImportance,
+    ]
+
+    # Obtener plugins instalados
+    try:
         installed_plugins = get_available_plugins()
-        basic_components = [
-            # Jobs
-            ExplainerJob,
-            ModelJob,
-            # Explainers
-            KernelShap,
-            PartialDependence,
-            PermutationFeatureImportance,
-        ]
-        return installed_plugins + basic_components
-    else:
-        raise ValueError("Unknown container type")
+        log.info(f"Se cargaron {len(installed_plugins)} plugins instalados")
+    except Exception as e:
+        log.error(f"Error al cargar plugins instalados: {str(e)}")
+        installed_plugins = []
+
+    return basic_components + installed_plugins
