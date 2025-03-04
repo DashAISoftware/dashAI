@@ -3,20 +3,6 @@ import type { IDataset } from "../types/dataset";
 
 const datasetEndpoint = "/v1/dataset";
 
-export const uploadDataset = async (
-  formData: FormData,
-  filename: string,
-): Promise<object> => {
-  const headers = {
-    "Content-Type": "multipart/form-data",
-    filename: encodeURIComponent(filename),
-  };
-  const response = await api.post<IDataset[]>(datasetEndpoint, formData, {
-    headers,
-  });
-  return response.data;
-};
-
 export const getDatasets = async (): Promise<IDataset[]> => {
   const response = await api.get<IDataset[]>(datasetEndpoint);
   return response.data;

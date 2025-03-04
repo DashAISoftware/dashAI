@@ -9,41 +9,57 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 
 @pytest.fixture(scope="module", name="dataset", autouse=True)
 def create_dataset(client: TestClient):
+    """Create testing dataset using job system."""
     script_dir = os.path.dirname(__file__)
     test_dataset = "ImdbSentimentDatasetSmall.json"
     abs_file_path = os.path.join(script_dir, test_dataset)
+
     with open(abs_file_path, "rb") as json_file:
-        form_data = {
-            "params": """{  "dataloader": "JSONDataLoader",
-                                    "name": "test_json",
-                                    "splits": {
-                                        "train_size": 0.5,
-                                        "test_size": 0.2,
-                                        "val_size": 0.3
-                                    },
-                                    "data_key": "data",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": false,
-                                        "stratify": false
-                                    }
-                                }""",
-            "url": "",
+        params = {
+            "dataloader": "JSONDataLoader",
+            "name": "test_json",
+            "data_key": "data",
         }
+
+        kwargs = {
+            "name": "test_json",
+            "url": "",
+            "params": params,
+        }
+
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
         files = {
             "file": ("ImdbSentimentDatasetSmall.json", json_file, "application/json")
         }
         headers = {
             "filename": "ImdbSentimentDatasetSmall.json",
         }
+
         response = client.post(
-            "/api/v1/dataset/",
+            "/api/v1/job/",
             data=form_data,
             files=files,
             headers=headers,
         )
-    assert response.status_code == 201, response.text
-    dataset = response.json()
+
+        assert (
+            response.status_code == 201
+        ), f"Failed to create dataset job: {response.text}"
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
+        datasets_response = client.get("/api/v1/dataset/")
+        assert datasets_response.status_code == 200, datasets_response.text
+
+        datasets = datasets_response.json()
+        dataset = None
+        for d in datasets:
+            if d["name"] == "test_json":
+                dataset = d
+                break
+
+        assert dataset is not None, "Dataset not found after job completion"
 
     yield dataset
 
@@ -124,13 +140,18 @@ def create_run_id(client: TestClient, experiment_id: int):
 
 
 def test_create_trained_run(client: TestClient, run_id: int):
+    form_data = {"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})}
+
     response = client.post(
         "/api/v1/job/",
-        json={"job_type": "ModelJob", "kwargs": {"run_id": run_id}},
+        data=form_data,
     )
     assert response.status_code == 201, response.text
 
     response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
     assert response.status_code == 202, response.text
+
+    response = client.get(f"/api/v1/run/{run_id}")
+    assert response.status_code == 200, response.text
 
     return run_id

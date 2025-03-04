@@ -47,7 +47,6 @@ class DatasetJob(BaseJob):
         session_factory: sessionmaker = lambda di: di["session_factory"],
         config: Dict[str, Any] = lambda di: di["config"],
     ) -> None:
-
         log.debug("Starting dataset creation process.")
 
         try:
@@ -83,7 +82,7 @@ class DatasetJob(BaseJob):
             except Exception as e:
                 log.exception(e)
                 shutil.rmtree(folder_path, ignore_errors=True)
-                raise JobError(f"Error loading dataset: {str(e)}")
+                raise JobError(f"Error loading dataset: {str(e)}") from e
 
             # Add dataset to database
             with session_factory() as db:
@@ -101,7 +100,7 @@ class DatasetJob(BaseJob):
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
                     shutil.rmtree(folder_path, ignore_errors=True)
-                    raise JobError("Internal database error")
+                    raise JobError("Internal database error") from e
 
             log.debug("Dataset creation successfully finished.")
 

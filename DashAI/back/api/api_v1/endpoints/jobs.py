@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import tempfile
-from typing import Any, Dict
 from urllib.parse import unquote
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
@@ -137,33 +136,26 @@ async def enqueue_job(
     """
     MAX_FILE_SIZE = 1024 * 1024 * 1024 * 4  # 4GB
 
-    # Check if this is a multipart form with file
     content_type = request.headers.get("content-type", "")
     if "multipart/form-data" in content_type and "filename" in request.headers:
-        # Process with streaming_form_data for file upload
         filename = unquote(request.headers.get("filename", "uploaded_file"))
 
         temp_dir = tempfile.mkdtemp()
 
-        # Create temp directory to store uploaded file
         file_path = os.path.join(temp_dir, filename)
 
-        # Setup streaming targets
         file_target = FileTarget(file_path, validator=MaxSizeValidator(MAX_FILE_SIZE))
         job_type_target = ValueTarget()
         kwargs_target = ValueTarget()
 
-        # Configure parser
         parser = StreamingFormDataParser(headers=request.headers)
         parser.register("file", file_target)
         parser.register("job_type", job_type_target)
         parser.register("kwargs", kwargs_target)
 
-        # Process the stream
         async for chunk in request.stream():
             parser.data_received(chunk)
 
-        # Extract values
         job_type = job_type_target.value.decode() if job_type_target.value else None
         kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
 
@@ -178,7 +170,6 @@ async def enqueue_job(
         kwargs["temp_dir"] = temp_dir
         kwargs["filename"] = filename
 
-        # Process the job
         with session_factory() as db:
             params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
             job: BaseJob = component_registry[params.job_type]["class"](
@@ -203,12 +194,9 @@ async def enqueue_job(
                     detail="Job not enqueued",
                 ) from e
 
-        # Don't close the temp directory here - let the job handle that
-        # We just return the response and let the job finish processing
         return job
 
     else:
-        # Regular form processing without streaming (for non-file jobs)
         form = await request.form()
         job_type = form.get("job_type")
         kwargs_str = form.get("kwargs")

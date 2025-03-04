@@ -73,39 +73,42 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture(scope="module", name="dataset", autouse=True)
 def create_dataset(client: TestClient):
+    """Create testing dataset using job system."""
     script_dir = os.path.dirname(__file__)
     test_dataset = "irisDataset.json"
     abs_file_path = os.path.join(script_dir, test_dataset)
+
     with open(abs_file_path, "rb") as json_file:
-        form_data = {
-            "params": """{  "dataloader": "JSONDataLoader",
-                                    "name": "test_json",
-                                    "splits": {
-                                        "train_size": 0.5,
-                                        "test_size": 0.2,
-                                        "val_size": 0.3
-                                    },
-                                    "data_key": "data",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": false,
-                                        "stratify": false
-                                    }
-                                }""",
+        params = {
+            "dataloader": "JSONDataLoader",
+            "name": "test_json",
+            "data_key": "data",
+        }
+
+        kwargs = {
+            "name": "test_json",
             "url": "",
+            "params": params,
         }
+
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
         files = {"file": ("irisDataset.json", json_file, "application/json")}
-        headers = {
-            "filename": "irisDataset.json",
-        }
+        headers = {"filename": "irisDataset.json"}
+
         response = client.post(
-            "/api/v1/dataset/",
+            "/api/v1/job/",
             data=form_data,
             files=files,
             headers=headers,
         )
-    assert response.status_code == 201, response.text
-    dataset = response.json()
+        assert response.status_code == 201, response.text
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
+        response = client.get("/api/v1/dataset/1")
+        assert response.status_code == 200, response.text
+        dataset = response.json()
 
     yield dataset
 
@@ -119,33 +122,36 @@ def create_dataset_2(client: TestClient):
     abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
 
     with open(abs_file_path, "rb") as csv:
-        form_data = {
-            "params": """{  "dataloader": "CSVDataLoader",
-                                    "name": "test_csv",
-                                    "splits": {
-                                        "train_size": 0.5,
-                                        "test_size": 0.2,
-                                        "val_size": 0.3
-                                    },
-                                    "separator": ",",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": true,
-                                        "stratify": false
-                                    }
-                                }""",
-            "url": "",
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "test_csv",
+            "separator": ",",
         }
+
+        kwargs = {
+            "name": "test_csv",
+            "url": "",
+            "params": params,
+        }
+
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
         files = {"file": ("iris.csv", csv, "text/csv")}
         headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
+            "/api/v1/job/",
             data=form_data,
             files=files,
             headers=headers,
         )
-    assert response.status_code == 201, response.text
-    dataset = response.json()
+        assert response.status_code == 201, response.text
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
+        response = client.get("/api/v1/dataset/2")
+        assert response.status_code == 200, response.text
+        dataset = response.json()
 
     yield dataset
 
@@ -220,9 +226,11 @@ def create_run_id(client: TestClient, experiment_id: int):
 
 @pytest.fixture(name="trained_run_id", scope="module", autouse=True)
 def create_trained_run(client: TestClient, run_id: int):
+    form_data = {"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})}
+
     response = client.post(
         "/api/v1/job/",
-        json={"job_type": "ModelJob", "kwargs": {"run_id": run_id}},
+        data=form_data,
     )
     assert response.status_code == 201, response.text
 
@@ -239,11 +247,18 @@ def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset)
         "id": dataset["id"],
         "json_filename": "predictTest",
     }
-    data = {"job_type": "PredictJob", "kwargs": kwargs}
-    response = client.post("/api/v1/job/", json=data)
+
+    form_data = {"job_type": "PredictJob", "kwargs": json.dumps(kwargs)}
+
+    response = client.post(
+        "/api/v1/job/",
+        data=form_data,
+    )
     assert response.status_code == 201, response.text
+
     response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
     assert response.status_code == 202, response.text
+
     return kwargs["json_filename"] + ".json"
 
 

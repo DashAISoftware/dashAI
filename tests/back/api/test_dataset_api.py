@@ -1,3 +1,4 @@
+import json
 import os
 
 import pytest
@@ -6,69 +7,71 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(name="response_1", autouse=True)
 def create_dataset_1(client):
-    """Create testing dataset 1."""
+    """Create testing dataset 1 using job system."""
     abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
 
     with open(abs_file_path, "rb") as csv:
-        form_data = {
-            "params": """{  "dataloader": "CSVDataLoader",
-                                "name": "test_csv",
-                                "splits": {
-                                    "train_size": 0.8,
-                                    "test_size": 0.1,
-                                    "val_size": 0.1
-                                },
-                                "separator": ",",
-                                "more_options": {
-                                    "seed": 42,
-                                    "shuffle": true,
-                                    "stratify": false
-                                }
-                            }""",
-            "url": "",
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "test_csv",
+            "separator": ",",
         }
+
+        kwargs = {
+            "name": "test_csv",
+            "url": "",
+            "params": params,
+        }
+
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
         files = {"file": ("iris.csv", csv, "text/csv")}
         headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
+            "/api/v1/job/",
             data=form_data,
             files=files,
             headers=headers,
         )
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
     return response
 
 
 @pytest.fixture(name="response_2", autouse=True)
 def create_dataset_2(client):
-    """Create testing dataset 2."""
+    """Create testing dataset 2 using job system."""
     abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
 
     with open(abs_file_path, "rb") as csv:
-        form_data = {
-            "params": """{  "dataloader": "CSVDataLoader",
-                                    "name": "test_csv2",
-                                    "splits": {
-                                        "train_size": 0.5,
-                                        "test_size": 0.2,
-                                        "val_size": 0.3
-                                    },
-                                    "separator": ",",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": true,
-                                        "stratify": false
-                                    }
-                                }""",
-            "url": "",
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "test_csv2",
+            "separator": ",",
         }
+
+        kwargs = {
+            "name": "test_csv2",
+            "url": "",
+            "params": params,
+        }
+
+        # Crear un formulario multipart similar a job.ts
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
         files = {"file": ("iris.csv", csv, "text/csv")}
         headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
+            "/api/v1/job/",
             data=form_data,
             files=files,
             headers=headers,
         )
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
 
     return response
 
