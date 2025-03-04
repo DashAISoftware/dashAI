@@ -9,9 +9,7 @@ from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.datasets_params import (
-    DatasetUpdateParams,
-)
+from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     get_columns_spec,
