@@ -17,6 +17,7 @@
       ~RandomForestClassifier.apply
       ~RandomForestClassifier.decision_path
       ~RandomForestClassifier.fit
+      ~RandomForestClassifier.get_metadata_routing
       ~RandomForestClassifier.get_params
       ~RandomForestClassifier.get_schema
       ~RandomForestClassifier.load
@@ -25,7 +26,10 @@
       ~RandomForestClassifier.predict_proba
       ~RandomForestClassifier.save
       ~RandomForestClassifier.score
+      ~RandomForestClassifier.set_fit_request
       ~RandomForestClassifier.set_params
+      ~RandomForestClassifier.set_predict_request
+      ~RandomForestClassifier.set_score_request
       ~RandomForestClassifier.validate_and_transform
    
    
@@ -39,7 +43,6 @@
       ~RandomForestClassifier.COMPATIBLE_COMPONENTS
       ~RandomForestClassifier.TYPE
       ~RandomForestClassifier.base_estimator_
-      ~RandomForestClassifier.estimator_
       ~RandomForestClassifier.feature_importances_
    
    

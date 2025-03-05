@@ -15,6 +15,7 @@
    
       ~DummyClassifier.__init__
       ~DummyClassifier.fit
+      ~DummyClassifier.get_metadata_routing
       ~DummyClassifier.get_params
       ~DummyClassifier.get_schema
       ~DummyClassifier.load
@@ -23,7 +24,10 @@
       ~DummyClassifier.predict_proba
       ~DummyClassifier.save
       ~DummyClassifier.score
+      ~DummyClassifier.set_fit_request
       ~DummyClassifier.set_params
+      ~DummyClassifier.set_predict_request
+      ~DummyClassifier.set_score_request
       ~DummyClassifier.validate_and_transform
    
    

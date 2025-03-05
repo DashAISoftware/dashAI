@@ -16,13 +16,17 @@
       ~GradientBoostingR.__init__
       ~GradientBoostingR.apply
       ~GradientBoostingR.fit
+      ~GradientBoostingR.get_metadata_routing
       ~GradientBoostingR.get_params
       ~GradientBoostingR.get_schema
       ~GradientBoostingR.load
       ~GradientBoostingR.predict
       ~GradientBoostingR.save
       ~GradientBoostingR.score
+      ~GradientBoostingR.set_fit_request
       ~GradientBoostingR.set_params
+      ~GradientBoostingR.set_predict_request
+      ~GradientBoostingR.set_score_request
       ~GradientBoostingR.staged_predict
       ~GradientBoostingR.validate_and_transform
    
@@ -37,8 +41,6 @@
       ~GradientBoostingR.COMPATIBLE_COMPONENTS
       ~GradientBoostingR.TYPE
       ~GradientBoostingR.base_estimator_
-      ~GradientBoostingR.estimator_
       ~GradientBoostingR.feature_importances_
-      ~GradientBoostingR.loss_
    
    

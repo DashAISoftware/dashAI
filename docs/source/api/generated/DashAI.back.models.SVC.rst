@@ -16,6 +16,7 @@
       ~SVC.__init__
       ~SVC.decision_function
       ~SVC.fit
+      ~SVC.get_metadata_routing
       ~SVC.get_params
       ~SVC.get_schema
       ~SVC.load
@@ -24,7 +25,10 @@
       ~SVC.predict_proba
       ~SVC.save
       ~SVC.score
+      ~SVC.set_fit_request
       ~SVC.set_params
+      ~SVC.set_predict_request
+      ~SVC.set_score_request
       ~SVC.validate_and_transform
    
    

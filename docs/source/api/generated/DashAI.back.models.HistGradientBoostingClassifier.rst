@@ -16,6 +16,7 @@
       ~HistGradientBoostingClassifier.__init__
       ~HistGradientBoostingClassifier.decision_function
       ~HistGradientBoostingClassifier.fit
+      ~HistGradientBoostingClassifier.get_metadata_routing
       ~HistGradientBoostingClassifier.get_params
       ~HistGradientBoostingClassifier.get_schema
       ~HistGradientBoostingClassifier.load
@@ -23,7 +24,10 @@
       ~HistGradientBoostingClassifier.predict_proba
       ~HistGradientBoostingClassifier.save
       ~HistGradientBoostingClassifier.score
+      ~HistGradientBoostingClassifier.set_fit_request
       ~HistGradientBoostingClassifier.set_params
+      ~HistGradientBoostingClassifier.set_predict_request
+      ~HistGradientBoostingClassifier.set_score_request
       ~HistGradientBoostingClassifier.staged_decision_function
       ~HistGradientBoostingClassifier.staged_predict
       ~HistGradientBoostingClassifier.staged_predict_proba
