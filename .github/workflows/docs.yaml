@@ -21,19 +21,31 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Build docs
-      uses: ammaraskar/sphinx-action@master
-      with:
-        docs-folder: "docs/"
-    - name: Setup Pages
-      uses: actions/configure-pages@v2
-    - name: Upload artifactfi
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: 'docs/build/html'
-        retention-days: 1
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install package in editable mode
+        run: pip install -e .
+
+      - name: Build docs
+        uses: ammaraskar/sphinx-action@master
+        with:
+          docs-folder: "docs/"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+
+      - name: Upload artifactfi
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs/build/html'
+          retention-days: 1
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
