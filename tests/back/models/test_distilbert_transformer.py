@@ -1,5 +1,6 @@
 import os
 import shutil
+import stat
 
 import numpy as np
 import pytest
@@ -13,6 +14,11 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
+
+
+def remove_readonly(func, path, _):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
 
 
 @pytest.fixture(scope="module", name="splited_dataset")
@@ -143,4 +149,4 @@ def test_save_and_load(sample_model, splited_dataset, tmp_path):
         ), f"""The loaded model should have the same weights and parameters
         as the original model (mismatch in {key})"""
 
-    shutil.rmtree(save_path)
+    shutil.rmtree(save_path, onerror=remove_readonly)
