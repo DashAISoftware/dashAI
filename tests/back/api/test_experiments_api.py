@@ -12,8 +12,6 @@ splits = json.dumps(
         "train": 0.5,
         "test": 0.2,
         "validation": 0.3,
-        "is_random": True,
-        "has_changed": True,
         "seed": 42,
         "shuffle": True,
         "stratify": False,
@@ -23,33 +21,46 @@ splits = json.dumps(
 
 @pytest.fixture(scope="module", name="dataset_id")
 def create_dataset(client):
-    """Create testing dataset 1."""
+    """Create testing dataset using job system."""
     abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
 
     with open(abs_file_path, "rb") as csv:
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "DummyDataset",
+            "separator": ",",
+        }
+        kwargs = {
+            "name": "DummyDataset",
+            "url": "",
+            "params": params,
+        }
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+        files = {"file": ("iris.csv", csv, "text/csv")}
+        headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
-            data={
-                "params": """{  "dataloader": "CSVDataLoader",
-                                    "name": "DummyDataset",
-                                    "splits_in_folders": false,
-                                    "splits": {
-                                        "train_size": 0.8,
-                                        "test_size": 0.1,
-                                        "val_size": 0.1
-                                    },
-                                    "separator": ",",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": true,
-                                        "stratify": false
-                                    }
-                                }""",
-                "url": "",
-            },
-            files={"file": ("filename", csv, "text/csv")},
+            "/api/v1/job/",
+            data=form_data,
+            files=files,
+            headers=headers,
         )
-    return response.json()["id"]
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
+        datasets = client.get("/api/v1/dataset/").json()
+        dataset_id = None
+        for dataset in datasets:
+            if dataset["name"] == "DummyDataset":
+                dataset_id = dataset["id"]
+                break
+
+        assert dataset_id is not None, "Dataset not found"
+
+    yield dataset_id
+
+    response = client.delete(f"/api/v1/dataset/{dataset_id}")
+    assert response.status_code == 204, response.text
 
 
 @pytest.fixture(scope="module", name="response_1")

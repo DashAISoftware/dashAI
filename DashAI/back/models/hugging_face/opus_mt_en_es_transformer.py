@@ -1,11 +1,13 @@
 """OpusMtEnESTransformer model for english-spanish translation DashAI implementation."""
 
 import shutil
-from typing import List, Optional
+from pathlib import Path
+from typing import List, Optional, Union
 
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
+    AutoConfig,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     Seq2SeqTrainer,
@@ -34,7 +36,7 @@ class OpusMtEnESTransformerSchema(BaseSchema):
     )  # type: ignore
     batch_size: schema_field(
         int_field(ge=1),
-        placeholder=16,
+        placeholder=4,
         description="The batch size per GPU/TPU core/CPU for training",
     )  # type: ignore
     learning_rate: schema_field(
@@ -104,13 +106,11 @@ class OpusMtEnESTransformer(TranslationModel):
         is_y = bool(y)
         if not y:
             y = Dataset.from_list([{"foo": 0}] * len(x))
-        # Initialize useful variables
         dataset = []
         input_column_name = x.column_names[0]
         output_column_name = y.column_names[0]
 
-        # Preprocess both datasets
-        for input_sample, output_sample in zip(x, y):  # noqa
+        for input_sample, output_sample in zip(x, y):
             tokenized_input = self.tokenizer(
                 input_sample[input_column_name],
                 truncation=True,
@@ -130,9 +130,9 @@ class OpusMtEnESTransformer(TranslationModel):
             sample = {
                 "input_ids": tokenized_input["input_ids"],
                 "attention_mask": tokenized_input["attention_mask"],
-                "labels": tokenized_output["input_ids"]
-                if is_y
-                else y[output_column_name],
+                "labels": (
+                    tokenized_output["input_ids"] if is_y else y[output_column_name]
+                ),
             }
             dataset.append(sample)
         return Dataset.from_list(dataset)
@@ -152,7 +152,6 @@ class OpusMtEnESTransformer(TranslationModel):
         dataset = self.tokenize_data(x_train, y_train)
         dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
 
-        # Arguments for fine-tuning
         training_args = Seq2SeqTrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_opus-mt-en-es",
             save_steps=1,
@@ -163,7 +162,6 @@ class OpusMtEnESTransformer(TranslationModel):
             **self.training_args,
         )
 
-        # The Trainer class is used for fine-tuning the model.
         trainer = Seq2SeqTrainer(
             model=self.model,
             args=training_args,
@@ -214,10 +212,38 @@ class OpusMtEnESTransformer(TranslationModel):
 
         return translations
 
-    def save(self, filename=None):
+    def save(self, filename: Union[str, Path]) -> None:
         self.model.save_pretrained(filename)
 
+        config = AutoConfig.from_pretrained(filename)
+
+        config.custom_params = {
+            "num_train_epochs": self.training_args.get("num_train_epochs"),
+            "batch_size": self.batch_size,
+            "learning_rate": self.training_args.get("learning_rate"),
+            "device": self.device,
+            "weight_decay": self.training_args.get("weight_decay"),
+            "fitted": self.fitted,
+        }
+
+        config.save_pretrained(filename)
+
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: Union[str, Path]):
         model = AutoModelForSeq2SeqLM.from_pretrained(filename)
-        return cls(model=model)
+
+        config = AutoConfig.from_pretrained(filename)
+
+        custom_params = getattr(config, "custom_params", {})
+
+        loaded_model = cls(
+            model=model,
+            num_train_epochs=custom_params.get("num_train_epochs"),
+            batch_size=custom_params.get("batch_size"),
+            learning_rate=custom_params.get("learning_rate"),
+            device=custom_params.get("device"),
+            weight_decay=custom_params.get("weight_decay"),
+        )
+        loaded_model.fitted = custom_params.get("fitted", False)
+
+        return loaded_model

@@ -37,6 +37,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [outputColumns, setOutputColumns] = useState([]);
   const [columnsReady, setColumnsReady] = useState(true);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
+  const [shuffle, setShuffle] = useState(true);
+  const [stratify, setStratify] = useState(false);
+  const [seed, setSeed] = useState();
 
   // rows index state
   const defaultParitionsIndex = {
@@ -49,6 +52,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     validation: 0.2,
     test: 0.2,
   };
+  const datasetPartitionsIndex = {
+    train: datasetInfo.train_indices,
+    validation: datasetInfo.val_indices,
+    test: datasetInfo.test_indices,
+  };
 
   const [rowsPartitionsIndex, setRowsPartitionsIndex] = useState(
     defaultParitionsIndex,
@@ -56,7 +64,13 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [rowsPartitionsPercentage, setRowsPartitionsPercentage] = useState(
     defaultPartitionsPercentage,
   );
-  const [isRandom, setIsRandom] = useState(true);
+  const SPLIT_TYPES = {
+    RANDOM: "random",
+    MANUAL: "manual",
+    PREDEFINED: "predefined",
+  };
+  const [splitType, setSplitType] = useState("");
+
   const [splitsReady, setSplitsReady] = useState(false);
 
   const getDatasetInfo = async () => {
@@ -99,18 +113,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     }
   };
 
-  const checkIfSplitsHasChanged = () => {
-    if (
-      rowsPartitionsPercentage.train !== defaultPartitionsPercentage.train ||
-      rowsPartitionsPercentage.test !== defaultPartitionsPercentage.test ||
-      rowsPartitionsPercentage.validation !==
-        defaultPartitionsPercentage.validation
-    ) {
-      return true;
-    }
-    return false;
-  };
-
   const validateColumns = async () => {
     try {
       const validation = await validateColumnsRequest(
@@ -132,31 +134,65 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     }
   };
 
-  useEffect(() => {
-    if (columnsReady && splitsReady) {
-      validateColumns();
-    }
-  }, [columnsReady]);
-
-  useEffect(() => {
-    if (columnsAreValid) {
+  const updateExperiment = () => {
+    if (splitType === SPLIT_TYPES.MANUAL) {
       setNewExp({
         ...newExp,
         input_columns: inputColumns,
         output_columns: outputColumns,
-        splits: !isRandom
-          ? { ...rowsPartitionsIndex, is_random: false, has_changed: true }
-          : {
-              ...rowsPartitionsPercentage,
-              is_random: true,
-              has_changed: checkIfSplitsHasChanged(),
-            },
-      }); // splits should depend on preference
+        splits: {
+          ...rowsPartitionsIndex,
+          splitType: splitType,
+        },
+      });
+    } else if (splitType === SPLIT_TYPES.RANDOM) {
+      setNewExp({
+        ...newExp,
+        input_columns: inputColumns,
+        output_columns: outputColumns,
+        splits: {
+          ...rowsPartitionsPercentage,
+          shuffle: shuffle,
+          stratify: stratify,
+          seed: seed,
+          splitType: splitType,
+        },
+      });
+    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
+      setNewExp({
+        ...newExp,
+        input_columns: inputColumns,
+        output_columns: outputColumns,
+        splits: {
+          ...datasetPartitionsIndex,
+          splitType: splitType,
+        },
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (columnsReady && splitsReady) {
+      validateColumns();
+    }
+  }, [columnsReady, splitsReady]);
+
+  useEffect(() => {
+    if (columnsAreValid && splitsReady && columnsReady) {
+      updateExperiment();
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
     }
-  }, [columnsReady, splitsReady, columnsAreValid]);
+  }, [
+    columnsReady,
+    splitsReady,
+    columnsAreValid,
+    splitType,
+    shuffle,
+    stratify,
+    seed,
+  ]);
 
   useEffect(() => {
     getDatasetInfo();
@@ -212,8 +248,15 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             rowsPartitionsPercentage={rowsPartitionsPercentage}
             setRowsPartitionsPercentage={setRowsPartitionsPercentage}
             setSplitsReady={setSplitsReady}
-            isRandom={isRandom}
-            setIsRandom={setIsRandom}
+            splitType={splitType}
+            setSplitType={setSplitType}
+            SPLIT_TYPES={SPLIT_TYPES}
+            shuffle={shuffle}
+            setShuffle={setShuffle}
+            stratify={stratify}
+            setStratify={setStratify}
+            seed={seed}
+            setSeed={setSeed}
           />
         </Grid>
       ) : (
@@ -234,8 +277,6 @@ PrepareDatasetStep.propTypes = {
     input_columns: PropTypes.arrayOf(PropTypes.number),
     output_columns: PropTypes.arrayOf(PropTypes.number),
     splits: PropTypes.shape({
-      has_changed: PropTypes.bool,
-      is_random: PropTypes.bool,
       training: PropTypes.number,
       validation: PropTypes.number,
       testing: PropTypes.number,

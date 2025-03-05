@@ -1,9 +1,16 @@
+import json
 import logging
+import os
+import tempfile
+from urllib.parse import unquote
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import sessionmaker
+from streaming_form_data import StreamingFormDataParser
+from streaming_form_data.targets import FileTarget, ValueTarget
+from streaming_form_data.validators import MaxSizeValidator
 
 from DashAI.back.api.api_v1.schemas.job_params import JobParams
 from DashAI.back.dependencies.job_queues import BaseJobQueue
@@ -101,17 +108,19 @@ async def get_job(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def enqueue_job(
-    params: JobParams,
+    request: Request,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
     """Create a runner job and put it in the job queue.
 
+    This endpoint can handle both regular form data and form data with files.
+
     Parameters
     ----------
-    run_id : int
-        Id of the Run to train and evaluate.
+    request : Request
+        The request object containing the form data.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -125,28 +134,106 @@ async def enqueue_job(
     dict
         dict with the new job on the database
     """
-    with session_factory() as db:
-        params.db = db
-        job: BaseJob = component_registry[params.job_type]["class"](
-            **params.model_dump()
-        )
-        try:
-            job.set_status_as_delivered()
-        except JobError as e:
-            logger.exception(e)
+    MAX_FILE_SIZE = 1024 * 1024 * 1024 * 4  # 4GB
+
+    content_type = request.headers.get("content-type", "")
+    if "multipart/form-data" in content_type and "filename" in request.headers:
+        filename = unquote(request.headers.get("filename", "uploaded_file"))
+
+        temp_dir = tempfile.mkdtemp()
+
+        file_path = os.path.join(temp_dir, filename)
+
+        file_target = FileTarget(file_path, validator=MaxSizeValidator(MAX_FILE_SIZE))
+        job_type_target = ValueTarget()
+        kwargs_target = ValueTarget()
+
+        parser = StreamingFormDataParser(headers=request.headers)
+        parser.register("file", file_target)
+        parser.register("job_type", job_type_target)
+        parser.register("kwargs", kwargs_target)
+
+        async for chunk in request.stream():
+            parser.data_received(chunk)
+
+        job_type = job_type_target.value.decode() if job_type_target.value else None
+        kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
+
+        if not job_type or not kwargs_str:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Job not delivered",
-            ) from e
-        try:
-            job_queue.put(job)
-        except JobQueueError as e:
-            logger.exception(e)
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Missing job_type or kwargs",
+            )
+
+        kwargs = json.loads(kwargs_str)
+        kwargs["file_path"] = file_path
+        kwargs["temp_dir"] = temp_dir
+        kwargs["filename"] = filename
+
+        with session_factory() as db:
+            params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
+            job: BaseJob = component_registry[params.job_type]["class"](
+                **params.model_dump()
+            )
+
+            try:
+                job.set_status_as_delivered()
+            except JobError as e:
+                logger.exception(e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Job not delivered",
+                ) from e
+
+            try:
+                job_queue.put(job)
+            except JobQueueError as e:
+                logger.exception(e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Job not enqueued",
+                ) from e
+
+        return job
+
+    else:
+        form = await request.form()
+        job_type = form.get("job_type")
+        kwargs_str = form.get("kwargs")
+
+        if not job_type or not kwargs_str:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Job not enqueued",
-            ) from e
-    return job
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Missing job_type or kwargs",
+            )
+
+        kwargs = json.loads(kwargs_str)
+
+        with session_factory() as db:
+            params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
+            job: BaseJob = component_registry[params.job_type]["class"](
+                **params.model_dump()
+            )
+
+            try:
+                job.set_status_as_delivered()
+            except JobError as e:
+                logger.exception(e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Job not delivered",
+                ) from e
+
+            try:
+                job_queue.put(job)
+            except JobQueueError as e:
+                logger.exception(e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Job not enqueued",
+                ) from e
+
+        return job
 
 
 @router.delete("/")

@@ -41,10 +41,18 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   };
 
   const handleAddButton = () => {
-    // sets the default values of the newly added model, making optional the parameter configuration
+    const existingModelsOfType = newExp.runs.filter(
+      (run) => run.model === selectedModel,
+    ).length;
+
+    const modelName =
+      name.trim() === ""
+        ? `${selectedModel}_${existingModelsOfType + 1}`
+        : name;
+
     const newModel = {
       id: uuid(),
-      name,
+      name: modelName,
       model: selectedModel,
       params: defaultValues,
       optimizer_name: "OptunaOptimizer",
@@ -54,6 +62,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         pruner: "None",
       },
     };
+
     setNewExp({ ...newExp, runs: [newModel, ...newExp.runs] });
     setName("");
     setSelectedModel("");
@@ -88,7 +97,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         </Typography>
       </Grid>
 
-      {/* Form to add a single model to the experiment */}
       <Grid item xs={12}>
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
           <Grid item xs={4} md={12}>
@@ -96,7 +104,10 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               label="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder={selectedModel ? `${selectedModel}_1` : "Model_1"}
+              InputLabelProps={{ shrink: true }}
               fullWidth
+              key={selectedModel}
             />
           </Grid>
 
@@ -149,8 +160,6 @@ ConfigureModelsStep.propTypes = {
     input_columns: PropTypes.arrayOf(PropTypes.number),
     output_columns: PropTypes.arrayOf(PropTypes.number),
     splits: PropTypes.shape({
-      has_changed: PropTypes.bool,
-      is_random: PropTypes.bool,
       training: PropTypes.number,
       validation: PropTypes.number,
       testing: PropTypes.number,

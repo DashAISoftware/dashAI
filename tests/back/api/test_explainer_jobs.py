@@ -36,33 +36,56 @@ splits = json.dumps(
 
 @pytest.fixture(scope="module", name="dataset_id")
 def create_dataset(client):
-    """Create testing dataset 1."""
+    """Create testing dataset using job system."""
     abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
 
     with open(abs_file_path, "rb") as csv:
+        # Preparar los parámetros en el formato que espera el job
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "DummyDataset6",
+            "separator": ",",
+        }
+
+        kwargs = {
+            "name": "DummyDataset6",
+            "url": "",
+            "params": params,
+        }
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
+        files = {"file": ("iris.csv", csv, "text/csv")}
+        headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
-            data={
-                "params": """{  "dataloader": "CSVDataLoader",
-                                    "name": "DummyDataset6",
-                                    "splits_in_folders": false,
-                                    "splits": {
-                                        "train_size": 0.8,
-                                        "test_size": 0.1,
-                                        "val_size": 0.1
-                                    },
-                                    "separator": ",",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": true,
-                                        "stratify": false
-                                    }
-                                }""",
-                "url": "",
-            },
-            files={"file": ("filename", csv, "text/csv")},
+            "/api/v1/job/",
+            data=form_data,
+            files=files,
+            headers=headers,
         )
-    return response.json()["id"]
+
+        assert (
+            response.status_code == 201
+        ), f"Failed to create dataset job: {response.text}"
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
+        datasets_response = client.get("/api/v1/dataset/")
+        assert datasets_response.status_code == 200, datasets_response.text
+
+        datasets = datasets_response.json()
+        dataset_id = None
+        for dataset in datasets:
+            if dataset["name"] == "DummyDataset6":
+                dataset_id = dataset["id"]
+                break
+
+        assert dataset_id is not None, "Dataset not found after job completion"
+
+    yield dataset_id
+
+    response = client.delete(f"/api/v1/dataset/{dataset_id}")
+    assert response.status_code == 204, response.text
 
 
 class DummyTask(BaseTask):
@@ -261,15 +284,19 @@ def create_local_explainer(client: TestClient, run_id: int, dataset_id: int):
 def test_enqueue_explainer_jobs(
     client: TestClient, global_explainer_id: int, local_explainer_id: int
 ):
-    response = client.post(
-        "/api/v1/job/",
-        json={
-            "job_type": "ExplainerJob",
-            "kwargs": {
+    form_data_global = {
+        "job_type": "ExplainerJob",
+        "kwargs": json.dumps(
+            {
                 "explainer_id": global_explainer_id,
                 "explainer_scope": "global",
-            },
-        },
+            }
+        ),
+    }
+
+    response = client.post(
+        "/api/v1/job/",
+        data=form_data_global,
     )
     assert response.status_code == 201, response.text
     created_job = response.json()
@@ -283,15 +310,19 @@ def test_enqueue_explainer_jobs(
     assert gotten_job["kwargs"] == created_job["kwargs"]
     assert gotten_job["kwargs"]["job_type"] == created_job["kwargs"]["job_type"]
 
-    response = client.post(
-        "/api/v1/job/",
-        json={
-            "job_type": "ExplainerJob",
-            "kwargs": {
+    form_data_local = {
+        "job_type": "ExplainerJob",
+        "kwargs": json.dumps(
+            {
                 "explainer_id": local_explainer_id,
                 "explainer_scope": "local",
-            },
-        },
+            }
+        ),
+    }
+
+    response = client.post(
+        "/api/v1/job/",
+        data=form_data_local,
     )
     assert response.status_code == 201, response.text
     created_job_2 = response.json()
@@ -311,27 +342,35 @@ def test_execute_jobs(
     run_id: int,
     dataset_id: int,
 ):
-    response = client.post(
-        "/api/v1/job/",
-        json={
-            "job_type": "ExplainerJob",
-            "kwargs": {
+    form_data_global = {
+        "job_type": "ExplainerJob",
+        "kwargs": json.dumps(
+            {
                 "explainer_id": global_explainer_id,
                 "explainer_scope": "global",
-            },
-        },
-    )
-    assert response.status_code == 201, response.text
+            }
+        ),
+    }
 
     response = client.post(
         "/api/v1/job/",
-        json={
-            "job_type": "ExplainerJob",
-            "kwargs": {
+        data=form_data_global,
+    )
+    assert response.status_code == 201, response.text
+
+    form_data_local = {
+        "job_type": "ExplainerJob",
+        "kwargs": json.dumps(
+            {
                 "explainer_id": local_explainer_id,
                 "explainer_scope": "local",
-            },
-        },
+            }
+        ),
+    }
+
+    response = client.post(
+        "/api/v1/job/",
+        data=form_data_local,
     )
     assert response.status_code == 201, response.text
 
@@ -360,11 +399,13 @@ def test_execute_jobs(
 
 
 def test_job_with_wrong_explainer(client: TestClient):
+    form_data_wrong = {
+        "job_type": "ExplainerJob",
+        "kwargs": json.dumps({"explainer_id": 31415, "explainer_scope": "local"}),
+    }
+
     response = client.post(
         "/api/v1/job/",
-        json={
-            "job_type": "ExplainerJob",
-            "kwargs": {"explainer_id": 31415, "explainer_scope": "local"},
-        },
+        data=form_data_wrong,
     )
     assert response.status_code == 500, response.text

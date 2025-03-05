@@ -58,12 +58,12 @@ class ComponentRegistry:
 
     @property
     @beartype
-    def registry(self) -> Dict[str, Dict[str, type]]:
+    def registry(self) -> Dict[str, Dict[str, Any]]:
         """Obtains the internal registry object.
 
         Returns
         -------
-        Dict[str, Dict[str, type]]
+        Dict[str, Dict[str, Any]]
             Registry dict.
         """
         return self._registry
@@ -96,7 +96,7 @@ class ComponentRegistry:
         return False
 
     @beartype
-    def __getitem__(self, item: str) -> Dict[str, type]:
+    def __getitem__(self, item: str) -> Dict[str, Any]:
         """Obtain a component from the registry using an indexer.
 
         Parameters
@@ -189,9 +189,11 @@ class ComponentRegistry:
             "class": new_component,
             "configurable_object": is_configurable_object,
             "schema": new_component.get_schema() if is_configurable_object else None,
-            "metadata": new_component.get_metadata()
-            if hasattr(new_component, "metadata")
-            else None,
+            "metadata": (
+                new_component.get_metadata()
+                if hasattr(new_component, "metadata")
+                else None
+            ),
             "description": getattr(new_component, "DESCRIPTION", None),
         }
 

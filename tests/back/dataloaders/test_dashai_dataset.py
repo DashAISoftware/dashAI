@@ -1,7 +1,6 @@
 """DashAI Dataset test suit module."""
 
 # ruff: noqa: ERA001
-import io
 import pathlib
 import shutil
 from typing import List
@@ -11,7 +10,6 @@ import pytest
 from datasets import DatasetDict
 from pyarrow.lib import ArrowInvalid
 from sklearn.datasets import load_iris
-from starlette.datastructures import UploadFile
 
 from DashAI.back.api.api_v1.schemas.datasets_params import ColumnSpecItemParams
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -31,12 +29,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from tests.back.test_datasets_generator import CSVTestDatasetGenerator
 
 
-def _read_file_wrapper(dataset_path: pathlib.Path) -> UploadFile:
-    """Read some file and simulate an upload by using UploadFile."""
-    with open(dataset_path, "r") as file:
-        loaded_bytes = file.read()
-        bytes_buffer = io.BytesIO(bytes(loaded_bytes, encoding="utf8"))
-        file = UploadFile(bytes_buffer)
+def _read_file_wrapper(dataset_path: pathlib.Path) -> str:
+    """Now is not needed to read the file, but to get the path as a string."""
+    file = str(dataset_path)
     return file
 
 
@@ -69,7 +64,7 @@ def load_test_datasetdict(test_datasets_path: pathlib.Path) -> DatasetDict:
 
     test_datasetdict = CSVDataLoader().load_data(
         filepath_or_buffer=file,
-        temp_path="tests/back/dataloaders",
+        temp_path=str(test_datasets_path),
         params={"separator": ";"},
     )
 
@@ -177,29 +172,28 @@ def load_dashai_dataset(test_datasetdict):
     ],
 )
 def test_sample_dashaidataset(dashai_datasetdict: list, method: str, n_samples: int):
-    for split in dashai_datasetdict:
-        dataset = dashai_datasetdict[split]
+    dataset = dashai_datasetdict
 
-        sample = dataset.sample(n=n_samples, method=method)
-        values = list(sample.values())
-        len_sample = len(values[0])
+    sample = dataset.sample(n=n_samples, method=method)
+    values = list(sample.values())
+    len_sample = len(values[0])
 
-        assert sample.keys() == dataset.features.keys()
-        assert isinstance(sample, dict)
-        assert all(len(item) == len_sample for item in values)
+    assert sample.keys() == dataset.features.keys()
+    assert isinstance(sample, dict)
+    assert all(len(item) == len_sample for item in values)
 
-        if method == "head":
-            assert sample == dataset[:n_samples]
+    if method == "head":
+        assert sample == dataset[:n_samples]
 
-        elif method == "tail":
-            assert sample == dataset[-n_samples:]
+    elif method == "tail":
+        assert sample == dataset[-n_samples:]
 
-        elif method == "random":
-            for index in list(range(len_sample)):
-                one_sample = {key: None for key in sample}
-                for key in one_sample:
-                    one_sample[key] = sample[key][index]
-                assert any(one_sample == data for data in dataset)
+    elif method == "random":
+        for index in list(range(len_sample)):
+            one_sample = {key: None for key in sample}
+            for key in one_sample:
+                one_sample[key] = sample[key][index]
+            assert any(one_sample == data for data in dataset)
 
 
 # ----------------------------------------------------------------------------
@@ -233,39 +227,37 @@ def test_sample_dashaidataset(dashai_datasetdict: list, method: str, n_samples: 
 def test_change_columns_type_errors(
     dashai_datasetdict: list, col_types, expected_exception, match
 ):
-    for split in dashai_datasetdict:
-        with pytest.raises(expected_exception, match=match):
-            dashai_datasetdict[split].change_columns_type(col_types)
+    with pytest.raises(expected_exception, match=match):
+        dashai_datasetdict.change_columns_type(col_types)
 
 
 def test_dashai_datasetdict_change_columns_type_target_col_as_cat(
-    dashai_datasetdict: DatasetDict,
+    dashai_datasetdict: DashAIDataset,
 ):
     """Test target column casting to a Categorical (ClassLabel) type."""
 
-    for split in dashai_datasetdict.values():
-        original_features = split.features.copy()
+    original_features = dashai_datasetdict.features.copy()
 
-        split = split.change_columns_type({"target": "Categorical"})
-        new_features = split.features
+    dashai_datasetdict = dashai_datasetdict.change_columns_type(
+        {"target": "Categorical"}
+    )
+    new_features = dashai_datasetdict.features
 
-        assert len(original_features) == len(new_features)
+    assert len(original_features) == len(new_features)
 
-        assert original_features["target"].dtype == "int64"
-        assert new_features["target"].dtype == "int64"
+    assert original_features["target"].dtype == "int64"
+    assert new_features["target"].dtype == "int64"
 
-        # check the new types.
-        assert isinstance(original_features["target"], datasets.features.Value)
-        assert isinstance(new_features["target"], datasets.features.ClassLabel)
+    # check the new types.
+    assert isinstance(original_features["target"], datasets.features.Value)
+    assert isinstance(new_features["target"], datasets.features.ClassLabel)
 
-        # check that the rest of the features remain unmodified.
-        for feature_name in original_features:
-            if feature_name != "target":
-                assert isinstance(
-                    original_features[feature_name], datasets.features.Value
-                )
-                assert isinstance(new_features[feature_name], datasets.features.Value)
-                assert original_features[feature_name] == new_features[feature_name]
+    # check that the rest of the features remain unmodified.
+    for feature_name in original_features:
+        if feature_name != "target":
+            assert isinstance(original_features[feature_name], datasets.features.Value)
+            assert isinstance(new_features[feature_name], datasets.features.Value)
+            assert original_features[feature_name] == new_features[feature_name]
 
 
 # ----------------------------------------------------------------------------
@@ -289,7 +281,7 @@ def test_split_dataset(
     test_size: float,
     val_size: float,
 ):
-    initial_dataset = dashai_datasetdict["train"]
+    initial_dataset = dashai_datasetdict
     totals_rows = initial_dataset.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=totals_rows,
@@ -331,7 +323,7 @@ def test_split_dataset(
 def split_dashai_datasetdict(test_datasetdict: DatasetDict):
     datasetdict = to_dashai_dataset(test_datasetdict)
 
-    total_rows = len(datasetdict["train"])
+    total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows,
         train_size=0.7,
@@ -339,7 +331,7 @@ def split_dashai_datasetdict(test_datasetdict: DatasetDict):
         val_size=0.2,
     )
     split_dashai_datasetdict = split_dataset(
-        datasetdict["train"],
+        datasetdict,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
@@ -464,6 +456,8 @@ def test_select_columns(
         output_columns=output_columns,
     )
     # check cols
+    x = split_dataset(x)
+    y = split_dataset(y)
     assert x["train"].column_names == input_columns
     assert x["test"].column_names == input_columns
     assert x["validation"].column_names == input_columns
@@ -500,14 +494,16 @@ def test_save_to_disk_and_load(
         "petal width (cm)",
         "target",
     ]
+    split_dashai_datasetdict = to_dashai_dataset(split_dashai_datasetdict)
     save_dataset(
-        datasetdict=split_dashai_datasetdict,
+        split_dashai_datasetdict,
         path=str(test_path / "dataloaders/dashaidataset/load_and_save_test"),
     )
 
     loaded_datasetdict = load_dataset(
         dataset_path=str(test_path / "dataloaders/dashaidataset/load_and_save_test")
     )
+    loaded_datasetdict = split_dataset(loaded_datasetdict)
     assert isinstance(loaded_datasetdict, datasets.DatasetDict)
 
     assert list((loaded_datasetdict["train"].features).keys()) == feature_names
@@ -525,7 +521,7 @@ def test_save_to_disk_and_load(
 def split_dashai_datasetdict_two_class_cols(test_datasetdict):
     """A split DashAIDataset with two target columns."""
 
-    test_df = test_datasetdict["train"].to_pandas()
+    test_df = test_datasetdict.to_pandas()
     test_df["target_2"] = test_df["target"].copy()
     new_datasetdict = datasets.DatasetDict(
         {"train": datasets.Dataset.from_pandas(test_df)}
@@ -533,7 +529,7 @@ def split_dashai_datasetdict_two_class_cols(test_datasetdict):
 
     datasetdict = to_dashai_dataset(new_datasetdict)
 
-    total_rows = len(datasetdict["train"])
+    total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows,
         train_size=0.7,
@@ -541,7 +537,7 @@ def split_dashai_datasetdict_two_class_cols(test_datasetdict):
         val_size=0.2,
     )
     split_dashai_datasetdict = split_dataset(
-        datasetdict["train"],
+        datasetdict,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
@@ -605,6 +601,8 @@ def test_update_columns_spec_on_disk(
     test_path: pathlib.Path,
 ):
     dashai_datasetdict = request.getfixturevalue(dashai_datasetdict_fixture)
+
+    dashai_datasetdict = to_dashai_dataset(dashai_datasetdict)
     save_dataset(
         dashai_datasetdict,
         test_path / "dataloaders/dashaidataset/update_col_specs",
@@ -614,7 +612,7 @@ def test_update_columns_spec_on_disk(
         columns=new_cols_specs,
     )
 
-    updated_features = updated_dataset["train"].features
+    updated_features = updated_dataset.features
     assert list(updated_features.keys()) == list(new_cols_specs.keys())
 
     for col_name in new_cols_specs:
@@ -656,10 +654,10 @@ def test_update_columns_spec_on_disk(
 
 @pytest.fixture(name="test_dataset_petal_width_dropped")
 def prepare_iris_petal_width_dropped_dataset(test_datasetdict):
-    new_dataset = DashAIDataset(
+    new_dataset = to_dashai_dataset(
         datasets.Dataset.from_pandas(
-            test_datasetdict["train"].to_pandas().drop(columns={"petal width (cm)"})
-        ).data
+            test_datasetdict.to_pandas().drop(columns={"petal width (cm)"})
+        )
     )
 
     return to_dashai_dataset(datasets.DatasetDict({"train": new_dataset}))
@@ -669,8 +667,8 @@ def test_remove_columns(
     test_datasetdict,
     test_dataset_petal_width_dropped,
 ):
-    train_split: DashAIDataset = test_datasetdict["train"]
-    train_dropped_split: DashAIDataset = test_dataset_petal_width_dropped["train"]
+    train_split: DashAIDataset = test_datasetdict
+    train_dropped_split: DashAIDataset = test_dataset_petal_width_dropped
 
     # The datasets we use must be different
     assert train_split.column_names != train_dropped_split.column_names
@@ -695,11 +693,13 @@ def test_update_splits_by_percentage(split_dashai_datasetdict):
     )
     new_splits = {"train": 0.5, "test": 0.3, "validation": 0.2}
 
+    split_dashai_datasetdict = to_dashai_dataset(split_dashai_datasetdict)
     new_dataset = update_dataset_splits(
         split_dashai_datasetdict,
         new_splits=new_splits,
         is_random=True,
     )
+    new_dataset = split_dataset(new_dataset)
 
     assert len(new_dataset["train"]) == n * 0.5
     assert len(new_dataset["test"]) == n * 0.3
@@ -715,12 +715,14 @@ def test_update_splits_by_specific_rows(split_dashai_datasetdict):
         "test": test_indexes,
         "validation": val_indexes,
     }
+    split_dashai_datasetdict = to_dashai_dataset(split_dashai_datasetdict)
 
     new_dataset = update_dataset_splits(
         split_dashai_datasetdict,
         new_splits=new_splits,
         is_random=False,
     )
+    new_dataset = split_dataset(new_dataset)
 
     assert len(new_dataset["train"]) == 100
     assert len(new_dataset["test"]) == 30

@@ -3,10 +3,10 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Final
 
-from datasets import DatasetDict
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseConverter(ConfigObject, BaseEstimator, TransformerMixin, metaclass=ABCMeta):
@@ -15,23 +15,23 @@ class BaseConverter(ConfigObject, BaseEstimator, TransformerMixin, metaclass=ABC
     TYPE: Final[str] = "Converter"
 
     @abstractmethod
-    def fit(self, dataset: DatasetDict) -> "BaseConverter":
+    def fit(self, dataset: DashAIDataset) -> "BaseConverter":
         """Fit the converter.
 
         Parameters
         ----------
-        dataset : DatasetDict
+        dataset : DashAIDataset
             Dataset to fit the converter
         """
         raise NotImplementedError
 
     @abstractmethod
-    def transform(self, dataset: DatasetDict) -> DatasetDict:
+    def transform(self, dataset: DashAIDataset) -> DashAIDataset:
         """Transform the dataset.
 
         Parameters
         ----------
-        dataset : DatasetDict
+        dataset : DashAIDataset
             Dataset to be converted
 
         Returns

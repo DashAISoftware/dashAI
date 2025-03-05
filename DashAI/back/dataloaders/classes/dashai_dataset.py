@@ -2,22 +2,36 @@
 
 import json
 import os
-import pathlib
 from typing import Dict, List, Literal, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.ipc as ipc
 from beartype import beartype
-from datasets import (
-    ClassLabel,
-    Dataset,
-    DatasetDict,
-    Value,
-    concatenate_datasets,
-    load_from_disk,
-)
-from datasets.table import Table
+from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
 from sklearn.model_selection import train_test_split
+
+
+def get_arrow_table(ds: Dataset) -> pa.Table:
+    """
+    Retrieve the underlying PyArrow table from a Hugging Face Dataset.
+    This function abstracts away the need to access private attributes.
+
+    Parameters:
+        ds (Dataset): A Hugging Face Dataset.
+
+    Returns:
+        pa.Table: The underlying PyArrow table.
+
+    Raises:
+        ValueError: If the arrow table cannot be retrieved.
+    """
+    if hasattr(ds, "arrow_table"):
+        return ds.arrow_table
+    elif hasattr(ds, "data") and hasattr(ds.data, "table"):
+        return ds.data.table
+    else:
+        raise ValueError("Unable to retrieve underlying arrow table from the dataset.")
 
 
 class DashAIDataset(Dataset):
@@ -26,7 +40,8 @@ class DashAIDataset(Dataset):
     @beartype
     def __init__(
         self,
-        table: Table,
+        table: pa.Table,
+        splits: dict = None,
         *args,
         **kwargs,
     ):
@@ -38,6 +53,7 @@ class DashAIDataset(Dataset):
             Arrow table from which the dataset will be created
         """
         super().__init__(table, *args, **kwargs)
+        self.splits = splits or {}
 
     @beartype
     def cast(self, *args, **kwargs) -> "DashAIDataset":
@@ -49,20 +65,48 @@ class DashAIDataset(Dataset):
             Dataset after cast
         """
         ds = super().cast(*args, **kwargs)
-        return DashAIDataset(ds._data)
+        arrow_tbl = get_arrow_table(ds)
+        return DashAIDataset(arrow_tbl, splits=self.splits)
+
+    @property
+    def arrow_table(self) -> pa.Table:
+        """
+        Provides a clean way to access the underlying PyArrow table.
+
+        Returns:
+            pa.Table: The underlying PyArrow table.
+        """
+        try:
+            return self._data.table
+        except AttributeError:
+            raise ValueError("Unable to retrieve the underlying Arrow table.") from None
+
+    def keys(self) -> List[str]:
+        """Return the available splits in the dataset.
+
+        Returns
+        -------
+        List[str]
+            List of split names (e.g., ['train', 'test', 'validation'])
+        """
+        if "split_indices" in self.splits:
+            return list(self.splits["split_indices"].keys())
+        return []
 
     @beartype
-    def save_to_disk(self, dataset_path: str) -> None:
-        """Saves a dataset to a dataset directory, or in a filesystem.
-
-        Overwrite the original method to include the input and output columns.
+    def save_to_disk(self, dataset_path: Union[str, os.PathLike]) -> None:
+        """
+        Overrides the default save_to_disk method to save the dataset as
+        a single directory with:
+          - "data.arrow": the dataset's Arrow table.
+          - "splits.json": the dataset's splits (e.g., original split indices).
 
         Parameters
         ----------
-        dataset_path : str
-            path where the dataset will be stored
+        dataset_path : Union[str, os.PathLike]
+            path where the dataset will be saved
         """
-        super().save_to_disk(dataset_path)
+        save_dataset(self, dataset_path)
 
     @beartype
     def change_columns_type(self, column_types: Dict[str, str]) -> "DashAIDataset":
@@ -172,60 +216,129 @@ class DashAIDataset(Dataset):
 
         return sample
 
+    @beartype
+    def get_split(self, split_name: str) -> "DashAIDataset":
+        """
+        Returns a new DashAIDataset corresponding to the specified split.
+        This method uses the metadata 'split_indices' stored in the original
+        DashAIDataset to obtain the list of indices for the desired split, then
+        it creates a new dataset containing only those rows.
+
+        Parameters:
+            split_name (str): The name of the split to extract (e.g., "train",
+            "test", "validation").
+
+        Returns:
+            DashAIDataset: A new DashAIDataset instance containing only the
+            rows of the specified split.
+
+        Raises:
+            ValueError: If the specified split is not found in the splits
+            of the dataset.
+        """
+        splits = self.splits.get("split_indices", {})
+        if split_name not in splits:
+            raise ValueError(f"Split '{split_name}' not found in dataset splits.")
+
+        indices = splits[split_name]
+        subset = self.select(indices)
+
+        new_splits = {"split_indices": {split_name: indices}}
+        arrow_table = subset.with_format("arrow")[:]
+        subset = DashAIDataset(arrow_table, splits=new_splits)
+        return subset
+
 
 @beartype
-def load_dataset(dataset_path: str) -> DatasetDict:
-    """Load a DashAI dataset from its path.
-
-         This process cast each split into a DashAIdataset object.
-
-    Parameters
-    ----------
-    dataset_path : str
-        Path where the dataset is stored.
-
-    Returns
-    -------
-    DatasetDict
-        The loaded dataset.
+def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     """
-    dataset = load_from_disk(dataset_path=dataset_path)
+    Merges the splits from a DatasetDict into a single DashAIDataset and records
+    the original indices for each split in the metadata.
 
-    for split in dataset:
-        dataset[split] = DashAIDataset(dataset[split].data)
+    Parameters:
+        dataset_dict (DatasetDict): A Hugging Face DatasetDict containing
+        multiple splits.
 
-    return dataset
+    Returns:
+        DashAIDataset: A unified dataset with merged data and metadata containing the
+        original split indices.
+    """
+
+    concatenated_datasets = []
+    split_index = {}
+    current_index = 0
+    if len(dataset_dict.keys()) == 1:
+        arrow_tbl = get_arrow_table(dataset_dict["train"])
+        return DashAIDataset(arrow_tbl)
+
+    for split in sorted(dataset_dict.keys()):
+        ds = dataset_dict[split]
+        n_rows = len(ds)
+        split_index[split] = list(range(current_index, current_index + n_rows))
+        current_index += n_rows
+        concatenated_datasets.append(ds)
+    merged_dataset = concatenate_datasets(concatenated_datasets)
+    arrow_tbl = get_arrow_table(merged_dataset)
+    dashai_dataset = DashAIDataset(arrow_tbl, splits={"split_indices": split_index})
+    return dashai_dataset
 
 
 @beartype
-def save_dataset(datasetdict: DatasetDict, path: Union[str, pathlib.Path]) -> None:
-    """Save the datasetdict with dashaidatasets inside.
-
-    Parameters
-    ----------
-    datasetdict : DatasetDict
-        The dataset to be saved.
-
-    datasetdict_path : str
-        Path where the dtaaset will be stored.
-
+def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
     """
-    splits = []
-    for split in datasetdict:
-        splits.append(split)
-        datasetdict[split].save_to_disk(f"{path}/{split}")
+    Saves a DashAIDataset in a custom format using two files in the specified directory:
+      - "data.arrow": contains the dataset's PyArrow table.
+      - "splits.json": contains the dataset's splits indices.
 
-    with open(
-        os.path.join(path, "dataset_dict.json"), "w", encoding="utf-8"
-    ) as datasetdict_info_file:
-        data = {"splits": splits}
-        json.dump(
-            data,
-            datasetdict_info_file,
-            indent=2,
-            sort_keys=True,
-            ensure_ascii=False,
-        )
+    Parameters:
+        dataset (DashAIDataset): The dataset to save.
+        path (Union[str, os.PathLike]): The directory path where the files
+        will be saved.
+    """
+
+    os.makedirs(path, exist_ok=True)
+
+    table = dataset.arrow_table
+
+    data_filepath = os.path.join(path, "data.arrow")
+    with pa.OSFile(data_filepath, "wb") as sink:
+        writer = ipc.new_file(sink, table.schema)
+        writer.write_table(table)
+        writer.close()
+
+    metadata_filepath = os.path.join(path, "splits.json")
+    with open(metadata_filepath, "w") as f:
+        json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
+
+
+@beartype
+def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
+    """
+    Loads a DashAIDataset previously saved with save_dataset.
+
+    It expects the directory at 'path' to contain:
+        - "data.arrow": the saved PyArrow table.
+        - "splits.json": the saved split indices.
+
+    Parameters:
+        path (Union[str, os.PathLike]): The directory path where the dataset was saved.
+
+    Returns:
+        DashAIDataset: The loaded dataset with data and metadata.
+    """
+
+    data_filepath = os.path.join(dataset_path, "data.arrow")
+    with pa.OSFile(data_filepath, "rb") as source:
+        reader = ipc.open_file(source)
+        data = reader.read_all()
+    metadata_filepath = os.path.join(dataset_path, "splits.json")
+    if os.path.exists(metadata_filepath):
+        with open(metadata_filepath, "r") as f:
+            splits = json.load(f)
+    else:
+        splits = {}
+
+    return DashAIDataset(data, splits=splits)
 
 
 @beartype
@@ -259,6 +372,8 @@ def split_indexes(
     val_size: float,
     seed: Union[int, None] = None,
     shuffle: bool = True,
+    stratify: bool = False,
+    labels: Union[List, None] = None,
 ) -> Tuple[List, List, List]:
     """Generate lists with train, test and validation indexes.
 
@@ -294,6 +409,9 @@ def split_indexes(
     shuffle : bool, optional
         If True, the data will be shuffled when splitting the dataset,
         by default True.
+    stratify : bool, optional
+        If True, the data will be stratified when splitting the dataset,
+        by default False.
 
     Returns
     -------
@@ -302,52 +420,81 @@ def split_indexes(
     """
 
     # Generate shuffled indexes
-    np.random.seed(seed)
+    if seed is None:
+        np.random.seed(seed)
     indexes = np.arange(total_rows)
 
     test_val = test_size + val_size
     val_proportion = test_size / test_val
+
+    stratify_labels = np.array(labels) if stratify else None
+
     train_indexes, test_val_indexes = train_test_split(
         indexes,
         train_size=train_size,
         random_state=seed,
         shuffle=shuffle,
+        stratify=stratify_labels,
     )
+
+    stratify_labels_test_val = stratify_labels[test_val_indexes] if stratify else None
+
     test_indexes, val_indexes = train_test_split(
         test_val_indexes,
         train_size=val_proportion,
         random_state=seed,
         shuffle=shuffle,
+        stratify=stratify_labels_test_val,
     )
     return list(train_indexes), list(test_indexes), list(val_indexes)
 
 
 @beartype
 def split_dataset(
-    dataset: Dataset,
-    train_indexes: List,
-    test_indexes: List,
-    val_indexes: List,
+    dataset: DashAIDataset,
+    train_indexes: List = None,
+    test_indexes: List = None,
+    val_indexes: List = None,
 ) -> DatasetDict:
-    """Split the dataset in train, test and validation subsets.
+    """
+    Split the dataset in train, test and validation subsets.
+    If indexes are not provided, it will use the split indices
+    from the dataset's splits.
 
     Parameters
     ----------
-    dataset : DatasetDict
-        A HuggingFace DatasetDict containing the dataset to be split.
-    train_indexes : List
-        Train split indexes.
-    test_indexes : List
-        Test split indexes.
-    val_indexes : List
-        Validation split indexes.
-
+    dataset : DashAIDataset
+        A HuggingFace DashAIDataset containing the dataset to be split.
+    train_indexes : List, optional
+        Train split indexes. If None, uses indices from splits.
+    test_indexes : List, optional
+        Test split indexes. If None, uses indices from splits.
+    val_indexes : List, optional
+        Validation split indexes. If None, uses indices from splits.
 
     Returns
     -------
     DatasetDict
         The split dataset.
+
+    Raises
+    -------
+    ValueError
+        Must provide all indexes or none.
     """
+    if all(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
+        train_dataset = dataset.get_split("train")
+        test_dataset = dataset.get_split("test")
+        val_dataset = dataset.get_split("validation")
+        return DatasetDict(
+            {
+                "train": train_dataset,
+                "test": test_dataset,
+                "validation": val_dataset,
+            }
+        )
+    elif any(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
+        raise ValueError("Must provide all indexes or none.")
 
     # Get the number of records
     n = len(dataset)
@@ -358,7 +505,13 @@ def split_dataset(
     val_mask = np.isin(np.arange(n), val_indexes)
 
     # Get the underlying table
-    table = dataset.data
+    table = dataset.arrow_table
+
+    dataset.splits["split_indices"] = {
+        "train": train_indexes,
+        "test": test_indexes,
+        "validation": val_indexes,
+    }
 
     # Create separate tables for each split
     train_table = table.filter(pa.array(train_mask))
@@ -367,33 +520,49 @@ def split_dataset(
 
     separate_dataset_dict = DatasetDict(
         {
-            "train": Dataset(train_table),
-            "test": Dataset(test_table),
-            "validation": Dataset(val_table),
+            "train": DashAIDataset(train_table),
+            "test": DashAIDataset(test_table),
+            "validation": DashAIDataset(val_table),
         }
     )
 
-    dataset = to_dashai_dataset(separate_dataset_dict)
-    return dataset
+    return separate_dataset_dict
 
 
-def to_dashai_dataset(dataset: DatasetDict) -> DatasetDict:
+def to_dashai_dataset(
+    dataset: Union[DatasetDict, Dataset, DashAIDataset],
+) -> DashAIDataset:
     """
-    Convert all datasets within the DatasetDict to DashAIDataset.
+    Converts a DatasetDict into a unified DashAIDataset.
 
-    Returns
-    -------
-    DatasetDict:
-        Datasetdict with datasets converted to DashAIDataset.
+    If the DatasetDict has only one split, it simply wraps it in a DashAIDataset
+    and records its indices. If there are multiple splits, it merges them using
+    merge_splits_with_metadata.
+
+    Parameters:
+        dataset_dict (DatasetDict): The original dataset with one or more splits.
+
+    Returns:
+        DashAIDataset: A unified dataset containing all data and metadata
+        about the original splits.
     """
-    for key in dataset:
-        dataset[key] = DashAIDataset(dataset[key].data)
-    return dataset
+    if isinstance(dataset, DashAIDataset):
+        return dataset
+    if isinstance(dataset, Dataset):
+        arrow_tbl = get_arrow_table(dataset)
+        return DashAIDataset(arrow_tbl)
+    elif len(dataset) == 1:
+        key = list(dataset.keys())[0]
+        ds = dataset[key]
+        arrow_tbl = get_arrow_table(ds)
+        return DashAIDataset(arrow_tbl)
+    else:
+        return merge_splits_with_metadata(dataset)
 
 
 @beartype
 def validate_inputs_outputs(
-    datasetdict: DatasetDict,
+    datasetdict: Union[DatasetDict, DashAIDataset],
     inputs: List[str],
     outputs: List[str],
 ) -> None:
@@ -409,7 +578,8 @@ def validate_inputs_outputs(
     outputs : List[str]
         List of output column names.
     """
-    dataset_features = list((datasetdict["train"].features).keys())
+    datasetdict = to_dashai_dataset(datasetdict)
+    dataset_features = list((datasetdict.features).keys())
     if len(inputs) == 0 or len(outputs) == 0:
         raise ValueError(
             "Inputs and outputs columns lists to validate must not be empty"
@@ -432,7 +602,7 @@ def validate_inputs_outputs(
 
 @beartype
 def get_column_names_from_indexes(
-    datasetdict: DatasetDict, indexes: List[int]
+    dataset: Union[DashAIDataset, DatasetDict], indexes: List[int]
 ) -> List[str]:
     """Obtain the column labels that correspond to the provided indexes.
 
@@ -450,8 +620,9 @@ def get_column_names_from_indexes(
     List[str]
         List with the labels of the columns
     """
+    dataset = to_dashai_dataset(dataset)
 
-    dataset_features = list((datasetdict["train"].features).keys())
+    dataset_features = list((dataset.features).keys())
     col_names = []
     for index in indexes:
         if index > len(dataset_features):
@@ -466,14 +637,16 @@ def get_column_names_from_indexes(
 
 @beartype
 def select_columns(
-    dataset: DatasetDict, input_columns: List[str], output_columns: List[str]
-) -> Tuple[DatasetDict, DatasetDict]:
+    dataset: Union[DatasetDict, DashAIDataset],
+    input_columns: List[str],
+    output_columns: List[str],
+) -> Tuple[DashAIDataset, DashAIDataset]:
     """Divide the dataset into a dataset with only the input columns in it
     and other dataset only with the output columns
 
     Parameters
     ----------
-    dataset : DatasetDict
+    dataset : Union[DatasetDict, DashAIDataset]
         Dataset to divide
     input_columns : List[str]
         List with the input columns labels
@@ -482,14 +655,12 @@ def select_columns(
 
     Returns
     -------
-    Tuple[DatasetDict, DatasetDict]
-        Tuple with the separated DatasetDicts x and y
+    DashAIDataset
+        Tuple with the separated datasets x and y
     """
-    input_columns_dataset = DatasetDict()
-    output_columns_dataset = DatasetDict()
-    for split in dataset:
-        input_columns_dataset[split] = dataset[split].select_columns(input_columns)
-        output_columns_dataset[split] = dataset[split].select_columns(output_columns)
+    dataset = to_dashai_dataset(dataset)
+    input_columns_dataset = to_dashai_dataset(dataset.select_columns(input_columns))
+    output_columns_dataset = to_dashai_dataset(dataset.select_columns(output_columns))
     return (input_columns_dataset, output_columns_dataset)
 
 
@@ -507,8 +678,8 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     Dict
         Dict with the columns and types
     """
-    dataset = load_dataset(dataset_path=dataset_path)
-    dataset_features = dataset["train"].features
+    dataset = load_dataset(dataset_path)
+    dataset_features = dataset.features
     column_types = {}
     for column in dataset_features:
         if dataset_features[column]._type == "Value":
@@ -525,7 +696,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
 
 
 @beartype
-def update_columns_spec(dataset_path: str, columns: Dict) -> DatasetDict:
+def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
 
     Parameters
@@ -544,24 +715,23 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DatasetDict:
         raise TypeError(f"types should be a dict, got {type(columns)}")
 
     # load the dataset from where its stored
-    dataset_dict = load_from_disk(dataset_path=dataset_path)
-    for split in dataset_dict:
-        # copy the features with the columns ans types
-        new_features = dataset_dict[split].features
-        for column in columns:
-            if columns[column].type == "ClassLabel":
-                names = list(set(dataset_dict[split][column]))
-                new_features[column] = ClassLabel(names=names)
-            elif columns[column].type == "Value":
-                new_features[column] = Value(columns[column].dtype)
+    dataset = load_dataset(dataset_path)
+    # copy the features with the columns ans types
+    new_features = dataset.features
+    for column in columns:
+        if columns[column].type == "ClassLabel":
+            names = list(set(dataset[column]))
+            new_features[column] = ClassLabel(names=names)
+        elif columns[column].type == "Value":
+            new_features[column] = Value(columns[column].dtype)
 
         # cast the column types with the changes
         try:
-            dataset_dict[split] = dataset_dict[split].cast(new_features)
+            dataset = dataset.cast(new_features)
 
         except ValueError as e:
             raise ValueError("Error while trying to cast the columns") from e
-    return dataset_dict
+    return dataset
 
 
 def get_dataset_info(dataset_path: str) -> object:
@@ -579,40 +749,47 @@ def get_dataset_info(dataset_path: str) -> object:
         Dictionary with the information of the dataset
     """
     dataset = load_dataset(dataset_path=dataset_path)
-    total_rows = sum(split.num_rows for split in dataset.values())
-    total_columns = len(dataset["train"].features)
+    total_rows = dataset.num_rows
+    total_columns = len(dataset.features)
+    splits = dataset.splits.get("split_indices", {})
+    train_indices = splits.get("train", [])
+    test_indices = splits.get("test", [])
+    val_indices = splits.get("validation", [])
+    train_size = len(train_indices)
+    test_size = len(test_indices)
+    val_size = len(val_indices)
+
     dataset_info = {
         "total_rows": total_rows,
         "total_columns": total_columns,
-        "train_size": dataset["train"].num_rows,
-        "test_size": dataset["test"].num_rows,
-        "val_size": dataset["validation"].num_rows,
+        "train_size": train_size,
+        "test_size": test_size,
+        "val_size": val_size,
+        "train_indices": train_indices,
+        "test_indices": test_indices,
+        "val_indices": val_indices,
     }
     return dataset_info
 
 
 @beartype
 def update_dataset_splits(
-    datasetdict: DatasetDict, new_splits: object, is_random: bool
-) -> DatasetDict:
-    """Splits an already separated dataset by concatenating it and applying
-    new splits. The splits could be random by giving numbers between 0 and 1
-    in new_splits parameters and setting the is_random parameter to True, or
-    the could be manually selected by giving lists of indices to new_splits
-    parameter and setting the is_random parameter to False.
+    dataset: DashAIDataset, new_splits: object, is_random: bool
+) -> DashAIDataset:
+    """Update the metadata splits of a DashAIDataset. The splits could be random by
+    giving numbers between 0 and 1 in new_splits parameters and setting the is_random
+    parameter to True, or the could be manually selected by giving lists of indices
+    to new_splits parameter and setting the is_random parameter to False.
 
     Args:
-        datasetdict (DatasetDict): Dataset to update splits
+        dataset (DashAIDataset: Dataset to update splits
         new_splits (object): Object with the new train, test and validation config
         is_random (bool): If the new splits are random by percentage
 
     Returns:
-        DatasetDict: New DatasetDict with the new splits configuration
+        DashAIDataset: New DashAIDataset with the new splits configuration.
     """
-    concatenated_dataset = concatenate_datasets(
-        [datasetdict["train"], datasetdict["test"], datasetdict["validation"]]
-    )
-    n = len(concatenated_dataset)
+    n = dataset.num_rows
     if is_random:
         check_split_values(
             new_splits["train"], new_splits["test"], new_splits["validation"]
@@ -624,9 +801,48 @@ def update_dataset_splits(
         train_indexes = new_splits["train"]
         test_indexes = new_splits["test"]
         val_indexes = new_splits["validation"]
-    return split_dataset(
-        dataset=concatenated_dataset,
-        train_indexes=train_indexes,
-        test_indexes=test_indexes,
-        val_indexes=val_indexes,
-    )
+    dataset.splits["split_indices"] = {
+        "train": train_indexes,
+        "test": test_indexes,
+        "validation": val_indexes,
+    }
+    return dataset
+
+
+def prepare_for_experiment(
+    dataset: DashAIDataset, splits: dict, output_columns: List[str]
+) -> DatasetDict:
+    """Prepare the dataset for an experiment by updating the splits configuration"""
+    splitType = splits.get("splitType")
+    if splitType == "manual" or splitType == "predefined":
+        splits_index = splits
+        prepared_dataset = split_dataset(
+            dataset,
+            train_indexes=splits_index["train"],
+            test_indexes=splits_index["test"],
+            val_indexes=splits_index["validation"],
+        )
+    else:
+        n = len(dataset)
+        if splits.get("stratify", False):
+            output_column = output_columns
+            labels = dataset[output_column]
+        else:
+            labels = None
+        train_indexes, test_indexes, val_indexes = split_indexes(
+            n,
+            splits["train"],
+            splits["test"],
+            splits["validation"],
+            shuffle=splits.get("shuffle", False),
+            seed=splits.get("seed"),
+            stratify=splits.get("stratify", False),
+            labels=labels,
+        )
+        prepared_dataset = split_dataset(
+            dataset,
+            train_indexes=train_indexes,
+            test_indexes=test_indexes,
+            val_indexes=val_indexes,
+        )
+    return prepared_dataset
