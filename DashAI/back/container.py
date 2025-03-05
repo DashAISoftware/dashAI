@@ -5,6 +5,7 @@ from kink import Container, di
 
 from DashAI.back.dataloaders import (
     CSVDataLoader,
+    CSVTypeInferenceDataLoader,
     ExcelDataLoader,
     ImageDataLoader,
     JSONDataLoader,
@@ -80,6 +81,7 @@ INITIAL_COMPONENTS = [
     LinearRegression,
     # Dataloaders
     CSVDataLoader,
+    CSVTypeInferenceDataLoader,
     JSONDataLoader,
     ImageDataLoader,
     ExcelDataLoader,

@@ -1,6 +1,7 @@
 # flake8: noqa
 from DashAI.back.dataloaders.classes.audio_dataloader import AudioDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
+from DashAI.back.dataloaders.classes.csv_type_inference_dataloader import CSVTypeInferenceDataLoader
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
