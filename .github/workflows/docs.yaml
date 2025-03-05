@@ -33,7 +33,7 @@ jobs:
         uses: ammaraskar/sphinx-action@master
         with:
           docs-folder: "docs/"
-          pre-build-command: "pip install -e ."
+          pre-build-command: "pip install -e . --no-use-pep517"
 
       - name: Setup Pages
         uses: actions/configure-pages@v2
