@@ -116,10 +116,10 @@ async def validate_columns(
                     detail="Error while loading the dataset.",
                 )
             inputs_names = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.inputs_columns
+                dataset=datasetdict, indexes=params.inputs_columns
             )
             outputs_names = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.outputs_columns
+                dataset=datasetdict, indexes=params.outputs_columns
             )
 
         except exc.SQLAlchemyError as e:
@@ -193,10 +193,10 @@ async def create_experiment(
                     detail="Error while loading the dataset.",
                 )
             inputs_columns = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.input_columns
+                dataset=datasetdict, indexes=params.input_columns
             )
             outputs_columns = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.output_columns
+                dataset=datasetdict, indexes=params.output_columns
             )
             experiment = Experiment(
                 dataset_id=params.dataset_id,

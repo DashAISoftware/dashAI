@@ -1,14 +1,18 @@
 """DashAI implementation of DistilBERT model for english classification."""
 
 import shutil
-from typing import Any, Callable, Dict, Optional
+from pathlib import Path
+from typing import Any, Union
 
-import numpy as np
+import torch
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
+from torch.utils.data import DataLoader
 from transformers import (
-    DistilBertForSequenceClassification,
-    DistilBertTokenizer,
+    AutoConfig,
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    DataCollatorWithPadding,
     Trainer,
     TrainingArguments,
 )
@@ -31,12 +35,12 @@ class DistilBertTransformerSchema(BaseSchema):
 
     num_train_epochs: schema_field(
         int_field(ge=1),
-        placeholder=3,
+        placeholder=2,
         description="Total number of training epochs to perform.",
     )  # type: ignore
     batch_size: schema_field(
         int_field(ge=1),
-        placeholder=8,
+        placeholder=16,
         description="The batch size per GPU/TPU core/CPU for training",
     )  # type: ignore
     learning_rate: schema_field(
@@ -52,7 +56,7 @@ class DistilBertTransformerSchema(BaseSchema):
     )  # type: ignore
     weight_decay: schema_field(
         float_field(ge=0.0),
-        placeholder=0.0,
+        placeholder=0.01,
         description="Weight decay is a regularization technique used in training "
         "neural networks to prevent overfitting. In the context of the AdamW "
         "optimizer, the 'weight_decay' parameter is the rate at which the weights of "
@@ -82,94 +86,82 @@ class DistilBertTransformer(TextClassificationModel):
         The process includes the instantiation of the pre-trained model and the
         associated tokenizer.
         """
+        self.num_labels = kwargs.get("num_labels")
         kwargs = self.validate_and_transform(kwargs)
         self.model_name = "distilbert-base-uncased"
-        self.tokenizer = DistilBertTokenizer.from_pretrained(self.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.training_args = {
+            "num_train_epochs": kwargs.get("num_train_epochs", 2),
+            "learning_rate": kwargs.get("learning_rate", 5e-5),
+            "weight_decay": kwargs.get("weight_decay", 0.01),
+        }
+        self.batch_size = kwargs.get("batch_size", 16)
+        self.device = kwargs.get("device", "gpu")
         self.model = (
             model
             if model is not None
-            else DistilBertForSequenceClassification.from_pretrained(self.model_name)
+            else AutoModelForSequenceClassification.from_pretrained(self.model_name)
         )
-        self.fitted = model is not None
-        if model is None:
-            self.training_args = kwargs
-            self.batch_size = kwargs.pop("batch_size")
-            self.device = kwargs.pop("device")
 
-    def get_tokenizer(
-        self,
-        input_column: str,
-        output_column: Optional[str] = None,
-    ) -> Callable:
-        """Tokenize input and output.
+        self.fitted = False
+
+    def tokenize_data(self, dataset: Dataset) -> Dataset:
+        """Tokenize the input data.
 
         Parameters
         ----------
-        input_column : str
-            name the input column to be tokenized.
-        output_column : Optional[str]
-            name the output column to be tokenized.
+        dataset : Dataset
+            Dataset with the input data to preprocess.
 
         Returns
         -------
-        Function
-            Function for batch tokenization of the dataset.
+        Dataset
+            Dataset with the tokenized input data.
         """
+        return dataset.map(
+            lambda examples: self.tokenizer(
+                examples["text"], truncation=True, padding=True, max_length=512
+            ),
+            batched=True,
+        )
 
-        def _tokenize(batch) -> Dict[str, Any]:
-            tokenized_batch = {
-                "input_ids": self.tokenizer(
-                    batch[input_column],
-                    padding="max_length",
-                    truncation=True,
-                    max_length=512,
-                )["input_ids"],
-                "attention_mask": self.tokenizer(
-                    batch[input_column],
-                    padding="max_length",
-                    truncation=True,
-                    max_length=512,
-                )["attention_mask"],
-            }
-            if output_column:
-                tokenized_batch["labels"] = batch[output_column]
-            return tokenized_batch
-
-        return _tokenize
-
-    def fit(self, x: Dataset, y: Dataset):
+    def fit(self, x_train: Dataset, y_train: Dataset):
         """Fine-tune the pre-trained model.
 
         Parameters
         ----------
-        dataset : DashAIDataset
-            DashAIDataset with training data.
+        x_train : Dataset
+            Dataset with input training data.
+        y_train : Dataset
+            Dataset with output training data.
 
         """
-        input_column = x.column_names[0]
-        output_column = y.column_names[0]
-        dataset = x.add_column(output_column, y[output_column])
+        output_column_name = y_train.column_names[0]
+        if self.num_labels is None:
+            self.num_labels = len(set(y_train[output_column_name]))
+        self.model.config.num_labels = self.num_labels
+        train_dataset = self.tokenize_data(x_train)
+        train_dataset = train_dataset.add_column("label", y_train[output_column_name])
 
-        tokenizer_func = self.get_tokenizer(input_column, output_column)
-        dataset = dataset.map(tokenizer_func, batched=True, batch_size=self.batch_size)
-        dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
-
-        # Arguments for fine-tuning
+        can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args = TrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
-            save_steps=1,
-            save_total_limit=1,
+            logging_strategy="steps",
+            logging_steps=50,
+            save_strategy="epoch",  # Guarda checkpoints al final de cada época
             per_device_train_batch_size=self.batch_size,
-            per_device_eval_batch_size=self.batch_size,
             no_cuda=self.device != "gpu",
+            fp16=can_use_fp16,
             **self.training_args,
         )
 
-        # The Trainer class is used for fine-tuning the model.
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
         trainer = Trainer(
             model=self.model,
             args=training_args,
-            train_dataset=dataset,
+            train_dataset=train_dataset,
+            data_collator=data_collator,
+            tokenizer=self.tokenizer,
         )
 
         trainer.train()
@@ -177,64 +169,83 @@ class DistilBertTransformer(TextClassificationModel):
         shutil.rmtree(
             "DashAI/back/user_models/temp_checkpoints_distilbert", ignore_errors=True
         )
-
         return self
 
-    def predict(self, x: Dataset) -> np.array:
-        """Make a prediction with the fine-tuned model.
+    def predict(self, x_pred: Dataset):
+        """Predict with the fine-tuned model.
 
         Parameters
         ----------
-        x : Dataset
+        x_pred : Dataset
             Dataset with text data.
 
         Returns
         -------
-        np.array
-            Numpy array with the probabilities for each class.
+        List
+            List of predicted probabilities for each class.
         """
+
         if not self.fitted:
             raise NotFittedError(
                 f"This {self.__class__.__name__} instance is not fitted yet. Call 'fit'"
-                " with appropriate arguments before using this "
-                "estimator."
+                " with appropriate arguments before using this estimator."
             )
 
-        input_column = x.column_names[0]
-        tokenizer_func = self.get_tokenizer(input_column)
-        x = x.map(tokenizer_func, batched=True, batch_size=self.batch_size)
-        x.set_format("torch", columns=["input_ids", "attention_mask"])
+        pred_dataset = self.tokenize_data(x_pred)
+
+        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        pred_loader = DataLoader(
+            pred_dataset.remove_columns(["text"]),
+            batch_size=self.batch_size,
+            collate_fn=data_collator,
+        )
 
         probabilities = []
 
-        # Calculate the number of batches
-        num_batches = len(x) // self.batch_size + (len(x) % self.batch_size > 0)
-
-        # Iterate over each batch
-        for i in range(num_batches):
-            start_idx = i * self.batch_size
-            end_idx = start_idx + self.batch_size
-
-            # Extract the batch from the dataset
-            batch = {
-                "input_ids": x["input_ids"][start_idx:end_idx],
-                "attention_mask": x["attention_mask"][start_idx:end_idx],
+        for batch in pred_loader:
+            inputs = {
+                k: v.to(self.model.device) for k, v in batch.items() if k != "labels"
             }
 
-            # Make sure that the tensors are in the correct device.
-            batch = {k: v.to(self.model.device) for k, v in batch.items()}
-            outputs = self.model(**batch)
-
-            # Takes the model probability using softmax
+            outputs = self.model(**inputs)
             probs = outputs.logits.softmax(dim=-1)
             probabilities.extend(probs.detach().cpu().numpy())
 
-        return np.array(probabilities)
+        return probabilities
 
-    def save(self, filename: str) -> None:
+    def save(self, filename: Union[str, Path]) -> None:
         self.model.save_pretrained(filename)
+        config = AutoConfig.from_pretrained(filename)
+        config.custom_params = {
+            "num_train_epochs": self.training_args.get("num_train_epochs"),
+            "batch_size": self.batch_size,
+            "learning_rate": self.training_args.get("learning_rate"),
+            "device": self.device,
+            "weight_decay": self.training_args.get("weight_decay"),
+            "num_labels": self.num_labels,
+            "fitted": self.fitted,
+        }
+
+        config.save_pretrained(filename)
 
     @classmethod
-    def load(cls, filename: str) -> Any:
-        model = DistilBertForSequenceClassification.from_pretrained(filename)
-        return cls(model=model)
+    def load(cls, filename: Union[str, Path]) -> Any:
+        config = AutoConfig.from_pretrained(filename)
+        custom_params = getattr(config, "custom_params", {})
+
+        model = AutoModelForSequenceClassification.from_pretrained(
+            filename, num_labels=custom_params.get("num_labels")
+        )
+        loaded_model = cls(
+            model=model,
+            model_name=config.model_type,
+            num_labels=custom_params.get("num_labels"),
+            num_train_epochs=custom_params.get("num_train_epochs"),
+            batch_size=custom_params.get("batch_size"),
+            learning_rate=custom_params.get("learning_rate"),
+            device=custom_params.get("device"),
+            weight_decay=custom_params.get("weight_decay"),
+        )
+        loaded_model.fitted = custom_params.get("fitted")
+
+        return loaded_model

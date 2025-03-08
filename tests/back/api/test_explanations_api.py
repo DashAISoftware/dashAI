@@ -90,6 +90,7 @@ def create_run_id_1(client: TestClient, experiment_id: int):
                 "pruner": "None",
                 "metric": "Accuracy",
             },
+            goal_metric="Accuracy",
             name="Run",
         )
         db.add(run)
@@ -120,6 +121,7 @@ def create_run_id_2(client: TestClient, experiment_id: int):
                 "pruner": "None",
                 "metric": "Accuracy",
             },
+            goal_metric="Accuracy",
             name="Run",
         )
         db.add(run)

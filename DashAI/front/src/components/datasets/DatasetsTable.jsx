@@ -5,7 +5,7 @@ import {
   AddCircleOutline as AddIcon,
   Update as UpdateIcon,
 } from "@mui/icons-material";
-import { Button, Grid, Paper, Typography } from "@mui/material";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import DeleteItemModal from "../custom/DeleteItemModal";
 import EditDatasetModal from "./EditDatasetModal";
 import DatasetSummaryModal from "./DatasetSummaryModal";
@@ -198,6 +198,7 @@ function DatasetsTable({
         loading={loading}
         slots={{
           toolbar: GridToolbar,
+          loadingOverlay: LinearProgress,
         }}
       />
     </Paper>

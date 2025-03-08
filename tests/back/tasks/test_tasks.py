@@ -1,9 +1,7 @@
-import io
 import shutil
 
 import pytest
 from datasets import DatasetDict
-from starlette.datastructures import Headers, UploadFile
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -23,12 +21,8 @@ def load_csv_into_datasetdict(file_name):
     test_dataset_path = f"tests/back/tasks/{file_name}"
     csv_dataloader = CSVDataLoader()
 
-    with open(test_dataset_path, "r") as file:
-        csv_binary = io.BytesIO(bytes(file.read(), encoding="utf8"))
-        file = UploadFile(csv_binary)
-
     datasetdict = csv_dataloader.load_data(
-        filepath_or_buffer=file,
+        filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/tasks",
         params={"separator": ","},
     )
@@ -38,10 +32,7 @@ def load_csv_into_datasetdict(file_name):
 def test_validate_tabular_task():
     dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
 
-    for split in dataset:
-        dataset[split] = dataset[split].change_columns_type(
-            column_types={"Species": "Categorical"}
-        )
+    dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
     tabular_task = TabularClassificationTask()
     inputs_columns = [
         "SepalLengthCm",
@@ -64,10 +55,7 @@ def test_validate_tabular_task():
 def test_wrong_type_task():
     dataset = to_dashai_dataset(load_csv_into_datasetdict("iris_extra_feature.csv"))
 
-    for split in dataset:
-        dataset[split] = dataset[split].change_columns_type(
-            column_types={"Species": "Categorical"}
-        )
+    dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
 
     tabular_task = TabularClassificationTask()
 
@@ -145,25 +133,20 @@ def text_classification_dataset_fixture():
     test_dataset_path = "tests/back/tasks/ImdbSentimentDatasetSmall.json"
     json_dataloader = JSONDataLoader()
 
-    with open(test_dataset_path, "r", encoding="utf8") as file:
-        json_data = file.read()
-        json_binary = io.BytesIO(bytes(json_data, encoding="utf8"))
-        file = UploadFile(json_binary)
-
     dataset = json_dataloader.load_data(
-        filepath_or_buffer=file,
+        filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/tasks",
         params={"data_key": "data"},
     )
 
     dashai_dataset = to_dashai_dataset(dataset)
 
-    total_rows = len(dashai_dataset["train"])
+    total_rows = dashai_dataset.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
     )
     split_datasetdict = split_dataset(
-        dashai_dataset["train"],
+        dashai_dataset,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
@@ -206,26 +189,20 @@ def image_classification_dataset_fixture():
     test_dataset_path = "tests/back/tasks/beans_dataset_small.zip"
     image_dataloader = ImageDataLoader()
 
-    with open(test_dataset_path, "rb") as file:
-        upload_file = UploadFile(
-            file=file,
-            filename=test_dataset_path,
-            headers=Headers({"Content-Type": "application/zip"}),
-        )
-        dataset_dict = image_dataloader.load_data(
-            filepath_or_buffer=upload_file,
-            params={},
-            temp_path="tests/back/tasks/beans_dataset",
-        )
+    dataset_dict = image_dataloader.load_data(
+        filepath_or_buffer=test_dataset_path,
+        params={},
+        temp_path="tests/back/tasks/beans_dataset",
+    )
 
     dataset = to_dashai_dataset(dataset_dict)
 
-    total_rows = len(dataset["train"])
+    total_rows = dataset.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
     )
     split_datasetdict = split_dataset(
-        dataset["train"],
+        dataset,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
@@ -270,24 +247,20 @@ def translation_dataset_fixture():
     test_dataset_path = "tests/back/tasks/translationEngSpaDatasetSmall.json"
     json_dataloader = JSONDataLoader()
 
-    with open(test_dataset_path, "r", encoding="utf8") as file:
-        json_binary = io.BytesIO(bytes(file.read(), encoding="utf8"))
-        file = UploadFile(json_binary)
-
     dataset = json_dataloader.load_data(
-        filepath_or_buffer=file,
+        filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/tasks",
         params={"data_key": "data"},
     )
 
     dataset = to_dashai_dataset(dataset)
 
-    total_rows = len(dataset["train"])
+    total_rows = dataset.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
     )
     split_datasetdict = split_dataset(
-        dataset["train"],
+        dataset,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
