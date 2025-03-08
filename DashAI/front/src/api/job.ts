@@ -71,12 +71,19 @@ export const enqueueExplainerJob = async (
 export const enqueueExplorerJob = async (
   explorerId: number,
 ): Promise<object> => {
-  const data = {
-    job_type: "ExplorerJob",
-    kwargs: { explorer_id: explorerId },
+  const formData = new FormData();
+  const kwargs = {
+    explorer_id: explorerId,
   };
 
-  const response = await api.post<object>("/v1/job/", data);
+  formData.append("job_type", "ExplorerJob");
+  formData.append("kwargs", JSON.stringify(kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 
