@@ -15,13 +15,17 @@
    
       ~LinearSVR.__init__
       ~LinearSVR.fit
+      ~LinearSVR.get_metadata_routing
       ~LinearSVR.get_params
       ~LinearSVR.get_schema
       ~LinearSVR.load
       ~LinearSVR.predict
       ~LinearSVR.save
       ~LinearSVR.score
+      ~LinearSVR.set_fit_request
       ~LinearSVR.set_params
+      ~LinearSVR.set_predict_request
+      ~LinearSVR.set_score_request
       ~LinearSVR.validate_and_transform
    
    

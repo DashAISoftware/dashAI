@@ -10,8 +10,40 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
     job_type: "ModelJob",
     kwargs: { run_id: runId },
   };
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
 
-  const response = await api.post<object>("/v1/job/", data);
+export const enqueueDatasetJob = async (
+  file: File,
+  name: string,
+  url: string,
+  params: object,
+): Promise<object> => {
+  const formData = new FormData();
+  const kwargs = {
+    name: name,
+    url: url,
+    params: params,
+  };
+
+  formData.append("job_type", "DatasetJob");
+  formData.append("kwargs", JSON.stringify(kwargs));
+  formData.append("file", file);
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      filename: encodeURIComponent(file.name),
+    },
+  });
   return response.data;
 };
 
@@ -24,7 +56,15 @@ export const enqueueExplainerJob = async (
     kwargs: { explainer_id: explainerId, explainer_scope: scope },
   };
 
-  const response = await api.post<object>("/v1/job/", data);
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 
@@ -47,10 +87,18 @@ export const enqueuePredictionJob = async (
 ): Promise<object> => {
   const data = {
     job_type: "PredictJob",
-    kwargs: { run_id: run_id, id: id, json_filename: json_filename },
+    kwargs: { run_id, id, json_filename },
   };
 
-  const response = await api.post<object>("/v1/job/", data);
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 

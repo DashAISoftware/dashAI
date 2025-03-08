@@ -3,7 +3,6 @@ import pathlib
 
 import numpy as np
 import pandas as pd
-import pathvalidate as pv
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
@@ -107,13 +106,7 @@ class CovarianceMatrixExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: Union[pd.DataFrame, go.Figure],
     ) -> str:
-        if explorer_info.name is None or explorer_info.name == "":
-            filename = f"{explorer_info.id}.json"
-        else:
-            filename = (
-                f"{explorer_info.id}_"
-                f"{pv.sanitize_filename(explorer_info.name)}.json"
-            )
+        filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
         if self.plot:

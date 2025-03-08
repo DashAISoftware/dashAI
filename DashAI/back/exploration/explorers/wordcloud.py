@@ -2,7 +2,6 @@ import base64
 import os
 import pathlib
 
-import pathvalidate as pv
 from beartype.typing import Any, Dict
 from PIL.Image import Image
 from wordcloud import STOPWORDS, WordCloud
@@ -89,13 +88,7 @@ class WordcloudExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: Image,
     ) -> str:
-        if explorer_info.name is None or explorer_info.name == "":
-            filename = f"{explorer_info.id}.png"
-        else:
-            filename = (
-                f"{explorer_info.id}_{pv.sanitize_filename(explorer_info.name)}.png"
-            )
-
+        filename = f"{explorer_info.id}.png"
         path = pathlib.Path(os.path.join(save_path, filename))
         result.save(path, format="PNG")
 

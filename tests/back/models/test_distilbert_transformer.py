@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import numpy as np
 import pytest
@@ -142,5 +141,3 @@ def test_save_and_load(sample_model, splited_dataset, tmp_path):
             original_state_dict[key], loaded_state_dict[key]
         ), f"""The loaded model should have the same weights and parameters
         as the original model (mismatch in {key})"""
-
-    shutil.rmtree(save_path)

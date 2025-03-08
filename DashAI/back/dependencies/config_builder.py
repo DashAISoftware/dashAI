@@ -11,7 +11,7 @@ from DashAI.back.config import DefaultSettings
 def build_config_dict(
     local_path: Union[pathlib.Path, None],
     logging_level: Literal["NOTSET", "DEBUG", "INFO", "WARN", "ERROR", "CRITICAL"],
-) -> Dict[str, Union[str, int]]:
+) -> Dict[str, Union[str, int, pathlib.Path]]:
     """
     Read configuration settings from a default source and updates them based on a
     provided local path.

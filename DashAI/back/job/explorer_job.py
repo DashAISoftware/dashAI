@@ -2,7 +2,6 @@ import logging
 import os
 import pathlib
 
-import pathvalidate as pv
 from beartype.typing import Any, Dict, Type
 from kink import inject
 from sqlalchemy import exc
@@ -159,10 +158,7 @@ class ExplorerJob(BaseJob):
             save_path = pathlib.Path(
                 os.path.join(
                     config["EXPLORATIONS_PATH"],
-                    (
-                        f"{exploration_info.id}_"
-                        f"{pv.sanitize_filename(exploration_info.name)}/"
-                    ),
+                    (f"{exploration_info.id}"),
                 )
             )
             if not save_path.exists():

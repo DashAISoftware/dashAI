@@ -15,6 +15,7 @@
    
       ~MLPRegression.__init__
       ~MLPRegression.fit
+      ~MLPRegression.get_metadata_routing
       ~MLPRegression.get_params
       ~MLPRegression.get_schema
       ~MLPRegression.load
@@ -22,7 +23,10 @@
       ~MLPRegression.predict
       ~MLPRegression.save
       ~MLPRegression.score
+      ~MLPRegression.set_fit_request
       ~MLPRegression.set_params
+      ~MLPRegression.set_predict_request
+      ~MLPRegression.set_score_request
       ~MLPRegression.validate_and_transform
    
    

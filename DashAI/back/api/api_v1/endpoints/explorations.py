@@ -2,7 +2,6 @@ import logging
 import os
 import pathlib
 
-import pathvalidate as pv
 from beartype.typing import Any, Dict, List, Union
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
@@ -189,7 +188,7 @@ async def delete_exploration(
         dir_path = pathlib.Path(
             os.path.join(
                 config["EXPLORATIONS_PATH"],
-                (f"{exploration.id}_" f"{pv.sanitize_filename(exploration.name)}/"),
+                (f"{exploration.id}"),
             )
         )
 

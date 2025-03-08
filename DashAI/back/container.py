@@ -33,7 +33,7 @@ from DashAI.back.exploration import (
     ScatterPlotExplorer,
     WordcloudExplorer,
 )
-from DashAI.back.job import ExplainerJob, ExplorerJob, ModelJob, PredictJob
+from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -113,6 +113,7 @@ INITIAL_COMPONENTS = [
     ModelJob,
     ExplorerJob,
     PredictJob,
+    DatasetJob,
     # Explainers
     KernelShap,
     PartialDependence,

@@ -17,6 +17,7 @@
       ~LogisticRegression.decision_function
       ~LogisticRegression.densify
       ~LogisticRegression.fit
+      ~LogisticRegression.get_metadata_routing
       ~LogisticRegression.get_params
       ~LogisticRegression.get_schema
       ~LogisticRegression.load
@@ -25,7 +26,10 @@
       ~LogisticRegression.predict_proba
       ~LogisticRegression.save
       ~LogisticRegression.score
+      ~LogisticRegression.set_fit_request
       ~LogisticRegression.set_params
+      ~LogisticRegression.set_predict_request
+      ~LogisticRegression.set_score_request
       ~LogisticRegression.sparsify
       ~LogisticRegression.validate_and_transform
    

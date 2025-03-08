@@ -2,7 +2,6 @@ import enum
 import os
 import pathlib
 
-import pathvalidate as pv
 import plotly.express as px
 import plotly.io as pio
 from beartype.typing import Any, Dict, List, Union
@@ -153,13 +152,7 @@ class HistogramPlotExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: Figure,
     ) -> str:
-        if explorer_info.name is None or explorer_info.name == "":
-            filename = f"{explorer_info.id}.json"
-        else:
-            filename = (
-                f"{explorer_info.id}_"
-                f"{pv.sanitize_filename(explorer_info.name)}.json"
-            )
+        filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())

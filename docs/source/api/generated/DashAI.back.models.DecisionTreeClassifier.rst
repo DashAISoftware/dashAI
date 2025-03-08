@@ -19,6 +19,7 @@
       ~DecisionTreeClassifier.decision_path
       ~DecisionTreeClassifier.fit
       ~DecisionTreeClassifier.get_depth
+      ~DecisionTreeClassifier.get_metadata_routing
       ~DecisionTreeClassifier.get_n_leaves
       ~DecisionTreeClassifier.get_params
       ~DecisionTreeClassifier.get_schema
@@ -28,7 +29,11 @@
       ~DecisionTreeClassifier.predict_proba
       ~DecisionTreeClassifier.save
       ~DecisionTreeClassifier.score
+      ~DecisionTreeClassifier.set_fit_request
       ~DecisionTreeClassifier.set_params
+      ~DecisionTreeClassifier.set_predict_proba_request
+      ~DecisionTreeClassifier.set_predict_request
+      ~DecisionTreeClassifier.set_score_request
       ~DecisionTreeClassifier.validate_and_transform
    
    
