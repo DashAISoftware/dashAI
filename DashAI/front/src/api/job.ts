@@ -102,7 +102,15 @@ export const enqueueConverterJob = async (
     },
   };
 
-  const response = await api.post<object>("/v1/job/", data);
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 
