@@ -4,6 +4,7 @@ import os
 import shutil
 import re
 import logging
+import json
 from typing import Any, Dict, List, Set, Tuple, Union
 from collections import Counter
 from pathlib import Path
@@ -157,284 +158,153 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         return valid_paths, invalid_paths, not_image_paths
     
     def _analyze_string_column(self, column_values: List[str]) -> Tuple[bool, float, Dict[str, Any]]:
-        """Analyze a column of string values to determine if it contains image paths.
+        """Analyze a string column to determine if it contains image paths.
         
         Parameters
         ----------
         column_values : List[str]
-            List of string values from a column
+            List of string values in the column
             
         Returns
         -------
         Tuple[bool, float, Dict[str, Any]]
-            A tuple containing (is_image_column, confidence_score, image_stats)
+            A tuple containing (is_image_column, image_percentage, stats)
         """
-        # Direct print for visibility
-        print(f"Analyzing column with {len(column_values)} values")
-        
-        # Filter out None values
-        valid_values = [v for v in column_values if v is not None]
-        
-        if not valid_values:
-            print("No valid values found in column")
-            return False, 0.0, {}
-            
         # Count how many values look like image paths
-        image_path_count = sum(1 for v in valid_values if self._is_image_path(v))
+        image_paths_count = 0
+        sample_image_paths = []
         
-        # Calculate the percentage of values that look like image paths
-        image_path_percentage = image_path_count / len(valid_values)
+        # Verify which paths exist and can be loaded
+        valid_paths, invalid_paths, not_image_paths = self._verify_image_paths(column_values)
         
-        # Determine if this is an image column based on the threshold
-        is_image_column = image_path_percentage >= self.IMAGE_THRESHOLD
+        # Calculate statistics
+        total_values = len(column_values)
+        image_paths_count = len(valid_paths) + len(invalid_paths)
+        image_percentage = (image_paths_count / total_values) * 100 if total_values > 0 else 0
+        valid_percentage = (len(valid_paths) / image_paths_count) * 100 if image_paths_count > 0 else 0
         
-        # Print detailed analysis information
-        analysis_msg = f"Column analysis: {image_path_count}/{len(valid_values)} values look like image paths ({image_path_percentage:.2%})"
-        print(analysis_msg)
-        logger.info(analysis_msg)
+        # Determine if this is an image column based on the percentage of image paths
+        is_image_column = image_percentage / 100 >= self.IMAGE_THRESHOLD
         
-        result_msg = f"Is image column: {is_image_column} (threshold: {self.IMAGE_THRESHOLD:.2%})"
-        print(result_msg)
-        logger.info(result_msg)
+        # Collect sample image paths for logging
+        sample_image_paths = (valid_paths + invalid_paths)[:5]
         
-        # If we have some image paths but not enough to meet the threshold, show a sample
-        if 0 < image_path_percentage < self.IMAGE_THRESHOLD:
-            sample_values = [v for v in valid_values[:10] if self._is_image_path(v)]
-            if sample_values:
-                sample_msg = f"Sample image paths detected but below threshold: {sample_values[:3]}"
-                print(sample_msg)
-                logger.info(sample_msg)
+        # Return the results
+        stats = {
+            "image_paths_count": image_paths_count,
+            "image_percentage": image_percentage,
+            "valid_paths_count": len(valid_paths),
+            "invalid_paths_count": len(invalid_paths),
+            "valid_percentage": valid_percentage,
+            "sample_image_paths": sample_image_paths,
+            "valid_paths": valid_paths,
+            "invalid_paths": invalid_paths
+        }
         
-        # Direct write to log file
-        with open(LOG_FILE, "a") as f:
-            f.write(f"Column analysis: {image_path_count}/{len(valid_values)} values look like image paths ({image_path_percentage:.2%})\n")
-            f.write(f"Is image column: {is_image_column} (threshold: {self.IMAGE_THRESHOLD:.2%})\n")
-        
-        # If this is an image column, verify which paths exist and can be loaded
-        image_stats = {}
-        if is_image_column:
-            print("Verifying image paths...")
-            # Get all values that look like image paths
-            potential_image_paths = [v for v in valid_values if self._is_image_path(v)]
-            
-            # Verify which paths exist and can be loaded
-            valid_paths, invalid_paths, _ = self._verify_image_paths(potential_image_paths)
-            
-            # Calculate statistics
-            total_images = len(potential_image_paths)
-            valid_count = len(valid_paths)
-            invalid_count = len(invalid_paths)
-            valid_percentage = valid_count / total_images if total_images > 0 else 0
-            
-            # Store statistics
-            image_stats = {
-                "total_images": total_images,
-                "valid_count": valid_count,
-                "invalid_count": invalid_count,
-                "valid_percentage": valid_percentage,
-                "valid_paths": valid_paths[:10],  # Store first 10 valid paths as examples
-                "invalid_paths": invalid_paths[:10],  # Store first 10 invalid paths as examples
-            }
-            
-            # Log statistics
-            stats_msg = (
-                f"Image path verification: {valid_count}/{total_images} paths are valid ({valid_percentage:.2%})\n"
-                f"  - Valid paths (first 5): {valid_paths[:5]}\n"
-                f"  - Invalid paths (first 5): {invalid_paths[:5]}"
-            )
-            print(stats_msg)
-            logger.info(stats_msg)
-            
-            # Direct write to log file
-            with open(LOG_FILE, "a") as f:
-                f.write(f"Image path verification: {valid_count}/{total_images} paths are valid ({valid_percentage:.2%})\n")
-                if valid_paths:
-                    f.write(f"Sample valid paths: {valid_paths[:5]}\n")
-                if invalid_paths:
-                    f.write(f"Sample invalid paths: {invalid_paths[:5]}\n")
-        
-        return is_image_column, image_path_percentage, image_stats
+        return is_image_column, image_percentage / 100, stats
     
     def _detect_image_columns(self, dataset: DatasetDict) -> DatasetDict:
-        """Process the dataset to detect and mark image columns.
+        """Detect columns that contain image paths and convert them to Image type.
         
         Parameters
         ----------
         dataset : DatasetDict
-            The original dataset
+            The dataset to analyze
             
         Returns
         -------
         DatasetDict
-            The processed dataset with image columns marked
+            The dataset with image columns converted to Image type
         """
-        processed_dataset = DatasetDict()
+        logger.info("=== Starting Image Column Detection ===")
         
-        start_msg = "=== Starting Image Column Detection ==="
-        print(f"\n{start_msg}")
-        logger.info(start_msg)
+        # Dictionary to store image column information for JSON output
+        image_columns_info = {}
         
-        # Dictionary to store image column statistics for all splits
-        all_image_stats = {}
-        
-        for split_name, split_dataset in dataset.items():
-            split_msg = f"Analyzing split: '{split_name}'"
-            print(f"\n{split_msg}")
-            logger.info(split_msg)
+        for split in dataset.keys():
+            logger.info(f"Analyzing split: '{split}'")
             
-            # Get the current features
-            features = split_dataset.features
-            new_features = {}
-            
-            # Track which columns should be converted to Image type
-            image_columns = []
-            
-            # Store image statistics for this split
+            # Dictionary to store image statistics for this split
             split_image_stats = {}
             
-            # Analyze each string column
-            for column_name, feature_type in features.items():
-                if isinstance(feature_type, Value) and feature_type.dtype == 'string':
-                    col_msg = f"Analyzing column: '{column_name}' (type: string)"
-                    print(f"\n{col_msg}")
-                    logger.info(col_msg)
+            # Analyze string columns to detect image paths
+            image_columns = []
+            
+            for column, dtype in dataset[split].features.items():
+                if isinstance(dtype, Value) and dtype.dtype == "string":
+                    logger.info(f"Analyzing column: '{column}' (type: {dtype.dtype})")
                     
-                    # Get all values for this column
-                    column_values = split_dataset[column_name]
+                    # Get column values
+                    column_values = dataset[split][column]
                     
-                    # Analyze if this column contains image paths
-                    analyze_msg = f"Analyzing {len(column_values)} values in column '{column_name}'..."
-                    print(analyze_msg)
-                    logger.info(analyze_msg)
+                    # Print a sample of values for debugging
+                    logger.info(f"Analyzing {len(column_values)} values in column '{column}'...")
                     
-                    is_image_column, confidence, image_stats = self._analyze_string_column(column_values)
+                    # Check if column contains image paths
+                    is_image_column, image_percentage, stats = self._analyze_string_column(column_values)
+                    
+                    # Log the results
+                    logger.info(f"Column analysis: {stats['image_paths_count']}/{len(column_values)} values look like image paths ({stats['image_percentage']:.2f}%)")
+                    logger.info(f"Is image column: {is_image_column} (threshold: {self.IMAGE_THRESHOLD*100:.2f}%)")
+                    print(f"Column analysis: {stats['image_paths_count']}/{len(column_values)} values look like image paths ({stats['image_percentage']:.2f}%)")
+                    print(f"Is image column: {is_image_column} (threshold: {self.IMAGE_THRESHOLD*100:.2f}%)")
+                    
+                    # Store column information for JSON
+                    image_columns_info[column] = {
+                        "is_image_column": is_image_column,
+                        "threshold_used": self.IMAGE_THRESHOLD,
+                        "image_percentage": stats['image_percentage'],
+                        "total_paths": len(column_values),
+                        "image_paths_count": stats['image_paths_count'],
+                        "valid_paths_count": stats['valid_paths_count'],
+                        "invalid_paths_count": stats['invalid_paths_count'],
+                        "invalid_paths": stats['invalid_paths'],
+                        "valid_paths": stats['valid_paths']
+                    }
                     
                     if is_image_column:
-                        # Mark this column as an image column, but keep it as string to avoid loading issues
-                        # new_features[column_name] = Image()  # This would try to load the images
-                        new_features[column_name] = feature_type  # Keep as string but mark for future reference
-                        image_columns.append(column_name)
-                        
+                        image_columns.append(column)
                         # Store image statistics for this column
-                        split_image_stats[column_name] = image_stats
-                        
-                        success_msg = f"✅ Column '{column_name}' identified as image column with {confidence:.2%} confidence"
-                        print(success_msg)
-                        logger.info(success_msg)
-                        
-                        # Show some sample values that were identified as images
-                        sample_values = [v for v in column_values[:5] if v is not None and self._is_image_path(v)]
-                        if sample_values:
-                            sample_msg = f"Sample image paths: {sample_values}"
-                            print(sample_msg)
-                            logger.info(sample_msg)
-                            
-                        # Add a warning about not converting to Image type to avoid errors
-                        warning_msg = f"⚠️ Column '{column_name}' contains image paths but keeping as string type to avoid loading errors"
-                        print(warning_msg)
-                        logger.warning(warning_msg)
-                        
-                        # Report on valid and invalid image paths
-                        if image_stats:
-                            valid_count = image_stats["valid_count"]
-                            total_images = image_stats["total_images"]
-                            valid_percentage = image_stats["valid_percentage"]
-                            
-                            if valid_count == total_images:
-                                path_msg = f"✅ All {valid_count} image paths in column '{column_name}' are valid and can be loaded"
-                            elif valid_count == 0:
-                                path_msg = f"❌ None of the {total_images} image paths in column '{column_name}' could be loaded"
-                            else:
-                                path_msg = f"⚠️ {valid_count}/{total_images} image paths in column '{column_name}' are valid ({valid_percentage:.2%})"
-                            
-                            print(path_msg)
-                            logger.info(path_msg)
+                        split_image_stats[column] = stats
+                        logger.info(f"  - {column}")
                     else:
-                        # Keep the original feature type
-                        new_features[column_name] = feature_type
-                        
-                        fail_msg = f"❌ Column '{column_name}' is not an image column (confidence: {confidence:.2%})"
-                        print(fail_msg)
-                        logger.info(fail_msg)
+                        if stats['image_paths_count'] > 0:
+                            logger.info(f"Sample image paths detected but below threshold: {stats['sample_image_paths']}")
                 else:
-                    # Keep non-string columns as they are
-                    new_features[column_name] = feature_type
+                    logger.info(f"Skipping column '{column}' (type: {dtype.dtype})")
+            
+            # Generate a summary report for this split
+            if split_image_stats:
+                report = "\n=== Image Column Summary Report ===\n\n"
+                report += f"Split: '{split}'\n"
+                
+                for column, stats in split_image_stats.items():
+                    report += f"  Column: '{column}'\n"
+                    report += f"    - Total image paths: {stats['image_paths_count']}\n"
+                    report += f"    - Valid image paths: {stats['valid_paths_count']} ({stats['valid_percentage']:.2f}%)\n"
+                    report += f"    - Invalid image paths: {stats['invalid_paths_count']}\n"
                     
-                    skip_msg = f"Skipping column '{column_name}' (type: {feature_type.dtype})"
-                    print(skip_msg)
-                    logger.info(skip_msg)
-            
-            # Create a new dataset with the updated features
-            processed_split = split_dataset
-            
-            # Instead of converting to Image type, we'll add metadata to mark image columns
-            if image_columns:
-                convert_msg = f"\n✅ Identified {len(image_columns)} image columns in split '{split_name}':"
-                print(convert_msg)
-                logger.info(convert_msg)
+                    if stats['invalid_paths']:
+                        report += f"    - Sample invalid paths: {stats['invalid_paths'][:3]}\n"
                 
-                for col in image_columns:
-                    col_msg = f"  - {col}"
-                    print(col_msg)
-                    logger.info(col_msg)
-                
-                # Add metadata to the dataset to mark image columns
-                info = processed_split.info
-                if not hasattr(info, 'image_columns'):
-                    info.image_columns = image_columns
-                
-                # Add image statistics to metadata
-                if not hasattr(info, 'image_stats'):
-                    info.image_stats = split_image_stats
-                
-                # Store image statistics for this split
-                all_image_stats[split_name] = split_image_stats
-                
-                # Log that we're not converting to Image type to avoid errors
-                info_msg = f"⚠️ Image columns are marked in dataset metadata but kept as string type to avoid loading errors"
-                print(info_msg)
-                logger.info(info_msg)
-            else:
-                no_cols_msg = f"\n❌ No image columns detected in split '{split_name}'"
-                print(no_cols_msg)
-                logger.info(no_cols_msg)
-            
-            processed_dataset[split_name] = processed_split
+                logger.info(report)
+                print(report)
         
-        # Generate a summary report of all image columns and their statistics
-        if all_image_stats:
-            summary_msg = "\n=== Image Column Summary Report ===\n"
-            
-            for split_name, split_stats in all_image_stats.items():
-                summary_msg += f"\nSplit: '{split_name}'\n"
-                
-                for column_name, stats in split_stats.items():
-                    valid_count = stats["valid_count"]
-                    total_images = stats["total_images"]
-                    valid_percentage = stats["valid_percentage"]
-                    
-                    summary_msg += f"  Column: '{column_name}'\n"
-                    summary_msg += f"    - Total image paths: {total_images}\n"
-                    summary_msg += f"    - Valid image paths: {valid_count} ({valid_percentage:.2%})\n"
-                    summary_msg += f"    - Invalid image paths: {stats['invalid_count']}\n"
-                    
-                    if stats["valid_paths"]:
-                        summary_msg += f"    - Sample valid paths: {stats['valid_paths'][:3]}\n"
-                    if stats["invalid_paths"]:
-                        summary_msg += f"    - Sample invalid paths: {stats['invalid_paths'][:3]}\n"
-            
-            print(summary_msg)
-            logger.info(summary_msg)
-            
-            # Write summary to log file
-            with open(LOG_FILE, "a") as f:
-                f.write(summary_msg)
+        # Write the image columns info to a JSON file
+        json_path = os.path.join(CURRENT_DIR, "image_columns_info.json")
+        with open(json_path, "w") as f:
+            json.dump(image_columns_info, f, indent=2)
+        logger.info(f"Image columns information saved to: {json_path}")
         
-        complete_msg = "=== Image Column Detection Complete ==="
-        print(f"\n{complete_msg}\n")
-        logger.info(complete_msg)
+        logger.info("=== Image Column Detection Complete ===")
         
-        return processed_dataset
+        # Add image columns info to dataset metadata
+        if not hasattr(dataset, 'info'):
+            dataset.info = {}
+        dataset.info['image_columns'] = image_columns
+        dataset.info['image_columns_info'] = image_columns_info
+        
+        return dataset
 
     @beartype
     def load_data(
