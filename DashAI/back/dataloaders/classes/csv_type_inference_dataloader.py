@@ -4,6 +4,7 @@ import os
 import shutil
 import re
 import json
+import logging
 from typing import Any, Dict, List, Set, Tuple, Union
 from collections import Counter
 from pathlib import Path
@@ -17,6 +18,9 @@ from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader, CSVDat
 
 # Get the directory of the current file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 class CSVTypeInferenceDataLoader(CSVDataLoader):
     """Data loader for tabular data in CSV files with automatic type inference and image detection."""
@@ -35,6 +39,7 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        logger.info("Initialized CSVTypeInferenceDataLoader")
     
     def _is_image_path(self, value: str) -> bool:
         """Check if a string value looks like an image path based on file extension.
@@ -154,7 +159,7 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         
         return is_image_column, image_percentage / 100, stats
     
-    def _detect_image_columns(self, dataset: DatasetDict) -> DatasetDict:
+    def _detect_image_columns(self, dataset: DatasetDict) -> Tuple[DatasetDict, Dict[str, Any]]:
         """Detect columns that contain image paths and convert them to Image type.
         
         Parameters
@@ -164,8 +169,10 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
             
         Returns
         -------
-        DatasetDict
-            The dataset with image columns converted to Image type
+        Tuple[DatasetDict, Dict[str, Any]]
+            A tuple containing:
+            - The dataset with image columns converted to Image type
+            - Dictionary with image columns information for JSON output
         """
         # Dictionary to store image column information for JSON output
         image_columns_info = {}
@@ -203,18 +210,13 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
                         # Store image statistics for this column
                         split_image_stats[column] = stats
         
-        # Write the image columns info to a JSON file
-        json_path = os.path.join(CURRENT_DIR, "image_columns_info.json")
-        with open(json_path, "w") as f:
-            json.dump(image_columns_info, f, indent=2)
-        
         # Add image columns info to dataset metadata
         if not hasattr(dataset, 'info'):
             dataset.info = {}
         dataset.info['image_columns'] = image_columns
         dataset.info['image_columns_info'] = image_columns_info
         
-        return dataset
+        return dataset, image_columns_info
 
     @beartype
     def load_data(
@@ -277,6 +279,17 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
                     os.remove(files_path)
         
         # Process the dataset to detect image columns
-        processed_dataset = self._detect_image_columns(dataset)
+        processed_dataset, image_columns_info = self._detect_image_columns(dataset)
+        
+        # Store the image columns info directly as an attribute of the dataset
+        processed_dataset.image_columns_info = image_columns_info
+        
+        # Save a copy of the image columns info
+        debug_json_path = os.path.join(temp_path, "image_columns_info.json")
+        try:
+            with open(debug_json_path, "w", encoding="utf-8") as f:
+                json.dump(image_columns_info, f, indent=2)
+        except Exception:
+            pass
         
         return processed_dataset 

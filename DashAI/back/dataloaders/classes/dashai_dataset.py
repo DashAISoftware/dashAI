@@ -199,17 +199,7 @@ def load_dataset(dataset_path: str) -> DatasetDict:
 
 @beartype
 def save_dataset(datasetdict: DatasetDict, path: Union[str, pathlib.Path]) -> None:
-    """Save the datasetdict with dashaidatasets inside.
-
-    Parameters
-    ----------
-    datasetdict : DatasetDict
-        The dataset to be saved.
-
-    datasetdict_path : str
-        Path where the dtaaset will be stored.
-
-    """
+    """Save the datasetdict with dashaidatasets inside."""
     splits = []
     for split in datasetdict:
         splits.append(split)
@@ -226,6 +216,34 @@ def save_dataset(datasetdict: DatasetDict, path: Union[str, pathlib.Path]) -> No
             sort_keys=True,
             ensure_ascii=False,
         )
+    
+    # Save image columns information if available
+    if hasattr(datasetdict, 'image_columns_info'):
+        image_columns_info_path = os.path.join(path, "image_columns_info.json")
+        try:
+            with open(image_columns_info_path, "w", encoding="utf-8") as image_info_file:
+                json.dump(
+                    datasetdict.image_columns_info,
+                    image_info_file,
+                    indent=2,
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+        except Exception:
+            pass
+    elif hasattr(datasetdict, 'info') and 'image_columns_info' in datasetdict.info:
+        image_columns_info_path = os.path.join(path, "image_columns_info.json")
+        try:
+            with open(image_columns_info_path, "w", encoding="utf-8") as image_info_file:
+                json.dump(
+                    datasetdict.info['image_columns_info'],
+                    image_info_file,
+                    indent=2,
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+        except Exception:
+            pass
 
 
 @beartype
@@ -329,28 +347,14 @@ def split_dataset(
     test_indexes: List,
     val_indexes: List,
 ) -> DatasetDict:
-    """Split the dataset in train, test and validation subsets.
-
-    Parameters
-    ----------
-    dataset : DatasetDict
-        A HuggingFace DatasetDict containing the dataset to be split.
-    train_indexes : List
-        Train split indexes.
-    test_indexes : List
-        Test split indexes.
-    val_indexes : List
-        Validation split indexes.
-
-
-    Returns
-    -------
-    DatasetDict
-        The split dataset.
-    """
-
+    """Split the dataset in train, test and validation subsets."""
     # Get the number of records
     n = len(dataset)
+
+    # Preserve the image_columns_info attribute if it exists
+    image_columns_info = None
+    if hasattr(dataset, 'image_columns_info'):
+        image_columns_info = dataset.image_columns_info
 
     # Convert the indexes into boolean masks
     train_mask = np.isin(np.arange(n), train_indexes)
@@ -373,21 +377,31 @@ def split_dataset(
         }
     )
 
-    dataset = to_dashai_dataset(separate_dataset_dict)
-    return dataset
+    # Convert to DashAIDataset
+    result_dataset = to_dashai_dataset(separate_dataset_dict)
+    
+    # Restore the image_columns_info attribute
+    if image_columns_info is not None:
+        result_dataset.image_columns_info = image_columns_info
+    
+    return result_dataset
 
 
 def to_dashai_dataset(dataset: DatasetDict) -> DatasetDict:
-    """
-    Convert all datasets within the DatasetDict to DashAIDataset.
-
-    Returns
-    -------
-    DatasetDict:
-        Datasetdict with datasets converted to DashAIDataset.
-    """
+    """Convert all datasets within the DatasetDict to DashAIDataset."""
+    # Preserve the image_columns_info attribute if it exists
+    image_columns_info = None
+    if hasattr(dataset, 'image_columns_info'):
+        image_columns_info = dataset.image_columns_info
+    
+    # Convert datasets to DashAIDataset
     for key in dataset:
         dataset[key] = DashAIDataset(dataset[key].data)
+    
+    # Restore the image_columns_info attribute
+    if image_columns_info is not None:
+        dataset.image_columns_info = image_columns_info
+    
     return dataset
 
 
@@ -609,9 +623,19 @@ def update_dataset_splits(
     Returns:
         DatasetDict: New DatasetDict with the new splits configuration
     """
+    # Preserve the image_columns_info attribute if it exists
+    image_columns_info = None
+    if hasattr(datasetdict, 'image_columns_info'):
+        image_columns_info = datasetdict.image_columns_info
+    
     concatenated_dataset = concatenate_datasets(
         [datasetdict["train"], datasetdict["test"], datasetdict["validation"]]
     )
+    
+    # Transfer the image_columns_info to the concatenated dataset
+    if image_columns_info is not None:
+        concatenated_dataset.image_columns_info = image_columns_info
+    
     n = len(concatenated_dataset)
     if is_random:
         check_split_values(
@@ -624,9 +648,12 @@ def update_dataset_splits(
         train_indexes = new_splits["train"]
         test_indexes = new_splits["test"]
         val_indexes = new_splits["validation"]
-    return split_dataset(
+    
+    result_dataset = split_dataset(
         dataset=concatenated_dataset,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
     )
+    
+    return result_dataset
