@@ -142,7 +142,7 @@ class DistilBertTransformer(TextClassificationModel):
             self.num_labels = len(set(y_train[output_column_name]))
         print("num_labelsenfit", self.num_labels)
         self.model.config.num_labels = self.num_labels
-        print("numlabels del mmodelo",self.model.config.num_labels)
+        print("numlabels del mmodelo", self.model.config.num_labels)
         train_dataset = self.tokenize_data(x_train)
         train_dataset = train_dataset.add_column("label", y_train[output_column_name])
 

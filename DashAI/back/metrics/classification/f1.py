@@ -14,7 +14,9 @@ class F1(ClassificationMetric):
     """F1 score to classification tasks."""
 
     @staticmethod
-    def score(true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None) -> float:
+    def score(
+        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
+    ) -> float:
         """Calculate f1 score between true labels and predicted labels.
 
         Parameters
@@ -38,7 +40,7 @@ class F1(ClassificationMetric):
         # Use the provided multiclass parameter or determine it using is_multiclass
         if multiclass is None:
             multiclass = ClassificationMetric.is_multiclass(true_labels)
-            
+
         if multiclass:
             return f1_score(true_labels, pred_labels, average="macro")
         else:

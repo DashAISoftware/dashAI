@@ -157,7 +157,9 @@ class ModelJob(BaseJob):
                     f"Unable to find Model with name {run.model_name} in registry.",
                 ) from e
             try:
-                factory = ModelFactory(run_model_class, run.parameters, n_labels=n_labels)
+                factory = ModelFactory(
+                    run_model_class, run.parameters, n_labels=n_labels
+                )
                 model: BaseModel = factory.model
                 run_optimizable_parameters = factory.optimizable_parameters
 

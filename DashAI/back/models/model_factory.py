@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from sklearn.exceptions import NotFittedError
 
@@ -32,7 +31,7 @@ class ModelFactory:
 
         self.num_labels = n_labels
 
-        print("fixed_parameters",self.fixed_parameters)
+        print("fixed_parameters", self.fixed_parameters)
         self.model = model(**self.fixed_parameters)
         self.fitted = False
         if n_labels is not None:
@@ -56,7 +55,8 @@ class ModelFactory:
 
     def _adjust_params_after_init(self, num_labels):
         """
-        Adjust model parameters based on the number of labels after model initialization.
+        Adjust model parameters based on the number of labels after model
+        initialization.
 
         This method checks the instantiated model to see if it has num_labels attribute
         and updates it accordingly.
@@ -77,7 +77,7 @@ class ModelFactory:
             self.model.n_classes_ = num_labels
             print(f"Actualizando n_classes_ a {num_labels} en modelo scikit-learn")
             return
-            
+
         # For other models that have the num_labels attribute
         if hasattr(self.model, "num_labels"):
             self.model.num_labels = num_labels
@@ -148,11 +148,12 @@ class ModelFactory:
             predictions = self.model.predict(x[split])
 
             for metric in metrics:
-                # Check if the metric is a classification metric that supports multiclass
-                if (isinstance(metric, type) and 
-                    issubclass(metric, ClassificationMetric) and 
-                    "multiclass" in metric.score.__code__.co_varnames and
-                    multiclass is not None):
+                if (
+                    isinstance(metric, type)
+                    and issubclass(metric, ClassificationMetric)
+                    and "multiclass" in metric.score.__code__.co_varnames
+                    and multiclass is not None
+                ):
                     score = metric.score(y[split], predictions, multiclass=multiclass)
                 else:
                     # For metrics that don't accept the multiclass parameter
