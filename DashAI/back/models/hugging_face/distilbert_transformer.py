@@ -87,6 +87,7 @@ class DistilBertTransformer(TextClassificationModel):
         associated tokenizer.
         """
         self.num_labels = kwargs.get("num_labels")
+        print("num_labels en init", self.num_labels)
         kwargs = self.validate_and_transform(kwargs)
         self.model_name = "distilbert-base-uncased"
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -139,7 +140,9 @@ class DistilBertTransformer(TextClassificationModel):
         output_column_name = y_train.column_names[0]
         if self.num_labels is None:
             self.num_labels = len(set(y_train[output_column_name]))
+        print("num_labelsenfit", self.num_labels)
         self.model.config.num_labels = self.num_labels
+        print("numlabels del mmodelo",self.model.config.num_labels)
         train_dataset = self.tokenize_data(x_train)
         train_dataset = train_dataset.add_column("label", y_train[output_column_name])
 
