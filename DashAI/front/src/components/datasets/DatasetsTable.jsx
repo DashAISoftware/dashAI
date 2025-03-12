@@ -195,14 +195,6 @@ function DatasetsTable({
             key="dataset-summary-component"
             datasetId={params.id}
           />,
-          <IconButton
-            key="image-info-component"
-            onClick={() => handleShowImageInfo(params.id)}
-            size="small"
-            title="Show Image Columns Info"
-          >
-            <ImageIcon />
-          </IconButton>,
         ],
       },
     ],
