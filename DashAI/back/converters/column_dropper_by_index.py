@@ -1,7 +1,6 @@
 from typing import Tuple, Type, Union
 
 from beartype import beartype
-from datasets import DatasetDict
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -26,35 +25,32 @@ class ColumnDropperByIndex(BaseConverter):
         self.columns_index = columns_index
 
     @beartype
-    def fit(self, dataset: DatasetDict) -> Type["BaseConverter"]:
+    def fit(self, dataset: DashAIDataset) -> Type["BaseConverter"]:
         """Fit the converter.
 
         Parameters
         ----------
-        dataset : DatasetDict
+        dataset : DashAIDataset
             Dataset to fit the converter
         """
         return self
 
     @beartype
-    def transform(self, dataset: DatasetDict) -> DatasetDict:
+    def transform(self, dataset: DashAIDataset) -> DashAIDataset:
         """Convert the dataset by removing columns.
 
         Parameters
         ----------
-        dataset : DatasetDict
+        dataset : DashAIDataset
             Dataset to be converted
 
         Returns
         -------
-        DatasetDict
+        DashAIDataset
             Dataset converted
         """
-        for split in dataset:
-            dataset_split: DashAIDataset = dataset[split]
-            column_names_to_drop = dataset[split].column_names[
-                self.columns_index[0] : self.columns_index[1] + 1
-            ]
-            dataset_split = dataset_split.remove_columns(column_names_to_drop)
-            dataset[split] = dataset_split
+        column_names_to_drop = dataset.column_names[
+            self.columns_index[0] : self.columns_index[1] + 1
+        ]
+        dataset = dataset.remove_columns(column_names_to_drop)
         return dataset

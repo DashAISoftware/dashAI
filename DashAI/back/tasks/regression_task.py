@@ -2,6 +2,10 @@ from typing import List
 
 from datasets import DatasetDict, Value
 
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -25,7 +29,7 @@ class RegressionTask(BaseTask):
 
     def prepare_for_task(
         self, datasetdict: DatasetDict, outputs_columns: List[str]
-    ) -> DatasetDict:
+    ) -> DashAIDataset:
         """Change the column types to suit the regression task.
 
         A copy of the dataset is created.
@@ -37,7 +41,7 @@ class RegressionTask(BaseTask):
 
         Returns
         -------
-        DatasetDict
+        DashAIDataset
             Dataset with the new types
         """
-        return datasetdict
+        return to_dashai_dataset(datasetdict)

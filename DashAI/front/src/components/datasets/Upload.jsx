@@ -132,6 +132,11 @@ function Upload({ onFileUpload }) {
             {datasetState === EMPTY && "Upload your dataset"}
             {datasetState === LOADING && "Loading..."}
             {datasetState === LOADED && "Loaded"}
+            {datasetState === EMPTY && (
+              <Typography variant="body2" component="div">
+                If your dataset have splits, upload it as a zip file
+              </Typography>
+            )}
           </DialogContentText>
         </Grid>
 

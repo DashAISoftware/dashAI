@@ -1,15 +1,13 @@
 """DashAI Excel Dataloader."""
 
 import glob
-import os
 import shutil
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 import pandas as pd
 from beartype import beartype
 from datasets import Dataset, DatasetDict
 from datasets.builder import DatasetGenerationError
-from starlette.datastructures import UploadFile
 
 from DashAI.back.core.schema_fields import (
     int_field,
@@ -19,11 +17,11 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dataloader import (
-    BaseDataLoader,
-    DataloaderMoreOptionsSchema,
-    DatasetSplitsSchema,
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
 )
+from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 
 class ExcelDataloaderSchema(BaseSchema):
@@ -64,8 +62,6 @@ class ExcelDataloaderSchema(BaseSchema):
         ranges (e.g. “A:E” or “A,C,E:F”). Ranges are inclusive of both sides.
         """,
     )  # type: ignore
-    splits: DatasetSplitsSchema
-    more_options: DataloaderMoreOptionsSchema
 
 
 class ExcelDataLoader(BaseDataLoader):
@@ -77,15 +73,15 @@ class ExcelDataLoader(BaseDataLoader):
     @beartype
     def load_data(
         self,
-        filepath_or_buffer: Union[UploadFile, str],
+        filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-    ) -> DatasetDict:
+    ) -> DashAIDataset:
         """Load the uploaded Excel files into a DatasetDict.
 
         Parameters
         ----------
-        filepath_or_buffer : Union[UploadFile, str], optional
+        filepath_or_buffer : str
             An URL where the dataset is located or a FastAPI/Uvicorn uploaded file
             object.
         temp_path : str
@@ -98,93 +94,67 @@ class ExcelDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
-
-        if isinstance(filepath_or_buffer, str):
-            dataset_dict = dataset = pd.read_excel(
-                io=filepath_or_buffer,
-                sheet_name=params["sheet"],
-                header=params["header"],
-                usecols=params["usecols"],
-            )
-
-        elif isinstance(filepath_or_buffer, UploadFile):
-            file_path = self.extract_files(
-                temp_path,
-                filepath_or_buffer,
-            )
-            if file_path.split("/")[-1] == "files":
-                train_files = glob.glob(file_path + "/train/*")
-                test_files = glob.glob(file_path + "/test/*")
-                val_files = glob.glob(file_path + "/val/*") + glob.glob(
-                    file_path + "/validation/*"
+        prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
+        if prepared_path[1] == "file":
+            try:
+                dataset = pd.read_excel(
+                    io=prepared_path[0],
+                    sheet_name=params["sheet"],
+                    header=params["header"],
+                    usecols=params["usecols"],
                 )
-                try:
-                    train_df_list = [
-                        pd.read_excel(
-                            io=file_path,
-                            sheet_name=params["sheet"],
-                            header=params["header"],
-                            usecols=params["usecols"],
-                        )
-                        for file_path in sorted(train_files)
-                    ]
-
-                    train_df = pd.concat(train_df_list)
-                    test_df_list = [
-                        pd.read_excel(
-                            io=file_path,
-                            sheet_name=params["sheet"],
-                            header=params["header"],
-                            usecols=params["usecols"],
-                        )
-                        for file_path in sorted(test_files)
-                    ]
-                    test_df_list = pd.concat(test_df_list)
-
-                    val_df_list = [
-                        pd.read_excel(
-                            io=file_path,
-                            sheet_name=params["sheet"],
-                            header=params["header"],
-                            usecols=params["usecols"],
-                        )
-                        for file_path in sorted(val_files)
-                    ]
-                    val_df = pd.concat(val_df_list)
-
-                    dataset_dict = DatasetDict(
-                        {
-                            "train": Dataset.from_pandas(
-                                train_df, preserve_index=False
-                            ),
-                            "test": Dataset.from_pandas(
-                                test_df_list, preserve_index=False
-                            ),
-                            "validation": Dataset.from_pandas(
-                                val_df, preserve_index=False
-                            ),
-                        }
-                    )
-                except ValueError as e:
-                    raise DatasetGenerationError from e
-
-                finally:
-                    shutil.rmtree(file_path)
-
-            else:
-                try:
-                    dataset = pd.read_excel(
+            except ValueError as e:
+                raise DatasetGenerationError from e
+            dataset_dict = DatasetDict({"train": Dataset.from_pandas(dataset)})
+        if prepared_path[1] == "dir":
+            train_files = glob.glob(prepared_path[0] + "/train/*")
+            test_files = glob.glob(prepared_path[0] + "/test/*")
+            val_files = glob.glob(prepared_path[0] + "/val/*") + glob.glob(
+                prepared_path[0] + "/validation/*"
+            )
+            try:
+                train_df_list = [
+                    pd.read_excel(
                         io=file_path,
                         sheet_name=params["sheet"],
                         header=params["header"],
                         usecols=params["usecols"],
                     )
-                    dataset_dict = DatasetDict({"train": Dataset.from_pandas(dataset)})
+                    for file_path in sorted(train_files)
+                ]
 
-                except ValueError as e:
-                    raise DatasetGenerationError from e
+                train_df = pd.concat(train_df_list)
+                test_df_list = [
+                    pd.read_excel(
+                        io=file_path,
+                        sheet_name=params["sheet"],
+                        header=params["header"],
+                        usecols=params["usecols"],
+                    )
+                    for file_path in sorted(test_files)
+                ]
+                test_df_list = pd.concat(test_df_list)
 
-                finally:
-                    os.remove(file_path)
+                val_df_list = [
+                    pd.read_excel(
+                        io=file_path,
+                        sheet_name=params["sheet"],
+                        header=params["header"],
+                        usecols=params["usecols"],
+                    )
+                    for file_path in sorted(val_files)
+                ]
+                val_df = pd.concat(val_df_list)
 
-        return dataset_dict
+                dataset_dict = DatasetDict(
+                    {
+                        "train": Dataset.from_pandas(train_df, preserve_index=False),
+                        "test": Dataset.from_pandas(test_df_list, preserve_index=False),
+                        "validation": Dataset.from_pandas(val_df, preserve_index=False),
+                    }
+                )
+            except ValueError as e:
+                raise DatasetGenerationError from e
+            finally:
+                shutil.rmtree(prepared_path[0])
+        return to_dashai_dataset(dataset_dict)

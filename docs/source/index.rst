@@ -26,6 +26,14 @@ the detailed API documentation and extensive examples. Check out :doc:`getting_s
    getting_started/user_guide.rst
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+
+   tutorials/upload_dataset.rst
+   tutorials/train_model.rst
+   tutorials/predict.rst
+
+.. toctree::
    :maxdepth: 1
    :caption: Documentation
 

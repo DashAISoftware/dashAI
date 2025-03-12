@@ -108,8 +108,8 @@ class PartialDependence(BaseGlobalExplainer):
             1 if features[feature]._type == "ClassLabel" else 0 for feature in features
         ]
 
-        output_column = list(y["test"].features)[0]
-        target_names = y["test"].features[output_column]._int2str
+        output_column = list(y["test"].features.keys())[0]
+        target_names = y["test"].features[output_column].names
 
         explanation = {"metadata": {"target_names": target_names}}
 

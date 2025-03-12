@@ -24,7 +24,7 @@
         }
       ]
     },
-    "splits_in_folders": {
+    "dataset_is_already_split": {
       "oneOf": [
         {
           "error_msg": "Must be true or false.",
