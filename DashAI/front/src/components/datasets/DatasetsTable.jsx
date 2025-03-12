@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import {
@@ -36,54 +36,67 @@ function DatasetsTable({
   const [showImageInfo, setShowImageInfo] = useState(false);
   const [imageColumnsInfo, setImageColumnsInfo] = useState({});
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
-  const [lastCheckedDatasetId, setLastCheckedDatasetId] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
-  // This function will be called automatically when datasets are updated
-  const checkLatestDatasetForImages = async (datasets) => {
-    if (datasets && datasets.length > 0) {
-      // Get the most recently added dataset (highest ID)
-      const latestDataset = datasets.reduce((prev, current) =>
-        prev.id > current.id ? prev : current,
-      );
+  // Usar un ref para almacenar el último ID de dataset conocido
+  const lastKnownMaxIdRef = useRef(0);
 
-      // Only check if it's a new dataset or different from the last checked one
-      if (latestDataset.id !== lastCheckedDatasetId) {
-        try {
-          const info = await getImageColumnsInfo(latestDataset.id);
-          if (Object.keys(info).length > 0) {
-            setImageColumnsInfo(info);
-            setSelectedDatasetId(latestDataset.id);
-            setShowImageInfo(true);
-            // Save the ID of the dataset we just checked
-            setLastCheckedDatasetId(latestDataset.id);
-          }
-        } catch (error) {
-          console.error("Error fetching image columns info:", error);
-        }
+  // Función para verificar imágenes en un dataset
+  const checkImagesForDataset = async (datasetId) => {
+    try {
+      setLoading(true);
+      const info = await getImageColumnsInfo(datasetId);
+
+      if (info && Object.keys(info).length > 0) {
+        setImageColumnsInfo(info);
+        setSelectedDatasetId(datasetId);
+        setShowImageInfo(true);
+      } else {
+        enqueueSnackbar("No image columns found in this dataset", {
+          variant: "info",
+        });
       }
+    } catch (error) {
+      console.error(
+        `Error fetching image columns info for dataset ${datasetId}:`,
+        error,
+      );
+      enqueueSnackbar("Error checking image columns", { variant: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para verificar si hay un nuevo dataset y mostrar su información de imágenes
+  const checkForNewDataset = (datasets) => {
+    if (!datasets || datasets.length === 0) return;
+
+    // Encontrar el ID máximo actual
+    const currentMaxId = Math.max(...datasets.map((d) => d.id));
+
+    // Si hay un nuevo dataset (ID mayor que el último conocido)
+    if (currentMaxId > lastKnownMaxIdRef.current) {
+      // Actualizar el último ID conocido
+      lastKnownMaxIdRef.current = currentMaxId;
+
+      // Verificar imágenes para el nuevo dataset
+      checkImagesForDataset(currentMaxId);
     }
   };
 
   const getDatasets = async () => {
     setLoading(true);
     try {
-      const datasets = await getDatasetsRequest();
-      setDatasets(datasets);
+      const fetchedDatasets = await getDatasetsRequest();
+      setDatasets(fetchedDatasets);
 
-      // Check if we should show image info for the latest dataset
+      // Si se está actualizando la tabla (posiblemente después de crear un dataset)
       if (updateTableFlag) {
-        checkLatestDatasetForImages(datasets);
+        checkForNewDataset(fetchedDatasets);
       }
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain the dataset table.");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error fetching datasets:", error);
     } finally {
       setLoading(false);
     }
@@ -97,13 +110,7 @@ function DatasetsTable({
       });
     } catch (error) {
       enqueueSnackbar("Error when trying to delete the dataset");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error deleting dataset:", error);
     }
   };
 
@@ -115,18 +122,32 @@ function DatasetsTable({
     [],
   );
 
-  // Modify the handler to avoid reopening the modal for the same dataset
   const handleCloseImageInfo = () => {
     setShowImageInfo(false);
-    // Don't reset lastCheckedDatasetId here to prevent reopening
   };
 
-  // Fetch datasets when the component is mounting
+  // Inicializar el último ID conocido al montar el componente
   useEffect(() => {
-    getDatasets();
+    const initializeLastKnownId = async () => {
+      try {
+        const initialDatasets = await getDatasetsRequest();
+        if (initialDatasets && initialDatasets.length > 0) {
+          lastKnownMaxIdRef.current = Math.max(
+            ...initialDatasets.map((d) => d.id),
+          );
+        }
+        setDatasets(initialDatasets);
+      } catch (error) {
+        console.error("Error initializing datasets:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeLastKnownId();
   }, []);
 
-  // triggers an update of the table when updateFlag is set to true
+  // Actualizar cuando cambia updateTableFlag
   useEffect(() => {
     if (updateTableFlag) {
       setUpdateTableFlag(false);
@@ -166,7 +187,7 @@ function DatasetsTable({
       {
         field: "actions",
         type: "actions",
-        minWidth: 150,
+        minWidth: 180,
         getActions: (params) => [
           <EditDatasetModal
             key="edit-component"
@@ -191,7 +212,6 @@ function DatasetsTable({
   return (
     <React.Fragment>
       <Paper sx={{ py: 4, px: 6 }}>
-        {/* Title and new datasets button */}
         <Grid
           container
           direction="row"
@@ -226,7 +246,6 @@ function DatasetsTable({
           </Grid>
         </Grid>
 
-        {/* Datasets Table */}
         <DataGrid
           rows={datasets}
           columns={columns}
@@ -250,18 +269,13 @@ function DatasetsTable({
         />
       </Paper>
 
-      {/* Image Columns Info Modal */}
+      {/* Modal para mostrar información de columnas de imágenes */}
       <ImageColumnsInfoModal
         open={showImageInfo}
         onClose={handleCloseImageInfo}
         imageColumnsInfo={imageColumnsInfo}
         datasetId={selectedDatasetId}
-        updateDatasets={() => {
-          setUpdateTableFlag(true);
-          // Important: when a dataset is deleted from the modal,
-          // we need to update lastCheckedDatasetId to null to avoid issues
-          setLastCheckedDatasetId(null);
-        }}
+        updateDatasets={() => setUpdateTableFlag(true)}
       />
     </React.Fragment>
   );
