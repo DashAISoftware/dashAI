@@ -23,6 +23,13 @@ export const getDatasetInfo = async (id: number): Promise<object> => {
   return response.data;
 };
 
+export const getImageColumnsInfo = async (id: number): Promise<object> => {
+  const response = await api.get<object>(
+    `${datasetEndpoint}/${id}/image_columns_info`,
+  );
+  return response.data;
+};
+
 export const updateDataset = async (
   id: number,
   formData: object,

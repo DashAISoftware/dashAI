@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import json
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Response, status
@@ -264,6 +265,63 @@ async def delete_dataset(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete directory",
         ) from e
+
+
+@router.get("/{dataset_id}/image_columns_info")
+@inject
+async def get_image_columns_info(
+    dataset_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Return the image columns information for the dataset with id dataset_id.
+
+    Parameters
+    ----------
+    dataset_id : int
+        id of the dataset to query.
+
+    Returns
+    -------
+    Dict
+        Dict containing image columns information.
+    """
+    with session_factory() as db:
+        try:
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found",
+                )
+            
+            # Try to load the image columns info from the JSON file
+            image_columns_info_path = os.path.join(dataset.file_path, "dataset", "image_columns_info.json")
+            if os.path.exists(image_columns_info_path):
+                try:
+                    with open(image_columns_info_path, "r", encoding="utf-8") as f:
+                        image_columns_info = json.load(f)
+                        return image_columns_info
+                except Exception as e:
+                    logger.exception(e)
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Error reading image columns information file",
+                    ) from e
+            
+            # If the file doesn't exist, try to get the info from the dataset object
+            dataset_obj = load_dataset(f"{dataset.file_path}/dataset")
+            if hasattr(dataset_obj, 'image_columns_info'):
+                return dataset_obj.image_columns_info
+            
+            # If no image columns info is found
+            return {}
+            
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.patch("/{dataset_id}")

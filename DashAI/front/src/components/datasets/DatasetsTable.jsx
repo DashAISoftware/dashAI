@@ -4,14 +4,24 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import {
   AddCircleOutline as AddIcon,
   Update as UpdateIcon,
+  Image as ImageIcon,
 } from "@mui/icons-material";
-import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
+import {
+  Button,
+  Grid,
+  Paper,
+  Typography,
+  LinearProgress,
+  IconButton,
+} from "@mui/material";
 import DeleteItemModal from "../custom/DeleteItemModal";
 import EditDatasetModal from "./EditDatasetModal";
 import DatasetSummaryModal from "./DatasetSummaryModal";
+import ImageColumnsInfoModal from "./ImageColumnsInfoModal";
 import {
   getDatasets as getDatasetsRequest,
   deleteDataset as deleteDatasetRequest,
+  getImageColumnsInfo,
 } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { formatDate } from "../../utils/index";
@@ -23,7 +33,35 @@ function DatasetsTable({
 }) {
   const [loading, setLoading] = useState(true);
   const [datasets, setDatasets] = useState([]);
+  const [showImageInfo, setShowImageInfo] = useState(false);
+  const [imageColumnsInfo, setImageColumnsInfo] = useState({});
+  const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  const handleShowImageInfo = async (datasetId) => {
+    try {
+      console.log("Fetching image info for dataset:", datasetId);
+      const info = await getImageColumnsInfo(datasetId);
+      console.log("Received info:", info);
+      if (Object.keys(info).length > 0) {
+        setImageColumnsInfo(info);
+        setSelectedDatasetId(datasetId);
+        setShowImageInfo(true);
+      } else {
+        enqueueSnackbar(
+          "No image columns information available for this dataset",
+          {
+            variant: "info",
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching image columns info:", error);
+      enqueueSnackbar("Error fetching image columns information", {
+        variant: "error",
+      });
+    }
+  };
 
   const getDatasets = async () => {
     setLoading(true);
@@ -131,6 +169,14 @@ function DatasetsTable({
             key="dataset-summary-component"
             datasetId={params.id}
           />,
+          <IconButton
+            key="image-info-component"
+            onClick={() => handleShowImageInfo(params.id)}
+            size="small"
+            title="Show Image Columns Info"
+          >
+            <ImageIcon />
+          </IconButton>,
         ],
       },
     ],
@@ -138,65 +184,74 @@ function DatasetsTable({
   );
 
   return (
-    <Paper sx={{ py: 4, px: 6 }}>
-      {/* Title and new datasets button */}
-      <Grid
-        container
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 4 }}
-      >
-        <Typography variant="h5" component="h2">
-          Current datasets
-        </Typography>
-        <Grid item>
-          <Grid container spacing={2}>
-            <Grid item>
-              <Button
-                variant="contained"
-                onClick={handleNewDataset}
-                endIcon={<AddIcon />}
-              >
-                New Dataset
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button
-                variant="contained"
-                onClick={() => setUpdateTableFlag(true)}
-                endIcon={<UpdateIcon />}
-              >
-                Update
-              </Button>
+    <React.Fragment>
+      <Paper sx={{ py: 4, px: 6 }}>
+        {/* Title and new datasets button */}
+        <Grid
+          container
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Typography variant="h5" component="h2">
+            Current datasets
+          </Typography>
+          <Grid item>
+            <Grid container spacing={2}>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  onClick={handleNewDataset}
+                  endIcon={<AddIcon />}
+                >
+                  New Dataset
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  onClick={() => setUpdateTableFlag(true)}
+                  endIcon={<UpdateIcon />}
+                >
+                  Update
+                </Button>
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
-      </Grid>
 
-      {/* Datasets Table */}
-      <DataGrid
-        rows={datasets}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
+        {/* Datasets Table */}
+        <DataGrid
+          rows={datasets}
+          columns={columns}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 5,
+              },
             },
-          },
-        }}
-        sortModel={[{ field: "id", sort: "desc" }]}
-        pageSize={5}
-        pageSizeOptions={[5, 10]}
-        disableRowSelectionOnClick
-        autoHeight
-        loading={loading}
-        slots={{
-          toolbar: GridToolbar,
-          loadingOverlay: LinearProgress,
-        }}
+          }}
+          sortModel={[{ field: "id", sort: "desc" }]}
+          pageSize={5}
+          pageSizeOptions={[5, 10]}
+          disableRowSelectionOnClick
+          autoHeight
+          loading={loading}
+          slots={{
+            toolbar: GridToolbar,
+            loadingOverlay: LinearProgress,
+          }}
+        />
+      </Paper>
+
+      {/* Image Columns Info Modal */}
+      <ImageColumnsInfoModal
+        open={showImageInfo}
+        onClose={() => setShowImageInfo(false)}
+        imageColumnsInfo={imageColumnsInfo}
       />
-    </Paper>
+    </React.Fragment>
   );
 }
 
