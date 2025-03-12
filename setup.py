@@ -19,7 +19,7 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.1.0",
+    version="0.1.1",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
@@ -36,7 +36,7 @@ setup(
     author_email="fbravo@dcc.uchile.cl",
     packages=find_packages(),
     include_package_data=True,
-    python_requires=">=3.10",
+    python_requires=">=3.8",
     install_requires=requirements,
     test_require=test_requirements,
     classifiers=[
