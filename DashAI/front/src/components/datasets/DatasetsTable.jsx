@@ -38,6 +38,27 @@ function DatasetsTable({
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
+  // This function will be called automatically when datasets are updated
+  const checkLatestDatasetForImages = async (datasets) => {
+    if (datasets && datasets.length > 0) {
+      // Get the most recently added dataset (highest ID)
+      const latestDataset = datasets.reduce((prev, current) =>
+        prev.id > current.id ? prev : current,
+      );
+
+      try {
+        const info = await getImageColumnsInfo(latestDataset.id);
+        if (Object.keys(info).length > 0) {
+          setImageColumnsInfo(info);
+          setSelectedDatasetId(latestDataset.id);
+          setShowImageInfo(true);
+        }
+      } catch (error) {
+        console.error("Error fetching image columns info:", error);
+      }
+    }
+  };
+
   const handleShowImageInfo = async (datasetId) => {
     try {
       console.log("Fetching image info for dataset:", datasetId);
@@ -68,6 +89,11 @@ function DatasetsTable({
     try {
       const datasets = await getDatasetsRequest();
       setDatasets(datasets);
+
+      // Check if we should show image info for the latest dataset
+      if (updateTableFlag) {
+        checkLatestDatasetForImages(datasets);
+      }
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain the dataset table.");
       if (error.response) {
@@ -250,6 +276,8 @@ function DatasetsTable({
         open={showImageInfo}
         onClose={() => setShowImageInfo(false)}
         imageColumnsInfo={imageColumnsInfo}
+        datasetId={selectedDatasetId}
+        updateDatasets={() => setUpdateTableFlag(true)}
       />
     </React.Fragment>
   );
