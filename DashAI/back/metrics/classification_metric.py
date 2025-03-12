@@ -15,6 +15,27 @@ class ClassificationMetric(BaseMetric):
         "TextClassificationTask",
     ]
 
+    @staticmethod
+    def is_multiclass(true_labels: np.ndarray) -> bool:
+        """
+        Determine if the classification problem is multiclass (more than 2 classes).
+
+        This method is used by metrics to decide whether to use binary or multiclass
+        scoring strategies.
+
+        Parameters
+        ----------
+        true_labels : np.ndarray
+            Array of true labels.
+
+        Returns
+        -------
+        bool
+            True if the problem has more than 2 unique classes, False otherwise.
+        """
+        unique_labels = np.unique(true_labels)
+        return len(unique_labels) > 2
+
 
 def validate_inputs(true_labels: np.ndarray, pred_labels: np.ndarray) -> None:
     """Validate inputs.
