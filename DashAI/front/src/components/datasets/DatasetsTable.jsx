@@ -36,6 +36,7 @@ function DatasetsTable({
   const [showImageInfo, setShowImageInfo] = useState(false);
   const [imageColumnsInfo, setImageColumnsInfo] = useState({});
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
+  const [lastCheckedDatasetId, setLastCheckedDatasetId] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
   // This function will be called automatically when datasets are updated
@@ -46,41 +47,21 @@ function DatasetsTable({
         prev.id > current.id ? prev : current,
       );
 
-      try {
-        const info = await getImageColumnsInfo(latestDataset.id);
-        if (Object.keys(info).length > 0) {
-          setImageColumnsInfo(info);
-          setSelectedDatasetId(latestDataset.id);
-          setShowImageInfo(true);
+      // Only check if it's a new dataset or different from the last checked one
+      if (latestDataset.id !== lastCheckedDatasetId) {
+        try {
+          const info = await getImageColumnsInfo(latestDataset.id);
+          if (Object.keys(info).length > 0) {
+            setImageColumnsInfo(info);
+            setSelectedDatasetId(latestDataset.id);
+            setShowImageInfo(true);
+            // Save the ID of the dataset we just checked
+            setLastCheckedDatasetId(latestDataset.id);
+          }
+        } catch (error) {
+          console.error("Error fetching image columns info:", error);
         }
-      } catch (error) {
-        console.error("Error fetching image columns info:", error);
       }
-    }
-  };
-
-  const handleShowImageInfo = async (datasetId) => {
-    try {
-      console.log("Fetching image info for dataset:", datasetId);
-      const info = await getImageColumnsInfo(datasetId);
-      console.log("Received info:", info);
-      if (Object.keys(info).length > 0) {
-        setImageColumnsInfo(info);
-        setSelectedDatasetId(datasetId);
-        setShowImageInfo(true);
-      } else {
-        enqueueSnackbar(
-          "No image columns information available for this dataset",
-          {
-            variant: "info",
-          },
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching image columns info:", error);
-      enqueueSnackbar("Error fetching image columns information", {
-        variant: "error",
-      });
     }
   };
 
@@ -133,6 +114,12 @@ function DatasetsTable({
     },
     [],
   );
+
+  // Modify the handler to avoid reopening the modal for the same dataset
+  const handleCloseImageInfo = () => {
+    setShowImageInfo(false);
+    // Don't reset lastCheckedDatasetId here to prevent reopening
+  };
 
   // Fetch datasets when the component is mounting
   useEffect(() => {
@@ -266,10 +253,15 @@ function DatasetsTable({
       {/* Image Columns Info Modal */}
       <ImageColumnsInfoModal
         open={showImageInfo}
-        onClose={() => setShowImageInfo(false)}
+        onClose={handleCloseImageInfo}
         imageColumnsInfo={imageColumnsInfo}
         datasetId={selectedDatasetId}
-        updateDatasets={() => setUpdateTableFlag(true)}
+        updateDatasets={() => {
+          setUpdateTableFlag(true);
+          // Important: when a dataset is deleted from the modal,
+          // we need to update lastCheckedDatasetId to null to avoid issues
+          setLastCheckedDatasetId(null);
+        }}
       />
     </React.Fragment>
   );

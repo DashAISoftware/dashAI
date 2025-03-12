@@ -43,12 +43,12 @@ const ColumnDetailsTable = ({ info }) => (
       </TableHead>
       <TableBody>
         <TableRow>
-          <TableCell>Image Percentage</TableCell>
-          <TableCell>{info.image_percentage.toFixed(2)}%</TableCell>
-        </TableRow>
-        <TableRow>
           <TableCell>Total Paths</TableCell>
           <TableCell>{info.total_paths}</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell>Image Percentage</TableCell>
+          <TableCell>{info.image_percentage.toFixed(2)}%</TableCell>
         </TableRow>
         <TableRow>
           <TableCell>Valid Paths Count</TableCell>
@@ -93,6 +93,7 @@ const ImageColumnsInfoModal = ({
   const { enqueueSnackbar } = useSnackbar();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [deleteAttempted, setDeleteAttempted] = useState(false);
 
   // Separar columnas en imágenes y no imágenes
   const imageColumns = Object.entries(imageColumnsInfo).filter(
@@ -107,11 +108,36 @@ const ImageColumnsInfoModal = ({
     ([_, info]) => info.invalid_paths_count > 0,
   );
 
+  // Reset states when modal opens/closes
+  useEffect(() => {
+    if (!open) {
+      setIsDeleted(false);
+      setIsDeleting(false);
+      setDeleteAttempted(false);
+    }
+  }, [open]);
+
   // Efecto para eliminar automáticamente cuando se abre el modal
   useEffect(() => {
     const autoDeleteDataset = async () => {
-      if (open && hasInvalidPaths && !isDeleting && !isDeleted) {
+      // Solo ejecutar si:
+      // 1. El modal está abierto
+      // 2. Hay paths inválidos
+      // 3. No está en proceso de eliminación
+      // 4. No se ha eliminado ya
+      // 5. No se ha intentado eliminar antes (para evitar bucles)
+      if (
+        open &&
+        hasInvalidPaths &&
+        !isDeleting &&
+        !isDeleted &&
+        !deleteAttempted &&
+        datasetId
+      ) {
+        console.log("Attempting to delete dataset:", datasetId);
         setIsDeleting(true);
+        setDeleteAttempted(true);
+
         try {
           await deleteDataset(datasetId);
           setIsDeleted(true);
@@ -132,14 +158,34 @@ const ImageColumnsInfoModal = ({
     };
 
     autoDeleteDataset();
-  }, [open, hasInvalidPaths, datasetId]);
+  }, [
+    open,
+    hasInvalidPaths,
+    datasetId,
+    isDeleting,
+    isDeleted,
+    deleteAttempted,
+  ]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      // Añadir este evento para asegurar que se intenta eliminar cuando el modal está completamente cargado
+      TransitionProps={{
+        onEntered: () => {
+          if (hasInvalidPaths && !isDeleted && !deleteAttempted) {
+            setDeleteAttempted(false); // Reset para permitir un nuevo intento
+          }
+        },
+      }}
+    >
       <DialogTitle>Dataset Image Columns Analysis</DialogTitle>
       <DialogContent>
         {hasInvalidPaths && (
-          <Alert severity={"error"} sx={{ mb: 3 }}>
+          <Alert severity={isDeleted ? "success" : "error"} sx={{ mb: 3 }}>
             {isDeleted
               ? "Dataset has been automatically deleted due to invalid image paths. You can close this window and upload a new dataset with valid paths."
               : isDeleting
@@ -209,6 +255,12 @@ const ImageColumnsInfoModal = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
+        {/* Añadir un botón para reintentar si la eliminación falló */}
+        {hasInvalidPaths && !isDeleted && !isDeleting && deleteAttempted && (
+          <Button color="error" onClick={() => setDeleteAttempted(false)}>
+            Retry Delete
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
