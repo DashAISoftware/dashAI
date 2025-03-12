@@ -3,7 +3,6 @@
 import json
 import os
 from typing import Dict, List, Literal, Tuple, Union
-import pathlib
 
 import numpy as np
 import pyarrow as pa
@@ -251,96 +250,6 @@ class DashAIDataset(Dataset):
 
 
 @beartype
-def save_dataset(dataset: Union[DashAIDataset, DatasetDict], path: Union[str, os.PathLike, pathlib.Path]) -> None:
-    """
-    Saves a DashAIDataset in a custom format using two files in the specified directory:
-      - "data.arrow": contains the dataset's PyArrow table.
-      - "splits.json": contains the dataset's splits indices.
-    
-    Also saves image_columns_info if available.
-
-    Parameters:
-        dataset (Union[DashAIDataset, DatasetDict]): The dataset to save.
-        path (Union[str, os.PathLike, pathlib.Path]): The directory path where the files
-        will be saved.
-    """
-    if isinstance(dataset, DatasetDict):
-        splits = []
-        for split in dataset:
-            splits.append(split)
-            dataset[split].save_to_disk(f"{path}/{split}")
-
-        with open(
-            os.path.join(path, "dataset_dict.json"), "w", encoding="utf-8"
-        ) as datasetdict_info_file:
-            data = {"splits": splits}
-            json.dump(
-                data,
-                datasetdict_info_file,
-                indent=2,
-                sort_keys=True,
-                ensure_ascii=False,
-            )
-        
-        # Save image columns information if available
-        if hasattr(dataset, 'image_columns_info'):
-            image_columns_info_path = os.path.join(path, "image_columns_info.json")
-            try:
-                with open(image_columns_info_path, "w", encoding="utf-8") as image_info_file:
-                    json.dump(
-                        dataset.image_columns_info,
-                        image_info_file,
-                        indent=2,
-                        sort_keys=True,
-                        ensure_ascii=False,
-                    )
-            except Exception:
-                pass
-        elif hasattr(dataset, 'info') and 'image_columns_info' in dataset.info:
-            image_columns_info_path = os.path.join(path, "image_columns_info.json")
-            try:
-                with open(image_columns_info_path, "w", encoding="utf-8") as image_info_file:
-                    json.dump(
-                        dataset.info['image_columns_info'],
-                        image_info_file,
-                        indent=2,
-                        sort_keys=True,
-                        ensure_ascii=False,
-                    )
-            except Exception:
-                pass
-    else:
-        os.makedirs(path, exist_ok=True)
-
-        table = dataset.arrow_table
-
-        data_filepath = os.path.join(path, "data.arrow")
-        with pa.OSFile(data_filepath, "wb") as sink:
-            writer = ipc.new_file(sink, table.schema)
-            writer.write_table(table)
-            writer.close()
-
-        metadata_filepath = os.path.join(path, "splits.json")
-        with open(metadata_filepath, "w") as f:
-            json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
-        
-        # Save image columns information if available
-        if hasattr(dataset, 'image_columns_info'):
-            image_columns_info_path = os.path.join(path, "image_columns_info.json")
-            try:
-                with open(image_columns_info_path, "w", encoding="utf-8") as image_info_file:
-                    json.dump(
-                        dataset.image_columns_info,
-                        image_info_file,
-                        indent=2,
-                        sort_keys=True,
-                        ensure_ascii=False,
-                    )
-            except Exception:
-                pass
-
-
-@beartype
 def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     """
     Merges the splits from a DatasetDict into a single DashAIDataset and records
@@ -389,6 +298,49 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
 
 
 @beartype
+def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
+    """
+    Saves a DashAIDataset in a custom format using two files in the specified directory:
+      - "data.arrow": contains the dataset's PyArrow table.
+      - "splits.json": contains the dataset's splits indices.
+      - "image_columns_info.json": contains metadata about image columns (if present).
+
+    Parameters:
+        dataset (DashAIDataset): The dataset to save.
+        path (Union[str, os.PathLike]): The directory path where the files
+        will be saved.
+    """
+    os.makedirs(path, exist_ok=True)
+
+    table = dataset.arrow_table
+
+    data_filepath = os.path.join(path, "data.arrow")
+    with pa.OSFile(data_filepath, "wb") as sink:
+        writer = ipc.new_file(sink, table.schema)
+        writer.write_table(table)
+        writer.close()
+
+    metadata_filepath = os.path.join(path, "splits.json")
+    with open(metadata_filepath, "w") as f:
+        json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
+    
+    # Save image columns information if available
+    if hasattr(dataset, 'image_columns_info') and dataset.image_columns_info is not None:
+        image_columns_info_path = os.path.join(path, "image_columns_info.json")
+        try:
+            with open(image_columns_info_path, "w", encoding="utf-8") as image_info_file:
+                json.dump(
+                    dataset.image_columns_info,
+                    image_info_file,
+                    indent=2,
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+        except Exception:
+            pass
+
+
+@beartype
 def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     """
     Loads a DashAIDataset previously saved with save_dataset.
@@ -396,6 +348,7 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     It expects the directory at 'path' to contain:
         - "data.arrow": the saved PyArrow table.
         - "splits.json": the saved split indices.
+        - "image_columns_info.json": optional file with image columns metadata.
 
     Parameters:
         path (Union[str, os.PathLike]): The directory path where the dataset was saved.
@@ -937,6 +890,7 @@ def update_dataset_splits(
         dataset.image_columns_info = image_columns_info
         
     return dataset
+
 
 def prepare_for_experiment(
     dataset: DashAIDataset, splits: dict, output_columns: List[str]

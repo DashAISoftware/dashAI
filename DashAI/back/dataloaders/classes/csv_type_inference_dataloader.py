@@ -15,6 +15,7 @@ from starlette.datastructures import UploadFile
 from PIL import Image as PILImage
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader, CSVDataloaderSchema
+from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset, DashAIDataset
 
 # Get the directory of the current file
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -224,8 +225,8 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         filepath_or_buffer: Union[UploadFile, str],
         temp_path: str,
         params: Dict[str, Any],
-    ) -> DatasetDict:
-        """Load the uploaded CSV files into a DatasetDict with automatic type inference and image detection.
+    ) -> Union[DatasetDict, DashAIDataset]:
+        """Load the uploaded CSV files into a dataset with automatic type inference and image detection.
 
         Parameters
         ----------
@@ -240,8 +241,9 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
 
         Returns
         -------
-        DatasetDict
-            A HuggingFace's Dataset with the loaded data, inferred types, and detected image columns.
+        Union[DatasetDict, DashAIDataset]
+            A dataset with the loaded data, inferred types, and detected image columns.
+            Returns a DashAIDataset to ensure compatibility with save_dataset function.
         """
         # Use the _check_params method from CSVDataLoader
         self._check_params(params)
@@ -292,4 +294,11 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         except Exception:
             pass
         
-        return processed_dataset 
+        # Convert to DashAIDataset before returning
+        dashai_dataset = to_dashai_dataset(processed_dataset)
+        
+        # Ensure image_columns_info is preserved in the conversion
+        if hasattr(processed_dataset, 'image_columns_info'):
+            dashai_dataset.image_columns_info = processed_dataset.image_columns_info
+        
+        return dashai_dataset 
