@@ -1,5 +1,6 @@
 """Base Optimizer abstract class."""
 
+import logging
 from abc import ABCMeta, abstractmethod
 from typing import Final
 
@@ -10,6 +11,8 @@ import plotly.graph_objects as go
 from optuna.importance import FanovaImportanceEvaluator
 
 from DashAI.back.config_object import ConfigObject
+
+log = logging.getLogger(__name__)
 
 
 class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
@@ -304,6 +307,17 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             )
         evaluator = FanovaImportanceEvaluator()
         importances = evaluator.evaluate(study)
+        try:
+            evaluator = FanovaImportanceEvaluator()
+            importances = evaluator.evaluate(study)
+        except RuntimeError:
+            importances = {
+                param: 1.0 / len(self.parameters) for param in self.parameters
+            }
+            log.warning(
+                "Could not calculate parameter importance using FANOVA. "
+                "Using equal importances."
+            )
 
         sorted_items = sorted(importances.items(), key=lambda item: item[1])
         param_names, importance_values = zip(*sorted_items)

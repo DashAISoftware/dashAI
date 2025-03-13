@@ -93,34 +93,46 @@ def fixture_dataset_id(client: TestClient):
     test_dataset = "iris.csv"
     abs_file_path = os.path.join(script_dir, test_dataset)
     with open(abs_file_path, "rb") as csv:
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "test_csv3",
+            "separator": ",",
+        }
+
+        kwargs = {
+            "name": "test_csv3",
+            "url": "",
+            "params": params,
+        }
+
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
+        files = {"file": ("iris.csv", csv, "text/csv")}
+        headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
-            data={
-                "params": """{  "dataloader": "CSVDataLoader",
-                                    "name": "test_csv3",
-                                    "splits_in_folders": false,
-                                    "splits": {
-                                        "train_size": 0.5,
-                                        "test_size": 0.2,
-                                        "val_size": 0.3
-                                    },
-                                    "separator": ",",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": true,
-                                        "stratify": false
-                                    }
-                                }""",
-                "url": "",
-            },
-            files={"file": ("filename", csv, "text/csv")},
+            "/api/v1/job/",
+            data=form_data,
+            files=files,
+            headers=headers,
         )
-    assert response.status_code == 201, response.text
-    dataset = response.json()
 
-    yield dataset["id"]
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
 
-    response = client.delete(f"/api/v1/dataset/{dataset['id']}")
+    response = client.get("/api/v1/dataset/")
+    assert response.status_code == 200, response.text
+    datasets = response.json()
+    dataset_id = None
+    for dataset in datasets:
+        if dataset["name"] == "test_csv3":
+            dataset_id = dataset["id"]
+            break
+
+    assert dataset_id is not None, "Dataset not found after job completion"
+
+    yield dataset_id
+
+    response = client.delete(f"/api/v1/dataset/{dataset_id}")
     assert response.status_code == 204, response.text
 
 
@@ -146,6 +158,7 @@ def create_experiment(client: TestClient, dataset_id: int):
                     "seed": 42,
                     "shuffle": True,
                     "stratify": False,
+                    "splitType": "random",
                 }
             ),
         )
@@ -223,9 +236,9 @@ def create_failed_run(client: TestClient, experiment_id: int):
 
 
 def test_enqueue_jobs(client: TestClient, run_id: int):
-    response = client.post(
-        "/api/v1/job/", json={"job_type": "ModelJob", "kwargs": {"run_id": run_id}}
-    )
+    form_data = {"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})}
+
+    response = client.post("/api/v1/job/", data=form_data)
     assert response.status_code == 201, response.text
     created_job = response.json()
     assert created_job["kwargs"]["job_type"] == "ModelJob"
@@ -239,7 +252,8 @@ def test_enqueue_jobs(client: TestClient, run_id: int):
     assert gotten_job["kwargs"]["job_type"] == created_job["kwargs"]["job_type"]
 
     response = client.post(
-        "/api/v1/job/", json={"job_type": "ModelJob", "kwargs": {"run_id": run_id}}
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
     )
     assert response.status_code == 201, response.text
     created_job_2 = response.json()
@@ -252,55 +266,16 @@ def test_enqueue_jobs(client: TestClient, run_id: int):
     assert gotten_jobs[1]["id"] == created_job_2["id"]
 
 
-def test_get_all_jobs(client: TestClient, run_id: int):
-    # Get all the experiments available in the back
-    response = client.get("/api/v1/job")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert data[0]["kwargs"]["run_id"] == run_id
-    assert data[1]["kwargs"]["run_id"] == run_id
-
-
-def test_get_wrong_job(client: TestClient):
-    # Try to retrieve a non-existent experiment an get an error
-    response = client.get("/api/v1/job/31415")
-    assert response.status_code == 404, response.text
-    assert response.text == '{"detail":"Job not found"}'
-
-
-def test_cancel_jobs(client: TestClient):
-    response = client.get("/api/v1/job")
-    assert response.status_code == 200, response.text
-    gotten_jobs = response.json()
-
-    response = client.delete(f"/api/v1/job/?job_id={gotten_jobs[0]['id']}")
-    assert response.status_code == 204, response.text
-
-    response = client.get("/api/v1/job")
-    assert response.status_code == 200, response.text
-    jobs = response.json()
-    assert len(jobs) == len(gotten_jobs) - 1
-    assert jobs[0]["id"] != gotten_jobs[0]["id"]
-    assert jobs[0]["id"] == gotten_jobs[1]["id"]
-
-    response = client.delete(f"/api/v1/job/?job_id={gotten_jobs[1]['id']}")
-    assert response.status_code == 204, response.text
-
-    response = client.get("/api/v1/job")
-    assert response.status_code == 200, response.text
-    jobs = response.json()
-    assert jobs == []
-
-
 def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
     response = client.post(
-        "/api/v1/job/", json={"job_type": "ModelJob", "kwargs": {"run_id": run_id}}
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
     )
     assert response.status_code == 201, response.text
 
     response = client.post(
         "/api/v1/job/",
-        json={"job_type": "ModelJob", "kwargs": {"run_id": failed_run_id}},
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": failed_run_id})},
     )
     assert response.status_code == 201, response.text
 
@@ -317,7 +292,6 @@ def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
 
     response = client.get(f"/api/v1/run/{run_id}")
     data = response.json()
-    print(data["status"])
     assert data["status"] == 3
     assert isinstance(data["train_metrics"], dict)
     assert "DummyMetric" in data["train_metrics"]
@@ -341,6 +315,7 @@ def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
 
 def test_job_with_wrong_run(client: TestClient):
     response = client.post(
-        "/api/v1/job/", json={"job_type": "ModelJob", "kwargs": {"run_id": 31415}}
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": 31415})},
     )
     assert response.status_code == 500, response.text

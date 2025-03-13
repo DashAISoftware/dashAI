@@ -7,33 +7,56 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="module", name="dataset_id")
 def create_dataset(client):
-    """Create testing dataset 1."""
+    """Create testing dataset using job system."""
     abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
 
     with open(abs_file_path, "rb") as csv:
+        params = {
+            "dataloader": "CSVDataLoader",
+            "name": "DummyDataset2",
+            "separator": ",",
+        }
+
+        kwargs = {
+            "name": "DummyDataset2",
+            "url": "",
+            "params": params,
+        }
+
+        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+
+        files = {"file": ("iris.csv", csv, "text/csv")}
+        headers = {"filename": "iris.csv"}
+
         response = client.post(
-            "/api/v1/dataset/",
-            data={
-                "params": """{  "dataloader": "CSVDataLoader",
-                                    "name": "DummyDataset2",
-                                    "splits_in_folders": false,
-                                    "splits": {
-                                        "train_size": 0.8,
-                                        "test_size": 0.1,
-                                        "val_size": 0.1
-                                    },
-                                    "separator": ",",
-                                    "more_options": {
-                                        "seed": 42,
-                                        "shuffle": true,
-                                        "stratify": false
-                                    }
-                                }""",
-                "url": "",
-            },
-            files={"file": ("filename", csv, "text/csv")},
+            "/api/v1/job/",
+            data=form_data,
+            files=files,
+            headers=headers,
         )
-    return response.json()["id"]
+
+        assert (
+            response.status_code == 201
+        ), f"Failed to create dataset job: {response.text}"
+
+        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+
+        datasets_response = client.get("/api/v1/dataset/")
+        assert datasets_response.status_code == 200, datasets_response.text
+
+        datasets = datasets_response.json()
+        dataset_id = None
+        for dataset in datasets:
+            if dataset["name"] == "DummyDataset2":
+                dataset_id = dataset["id"]
+                break
+
+        assert dataset_id is not None, "Dataset not found after job completion"
+
+    yield dataset_id
+
+    response = client.delete(f"/api/v1/dataset/{dataset_id}")
+    assert response.status_code == 204, response.text
 
 
 @pytest.fixture(scope="module", name="experiment_id")
@@ -61,7 +84,10 @@ def create_experiment(client: TestClient, dataset_id):
             ),
         },
     )
-    return response.json()["id"]
+
+    yield response.json()["id"]
+    response = client.delete(f"/api/v1/experiment/{response.json()['id']}")
+    assert response.status_code == 204, response.text
 
 
 def test_create_run(client: TestClient, experiment_id: int):

@@ -1,7 +1,11 @@
-from typing import List
+from typing import List, Union
 
 from datasets import ClassLabel, DatasetDict, Image
 
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -21,9 +25,9 @@ class ImageClassificationTask(BaseTask):
     }
 
     def prepare_for_task(
-        self, datasetdict: DatasetDict, outputs_columns: List[str]
-    ) -> DatasetDict:
-        """Change the column types to suit the tabular classification task.
+        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+    ) -> DashAIDataset:
+        """Change the column types to suit the image classification task.
 
         A copy of the dataset is created.
 
@@ -34,11 +38,10 @@ class ImageClassificationTask(BaseTask):
 
         Returns
         -------
-        DatasetDict
+        DashAIDataset
             Dataset with the new types
         """
-
         types = {column: "Categorical" for column in outputs_columns}
-        for split in datasetdict:
-            datasetdict[split] = datasetdict[split].change_columns_type(types)
-        return datasetdict
+        datasetdict = to_dashai_dataset(datasetdict)
+        dataset = datasetdict.change_columns_type(types)
+        return dataset

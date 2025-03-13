@@ -4,31 +4,22 @@ import shutil
 from typing import Any, Dict
 
 from datasets import DatasetDict
-from fastapi import APIRouter, Depends, File, Form, Response, UploadFile, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.datasets_params import (
-    DatasetParams,
-    DatasetUpdateParams,
-)
-from DashAI.back.api.utils import parse_params
+from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     get_columns_spec,
     get_dataset_info,
     load_dataset,
-    save_dataset,
-    split_dataset,
-    split_indexes,
-    to_dashai_dataset,
     update_columns_spec,
 )
 from DashAI.back.dependencies.database.models import Dataset
-from DashAI.back.dependencies.registry import ComponentRegistry
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -239,128 +230,6 @@ async def get_types(
     return columns_spec
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-@inject
-async def upload_dataset(
-    params: str = Form(),
-    url: str = Form(None),
-    file: UploadFile = File(None),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: Dict[str, Any] = Depends(lambda: di["config"]),
-):
-    """Create a new dataset from a file or url.
-
-    Parameters
-    ----------
-    params : str, optional
-        A Dict containing configuration options for the new dataset.
-    url : str, optional
-        URL of the dataset file, mutually exclusive with uploading a file, by default
-        Form(None).
-    file : UploadFile, optional
-        File object containing the dataset data, mutually exclusive with
-        providing a URL, by default File(None).
-    component_registry : ComponentRegistry
-        Registry containing the current app available components.
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy session.
-        The generated session can be used to access and query the database.
-    config: Dict[str, Any]
-        Application settings.
-
-    Returns
-    -------
-    Dataset
-        The created dataset.
-    """
-    logger.debug("Creating a new dataset.")
-    logger.debug("Params: %s", str(params))
-
-    parsed_params = parse_params(DatasetParams, params)
-    dataloader = component_registry[parsed_params.dataloader]["class"]()
-    folder_path = config["DATASETS_PATH"] / parsed_params.name
-
-    # create dataset path
-    try:
-        logger.debug("Trying to create a new dataset path: %s", folder_path)
-        folder_path.mkdir(parents=True)
-    except FileExistsError as e:
-        logger.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="A dataset with this name already exists",
-        ) from e
-
-    # save dataset
-    try:
-        logger.debug("Storing dataset in %s", folder_path)
-        new_dataset = dataloader.load_data(
-            filepath_or_buffer=file if file is not None else url,
-            temp_path=str(folder_path),
-            params=parsed_params.model_dump(),
-        )
-
-        new_dataset = to_dashai_dataset(new_dataset)
-
-        if not parsed_params.splits_in_folders:
-            n = len(new_dataset["train"])
-            train_indexes, test_indexes, val_indexes = split_indexes(
-                n,
-                parsed_params.splits.train_size,
-                parsed_params.splits.test_size,
-                parsed_params.splits.val_size,
-                parsed_params.more_options.seed,
-                parsed_params.more_options.shuffle,
-            )
-            new_dataset = split_dataset(
-                new_dataset["train"],
-                train_indexes=train_indexes,
-                test_indexes=test_indexes,
-                val_indexes=val_indexes,
-            )
-            dataset_path = folder_path / "dataset"
-        logger.debug("Saving dataset in %s", str(dataset_path))
-        save_dataset(new_dataset, dataset_path)
-
-        # - NOTE -------------------------------------------------------------
-        # Is important that the DatasetDict dataset it be saved in "/dataset"
-        # because for images and audio is also saved the original files,
-        # So we have the original files and the "dataset" folder
-        # with the DatasetDict that we use to handle the data.
-        # --------------------------------------------------------------------
-
-    except OSError as e:
-        shutil.rmtree(folder_path, ignore_errors=True)
-        logger.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to read file",
-        ) from e
-
-    with session_factory() as db:
-        logger.debug("Storing dataset metadata in database.")
-        try:
-            folder_path = os.path.realpath(folder_path)
-            new_dataset = Dataset(
-                name=parsed_params.name,
-                file_path=folder_path,
-            )
-            db.add(new_dataset)
-            db.commit()
-            db.refresh(new_dataset)
-
-        except exc.SQLAlchemyError as e:
-            logger.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal database error",
-            ) from e
-
-    logger.debug("Dataset creation sucessfully finished.")
-    return new_dataset
-
-
 @router.delete("/{dataset_id}")
 @inject
 async def delete_dataset(
@@ -419,6 +288,7 @@ async def update_dataset(
     dataset_id: int,
     params: DatasetUpdateParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Updates the name and/or task name of a dataset with the provided ID.
 
@@ -446,6 +316,8 @@ async def update_dataset(
                 update_columns_spec(f"{dataset.file_path}/dataset", params.columns)
             if params.name:
                 setattr(dataset, "name", params.name)
+                new_folder_path = config["DATASETS_PATH"] / params.name
+                os.rename(dataset.file_path, new_folder_path)
                 db.commit()
                 db.refresh(dataset)
                 return dataset

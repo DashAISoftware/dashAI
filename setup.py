@@ -1,48 +1,25 @@
+import os
+
 from setuptools import find_packages, setup
 
 with open("README.rst") as f:
     long_description = f.read()
 
-requirements = [
-    "fastapi[all]>=0.96",
-    "SQLAlchemy>=2.0",
-    "numpy>=1.17.3",
-    "joblib>=1.2.0",
-    "pydantic>=2.0.2",
-    "pydantic-settings>=2.0.1",
-    "starlette>=0.27.0,<0.28.0",
-    "scikit-learn>=1.2.1",
-    "datasets>=2.9.0",
-    "evaluate>=0.4.0",
-    "accelerate>=0.20.3",
-    "torch==1.13.0",
-    "transformers>=4.23.1",
-    "sacrebleu>=2.3.1",
-    "sentencepiece>=0.1.97",
-]
+
+def load_requirements(filename):
+    """Load requirements from a file, ignoring comments and empty lines."""
+    with open(os.path.join(os.path.dirname(__file__), filename)) as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 
-test_requirements = [
-    "pytest>=7.1.2",
-    "pre-commit>=2.20.0",
-    "ruff>=0.0.218",
-    "black>=23.1.0",
-    "isort>=5.12.0",
-    "sphinx_rtd_theme==1.2.0",
-    "sphinx==6.1.3",
-    "flake8>=6.0.0",
-    "Flake8-pyproject>=1.2.2",
-    "sqlalchemy-stubs>=0.4",
-    "pytest-cov>=2.8.1",
-    "httpx>=0.23.3",
-    "ipdb==0.13.11",
-    "pytest-cov==4.0.0",
-]
+# Use your existing requirements files
+requirements = load_requirements("requirements.txt")
+test_requirements = load_requirements("requirements-dev.txt")
 
 
 setup(
     name="DashAI",
-    version="0.0.14",
+    version="0.1.1",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
@@ -59,7 +36,7 @@ setup(
     author_email="fbravo@dcc.uchile.cl",
     packages=find_packages(),
     include_package_data=True,
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=requirements,
     test_require=test_requirements,
     classifiers=[
@@ -72,7 +49,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "dashai = DashAI:main",
+            "dashai = DashAI:run",
+            "DashAI = DashAI:run",
         ]
     },
 )

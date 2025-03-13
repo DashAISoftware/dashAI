@@ -62,12 +62,12 @@ class ComponentRegistry:
 
     @property
     @beartype
-    def registry(self) -> Dict[str, Dict[str, type]]:
+    def registry(self) -> Dict[str, Dict[str, Any]]:
         """Obtains the internal registry object.
 
         Returns
         -------
-        Dict[str, Dict[str, type]]
+        Dict[str, Dict[str, Any]]
             Registry dict.
         """
         return self._registry
@@ -100,7 +100,7 @@ class ComponentRegistry:
         return False
 
     @beartype
-    def __getitem__(self, item: str) -> Dict[str, type]:
+    def __getitem__(self, item: str) -> Dict[str, Any]:
         """Obtain a component from the registry using an indexer.
 
         Parameters
