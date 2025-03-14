@@ -3,6 +3,8 @@ import os
 import shutil
 from typing import Any, Dict
 
+import pyarrow as pa
+import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
@@ -11,7 +13,6 @@ from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
     get_columns_spec,
     get_dataset_info,
     load_dataset,
@@ -99,7 +100,6 @@ async def get_dataset(
 
     return dataset
 
-
 @router.get("/{dataset_id}/sample")
 @inject
 async def get_sample(
@@ -126,8 +126,16 @@ async def get_sample(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-            dataset: DashAIDataset = load_dataset(f"{file_path}/dataset")
-            sample = dataset.sample(n=10)
+
+            arrow_path = os.path.join(file_path, "dataset", "data.arrow")
+
+            with pa.OSFile(arrow_path, "rb") as source:
+                reader = ipc.open_file(source)
+                batch = reader.get_batch(0)
+                sample_size = min(10, batch.num_rows)
+                sample_batch = batch.slice(0, sample_size)
+                sample = sample_batch.to_pydict()
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
