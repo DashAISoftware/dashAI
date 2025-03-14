@@ -1,7 +1,9 @@
 import logging
+import os
 from typing import Union
 
 import pyarrow as pa
+import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
@@ -164,6 +166,7 @@ async def validate_columns(
         validation_response["error"] = str(e)
     return validation_response
 
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def create_experiment(
@@ -231,6 +234,7 @@ async def create_experiment(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
 
 @router.delete("/{experiment_id}")
 @inject

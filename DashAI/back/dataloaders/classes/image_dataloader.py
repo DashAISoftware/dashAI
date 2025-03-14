@@ -1,11 +1,9 @@
 """DashAI Image Dataloader."""
 
-import shutil
 from typing import Any, Dict
 
 from beartype import beartype
 from datasets import load_dataset
-from kink import inject
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -14,7 +12,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
-from DashAI.back.dependencies.registry import ComponentRegistry
 
 
 class ImageDataloaderSchema(BaseSchema):
@@ -33,14 +30,13 @@ class ImageDataLoader(BaseDataLoader):
 
     COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
     SCHEMA = ImageDataloaderSchema
+
     @beartype
-    @inject
     def load_data(
         self,
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-        config: Dict[str, Any] = lambda di: di["config"],
     ) -> DashAIDataset:
         """Load an image dataset.
 
@@ -60,14 +56,10 @@ class ImageDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
-        image_save_path = config["DATASETS_PATH"] / params["name"] / "dataset"
-        prepared_path = self.prepare_files(filepath_or_buffer, image_save_path)
+        prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
 
         if prepared_path[1] == "dir":
-            dataset = load_dataset(
-                "imagefolder",
-                data_dir=prepared_path[0]
-            )
+            dataset = load_dataset("imagefolder", data_dir=prepared_path[0])
         else:
             raise Exception(
                 "The image dataloader requires the input file to be a zip file."

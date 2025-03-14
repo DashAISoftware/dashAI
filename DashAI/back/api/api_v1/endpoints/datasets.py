@@ -15,7 +15,6 @@ from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
-    load_dataset,
     update_columns_spec,
 )
 from DashAI.back.dependencies.database.models import Dataset
@@ -99,6 +98,7 @@ async def get_dataset(
             ) from e
 
     return dataset
+
 
 @router.get("/{dataset_id}/sample")
 @inject

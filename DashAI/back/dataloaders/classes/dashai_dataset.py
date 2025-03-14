@@ -686,6 +686,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
             }
     return column_types
 
+
 @beartype
 def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
@@ -770,6 +771,7 @@ def get_dataset_info(dataset_path: str) -> object:
         "test_indices": test_indices,
         "val_indices": val_indices,
     }
+
 
 @beartype
 def update_dataset_splits(
