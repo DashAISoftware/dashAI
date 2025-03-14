@@ -184,6 +184,7 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
             
             # Analyze string columns to detect image paths
             image_columns = []
+            columns_to_convert = {}
             
             for column, dtype in dataset[split].features.items():
                 if isinstance(dtype, Value) and dtype.dtype == "string":
@@ -210,6 +211,20 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
                         image_columns.append(column)
                         # Store image statistics for this column
                         split_image_stats[column] = stats
+                        
+                        # If there are no invalid images, mark this column for conversion
+                        if stats['invalid_paths_count'] == 0 and stats['valid_paths_count'] > 0:
+                            columns_to_convert[column] = True
+            
+            # Convert valid columns to Image type.
+            if columns_to_convert:
+                # Create a new Features with the converted image columns
+                new_features = dict(dataset[split].features)
+                for column in columns_to_convert:
+                    new_features[column] = Image()
+                
+                # Apply the new features to the dataset
+                dataset[split] = dataset[split].cast(Features(new_features))
         
         # Add image columns info to dataset metadata
         if not hasattr(dataset, 'info'):
