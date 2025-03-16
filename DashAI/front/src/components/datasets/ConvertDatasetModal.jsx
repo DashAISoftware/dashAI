@@ -121,27 +121,24 @@ function ConvertDatasetModal({ datasetId }) {
         {},
       );
 
-      const response = await saveDatasetConverterList(
-        id,
-        flattenConverterList,
-      );
+      const response = await saveDatasetConverterList(id, flattenConverterList);
+
       const converterListId = response.id;
       setConverterListId(converterListId);
 
       // Enqueue the converter job using the id of the saved list
       await enqueueConverterJob(converterListId);
-      enqueueSnackbar("Converter job successfully created.", {
-        variant: "success",
-      });
-      await startJobQueue().then(() => {
-        setRunning(true);
-      });
+
+      await startJobQueue();
+
+      setRunning(true);
       enqueueSnackbar("Running converter jobs.", {
         variant: "success",
       });
     } catch (error) {
-      setRunning(false);
-      enqueueSnackbar("Error while trying to modify the dataset");
+      enqueueSnackbar("Failed to save converter list: " + error.message, {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -149,9 +146,6 @@ function ConvertDatasetModal({ datasetId }) {
       } else {
         console.error("Unknown Error", error.message);
       }
-    } finally {
-      setConvertersToApply([]);
-      setTargetColumnIndex(null);
     }
   };
 
@@ -175,28 +169,42 @@ function ConvertDatasetModal({ datasetId }) {
   };
 
   const getConverterListStatus = async () => {
-    getDatasetConverterList(converterListId)
-      .then((convertersFromDB) => {
-        setConverterListStatus(convertersFromDB.status);
-      })
-      .catch((error) => {
-        enqueueSnackbar("Error while trying to fetch converters", {
+    try {
+      const convertersFromDB = await getDatasetConverterList(converterListId);
+      setConverterListStatus(convertersFromDB.status);
+
+      // Set running to false if status is ERROR or FINISHED
+      if (convertersFromDB.status === ConverterListStatus.ERROR) {
+        setRunning(false);
+        enqueueSnackbar("Converter job failed", {
           variant: "error",
         });
-      });
-  };
+      } else if (convertersFromDB.status === ConverterListStatus.FINISHED) {
+        setRunning(false);
+        enqueueSnackbar("Dataset successfully modified.", {
+          variant: "success",
+        });
+        setConvertersToApply([]);
+        setTargetColumnIndex(null);
+      }
+    } catch (error) {
+      setRunning(false);
+      let errorMessage = "Error while checking converter status: ";
 
-  // update state of the job
-  useEffect(() => {
-    let running = converterListStatus === ConverterListStatus.RUNNING;
-    let finished = converterListStatus === ConverterListStatus.FINISHED;
-    setRunning(running);
-    if (finished) {
-      enqueueSnackbar("Dataset successfully modified.", {
-        variant: "success",
+      if (error.response?.data?.detail) {
+        errorMessage += error.response.data.detail;
+      } else if (error.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += "Failed to fetch converter status";
+      }
+
+      enqueueSnackbar(errorMessage, {
+        variant: "error",
       });
+      console.error("Error in getConverterListStatus:", error);
     }
-  }, [converterListStatus]);
+  };
 
   // polling to update the state of the run
   useEffect(() => {

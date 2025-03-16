@@ -62,8 +62,12 @@ class ConverterListJob(BaseJob):
             module_path = f"DashAI.back.converters.{submodule}.{converter_filename}"
 
             # Import the converter
-            module = import_module(module_path)
-            converter_constructor = getattr(module, converter_name)
+            try:
+                module = import_module(module_path)
+                converter_constructor = getattr(module, converter_name)
+            except ImportError as e:
+                log.exception(e)
+                raise JobError(f"Error importing converter {converter_name}: {e}") from e
 
             # Get parameters or empty dict if none
             converter_parameters = converter_params.get("params", {})
@@ -178,28 +182,32 @@ class ConverterListJob(BaseJob):
 
                 # Check if it's a pipeline
                 if converter_name == "Pipeline":
-                    n_steps = int(converter_params["params"]["steps"])
+                    try:
+                        n_steps = int(converter_params["params"]["steps"])
 
-                    # Get the pipeline steps
-                    pipeline_steps = converters_sorted_list[i+1:i+n_steps+1]
+                        # Get the pipeline steps
+                        pipeline_steps = converters_sorted_list[i+1:i+n_steps+1]
 
-                    # Instantiate pipeline
-                    pipeline_instance = instantiate_pipeline(
-                        pipeline_steps,
-                        camel_to_snake,
-                        converter_submodule_inverse_index,
-                    )
+                        # Instantiate pipeline
+                        pipeline_instance = instantiate_pipeline(
+                            pipeline_steps,
+                            camel_to_snake,
+                            converter_submodule_inverse_index,
+                        )
 
-                    # Get scope or use default
-                    scope = converter_params.get("scope", {"columns": [], "rows": []})
+                        # Get scope or use default
+                        scope = converter_params.get("scope", {"columns": [], "rows": []})
 
-                    # Add pipeline to instances
-                    converter_instances.append({
-                        "name": "Pipeline",
-                        "instance": pipeline_instance,
-                        "scope": scope
-                    })
-                    i += n_steps + 1
+                        # Add pipeline to instances
+                        converter_instances.append({
+                            "name": "Pipeline",
+                            "instance": pipeline_instance,
+                            "scope": scope
+                        })
+                        i += n_steps + 1
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(f"Error instantiating pipeline: {e}") from e
 
                 else:
                     # Regular converter
@@ -260,7 +268,11 @@ class ConverterListJob(BaseJob):
                     X = X.to_frame()
 
                 y = df_full[target_column_name].iloc[scope_rows_indexes]
-                converter = converter.fit(X, y)
+                try:
+                    converter = converter.fit(X, y)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(f"Error fitting converter {converter_name}: {e}") from e
 
                 # Transform data
                 X = df_full[scope_column_names]
@@ -269,7 +281,11 @@ class ConverterListJob(BaseJob):
                 if len(X.shape) == 1:
                     X = X.to_frame()
 
-                resulting_dataframe = converter.transform(X, y)
+                try:
+                    resulting_dataframe = converter.transform(X, y)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(f"Error transforming data: {e}") from e
 
                 # Update dataframe
                 columns_to_drop = df_full.columns[scope_column_indexes]
