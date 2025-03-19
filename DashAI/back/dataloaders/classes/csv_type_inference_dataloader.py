@@ -260,36 +260,20 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         self._check_params(params)
         separator = params["separator"]
 
-        if isinstance(filepath_or_buffer, str):
+        prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
+        if prepared_path[1] == "file":
             dataset = load_dataset(
                 "csv",
-                data_files=filepath_or_buffer,
-                sep=separator,
+                data_files=prepared_path[0],
+                delimiter=separator,
             )
-        elif isinstance(filepath_or_buffer, UploadFile):
-            files_path = self.extract_files(
-                temp_path,
-                filepath_or_buffer,
+        else:
+            dataset = load_dataset(
+                "csv",
+                data_dir=prepared_path[0],
+                delimiter=separator,
             )
-            
-            if files_path.split("/")[-1] == "files":
-                try:
-                    dataset = load_dataset(
-                        "csv",
-                        data_dir=files_path,
-                        sep=separator,
-                    )
-                finally:
-                    shutil.rmtree(temp_path, ignore_errors=True)
-            else:
-                try:
-                    dataset = load_dataset(
-                        "csv",
-                        data_files=files_path,
-                        sep=separator,
-                    )
-                finally:
-                    os.remove(files_path)
+            shutil.rmtree(prepared_path[0])
         
         # Process the dataset to detect image columns
         processed_dataset, image_columns_info = self._detect_image_columns(dataset)
