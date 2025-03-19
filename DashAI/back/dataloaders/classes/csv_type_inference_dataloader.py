@@ -182,6 +182,7 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
             # Analyze string columns to detect image paths
             image_columns = []
             columns_to_convert = {}
+            rows_to_remove = {}  # Dictionary to track indices of rows to remove
             
             for column, dtype in dataset[split].features.items():
                 if isinstance(dtype, Value) and dtype.dtype == "string":
@@ -210,6 +211,20 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
                         # If there are no invalid images, mark this column for conversion
                         if stats['invalid_paths_count'] == 0 and stats['valid_paths_count'] > 0:
                             columns_to_convert[column] = True
+
+
+                            if stats['valid_paths_count'] != len(column_values):
+                                # Identify rows where values don't match the image path pattern
+                                for i, value in enumerate(column_values):
+                                    if value is not None and not self._is_image_path(value):
+                                        if i not in rows_to_remove:
+                                            rows_to_remove[i] = True
+            
+            # Remove rows that don't contain valid image paths in image columns
+            if rows_to_remove:
+                indices_to_keep = [i for i in range(len(dataset[split])) if i not in rows_to_remove]
+                dataset[split] = dataset[split].select(indices_to_keep)
+                logger.info(f"Removed {len(rows_to_remove)} rows with invalid image paths from split '{split}'")
             
             # Convert valid columns to Image type.
             if columns_to_convert:
