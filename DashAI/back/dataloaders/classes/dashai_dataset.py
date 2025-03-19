@@ -263,21 +263,12 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
         DashAIDataset: A unified dataset with merged data and metadata containing the
         original split indices.
     """
-    # Preserve the image_columns_info attribute if it exists
-    image_columns_info = None
-    if hasattr(dataset_dict, 'image_columns_info'):
-        image_columns_info = dataset_dict.image_columns_info
-    elif hasattr(dataset_dict, 'info') and 'image_columns_info' in dataset_dict.info:
-        image_columns_info = dataset_dict.info['image_columns_info']
-
     concatenated_datasets = []
     split_index = {}
     current_index = 0
     if len(dataset_dict.keys()) == 1:
         arrow_tbl = get_arrow_table(dataset_dict["train"])
         dashai_dataset = DashAIDataset(arrow_tbl)
-        if image_columns_info is not None:
-            dashai_dataset.image_columns_info = image_columns_info
         return dashai_dataset
 
     for split in sorted(dataset_dict.keys()):
@@ -289,10 +280,6 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     merged_dataset = concatenate_datasets(concatenated_datasets)
     arrow_tbl = get_arrow_table(merged_dataset)
     dashai_dataset = DashAIDataset(arrow_tbl, splits={"split_indices": split_index})
-    
-    # Restore the image_columns_info attribute
-    if image_columns_info is not None:
-        dashai_dataset.image_columns_info = image_columns_info
     
     return dashai_dataset
 
@@ -348,7 +335,6 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     It expects the directory at 'path' to contain:
         - "data.arrow": the saved PyArrow table.
         - "splits.json": the saved split indices.
-        - "image_columns_info.json": optional file with image columns metadata.
 
     Parameters:
         path (Union[str, os.PathLike]): The directory path where the dataset was saved.
@@ -368,16 +354,6 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
         splits = {}
     
     dataset = DashAIDataset(data, splits=splits)
-    
-    # Load image columns information if available
-    image_columns_info_path = os.path.join(dataset_path, "image_columns_info.json")
-    if os.path.exists(image_columns_info_path):
-        try:
-            with open(image_columns_info_path, "r", encoding="utf-8") as image_info_file:
-                image_columns_info = json.load(image_info_file)
-                dataset.image_columns_info = image_columns_info
-        except Exception:
-            pass
     
     return dataset
 
@@ -523,11 +499,6 @@ def split_dataset(
     ValueError
         Must provide all indexes or none.
     """
-    # Preserve the image_columns_info attribute if it exists
-    image_columns_info = None
-    if hasattr(dataset, 'image_columns_info'):
-        image_columns_info = dataset.image_columns_info
-    
     if all(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
         train_dataset = dataset.get_split("train")
         test_dataset = dataset.get_split("test")
@@ -540,10 +511,6 @@ def split_dataset(
                 "validation": val_dataset,
             }
         )
-        
-        # Restore the image_columns_info attribute
-        if image_columns_info is not None:
-            result_dataset.image_columns_info = image_columns_info
             
         return result_dataset
     elif any(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
@@ -578,10 +545,6 @@ def split_dataset(
             "validation": DashAIDataset(val_table),
         }
     )
-    
-    # Restore the image_columns_info attribute
-    if image_columns_info is not None:
-        result_dataset.image_columns_info = image_columns_info
 
     return result_dataset
 
@@ -603,30 +566,17 @@ def to_dashai_dataset(
         DashAIDataset: A unified dataset containing all data and metadata
         about the original splits.
     """
-    # Preserve the image_columns_info attribute if it exists
-    image_columns_info = None
-    if hasattr(dataset, 'image_columns_info'):
-        image_columns_info = dataset.image_columns_info
-    elif hasattr(dataset, 'info') and 'image_columns_info' in dataset.info:
-        image_columns_info = dataset.info['image_columns_info']
-    
     if isinstance(dataset, DashAIDataset):
-        if image_columns_info is not None and not hasattr(dataset, 'image_columns_info'):
-            dataset.image_columns_info = image_columns_info
         return dataset
     if isinstance(dataset, Dataset):
         arrow_tbl = get_arrow_table(dataset)
         dashai_dataset = DashAIDataset(arrow_tbl)
-        if image_columns_info is not None:
-            dashai_dataset.image_columns_info = image_columns_info
         return dashai_dataset
     elif len(dataset) == 1:
         key = list(dataset.keys())[0]
         ds = dataset[key]
         arrow_tbl = get_arrow_table(ds)
         dashai_dataset = DashAIDataset(arrow_tbl)
-        if image_columns_info is not None:
-            dashai_dataset.image_columns_info = image_columns_info
         return dashai_dataset
     else:
         return merge_splits_with_metadata(dataset)
@@ -861,11 +811,6 @@ def update_dataset_splits(
     Returns:
         DashAIDataset: New DashAIDataset with the new splits configuration.
     """
-    # Preserve the image_columns_info attribute if it exists
-    image_columns_info = None
-    if hasattr(dataset, 'image_columns_info'):
-        image_columns_info = dataset.image_columns_info
-        
     n = dataset.num_rows
     if is_random:
         check_split_values(
@@ -885,10 +830,6 @@ def update_dataset_splits(
         "validation": val_indexes,
     }
     
-    # Restore the image_columns_info attribute
-    if image_columns_info is not None:
-        dataset.image_columns_info = image_columns_info
-        
     return dataset
 
 
@@ -896,11 +837,6 @@ def prepare_for_experiment(
     dataset: DashAIDataset, splits: dict, output_columns: List[str]
 ) -> DatasetDict:
     """Prepare the dataset for an experiment by updating the splits configuration"""
-    # Preserve the image_columns_info attribute if it exists
-    image_columns_info = None
-    if hasattr(dataset, 'image_columns_info'):
-        image_columns_info = dataset.image_columns_info
-        
     splitType = splits.get("splitType")
     if splitType == "manual" or splitType == "predefined":
         splits_index = splits
@@ -934,8 +870,4 @@ def prepare_for_experiment(
             val_indexes=val_indexes,
         )
     
-    # Restore the image_columns_info attribute
-    if image_columns_info is not None:
-        prepared_dataset.image_columns_info = image_columns_info
-        
     return prepared_dataset

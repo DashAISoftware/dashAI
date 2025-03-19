@@ -27,8 +27,8 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
     """Data loader for tabular data in CSV files with automatic type inference and image detection."""
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
-    SCHEMA = CSVDataloaderSchema  # Usamos el mismo esquema que CSVDataLoader
-    DESCRIPTION = "A dataloader that automatically infers column types from CSV files and detects image columns"
+    SCHEMA = CSVDataloaderSchema
+    DESCRIPTION = "A dataloader that automatically infers image types from CSV files and cast those columns"
     
     # Common image file extensions
     IMAGE_EXTENSIONS = {
@@ -179,9 +179,6 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         image_columns_info = {}
         
         for split in dataset.keys():
-            # Dictionary to store image statistics for this split
-            split_image_stats = {}
-            
             # Analyze string columns to detect image paths
             image_columns = []
             columns_to_convert = {}
@@ -209,8 +206,6 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
                     
                     if is_image_column:
                         image_columns.append(column)
-                        # Store image statistics for this column
-                        split_image_stats[column] = stats
                         
                         # If there are no invalid images, mark this column for conversion
                         if stats['invalid_paths_count'] == 0 and stats['valid_paths_count'] > 0:
@@ -225,13 +220,14 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
                 
                 # Apply the new features to the dataset
                 dataset[split] = dataset[split].cast(Features(new_features))
-        
-        # Add image columns info to dataset metadata
-        if not hasattr(dataset, 'info'):
-            dataset.info = {}
-        dataset.info['image_columns'] = image_columns
-        dataset.info['image_columns_info'] = image_columns_info
-        
+                
+                # Verify columns converts succesfully
+                for column in columns_to_convert:
+                    if isinstance(dataset[split].features[column], Image):
+                        logger.info(f"Columna '{column}' convertida correctamente a tipo Image.")
+                    else:
+                        logger.error(f"Error: La columna '{column}' no se ha convertido a tipo Image.")
+
         return dataset, image_columns_info
 
     @beartype
@@ -301,14 +297,6 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         # Store the image columns info directly as an attribute of the dataset
         processed_dataset.image_columns_info = image_columns_info
         
-        # Save a copy of the image columns info
-        debug_json_path = os.path.join(temp_path, "image_columns_info.json")
-        try:
-            with open(debug_json_path, "w", encoding="utf-8") as f:
-                json.dump(image_columns_info, f, indent=2)
-        except Exception:
-            pass
-        
         # Convert to DashAIDataset before returning
         dashai_dataset = to_dashai_dataset(processed_dataset)
         
@@ -316,4 +304,4 @@ class CSVTypeInferenceDataLoader(CSVDataLoader):
         if hasattr(processed_dataset, 'image_columns_info'):
             dashai_dataset.image_columns_info = processed_dataset.image_columns_info
         
-        return dashai_dataset 
+        return dashai_dataset
