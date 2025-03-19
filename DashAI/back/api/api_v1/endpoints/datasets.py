@@ -308,11 +308,6 @@ async def get_image_columns_info(
                         detail="Error reading image columns information file",
                     ) from e
             
-            # If the file doesn't exist, try to get the info from the dataset object
-            dataset_obj = load_dataset(f"{dataset.file_path}/dataset")
-            if hasattr(dataset_obj, 'image_columns_info'):
-                return dataset_obj.image_columns_info
-            
             # If no image columns info is found
             return {}
             
