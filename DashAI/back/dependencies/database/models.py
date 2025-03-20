@@ -17,9 +17,6 @@ Base = declarative_base()
 
 class Dataset(Base):
     __tablename__ = "dataset"
-    """
-    Table to store all the information about a dataset.
-    """
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
@@ -29,7 +26,9 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
-    experiments: Mapped[List["Experiment"]] = relationship()
+    experiments: Mapped[List["Experiment"]] = relationship(
+        "Experiment", cascade="all, delete-orphan", back_populates="dataset"
+    )
     explorations: Mapped[List["Exploration"]] = relationship(back_populates="dataset")
 
 
@@ -51,7 +50,10 @@ class Experiment(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-    runs: Mapped[List["Run"]] = relationship()
+    runs: Mapped[List["Run"]] = relationship(
+        "Run", cascade="all, delete-orphan", back_populates="experiment"
+    )
+    dataset = relationship("Dataset", back_populates="experiments")
 
 
 class Run(Base):
@@ -60,7 +62,9 @@ class Run(Base):
     Table to store all the information about a specific run of a model.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiment.id"))
+    experiment_id: Mapped[int] = mapped_column(
+        ForeignKey("experiment.id", ondelete="CASCADE")
+    )
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -95,6 +99,7 @@ class Run(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    experiment = relationship("Experiment", back_populates="runs")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the run to delivered and set delivery_time to now."""
