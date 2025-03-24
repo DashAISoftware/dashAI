@@ -3,9 +3,6 @@
 # Chain of converters utility
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 
-# Cross decomposition module
-from DashAI.back.converters.scikit_learn.cca import CCA # Missing Y
-
 # Decomposition module
 from DashAI.back.converters.scikit_learn.fast_ica import FastICA 
 from DashAI.back.converters.scikit_learn.incremental_pca import IncrementalPCA 

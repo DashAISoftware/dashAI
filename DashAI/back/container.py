@@ -4,7 +4,6 @@ from typing import Dict
 from kink import Container, di
 
 from DashAI.back.converters import (
-    CCA,
     PCA,
     ConverterChain,
     AdditiveChi2Sampler,
@@ -152,7 +151,6 @@ INITIAL_COMPONENTS = [
     BoxPlotExplorer,
     MultiColumnBoxPlotExplorer,
     # Converters
-    CCA,
     FastICA,
     IncrementalPCA,
     PCA,
