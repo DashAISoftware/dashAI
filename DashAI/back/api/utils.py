@@ -54,52 +54,20 @@ def parse_string_to_dict(string):
     """
     return ast.literal_eval(string)
 
-def cast_float_types(string):
+def cast_string_to_type(string):
     """
-    Cast a string to a numpy float.
-    """
-    if string == "np.float32":
-        return np.float32
-    elif string == "np.float64":
-        return np.float64
-    return string
-
-def cast_numpy_types(string):
-    """
-    Cast a string to a numpy type.
-    """
-    if string == "np.int32":
-        return np.int32
-    elif string == "np.int64":
-        return np.int64
-    return cast_float_types(string)
-
-def cast_float_and_int_types(string):
-    """
-    Cast a string to a numpy float.
+    Cast a string to a type.
     """
     if string == "int":
         return int
-    else:
-        return cast_float_types(string)
-    
-def cast_nan_or_int_types(string):
-    """
-    Cast a string to a numpy float.
-    """
-    if string == "np.nan":
-        return np.nan
-    elif string == "int":
-        return int
-    
-    return string
-
-def cast_nan_types(string):
-    """
-    Cast a string to a numpy nan or pandas NA.
-    """
-    if string == None:
-        return np.nan
+    elif string == "np.int32":
+        return np.int32
+    elif string == "np.int64":
+        return np.int64
+    elif string == "np.float32":
+        return np.float32
+    elif string == "np.float64":
+        return np.float64
     elif string == "np.nan":
         return np.nan
     elif string == "pandas.NA":

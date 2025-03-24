@@ -1,6 +1,6 @@
 from sklearn.impute import MissingIndicator as MissingIndicatorOperation
 
-from DashAI.back.api.utils import cast_nan_types
+from DashAI.back.api.utils import cast_string_to_type
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -28,11 +28,12 @@ class MissingIndicatorSchema(BaseSchema):
         None,
         "The features to consider for missing values.",
     )  # type: ignore
-    sparse: schema_field(
-        union_type(bool_field(), enum_field(["auto"])),
-        "auto",
-        "Whether the output should be a sparse matrix.",
-    )  # type: ignore
+    # Pandas output does not support sparse data. Set sparse=False
+    # sparse: schema_field(
+    #     union_type(bool_field(), enum_field(["auto"])),
+    #     "auto",
+    #     "Whether the output should be a sparse matrix.",
+    # )  # type: ignore
     error_on_new: schema_field(
         bool_field(),
         True,
@@ -48,7 +49,11 @@ class MissingIndicator(SklearnWrapper, MissingIndicatorOperation):
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)
-        self.missing_values = cast_nan_types(self.missing_values)
+        self.missing_values = cast_string_to_type(self.missing_values)
         kwargs["missing_values"] = self.missing_values
+
+        # Pandas output does not support sparse data. Set sparse=False
+        self.sparse = kwargs.pop("sparse", False)
+        kwargs["sparse"] = self.sparse
         
         super().__init__(**kwargs)

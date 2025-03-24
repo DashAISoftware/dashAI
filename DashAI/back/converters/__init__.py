@@ -4,7 +4,7 @@
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 
 # Cross decomposition module
-from DashAI.back.converters.scikit_learn.cca import CCA
+from DashAI.back.converters.scikit_learn.cca import CCA # Missing Y
 
 # Decomposition module
 from DashAI.back.converters.scikit_learn.fast_ica import FastICA 
@@ -14,24 +14,15 @@ from DashAI.back.converters.scikit_learn.truncated_svd import TruncatedSVD
 
 # Preprocessing module
 from DashAI.back.converters.scikit_learn.binarizer import Binarizer
-from DashAI.back.converters.scikit_learn.k_bins_discretizer import KBinsDiscretizer 
 from DashAI.back.converters.scikit_learn.label_binarizer import LabelBinarizer
 from DashAI.back.converters.scikit_learn.label_encoder import LabelEncoder
 from DashAI.back.converters.scikit_learn.max_abs_scaler import MaxAbsScaler
 from DashAI.back.converters.scikit_learn.min_max_scaler import MinMaxScaler
-from DashAI.back.converters.scikit_learn.multi_label_binarizer import (
-    MultiLabelBinarizer,
-)
 from DashAI.back.converters.scikit_learn.normalizer import Normalizer
-from DashAI.back.converters.scikit_learn.one_hot_encoder import OneHotEncoder 
+from DashAI.back.converters.scikit_learn.one_hot_encoder import OneHotEncoder
 from DashAI.back.converters.scikit_learn.ordinal_encoder import OrdinalEncoder 
 from DashAI.back.converters.scikit_learn.polynomial_features import PolynomialFeatures
 from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
-
-# Feature extraction from text module
-from DashAI.back.converters.scikit_learn.count_vectorizer import CountVectorizer 
-from DashAI.back.converters.scikit_learn.hashing_vectorizer import HashingVectorizer 
-from DashAI.back.converters.scikit_learn.tfidf_vectorizer import TfidfVectorizer 
 
 # Feature selection module
 from DashAI.back.converters.scikit_learn.generic_univariate_select import (
@@ -46,7 +37,7 @@ from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThres
 
 # Impute module
 from DashAI.back.converters.scikit_learn.simple_imputer import SimpleImputer 
-from DashAI.back.converters.scikit_learn.missing_indicator import MissingIndicator 
+from DashAI.back.converters.scikit_learn.missing_indicator import MissingIndicator
 from DashAI.back.converters.scikit_learn.knn_imputer import KNNImputer 
 
 # Kernel approximation module

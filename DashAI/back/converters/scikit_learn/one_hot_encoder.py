@@ -1,6 +1,6 @@
 from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 
-from DashAI.back.api.utils import cast_float_and_int_types, parse_string_to_list
+from DashAI.back.api.utils import cast_string_to_type, parse_string_to_list
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -28,11 +28,12 @@ class OneHotEncoderSchema(BaseSchema):
         None,
         "Specifies a methodology to use to drop one of the categories per feature.",
     )  # type: ignore
-    sparse_output: schema_field(
-        bool_field(),
-        True,
-        "Whether the output should be a sparse matrix or dense array.",
-    )  # type: ignore
+    # Sparse output is not supported in pandas
+    # sparse_output: schema_field(
+    #     bool_field(),
+    #     True,
+    #     "Whether the output should be a sparse matrix or dense array.",
+    # )  # type: ignore
     dtype: schema_field(
         enum_field(["int", "np.float32", "np.float64"]), # number type
         "np.float64",
@@ -83,7 +84,11 @@ class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
         kwargs["drop"] = self.drop
 
         self.dtype = kwargs.pop("dtype", "np.float64")
-        self.dtype = cast_float_and_int_types(self.dtype)
+        self.dtype = cast_string_to_type(self.dtype)
         kwargs["dtype"] = self.dtype
+
+        # Pandas output does not support sparse data. Set sparse_output=False
+        self.sparse_output = kwargs.pop("sparse_output", False)
+        kwargs["sparse_output"] = self.sparse_output
 
         super().__init__(**kwargs)

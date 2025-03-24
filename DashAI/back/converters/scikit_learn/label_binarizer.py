@@ -20,11 +20,12 @@ class LabelBinarizerSchema(BaseSchema):
         1,
         "Value with which positive labels must be encoded.",
     )  # type: ignore
-    sparse_output: schema_field(
-        bool_field(),
-        False,
-        "True if the returned array from transform is desired to be in sparse CSR format.",
-    )  # type: ignore
+    # Sparse output is not supported in pandas
+    # sparse_output: schema_field(
+    #     bool_field(),
+    #     False,
+    #     "True if the returned array from transform is desired to be in sparse CSR format.",
+    # )  # type: ignore
 
 
 class LabelBinarizer(SklearnWrapper, LabelBinarizerOperation):
