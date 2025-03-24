@@ -29,7 +29,7 @@ import { parseIndexToRange } from "../../utils/parseRange";
 /**
  * Modal to define the scope of a converter
  * @param {Object} props
- * @param {string} props.elementToConfigure - Name of the converter or pipeline to configure
+ * @param {string} props.elementToConfigure - Name of the converter or chain to configure
  * @param {Function} props.updateScope - Function to update the scope of the element
  * @param {Object} props.scopeInitialValues - Initial values of the scope
  * @param {Object} props.datasetInfo - Information about the dataset

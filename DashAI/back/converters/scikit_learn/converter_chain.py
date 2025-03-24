@@ -4,11 +4,11 @@ from DashAI.back.converters.scikit_learn.sklearn_like_converter import (
 )
 
 
-class Pipeline(BaseConverter, SklearnLikeConverter):
-    """Pipeline of transforms with a final estimator."""
+class ConverterChain(BaseConverter, SklearnLikeConverter):
+    """Chain of converters."""
 
     DESCRIPTION = (
-        "A Pipeline applies a sequence of converters to preprocess "
+        "A ConverterChain applies a sequence of converters to preprocess "
         "data, passing the output of one converter to the next, with "
         "its scope defined by the first converter."
     )

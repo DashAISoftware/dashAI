@@ -7,7 +7,7 @@ import PropTypes from "prop-types";
 import ConverterScopeModal from "./ConverterScopeModal";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { parseIndexToRange } from "../../utils/parseRange";
-import ConverterPipelineModal from "./ConverterPipelineModal";
+import ConverterChainModal from "./ConverterChainModal";
 
 /**
  * Table to display and manage the list of converters to apply to a dataset
@@ -56,9 +56,9 @@ const ConverterTable = ({
             return false;
           }
 
-          // If the converter is a pipeline, filter its content recursively
+          // If the converter is a chain, filter its content recursively
           if (
-            converter.name === "Pipeline" &&
+            converter.name === "ConverterChain" &&
             Array.isArray(converter.params.steps)
           ) {
             converter.params.steps = removeById(
@@ -78,7 +78,7 @@ const ConverterTable = ({
   );
 
   const handleUpdateParams = (id) => (newParams) => {
-    const updatePipelineParams = (converters) => {
+    const updateChainParams = (converters) => {
       return converters.map((converter) => {
         // Check if the converter is the one we need to update
         if (converter.id === id) {
@@ -88,14 +88,14 @@ const ConverterTable = ({
           };
         }
 
-        // If the converter is a Pipeline, recursively update its steps
+        // If the converter is a Chain, recursively update its steps
         if (
-          converter.name === "Pipeline" &&
+          converter.name === "ConverterChain" &&
           Array.isArray(converter.params.steps)
         ) {
           return {
             ...converter,
-            params: { steps: updatePipelineParams(converter.params.steps) },
+            params: { steps: updateChainParams(converter.params.steps) },
           };
         }
 
@@ -105,14 +105,14 @@ const ConverterTable = ({
     };
 
     // Create a new copy of the convertersToApply with updated parameters
-    const updatedConverters = updatePipelineParams(convertersToApply);
+    const updatedConverters = updateChainParams(convertersToApply);
 
     // Update the state with the new converters
     setConvertersToApply(updatedConverters);
   };
 
   const handleUpdateScope = (id) => (newScope) => {
-    // Converters that are not in a pipeline can be updated
+    // Converters that are not in a chain can be updated
     let index = convertersToApply.findIndex((converter) => converter.id === id);
     if (index !== -1) {
       let updatedConverters = [...convertersToApply];
@@ -200,12 +200,12 @@ const ConverterTable = ({
               scopeInitialValues={params.row.scope}
               datasetInfo={datasetInfo}
             />,
-            <ConverterPipelineModal
-              key="pipeline-component"
+            <ConverterChainModal
+              key="chain-component"
               converters={convertersToApply}
               setConvertersToApply={setConvertersToApply}
-              existingPipelines={convertersToApply.filter(
-                (converter) => converter.name === "Pipeline",
+              existingChains={convertersToApply.filter(
+                (converter) => converter.name === "ConverterChain",
               )}
               converterToAdd={params.row}
             />,
@@ -214,28 +214,28 @@ const ConverterTable = ({
               deleteFromTable={createDeleteHandler(params.id)}
             />,
           ].filter((action) => {
-            if (params.row.name === "Pipeline") {
-              // Pipelines doesn't have hyperparameters and can't be added to another pipeline
+            if (params.row.name === "ConverterChain") {
+              // Chains doesn't have hyperparameters and can't be added to another chain
               return (
                 action.key !== "edit-component" &&
-                action.key !== "pipeline-component"
+                action.key !== "chain-component"
               );
             }
-            let existingPipelines = convertersToApply.filter(
-              (converter) => converter.name === "Pipeline",
+            let existingChains = convertersToApply.filter(
+              (converter) => converter.name === "ConverterChain",
             );
-            let existsPipelines = existingPipelines.length > 0;
-            let inPipeline = existingPipelines.some((pipeline) => {
-              return pipeline.params.steps.some(
+            let existsChains = existingChains.length > 0;
+            let inChain = existingChains.some((chain) => {
+              return chain.params.steps.some(
                 (step) => step.id === params.row.id,
               );
             });
-            // Hide pipeline component if there are not pipelines
-            if (!existsPipelines) {
-              return action.key !== "pipeline-component";
+            // Hide chain component if there are not chains
+            if (!existsChains) {
+              return action.key !== "chain-component";
             }
-            // Hide scope component if the converter is already in a pipeline
-            if (inPipeline) {
+            // Hide scope component if the converter is already in a chain
+            if (inChain) {
               return action.key !== "scope-component";
             }
             return true;
@@ -257,7 +257,7 @@ const ConverterTable = ({
       });
 
       if (
-        converter.name === "Pipeline" &&
+        converter.name === "ConverterChain" &&
         Array.isArray(converter.params.steps)
       ) {
         converter.params.steps.forEach((step, stepIndex) => {

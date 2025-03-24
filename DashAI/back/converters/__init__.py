@@ -1,7 +1,7 @@
 # flake8: noqa
 
-# Pipeline utility
-from DashAI.back.converters.scikit_learn.pipeline import Pipeline
+# Chain of converters utility
+from DashAI.DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 
 # Cross decomposition module
 from DashAI.back.converters.scikit_learn.cca import CCA

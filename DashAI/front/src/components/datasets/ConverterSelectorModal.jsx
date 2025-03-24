@@ -63,7 +63,7 @@ const ConverterSelectorModal = ({ setConvertersToApply }) => {
   const handleAddConverter = () => {
     setOpen(false);
     let defaultParams =
-      selectedConverter.name === "Pipeline" ? { steps: [] } : defaultParameters;
+      selectedConverter.name === "ConverterChain" ? { steps: [] } : defaultParameters;
     setConvertersToApply((prev) => [
       ...prev,
       {

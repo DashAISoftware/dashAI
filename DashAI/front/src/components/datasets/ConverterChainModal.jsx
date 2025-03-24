@@ -20,21 +20,21 @@ import { ArrowBackOutlined, Cable } from "@mui/icons-material";
 import PropTypes from 'prop-types';
 
 /**
- * Modal to manage the pipeline of converters
+ * Modal to manage the chain of converters
  * @param {Object} props
  * @param {Array} props.converters - List of selected converters to apply
  * @param {Function} props.setConvertersToApply - Function to update the list of converters to apply
- * @param {Array} props.existingPipelines - List of existing pipelines
- * @param {Object} props.converterToAdd - Converter to add to the pipeline
+ * @param {Array} props.existingChains - List of existing chains
+ * @param {Object} props.converterToAdd - Converter to add to the chain
  */
-const ConverterPipelineModal = ({
+const ConverterChainModal = ({
   converters,
   setConvertersToApply,
-  existingPipelines,
+  existingChains,
   converterToAdd,
 }) => {
   const [open, setOpen] = useState(false);
-  const [selectedPipeline, setSelectedPipeline] = useState({
+  const [selectedChain, setSelectedChain] = useState({
     name: "",
     id: "",
     scope: {
@@ -45,18 +45,17 @@ const ConverterPipelineModal = ({
       steps: [],
     },
   });
-  const assignedPipeline = existingPipelines.find(
-    (pipeline) =>
-      pipeline.params.steps.some((converter) => converter.id === converterToAdd.id),
+  const assignedChain = existingChains.find(
+    (chain) =>
+      chain.params.steps.some((converter) => converter.id === converterToAdd.id),
   );
-  const alreadyInPipeline = assignedPipeline !== undefined;
+  const alreadyInChain = assignedChain !== undefined;
 
   const handleOnChange = (event) => {
-    console.log(event.target.value);
-    if (event.target.value === "Remove from pipeline") {
-      setSelectedPipeline({
-        name: "Remove from pipeline",
-        id: "Remove from pipeline",
+    if (event.target.value === "Remove from chain") {
+      setSelectedChain({
+        name: "Remove from chain",
+        id: "Remove from chain",
         scope: {
           columns: [],
           rows: [],
@@ -67,25 +66,25 @@ const ConverterPipelineModal = ({
       });
       return;
     }
-    const pipeline = existingPipelines.find((p) => p.id === event.target.value);
-    setSelectedPipeline(pipeline);
+    const chain = existingChains.find((c) => c.id === event.target.value);
+    setSelectedChain(chain);
   };
 
-  const handleAddToExistingPipeline = () => {
-    // We move the convertToAdd from convertersToApply to selectedPipeline.params.steps
+  const handleAddToExistingChain = () => {
+    // We move the convertToAdd from convertersToApply to selectedChain.params.steps
     let updatedConverters = converters.filter(
       (converter) => converter.id !== converterToAdd.id,
     );
-    let pipelineIndex = updatedConverters.findIndex(
-      (converter) => converter.id === selectedPipeline.id,
+    let chainIndex = updatedConverters.findIndex(
+      (converter) => converter.id === selectedChain.id,
     );
-    if (pipelineIndex !== -1) {
-      updatedConverters[pipelineIndex] = {
-        ...updatedConverters[pipelineIndex],
+    if (chainIndex !== -1) {
+      updatedConverters[chainIndex] = {
+        ...updatedConverters[chainIndex],
         params: {
-          ...updatedConverters[pipelineIndex].params,
+          ...updatedConverters[chainIndex].params,
           steps: [
-            ...updatedConverters[pipelineIndex].params.steps,
+            ...updatedConverters[chainIndex].params.steps,
             converterToAdd,
           ],
         },
@@ -94,29 +93,29 @@ const ConverterPipelineModal = ({
     setConvertersToApply(updatedConverters);
   };
 
-  const moveConverterFromPipelineToSequence = () => {
-    // Find the index of the pipeline that contains the converter to remove
-    const pipelineIndex = converters.findIndex((converter) =>
+  const moveConverterFromChainToSequence = () => {
+    // Find the index of the chain that contains the converter to remove
+    const chainIndex = converters.findIndex((converter) =>
       converter.params.steps.some((step) => step.id === converterToAdd.id),
     );
 
-    if (pipelineIndex === -1) {
+    if (chainIndex === -1) {
       return;
     }
 
     // Create the updated converters array
     const updatedConverters = [
-      ...converters.slice(0, pipelineIndex + 1),
+      ...converters.slice(0, chainIndex + 1),
       converterToAdd,
-      ...converters.slice(pipelineIndex + 1),
+      ...converters.slice(chainIndex + 1),
     ];
 
-    // Update the pipeline by removing the converter from its steps
-    updatedConverters[pipelineIndex] = {
-      ...updatedConverters[pipelineIndex],
+    // Update the chain by removing the converter from its steps
+    updatedConverters[chainIndex] = {
+      ...updatedConverters[chainIndex],
       params: {
-        ...updatedConverters[pipelineIndex].params,
-        steps: updatedConverters[pipelineIndex].params.steps.filter(
+        ...updatedConverters[chainIndex].params,
+        steps: updatedConverters[chainIndex].params.steps.filter(
           (step) => step.id !== converterToAdd.id,
         ),
       },
@@ -126,16 +125,16 @@ const ConverterPipelineModal = ({
   };
 
   const handleOnSave = () => {
-    // If the selected item is Remove from pipeline, we remove the converter from the pipeline
-    if (selectedPipeline.id === "Remove from pipeline") {
-      moveConverterFromPipelineToSequence();
+    // If the selected item is Remove from chain, we remove the converter from the chain
+    if (selectedChain.id === "Remove from chain") {
+      moveConverterFromChainToSequence();
       setOpen(false);
       return;
     }
 
-    // Add the converter to the selected pipeline if not already in it
-    if (!alreadyInPipeline) {
-      handleAddToExistingPipeline();
+    // Add the converter to the selected chain if not already in it
+    if (!alreadyInChain) {
+      handleAddToExistingChain();
     }
     setOpen(false);
   };
@@ -143,17 +142,17 @@ const ConverterPipelineModal = ({
   return (
     <React.Fragment>
       <Tooltip
-        title={<Typography>Manage pipeline</Typography>}
+        title={<Typography>Manage chain</Typography>}
         placement="top"
         arrow
       >
         <GridActionsCellItem
-          key="manage-pipeline-button"
+          key="manage-chain-button"
           icon={<Cable />}
-          label="Manage pipeline"
+          label="Manage chain"
           onClick={() => setOpen(true)}
         >
-          Manage pipeline
+          Manage chain
         </GridActionsCellItem>
       </Tooltip>
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -163,32 +162,32 @@ const ConverterPipelineModal = ({
               <ArrowBackOutlined />
             </IconButton>
             <Typography variant="h5" sx={{ ml: 2 }}>
-              Manage pipeline
+              Manage chain
             </Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={4} sx={{ py: 2 }} transition="ease">
             <DialogContentText>
-              A Pipeline applies a sequence of converters to preprocess data,
+              A Chain applies a sequence of converters to preprocess data,
               passing the output of one converter to the next, with its scope
               defined by the first converter.
             </DialogContentText>
             <TextField
               select
-              value={selectedPipeline.id}
+              value={selectedChain.id}
               onChange={handleOnChange}
               fullWidth
-              label="Select pipeline"
+              label="Select chain"
             >
-              {existingPipelines.map((pipeline, index) => (
-                <MenuItem key={pipeline.id} value={pipeline.id}>
-                  {pipeline.name} {index + 1}
+              {existingChains.map((chain, index) => (
+                <MenuItem key={chain.id} value={chain.id}>
+                  {chain.name} {index + 1}
                 </MenuItem>
               ))}
-              {alreadyInPipeline && (
-                <MenuItem value="Remove from pipeline">
-                  Remove from pipeline
+              {alreadyInChain && (
+                <MenuItem value="Remove from chain">
+                  Remove from chain
                 </MenuItem>
               )}
             </TextField>
@@ -207,11 +206,11 @@ const ConverterPipelineModal = ({
   );
 };
 
-ConverterPipelineModal.propTypes = {
+ConverterChainModal.propTypes = {
   converters: PropTypes.arrayOf(PropTypes.object).isRequired,
   setConvertersToApply: PropTypes.func.isRequired,
-  existingPipelines: PropTypes.arrayOf(PropTypes.object).isRequired,
+  existingChains: PropTypes.arrayOf(PropTypes.object).isRequired,
   converterToAdd: PropTypes.object.isRequired,
 };
 
-export default ConverterPipelineModal;
+export default ConverterChainModal;

@@ -89,12 +89,12 @@ function ConvertDatasetModal({ datasetId }) {
 
       const flattenConverterList = convertersToApply.reduce(
         (acc, { name, params, scope }) => {
-          // If the converter is a Pipeline, we need to store the steps separately
-          if (name === "Pipeline" && params?.steps) {
+          // If the converter is a Chain, we need to store the steps separately
+          if (name === "ConverterChain" && params?.steps) {
             acc[name] = {
               params: {
                 ...params,
-                steps: params.steps.length, // Store the number of steps in the Pipeline
+                steps: params.steps.length, // Store the number of steps in the ConverterChain
               },
               scope: scope,
               order: sequenceOrder,

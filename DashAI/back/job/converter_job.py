@@ -11,7 +11,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
-from DashAI.back.converters.scikit_learn.pipeline import Pipeline
+from DashAI.DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     save_dataset,
@@ -74,11 +74,11 @@ class ConverterListJob(BaseJob):
 
             return converter_constructor(**converter_parameters)
 
-        def instantiate_pipeline(
+        def instantiate_chain(
             steps: List,
             camel_to_snake: re.Pattern,
             converter_submodule_inverse_index: Dict,
-        ) -> Pipeline:
+        ) -> ConverterChain:
             converter_instances = []
 
             for converter_name, converter_params in steps:
@@ -90,7 +90,7 @@ class ConverterListJob(BaseJob):
                 )
                 converter_instances.append(converter_instance)
 
-            return Pipeline(steps=converter_instances)
+            return ConverterChain(steps=converter_instances)
 
         # Extract job parameters
         converter_list_id = self.kwargs["converter_list_id"]
@@ -180,17 +180,17 @@ class ConverterListJob(BaseJob):
                 converter_name = converters_sorted_list[i][0]
                 converter_params = converters_sorted_list[i][1]
 
-                # Check if it's a pipeline
-                if converter_name == "Pipeline":
+                # Check if it's a chain of converters
+                if converter_name == "ConverterChain":
                     try:
                         n_steps = int(converter_params["params"]["steps"])
 
-                        # Get the pipeline steps
-                        pipeline_steps = converters_sorted_list[i+1:i+n_steps+1]
+                        # Get the steps
+                        chain_steps = converters_sorted_list[i+1:i+n_steps+1]
 
-                        # Instantiate pipeline
-                        pipeline_instance = instantiate_pipeline(
-                            pipeline_steps,
+                        # Instantiate chain of converters
+                        chain_instance = instantiate_chain(
+                            chain_steps,
                             camel_to_snake,
                             converter_submodule_inverse_index,
                         )
@@ -198,16 +198,16 @@ class ConverterListJob(BaseJob):
                         # Get scope or use default
                         scope = converter_params.get("scope", {"columns": [], "rows": []})
 
-                        # Add pipeline to instances
+                        # Add converter chain to instances
                         converter_instances.append({
-                            "name": "Pipeline",
-                            "instance": pipeline_instance,
+                            "name": "ConverterChain",
+                            "instance": chain_instance,
                             "scope": scope
                         })
                         i += n_steps + 1
                     except Exception as e:
                         log.exception(e)
-                        raise JobError(f"Error instantiating pipeline: {e}") from e
+                        raise JobError(f"Error instantiating converter chain: {e}") from e
 
                 else:
                     # Regular converter
