@@ -6,7 +6,7 @@ import {
   Update as UpdateIcon,
 } from "@mui/icons-material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { Button, Grid, Paper, Typography } from "@mui/material";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 
 import {
@@ -207,6 +207,7 @@ function ExperimentsTable({
         loading={loading}
         slots={{
           toolbar: GridToolbar,
+          loadingOverlay: LinearProgress,
         }}
       />
     </Paper>

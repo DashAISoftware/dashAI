@@ -53,8 +53,6 @@ const defaultNewExp = {
   input_columns: [],
   output_columns: [],
   splits: {
-    has_changed: false,
-    is_random: true,
     train: 0.6,
     validation: 0.2,
     test: 0.2,
@@ -94,6 +92,11 @@ export default function NewExperimentModal({
           run.params,
           run.optimizer_name || "",
           run.optimizer_parameters || {},
+          run.plot_history_path || "",
+          run.plot_slice_path || "",
+          run.plot_contour_path || "",
+          run.plot_importance_path || "",
+          run.goal_metric || "",
           "",
         );
       } catch (error) {

@@ -23,7 +23,6 @@ export default function useSchema({ modelName = null } = {}) {
 
         setModel(formattedSchema);
       } catch (error) {
-        console.log(error);
       } finally {
         setLoading(false);
       }

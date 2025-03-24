@@ -1,8 +1,16 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../.."))
-sys.path.insert(0, os.path.abspath("../../DashAI/back"))
+# Get the directory of conf.py (e.g. /home/ctamblay/CENIA/DashAI/docs/source)
+conf_dir = os.path.dirname(os.path.realpath(__file__))
+
+# The repository root is two directories up (i.e. /home/ctamblay/CENIA/DashAI)
+repo_root = os.path.abspath(os.path.join(conf_dir, os.pardir, os.pardir))
+print("conf_dir:", conf_dir)  # Debug: prints conf.py directory
+print("repo_root:", repo_root)  # Debug: should print the repository root
+
+# Insert the repository root into sys.path so that modules can be imported
+sys.path.insert(0, repo_root)
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -24,10 +32,13 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx_rtd_theme",
 ]
-
+autosummary_generate = True
+add_module_names = False
 templates_path = ["_templates"]
 exclude_patterns = []
 
@@ -43,6 +54,7 @@ html_static_path = [
 html_theme = "sphinx_rtd_theme"
 html_logo = "_static/logo.png"
 html_favicon = "_static/favicon.ico"
+
 
 html_theme_options = {
     "logo_only": True,

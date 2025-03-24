@@ -20,6 +20,7 @@ function HyperparameterOptimizationStep({ newExp, setNewExp, setNextEnabled }) {
       setNextEnabled(true);
     }
   }, [JSON.stringify(newExp.runs)]);
+
   return (
     <Grid
       container
