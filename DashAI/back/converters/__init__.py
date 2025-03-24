@@ -15,8 +15,8 @@ from DashAI.back.converters.scikit_learn.truncated_svd import TruncatedSVD
 # Preprocessing module
 from DashAI.back.converters.scikit_learn.binarizer import Binarizer
 from DashAI.back.converters.scikit_learn.k_bins_discretizer import KBinsDiscretizer 
-from DashAI.back.converters.scikit_learn.label_binarizer import LabelBinarizer # takes 2 but 3 were given
-from DashAI.back.converters.scikit_learn.label_encoder import LabelEncoder # takes 2 but 3 were given
+from DashAI.back.converters.scikit_learn.label_binarizer import LabelBinarizer
+from DashAI.back.converters.scikit_learn.label_encoder import LabelEncoder
 from DashAI.back.converters.scikit_learn.max_abs_scaler import MaxAbsScaler
 from DashAI.back.converters.scikit_learn.min_max_scaler import MinMaxScaler
 from DashAI.back.converters.scikit_learn.multi_label_binarizer import (

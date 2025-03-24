@@ -31,8 +31,12 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         # Check for supervised transformers that require y
         if requires_y and y is None:
             raise ValueError("This transformer requires y for fitting")
-
-        super(BaseConverter, self).fit(X, y)
+        
+        if requires_y:
+            super(BaseConverter, self).fit(X, y)
+        else:
+            super(BaseConverter, self).fit(X)
+            
         return self
 
     def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
