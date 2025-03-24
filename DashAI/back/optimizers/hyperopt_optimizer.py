@@ -1,8 +1,5 @@
 import importlib
 
-import numpy as np
-import plotly
-import plotly.graph_objects as go
 from hyperopt import Trials, fmin, hp, rand, tpe  # noqa: F401
 
 from DashAI.back.core.schema_fields import (
@@ -15,7 +12,7 @@ from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
 class HyperOptSchema(BaseSchema):
-    max_evals: schema_field(
+    n_trials: schema_field(
         int_field(gt=0),
         placeholder=10,
         description="The parameter 'n_trials' is the quantity of trials"
@@ -26,12 +23,6 @@ class HyperOptSchema(BaseSchema):
         placeholder="tpe",
         description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
         ". Must be in string format and can be 'scale' or 'auto'.",
-    )  # type: ignore
-    metric: schema_field(
-        enum_field(enum=["Accuracy", "F1", "Precision", "Recall"]),
-        placeholder="Accuracy",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels."
-        "Must be in string format and can be 'scale' or 'auto'.",
     )  # type: ignore
 
 
@@ -44,10 +35,9 @@ class HyperOptOptimizer(BaseOptimizer):
         "TranslationTask",
     ]
 
-    def __init__(self, max_evals=None, sampler=None, metric=None):
-        self.max_evals = max_evals
+    def __init__(self, n_trials=None, sampler=None):
+        self.n_trials = n_trials
         self.sampler = importlib.import_module(f"hyperopt.{sampler}").suggest
-        self.metric = metric["class"]
 
     def search_space(self, hyperparams_data):
         """
@@ -64,29 +54,37 @@ class HyperOptOptimizer(BaseOptimizer):
         search_space = {}
 
         for hyperparameter, values in hyperparams_data.items():
-            search_space[hyperparameter] = hp.quniform(
-                hyperparameter, values[0], values[1], 1
-            )
+            if isinstance(values[0], int):
+                search_space[hyperparameter] = hp.quniform(
+                    hyperparameter, values[0], values[1], 1
+                )
+            elif isinstance(values[0], float):
+                search_space[hyperparameter] = hp.uniform(
+                    hyperparameter, values[0], values[1]
+                )
         return search_space
 
-    def optimize(self, model, input_dataset, output_dataset, parameters, task):
+    def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
         """
         Optimization process
 
         Args:
             model (class): class for the model from the current experiment
-            dataset (dict): dict with the data to train and validation
+            input_dataset (dict): dict with train dataset
+            output_dataset (dict): dict with validation dataset
             parameters (dict): dict with the information to create the search space
             metric (class): class for the metric to optimize
+            task (string): Name of the current task
 
         Returns
         -------
-            best_model: Object from the class model with the best hyperparameters found.
+            None
         """
         self.model = model
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
+        self.metric = metric["class"]
         search_space = self.search_space(self.parameters)
 
         if task == "TextClassificationTask":
@@ -99,7 +97,7 @@ class HyperOptOptimizer(BaseOptimizer):
                     self.input_dataset["train"], self.output_dataset["train"]
                 )
                 y_pred = model_eval.predict(input_dataset["validation"])
-                score = -1 * self.metric.score(output_dataset["validation"], y_pred)
+                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
                 return score
 
         else:
@@ -113,58 +111,26 @@ class HyperOptOptimizer(BaseOptimizer):
                     self.input_dataset["train"], self.output_dataset["train"]
                 )
                 y_pred = model_eval.predict(input_dataset["validation"])
-                score = -1 * self.metric.score(output_dataset["validation"], y_pred)
+                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
                 return score
 
         trials = Trials()
-        best_params = fmin(
+        fmin(
             fn=objective,
             space=search_space,
             algo=self.sampler,
-            max_evals=self.max_evals,
+            max_evals=self.n_trials,
+            trials=trials,
         )
         self.trials = trials
-        best_model = self.model
-        for hyperparameter, value in best_params.items():
-            setattr(best_model, hyperparameter, value.astype(int))
-
-        best_model.fit(self.input_dataset["train"], self.output_dataset["train"])
-        self.model = best_model
 
     def get_model(self):
         return self.model
 
-    def get_metrics(self):
-        x = list(range(len(self.trials.trials)))
-        y = [self.trials["result"]["loss"] for trial in self.trials.trials]
-        return x, y
-
-    def create_plot(self, x, y):
-        max_cumulative = np.maximum.accumulate(y)
-        fig = go.Figure()
-        fig.add_trace(
-            go.Scatter(
-                x=x,
-                y=y,
-                mode="markers",
-                name="Optimization History",
-                marker_color="blue",
-                marker_size=8,
-            )
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=x,
-                y=max_cumulative,
-                mode="lines",
-                name="Current Max Value",
-                line_color="red",
-                line_width=2,
-            )
-        )
-        fig.update_layout(
-            title="Optimization History with Current Max Value",
-            xaxis_title="Trial",
-            yaxis_title="Objective Value",
-        )
-        return plotly.io.to_json(fig)
+    def get_trials_values(self):
+        trials = []
+        for trial in self.trials:
+            if trial["result"]["status"] == "ok":
+                params = {key: val[0] for key, val in trial["misc"]["vals"].items()}
+                trials.append({"params": params, "value": trial["result"]["loss"]})
+        return trials

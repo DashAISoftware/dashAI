@@ -34,8 +34,6 @@ function FormSchemaRenderFields({
         return;
       }
 
-      console.log("name", name, "value", value);
-
       handleUpdateSchema({ [name]: value }, autoSave ? onFormSubmit : null);
       formik?.setFieldValue(name, value);
     };

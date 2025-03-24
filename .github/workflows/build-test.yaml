@@ -19,7 +19,7 @@ jobs:
 
       - run: yarn install --frozen-lockfile
       - run: yarn build
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build
@@ -49,7 +49,7 @@ jobs:
       - run: pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
       - name: Make build directory
         run: mkdir DashAI/front/build
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build

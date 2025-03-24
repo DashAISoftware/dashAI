@@ -21,6 +21,7 @@ export default function ExplainersDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { modelName } = location.state ?? "";
+  const { taskName } = location.state ?? "";
   const [showNewGlobalExplainerModal, setShowNewGlobalExplainerModal] =
     useState(false);
   const [showNewLocalExplainerModal, setShowNewLocalExplainerModal] =
@@ -42,6 +43,7 @@ export default function ExplainersDashboard() {
 
   const explainerConfig = {
     runId: id,
+    taskName: taskName,
   };
 
   const ExplainersTable = ({ scope, handleNewExplainer, description }) => {

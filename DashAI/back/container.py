@@ -13,13 +13,12 @@ from DashAI.back.dependencies.database import setup_sqlite_db
 from DashAI.back.dependencies.job_queues import SimpleJobQueue
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability import (
-    FitKernelShap,
     KernelShap,
     PartialDependence,
     PermutationFeatureImportance,
 )
-from DashAI.back.job import ExplainerJob, GenerativeJob, ModelJob
-from DashAI.back.metrics import F1, Accuracy, Bleu, Precision, Recall
+from DashAI.back.job import DatasetJob, ExplainerJob, ModelJob, PredictJob, GenerativeJob
+from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
@@ -27,20 +26,24 @@ from DashAI.back.models import (
     DistilBertTransformer,
     DummyClassifier,
     GemmaModel,
+    GradientBoostingR,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
+    LinearRegression,
+    LinearSVR,
     LogisticRegression,
+    MLPRegression,
     OpusMtEnESTransformer,
     QwenModel,
     RandomForestClassifier,
+    RandomForestRegression,
+    RidgeRegression,
     ViTTransformer,
 )
-from DashAI.back.optimizers import (
-    HyperOptOptimizer,
-    OptunaOptimizer,
-)
+from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.tasks import (
     ImageClassificationTask,
+    RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
     TranslationTask,
@@ -57,20 +60,27 @@ INITIAL_COMPONENTS = [
     TranslationTask,
     ImageClassificationTask,
     LLMGenerationTask,
+    RegressionTask,
     # Models
     SVC,
     DecisionTreeClassifier,
     DummyClassifier,
+    GradientBoostingR,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
     LogisticRegression,
+    MLPRegression,
     RandomForestClassifier,
+    RandomForestRegression,
     DistilBertTransformer,
     ViTTransformer,
     OpusMtEnESTransformer,
     BagOfWordsTextClassificationModel,
     QwenModel,
     GemmaModel,
+    RidgeRegression,
+    LinearSVR,
+    LinearRegression,
     # Dataloaders
     CSVDataLoader,
     JSONDataLoader,
@@ -82,6 +92,9 @@ INITIAL_COMPONENTS = [
     Precision,
     Recall,
     Bleu,
+    Ter,
+    MAE,
+    RMSE,
     # Optimizers
     OptunaOptimizer,
     HyperOptOptimizer,
@@ -89,12 +102,12 @@ INITIAL_COMPONENTS = [
     ExplainerJob,
     ModelJob,
     GenerativeJob,
+    PredictJob,
+    DatasetJob,
     # Explainers
     KernelShap,
     PartialDependence,
     PermutationFeatureImportance,
-    # Explainers Fit Schema
-    FitKernelShap,
 ]
 
 
