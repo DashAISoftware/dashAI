@@ -8,7 +8,7 @@ import ConverterScopeModal from "./converterModals/ConverterScopeModal";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { parseIndexToRange } from "../../utils/parseRange";
 import ConverterChainModal from "./converterModals/ConverterChainModal";
-
+import { useSnackbar } from "notistack";
 /**
  * Table to display and manage the list of converters to apply to a dataset
  * @param {Object} props
@@ -23,6 +23,7 @@ const ConverterTable = ({
 }) => {
   const [datasetInfo, setDatasetInfo] = useState({});
   const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
 
   const getDatasetInfo = async () => {
     setLoading(true);
