@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Settings } from "@mui/icons-material";
-import FormSchemaDialog from "../shared/FormSchemaDialog";
-import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
+import FormSchemaDialog from "../../shared/FormSchemaDialog";
+import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
 import { Tooltip, Typography } from "@mui/material";
 
 /**

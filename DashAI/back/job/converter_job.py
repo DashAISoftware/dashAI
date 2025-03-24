@@ -11,7 +11,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
-from DashAI.DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
+from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     save_dataset,

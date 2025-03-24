@@ -2,12 +2,12 @@ import React, { useCallback, useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Grid, Typography } from "@mui/material";
 import DeleteItemModal from "../custom/DeleteItemModal";
-import ConverterEditorModal from "./ConverterEditorModal";
+import ConverterEditorModal from "./converterModals/ConverterEditorModal";
 import PropTypes from "prop-types";
-import ConverterScopeModal from "./ConverterScopeModal";
+import ConverterScopeModal from "./converterModals/ConverterScopeModal";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { parseIndexToRange } from "../../utils/parseRange";
-import ConverterChainModal from "./ConverterChainModal";
+import ConverterChainModal from "./converterModals/ConverterChainModal";
 
 /**
  * Table to display and manage the list of converters to apply to a dataset

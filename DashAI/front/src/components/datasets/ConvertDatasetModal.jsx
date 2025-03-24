@@ -16,7 +16,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import DatasetSummaryTable from "./DatasetSummaryTable";
-import ConverterSelectorModal from "./ConverterSelectorModal";
+import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";
 import { useSnackbar } from "notistack";
 import { enqueueConverterJob as enqueueConverterJobRequest } from "../../api/job";
@@ -27,7 +27,7 @@ import {
 } from "../../api/converter";
 import { ConverterListStatus } from "../../types/converter";
 import { getExperimentsExist } from "../../api/datasets";
-import CopyDatasetModal from "./CopyDatasetModal";
+import CopyDatasetModal from "./converterModals/CopyDatasetModal";
 
 /**
  * Modal to modify a dataset by applying a list of converters

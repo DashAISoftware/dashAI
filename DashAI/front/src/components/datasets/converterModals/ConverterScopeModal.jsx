@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { GridActionsCellItem } from "@mui/x-data-grid";
-import { parseRangeToIndex } from "../../utils/parseRange";
+import { parseRangeToIndex } from "../../../utils/parseRange";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -22,9 +22,9 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
-import BoxWithTitle from "../shared/BoxWithTitle";
-import InputWithDebounce from "../shared/InputWithDebounce";
-import { parseIndexToRange } from "../../utils/parseRange";
+import BoxWithTitle from "../../shared/BoxWithTitle";
+import InputWithDebounce from "../../shared/InputWithDebounce";
+import { parseIndexToRange } from "../../../utils/parseRange";
 
 /**
  * Modal to define the scope of a converter

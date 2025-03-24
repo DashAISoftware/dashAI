@@ -10,10 +10,10 @@ import {
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { Help, AddCircleOutline as AddIcon } from "@mui/icons-material";
-import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
+import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
 
-import { getComponents as getComponentsRequest } from "../../api/component";
-import useSchema from "../../hooks/useSchema";
+import { getComponents as getComponentsRequest } from "../../../api/component";
+import useSchema from "../../../hooks/useSchema";
 import uuid from "react-uuid";
 import PropTypes from "prop-types";
 

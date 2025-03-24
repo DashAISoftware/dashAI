@@ -9,7 +9,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import { copyDataset } from "../../api/datasets";
+import { copyDataset } from "../../../api/datasets";
 
 /**
  * Modal to handle copying a dataset or not before modifications if it is used in existing experiments
