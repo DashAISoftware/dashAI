@@ -26,6 +26,7 @@ from DashAI.back.models import (
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
+    GemmaModel,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
     LogisticRegression,
@@ -69,6 +70,7 @@ INITIAL_COMPONENTS = [
     OpusMtEnESTransformer,
     BagOfWordsTextClassificationModel,
     QwenModel,
+    GemmaModel,
     # Dataloaders
     CSVDataLoader,
     JSONDataLoader,
