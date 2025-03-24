@@ -12,6 +12,7 @@ function SetNameAndExplainerStep({
   setNewExpl,
   setNextEnabled,
   scope,
+  taskName,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -34,6 +35,7 @@ function SetNameAndExplainerStep({
     try {
       const explainers = await getComponentsRequest({
         selectTypes: [`${scope}Explainer`],
+        relatedComponent: taskName,
       });
       setExplainers(filterObjects(explainers));
     } catch (error) {

@@ -112,10 +112,11 @@ async def get_run_by_id(
         return run
 
 
-@router.get("/plot/{run_id}")
+@router.get("/plot/{run_id}/{plot_type}")
 @inject
 async def get_hyperparameter_optimization_plot(
     run_id: int,
+    plot_type: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     with session_factory() as db:
@@ -134,7 +135,14 @@ async def get_hyperparameter_optimization_plot(
                     detail="Run hyperaparameter plot not found",
                 )
 
-            plot_path = run_model[0].plot_path
+            if plot_type == 1:
+                plot_path = run_model[0].plot_history_path
+            elif plot_type == 2:
+                plot_path = run_model[0].plot_slice_path
+            elif plot_type == 3:
+                plot_path = run_model[0].plot_contour_path
+            else:
+                plot_path = run_model[0].plot_importance_path
 
             with open(plot_path, "rb") as file:
                 plot = pickle.load(file)
@@ -189,6 +197,11 @@ async def upload_run(
                 parameters=params.parameters,
                 optimizer_name=params.optimizer_name,
                 optimizer_parameters=params.optimizer_parameters,
+                plot_history_path=params.plot_history_path,
+                plot_slice_path=params.plot_slice_path,
+                plot_contour_path=params.plot_contour_path,
+                plot_importance_path=params.plot_importance_path,
+                goal_metric=params.goal_metric,
                 name=params.name,
                 description=params.description,
             )

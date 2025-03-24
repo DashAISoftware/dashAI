@@ -1,25 +1,22 @@
 """DashAI JSON Dataloader."""
 
-import os
 import shutil
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from beartype import beartype
-from datasets import DatasetDict, load_dataset
-from starlette.datastructures import UploadFile
+from datasets import load_dataset
 
 from DashAI.back.core.schema_fields import (
-    bool_field,
     none_type,
     schema_field,
     string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dataloader import (
-    BaseDataLoader,
-    DataloaderMoreOptionsSchema,
-    DatasetSplitsSchema,
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
 )
+from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 
 class JSONDataloaderSchema(BaseSchema):
@@ -43,16 +40,6 @@ class JSONDataloaderSchema(BaseSchema):
             "records" orient in pandas), set this value as null.
         """,
     )  # type: ignore
-    splits_in_folders: schema_field(
-        bool_field(),
-        False,
-        (
-            "If your data has folders that define the splits select 'true', "
-            "otherwise 'false'."
-        ),
-    )  # type: ignore
-    splits: DatasetSplitsSchema
-    more_options: DataloaderMoreOptionsSchema
 
 
 class JSONDataLoader(BaseDataLoader):
@@ -81,15 +68,15 @@ class JSONDataLoader(BaseDataLoader):
     @beartype
     def load_data(
         self,
-        filepath_or_buffer: Union[UploadFile, str],
+        filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-    ) -> DatasetDict:
+    ) -> DashAIDataset:
         """Load the uploaded JSON dataset into a DatasetDict.
 
         Parameters
         ----------
-        filepath_or_buffer : Union[UploadFile, str], optional
+        filepath_or_buffer : str
             An URL where the dataset is located or a FastAPI/Uvicorn uploaded file
             object.
         temp_path : str
@@ -105,33 +92,15 @@ class JSONDataLoader(BaseDataLoader):
         """
         self._check_params(params)
         field = params["data_key"]
+        prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
 
-        if isinstance(filepath_or_buffer, str):
+        if prepared_path[1] == "file":
             dataset = load_dataset(
                 "json",
-                data_files=filepath_or_buffer,
+                data_files=prepared_path[0],
                 field=field,
             )
-
-        elif isinstance(filepath_or_buffer, UploadFile):
-            files_path = self.extract_files(temp_path, filepath_or_buffer)
-            if files_path.split("/")[-1] == "files":
-                try:
-                    dataset = load_dataset(
-                        "json",
-                        data_dir=files_path,
-                        field=field,
-                    )
-                finally:
-                    shutil.rmtree(temp_path, ignore_errors=True)
-            else:
-                try:
-                    dataset = load_dataset(
-                        "json",
-                        data_files=files_path,
-                        field=field,
-                    )
-                finally:
-                    os.remove(files_path)
-
-        return dataset
+        else:
+            dataset = load_dataset("json", data_dir=prepared_path[0], field=field)
+            shutil.rmtree(prepared_path[0])
+        return to_dashai_dataset(dataset)

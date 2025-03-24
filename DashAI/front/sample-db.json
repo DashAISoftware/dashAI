@@ -67,9 +67,7 @@
       "name": "CSV Data",
       "help": "Use CSV files to upload the data. You can use a .csv file or multiple .csv files in a .zip file.",
       "description": "You can upload your data in a .csv file or in multiple .csv files in a .zip, where you can have the definition of splits in folders as shown above. \n If you only have one file or multiple files without the folder definition for the splits, you can set them up later. \n Make sure that all the CSV files have the same features.",
-      "images": [
-        "/info_images/csv_files.png"
-      ],
+      "images": ["/info_images/csv_files.png"],
       "type": "object"
     },
     {
@@ -77,10 +75,7 @@
       "name": "JSON Data",
       "help": "Use JSON files to upload the data. You can use a .json file or multiple .json files in a .zip file.",
       "description": "You can upload your data in a .json file or in multiple .json files in a .zip, where you can have the definition of splits in folders as shown above. \n If you only have one file or multiple files without the folder definition for the splits, you can set them up later. \n The JSON files have to follow the format that specify in the last figure, the data have to be in a key, that contains an array with the samples of the data or rows in JSON objects, where each one have the features of data or columns like key/value pairs. \n Make sure that all the JSON files have the same features and format.",
-      "images": [
-        "/info_images/json_files.png",
-        "/info_images/json_format.svg"
-      ],
+      "images": ["/info_images/json_files.png", "/info_images/json_format.svg"],
       "type": "object"
     }
   ],
@@ -108,12 +103,7 @@
             "description": "A separator character delimits the data in a CSV file.",
             "type": "string",
             "default": "Comma (,)",
-            "enum": [
-              "Comma (,)",
-              "Semicolon (;)",
-              "Space",
-              "Tabulation"
-            ]
+            "enum": ["Comma (,)", "Semicolon (;)", "Space", "Tabulation"]
           }
         ]
       },
@@ -127,7 +117,7 @@
           }
         ]
       },
-      "splits_in_folders": {
+      "dataset_is_already_split": {
         "oneOf": [
           {
             "error_msg": "Need to select 'true' if you have folders that define the splits, otherwise 'false'.",

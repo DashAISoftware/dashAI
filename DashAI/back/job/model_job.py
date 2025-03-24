@@ -11,14 +11,16 @@ from sqlalchemy.orm import Session
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
+    prepare_for_experiment,
     select_columns,
-    update_dataset_splits,
+    split_dataset,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
+from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers import BaseOptimizer
 from DashAI.back.tasks import BaseTask
 
@@ -56,11 +58,13 @@ class ModelJob(BaseJob):
             _intersect_component_lists,
         )
 
+        # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
         db: Session = self.kwargs["db"]
 
         run: Run = db.get(Run, run_id)
         try:
+            # Get the experiment, dataset, task, metrics and splits
             experiment: Experiment = db.get(Experiment, run.experiment_id)
             if not experiment:
                 raise JobError(f"Experiment {run.experiment_id} does not exist in DB.")
@@ -87,14 +91,17 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-                selected_metrics = {
+                # Get all the metrics
+                all_metrics = {
                     component_dict["name"]: component_dict
                     for component_dict in component_registry.get_components_by_types(
                         select="Metric"
                     )
                 }
+                # Get the intersection between the metrics and the task
+                # related components
                 selected_metrics = _intersect_component_lists(
-                    selected_metrics,
+                    all_metrics,
                     component_registry.get_related_components(experiment.task_name),
                 )
                 metrics: List[BaseMetric] = [
@@ -108,26 +115,24 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-                splits = json.loads(experiment.splits)
-                if splits["has_changed"]:
-                    new_splits = {
-                        "train": splits["train"],
-                        "test": splits["test"],
-                        "validation": splits["validation"],
-                    }
-                    loaded_dataset = update_dataset_splits(
-                        loaded_dataset,
-                        new_splits,
-                        splits["is_random"],
-                    )
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )
+                splits = json.loads(experiment.splits)
+                prepared_dataset = prepare_for_experiment(
+                    dataset=prepared_dataset,
+                    splits=splits,
+                    output_columns=experiment.output_columns,
+                )
+
                 x, y = select_columns(
                     prepared_dataset,
                     experiment.input_columns,
                     experiment.output_columns,
                 )
+                x = split_dataset(x)
+                y = split_dataset(y)
+
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -143,94 +148,47 @@ class ModelJob(BaseJob):
                     f"Unable to find Model with name {run.model_name} in registry.",
                 ) from e
             try:
-                if experiment.task_name == "TextClassificationTask":
-                    run_fixed_parameters = {
-                        key: (
-                            parameter["fixed_value"]
-                            if isinstance(parameter, dict) and "optimize" in parameter
-                            else parameter
-                        )
-                        for key, parameter in run.parameters["tabular_classifier"][
-                            "properties"
-                        ]["params"]["comp"]["params"].items()
-                        if (
-                            isinstance(parameter, dict)
-                            and parameter.get("optimize") is False
-                        )
-                        or isinstance(parameter, (bool, str))
-                    }
-                    run_optimizable_parameters = {
-                        key: (parameter["lower_bound"], parameter["upper_bound"])
-                        for key, parameter in run.parameters["tabular_classifier"][
-                            "properties"
-                        ]["params"]["comp"]["params"].items()
-                        if (
-                            isinstance(parameter, dict)
-                            and parameter.get("optimize") is True
-                        )
-                    }
-                    submodel: BaseModel = component_registry[
-                        run.parameters["tabular_classifier"]["properties"]["params"][
-                            "comp"
-                        ]["component"]
-                    ]["class"](**run_fixed_parameters)
-                    model: BaseModel = run_model_class(submodel, **run.parameters)
+                factory = ModelFactory(run_model_class, run.parameters)
+                model: BaseModel = factory.model
+                run_optimizable_parameters = factory.optimizable_parameters
 
-                else:
-                    run_fixed_parameters = {
-                        key: (
-                            parameter["fixed_value"]
-                            if isinstance(parameter, dict) and "optimize" in parameter
-                            else parameter
-                        )
-                        for key, parameter in run.parameters.items()
-                        if (
-                            isinstance(parameter, dict)
-                            and parameter.get("optimize") is False
-                        )
-                        or isinstance(parameter, (bool, str))
-                    }
-                    run_optimizable_parameters = {
-                        key: (parameter["lower_bound"], parameter["upper_bound"])
-                        for key, parameter in run.parameters.items()
-                        if (
-                            isinstance(parameter, dict)
-                            and parameter.get("optimize") is True
-                        )
-                    }
-                    model: BaseModel = run_model_class(**run_fixed_parameters)
             except Exception as e:
                 log.exception(e)
                 raise JobError(
                     f"Unable to instantiate model using run {run_id}",
                 ) from e
-            try:
-                # Optimizer configuration
-                run_optimizer_class = component_registry[run.optimizer_name]["class"]
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    f"Unable to find Model with name {run.optimizer_name} in registry.",
-                ) from e
-
-            try:
-                run.optimizer_parameters["metric"] = selected_metrics[
-                    run.optimizer_parameters["metric"]
-                ]
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    "Metric is not compatible with the Task",
-                ) from e
-            try:
-                optimizer: BaseOptimizer = run_optimizer_class(
-                    **run.optimizer_parameters
-                )
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    "Optimizer parameters are not compatible with the optimizer",
-                ) from e
+            if experiment.task_name in [
+                "TextClassificationTask",
+                "TabularClassificationTask",
+            ]:
+                try:
+                    # Optimizer configuration
+                    run_optimizer_class = component_registry[run.optimizer_name][
+                        "class"
+                    ]
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Unable to find Model with name {run.optimizer_name} in "
+                        "registry.",
+                    ) from e
+                if run.goal_metric != "":
+                    try:
+                        goal_metric = selected_metrics[run.goal_metric]
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Metric is not compatible with the Task",
+                        ) from e
+                    try:
+                        optimizer: BaseOptimizer = run_optimizer_class(
+                            **run.optimizer_parameters
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Optimizer parameters not compatible with the optimizer",
+                        ) from e
             try:
                 run.set_status_as_started()
                 db.commit()
@@ -245,30 +203,53 @@ class ModelJob(BaseJob):
                     model.fit(x["train"], y["train"])
                 else:
                     optimizer.optimize(
-                        model, x, y, run_optimizable_parameters, experiment.task_name
+                        model,
+                        x,
+                        y,
+                        run_optimizable_parameters,
+                        goal_metric,
+                        experiment.task_name,
                     )
                     model = optimizer.get_model()
                     # Generate hyperparameter plot
-                    X, Y = optimizer.get_metrics()
-                    plot = optimizer.create_plot(X, Y)
-                    plot_filename = f"hyperparameter_optimization_plot_{run_id}.pickle"
-                    plot_path = os.path.join(config["RUNS_PATH"], plot_filename)
-                    with open(plot_path, "wb") as file:
-                        pickle.dump(plot, file)
+                    trials = optimizer.get_trials_values()
+                    plot_filenames, plots = optimizer.create_plots(
+                        trials, run_id, n_params=len(run_optimizable_parameters)
+                    )
+                    plot_paths = []
+                    for filename, plot in zip(plot_filenames, plots):
+                        plot_path = os.path.join(config["RUNS_PATH"], filename)
+                        with open(plot_path, "wb") as file:
+                            pickle.dump(plot, file)
+                            plot_paths.append(plot_path)
             except Exception as e:
                 log.exception(e)
                 raise JobError(
                     "Model training failed",
                 ) from e
             if run_optimizable_parameters != {}:
-                try:
-                    run.plot_path = plot_path
-                    db.commit()
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Hyperparameter plot path saving failed",
-                    ) from e
+                if len(run_optimizable_parameters) >= 2:
+                    try:
+                        run.plot_history_path = plot_paths[0]
+                        run.plot_slice_path = plot_paths[1]
+                        run.plot_contour_path = plot_paths[2]
+                        run.plot_importance_path = plot_paths[3]
+                        db.commit()
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Hyperparameter plot path saving failed",
+                        ) from e
+                else:
+                    try:
+                        run.plot_history_path = plot_paths[0]
+                        run.plot_slice_path = plot_paths[1]
+                        db.commit()
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Hyperparameter plot path saving failed",
+                        ) from e
             try:
                 run.set_status_as_finished()
                 db.commit()
@@ -279,16 +260,7 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-                model_metrics = {
-                    split: {
-                        metric.__name__: metric.score(
-                            y[split],
-                            model.predict(x[split]),
-                        )
-                        for metric in metrics
-                    }
-                    for split in ["train", "validation", "test"]
-                }
+                model_metrics = factory.evaluate(x, y, metrics)
             except Exception as e:
                 log.exception(e)
                 raise JobError(

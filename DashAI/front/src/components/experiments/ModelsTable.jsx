@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Grid, Paper, Typography } from "@mui/material";
 import DeleteItemModal from "../custom//DeleteItemModal";
 import EditModelDialog from "./EditModelDialog";
+import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -11,20 +12,27 @@ import EditModelDialog from "./EditModelDialog";
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  */
 function ModelsTable({ newExp, setNewExp }) {
+  const [selectedMetric, setSelectedMetric] = useState({});
+
   const handleDeleteModel = (id) => {
     setNewExp({
       ...newExp,
       runs: newExp.runs.filter((model) => model.id !== id),
     });
   };
-
   const handleUpdateParameters = (id) => (newValues) => {
+    console.log(id);
+    console.log(newValues);
     setNewExp((prevExp) => {
       return {
         ...prevExp,
         runs: prevExp.runs.map((model) => {
           if (model.id === id) {
-            return { ...model, params: newValues };
+            return {
+              ...model,
+              params: newValues,
+              goal_metric: selectedMetric[id],
+            };
           }
           return model;
         }),
@@ -32,25 +40,57 @@ function ModelsTable({ newExp, setNewExp }) {
     });
   };
 
-  const columns = React.useMemo(
-    () => [
-      {
-        field: "name",
-        headerName: "Name",
-        minWidth: 450,
-        editable: false,
-      },
-      {
-        field: "model",
-        headerName: "Model",
-        minWidth: 450,
-        editable: false,
-      },
-      {
-        field: "actions",
-        type: "actions",
-        minWidth: 100,
-        getActions: (params) => [
+  const handleAddMetric = async (name, id) => {
+    // sets the default values of the newly added optimizer, making optional the parameter configuration
+
+    const metricRun = newExp.runs.map((run) => {
+      if (run.id === id) {
+        return {
+          ...run,
+          goal_metric: name,
+        };
+      }
+      return run;
+    });
+
+    setNewExp((prevExp) => {
+      return {
+        ...prevExp,
+        runs: metricRun,
+      };
+    });
+  };
+
+  const handleSelectedMetric = async (name, id) => {
+    setSelectedMetric((prevSelectedMetric) => {
+      return {
+        ...prevSelectedMetric,
+        [id]: name,
+      };
+    });
+
+    handleAddMetric(name, id);
+  };
+
+  const columns = [
+    {
+      field: "name",
+      headerName: "Name",
+      flex: 1,
+      editable: false,
+    },
+    {
+      field: "model",
+      headerName: "Model",
+      flex: 1,
+      editable: false,
+    },
+    {
+      field: "actions",
+      type: "actions",
+      flex: 0.5,
+      getActions: (params) => {
+        return [
           <EditModelDialog
             key="edit-component"
             modelToConfigure={params.row.model}
@@ -61,11 +101,24 @@ function ModelsTable({ newExp, setNewExp }) {
             key="delete-component"
             deleteFromTable={() => handleDeleteModel(params.id)}
           />,
-        ],
+        ];
       },
-    ],
-    [handleDeleteModel],
-  );
+    },
+    {
+      field: "metric",
+      headerName: "Optimization Metric (Optional)",
+      flex: 1,
+      renderCell: (params) => (
+        <ModelsTableSelectMetric
+          taskName={newExp.task_name}
+          metricName={selectedMetric[params.row.id]}
+          handleSelectedMetric={(metricName) =>
+            handleSelectedMetric(metricName, params.row.id)
+          }
+        />
+      ),
+    },
+  ];
 
   return (
     <Paper sx={{ py: 1, px: 2 }}>

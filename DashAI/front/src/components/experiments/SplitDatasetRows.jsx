@@ -10,6 +10,7 @@ import {
   RadioGroup,
   FormHelperText,
 } from "@mui/material";
+import BooleanInput from "../configurableObject/Inputs/BooleanInput";
 
 function SplitDatasetRows({
   datasetInfo,
@@ -18,35 +19,68 @@ function SplitDatasetRows({
   rowsPartitionsPercentage,
   setRowsPartitionsPercentage,
   setSplitsReady,
-  isRandom,
-  setIsRandom,
+  splitType,
+  setSplitType,
+  SPLIT_TYPES,
+  shuffle,
+  setShuffle,
+  stratify,
+  setStratify,
+  seed,
+  setSeed,
 }) {
   const totalRows = datasetInfo.total_rows;
+  const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
+    2,
+  );
+  const validationDatasetPercentage = (
+    datasetInfo.val_size / totalRows
+  ).toFixed(2);
+  const testDatasetPercentage = (datasetInfo.test_size / totalRows).toFixed(2);
 
-  // handle rows numbers change state
-  const [rowsPartitionsError, setRowsPartitionsError] = useState(false);
-  const [rowsPartitionsErrorText, setRowsPartitionsErrorText] = useState("");
+  const hasPredefinedSplits =
+    trainDatasetPercentage > 0 ||
+    validationDatasetPercentage > 0 ||
+    testDatasetPercentage > 0;
 
   const checkSplit = (train, validation, test) => {
     return train + validation + test === 1;
   };
 
-  const handleRowsPreferenceChange = (event) => {
-    if (event.target.value === "splitByIndex") {
-      setIsRandom(false);
+  // handle rows numbers change state
+  const disabledTextFieldStyle = {
+    "& .MuiInputBase-input.Mui-disabled": {
+      WebkitTextFillColor: "#999",
+    },
+    "& .MuiInputLabel-root.Mui-disabled": {
+      color: "#bbb",
+    },
+  };
+  const [rowsPartitionsError, setRowsPartitionsError] = useState(false);
+  const [rowsPartitionsErrorText, setRowsPartitionsErrorText] = useState("");
+
+  const handleSplitTypeChange = (event) => {
+    const newType = event.target.value;
+    setSplitType(newType);
+
+    if (newType === SPLIT_TYPES.PREDEFINED) {
+      setRowsPartitionsError(false);
+      setSplitsReady(true);
+    }
+    if (newType === SPLIT_TYPES.RANDOM) {
+      setSplitType(newType);
       setRowsPartitionsPercentage({ train: 0.6, test: 0.2, validation: 0.2 });
-    } else {
-      setIsRandom(true);
+    }
+    if (newType === SPLIT_TYPES.MANUAL) {
+      setSplitType(newType);
       setRowsPartitionsIndex({ train: [], test: [], validation: [] });
     }
-    setRowsPartitionsError(false);
-    setRowsPartitionsErrorText("");
   };
 
   const handleRowsChange = (event) => {
     const value = event.target.value;
     const id = event.target.id; // TODO: check that the training, validation and testing rows dont overlap
-    if (isRandom === false) {
+    if (splitType === SPLIT_TYPES.MANUAL) {
       try {
         const rowsIndex = parseRangeToIndex(value, totalRows);
         switch (id) {
@@ -99,10 +133,39 @@ function SplitDatasetRows({
     }
   };
 
+  const handleShuffleChange = (value) => {
+    setShuffle(value);
+    if (!value) {
+      setStratify(false);
+    }
+  };
+
+  const handleStratifyChange = (value) => {
+    if (shuffle) {
+      setStratify(value);
+    } else {
+      setStratify(false);
+    }
+  };
+
+  const handleSeedChange = (event) => {
+    setSeed(event.target.value);
+  };
+
+  useEffect(() => {
+    if (hasPredefinedSplits) {
+      setSplitType(SPLIT_TYPES.PREDEFINED);
+    } else {
+      setSplitType(SPLIT_TYPES.RANDOM);
+    }
+  }, [hasPredefinedSplits]);
+
   useEffect(() => {
     // check if splits doesnt have errors and arent empty
-    if (
-      isRandom === false &&
+    if (splitType === SPLIT_TYPES.PREDEFINED) {
+      setSplitsReady(true);
+    } else if (
+      splitType === SPLIT_TYPES.MANUAL &&
       !rowsPartitionsError &&
       rowsPartitionsIndex.train.length >= 1 &&
       rowsPartitionsIndex.validation.length >= 1 &&
@@ -110,7 +173,7 @@ function SplitDatasetRows({
     ) {
       setSplitsReady(true);
     } else if (
-      isRandom === true &&
+      splitType === SPLIT_TYPES.RANDOM &&
       !rowsPartitionsError &&
       rowsPartitionsPercentage.train > 0 &&
       rowsPartitionsPercentage.validation > 0 &&
@@ -120,7 +183,13 @@ function SplitDatasetRows({
     } else {
       setSplitsReady(false);
     }
-  }, [rowsPartitionsIndex, rowsPartitionsPercentage, rowsPartitionsError]);
+  }, [
+    rowsPartitionsIndex,
+    rowsPartitionsPercentage,
+    rowsPartitionsError,
+    splitType,
+  ]);
+
   return (
     <React.Fragment>
       <Grid container spacing={1}>
@@ -132,20 +201,71 @@ function SplitDatasetRows({
         </Grid>
       </Grid>
       <RadioGroup
-        defaultValue={"random"}
+        value={splitType}
+        onChange={handleSplitTypeChange}
         name="radio-buttons-group"
-        onChange={handleRowsPreferenceChange}
       >
         <FormControlLabel
-          value="random"
+          value={SPLIT_TYPES.PREDEFINED}
           control={<Radio />}
-          label="Use random rows by specifying wich portion of the dataset you want to use for each subset"
+          label={
+            hasPredefinedSplits
+              ? "Use predefined splits from dataset"
+              : "Use predefined splits from dataset (not available)"
+          }
+          sx={{ my: 1 }}
+          disabled={!hasPredefinedSplits}
+        />
+        {splitType === SPLIT_TYPES.PREDEFINED && (
+          <Grid container direction="row" spacing={4}>
+            <Grid item xs={4}>
+              <TextField
+                id="train"
+                label="Train"
+                value={trainDatasetPercentage}
+                autoComplete="off"
+                type="number"
+                size="small"
+                disabled
+                sx={disabledTextFieldStyle}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                id="val"
+                label="Validation"
+                value={validationDatasetPercentage}
+                disabled
+                autoComplete="off"
+                type="number"
+                size="small"
+                sx={disabledTextFieldStyle}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                id="test"
+                label="Test"
+                value={testDatasetPercentage}
+                autoComplete="off"
+                type="number"
+                size="small"
+                disabled
+                sx={disabledTextFieldStyle}
+              />
+            </Grid>
+          </Grid>
+        )}
+        <FormControlLabel
+          value={SPLIT_TYPES.RANDOM}
+          control={<Radio />}
+          label="Use random rows by specifying which portion of the dataset you want to use for each subset"
           sx={{ my: 1 }}
         />
-        {isRandom === true ? (
-          <React.Fragment>
+        <React.Fragment>
+          {splitType === SPLIT_TYPES.RANDOM && (
             <Grid container direction="row" spacing={4}>
-              <Grid item sx={{ xs: 4 }}>
+              <Grid item xs={4}>
                 <TextField
                   id="train"
                   label="Train"
@@ -157,7 +277,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item sx={{ xs: 4 }}>
+              <Grid item xs={4}>
                 <TextField
                   id="validation"
                   label="Validation"
@@ -169,7 +289,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item sx={{ xs: 4 }}>
+              <Grid item xs={4}>
                 <TextField
                   id="test"
                   label="Test"
@@ -181,26 +301,51 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
+              <Grid item xs={12} sx={{ ml: 3 }}>
+                <BooleanInput
+                  name="shuffle"
+                  value={shuffle}
+                  label="Shuffle"
+                  onChange={handleShuffleChange}
+                  description="Determines whether the data will be shuffled when defining the sets or not. It must be true to shuffle the data, otherwise false."
+                />
+                <BooleanInput
+                  name="stratify"
+                  value={stratify}
+                  label="Stratify"
+                  onChange={handleStratifyChange}
+                  description="Defines whether the data will be proportionally separated according to the distribution of classes in each set. Shuffle must be true to stratify the data."
+                />
+                <TextField
+                  id="seed"
+                  label="Seed"
+                  value={seed}
+                  onChange={handleSeedChange}
+                  autoComplete="off"
+                  type="number"
+                  size="small"
+                  helperText="Enter a seed value for reproducibility (optional)"
+                />
+              </Grid>
             </Grid>
-            {rowsPartitionsError ? (
-              <FormHelperText>{rowsPartitionsErrorText}</FormHelperText>
-            ) : (
-              <React.Fragment />
-            )}
-          </React.Fragment>
-        ) : (
-          <React.Fragment />
-        )}
+          )}
+          {rowsPartitionsError ? (
+            <FormHelperText>{rowsPartitionsErrorText}</FormHelperText>
+          ) : (
+            <React.Fragment />
+          )}
+        </React.Fragment>
+        <React.Fragment />
         <FormControlLabel
-          value="splitByIndex"
+          value={SPLIT_TYPES.MANUAL}
           control={<Radio />}
           label="Use manual splitting by specifying the row indexes of each subset"
           sx={{ my: 1 }}
         />
-        {isRandom === false ? (
-          <React.Fragment>
+        <React.Fragment>
+          {splitType === SPLIT_TYPES.MANUAL && (
             <Grid container direction="row" spacing={4}>
-              <Grid item sx={{ xs: 4 }}>
+              <Grid item xs={4}>
                 <TextField
                   id="train"
                   label="Train"
@@ -210,7 +355,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item sx={{ xs: 4 }}>
+              <Grid item xs={4}>
                 <TextField
                   id="validation"
                   label="Validation"
@@ -220,7 +365,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item sx={{ xs: 4 }}>
+              <Grid item xs={4}>
                 <TextField
                   id="test"
                   label="Test"
@@ -231,15 +376,14 @@ function SplitDatasetRows({
                 />
               </Grid>
             </Grid>
-            {rowsPartitionsError ? (
-              <FormHelperText>{rowsPartitionsErrorText}</FormHelperText>
-            ) : (
-              <React.Fragment />
-            )}
-          </React.Fragment>
-        ) : (
-          <React.Fragment />
-        )}
+          )}
+          {rowsPartitionsError ? (
+            <FormHelperText>{rowsPartitionsErrorText}</FormHelperText>
+          ) : (
+            <React.Fragment />
+          )}
+        </React.Fragment>
+        <React.Fragment />
       </RadioGroup>
     </React.Fragment>
   );
@@ -266,7 +410,12 @@ SplitDatasetRows.propTypes = {
   }),
   setRowsPartitionsPercentage: PropTypes.func.isRequired,
   setSplitsReady: PropTypes.func.isRequired,
-  isRandom: PropTypes.bool,
-  setIsRandom: PropTypes.func.isRequired,
+  splitType: PropTypes.string.isRequired,
+  setSplitType: PropTypes.func.isRequired,
+  SPLIT_TYPES: PropTypes.object.isRequired,
+  shuffle: PropTypes.bool.isRequired,
+  setShuffle: PropTypes.func.isRequired,
+  stratify: PropTypes.bool.isRequired,
+  setStratify: PropTypes.func.isRequired,
 };
 export default SplitDatasetRows;
