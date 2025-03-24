@@ -16,7 +16,7 @@ router = APIRouter()
 
 class ConverterParams(PydanticBaseModel):
     order: int = 0
-    params: Dict[str, Union[str, int, float, bool]] = None
+    params: Dict[str, Union[str, int, float, bool, None]] = None
     scope: Dict[str, List[int]] = None
 
     def serialize(self) -> Dict[str, Any]:
