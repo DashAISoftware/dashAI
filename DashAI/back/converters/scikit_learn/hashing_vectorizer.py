@@ -2,6 +2,7 @@ from sklearn.feature_extraction.text import (
     HashingVectorizer as HashingVectorizerOperation,
 )
 
+from DashAI.back.api.utils import cast_float_and_int_types, parse_string_to_list
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -51,7 +52,7 @@ class HashingVectorizerSchema(BaseSchema):
     #     "Override the string tokenization step while preserving the preprocessing and n-grams generation steps.",
     # )  # type: ignore
     stop_words: schema_field(
-        none_type(enum_field(["english"])),  # {‘english’} or list
+        none_type(string_field()),  # {‘english’} or list
         None,
         "If ‘english’, a built-in stop word list for English is used.",
     )  # type: ignore
@@ -60,11 +61,16 @@ class HashingVectorizerSchema(BaseSchema):
         r"(?u)\b\w\w+\b",
         "Regular expression denoting what constitutes a ‘token’.",
     )  # type: ignore
-    # ngram_range: schema_field(
-    #     string_field(), # tuple
-    #     "1,1",
-    #     "The lower and upper boundary of the range of n-values for different n-grams to be extracted.",
-    # )  # type: ignore
+    ngram_min: schema_field(
+        int_field(ge=1),
+        None,
+        "The minimum n-gram length.",
+    )  # type: ignore
+    ngram_max: schema_field(
+        int_field(ge=1),
+        None,
+        "The maximum n-gram length.",
+    )  # type: ignore
     analyzer: schema_field(
         enum_field(
             ["word", "char", "char_wb"]
@@ -92,11 +98,11 @@ class HashingVectorizerSchema(BaseSchema):
         True,
         "Whether to alternate the sign of the hash value for each feature.",
     )  # type: ignore
-    # dtype: schema_field(
-    #     none_type(enum_field(["np.float32", "np.float64"])),  # dtype
-    #     "np.float64",
-    #     "Type of the matrix returned.",
-    # )  # type: ignore
+    dtype: schema_field(
+        none_type(enum_field(["np.float32", "np.float64"])),  # dtype
+        "np.float64",
+        "Type of the matrix returned.",
+    )  # type: ignore
 
 
 class HashingVectorizer(SklearnWrapper, HashingVectorizerOperation):
@@ -106,3 +112,19 @@ class HashingVectorizer(SklearnWrapper, HashingVectorizerOperation):
     DESCRIPTION = (
         "Convert a collection of text documents to a matrix of token occurrences."
     )
+
+    def __init__(self, **kwargs):
+        self.stop_words = kwargs.pop("stop_words", None)
+        if self.stop_words != None and self.stop_words != "english":
+            self.stop_words = [parse_string_to_list(self.stop_words)]
+        kwargs["stop_words"] = self.stop_words
+        
+        self.ngram_min = kwargs.pop("ngram_min", 1)
+        self.ngram_max = kwargs.pop("ngram_max", 1)
+        kwargs["ngram_range"] = (self.ngram_min, self.ngram_max)
+
+        self.dtype = kwargs.pop("dtype", "np.float64")
+        self.dtype = cast_float_and_int_types(self.dtype)
+        kwargs["dtype"] = self.dtype
+
+        super().__init__(**kwargs)

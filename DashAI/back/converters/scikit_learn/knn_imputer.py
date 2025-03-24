@@ -1,5 +1,6 @@
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
+from DashAI.back.api.utils import cast_nan_types
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -59,3 +60,10 @@ class KNNImputer(SklearnWrapper, KNNImputerOperation):
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
+
+    def __init__(self, **kwargs):
+        self.missing_values = kwargs.pop("missing_values", None)
+        self.missing_values = cast_nan_types(self.missing_values)
+        kwargs["missing_values"] = self.missing_values
+        
+        super().__init__(**kwargs)

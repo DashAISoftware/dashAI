@@ -1,5 +1,6 @@
 from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 
+from DashAI.back.api.utils import cast_float_and_int_types, parse_string_to_list
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -9,19 +10,20 @@ from DashAI.back.core.schema_fields import (
     none_type,
     schema_field,
     union_type,
+    string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
 class OneHotEncoderSchema(BaseSchema):
-    # categories: schema_field(
-    #     list, # ‘auto’ or a list of array-like
-    #     None,
-    #     "The categories of each feature.",
-    # )  # type: ignore
+    categories: schema_field(
+        string_field(), # ‘auto’ or a list of array-like
+        "auto",
+        "The categories of each feature.",
+    )  # type: ignore
     drop: schema_field(
         none_type(
-            enum_field(["first", "if_binary"])
+            string_field()
         ),  # {‘first’, ‘if_binary’} or an array-like of shape (n_features,)
         None,
         "Specifies a methodology to use to drop one of the categories per feature.",
@@ -31,11 +33,11 @@ class OneHotEncoderSchema(BaseSchema):
         True,
         "Whether the output should be a sparse matrix or dense array.",
     )  # type: ignore
-    # dtype: schema_field(
-    #     enum_field(["int", "np.float32", "np.float64"]), # number type
-    #     "np.float64",
-    #     "Desired dtype of output.",
-    # )  # type: ignore
+    dtype: schema_field(
+        enum_field(["int", "np.float32", "np.float64"]), # number type
+        "np.float64",
+        "Desired dtype of output.",
+    )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "ignore", "infrequent_if_exist"]),
         "error",
@@ -52,15 +54,15 @@ class OneHotEncoderSchema(BaseSchema):
         "Maximum number of categories to encode.",
     )  # type: ignore
     # Added in version 1.3
-    # feature_name_combiner: schema_field(
-    #     enum_field(
-    #         [
-    #             "concat",
-    #         ]
-    #     ),  # “concat” or callable
-    #     "concat",
-    #     "Method used to combine feature names.",
-    # )  # type: ignore
+    feature_name_combiner: schema_field(
+        enum_field(
+            [
+                "concat",
+            ]
+        ),  # “concat” or callable
+        "concat",
+        "Method used to combine feature names.",
+    )  # type: ignore
 
 
 class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
@@ -68,3 +70,20 @@ class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
 
     SCHEMA = OneHotEncoderSchema
     DESCRIPTION = "Encode categorical integer features as a one-hot numeric array."
+
+    def __init__(self, **kwargs):
+        self.categories = kwargs.pop("categories", "auto")
+        if self.categories != "auto":
+            self.categories = [parse_string_to_list(self.categories)]
+        kwargs["categories"] = self.categories
+
+        self.drop = kwargs.pop("drop", None)
+        if self.drop != None and self.drop != "first" and self.drop != "if_binary":
+            self.drop = [parse_string_to_list(self.drop)]
+        kwargs["drop"] = self.drop
+
+        self.dtype = kwargs.pop("dtype", "np.float64")
+        self.dtype = cast_float_and_int_types(self.dtype)
+        kwargs["dtype"] = self.dtype
+
+        super().__init__(**kwargs)

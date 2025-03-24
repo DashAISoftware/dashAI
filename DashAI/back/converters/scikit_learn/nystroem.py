@@ -1,5 +1,6 @@
 from sklearn.kernel_approximation import Nystroem as NystroemOperation
 
+from DashAI.back.api.utils import parse_string_to_dict
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     float_field,
@@ -32,11 +33,11 @@ class NystroemSchema(BaseSchema):
         None,
         "The degree of the polynomial kernel.",
     )  # type: ignore
-    # kernel_params: schema_field(
-    #     none_type(dict), # dict
-    #     None,
-    #     "Additional parameters (keyword arguments) for the kernel function.",
-    # )  # type: ignore
+    kernel_params: schema_field(
+        none_type(string_field()), # dict
+        None,
+        "Additional parameters (keyword arguments) for the kernel function.",
+    )  # type: ignore
     n_components: schema_field(
         int_field(ge=1),
         100,
@@ -59,3 +60,11 @@ class Nystroem(SklearnWrapper, NystroemOperation):
 
     SCHEMA = NystroemSchema
     DESCRIPTION = "Approximates the feature map of an RBF kernel by Monte Carlo approximation of its Fourier transform."
+
+    def __init__(self, **kwargs):
+        self.kernel_params = kwargs.pop("kernel_params", None)
+        if self.kernel_params != None:
+            self.kernel_params = parse_string_to_dict(self.kernel_params)
+        kwargs["kernel_params"] = self.kernel_params
+
+        super().__init__(**kwargs)

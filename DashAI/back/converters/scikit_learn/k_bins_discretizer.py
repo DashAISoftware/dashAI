@@ -1,5 +1,6 @@
 from sklearn.preprocessing import KBinsDiscretizer as KBinsDiscretizerOperation
 
+from DashAI.back.api.utils import cast_float_types
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -26,14 +27,14 @@ class KBinsDiscretizerSchema(BaseSchema):
         "quantile",
         "Strategy used to define the widths of the bins.",
     )  # type: ignore
-    # dtype: schema_field(
-    #     none_type(enum_field(["np.float32", "np.float64"])), # {np.float32, np.float64}
-    #     None,
-    #     "The desired data-type for the output. If None, output dtype is consistent with input dtype.",
-    # )  # type: ignore
-    sub_sample: schema_field(
+    dtype: schema_field(
+        none_type(enum_field(["np.float32", "np.float64"])), # {np.float32, np.float64}
+        None,
+        "The desired data-type for the output. If None, output dtype is consistent with input dtype.",
+    )  # type: ignore
+    subsample: schema_field(
         none_type(int_field(gt=0)),
-        None,  # Changed in versions 1.3 and 1.5
+        200000,  # Changed in versions 1.3 and 1.5
         "Maximum number of samples used to estimate the quantiles for computing the bins.",
     )  # type: ignore
     random_state: schema_field(
@@ -48,3 +49,11 @@ class KBinsDiscretizer(SklearnWrapper, KBinsDiscretizerOperation):
 
     SCHEMA = KBinsDiscretizerSchema
     DESCRIPTION = "Bin continuous data into intervals."
+
+    def __init__(self, **kwargs):
+       self.dtype = kwargs.pop("dtype", None)
+       if self.dtype is not None:
+           self.dtype = cast_float_types(self.dtype)
+       kwargs["dtype"] = self.dtype
+       
+       super().__init__(**kwargs)

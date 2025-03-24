@@ -1,5 +1,6 @@
 from sklearn.decomposition import PCA as PCAOperation
 
+from DashAI.back.api.utils import create_random_state
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -67,16 +68,14 @@ class PCASchema(BaseSchema):
             "LU decomposition ('LU') or left untouched ('QR'). Not used by ARPACK."
         ),
     )  # type: ignore
-    # random_state: schema_field(
-    #     none_type(
-    #         int_field(),
-    #     ),  # int, RandomState instance or None
-    #     None,
-    #     (
-    #         "Used when the ‘arpack’ or ‘randomized’ solvers are used. "
-    #         "Pass an int for reproducible results across multiple function calls."
-    #     ),
-    # )  # type: ignore
+    random_state: schema_field(
+        none_type(union_type(int_field(), enum_field(["RandomState"]))),  # int, RandomState instance or None
+        None,
+        (
+            "Used when the ‘arpack’ or ‘randomized’ solvers are used. "
+            "Pass an int for reproducible results across multiple function calls."
+        ),
+    )  # type: ignore
 
 
 class PCA(SklearnWrapper, PCAOperation):
@@ -84,3 +83,11 @@ class PCA(SklearnWrapper, PCAOperation):
 
     SCHEMA = PCASchema
     DESCRIPTION = "Principal component analysis (PCA)."
+
+    def __init__(self, **kwargs):
+        self.random_state = kwargs.pop("random_state", None)
+        if self.random_state == "RandomState":
+            self.random_state = create_random_state()
+        kwargs["random_state"] = self.random_state
+
+        super().__init__(**kwargs)

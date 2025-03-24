@@ -4,16 +4,22 @@ from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
     schema_field,
+    float_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
 class MinMaxScalerSchema(BaseSchema):
-    # feature_range: schema_field(
-    #     tuple, # tuple (min, max),
-    #     (0, 1),
-    #     "Desired range of transformed data.",
-    # )  # type: ignore
+    min_range: schema_field(
+        float_field(ge=0),
+        0,
+        "The minimum value of the range to scale the data to.",
+    )  # type: ignore
+    max_range: schema_field(
+        float_field(ge=0),
+        1,
+        "The maximum value of the range to scale the data to.",
+    )  # type: ignore
     copy: schema_field(
         bool_field(),
         True,
@@ -31,3 +37,9 @@ class MinMaxScaler(SklearnWrapper, MinMaxScalerOperation):
 
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = "Transform features by scaling each feature to a given range."
+
+    def __init__(self, **kwargs):
+        self.min_range = kwargs.pop("min_range", 0)
+        self.max_range = kwargs.pop("max_range", 1)
+        kwargs["feature_range"] = (self.min_range, self.max_range)
+        super().__init__(**kwargs)
