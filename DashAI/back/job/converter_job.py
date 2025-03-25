@@ -347,4 +347,4 @@ class ConverterListJob(BaseJob):
             db.commit()
             raise JobError(
                 f"Error applying converters to dataset {dataset_id}: {e}"
-            ) from e 
+            ) from e
