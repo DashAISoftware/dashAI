@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { ArrowBackOutlined, Cable } from "@mui/icons-material";
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
 
 /**
  * Modal to manage the chain of converters
@@ -45,9 +45,8 @@ const ConverterChainModal = ({
       steps: [],
     },
   });
-  const assignedChain = existingChains.find(
-    (chain) =>
-      chain.params.steps.some((converter) => converter.id === converterToAdd.id),
+  const assignedChain = existingChains.find((chain) =>
+    chain.params.steps.some((converter) => converter.id === converterToAdd.id),
   );
   const alreadyInChain = assignedChain !== undefined;
 
@@ -186,9 +185,7 @@ const ConverterChainModal = ({
                 </MenuItem>
               ))}
               {alreadyInChain && (
-                <MenuItem value="Remove from chain">
-                  Remove from chain
-                </MenuItem>
+                <MenuItem value="Remove from chain">Remove from chain</MenuItem>
               )}
             </TextField>
           </Stack>
