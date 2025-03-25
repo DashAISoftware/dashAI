@@ -70,8 +70,8 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
 
   // checks if there is at least 1 model added to enable the "Next" button
   useEffect(() => {
-    const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
-    if (newExp.runs.length && allModelsHaveMetric) {
+    // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
+    if (newExp.runs.length) {
       setNextEnabled(true);
     } else {
       setNextEnabled(false);

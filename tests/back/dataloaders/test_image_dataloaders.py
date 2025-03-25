@@ -14,7 +14,7 @@ def test_image_dataloader_from_zip():
         dataset = image_dataloader.load_data(
             filepath_or_buffer=test_dataset_path,
             temp_path="tests/back/dataloaders/beans_dataset_small",
-            params={},
+            params={"name": "beans_dataset_small"},
         )
 
         assert isinstance(dataset, DashAIDataset)
