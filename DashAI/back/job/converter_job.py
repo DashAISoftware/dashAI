@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class ConverterListJob(BaseJob):
-    """ConverterListJob class to modify a dataset by applying a 
+    """ConverterListJob class to modify a dataset by applying a
     sequence of converters."""
 
     def set_status_as_delivered(self) -> None:
@@ -347,4 +347,4 @@ class ConverterListJob(BaseJob):
             db.commit()
             raise JobError(
                 f"Error applying converters to dataset {dataset_id}: {e}"
-            ) from e
+            ) from e 
