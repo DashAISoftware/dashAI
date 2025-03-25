@@ -1,5 +1,6 @@
 from sklearn.decomposition import TruncatedSVD as TruncatedSVDOperation
 
+from DashAI.back.api.utils import create_random_state
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -7,6 +8,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     none_type,
     schema_field,
+    union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
@@ -38,7 +40,7 @@ class TruncatedSVDSchema(BaseSchema):
         "Method to normalize the eigenvectors.",
     )  # type: ignore
     random_state: schema_field(
-        none_type(int_field()),  # int, RandomState instance or None
+        none_type(union_type(int_field(), enum_field(["RandomState"]))),  # int, RandomState instance or None
         None,
         "Used during randomized svd. Pass an int for reproducible results across multiple function calls.",
     )  # type: ignore
@@ -58,3 +60,9 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
         "Contrary to PCA, this estimator does not center the data before computing the singular value decomposition. "
         "This means it can work with sparse matrices efficiently."
     )
+
+    def __init__(self, **kwargs):
+        self.random_state = kwargs.pop("random_state", None)
+        if self.random_state == "RandomState":
+            self.random_state = create_random_state()
+        kwargs["random_state"] = self.random_state

@@ -1,6 +1,6 @@
 from sklearn.kernel_approximation import Nystroem as NystroemOperation
 
-from DashAI.back.api.utils import parse_string_to_dict
+from DashAI.back.api.utils import create_random_state, parse_string_to_dict
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     float_field,
@@ -8,6 +8,8 @@ from DashAI.back.core.schema_fields import (
     none_type,
     schema_field,
     string_field,
+    union_type,
+    enum_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
@@ -44,7 +46,7 @@ class NystroemSchema(BaseSchema):
         "The number of features to construct.",
     )  # type: ignore
     random_state: schema_field(
-        none_type(int_field()),  # int, RandomState instance or None
+        none_type(union_type(int_field(), enum_field(["RandomState"]))),  # int, RandomState instance or None
         None,
         "The seed of the pseudo random number generator to use when shuffling the data.",
     )  # type: ignore
@@ -66,5 +68,10 @@ class Nystroem(SklearnWrapper, NystroemOperation):
         if self.kernel_params != None:
             self.kernel_params = parse_string_to_dict(self.kernel_params)
         kwargs["kernel_params"] = self.kernel_params
+
+        self.random_state = kwargs.pop("random_state", None)
+        if self.random_state == "RandomState":
+            self.random_state = create_random_state()
+        kwargs["random_state"] = self.random_state
 
         super().__init__(**kwargs)
