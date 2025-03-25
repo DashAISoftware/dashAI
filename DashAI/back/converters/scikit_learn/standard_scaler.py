@@ -19,7 +19,10 @@ class StandardScalerSchema(BaseSchema):
     with_std: schema_field(
         bool_field(),
         True,
-        "If True, scale the data to unit variance (or equivalently, unit standard deviation).",
+        (
+            "If True, scale the data to unit variance (or equivalently, unit "
+            "standard deviation)."
+        ),
     )  # type: ignore
 
 

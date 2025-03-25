@@ -16,12 +16,12 @@ class ConverterChain(BaseConverter, SklearnLikeConverter):
     def __init__(self, steps):
         self.steps = steps
 
-    def fit(self, X, y=None):
+    def fit(self, x, y=None):
         for step in self.steps:
-            step.fit(X, y)
+            step.fit(x, y)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, x, y=None):
         for step in self.steps:
-            X = step.transform(X, y)
-        return X
+            x = step.transform(x, y)
+        return x

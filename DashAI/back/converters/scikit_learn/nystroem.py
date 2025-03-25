@@ -3,13 +3,13 @@ from sklearn.kernel_approximation import Nystroem as NystroemOperation
 from DashAI.back.api.utils import create_random_state, parse_string_to_dict
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
+    enum_field,
     float_field,
     int_field,
     none_type,
     schema_field,
     string_field,
     union_type,
-    enum_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
@@ -23,7 +23,10 @@ class NystroemSchema(BaseSchema):
     gamma: schema_field(
         none_type(float_field(gt=0)),
         None,
-        "The gamma parameter for the RBF, laplacian, polynomial, exponential chi2 and sigmoid kernels.",
+        (
+            "The gamma parameter for the RBF, laplacian, polynomial, "
+            "exponential chi2 and sigmoid kernels."
+        ),
     )  # type: ignore
     coef0: schema_field(
         none_type(float_field()),
@@ -36,7 +39,7 @@ class NystroemSchema(BaseSchema):
         "The degree of the polynomial kernel.",
     )  # type: ignore
     kernel_params: schema_field(
-        none_type(string_field()), # dict
+        none_type(string_field()),  # dict
         None,
         "Additional parameters (keyword arguments) for the kernel function.",
     )  # type: ignore
@@ -46,9 +49,14 @@ class NystroemSchema(BaseSchema):
         "The number of features to construct.",
     )  # type: ignore
     random_state: schema_field(
-        none_type(union_type(int_field(), enum_field(["RandomState"]))),  # int, RandomState instance or None
+        none_type(
+            union_type(int_field(), enum_field(["RandomState"]))
+        ),  # int, RandomState instance or None
         None,
-        "The seed of the pseudo random number generator to use when shuffling the data.",
+        (
+            "The seed of the pseudo random number generator to use when "
+            "shuffling the data."
+        ),
     )  # type: ignore
     n_jobs: schema_field(
         none_type(int_field()),
@@ -61,11 +69,14 @@ class Nystroem(SklearnWrapper, NystroemOperation):
     """Scikit-learn's Nystroem wrapper for DashAI."""
 
     SCHEMA = NystroemSchema
-    DESCRIPTION = "Approximates the feature map of an RBF kernel by Monte Carlo approximation of its Fourier transform."
+    DESCRIPTION = (
+        "Approximates the feature map of an RBF kernel by Monte Carlo "
+        "approximation of its Fourier transform."
+    )
 
     def __init__(self, **kwargs):
         self.kernel_params = kwargs.pop("kernel_params", None)
-        if self.kernel_params != None:
+        if self.kernel_params is not None:
             self.kernel_params = parse_string_to_dict(self.kernel_params)
         kwargs["kernel_params"] = self.kernel_params
 

@@ -1,13 +1,12 @@
 import pandas as pd
 import torch
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModel, AutoTokenizer
+
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import (
-    string_field,
-    int_field,
     enum_field,
+    int_field,
     schema_field,
-    none_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
@@ -66,7 +65,9 @@ class Embedding(HuggingFaceWrapper):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.pooling_strategy = kwargs.get("pooling_strategy", "mean")
-        self.model_name = kwargs.get("model_name", "sentence-transformers/all-MiniLM-L6-v2")
+        self.model_name = kwargs.get(
+            "model_name", "sentence-transformers/all-MiniLM-L6-v2"
+        )
         self.device = kwargs.get("device", "cuda")
         self.max_length = kwargs.get("max_length", 512)
         self.batch_size = kwargs.get("batch_size", 32)

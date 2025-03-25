@@ -1,15 +1,15 @@
 from sklearn.preprocessing import OrdinalEncoder as OrdinalEncoderOperation
 
-from DashAI.back.api.utils import cast_string_to_type, cast_string_to_type
+from DashAI.back.api.utils import cast_string_to_type
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
-    schema_field,
-    none_type,
-    union_type,
-    int_field,
     float_field,
+    int_field,
+    none_type,
+    schema_field,
     string_field,
+    union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
@@ -21,18 +21,21 @@ class OrdinalEncoderSchema(BaseSchema):
         "Categories (unique values) per feature.",
     )  # type: ignore
     dtype: schema_field(
-        enum_field(["np.int32", "np.int64", "np.float32", "np.float64"]), # number type
+        enum_field(["np.int32", "np.int64", "np.float32", "np.float64"]),  # number type
         "np.float64",
         "Desired dtype of output.",
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "use_encoded_value"]),
         "error",
-        "Whether to raise an error or ignore if an unknown categorical feature is present during transform.",
+        (
+            "Whether to raise an error or ignore if an unknown categorical feature "
+            "is present during transform."
+        ),
     )  # type: ignore
     unknown_value: schema_field(
         none_type(
-            enum_field(["int", "np.nan"]), # int or np.nan
+            enum_field(["int", "np.nan"]),  # int or np.nan
         ),
         None,
         "The value to use for unknown categories.",

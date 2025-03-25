@@ -2,7 +2,6 @@ from sklearn.preprocessing import LabelBinarizer as LabelBinarizerOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
-    bool_field,
     int_field,
     schema_field,
 )
@@ -20,12 +19,7 @@ class LabelBinarizerSchema(BaseSchema):
         1,
         "Value with which positive labels must be encoded.",
     )  # type: ignore
-    # Sparse output is not supported in pandas
-    # sparse_output: schema_field(
-    #     bool_field(),
-    #     False,
-    #     "True if the returned array from transform is desired to be in sparse CSR format.",
-    # )  # type: ignore
+    # sparse_output: Sparse output is not supported in pandas
 
 
 class LabelBinarizer(SklearnWrapper, LabelBinarizerOperation):

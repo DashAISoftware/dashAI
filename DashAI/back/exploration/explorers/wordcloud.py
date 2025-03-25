@@ -60,7 +60,7 @@ class WordcloudExplorer(BaseExplorer):
 
     def __init__(self, **kwargs) -> None:
         self.max_words = kwargs.get("max_words", 200)
-        self.background_color = kwargs.get("background_color", None)
+        self.background_color = kwargs.get("background_color")
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):

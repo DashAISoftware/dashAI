@@ -18,7 +18,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     update_columns_spec,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment
-from DashAI.back.dependencies.registry import ComponentRegistry
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -90,7 +89,6 @@ async def get_dataset(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -181,7 +179,7 @@ async def get_experiments_exist(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Get a boolean indicating if there are experiments associated with the dataset.
-    
+
     Parameters
     ----------
     dataset_id : int
@@ -201,12 +199,13 @@ async def get_experiments_exist(
                     detail="Dataset not found",
                 )
             # Check if there are any experiments associated with the dataset
-            experiments_exist = db.query(Experiment).filter(
-                Experiment.dataset_id == dataset_id
-            ).first() is not None
+            experiments_exist = (
+                db.query(Experiment).filter(Experiment.dataset_id == dataset_id).first()
+                is not None
+            )
 
             return experiments_exist
-        
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -296,7 +295,7 @@ async def copy_dataset(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"A dataset with the name '{new_name}' already exists.",
-            )
+            ) from None
         except Exception as e:
             logger.exception(e)
             raise HTTPException(

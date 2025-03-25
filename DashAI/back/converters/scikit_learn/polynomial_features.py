@@ -19,17 +19,28 @@ class PolynomialFeaturesSchema(BaseSchema):
     interaction_only: schema_field(
         bool_field(),
         False,
-        "If True, only interaction features are produced: features that are products of at most degree distinct input features (so not x[1] ** 2, x[0] * x[2] ** 3, etc.).",
+        (
+            "If True, only interaction features are produced: features that are "
+            "products of at most degree distinct input features (so not "
+            "x[1] ** 2, x[0] * x[2] ** 3, etc.)."
+        ),
     )  # type: ignore
     include_bias: schema_field(
         bool_field(),
         True,
-        "If True (default), then include a bias column, the feature in which all polynomial powers are zero (i.e. a column of ones - acts as an intercept term in a linear model).",
+        (
+            "If True (default), then include a bias column, the feature in which "
+            "all polynomial powers are zero (i.e. a column of ones - acts as an "
+            "intercept term in a linear model)."
+        ),
     )  # type: ignore
     order: schema_field(
         enum_field(["C", "F"]),
         "C",
-        "Order of output array in the dense case. 'F' order is faster to compute, but may slow down subsequent estimators.",
+        (
+            "Order of output array in the dense case. 'F' order is faster to "
+            "compute, but may slow down subsequent estimators."
+        ),
     )  # type: ignore
 
 

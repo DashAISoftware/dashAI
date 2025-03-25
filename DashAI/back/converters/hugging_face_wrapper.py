@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import Type
+
 import pandas as pd
+
 from DashAI.back.converters.base_converter import BaseConverter
 
 
@@ -20,13 +22,13 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
         """Process a batch of data through the model."""
         raise NotImplementedError
 
-    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
+    def fit(self, x: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
         """Validate parameters and prepare for transformation."""
-        if X.empty:
+        if x.empty:
             raise ValueError("Input DataFrame is empty")
 
         # Check that all columns contain string data
-        non_string_cols = [col for col in X.columns if X[col].dtype != object]
+        non_string_cols = [col for col in x.columns if x[col].dtype != object]
         if non_string_cols:
             raise ValueError(f"Columns {non_string_cols} must contain string data")
 
@@ -35,12 +37,12 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
 
         return self
 
-    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+    def transform(self, x: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         """Transform the input data using the model."""
         all_results = []
 
-        for i in range(0, len(X), self.batch_size):
-            batch = X.iloc[i : i + self.batch_size]
+        for i in range(0, len(x), self.batch_size):
+            batch = x.iloc[i : i + self.batch_size]
             batch_results = self._process_batch(batch)
             all_results.append(batch_results)
 

@@ -1,6 +1,7 @@
-import logging
 import ast
+import logging
 import re
+
 import numpy as np
 import pandas as pd
 import pydantic
@@ -37,16 +38,18 @@ def parse_params(model_class, params):
             detail=jsonable_encoder(e.errors()),
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         ) from e
-    
+
+
 def parse_string_to_list(string):
     """
     Parse a string to a list.
     """
     no_brackets = re.sub(r"[\[\]\(\)\{\}]", "", string)
-    no_double_quotes = re.sub(r'"', '', no_brackets)
-    no_quotes = re.sub(r"'", '', no_double_quotes)
+    no_double_quotes = re.sub(r'"', "", no_brackets)
+    no_quotes = re.sub(r"'", "", no_double_quotes)
     splitted_and_stripped = [item.strip() for item in no_quotes.split(",")]
     return splitted_and_stripped
+
 
 def parse_string_to_dict(string):
     """
@@ -54,26 +57,22 @@ def parse_string_to_dict(string):
     """
     return ast.literal_eval(string)
 
+
 def cast_string_to_type(string):
     """
     Cast a string to a type.
     """
-    if string == "int":
-        return int
-    elif string == "np.int32":
-        return np.int32
-    elif string == "np.int64":
-        return np.int64
-    elif string == "np.float32":
-        return np.float32
-    elif string == "np.float64":
-        return np.float64
-    elif string == "np.nan":
-        return np.nan
-    elif string == "pandas.NA":
-        return pd.NA
-    
-    return string
+    type_map = {
+        "int": int,
+        "np.int32": np.int32,
+        "np.int64": np.int64,
+        "np.float32": np.float32,
+        "np.float64": np.float64,
+        "np.nan": np.nan,
+        "pandas.NA": pd.NA,
+    }
+    return type_map.get(string, string)
+
 
 def create_random_state():
     """

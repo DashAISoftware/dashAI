@@ -1,4 +1,4 @@
-from sklearn.cross_decomposition import CCA as CCAOperation
+from sklearn.cross_decomposition import CCA as CCAOPERATION
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
@@ -38,7 +38,7 @@ class CCASchema(BaseSchema):
     )  # type: ignore
 
 
-class CCA(SklearnWrapper, CCAOperation):
+class CCA(SklearnWrapper, CCAOPERATION):
     """Scikit-learn's CCA wrapper for DashAI."""
 
     SCHEMA = CCASchema

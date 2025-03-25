@@ -70,7 +70,7 @@ class MultiColumnBoxPlotExplorer(BaseExplorer):
         if kwargs.get("points") == "False":
             kwargs["points"] = False
         self.points = kwargs.get("points", "outliers")
-        self.opposite_axis = kwargs.get("opposite_axis", None)
+        self.opposite_axis = kwargs.get("opposite_axis")
 
         super().__init__(**kwargs)
 

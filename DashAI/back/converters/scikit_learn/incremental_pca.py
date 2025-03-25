@@ -19,12 +19,21 @@ class IncrementalPCASchema(BaseSchema):
     whiten: schema_field(
         bool_field(),
         False,
-        "When True (False by default) the components_ vectors are multiplied by the square root of n_samples and then divided by the singular values to ensure uncorrelated outputs with unit component-wise variances.",
+        (
+            "When True (False by default) the components_ vectors "
+            "are multiplied by the square root of n_samples and then "
+            "divided by the singular values to ensure uncorrelated "
+            "outputs with unit component-wise variances."
+        ),
     )  # type: ignore
     copy: schema_field(
         bool_field(),
         True,
-        "If False, data passed to fit are overwritten and running fit(X).transform(X) will not yield the expected results, use fit_transform(X) instead.",
+        (
+            "If False, data passed to fit are overwritten and running "
+            "fit(X).transform(X) will not yield the expected results, "
+            "use fit_transform(X) instead."
+        ),
     )  # type: ignore
     batch_size: schema_field(
         none_type(int_field(ge=1)),

@@ -8,7 +8,6 @@ import pandas as pd
 from datasets import Dataset
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session
 
 from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
@@ -27,7 +26,8 @@ log = logging.getLogger(__name__)
 
 
 class ConverterListJob(BaseJob):
-    """ConverterListJob class to modify a dataset by applying a sequence of converters."""
+    """ConverterListJob class to modify a dataset by applying a 
+    sequence of converters."""
 
     def set_status_as_delivered(self) -> None:
         """Set the status of the list as delivered."""
@@ -36,7 +36,9 @@ class ConverterListJob(BaseJob):
 
         converter_list = db.get(ConverterList, converter_list_id)
         if converter_list is None:
-            raise JobError(f"Converter list with id {converter_list_id} does not exist in DB.")
+            raise JobError(
+                f"Converter list with id {converter_list_id} does not exist in DB."
+            )
 
         try:
             converter_list.set_status_as_delivered()
@@ -67,7 +69,9 @@ class ConverterListJob(BaseJob):
                 converter_constructor = getattr(module, converter_name)
             except ImportError as e:
                 log.exception(e)
-                raise JobError(f"Error importing converter {converter_name}: {e}") from e
+                raise JobError(
+                    f"Error importing converter {converter_name}: {e}"
+                ) from e
 
             # Get parameters or empty dict if none
             converter_parameters = converter_params.get("params", {})
@@ -132,8 +136,12 @@ class ConverterListJob(BaseJob):
             loaded_dataset = load_dataset(dataset_path)
 
             # Validate target column index
-            if int(target_column_index) < 1 or int(target_column_index) > len(loaded_dataset.features):
-                raise JobError(f"Target column index {target_column_index} is out of bounds")
+            if int(target_column_index) < 1 or int(target_column_index) > len(
+                loaded_dataset.features
+            ):
+                raise JobError(
+                    f"Target column index {target_column_index} is out of bounds"
+                )
 
         except Exception as e:
             log.exception(e)
@@ -168,8 +176,7 @@ class ConverterListJob(BaseJob):
 
             # Sort converters by order
             converters_sorted_list = sorted(
-                converters_stored_info.items(), 
-                key=lambda x: x[1]["order"]
+                converters_stored_info.items(), key=lambda x: x[1]["order"]
             )
 
             # Process converters
@@ -186,7 +193,7 @@ class ConverterListJob(BaseJob):
                         n_steps = int(converter_params["params"]["steps"])
 
                         # Get the steps
-                        chain_steps = converters_sorted_list[i+1:i+n_steps+1]
+                        chain_steps = converters_sorted_list[i + 1 : i + n_steps + 1]
 
                         # Instantiate chain of converters
                         chain_instance = instantiate_chain(
@@ -196,18 +203,24 @@ class ConverterListJob(BaseJob):
                         )
 
                         # Get scope or use default
-                        scope = converter_params.get("scope", {"columns": [], "rows": []})
+                        scope = converter_params.get(
+                            "scope", {"columns": [], "rows": []}
+                        )
 
                         # Add converter chain to instances
-                        converter_instances.append({
-                            "name": "ConverterChain",
-                            "instance": chain_instance,
-                            "scope": scope
-                        })
+                        converter_instances.append(
+                            {
+                                "name": "ConverterChain",
+                                "instance": chain_instance,
+                                "scope": scope,
+                            }
+                        )
                         i += n_steps + 1
                     except Exception as e:
                         log.exception(e)
-                        raise JobError(f"Error instantiating converter chain: {e}") from e
+                        raise JobError(
+                            f"Error instantiating converter chain: {e}"
+                        ) from e
 
                 else:
                     # Regular converter
@@ -222,11 +235,13 @@ class ConverterListJob(BaseJob):
                     scope = converter_params.get("scope", {"columns": [], "rows": []})
 
                     # Add to instances
-                    converter_instances.append({
-                        "name": converter_name,
-                        "instance": converter_instance,
-                        "scope": scope
-                    })
+                    converter_instances.append(
+                        {
+                            "name": converter_name,
+                            "instance": converter_instance,
+                            "scope": scope,
+                        }
+                    )
                     i += 1
 
             # Apply each converter in sequence
@@ -246,8 +261,7 @@ class ConverterListJob(BaseJob):
                     scope_column_indexes = list(range(len(loaded_dataset.features)))
 
                 scope_column_names = [
-                    dataset_original_columns[index] 
-                    for index in scope_column_indexes
+                    dataset_original_columns[index] for index in scope_column_indexes
                 ]
 
                 # Process rows scope
@@ -260,7 +274,9 @@ class ConverterListJob(BaseJob):
 
                 # Adjust target column index (0-based internally)
                 target_column_index_0based = int(target_column_index) - 1
-                target_column_name = dataset_original_columns[target_column_index_0based]
+                target_column_name = dataset_original_columns[
+                    target_column_index_0based
+                ]
 
                 # Fit converter
                 X = df_full[scope_column_names].iloc[scope_rows_indexes]
@@ -272,7 +288,9 @@ class ConverterListJob(BaseJob):
                     converter = converter.fit(X, y)
                 except Exception as e:
                     log.exception(e)
-                    raise JobError(f"Error fitting converter {converter_name}: {e}") from e
+                    raise JobError(
+                        f"Error fitting converter {converter_name}: {e}"
+                    ) from e
 
                 # Transform data
                 X = df_full[scope_column_names]
@@ -289,21 +307,21 @@ class ConverterListJob(BaseJob):
 
                 # Update dataframe
                 columns_to_drop = df_full.columns[scope_column_indexes]
-                df_full.drop(columns=columns_to_drop, axis=1, inplace=True)
+                df_full = df_full.drop(columns=columns_to_drop, axis=1)
 
                 # Insert transformed columns at their original positions
                 for i, column in enumerate(resulting_dataframe.columns):
                     if i < len(scope_column_indexes):
                         df_full.insert(
-                            scope_column_indexes[i], 
-                            column, 
-                            resulting_dataframe[column]
+                            scope_column_indexes[i], column, resulting_dataframe[column]
                         )
 
                 # Add any additional columns created by the transformer
                 if len(resulting_dataframe.columns) > len(scope_column_indexes):
                     # Get the new columns
-                    remaining_columns = resulting_dataframe.columns[len(scope_column_indexes):]
+                    remaining_columns = resulting_dataframe.columns[
+                        len(scope_column_indexes) :
+                    ]
 
                     # Create DataFrame with just these columns
                     remaining_df = resulting_dataframe[remaining_columns].copy()
@@ -327,4 +345,6 @@ class ConverterListJob(BaseJob):
             log.exception(e)
             converter_list.set_status_as_error()
             db.commit()
-            raise JobError(f"Error applying converters to dataset {dataset_id}: {e}") from e
+            raise JobError(
+                f"Error applying converters to dataset {dataset_id}: {e}"
+            ) from e

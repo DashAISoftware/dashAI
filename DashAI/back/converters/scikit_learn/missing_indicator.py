@@ -28,12 +28,7 @@ class MissingIndicatorSchema(BaseSchema):
         None,
         "The features to consider for missing values.",
     )  # type: ignore
-    # Pandas output does not support sparse data. Set sparse=False
-    # sparse: schema_field(
-    #     union_type(bool_field(), enum_field(["auto"])),
-    #     "auto",
-    #     "Whether the output should be a sparse matrix.",
-    # )  # type: ignore
+    # sparse: Pandas output does not support sparse data. Set sparse=False
     error_on_new: schema_field(
         bool_field(),
         True,
@@ -55,5 +50,5 @@ class MissingIndicator(SklearnWrapper, MissingIndicatorOperation):
         # Pandas output does not support sparse data. Set sparse=False
         self.sparse = kwargs.pop("sparse", False)
         kwargs["sparse"] = self.sparse
-        
+
         super().__init__(**kwargs)

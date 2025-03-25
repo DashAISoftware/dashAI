@@ -15,11 +15,6 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
 class GenericUnivariateSelectSchema(BaseSchema):
-    # score_func: schema_field(
-    #     string_field(), # callable
-    #     "f_classif",
-    #     "The scoring function to use.",
-    # )  # type: ignore
     mode: schema_field(
         enum_field(["percentile", "k_best", "fpr", "fdr", "fwe"]),
         "percentile",

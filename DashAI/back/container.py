@@ -5,11 +5,12 @@ from kink import Container, di
 
 from DashAI.back.converters import (
     PCA,
-    ConverterChain,
     AdditiveChi2Sampler,
     Binarizer,
+    ConverterChain,
     Embedding,
     FastICA,
+    GenericUnivariateSelect,
     IncrementalPCA,
     KNNImputer,
     LabelBinarizer,
@@ -18,22 +19,21 @@ from DashAI.back.converters import (
     MinMaxScaler,
     MissingIndicator,
     Normalizer,
+    Nystroem,
     OneHotEncoder,
     OrdinalEncoder,
     PolynomialFeatures,
     RBFSampler,
+    SelectFdr,
+    SelectFpr,
+    SelectFwe,
+    SelectKBest,
+    SelectPercentile,
     SimpleImputer,
     SkewedChi2Sampler,
     StandardScaler,
     TruncatedSVD,
     VarianceThreshold,
-    GenericUnivariateSelect,
-    SelectPercentile,
-    SelectKBest,
-    SelectFpr,
-    SelectFdr,
-    SelectFwe,
-    Nystroem,
 )
 from DashAI.back.dataloaders import (
     CSVDataLoader,
@@ -57,7 +57,14 @@ from DashAI.back.exploration import (
     ScatterPlotExplorer,
     WordcloudExplorer,
 )
-from DashAI.back.job import ConverterListJob, DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob
+from DashAI.back.job import (
+    ConverterListJob,
+    DatasetJob,
+    ExplainerJob,
+    ExplorerJob,
+    ModelJob,
+    PredictJob,
+)
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,

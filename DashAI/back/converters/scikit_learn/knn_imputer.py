@@ -65,5 +65,5 @@ class KNNImputer(SklearnWrapper, KNNImputerOperation):
         self.missing_values = kwargs.pop("missing_values", None)
         self.missing_values = cast_string_to_type(self.missing_values)
         kwargs["missing_values"] = self.missing_values
-        
+
         super().__init__(**kwargs)

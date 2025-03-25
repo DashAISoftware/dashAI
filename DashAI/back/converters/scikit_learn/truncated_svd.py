@@ -40,9 +40,14 @@ class TruncatedSVDSchema(BaseSchema):
         "Method to normalize the eigenvectors.",
     )  # type: ignore
     random_state: schema_field(
-        none_type(union_type(int_field(), enum_field(["RandomState"]))),  # int, RandomState instance or None
+        none_type(
+            union_type(int_field(), enum_field(["RandomState"]))
+        ),  # int, RandomState instance or None
         None,
-        "Used during randomized svd. Pass an int for reproducible results across multiple function calls.",
+        (
+            "Used during randomized svd. Pass an int for reproducible results "
+            "across multiple function calls."
+        ),
     )  # type: ignore
     tol: schema_field(
         float_field(ge=0),
@@ -56,8 +61,10 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
 
     SCHEMA = TruncatedSVDSchema
     DESCRIPTION = (
-        "This transformer performs linear dimensionality reduction by means of truncated singular value decomposition (SVD). "
-        "Contrary to PCA, this estimator does not center the data before computing the singular value decomposition. "
+        "This transformer performs linear dimensionality reduction by means of "
+        "truncated singular value decomposition (SVD). "
+        "Contrary to PCA, this estimator does not center the data before "
+        "computing the singular value decomposition. "
         "This means it can work with sparse matrices efficiently."
     )
 

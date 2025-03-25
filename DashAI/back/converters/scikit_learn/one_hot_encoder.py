@@ -3,21 +3,20 @@ from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 from DashAI.back.api.utils import cast_string_to_type, parse_string_to_list
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
-    bool_field,
     enum_field,
     float_field,
     int_field,
     none_type,
     schema_field,
-    union_type,
     string_field,
+    union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
 class OneHotEncoderSchema(BaseSchema):
     categories: schema_field(
-        string_field(), # ‘auto’ or a list of array-like
+        string_field(),  # ‘auto’ or a list of array-like
         "auto",
         "The categories of each feature.",
     )  # type: ignore
@@ -28,21 +27,19 @@ class OneHotEncoderSchema(BaseSchema):
         None,
         "Specifies a methodology to use to drop one of the categories per feature.",
     )  # type: ignore
-    # Sparse output is not supported in pandas
-    # sparse_output: schema_field(
-    #     bool_field(),
-    #     True,
-    #     "Whether the output should be a sparse matrix or dense array.",
-    # )  # type: ignore
+    # sparse_output: Sparse output is not supported in pandas
     dtype: schema_field(
-        enum_field(["int", "np.float32", "np.float64"]), # number type
+        enum_field(["int", "np.float32", "np.float64"]),  # number type
         "np.float64",
         "Desired dtype of output.",
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "ignore", "infrequent_if_exist"]),
         "error",
-        "Whether to raise an error or ignore if an unknown categorical feature is present during transform.",
+        (
+            "Whether to raise an error or ignore if an unknown categorical feature "
+            "is present during transform."
+        ),
     )  # type: ignore
     min_frequency: schema_field(
         none_type(union_type(int_field(ge=0), float_field(ge=0.0, le=1.0))),
@@ -79,7 +76,7 @@ class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
         kwargs["categories"] = self.categories
 
         self.drop = kwargs.pop("drop", None)
-        if self.drop != None and self.drop != "first" and self.drop != "if_binary":
+        if self.drop is not None and self.drop != "first" and self.drop != "if_binary":
             self.drop = [parse_string_to_list(self.drop)]
         kwargs["drop"] = self.drop
 

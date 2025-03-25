@@ -19,7 +19,7 @@ class BaseConverter(ConfigObject, metaclass=ABCMeta):
     TYPE: Final[str] = "Converter"
 
     @abstractmethod
-    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
+    def fit(self, x: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
         """Fit the converter.
         This method should allow to validate the converter's parameters.
 
@@ -38,7 +38,7 @@ class BaseConverter(ConfigObject, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+    def transform(self, x: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         """Transform the dataset.
 
         Parameters

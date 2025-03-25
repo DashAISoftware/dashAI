@@ -11,11 +11,6 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
 class SelectPercentileSchema(BaseSchema):
-    # score_func: schema_field(
-    #     string_field(),  # callable
-    #     "f_classif",
-    #     "The scoring function to use.",
-    # )  # type: ignore
     percentile: schema_field(
         int_field(ge=1, le=100),
         10,

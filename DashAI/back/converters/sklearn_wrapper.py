@@ -21,7 +21,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
                 transform="pandas"
             )  # Cast the output from numpy ndarray to pandas DataFrame
 
-    def fit(self, X: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
+    def fit(self, x: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
         """Generic fit method for sklearn transformers"""
 
         requires_y = hasattr(self, "_get_tags") and self._get_tags().get(
@@ -31,16 +31,16 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         # Check for supervised transformers that require y
         if requires_y and y is None:
             raise ValueError("This transformer requires y for fitting")
-        
+
         if requires_y:
-            super(BaseConverter, self).fit(X, y)
+            super(BaseConverter, self).fit(x, y)
         else:
-            super(BaseConverter, self).fit(X)
-            
+            super(BaseConverter, self).fit(x)
+
         return self
 
-    def transform(self, X: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+    def transform(self, x: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
         """Generic transform method for sklearn transformers"""
 
-        X_new = super(BaseConverter, self).transform(X)
-        return X_new
+        x_new = super(BaseConverter, self).transform(x)
+        return x_new

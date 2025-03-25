@@ -11,11 +11,6 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
 class SelectFprSchema(BaseSchema):
-    # score_func: schema_field(
-    #     string_field(),  # callable
-    #     "f_classif",
-    #     "The scoring function to use.",
-    # )  # type: ignore
     alpha: schema_field(
         float_field(ge=0.0, le=1.0),
         0.05,

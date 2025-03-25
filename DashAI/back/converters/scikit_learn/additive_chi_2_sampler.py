@@ -29,4 +29,7 @@ class AdditiveChi2Sampler(SklearnWrapper, AdditiveChi2SamplerOperation):
     """Scikit-learn's AdditiveChi2Sampler wrapper for DashAI."""
 
     SCHEMA = AdditiveChi2SamplerSchema
-    DESCRIPTION = "Uses sampling the fourier transform of the kernel characteristic at regular intervals."
+    DESCRIPTION = (
+        "Uses sampling the fourier transform of the kernel characteristic "
+        "at regular intervals."
+    )
