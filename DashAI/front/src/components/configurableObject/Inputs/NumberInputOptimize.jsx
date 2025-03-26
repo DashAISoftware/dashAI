@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import FormInputWrapper from "./FormInputWrapper";
 import {
@@ -8,17 +8,11 @@ import {
   FormHelperText,
 } from "@mui/material";
 import InputWithDebounce from "../../shared/InputWithDebounce";
+
 /**
- * This component renders a form field that accepts input for both integer and float numbers.
- * However, since there are already other components in place to handle inputs for these data types,
- * it is recommended to remove this component in the future once the necessary changes
- * have been made to the JSON objects in the backend.
- * @param {string} name name of the input to use as an identifier
- * @param {number} value the value of the input
- * @param {function} onChange function to manage changes in the input
- * @param {string} error text to indicate the reason the validation failed, undefined if there are no errors in validation
- * @param {string} description text to put in a tooltip that helps the user to understand the parameter
- *
+ * This component renders an HPO form field for "number" parameters.
+ * It merges the real user data (props.value) with placeholder defaults,
+ * ensuring that next time we open the dialog, we see updated data rather than the old placeholder.
  */
 function OptimizeNumberInput({
   name,
@@ -29,32 +23,54 @@ function OptimizeNumberInput({
   error,
   placeholder,
 }) {
-  const [switchState, setSwitchState] = useState(placeholder.optimize);
-  const handleChangeFixed = (inputValue) => {
-    const newValue = inputValue === "" ? null : Number(inputValue);
-    onChange({ ...value, fixed_value: newValue });
+  // 1) Merge existing user data with defaults from placeholder (if user data is missing)
+  //    e.g. if 'value.optimize' is undefined, fallback to placeholder.optimize or false
+  const mergedOptimize = value.optimize ?? placeholder.optimize ?? false;
+  const mergedLower = value.lower_bound ?? placeholder.lower_bound ?? "";
+  const mergedUpper = value.upper_bound ?? placeholder.upper_bound ?? "";
+  const mergedFixed = value.fixed_value ?? placeholder.fixed_value ?? "";
+
+  // 2) Keep local state for the switch, so toggling is immediate in the UI
+  const [switchState, setSwitchState] = useState(mergedOptimize);
+
+  // If the parent changes value.optimize from outside, sync local switch state:
+  useEffect(() => {
+    setSwitchState(mergedOptimize);
+  }, [mergedOptimize]);
+
+  // 3) Handlers to reflect user input back into the parent form data
+  const handleSwitchChange = () => {
+    const toggled = !switchState;
+    setSwitchState(toggled);
+    // Spread the entire "value" and override 'optimize'
+    onChange({ ...value, optimize: toggled });
   };
 
   const handleChangeLower = (inputValue) => {
-    const newValue = inputValue === "" ? null : parseInt(inputValue);
-    onChange({ ...value, lower_bound: newValue });
+    const parsed = inputValue === "" ? null : parseFloat(inputValue);
+    onChange({ ...value, lower_bound: parsed });
   };
 
   const handleChangeUpper = (inputValue) => {
-    const newValue = inputValue === "" ? null : parseInt(inputValue);
-    onChange({ ...value, upper_bound: newValue });
+    const parsed = inputValue === "" ? null : parseFloat(inputValue);
+    onChange({ ...value, upper_bound: parsed });
   };
 
-  const handleSwitchChange = () => {
-    setSwitchState(!switchState);
-    onChange({ ...value, optimize: !switchState });
+  const handleChangeFixed = (inputValue) => {
+    const parsed = inputValue === "" ? null : parseFloat(inputValue);
+    onChange({ ...value, fixed_value: parsed });
   };
-  if (placeholder.optimize !== undefined) {
-    return (
-      <FormInputWrapper name={name} description={description}>
-        <FormControl error={error !== undefined}>
+
+  // 4) If 'optimize' is recognized in placeholder, we show the switch & bound inputs
+  const canOptimize = placeholder.optimize !== undefined;
+
+  return (
+    <FormInputWrapper name={name} description={description}>
+      {/* If we can optimize, show the switch control */}
+      {canOptimize && (
+        <FormControl error={Boolean(error)}>
           <FormControlLabel
-            label={'Optimize hyperparameter "' + name + '"'}
+            label={`Optimize hyperparameter "${name}"`}
             control={
               <Switch
                 name={name}
@@ -65,88 +81,85 @@ function OptimizeNumberInput({
           />
           <FormHelperText>{error || " "}</FormHelperText>
         </FormControl>
+      )}
 
-        {switchState ? (
-          <>
-            <InputWithDebounce
-              variant="outlined"
-              label={"enter a value for the lower bound of search space"}
-              name={name}
-              value={
-                placeholder.lower_bound !== null ? placeholder.lower_bound : ""
-              }
-              onChange={handleChangeLower}
-              error={error !== undefined}
-              helperText={error || " "}
-              type="number"
-              margin="dense"
-            />
-            <InputWithDebounce
-              variant="outlined"
-              label={"enter a value for the upper bound of search space"}
-              name={name}
-              value={
-                placeholder.upper_bound !== null ? placeholder.upper_bound : ""
-              }
-              onChange={handleChangeUpper}
-              error={error !== undefined}
-              helperText={error || " "}
-              type="number"
-              margin="dense"
-            />
-          </>
-        ) : (
+      {canOptimize && switchState ? (
+        // If user toggled "optimize", show lower/upper bound
+        <>
           <InputWithDebounce
             variant="outlined"
-            label={"enter a value"}
-            name={name}
-            value={
-              placeholder.fixed_value !== null ? placeholder.fixed_value : ""
-            }
-            onChange={handleChangeFixed}
-            error={error !== undefined}
+            label="enter a value for the lower bound of search space"
+            name={`${name}-lower`}
+            value={mergedLower}
+            onChange={handleChangeLower}
+            error={Boolean(error)}
             helperText={error || " "}
             type="number"
             margin="dense"
           />
-        )}
-      </FormInputWrapper>
-    );
-  } else {
-    return (
-      <FormInputWrapper name={name} description={description}>
+          <InputWithDebounce
+            variant="outlined"
+            label="enter a value for the upper bound of search space"
+            name={`${name}-upper`}
+            value={mergedUpper}
+            onChange={handleChangeUpper}
+            error={Boolean(error)}
+            helperText={error || " "}
+            type="number"
+            margin="dense"
+          />
+        </>
+      ) : (
+        // If "optimize" is off (or we can't optimize), show a single "fixed_value"
         <InputWithDebounce
           variant="outlined"
-          label={"enter a value"}
-          name={name}
-          value={
-            placeholder.fixed_value !== null ? placeholder.fixed_value : ""
-          }
+          label="enter a value"
+          name={`${name}-fixed`}
+          value={mergedFixed}
           onChange={handleChangeFixed}
-          error={error !== undefined}
+          error={Boolean(error)}
           helperText={error || " "}
           type="number"
           margin="dense"
         />
-      </FormInputWrapper>
-    );
-  }
+      )}
+    </FormInputWrapper>
+  );
 }
+
 OptimizeNumberInput.propTypes = {
   name: PropTypes.string,
-  value: PropTypes.object.isRequired,
   label: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
   description: PropTypes.string.isRequired,
+  value: PropTypes.shape({
+    optimize: PropTypes.bool,
+    fixed_value: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
+    lower_bound: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
+    upper_bound: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.oneOf([null]),
+    ]),
+  }),
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.shape({
+    // The original defaults
+    optimize: PropTypes.bool,
+    fixed_value: PropTypes.number,
+    lower_bound: PropTypes.number,
+    upper_bound: PropTypes.number,
+  }),
   error: PropTypes.string,
 };
+
 OptimizeNumberInput.defaultProps = {
-  value: {
-    fixed_value: 1.0,
-    lower_bound: 1.0,
-    optimize: false,
-    upper_bound: 10.0,
-  },
+  value: {},
+  placeholder: {},
   error: undefined,
 };
 

@@ -183,23 +183,23 @@ class ModelJob(BaseJob):
                         f"Unable to find Model with name {run.optimizer_name} in "
                         "registry.",
                     ) from e
-
-                try:
-                    goal_metric = selected_metrics[run.goal_metric]
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Metric is not compatible with the Task",
-                    ) from e
-                try:
-                    optimizer: BaseOptimizer = run_optimizer_class(
-                        **run.optimizer_parameters
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Optimizer parameters are not compatible with the optimizer",
-                    ) from e
+                if run.goal_metric != "":
+                    try:
+                        goal_metric = selected_metrics[run.goal_metric]
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Metric is not compatible with the Task",
+                        ) from e
+                    try:
+                        optimizer: BaseOptimizer = run_optimizer_class(
+                            **run.optimizer_parameters
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Optimizer parameters not compatible with the optimizer",
+                        ) from e
             try:
                 run.set_status_as_started()
                 db.commit()
