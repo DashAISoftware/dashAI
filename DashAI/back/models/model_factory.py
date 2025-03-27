@@ -31,7 +31,6 @@ class ModelFactory:
 
         self.num_labels = n_labels
 
-        print("fixed_parameters", self.fixed_parameters)
         self.model = model(**self.fixed_parameters)
         self.fitted = False
         if n_labels is not None:
@@ -69,19 +68,16 @@ class ModelFactory:
         # For Hugging Face models
         if hasattr(self.model, "config") and hasattr(self.model.config, "num_labels"):
             self.model.config.num_labels = num_labels
-            print(f"Actualizando num_labels a {num_labels} en modelo Hugging Face")
             return
 
         # For scikit-learn models
         if hasattr(self.model, "n_classes_"):
             self.model.n_classes_ = num_labels
-            print(f"Actualizando n_classes_ a {num_labels} en modelo scikit-learn")
             return
 
         # For other models that have the num_labels attribute
         if hasattr(self.model, "num_labels"):
             self.model.num_labels = num_labels
-            print(f"Actualizando num_labels a {num_labels} en modelo genérico")
             return
 
     def _extract_parameters(self, parameters: dict) -> dict:
@@ -146,7 +142,6 @@ class ModelFactory:
         for split in ["train", "validation", "test"]:
             split_results = {}
             predictions = self.model.predict(x[split])
-
             for metric in metrics:
                 if (
                     isinstance(metric, type)

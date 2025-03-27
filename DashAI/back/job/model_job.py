@@ -122,6 +122,7 @@ class ModelJob(BaseJob):
                 if experiment.task_name in [
                     "TextClassificationTask",
                     "TabularClassificationTask",
+                    "ImageClassificationTask",
                 ]:
                     all_classes = prepared_dataset.unique(experiment.output_columns[0])
                     n_labels = len(all_classes)
@@ -149,7 +150,6 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-                print("Nombre del modelo sgnmodeljob", run.model_name)
                 run_model_class = component_registry[run.model_name]["class"]
             except Exception as e:
                 log.exception(e)
