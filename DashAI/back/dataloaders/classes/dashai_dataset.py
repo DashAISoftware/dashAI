@@ -833,10 +833,11 @@ def prepare_for_experiment(
             output_column = output_columns[0]
             try:
                 column_values = dataset[output_column]
-                
+
                 # Check column type and convert to numerical indices if needed
                 if isinstance(column_values[0], str):
                     import pandas as pd
+
                     labels_array, unique_values = pd.factorize(column_values)
                     labels = labels_array.tolist()
                 else:
