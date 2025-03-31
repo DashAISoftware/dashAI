@@ -21,6 +21,8 @@ function ModelsTable({ newExp, setNewExp }) {
     });
   };
   const handleUpdateParameters = (id) => (newValues) => {
+    console.log(id);
+    console.log(newValues);
     setNewExp((prevExp) => {
       return {
         ...prevExp,
@@ -70,25 +72,25 @@ function ModelsTable({ newExp, setNewExp }) {
     handleAddMetric(name, id);
   };
 
-  const columns = React.useMemo(
-    () => [
-      {
-        field: "name",
-        headerName: "Name",
-        flex: 1, // This makes the column take available space proportionally
-        editable: false,
-      },
-      {
-        field: "model",
-        headerName: "Model",
-        flex: 1, // Ensures it resizes properly
-        editable: false,
-      },
-      {
-        field: "actions",
-        type: "actions",
-        flex: 0.5, // Less space needed since it's just buttons
-        getActions: (params) => [
+  const columns = [
+    {
+      field: "name",
+      headerName: "Name",
+      flex: 1,
+      editable: false,
+    },
+    {
+      field: "model",
+      headerName: "Model",
+      flex: 1,
+      editable: false,
+    },
+    {
+      field: "actions",
+      type: "actions",
+      flex: 0.5,
+      getActions: (params) => {
+        return [
           <EditModelDialog
             key="edit-component"
             modelToConfigure={params.row.model}
@@ -99,25 +101,24 @@ function ModelsTable({ newExp, setNewExp }) {
             key="delete-component"
             deleteFromTable={() => handleDeleteModel(params.id)}
           />,
-        ],
+        ];
       },
-      {
-        field: "metric",
-        headerName: "Optimization Metric (Optional)",
-        flex: 1, // Since it's a dropdown, give it more space
-        renderCell: (params) => (
-          <ModelsTableSelectMetric
-            taskName={newExp.task_name}
-            metricName={selectedMetric[params.row.id]}
-            handleSelectedMetric={(metricName) =>
-              handleSelectedMetric(metricName, params.row.id)
-            }
-          />
-        ),
-      },
-    ],
-    [handleDeleteModel],
-  );
+    },
+    {
+      field: "metric",
+      headerName: "Optimization Metric (Optional)",
+      flex: 1,
+      renderCell: (params) => (
+        <ModelsTableSelectMetric
+          taskName={newExp.task_name}
+          metricName={selectedMetric[params.row.id]}
+          handleSelectedMetric={(metricName) =>
+            handleSelectedMetric(metricName, params.row.id)
+          }
+        />
+      ),
+    },
+  ];
 
   return (
     <Paper sx={{ py: 1, px: 2 }}>

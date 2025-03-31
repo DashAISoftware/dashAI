@@ -19,7 +19,7 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.0.14",
+    version="0.1.1",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
@@ -50,6 +50,7 @@ setup(
     entry_points={
         "console_scripts": [
             "dashai = DashAI:run",
+            "DashAI = DashAI:run",
         ]
     },
 )

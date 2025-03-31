@@ -9,6 +9,7 @@ import pyarrow as pa
 import pyarrow.ipc as ipc
 from beartype import beartype
 from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
+from datasets.features import Features
 from sklearn.model_selection import train_test_split
 
 
@@ -92,21 +93,6 @@ class DashAIDataset(Dataset):
         if "split_indices" in self.splits:
             return list(self.splits["split_indices"].keys())
         return []
-
-    @beartype
-    def save_to_disk(self, dataset_path: Union[str, os.PathLike]) -> None:
-        """
-        Overrides the default save_to_disk method to save the dataset as
-        a single directory with:
-          - "data.arrow": the dataset's Arrow table.
-          - "splits.json": the dataset's splits (e.g., original split indices).
-
-        Parameters
-        ----------
-        dataset_path : Union[str, os.PathLike]
-            path where the dataset will be saved
-        """
-        save_dataset(self, dataset_path)
 
     @beartype
     def change_columns_type(self, column_types: Dict[str, str]) -> "DashAIDataset":
@@ -678,16 +664,22 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     Dict
         Dict with the columns and types
     """
-    dataset = load_dataset(dataset_path)
-    dataset_features = dataset.features
+
+    data_filepath = os.path.join(dataset_path, "data.arrow")
+    with pa.OSFile(data_filepath, "rb") as source:
+        reader = ipc.open_file(source)
+        schema = reader.schema
+
+    features = Features.from_arrow_schema(schema)
+
     column_types = {}
-    for column in dataset_features:
-        if dataset_features[column]._type == "Value":
+    for column, feature in features.items():
+        if feature._type == "Value":
             column_types[column] = {
                 "type": "Value",
-                "dtype": dataset_features[column].dtype,
+                "dtype": feature.dtype,
             }
-        elif dataset_features[column]._type == "ClassLabel":
+        elif feature._type == "ClassLabel":
             column_types[column] = {
                 "type": "Classlabel",
                 "dtype": "",
@@ -748,28 +740,37 @@ def get_dataset_info(dataset_path: str) -> object:
     object
         Dictionary with the information of the dataset
     """
-    dataset = load_dataset(dataset_path=dataset_path)
-    total_rows = dataset.num_rows
-    total_columns = len(dataset.features)
-    splits = dataset.splits.get("split_indices", {})
+    metadata_filepath = os.path.join(dataset_path, "splits.json")
+    if os.path.exists(metadata_filepath):
+        with open(metadata_filepath, "r") as f:
+            splits_data = json.load(f)
+    else:
+        splits_data = {"split_indices": {}}
+
+    data_filepath = os.path.join(dataset_path, "data.arrow")
+    with pa.OSFile(data_filepath, "rb") as source:
+        reader = ipc.open_file(source)
+        schema = reader.schema
+
+        total_rows = 0
+        for i in range(reader.num_record_batches):
+            total_rows += reader.get_batch(i).num_rows
+
+    splits = splits_data.get("split_indices", {})
     train_indices = splits.get("train", [])
     test_indices = splits.get("test", [])
     val_indices = splits.get("validation", [])
-    train_size = len(train_indices)
-    test_size = len(test_indices)
-    val_size = len(val_indices)
 
-    dataset_info = {
+    return {
         "total_rows": total_rows,
-        "total_columns": total_columns,
-        "train_size": train_size,
-        "test_size": test_size,
-        "val_size": val_size,
+        "total_columns": len(schema),
+        "train_size": len(train_indices),
+        "test_size": len(test_indices),
+        "val_size": len(val_indices),
         "train_indices": train_indices,
         "test_indices": test_indices,
         "val_indices": val_indices,
     }
-    return dataset_info
 
 
 @beartype

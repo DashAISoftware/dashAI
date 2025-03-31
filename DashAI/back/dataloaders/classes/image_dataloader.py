@@ -1,11 +1,12 @@
 """DashAI Image Dataloader."""
 
-import shutil
 from typing import Any, Dict
 
 from beartype import beartype
 from datasets import load_dataset
 
+from DashAI.back.core.schema_fields import none_type, schema_field, string_field
+from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
@@ -13,10 +14,22 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 
+class ImageDataloaderSchema(BaseSchema):
+    name: schema_field(
+        none_type(string_field()),
+        "",
+        (
+            "Custom name to register your dataset. If no name is specified, "
+            "the name of the uploaded file will be used."
+        ),
+    )  # type: ignore
+
+
 class ImageDataLoader(BaseDataLoader):
     """Data loader for data from image files."""
 
     COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    SCHEMA = ImageDataloaderSchema
 
     @beartype
     def load_data(
@@ -46,11 +59,7 @@ class ImageDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
 
         if prepared_path[1] == "dir":
-            dataset = load_dataset(
-                "imagefolder",
-                data_dir=prepared_path[0],
-            )
-            shutil.rmtree(prepared_path[0])
+            dataset = load_dataset("imagefolder", data_dir=prepared_path[0])
         else:
             raise Exception(
                 "The image dataloader requires the input file to be a zip file."
