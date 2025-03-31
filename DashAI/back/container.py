@@ -51,9 +51,17 @@ from DashAI.back.explainability import (
 )
 from DashAI.back.exploration import (
     BoxPlotExplorer,
+    CorrelationMatrixExplorer,
+    CovarianceMatrixExplorer,
+    DensityHeatmapExplorer,
     DescribeExplorer,
+    ECDFPlotExplorer,
+    HistogramPlotExplorer,
     MultiColumnBoxPlotExplorer,
+    ParallelCategoriesExplorer,
+    ParallelCordinatesExplorer,
     RowExplorer,
+    ScatterMatrixExplorer,
     ScatterPlotExplorer,
     WordcloudExplorer,
 )
@@ -188,6 +196,14 @@ INITIAL_COMPONENTS = [
     SelectFdr,
     SelectFwe,
     Nystroem,
+    CorrelationMatrixExplorer,
+    CovarianceMatrixExplorer,
+    DensityHeatmapExplorer,
+    ECDFPlotExplorer,
+    HistogramPlotExplorer,
+    ScatterMatrixExplorer,
+    ParallelCategoriesExplorer,
+    ParallelCordinatesExplorer,
 ]
 
 

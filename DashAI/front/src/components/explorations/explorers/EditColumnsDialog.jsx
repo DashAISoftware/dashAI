@@ -290,12 +290,12 @@ function EditColumnsDialog({
                     },
                   },
                   sorting: {
-                    sortModel: [
-                      {
-                        field: "order",
-                        sort: "asc",
-                      },
-                    ],
+                    // sortModel: [
+                    //   {
+                    //     field: "order",
+                    //     sort: "asc",
+                    //   },
+                    // ],
                   },
                 }}
                 pageSizeOptions={[5, 10, 20]}

@@ -3,7 +3,6 @@ import pathlib
 
 import numpy as np
 import pandas as pd
-import pathvalidate as pv
 from beartype.typing import Any, Dict
 
 from DashAI.back.core.schema_fields import (
@@ -113,14 +112,9 @@ class DescribeExplorer(BaseExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, __explorer_info__: Explorer
     ) -> pd.DataFrame:
-        _df = dataset.to_pandas()
-
-        percentiles = self.percentiles
-        include = self.include
-        exclude = self.exclude
-
-        result = _df.describe(percentiles=percentiles, include=include, exclude=exclude)
-        return result
+        return dataset.to_pandas().describe(
+            percentiles=self.percentiles, include=self.include, exclude=self.exclude
+        )
 
     def save_exploration(
         self,
@@ -129,13 +123,7 @@ class DescribeExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: pd.DataFrame,
     ) -> str:
-        if explorer_info.name is None or explorer_info.name == "":
-            filename = f"{explorer_info.id}.json"
-        else:
-            filename = (
-                f"{explorer_info.id}_"
-                f"{pv.sanitize_filename(explorer_info.name)}.json"
-            )
+        filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
         result.to_json(path)

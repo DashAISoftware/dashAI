@@ -38,12 +38,13 @@ const renderOption = (props, option, _, ownerState) => {
         <Typography
           component="span"
           variant="inherit"
-          sx={{ whiteSpace: "pre-line" }}
+          sx={{ whiteSpace: "pre-line", fontSize: "0.9rem" }}
         >
           {option.tooltip}
         </Typography>
       }
-      placement="right"
+      arrow
+      placement="left"
       key={key}
     >
       <span>
@@ -123,47 +124,47 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         inputCardinality.exact != undefined &&
         inputCardinality.exact != null
       ) {
-        if (tooltip) tooltip += "\n";
-        tooltip += `This explorer requires exactly ${
-          inputCardinality.exact
-        } valid ${inputCardinality.exact === 1 ? "column" : "columns"}.`;
+        // if (tooltip) tooltip += "\n";
+        // tooltip += `This explorer requires exactly ${
+        //   inputCardinality.exact
+        // } valid ${inputCardinality.exact === 1 ? "column" : "columns"}.`;
         if (validColumns.length < inputCardinality.exact) disabled = true;
       } else {
         if (inputCardinality.min != undefined && inputCardinality.min != null) {
-          if (tooltip) tooltip += "\n";
-          tooltip += `This explorer requires at least ${
-            inputCardinality.min
-          } valid ${inputCardinality.min === 1 ? "column" : "columns"}.`;
+          // if (tooltip) tooltip += "\n";
+          // tooltip += `This explorer requires at least ${
+          //   inputCardinality.min
+          // } valid ${inputCardinality.min === 1 ? "column" : "columns"}.`;
 
           if (validColumns.length < inputCardinality.min) disabled = true;
         }
 
         if (inputCardinality.max != undefined && inputCardinality.max != null) {
-          if (tooltip) tooltip += "\n";
-          tooltip += `This explorer requires at most ${
-            inputCardinality.max
-          } valid ${inputCardinality.max === 1 ? "column" : "columns"}.`;
+          // if (tooltip) tooltip += "\n";
+          // tooltip += `This explorer requires at most ${
+          //   inputCardinality.max
+          // } valid ${inputCardinality.max === 1 ? "column" : "columns"}.`;
         }
       }
 
       if (!allowedDtypes.includes("*")) {
-        tooltip += `\n\n\
-          This explorer only accepts columns with data types: \n\
-          ${allowedDtypes.map((dtype) => ` - ${dtype}`).join("\n")}`;
+        // tooltip += `\n\n\
+        //   This explorer only accepts columns with data types: \n\
+        //   ${allowedDtypes.map((dtype) => ` - ${dtype}`).join("\n")}`;
       }
 
       if (restrictedDtypes.length > 0) {
-        tooltip += `\n\n\
-          This explorer does NOT accept columns with data types: \n\
-          ${restrictedDtypes.map((dtype) => ` - ${dtype}`).join("\n")}`;
+        // tooltip += `\n\n\
+        //   This explorer does NOT accept columns with data types: \n\
+        //   ${restrictedDtypes.map((dtype) => ` - ${dtype}`).join("\n")}`;
       }
 
       if (validColumns.length > 0) {
-        tooltip += `\n\n\
-          The dataset has the following valid columns: \n\
-          ${validColumns
-            .map((col) => ` - ${col.columnName}: ${col.dataType}`)
-            .join("\n")}`;
+        // tooltip += `\n\n\
+        //   The dataset has the following valid columns: \n\
+        //   ${validColumns
+        //     .map((col) => ` - ${col.columnName}: ${col.dataType}`)
+        //     .join("\n")}`;
       } else {
         tooltip += `\n\n\
           The dataset does not have any valid columns for this explorer.`;
@@ -186,7 +187,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
       };
     });
 
-    return options;
+    return options.sort((a, b) => a.label.localeCompare(b.label));
   }, []);
 
   const getAvailableExplorers = () => {

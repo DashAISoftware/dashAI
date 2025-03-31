@@ -2,7 +2,6 @@ import logging
 import os
 import pathlib
 
-import pathvalidate as pv
 from beartype.typing import Any, Dict, Type
 from kink import inject
 from sqlalchemy import exc
@@ -90,7 +89,7 @@ class ExplorerJob(BaseJob):
 
         # Load the dataset
         try:
-            dataset_dict = load_dataset(f"{dataset_info.file_path}/dataset")
+            loaded_dataset = load_dataset(f"{dataset_info.file_path}/dataset")
         except Exception as e:
             log.exception(e)
             explorer_info.set_status_as_error()
@@ -115,6 +114,7 @@ class ExplorerJob(BaseJob):
         # Instance the explorer (the explorer handles its validation)
         try:
             explorer_instance = explorer_component_class(**explorer_info.parameters)
+            assert isinstance(explorer_instance, BaseExplorer)
         except Exception as e:
             log.exception(e)
             explorer_info.set_status_as_error()
@@ -126,7 +126,7 @@ class ExplorerJob(BaseJob):
         # prepare the dataset
         try:
             prepared_dataset = explorer_instance.prepare_dataset(
-                dataset_dict, explorer_info.columns
+                loaded_dataset, explorer_info.columns
             )
         except Exception as e:
             log.exception(e)
@@ -158,10 +158,7 @@ class ExplorerJob(BaseJob):
             save_path = pathlib.Path(
                 os.path.join(
                     config["EXPLORATIONS_PATH"],
-                    (
-                        f"{exploration_info.id}_"
-                        f"{pv.sanitize_filename(exploration_info.name)}/"
-                    ),
+                    (f"{exploration_info.id}"),
                 )
             )
             if not save_path.exists():

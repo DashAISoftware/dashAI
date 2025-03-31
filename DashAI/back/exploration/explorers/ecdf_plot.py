@@ -1,12 +1,14 @@
+import enum
 import os
 import pathlib
 
 import plotly.express as px
-from beartype.typing import Any, Dict, List
+import plotly.io as pio
+from beartype.typing import Any, Dict, List, Union
 from plotly.graph_objs import Figure
-from plotly.io import read_json
 
 from DashAI.back.core.schema_fields import (
+    enum_field,
     int_field,
     none_type,
     schema_field,
@@ -20,47 +22,61 @@ from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
 
-class ScatterPlotSchema(BaseExplorerSchema):
-    color_group: schema_field(
+class ECDFNorm(enum.Enum):
+    NONE = "none"
+    PERCENT = "percent"
+    PROBABILITY = "probability"
+
+
+class ECDFPlotSchema(BaseExplorerSchema):
+    color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping colored points."),
+        ("The column to use for coloring the ECDF plot."),
     )  # type: ignore
-    simbol_group: schema_field(
+    facet_col: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping simbol of the points."),
+        ("The column to use for faceting the ECDF plot in the column direction."),
     )  # type: ignore
-    point_size: schema_field(
+    facet_row: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for size of each point."),
+        ("The column to use for faceting the ECDF plot in the row direction."),
+    )  # type: ignore
+    ecdf_norm: schema_field(
+        enum_field([e.value for e in ECDFNorm]),
+        ECDFNorm.PROBABILITY.value,
+        ("Specifies the type of normalization used for this ECDF plot."),
     )  # type: ignore
 
 
-class ScatterPlotExplorer(BaseExplorer):
+class ECDFPlotExplorer(BaseExplorer):
     """
-    ScatterPlotExplorer is an explorer that returns a scatter plot
-    of selected columns of a dataset.
+    ECDFPlotExplorer is an explorer that creates an Empirical Cumulative
+    Distribution Plot. It shows the proportion or count of observations
+    falling below each unique value in the dataset.
     """
 
-    DISPLAY_NAME = "Scatter Plot"
+    DISPLAY_NAME = "Empirical Cumulative Distribution Plot"
     DESCRIPTION = (
-        "ScatterPlotExplorer is an explorer that returns a scatter plot "
-        "of selected columns of a dataset."
+        "The ECDF plot is a non-parametric way to explore the distribution of a "
+        "variable. It shows the proportion or count of observations falling below "
+        "each unique value in the dataset."
     )
 
-    SCHEMA = ScatterPlotSchema
+    SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
+        "allowed_dtypes": ["float64", "float32"],
         "restricted_dtypes": [],
-        "input_cardinality": {"exact": 2},
+        "input_cardinality": {"min": 1},
     }
 
     def __init__(self, **kwargs) -> None:
-        self.color_column = kwargs.get("color_group")
-        self.simbol_column = kwargs.get("simbol_group")
-        self.size_column = kwargs.get("point_size")
+        self.color_column: Union[str, int, None] = kwargs.get("color_column")
+        self.facet_col: Union[str, int, None] = kwargs.get("facet_col")
+        self.facet_row: Union[str, int, None] = kwargs.get("facet_row")
+        self.ecdf_norm: ECDFNorm = ECDFNorm(kwargs.get("ecdf_norm"))
         super().__init__(**kwargs)
 
     def prepare_dataset(
@@ -81,48 +97,50 @@ class ScatterPlotExplorer(BaseExplorer):
                     columns.append({"columnName": col})
             self.color_column = col
 
-        if self.simbol_column is not None:
-            if isinstance(self.simbol_column, int):
-                idx = self.simbol_column
+        if self.facet_col is not None:
+            if isinstance(self.facet_col, int):
+                idx = self.facet_col
                 col = dataset_columns[idx]
                 if col not in explorer_columns:
                     columns.append({"id": idx, "columnName": col})
             else:
-                col = self.simbol_column
+                col = self.facet_col
                 if col not in explorer_columns:
                     columns.append({"columnName": col})
-            self.simbol_column = col
+            self.facet_col = col
 
-        if self.size_column is not None:
-            if isinstance(self.size_column, (int, float)):
-                idx = self.size_column
+        if self.facet_row is not None:
+            if isinstance(self.facet_row, int):
+                idx = self.facet_row
                 col = dataset_columns[idx]
                 if col not in explorer_columns:
                     columns.append({"id": idx, "columnName": col})
             else:
-                col = self.size_column
+                col = self.facet_row
                 if col not in explorer_columns:
                     columns.append({"columnName": col})
-            self.size_column = col
+            self.facet_row = col
 
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
         _df = dataset.to_pandas()
-        cols = [col["columnName"] for col in explorer_info.columns]
+        columns = [col["columnName"] for col in explorer_info.columns]
 
-        colorColumn = self.color_column if self.color_column in _df.columns else None
-        simbolColumn = self.simbol_column if self.simbol_column in _df.columns else None
-        sizeColumn = self.size_column if self.size_column in _df.columns else None
-
-        fig = px.scatter(
+        fig = px.ecdf(
             _df,
-            x=cols[0],
-            y=cols[1],
-            color=colorColumn,
-            symbol=simbolColumn,
-            size=sizeColumn,
-            title=f"Scatter Plot of {cols[0]} vs {cols[1]}",
+            x=columns[0] if len(columns) == 1 else columns,
+            color=self.color_column,
+            facet_col=self.facet_col,
+            facet_row=self.facet_row,
+            ecdfnorm=(
+                self.ecdf_norm.value if self.ecdf_norm is not ECDFNorm.NONE else None
+            ),
+            title=(
+                f"ECDF Plot of {len(columns)} columns"
+                if len(columns) > 1
+                else f"ECDF Plot of {columns[0]}"
+            ),
         )
 
         if explorer_info.name is not None and explorer_info.name != "":
@@ -137,7 +155,7 @@ class ScatterPlotExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: Figure,
     ) -> str:
-        filename = f"{explorer_info.id}.pickle"
+        filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
@@ -149,7 +167,7 @@ class ScatterPlotExplorer(BaseExplorer):
         resultType = "plotly_json"
         config = {}
 
-        result = read_json(exploration_path)
+        result = pio.read_json(exploration_path)
         result = result.to_json()
 
         return {"data": result, "type": resultType, "config": config}

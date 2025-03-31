@@ -7,8 +7,6 @@ from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
-    DatasetDict,
-    concatenate_datasets,
     select_columns,
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
@@ -163,7 +161,7 @@ class BaseExplorer(ConfigObject, ABC):
         return True
 
     def prepare_dataset(
-        self, dataset_dict: DatasetDict, columns: List[Dict[str, Any]]
+        self, loaded_dataset: DashAIDataset, columns: List[Dict[str, Any]]
     ) -> DashAIDataset:
         """
         Prepare the dataset for the exploration.
@@ -192,13 +190,8 @@ class BaseExplorer(ConfigObject, ABC):
         """
         # Select the columns
         columnNames = list({col["columnName"] for col in columns})
-        dataset_dict = select_columns(dataset_dict, columnNames, [])[0]
-        dataset_dict = concatenate_datasets(
-            [dataset_dict[split] for split in dataset_dict]
-        )
-        # Cast the dataset to DashAIDataset
-        dataset_dict: DashAIDataset = dataset_dict
-        return dataset_dict
+        loaded_dataset = select_columns(loaded_dataset, columnNames, [])[0]
+        return loaded_dataset
 
     @abstractmethod
     def launch_exploration(
