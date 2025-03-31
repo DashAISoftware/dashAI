@@ -60,3 +60,81 @@ async def upload_generative_session(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.get("/{session_id}", status_code=status.HTTP_200_OK)
+async def get_generative_session(
+    session_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get a generative session by its ID.
+
+    Parameters
+    ----------
+    session_id : int
+        The ID of the generative session to retrieve.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    dict
+        A dictionary with the generative session on the database
+
+    Raises
+    ------
+    HTTPException
+        If the generative session does not exist or if there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            session = db.get(GenerativeSession, session_id)
+            if not session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative session {session_id} does not exist in DB.",
+                )
+            return session
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get("/", status_code=status.HTTP_200_OK)
+async def get_all_generative_sessions(
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get all generative sessions.
+
+    Parameters
+    ----------
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    list
+        A list of dictionaries with all generative sessions on the database
+
+    Raises
+    ------
+    HTTPException
+        If there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            sessions = db.query(GenerativeSession).all()
+            return sessions
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
