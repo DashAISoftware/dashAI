@@ -24,7 +24,10 @@ router = APIRouter()
 
 
 def validate_explorer_params(
-    session: Session, component_registry: ComponentRegistry, explorer: Explorer
+    session: Session,
+    component_registry: ComponentRegistry,
+    explorer: Explorer,
+    validate_columns: bool = True,
 ):
     """
     Function to validate explorer parameters.
@@ -74,18 +77,19 @@ def validate_explorer_params(
             detail="Dataset not found",
         )
 
-    # validate columns against dataset columns
-    dataset_path = f"{dataset.file_path}/dataset"
-    columns_spec = get_columns_spec(dataset_path)
+    if validate_columns:
+        # validate columns against dataset columns
+        dataset_path = f"{dataset.file_path}/dataset"
+        columns_spec = get_columns_spec(dataset_path)
 
-    try:
-        explorer_class.validate_columns(explorer, columns_spec)
-    except Exception as e:
-        log.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error while validating explorer columns",
-        ) from e
+        try:
+            explorer_class.validate_columns(explorer, columns_spec)
+        except Exception as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Error while validating explorer columns",
+            ) from e
 
     return True
 
@@ -214,7 +218,10 @@ async def update_explorer(
             setattr(explorer, key, value)
 
         validate_explorer_params(
-            session=db, component_registry=component_registry, explorer=explorer
+            session=db,
+            component_registry=component_registry,
+            explorer=explorer,
+            validate_columns=False,
         )
 
         db.commit()

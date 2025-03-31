@@ -14,8 +14,8 @@ import ResultsByExplorer from "./ResultsByExplorer";
 import ResultsAll from "./ResultsAll";
 
 const viewModes = {
-  BY_EXPLORER: "BY_EXPLORER",
   ALL: "ALL",
+  BY_EXPLORER: "BY_EXPLORER",
 };
 
 /**
@@ -29,7 +29,7 @@ function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
   const { enqueueSnackbar } = useSnackbar();
   const { explorationData, setExplorationData } = useExplorationsContext();
 
-  const [viewMode, setViewMode] = useState(viewModes.BY_EXPLORER);
+  const [viewMode, setViewMode] = useState(viewModes.ALL);
   const [loading, setLoading] = useState(false);
 
   const handleChangeViewMode = (mode) => {
@@ -62,12 +62,28 @@ function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
         <Grid item container justifyContent="flex-start" sx={{ mt: 1, mb: 1 }}>
           <Grid item sx={{ ml: 2 }}>
             <Typography variant="body1">
-              View results by Explorer or All
+              View all or view by explorer details
             </Typography>
           </Grid>
         </Grid>
         <Grid item sx={{ my: 1 }}>
           <Grid container justifyContent="center">
+            <TimestampWrapper
+              eventName={TIMESTAMP_KEYS.exploration.viewResults}
+            >
+              <Button
+                variant="contained"
+                color={viewMode === viewModes.ALL ? "primary" : "inherit"}
+                onClick={() => handleChangeViewMode(viewModes.ALL)}
+                style={{
+                  border: "2px solid #00bebb",
+                  color: viewMode === viewModes.ALL ? "#ffffff" : "#00bebb",
+                  borderRadius: "1px",
+                }}
+              >
+                All
+              </Button>
+            </TimestampWrapper>
             <TimestampWrapper
               eventName={TIMESTAMP_KEYS.exploration.viewResults}
             >
@@ -85,22 +101,6 @@ function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
                 }}
               >
                 By Explorer
-              </Button>
-            </TimestampWrapper>
-            <TimestampWrapper
-              eventName={TIMESTAMP_KEYS.exploration.viewResults}
-            >
-              <Button
-                variant="contained"
-                color={viewMode === viewModes.ALL ? "primary" : "inherit"}
-                onClick={() => handleChangeViewMode(viewModes.ALL)}
-                style={{
-                  border: "2px solid #00bebb",
-                  color: viewMode === viewModes.ALL ? "#ffffff" : "#00bebb",
-                  borderRadius: "1px",
-                }}
-              >
-                All
               </Button>
             </TimestampWrapper>
           </Grid>

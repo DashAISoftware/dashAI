@@ -150,15 +150,15 @@ function ResultsByExplorer({
               },
             },
             filter: {
-              filterModel: {
-                items: [
-                  {
-                    field: "status_display",
-                    operator: "contains",
-                    value: ExplorerStatus[ExplorerStatus.FINISHED],
-                  },
-                ],
-              },
+              // filterModel: {
+              //   items: [
+              //     {
+              //       field: "status_display",
+              //       operator: "contains",
+              //       value: ExplorerStatus[ExplorerStatus.FINISHED],
+              //     },
+              //   ],
+              // },
             },
             columns: {
               columnVisibilityModel: {

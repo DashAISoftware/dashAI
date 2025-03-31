@@ -55,16 +55,24 @@ function ExplorationRunner({
   }, [explorers]);
 
   const [running, setRunning] = useState(false);
-  const [finishedRunning, setFinishedRunning] = useState(false);
+  const [finishedRunning, setFinishedRunning] = useState(true);
+  const [launchedJobs, setLaunchedJobs] = useState(false);
 
   const launchJob = async (explorerId) => {
     return enqueueJobRequest(explorerId);
   };
 
-  const submitExecutions = async () => {
+  const submitExecutions = async (notify = true) => {
     return Promise.all(
       rowSelectionModel.map((explorerId) => launchJob(explorerId)),
-    );
+    ).then(() => {
+      if (notify) {
+        enqueueSnackbar("Explorers started successfully", {
+          variant: "success",
+        });
+      }
+      setLaunchedJobs(true);
+    });
   };
 
   const handleExecuteExplorers = async () => {
@@ -103,16 +111,24 @@ function ExplorationRunner({
   // update state of explorer jobs
   useEffect(() => {
     if (rows.length > 0) {
-      let running = rows.some(
+      let isAnyExplorerRunning = rows.some(
         (explorer) =>
           explorer.status === ExplorerStatus.DELIVERED ||
           explorer.status === ExplorerStatus.STARTED,
       );
-      let finished = rows.every(
+      let areAllFinished = rows.every(
         (explorer) => explorer.status === ExplorerStatus.FINISHED,
       );
-      setRunning(running);
-      setFinishedRunning(finished);
+
+      // notify when all explorers are finished and previously some were running
+      if (launchedJobs && areAllFinished) {
+        enqueueSnackbar("All Explorers finished successfully", {
+          variant: "success",
+        });
+      }
+
+      setRunning(isAnyExplorerRunning);
+      setFinishedRunning(areAllFinished);
     }
   }, [rows]);
 
@@ -123,6 +139,7 @@ function ExplorationRunner({
     }
 
     if (running) {
+      setLaunchedJobs(true);
       const interval = setInterval(() => {
         getExplorers();
       }, 5000);
@@ -252,9 +269,22 @@ function ExplorationRunner({
       </Paper>
 
       <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
+        <LoadingButton
+          variant={"contained"}
+          loading={running}
+          endIcon={finishedRunning ? <CheckIcon /> : <PlayArrowIcon />}
+          onClick={
+            finishedRunning ? () => handleCloseDialog() : handleExecuteExplorers
+          }
+          disabled={!finishedRunning && rowSelectionModel.length === 0}
+          color={finishedRunning ? "success" : "primary"}
+        >
+          {finishedRunning ? "Finish" : "Start"}
+        </LoadingButton>
+
         {!running && finishedRunning && (
           <LoadingButton
-            variant="outlined"
+            variant="contained"
             loading={running}
             endIcon={<PlayArrowIcon />}
             onClick={handleExecuteExplorers}
@@ -263,18 +293,6 @@ function ExplorationRunner({
             Re Run
           </LoadingButton>
         )}
-
-        <LoadingButton
-          variant="contained"
-          loading={running}
-          endIcon={finishedRunning ? <CheckIcon /> : <PlayArrowIcon />}
-          onClick={
-            finishedRunning ? () => handleCloseDialog() : handleExecuteExplorers
-          }
-          disabled={!finishedRunning && rowSelectionModel.length === 0}
-        >
-          {finishedRunning ? "Finished" : "Start"}
-        </LoadingButton>
       </ButtonGroup>
     </Box>
   );

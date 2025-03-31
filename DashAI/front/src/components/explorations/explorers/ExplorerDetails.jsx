@@ -3,7 +3,13 @@ import PropTypes from "prop-types";
 
 import { Tabs, Tab, Button, Paper, Box } from "@mui/material";
 
-import { ArrowBackIosNew as BackIcon } from "@mui/icons-material";
+import {
+  ArrowBackIosNew as BackIcon,
+  InfoOutlined,
+  ViewColumnOutlined,
+  TuneOutlined,
+  AnalyticsOutlined,
+} from "@mui/icons-material";
 
 import { useExplorationsContext } from "../context";
 import CustomLayout from "../../custom/CustomLayout";
@@ -13,18 +19,22 @@ const tabs = [
   {
     label: "Info",
     value: 0,
+    icon: <InfoOutlined />,
   },
   {
     label: "Columns",
     value: 1,
+    icon: <ViewColumnOutlined />,
   },
   {
     label: "Parameters",
     value: 2,
+    icon: <TuneOutlined />,
   },
   {
     label: "Results",
     value: 3,
+    icon: <AnalyticsOutlined />,
   },
 ];
 const defaultTab = tabs.find((tab) => tab.label === "Results").value;
@@ -52,17 +62,23 @@ function ExplorerDetails({
   return (
     <CustomLayout>
       <Button startIcon={<BackIcon />} onClick={handleClose}>
-        Close
+        Close details
       </Button>
 
-      <Paper sx={{ mt: 2 }}>
-        <Tabs value={currentTab} onChange={handleTabChange}>
+      <Paper sx={{ mt: 2 }} elevation={0}>
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
+          centered
+          sx={{ borderBottom: 1, borderColor: "divider" }}
+        >
           {tabs.map((tab) => (
             <Tab
               key={tab.value}
               value={tab.value}
               label={tab.label}
               disabled={tab.disabled}
+              icon={tab.icon}
             />
           ))}
         </Tabs>

@@ -21,7 +21,11 @@ import { ExplorationModule } from ".";
  * @param {boolean} props.open - Flag to open the modal.
  * @param {function} props.onClose - Function to call when the modal is closed.
  */
-function ExplorationsModal({ open, onClose = () => {} }) {
+function ExplorationsModal({
+  open,
+  onClose = () => {},
+  closeOnBackdropClick = true,
+}) {
   const { explorationMode, explorationData, explorerData } =
     useExplorationsContext();
   const { dataset_id: datasetId, id: explorationId } = explorationData;
@@ -29,7 +33,7 @@ function ExplorationsModal({ open, onClose = () => {} }) {
 
   const handleCloseContent = useCallback(
     (_e, reason) => {
-      if (reason === "backdropClick") return;
+      if (!closeOnBackdropClick && reason === "backdropClick") return;
       onClose();
     },
     [onClose],

@@ -40,7 +40,8 @@ function ResultsAll({ updateFlag = false, setUpdateFlag = () => {} }) {
           {filteredExplorers.map((explorer) => (
             <Grid item key={explorer.id} width={"100%"}>
               <Typography variant="h6" color={"GrayText"}>
-                {explorer.id} {explorer.name && `| ${explorer.name}`}
+                {explorer.id} {` : ${explorer.exploration_type}`}{" "}
+                {explorer.name && `| ${explorer.name}`}
               </Typography>
               <Results
                 id={explorer.id}

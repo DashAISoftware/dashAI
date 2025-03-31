@@ -1,12 +1,14 @@
+import enum
 import os
 import pathlib
 
 import plotly.express as px
-from beartype.typing import Any, Dict, List
+import plotly.io as pio
+from beartype.typing import Any, Dict, List, Union
 from plotly.graph_objs import Figure
-from plotly.io import read_json
 
 from DashAI.back.core.schema_fields import (
+    enum_field,
     int_field,
     none_type,
     schema_field,
@@ -20,47 +22,75 @@ from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
 
-class ScatterPlotSchema(BaseExplorerSchema):
+class HistFunc(enum.Enum):
+    COUNT = "count"
+    SUM = "sum"
+    AVG = "avg"
+    MIN = "min"
+    MAX = "max"
+
+
+class HistNorm(enum.Enum):
+    NONE = ""
+    PERCENT = "percent"
+    PROBABILITY = "probability"
+    DENSITY = "density"
+    PROBABILITY_DENSITY = "probability density"
+
+
+class HistogramPlotSchema(BaseExplorerSchema):
+    nbins: schema_field(
+        none_type(int_field(ge=1)),
+        None,
+        ("The number of bins to use for the histogram."),
+    )  # type: ignore
+    histfunc: schema_field(
+        enum_field([e.value for e in HistFunc]),
+        HistFunc.COUNT.value,
+        ("Specifies the binning function used for this histogram trace."),
+    )  # type: ignore
+    histnorm: schema_field(
+        enum_field([e.value for e in HistNorm]),
+        HistNorm.NONE.value,
+        ("Specifies the type of normalization used for this histogram trace."),
+    )  # type: ignore
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
         ("The columnName or columnIndex to take for grouping colored points."),
     )  # type: ignore
-    simbol_group: schema_field(
+    pattern_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping simbol of the points."),
-    )  # type: ignore
-    point_size: schema_field(
-        none_type(union_type(string_field(), int_field(ge=0))),
-        None,
-        ("The columnName or columnIndex to take for size of each point."),
+        ("The columnName or columnIndex to take for grouping pattern of the points."),
     )  # type: ignore
 
 
-class ScatterPlotExplorer(BaseExplorer):
+class HistogramPlotExplorer(BaseExplorer):
     """
-    ScatterPlotExplorer is an explorer that returns a scatter plot
-    of selected columns of a dataset.
+    HistogramPlotExplorer is an explorer that returns a density heatmap
+    of a selected column of a dataset.
     """
 
-    DISPLAY_NAME = "Scatter Plot"
+    DISPLAY_NAME = "Histogram Plot"
     DESCRIPTION = (
-        "ScatterPlotExplorer is an explorer that returns a scatter plot "
-        "of selected columns of a dataset."
+        "HistogramPlotExplorer is an explorer that returns a density heatmap "
+        "of a selected column of a dataset."
     )
 
-    SCHEMA = ScatterPlotSchema
+    SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {
         "allowed_dtypes": ["*"],
         "restricted_dtypes": [],
-        "input_cardinality": {"exact": 2},
+        "input_cardinality": {"exact": 1},
     }
 
     def __init__(self, **kwargs) -> None:
-        self.color_column = kwargs.get("color_group")
-        self.simbol_column = kwargs.get("simbol_group")
-        self.size_column = kwargs.get("point_size")
+        self.nbins: Union[int, None] = kwargs.get("nbins")
+        self.histfunc: HistFunc = HistFunc(kwargs.get("histfunc"))
+        self.histnorm: HistNorm = HistNorm(kwargs.get("histnorm"))
+        self.color_column: Union[str, int, None] = kwargs.get("color_group")
+        self.pattern_column: Union[str, int, None] = kwargs.get("pattern_group")
         super().__init__(**kwargs)
 
     def prepare_dataset(
@@ -81,48 +111,33 @@ class ScatterPlotExplorer(BaseExplorer):
                     columns.append({"columnName": col})
             self.color_column = col
 
-        if self.simbol_column is not None:
-            if isinstance(self.simbol_column, int):
-                idx = self.simbol_column
+        if self.pattern_column is not None:
+            if isinstance(self.pattern_column, int):
+                idx = self.pattern_column
                 col = dataset_columns[idx]
                 if col not in explorer_columns:
                     columns.append({"id": idx, "columnName": col})
             else:
-                col = self.simbol_column
+                col = self.pattern_column
                 if col not in explorer_columns:
                     columns.append({"columnName": col})
-            self.simbol_column = col
-
-        if self.size_column is not None:
-            if isinstance(self.size_column, (int, float)):
-                idx = self.size_column
-                col = dataset_columns[idx]
-                if col not in explorer_columns:
-                    columns.append({"id": idx, "columnName": col})
-            else:
-                col = self.size_column
-                if col not in explorer_columns:
-                    columns.append({"columnName": col})
-            self.size_column = col
+            self.pattern_column = col
 
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
         _df = dataset.to_pandas()
-        cols = [col["columnName"] for col in explorer_info.columns]
+        columns = [col["columnName"] for col in explorer_info.columns]
 
-        colorColumn = self.color_column if self.color_column in _df.columns else None
-        simbolColumn = self.simbol_column if self.simbol_column in _df.columns else None
-        sizeColumn = self.size_column if self.size_column in _df.columns else None
-
-        fig = px.scatter(
+        fig = px.histogram(
             _df,
-            x=cols[0],
-            y=cols[1],
-            color=colorColumn,
-            symbol=simbolColumn,
-            size=sizeColumn,
-            title=f"Scatter Plot of {cols[0]} vs {cols[1]}",
+            x=columns[0],
+            nbins=self.nbins,
+            histnorm=self.histnorm.value,
+            histfunc=self.histfunc.value,
+            color=self.color_column,
+            pattern_shape=self.pattern_column,
+            title=f"Histogram of {columns[0]}",
         )
 
         if explorer_info.name is not None and explorer_info.name != "":
@@ -137,7 +152,7 @@ class ScatterPlotExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: Figure,
     ) -> str:
-        filename = f"{explorer_info.id}.pickle"
+        filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
@@ -149,7 +164,7 @@ class ScatterPlotExplorer(BaseExplorer):
         resultType = "plotly_json"
         config = {}
 
-        result = read_json(exploration_path)
+        result = pio.read_json(exploration_path)
         result = result.to_json()
 
         return {"data": result, "type": resultType, "config": config}

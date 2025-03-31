@@ -35,6 +35,7 @@ function Explorations() {
     explorationData,
     setExplorationData,
     setExplorerData,
+    setRefreshFlag,
   } = useExplorationsContext();
   const { dataset_id } = explorationData;
   const { enqueueSnackbar } = useSnackbar();
@@ -61,6 +62,7 @@ function Explorations() {
 
   const handleReload = () => {
     setUpdateFlag(true);
+    setRefreshFlag(true);
   };
 
   const fetchExplorers = async (explorationId) => {

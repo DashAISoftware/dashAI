@@ -101,6 +101,8 @@ const ExplorationsContext = createContext({
   setExplorerData: (prev) => {},
   datasetColumns: [],
   setDatasetColumns: (prev) => {},
+  refreshFlag: false,
+  setRefreshFlag: (prev) => {},
 });
 
 // Create a provider component
@@ -128,10 +130,9 @@ export function ExplorationsProvider({
     exploration_id: explorationId,
   });
 
+  const [refreshFlag, setRefreshFlag] = useState(false);
   const [datasetColumns, setDatasetColumns] = useState([]);
-
-  useEffect(() => {
-    // Fetch dataset columns type specification
+  const fetchDatasetColumns = () => {
     if (datasetId) {
       getDatasetTypes(datasetId)
         .then((data) => {
@@ -153,7 +154,20 @@ export function ExplorationsProvider({
           });
         });
     }
+  };
+
+  // Fetch dataset columns type specification when datasetId changes and on mount
+  useEffect(() => {
+    fetchDatasetColumns();
   }, [datasetId]);
+
+  // Fetch dataset columns type specification when refreshFlag is set
+  useEffect(() => {
+    if (refreshFlag) {
+      fetchDatasetColumns();
+      setRefreshFlag(false);
+    }
+  }, [refreshFlag]);
 
   return (
     <ExplorationsContext.Provider
@@ -166,6 +180,8 @@ export function ExplorationsProvider({
         setExplorerData,
         datasetColumns,
         setDatasetColumns,
+        refreshFlag,
+        setRefreshFlag,
       }}
     >
       {children}

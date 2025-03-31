@@ -76,7 +76,13 @@ const getDataFromOrientation = (data, orientation) => {
       {
         field: "id",
         headerName: "Index",
-        width: 150,
+        renderCell: (params) => {
+          return (
+            <Tooltip title={params.value} arrow>
+              <Typography variant="body2">{params.value}</Typography>
+            </Tooltip>
+          );
+        },
       },
       ...columns.map((column) => {
         return {
@@ -88,7 +94,7 @@ const getDataFromOrientation = (data, orientation) => {
             } else if (typeof params.value === "object") {
               const tooltip = JSON.stringify(params.value);
               return (
-                <Tooltip title={tooltip} arrow followCursor>
+                <Tooltip title={tooltip} arrow>
                   <Typography variant="body2" color="text.secondary">
                     {JSON.stringify(params.value)}
                   </Typography>
@@ -109,7 +115,7 @@ const getDataFromOrientation = (data, orientation) => {
             }
             const tooltip = params.value;
             return (
-              <Tooltip title={tooltip} arrow followCursor>
+              <Tooltip title={tooltip} arrow>
                 <Typography variant="body2">{params.value}</Typography>
               </Tooltip>
             );
@@ -172,7 +178,7 @@ function Results({ id, updateFlag = false, setUpdateFlag = () => {} }) {
             columns: data.columns.map((column) => {
               return {
                 ...column,
-                flex: 1,
+                // flex: 1,
               };
             }),
             rows: data.rows,
@@ -219,6 +225,7 @@ function Results({ id, updateFlag = false, setUpdateFlag = () => {} }) {
     <Box
       sx={{
         height: "100%",
+        minHeight: "300px",
         width: "100%",
         display: "flex",
         alignItems: "center",
