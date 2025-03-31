@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
-from DashAI.back.dependencies.database.models import GenerativeModel, GenerativeSession
+from DashAI.back.dependencies.database.models import GenerativeSession
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -43,30 +43,9 @@ async def upload_generative_session(
 
     with session_factory() as db:
         try:
-            model: GenerativeModel | None = (
-                db.query(GenerativeModel)
-                .filter_by(name=params.model_name)
-                .one_or_none()
-            )
-            if not model:
-                model = GenerativeModel(
-                    name=params.model_name,
-                    task_name=params.task_name,
-                )
-                db.add(model)
-                db.commit()
-                db.refresh(model)
-            model_id = model.id
-
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Model not found",
-            )
-
-        try:
             session = GenerativeSession(
-                model_id=model_id,
+                model_name=params.model_name,
+                task_name=params.task_name,
                 parameters=params.parameters,
                 name=params.name,
                 description=params.description,
