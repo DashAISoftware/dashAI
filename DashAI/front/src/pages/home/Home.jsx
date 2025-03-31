@@ -4,6 +4,7 @@ import {
   FileUpload as FileUploadIcon,
   Science as ScienceIcon,
   Insights as InsightsIcon,
+  Timeline as TimelineIcon,
 } from "@mui/icons-material";
 import HomeButton from "../../components/HomeButton";
 import CustomLayout from "../../components/custom/CustomLayout";
@@ -39,6 +40,14 @@ function Home() {
             description="Create and manage and view the status of your experiments."
             to="/app/experiments"
             Icon={ScienceIcon}
+          />
+        </Grid>
+        <Grid item md={4} sm={6} xs={12}>
+          <HomeButton
+            title="Predictions"
+            description="Make predictions using your trained models."
+            to="/app/predict"
+            Icon={TimelineIcon}
           />
         </Grid>
         <Grid item md={4} sm={6} xs={12}>

@@ -1,4 +1,3 @@
-import io
 import os
 from typing import Tuple
 
@@ -7,7 +6,6 @@ import pytest
 from datasets import DatasetDict
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.validation import check_is_fitted
-from starlette.datastructures import UploadFile
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -29,24 +27,20 @@ def tabular_model_fixture():
     test_dataset_path = "tests/back/models/iris.csv"
     dataloader_test = CSVDataLoader()
 
-    with open(test_dataset_path, "r") as file:
-        csv_binary = io.BytesIO(bytes(file.read(), encoding="utf8"))
-        file = UploadFile(csv_binary)
-
     datasetdict = dataloader_test.load_data(
-        filepath_or_buffer=file,
+        filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/models",
         params={"separator": ","},
     )
 
     datasetdict = to_dashai_dataset(datasetdict)
 
-    total_rows = len(datasetdict["train"])
+    total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
     )
     split_dataset_dict = split_dataset(
-        datasetdict["train"],
+        datasetdict,
         train_indexes=train_indexes,
         test_indexes=test_indexes,
         val_indexes=val_indexes,
@@ -59,10 +53,10 @@ def tabular_model_fixture():
         "PetalWidthCm",
     ]
     outputs_columns = ["Species"]
-    divided_dataset = select_columns(
-        split_dataset_dict, inputs_columns, outputs_columns
-    )
-    return divided_dataset
+    x, y = select_columns(split_dataset_dict, inputs_columns, outputs_columns)
+    x = split_dataset(x)
+    y = split_dataset(y)
+    return (x, y)
 
 
 @pytest.fixture(scope="module", name="model_params")

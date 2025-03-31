@@ -10,6 +10,7 @@ import ExplainersDashboard from "./components/explainers/ExplainersDashboard";
 import ExplainersPage from "./pages/ExplainersPage";
 import ExplainerData from "./components/explainers/ExplainerData";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
+import PredictionPage from "./pages/predictions/PredictionPage";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <ResponsiveAppBar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/app/predict" element={<PredictionPage />} />
         <Route path="/app" element={<Home />} />
         <Route path="/app/data/" element={<DatasetsPage />} />
         <Route path="/app/experiments" element={<ExperimentsPage />} />

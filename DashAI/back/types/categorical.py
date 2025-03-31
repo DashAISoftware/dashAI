@@ -1,92 +1,121 @@
 from dataclasses import dataclass
-
+import pyarrow as pa
 from datasets import ClassLabel
 
 # from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
-@dataclass
-class Categorical(ClassLabel, DashAIDataType):
-    """Wrapper for Hugging Face for representing categorical values.
-    Internally the categorical values are integer numbers.
-    There are 3 ways to define a `Categorical`,
-    which correspond to the 3 arguments:
-
-     * `num_classes`: Create 0 to (num_classes-1) labels.
-     * `names`: List of label strings.
-     * `names_file`: File containing the list of labels.
+class Categorical(DashAIDataType):
+    """Represents a categorical variable.
 
     Attributes
     ----------
-    ClassLabel : _type_
-        _description_
-
-    num_classes : int, optional
-        Number of classes. All labels must be < `num_classes`.
-    names : list of str, optional
-        String names for the integer classes.
-        The order in which the names are provided is kept.
-    names_file : str, optional
-        Path to a file with names for the integer classes, one per line.
+    categories : list
+        List of unique category values (can be strings or numbers).
     """
 
-    def __post_init__(self, num_classes, names_file):
-        return super().__post_init__(num_classes, names_file)
+    categories: list
 
-    @staticmethod
-    def from_classlabel(hf_feature: ClassLabel) -> "Categorical":
-        """Creates a categorical data type instance with the information of
-        the given Hugging Face feature `hf_feature`.
+    def __init__(self, arrow_type: pa.DataType, values: pa.Array):
+        """Initialize a Categorical type.
 
         Parameters
         ----------
-        hf_feature : ClassLabel
-            Hugging Face feature instance used to create a Categorical
-            instance.
-
-        Returns
-        -------
-        DashAIDataType
-            _description_
-
-        Raises
-        ------
-        TypeError
-            Raises if `hf_feature` is not a ClassLabel instance.
+        arrow_type : pa.DataType
+            The PyArrow data type of the column.
+        values : pa.Array
+            The values in the column to extract categories.
         """
-        if not isinstance(hf_feature, ClassLabel):
-            raise TypeError("hf_feature should be a ClassLabel instance")
+        if not pa.types.is_dictionary(arrow_type):
+            raise ValueError(f"Expected a dictionary (categorical) type, got {arrow_type}")
 
-        return Categorical(hf_feature.names)
+        # Extraer categorías en su tipo original
+        self.categories = [v.as_py() for v in values.dictionary]
+
+    def transform(self, values, library):
+        pass
+#@dataclass
+# class Categorical(ClassLabel, DashAIDataType):
+#     """Wrapper for Hugging Face for representing categorical values.
+#     Internally the categorical values are integer numbers.
+#     There are 3 ways to define a `Categorical`,
+#     which correspond to the 3 arguments:
+
+#      * `num_classes`: Create 0 to (num_classes-1) labels.
+#      * `names`: List of label strings.
+#      * `names_file`: File containing the list of labels.
+
+#     Attributes
+#     ----------
+#     ClassLabel : _type_
+#         _description_
+
+#     num_classes : int, optional
+#         Number of classes. All labels must be < `num_classes`.
+#     names : list of str, optional
+#         String names for the integer classes.
+#         The order in which the names are provided is kept.
+#     names_file : str, optional
+#         Path to a file with names for the integer classes, one per line.
+#     """
+
+#     def __post_init__(self, num_classes, names_file):
+#         return super().__post_init__(num_classes, names_file)
+
+#     @staticmethod
+#     def from_classlabel(hf_feature: ClassLabel) -> "Categorical":
+#         """Creates a categorical data type instance with the information of
+#         the given Hugging Face feature `hf_feature`.
+
+#         Parameters
+#         ----------
+#         hf_feature : ClassLabel
+#             Hugging Face feature instance used to create a Categorical
+#             instance.
+
+#         Returns
+#         -------
+#         DashAIDataType
+#             _description_
+
+#         Raises
+#         ------
+#         TypeError
+#             Raises if `hf_feature` is not a ClassLabel instance.
+#         """
+#         if not isinstance(hf_feature, ClassLabel):
+#             raise TypeError("hf_feature should be a ClassLabel instance")
+
+#         return Categorical(hf_feature.names)
 
 
-def to_dashai_categorical(hf_feature: ClassLabel) -> Categorical:
-    """Creates a categorical data type instance with the information of
-    the given Hugging Face feature `hf_feature`.
+# def to_dashai_categorical(hf_feature: ClassLabel) -> Categorical:
+#     """Creates a categorical data type instance with the information of
+#     the given Hugging Face feature `hf_feature`.
 
-    Parameters
-    ----------
-    hf_feature : ClassLabel
-        Hugging Face feature instance used to create a Categorical
-        instance.
+#     Parameters
+#     ----------
+#     hf_feature : ClassLabel
+#         Hugging Face feature instance used to create a Categorical
+#         instance.
 
-    Returns
-    -------
-    DashAIDataType
-        _description_
+#     Returns
+#     -------
+#     DashAIDataType
+#         _description_
 
-    Raises
-    ------
-    TypeError
-        Raises if `hf_feature` is not a ClassLabel instance.
-    """
-    if not isinstance(hf_feature, ClassLabel):
-        raise TypeError("hf_feature should be a ClassLabel instance")
+#     Raises
+#     ------
+#     TypeError
+#         Raises if `hf_feature` is not a ClassLabel instance.
+#     """
+#     if not isinstance(hf_feature, ClassLabel):
+#         raise TypeError("hf_feature should be a ClassLabel instance")
     
-    names = hf_feature.names
+#     names = hf_feature.names
 
-    return Categorical(names=names)
+#     return Categorical(names=names)
 
 
 

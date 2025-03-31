@@ -71,7 +71,12 @@ class Run(Base):
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
-    plot_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_history_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_slice_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_contour_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_importance_path: Mapped[str] = mapped_column(String, nullable=True)
+    # goal metrics
+    goal_metric: Mapped[str] = mapped_column(String)
     # metrics
     train_metrics: Mapped[JSON] = mapped_column(JSON, nullable=True)
     test_metrics: Mapped[JSON] = mapped_column(JSON, nullable=True)

@@ -1,10 +1,15 @@
-from typing import List
+from typing import List, Union
 
 from datasets import ClassLabel, DatasetDict, Value
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_value import DashAIValue
 from DashAI.back.types.value_types import Integer, Float, Text, Time, Boolean, Timestamp, Date, Duration, Decimal, Binary
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -13,6 +18,8 @@ class TabularClassificationTask(BaseTask):
 
     Here you can change the methods provided by class Task.
     """
+
+    COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
 
     DESCRIPTION: str = """
     Tabular classification in machine learning involves predicting categorical
@@ -27,23 +34,23 @@ class TabularClassificationTask(BaseTask):
     }
 
     def prepare_for_task(
-        self, datasetdict: DatasetDict, outputs_columns: List[str]
-    ) -> DatasetDict:
+        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+    ) -> DashAIDataset:
         """Change the column types to suit the tabular classification task.
 
         A copy of the dataset is created.
 
         Parameters
         ----------
-        datasetdict : DatasetDict
+        datasetdict : Union[DatasetDict, DashAIDataset]
             Dataset to be changed
 
         Returns
         -------
-        DatasetDict
+        DashAIDataset
             Dataset with the new types
         """
         types = {column: "Categorical" for column in outputs_columns}
-        for split in datasetdict:
-            datasetdict[split] = datasetdict[split].change_columns_type(types)
-        return datasetdict
+        datasetdict = to_dashai_dataset(datasetdict)
+        dataset = datasetdict.change_columns_type(types)
+        return dataset

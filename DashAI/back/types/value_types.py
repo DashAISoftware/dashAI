@@ -1,129 +1,133 @@
 from dataclasses import dataclass
 
 from datasets import Value
-
+import pyarrow as pa
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_value import DashAIValue
+from typing import Optional
 
 
 @dataclass
-class Integer(DashAIValue, DashAIDataType):
-    """Wrapper class to represent integer and unsigned integer Hugging Face
-    values.
-
+class Integer(DashAIValue):
+    """Represents an integer value.
+    
     Attributes
     ----------
     size : int
         Number of bits used to represent the integer numbers.
         The accepted sizes are 8, 16, 32 and 64.
     unsigned : bool
-        True if the represented integer is unsigned (non negative)
-
-    Raises
-    ------
-    ValueError
-        Raised when an invalid size is given.
+        Whether the integer is unsigned or not.
     """
 
     size: int = 64
     unsigned: bool = False
 
-    def __post_init__(self):
-        if self.size not in {8, 16, 32, 64}:
+    def __init__(self, arrow_type: pa.DataType):
+        if not pa.types.is_integer(arrow_type):
             raise ValueError(
-                f"Integer size must be 8, 16, 32 or 64, but {self.size} \
-                    was given."
-            )
-
-        self.dtype = f"uint{self.size}" if self.unsigned else f"int{self.size}"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith(("int", "uint")):
-            raise ValueError(f"dtype {value.dtype} is not an integer")
-
-        unsigned: bool = value.dtype.startswith("uint")
-        size: int = int(value.dtype[4:]) if unsigned else int(value.dtype[3:])
-
-        return Integer(size=size, unsigned=unsigned)
-
+                f"Arrow type {arrow_type} is not an integer type.")
+        if pa.types.is_unsigned_integer(arrow_type):
+            self.unsigned = True
+        else:
+            self.unsigned = False
+        self.size = arrow_type.bit_width
+        
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Integer", "size": self.size, "unsigned": self.unsigned}
+        
 
 @dataclass
-class Float(DashAIValue, DashAIDataType):
-    """Wrapper class to represent float Hugging Face values.
-
+class Float(DashAIValue):
+    """Represents a float value.
+    
     Attributes
     ----------
     size : int
-        Number of bits used to represent the integer numbers.
+        Number of bits used to represent the float numbers.
         The accepted sizes are 16, 32 and 64.
-
-    Raises
-    ------
-    ValueError
-        Raised when an invalid size is given.
     """
 
     size: int = 64
 
-    def __post_init__(self):
-        if self.size not in {16, 32, 64}:
+    def __init__(self, arrow_type: pa.DataType):
+        if not pa.types.is_floating(arrow_type):
             raise ValueError(
-                f"Float size must be 16, 32 or 64, but {self.size} was given"
-            )
+                f"Arrow type {arrow_type} is not a float type.")
+        
+        self.size = arrow_type.bit_width
 
-        self.dtype = f"float{self.size}"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith("float"):
-            raise ValueError(f"dtype {value.dtype} is not a float")
-
-        size: int = int(value.dtype[5:])
-        return Float(size=size)
-
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Float", "size": self.size}
+    
 
 @dataclass
-class Text(DashAIValue, DashAIDataType):
-    """Wrapper class to represent string and large string Hugging Face values.
-
+class Text(DashAIValue):
+    """
+    Represents a text value.
+    
     Attributes
     ----------
-    string_type : str
-        Type of string represented. It should be 'string' or 'large_string'
-
-    Raises
-    ------
-    ValueError
-        Raised when an invalid string type is given.
+    encoding : str
+        Encoding used for the text. It should be a valid Python encoding.
+    large : bool
+        Whether the text is large or not.
     """
+    
 
-    string_type: str = "string"
+    encoding: str = "utf-8"
+    large: bool = False
 
-    def __post_init__(self):
-        if self.string_type not in ("large_string", "string"):
+    def __init__(self, arrow_type: pa.DataType):
+        if not (pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type)):
             raise ValueError(
-                f"String type must be 'string' or 'large_string', but\
-                    {self.string_type} was given."
-            )
+                f"Arrow type {arrow_type} is not a string type.")
+        
+        if arrow_type.equals(pa.large_string()):
+            self.large = True
+        else:
+            self.large = False
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Text", "encoding": self.encoding, "large": self.large}
+        
 
-        self.dtype = self.string_type
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if value.dtype not in ("string", "large_string"):
-            raise ValueError(f"dtype {value.dtype} is not a string")
-
-        return Text(string_type=value.dtype)
 
 
 @dataclass
-class Time(DashAIValue, DashAIDataType):
-    """Wrapper class to represent time Hugging Face values.
-
+class Time(DashAIValue):
+    """Represents a time value.
+        
     Attributes
     ----------
     size : int
@@ -131,150 +135,144 @@ class Time(DashAIValue, DashAIDataType):
         The accepted sizes are 32 and 64.
     unit : str
         Unit of time used. It should be 's' or 'ms'.
-
-    Raises
-    ------
-    ValueError
-        Raised when an invalid size or invalid unit is given.
     """
-
-    size: int = 64
+    size: int = 32
     unit: str = "s"
 
-    def __post_init__(self):
-        if self.size not in [32, 64]:
+    def __init__(self, arrow_type: pa.DataType):
+        if not pa.types.is_time(arrow_type):
             raise ValueError(
-                f"size must be 32 or 64, but {self.size} was\
-                given."
-            )
-
-        if self.size == 32 and self.unit not in ["s", "ms"]:
+                f"Arrow type {arrow_type} is not a time type.")
+        
+        self.size = arrow_type.bit_width
+        if arrow_type.equals(pa.time32()):
+            if arrow_type.unit == "s":
+                self.unit = "s"
+            elif arrow_type.unit == "ms":
+                self.unit = "ms"
+        elif arrow_type.equals(pa.time64()):
+            if arrow_type.unit == "us":
+                self.unit = "us"
+            elif arrow_type.unit == "ns":
+                self.unit = "ns"
+        else:
             raise ValueError(
-                f"unit for size=32 must be 's' or 'ms', but {self.unit} was\
-                    given."
+                f"Invalid time type: {arrow_type}. Expected time32 or time64."
             )
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Time", "size": self.size, "unit": self.unit}
+    
 
-        if self.size == 64 and self.unit not in ["us", "ns"]:
-            raise ValueError(
-                f"unit for size=64 must be 'us' or 'ns', but {self.unit} was\
-                    given."
-            )
-
-        self.dtype = f"time{self.size}[{self.unit}]"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith("time"):
-            raise ValueError(f"dtype {value.dtype} is not a time value")
-
-        size: int = int(value.dtype[4:6])
-        unit: str = value.dtype[7:-1]
-        return Time(size=size, unit=unit)
 
 
 @dataclass
-class Boolean(DashAIValue, DashAIDataType):
-    """Wrapper class to represent boolean Hugging Face values."""
+class Boolean(DashAIValue):
+    """
+    Represents a boolean value.
+    """
 
-    def __post_init__(self):
-        self.dtype = "bool"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if value.dtype != "boolean":
-            raise ValueError(f"dtype {value.dtype} is not boolean")
-        return Boolean()
+    def __init__(self, arrow_type: pa.DataType):
+        if not pa.types.is_boolean(arrow_type):
+            raise ValueError(
+                f"Arrow type {arrow_type} is not a boolean type.")
+    
+        
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Boolean"}
 
 
 @dataclass
-class Timestamp(DashAIValue, DashAIDataType):
-    """Wrapper class to represent timestamp Hugging Face values.
-
+class Timestamp(DashAIValue):
+    """Represents a timestamp value.
+    
     Attributes
     ----------
     unit : str
-        Unit of used for the timestamp. It should be 's', 'ms', 'us', or 'ns'.
-    timezone : str | None
-        Timezone used for the timestamp.
-    Raises
-    ------
-    ValueError
-        Raised when an invalid string type is given.
+        Unit of time used. It should be 's', 'ms', 'us' or 'ns'.
+        timezone : str or None
+        Timezone used for the timestamp. If None, the timestamp is timezone-naive.
     """
 
     unit: str = "s"
-    timezone: str = None
+    timezone: Optional[str] = None
 
-    def __post_init__(self):
-        if self.unit not in ["s", "ms", "us", "ns"]:
+    def __init__(self, arrow_type: pa.DataType):
+        if not pa.types.is_timestamp(arrow_type):
             raise ValueError(
-                f"Timestamp unit must be 's', 'ms', 'us' or 'ns', but\
-                    {self.unit} was given"
-            )
-        if self.timezone is None:
-            self.dtype = f"timestamp[{self.unit}]"
-
+                f"Arrow type {arrow_type} is not a timestamp type.")
+        
+        self.unit = arrow_type.unit
+        self.timezone = arrow_type.tz
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
         else:
-            self.dtype = f"timestamp[{self.unit}, tz={self.timezone}]"
-
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith("timestamp"):
-            raise ValueError(f"dtype {value.dtype} is not timestamp.")
-
-        timestamp_params: list[str] = value.dtype[10:-1].split(",")
-        unit: str = timestamp_params[0]
-
-        if len(timestamp_params) == 2:
-            timezone = timestamp_params[1][4:]
-            return Timestamp(unit=unit, timezone=timezone)
-
-        return Timestamp(unit=unit)
-
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Timestamp", "unit": self.unit, "timezone": self.timezone}
 
 @dataclass
-class Duration(DashAIValue, DashAIDataType):
-    """Wrapper class to represent duration Hugging Face values.
+class Duration(DashAIValue):
+    """Represents a duration value.
 
     Attributes
     ----------
     unit : str
         Unit of time used. It should be 's', 'ms', 'us' or 'ns'.
-
-    Raises
-    ------
-    ValueError
-        Raised when an invalid unit is given.
     """
 
     unit: str = "ms"
 
-    def __post_init__(self):
-        if self.unit not in ["s", "ms", "us", "ns"]:
+    def __init__(self, arrow_type: pa.DataType):
+        if not pa.types.is_duration(arrow_type):
             raise ValueError(
-                f"Duration unit must be 's', 'ms', 'us' or 'ns', but\
-                    {self.unit} was given."
-            )
+                f"Arrow type {arrow_type} is not a duration type.")
+        
+        self.unit = arrow_type.unit
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
 
-        self.dtype = f"duration[{self.unit}]"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith("duration"):
-            raise Value(f"dtype {value.dtype} is not duration")
-
-        unit = value.dtype[9:-1]
-        return Duration(unit=unit)
-
+    def to_string(self):
+        return {"type": "Duration", "unit": self.unit}
 
 @dataclass
-class Decimal(DashAIValue, DashAIDataType):
-    """Wrapper class to represent decimal Hugging Face values.
+class Decimal(DashAIValue):
+    """Represents a decimal value.
 
     Attributes
     ----------
@@ -286,36 +284,45 @@ class Decimal(DashAIValue, DashAIDataType):
     scale : int
         Number of decimal digits
 
-    Raises
-    ------
-    ValueError
-        Raised when an invalid size is given.
     """
 
     size: int = 128
     precision: int = 8
     scale: int = 0
 
-    def __post_init__(self):
-        if self.size not in [128, 256]:
+    def __init__ (self, arrow_type: pa.DataType):
+        if not pa.types.is_decimal(arrow_type):
             raise ValueError(
-                f"Decimal size must be 128 or 256, but {self.size} was given."
+                f"Arrow type {arrow_type} is not a decimal type.")
+        
+        if isinstance(arrow_type, pa.Decimal128Type):
+            self.size = 128
+        elif isinstance(arrow_type, pa.Decimal256Type):
+            self.size = 256
+        else:
+            raise ValueError(
+                f"Invalid decimal type: {arrow_type}. Expected Decimal128 or Decimal256."
             )
-        self.dtype = f"decimal{self.size}({self.precision}, {self.scale})"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith("decimal"):
-            raise ValueError(f"dtype {value.dtype} is not decimal")
-        size = int(value.dtype[7:10])
-        params = value.dtype[11:-1].split(", ")
-        return Decimal(size=size, precision=params[0], scale=params[1])
+        self.precision = arrow_type.precision
+        self.scale = arrow_type.scale
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Decimal", "size": self.size, "precision": self.precision, "scale": self.scale}
 
 
 @dataclass
-class Date(DashAIValue, DashAIDataType):
-    """Wrapper class to represent date Hugging Face values.
+class Date(DashAIValue):
+    """Represents a date value.
 
     Attributes
     ----------
@@ -323,65 +330,69 @@ class Date(DashAIValue, DashAIDataType):
         Number of bits used to represent the date value.
         It should be 32 or 64.
 
-    Raises
-    ------
-    ValueError
-        Raised when an invalid size is given.
     """
 
     size: int = 64
 
-    def __post_init__(self):
-        if self.size not in [32, 64]:
+    def __init__ (self, arrow_type: pa.DataType):
+        if not pa.types.is_date(arrow_type):
             raise ValueError(
-                f"Date size must be 32 or 64, but {self.size} was\
-                given."
-            )
-        self.dtype = f"date{self.size}"
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if not value.dtype.startswith("date"):
-            raise ValueError(f"dtype {value.dtype} is not date.")
-        size = int(value.dtype[4:])
-        return Date(size=size)
-
+                f"Arrow type {arrow_type} is not a date type.")
+        
+        if arrow_type.equals(pa.date32()):
+            self.size = 32
+        elif arrow_type.equals(pa.date64()):
+            self.size = 64
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Date", "size": self.size}
 
 @dataclass
-class Binary(DashAIValue, DashAIDataType):
-    """Wrapper class to represent binary Hugging Face values.
+class Binary(DashAIValue):
+    """Represents a binary value.
 
     Attributes
     ----------
     binary_type : str
         Type of binary. It should be 'binary' or 'large_binary'.
 
-    Raises
-    ------
-    ValueError
-        Raised when an invalid binary type is given.
     """
 
     binary_type: str = "binary"
 
-    def __post_init__(self):
-        if self.binary_type not in ["binary", "large_binary"]:
+    def __init__(self, arrow_type: pa.DataType):
+        if not (pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type)):
             raise ValueError(
-                f"binary_type must be 'binary' or 'large_binary', but\
-                    {self.binary_type} was given."
-            )
+                f"Arrow type {arrow_type} is not a binary type.")
 
-        self.dtype = self.binary_type
-        super().__post_init__()
-
-    @staticmethod
-    def from_value(value: Value):
-        if value.dtype not in ["binary", "large_binary"]:
-            raise ValueError(f"dtype {value.dtype} is not binary")
-
-        return Binary(binary_type=value.dtype)
-
+        if arrow_type.equals(pa.binary()):
+            self.binary_type = "binary"
+        elif arrow_type.equals(pa.large_binary()):
+            self.binary_type = "large_binary"
+    
+    def transform(self, values, library):
+        if library == "numpy":
+            return values.to_numpy()
+        elif library == "torch":
+            return values.to_torch()
+        elif library == "tensorflow":
+            return values.to_tensorflow()
+        else:
+            raise ValueError(f"Unsupported library: {library}")
+    
+    def to_string(self):
+        return {"type": "Binary", "binary_type": self.binary_type}
+    
 
 VALUES_DICT: "dict[str, DashAIValue]" = {
     "bool": Boolean,
@@ -440,6 +451,41 @@ def to_dashai_value(value: Value) -> "DashAIValue":
 
     return VALUES_DICT[val].from_value(value)
 
+def arrow_to_dashai_types(arrow_type) -> DashAIValue:
+    """Convert an Arrow type to a DashAI value."""
+    if pa.types.is_integer(arrow_type):
+        return Integer(arrow_type).to_string()
+    elif pa.types.is_floating(arrow_type):
+        return Float(arrow_type).to_string()
+    elif pa.types.is_string(arrow_type):
+        return Text(arrow_type).to_string()
+    elif pa.types.is_large_string(arrow_type):
+        return Text(arrow_type).to_string()
+    elif pa.types.is_boolean(arrow_type):
+        return Boolean(arrow_type).to_string()
+    elif pa.types.is_time(arrow_type):
+        return Time(arrow_type).to_string()
+    elif pa.types.is_timestamp(arrow_type):
+        return Timestamp(arrow_type).to_string()
+    elif pa.types.is_duration(arrow_type):
+        return Duration(arrow_type).to_string()
+    elif pa.types.is_date(arrow_type):
+        return Date(arrow_type).to_string()
+    elif pa.types.is_decimal(arrow_type):
+        return Decimal(arrow_type).to_string()
+    elif pa.types.is_binary(arrow_type):
+        return Binary(arrow_type).to_string()
+    elif pa.types.is_large_binary(arrow_type):
+        return Binary(arrow_type).to_string()
+
+def arrow_to_dashai_schema(arrow_tbl):
+    """Iterates arrow table and asigns corresponding DashAI value type."""
+    schema = {}
+    for field in arrow_tbl.schema:
+        column_name = field.name
+        column_type = field.type
+        schema[column_name] = arrow_to_dashai_types(column_type)
+    return schema
 
 if __name__ == "__main__":
     int_val = Integer()
