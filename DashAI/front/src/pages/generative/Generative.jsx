@@ -3,16 +3,18 @@ import { useEffect } from "react";
 import React from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
-import TaskBox from "../../components/generative/TaskBox";
+import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import { getSessions } from "../../api/session";
+import { getGenerativeTask } from "../../api/generativeTask";
 
 export default function Generative() {
   const [sessions, setSessions] = React.useState([]);
 
+  const [task, setTask] = React.useState([]);
+
   useEffect(() => {
-    getSessions().then((data) => {
-      setSessions(data);
-    });
+    getSessions().then(setSessions);
+    getGenerativeTask().then(setTask); // Suponiendo que tienes este estado
   }, []);
 
   return (
@@ -28,7 +30,9 @@ export default function Generative() {
       alignItems={"stretch"}
     >
       <SessionBar sessions={sessions} />
-      <MainGenerativeBox></MainGenerativeBox>
+      <MainGenerativeBox>
+        <SelectTaskMenu task={task} />
+      </MainGenerativeBox>
     </Box>
   );
 }
