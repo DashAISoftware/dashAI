@@ -7,6 +7,8 @@ import { getGenerativeTask } from "../../api/generativeTask";
 
 export default function Generative() {
   const [task, setTask] = useState([]);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [selectedSession, setSelectedSession] = useState(null);
 
   useEffect(() => {
     getGenerativeTask().then(setTask);
@@ -26,7 +28,11 @@ export default function Generative() {
     >
       <SessionBar />
       <MainGenerativeBox>
+        {/* Step 0 */}
         <SelectTaskMenu task={task} />
+        {/* Step 1  */}
+        {/* ... */}
+        {/* or Chat */}
       </MainGenerativeBox>
     </Box>
   );
