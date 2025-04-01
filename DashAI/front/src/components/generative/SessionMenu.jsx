@@ -9,8 +9,8 @@ import {
   styled,
 } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import InfoIcon from "@mui/icons-material/Info";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   color: theme.palette.error.main,
@@ -71,9 +71,9 @@ export default function SessionMenu({ sessionId, onEdit, onDelete }) {
       >
         <MenuItem onClick={() => handleAction(onEdit, sessionId)}>
           <ListItemIcon>
-            <EditIcon fontSize="small" />
+            <InfoIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemText>Info</ListItemText>
         </MenuItem>
         <Divider />
         <DeleteMenuItem onClick={() => handleAction(onDelete, sessionId)}>
