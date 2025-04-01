@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Avatar } from "@mui/material";
 import SessionBox from "./SessionBox";
 import NewSession from "./NewSession";
@@ -9,12 +8,30 @@ import { removeSession } from "../../api/session";
 
 export default function SessionBar() {
   const [sessions, setSessions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredSessions, setFilteredSessions] = useState([]);
 
   useEffect(() => {
     getSessions().then((data) => {
       setSessions(data);
+      setFilteredSessions(data);
     });
   }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredSessions(sessions);
+    } else {
+      const filtered = sessions.filter((session) =>
+        session.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+      setFilteredSessions(filtered);
+    }
+  }, [searchQuery, sessions]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
 
   const handleSessionDelete = (id) => {
     setSessions((prevSessions) =>
@@ -56,7 +73,11 @@ export default function SessionBar() {
         {/* Create a new generative session */}
         <NewSession />
         {/* Search Bar */}
-        <SearchBar placeholder={"Search"} />
+        <SearchBar
+          placeholder={"Search"}
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
         {/* Sessions Header */}
         <Box
           display={"flex"}
@@ -72,14 +93,16 @@ export default function SessionBar() {
             sx={{ opacity: "0.5" }}
             p={0.5}
           >
-            Sessions
+            Sessions{" "}
+            {filteredSessions.length !== sessions.length &&
+              `(${filteredSessions.length}/${sessions.length})`}
           </Typography>
         </Box>
 
         {/* Sessions Display */}
         <Box display={"flex"} flexDirection={"column"} overflow={"auto"}>
-          {sessions.map((session) => {
-            return (
+          {filteredSessions.length > 0 ? (
+            filteredSessions.map((session) => (
               <SessionBox
                 name={session.name}
                 key={session.id}
@@ -88,8 +111,19 @@ export default function SessionBar() {
                 onDelete={handleSessionDelete}
                 onInfo={handleSessionInfo}
               />
-            );
-          })}
+            ))
+          ) : (
+            <Typography
+              sx={{
+                color: "#ffffff",
+                opacity: 0.5,
+                textAlign: "center",
+                padding: 2,
+              }}
+            >
+              No sessions found
+            </Typography>
+          )}
         </Box>
       </Box>
       <Box display={"flex"} justifyContent={"center"}>

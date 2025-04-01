@@ -1,7 +1,5 @@
-import React from "react";
 import { Paper, TextField, IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import AddCardIcon from "@mui/icons-material/AddCard";
 
 export default function SearchBar({ placeholder, onChange, value }) {
   return (
@@ -16,6 +14,7 @@ export default function SearchBar({ placeholder, onChange, value }) {
         borderRadius: 1,
         backgroundColor: "#161925",
       }}
+      onSubmit={(e) => e.preventDefault()} // Prevent form submission
     >
       <TextField
         variant="standard"
