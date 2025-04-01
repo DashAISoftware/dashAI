@@ -31,6 +31,7 @@ export default function SessionBar() {
       <Box
         display={"flex"}
         justifyContent={"space-between"}
+        gap={1}
         flexDirection={"column"}
         overflow={"none"}
       >
