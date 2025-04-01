@@ -19,7 +19,7 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-export default function SessionMenu({ sessionId, onEdit, onDelete }) {
+export default function SessionMenu({ sessionId, onInfo, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -69,7 +69,7 @@ export default function SessionMenu({ sessionId, onEdit, onDelete }) {
           horizontal: "right",
         }}
       >
-        <MenuItem onClick={() => handleAction(onEdit, sessionId)}>
+        <MenuItem onClick={() => handleAction(onInfo, sessionId)}>
           <ListItemIcon>
             <InfoIcon fontSize="small" />
           </ListItemIcon>
