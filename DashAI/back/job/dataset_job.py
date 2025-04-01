@@ -72,7 +72,7 @@ class DatasetJob(BaseJob):
             try:
                 log.debug("Storing dataset in %s", folder_path)
                 dataset_save_path = folder_path / "dataset"
-                if dataloader == ImageDataLoader:
+                if isinstance(dataloader, ImageDataLoader):
                     new_dataset = dataloader.load_data(
                         filepath_or_buffer=str(file_path)
                         if file_path is not None
