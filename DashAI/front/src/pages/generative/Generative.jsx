@@ -1,18 +1,15 @@
 import { Box } from "@mui/material";
-import React from "react";
+import { useEffect, useState } from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
-import { getSessions } from "../../api/session";
 import { getGenerativeTask } from "../../api/generativeTask";
 
 export default function Generative() {
-  const [sessions, setSessions] = React.useState([]);
-  const [task, setTask] = React.useState([]);
+  const [task, setTask] = useState([]);
 
   useEffect(() => {
-    getSessions().then(setSessions);
-    getGenerativeTask().then(setTask); // Suponiendo que tienes este estado
+    getGenerativeTask().then(setTask);
   }, []);
 
   return (
@@ -27,7 +24,7 @@ export default function Generative() {
       p={1.5}
       alignItems={"stretch"}
     >
-      <SessionBar sessions={sessions} />
+      <SessionBar />
       <MainGenerativeBox>
         <SelectTaskMenu task={task} />
       </MainGenerativeBox>
