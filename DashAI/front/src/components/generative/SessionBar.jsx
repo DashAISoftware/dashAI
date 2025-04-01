@@ -60,7 +60,13 @@ export default function SessionBar() {
         {/* Sessions Display */}
         <Box display={"flex"} flexDirection={"column"} overflow={"auto"}>
           {sessions.map((session) => {
-            return <SessionBox name={session.name} key={session.id} />;
+            return (
+              <SessionBox
+                name={session.name}
+                key={session.id}
+                id={session.id}
+              />
+            );
           })}
         </Box>
       </Box>

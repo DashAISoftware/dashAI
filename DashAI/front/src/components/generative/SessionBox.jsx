@@ -1,25 +1,41 @@
 import React from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import SessionMenu from "./SessionMenu";
+import { removeSession } from "../../api/session";
 
-export default function SessionBox({ name }) {
+export default function SessionBox({ name, id, onClick }) {
+  const onEdit = () => {
+    console.log("Edit session", id);
+  };
+
+  const onDelete = () => {
+    removeSession(id).then(() => {
+      console.log("Session deleted", id);
+    });
+  };
+
   return (
-    <Button
+    <Box
       sx={{
         width: "100%",
         height: "40px",
         display: "flex",
         justifyContent: "space-between",
-        textTransform: "none",
+        alignItems: "center",
+        borderRadius: 1,
+        cursor: "pointer",
+        p: 0.5,
+        "&:hover": {
+          backgroundColor: "#1E1E2F",
+        },
       }}
-      borderRadius={1}
-      p={0.5}
+      onClick={onClick}
     >
       <Box
-        display={"flex"}
-        flexDirection={"column"}
-        alignItems={"center"}
-        justifyContent={"center"}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
         gap={0.5}
       >
         <Typography
@@ -29,9 +45,9 @@ export default function SessionBox({ name }) {
           {name}
         </Typography>
       </Box>
-      <IconButton>
-        <MoreHorizIcon />
-      </IconButton>
-    </Button>
+      <Box onClick={(e) => e.stopPropagation()}>
+        <SessionMenu sessionId={id} onEdit={onEdit} onDelete={onDelete} />
+      </Box>
+    </Box>
   );
 }
