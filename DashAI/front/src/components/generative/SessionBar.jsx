@@ -5,6 +5,7 @@ import NewSession from "./NewSession";
 import SearchBar from "./SearchBar";
 import { getSessions } from "../../api/session";
 import { useEffect, useState } from "react";
+import { removeSession } from "../../api/session";
 
 export default function SessionBar() {
   const [sessions, setSessions] = useState([]);
@@ -14,6 +15,23 @@ export default function SessionBar() {
       setSessions(data);
     });
   }, []);
+
+  const handleSessionDelete = (id) => {
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session.id !== id),
+    );
+    removeSession(id).then(() => {
+      console.log("Session deleted", id);
+    });
+  };
+
+  const handleSessionClick = (id) => {
+    console.log("Session clicked", id);
+  };
+
+  const handleSessionInfo = (id) => {
+    console.log("Session info", id);
+  };
 
   return (
     <Box
@@ -65,6 +83,9 @@ export default function SessionBar() {
                 name={session.name}
                 key={session.id}
                 id={session.id}
+                onClick={() => handleSessionClick(session.id)}
+                onDelete={handleSessionDelete}
+                onInfo={handleSessionInfo}
               />
             );
           })}

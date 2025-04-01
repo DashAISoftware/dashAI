@@ -3,17 +3,7 @@ import { Box, Typography, Button, IconButton } from "@mui/material";
 import SessionMenu from "./SessionMenu";
 import { removeSession } from "../../api/session";
 
-export default function SessionBox({ name, id, onClick }) {
-  const onEdit = () => {
-    console.log("Edit session", id);
-  };
-
-  const onDelete = () => {
-    removeSession(id).then(() => {
-      console.log("Session deleted", id);
-    });
-  };
-
+export default function SessionBox({ name, id, onClick, onDelete, onInfo }) {
   return (
     <Box
       sx={{
@@ -46,7 +36,7 @@ export default function SessionBox({ name, id, onClick }) {
         </Typography>
       </Box>
       <Box onClick={(e) => e.stopPropagation()}>
-        <SessionMenu sessionId={id} onEdit={onEdit} onDelete={onDelete} />
+        <SessionMenu sessionId={id} onInfo={onInfo} onDelete={onDelete} />
       </Box>
     </Box>
   );
