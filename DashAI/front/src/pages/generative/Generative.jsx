@@ -1,5 +1,4 @@
 import { Box } from "@mui/material";
-import { useEffect } from "react";
 import React from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
@@ -9,7 +8,6 @@ import { getGenerativeTask } from "../../api/generativeTask";
 
 export default function Generative() {
   const [sessions, setSessions] = React.useState([]);
-
   const [task, setTask] = React.useState([]);
 
   useEffect(() => {

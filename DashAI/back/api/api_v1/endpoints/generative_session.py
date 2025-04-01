@@ -138,3 +138,51 @@ async def get_all_generative_sessions(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_generative_session(
+    session_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Delete a generative session by its ID.
+
+    Parameters
+    ----------
+    session_id : int
+        The ID of the generative session to delete.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Raises
+    ------
+    HTTPException
+        If the generative session does not exist or if there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            session = db.get(GenerativeSession, session_id)
+            if not session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative session {session_id} does not exist in DB.",
+                )
+            db.delete(session)
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except Exception as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error",
+            ) from e
+        finally:
+            db.rollback()
+            db.close()
