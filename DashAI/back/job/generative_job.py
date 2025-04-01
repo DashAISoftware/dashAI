@@ -76,7 +76,9 @@ class GenerativeJob(BaseJob):
         output: Any = model.generate(input_data)
 
         # Process output and store it
-        task: GenerativeTask = component_registry[generative_model.task_name]["class"]()
+        task: GenerativeTask = component_registry[generative_session.task_name][
+            "class"
+        ]()
         output: Any = task.process_output(output, config["LOCAL_PATH"])
         generative_process.output = output
 
