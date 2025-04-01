@@ -70,6 +70,7 @@ export default function SessionBar() {
             flexDirection={"column"}
             justifyContent={"center"}
             sx={{ opacity: "0.5" }}
+            p={0.5}
           >
             Sessions
           </Typography>
