@@ -5,14 +5,20 @@ export default function TaskBox({ taskName, description }) {
   return (
     <Button
       sx={{
-        width: "100%",
-        height: "40px",
+        width: "300px",
+        minHeight: "40px",
+        height: "auto",
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "center",
         textTransform: "none",
+        backgroundColor: "#4d4d4d",
+        "&:hover": {
+          backgroundColor: "#3a3a3a",
+        },
       }}
       borderRadius={1}
       p={0.5}
+      variant="contained"
     >
       <Box
         display={"flex"}
@@ -20,17 +26,27 @@ export default function TaskBox({ taskName, description }) {
         alignItems={"center"}
         justifyContent={"center"}
         gap={0.5}
+        p={2}
       >
         <Typography
           variant="h1"
-          sx={{ fontSize: "12px", textOverflow: "ellipsis" }}
+          sx={{
+            fontSize: "16px",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            fontWeight: "bold",
+          }}
         >
           {taskName}
         </Typography>
 
         <Typography
           variant="h1"
-          sx={{ fontSize: "12px", textOverflow: "ellipsis" }}
+          sx={{
+            fontSize: "16px",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          }}
         >
           {description}
         </Typography>
