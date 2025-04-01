@@ -6,7 +6,6 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.dependencies.database.models import (
-    GenerativeModel,
     GenerativeProcess,
     GenerativeSession,
 )
@@ -58,11 +57,7 @@ class GenerativeJob(BaseJob):
             GenerativeSession, generative_process.session_id
         )
 
-        generative_model: GenerativeModel = db.get(
-            GenerativeModel, generative_session.model_id
-        )
-
-        model_class = component_registry[generative_model.name]["class"]
+        model_class = component_registry[generative_session.model_name]["class"]
         params = generative_session.parameters
 
         try:
