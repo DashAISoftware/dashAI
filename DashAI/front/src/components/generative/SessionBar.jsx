@@ -3,8 +3,18 @@ import { Box, Typography, Avatar } from "@mui/material";
 import SessionBox from "./SessionBox";
 import NewSession from "./NewSession";
 import SearchBar from "./SearchBar";
+import { getSessions } from "../../api/session";
+import { useEffect, useState } from "react";
 
-export default function SessionBar({ sessions }) {
+export default function SessionBar() {
+  const [sessions, setSessions] = useState([]);
+
+  useEffect(() => {
+    getSessions().then((data) => {
+      setSessions(data);
+    });
+  }, []);
+
   return (
     <Box
       width={"287px"}
