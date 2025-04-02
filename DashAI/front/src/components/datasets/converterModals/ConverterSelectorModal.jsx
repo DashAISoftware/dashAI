@@ -62,17 +62,13 @@ const ConverterSelectorModal = ({ setConvertersToApply }) => {
 
   const handleAddConverter = () => {
     setOpen(false);
-    let defaultParams =
-      selectedConverter.name === "ConverterChain"
-        ? { steps: [] }
-        : defaultParameters;
     setConvertersToApply((prev) => [
       ...prev,
       {
         id: uuid(),
         name: selectedConverter.name,
         schema: selectedConverter.schema,
-        params: defaultParams,
+        params: defaultParameters,
         scope: {
           columns: [],
           rows: [],

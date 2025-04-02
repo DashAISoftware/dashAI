@@ -85,36 +85,13 @@ function ConvertDatasetModal({ datasetId }) {
   const saveAndEnqueueConverterList = async (id) => {
     try {
       // Save the list of converters to apply
-      let sequenceOrder = 1;
-
       const flattenConverterList = convertersToApply.reduce(
-        (acc, { name, params, scope }) => {
-          // If the converter is a Chain, we need to store the steps separately
-          if (name === "ConverterChain" && params?.steps) {
-            acc[name] = {
-              params: {
-                ...params,
-                steps: params.steps.length, // Store the number of steps in the ConverterChain
-              },
-              scope: scope,
-              order: sequenceOrder,
-            };
-            params.steps.forEach((step) => {
-              sequenceOrder += 1; // Increase the `order` for each step
-              acc[step.name] = {
-                params: step.params,
-                scope: step.scope,
-                order: sequenceOrder,
-              };
-            });
-          } else {
-            sequenceOrder += 1; // Increase the `order` for each converter
-            acc[name] = {
-              params: params,
-              scope: scope,
-              order: sequenceOrder,
-            };
-          }
+        (acc, { name, params, scope }, index) => {
+          acc[name] = {
+            params: params,
+            scope: scope,
+            order: index + 1,
+          };
 
           return acc;
         },
