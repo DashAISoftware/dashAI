@@ -197,7 +197,7 @@ export default function SessionBar() {
           alt="DashAI Logo"
           src="/images/logo.png"
           variant="square"
-          sx={{ width: 120, p: 0, mr: 3, my: 1, mt: 2 }}
+          sx={{ width: 120, p: 0, mt: 2 }}
         />
       </Box>
       {/* Session Info Modal */}
