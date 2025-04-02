@@ -110,3 +110,15 @@ Explainers
    DashAI.back.explainability.KernelShap
    DashAI.back.explainability.PartialDependence
    DashAI.back.explainability.PermutationFeatureImportance
+
+Converters
+==========
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.BaseConverter
+   DashAI.back.converters.sklearn_wrapper.SklearnWrapper
+   DashAI.back.converters.hugging_face_wrapper.HuggingFaceWrapper
+   DashAI.back.converters.scikit_learn.sklearn_like_converter.SklearnLikeConverter
+   DashAI.back.converters.scikit_learn.converter_chain.ConverterChain

@@ -32,6 +32,8 @@ the detailed API documentation and extensive examples. Check out :doc:`getting_s
    tutorials/upload_dataset.rst
    tutorials/train_model.rst
    tutorials/predict.rst
+   tutorials/converter.rst
+   tutorials/converter_chain.rst
 
 .. toctree::
    :maxdepth: 1
