@@ -69,7 +69,7 @@ A summary of the dataset will appear, along with an empty table where your conve
    :alt: Set scope of converter
    :width: 600
 
-By default, the converter processes all columns and rows in the dataset. 
+By default, the converter processes all columns and rows in the dataset.
 However, you can select specific columns to transform and the number of rows to learn from.
 
 To refine the scope of the converter:

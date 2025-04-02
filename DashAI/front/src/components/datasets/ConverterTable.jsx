@@ -8,6 +8,7 @@ import ConverterScopeModal from "./converterModals/ConverterScopeModal";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { parseIndexToRange } from "../../utils/parseRange";
 import { useSnackbar } from "notistack";
+
 /**
  * Table to display and manage the list of converters to apply to a dataset
  * @param {Object} props
@@ -169,34 +170,34 @@ const ConverterTable = ({
         field: "actions",
         type: "actions",
         minWidth: 150,
-        getActions: (params) => [
-          <ConverterEditorModal
-            key="edit-component"
-            converterToConfigure={params.row.name}
-            updateParameters={handleUpdateParams(params.row.id)}
-            paramsInitialValues={params.row.params}
-          />,
-          <ConverterScopeModal
-            key="scope-component"
-            elementToConfigure={params.row.name}
-            updateScope={handleUpdateScope(params.row.id)}
-            scopeInitialValues={params.row.scope}
-            datasetInfo={datasetInfo}
-          />,
-          <DeleteItemModal
-            key="delete-component"
-            deleteFromTable={createDeleteHandler(params.id)}
-          />,
-        ].filter(
-          // Filter Scope modal if the converter is after a chain
-          (action, index) => {
-            if (action.key === "scope-component") {
-              return !params.row.isStepInChain;
-            }
-            return true;
-          },
-
-        ),
+        getActions: (params) =>
+          [
+            <ConverterEditorModal
+              key="edit-component"
+              converterToConfigure={params.row.name}
+              updateParameters={handleUpdateParams(params.row.id)}
+              paramsInitialValues={params.row.params}
+            />,
+            <ConverterScopeModal
+              key="scope-component"
+              elementToConfigure={params.row.name}
+              updateScope={handleUpdateScope(params.row.id)}
+              scopeInitialValues={params.row.scope}
+              datasetInfo={datasetInfo}
+            />,
+            <DeleteItemModal
+              key="delete-component"
+              deleteFromTable={createDeleteHandler(params.id)}
+            />,
+          ].filter(
+            // Filter Scope modal if the converter is after a chain
+            (action, index) => {
+              if (action.key === "scope-component") {
+                return !params.row.isStepInChain;
+              }
+              return true;
+            },
+          ),
       },
     ],
     [createDeleteHandler],
@@ -256,46 +257,34 @@ const ConverterTable = ({
         }
       }
     });
+
     return result;
   }, [convertersToApply]);
 
   return (
-    <Grid container>
-      {/* Selected converters table */}
-      <Grid item xs={12}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          initialState={{
-            sorting: {
-              sortModel: [{ field: "order", sort: "asc" }],
-            },
-            pagination: {
-              paginationModel: {
-                pageSize: 5,
-              },
-            },
-          }}
-          pageSize={5}
-          pageSizeOptions={[5, 10]}
-          disableRowSelectionOnClick
-          autoHeight
-          loading={loading}
-        />
-      </Grid>
-    </Grid>
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      pageSize={5}
+      rowsPerPageOptions={[5]}
+      disableSelectionOnClick
+      autoHeight
+      loading={loading}
+    />
   );
 };
 
 ConverterTable.propTypes = {
   datasetId: PropTypes.number.isRequired,
-  convertersToApply: PropTypes.arrayOf(PropTypes.object),
-  setConvertersToApply: PropTypes.func,
-};
-
-ConverterTable.defaultProps = {
-  convertersToApply: [],
-  setConvertersToApply: () => {},
+  convertersToApply: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+      params: PropTypes.object.isRequired,
+      scope: PropTypes.object.isRequired,
+    }),
+  ).isRequired,
+  setConvertersToApply: PropTypes.func.isRequired,
 };
 
 export default ConverterTable;
