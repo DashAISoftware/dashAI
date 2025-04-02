@@ -4,19 +4,12 @@ import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
-import { getRelatedComponents } from "../../api/generativeTask";
+import SelectModelMenu from "../../components/generative/SelectModelMenu";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
-  const [relatedComponents, setRelatedComponents] = useState([]);
-
-  useEffect(() => {
-    if (!selectedTaskName) return;
-
-    getRelatedComponents(selectedTaskName).then(setRelatedComponents);
-  }, [selectedTaskName]);
 
   return (
     <Box
@@ -42,15 +35,7 @@ export default function Generative() {
             }}
           />
         ) : stepIndex === 1 ? (
-          <Box>
-            Select a model from the list:
-            <Autocomplete
-              disablePortal
-              options={relatedComponents.map((t) => t.name)}
-              sx={{ m: 5 }}
-              renderInput={(params) => <TextField {...params} label="Model" />}
-            />
-          </Box>
+          <SelectModelMenu selectedTaskName={selectedTaskName} />
         ) : (
           (stepIndex) => (2 ? <Typography>Not a valid step</Typography> : null)
         )}
