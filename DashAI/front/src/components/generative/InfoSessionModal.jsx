@@ -48,7 +48,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
           width: { xs: "90%", sm: 500 },
           bgcolor: "background.paper",
           borderRadius: 2,
-          boxShadow: 24,
+          boxShadow: 12,
           p: 0,
           outline: "none",
         }}
