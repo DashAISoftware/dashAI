@@ -4,6 +4,7 @@ import TaskBox from "../../components/generative/TaskBox";
 import IconAvatar from "../../components/generative/IconAvatar";
 import { useEffect, useState } from "react";
 import { getGenerativeTask } from "../../api/generativeTask";
+
 export default function SelectTaskMenu({ goToNextStep }) {
   const [task, setTask] = useState([]);
 
@@ -79,7 +80,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
             key={index}
             taskName={task.display_name}
             description={task.description}
-            onClick={goToNextStep}
+            onClick={() => goToNextStep(task.name)}
           />
         ))}
       </Box>
