@@ -1,6 +1,6 @@
-=================
+========================================
 Convert data with a chain of converters
-=================
+========================================
 
 This tutorial will guide you through the process of converting data with a chain of converters.
 The chain of converters is a sequence of converters that take the output of one converter as the input of the next one.
@@ -21,26 +21,27 @@ Step-by-Step Guide
 1. Access the dataset section
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step1.png
+.. image:: ../tutorials/images/converter_chain/step1.gif
    :alt: Navigate to dataset section
    :width: 600
 
 Navigate to the dataset section in DashAI to access the dataset you want to convert.
 
 2. Open the converter modal
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step2.png
+.. image:: ../tutorials/images/converter_chain/step2.gif
    :alt: Open converter modal
    :width: 600
 
 * Click on the settings icon of the dataset you want to convert.
+
 A summary of the dataset will appear, along with an empty table where your converters will be listed.
 
 3. Select the ConverterChain converter
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step3.png
+.. image:: ../tutorials/images/converter_chain/step3.gif
    :alt: Select ConverterChain converter
    :width: 600
 
@@ -51,7 +52,7 @@ A summary of the dataset will appear, along with an empty table where your conve
 4. Configure the ConverterChain converter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step4.png
+.. image:: ../tutorials/images/converter_chain/step4.gif
    :alt: Configure ConverterChain converter
    :width: 600
 
@@ -60,9 +61,9 @@ A summary of the dataset will appear, along with an empty table where your conve
 * Click "Save" to apply the settings.
 
 5. Add converters to the chain
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step5.png
+.. image:: ../tutorials/images/converter_chain/step5.gif
    :alt: Add converters to the chain
    :width: 600
 
@@ -71,9 +72,9 @@ A summary of the dataset will appear, along with an empty table where your conve
 * Click "Add" to include the selected converter in the table.
 
 6. Configure the converters
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step6.png
+.. image:: ../tutorials/images/converter_chain/step6.gif
    :alt: Configure converters
    :width: 600
 
@@ -84,7 +85,7 @@ A summary of the dataset will appear, along with an empty table where your conve
 7. Set the scope of the chain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step7.png
+.. image:: ../tutorials/images/converter_chain/step7.gif
    :alt: Set scope of ConverterChain
    :width: 600
 
@@ -97,9 +98,9 @@ The scope of the converters in the chain will be set automatically based on the 
 * Click "Save" to apply these settings.
 
 8. Set the target column
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step8.png
+.. image:: ../tutorials/images/converter_chain/step8.gif
    :alt: Set target column
    :width: 600
 
@@ -110,9 +111,9 @@ This column can be labeled as "class" or "target" in the dataset.
 * Set the target column index.
 
 9. Start the conversion
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step9.png
+.. image:: ../tutorials/images/converter_chain/step9.gif
    :alt: Start conversion
    :width: 600
 

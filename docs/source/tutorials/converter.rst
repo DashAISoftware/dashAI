@@ -1,6 +1,6 @@
-=================
+=========================
 Convert data in a dataset
-=================
+=========================
 
 This tutorial will guide you through the process of converting data in a dataset.
 With the converter, you can:
@@ -23,26 +23,27 @@ Step-by-Step Guide
 1. Access the dataset section
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step1.png
+.. image:: ../tutorials/images/converter/step1.gif
    :alt: Navigate to dataset section
    :width: 600
 
 Navigate to the dataset section in DashAI to access the dataset you want to convert.
 
 2. Open the converter modal
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step2.png
+.. image:: ../tutorials/images/converter/step2.gif
    :alt: Open converter modal
    :width: 600
 
 * Click on the settings icon of the dataset you want to convert.
+
 A summary of the dataset will appear, along with an empty table where your converters will be listed.
 
 3. Select the converter
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step3.png
+.. image:: ../tutorials/images/converter/step3.gif
    :alt: Select converter
    :width: 600
 
@@ -53,7 +54,7 @@ A summary of the dataset will appear, along with an empty table where your conve
 4. Configure the converter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step4.png
+.. image:: ../tutorials/images/converter/step4.gif
    :alt: Configure converter
    :width: 600
 
@@ -62,9 +63,9 @@ A summary of the dataset will appear, along with an empty table where your conve
 * Click "Save" to apply the settings.
 
 5. Set the scope of the converter
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step5.png
+.. image:: ../tutorials/images/converter/step5.gif
    :alt: Set scope of converter
    :width: 600
 
@@ -79,9 +80,9 @@ To refine the scope of the converter:
 * Click "Save" to apply these settings.
 
 6. Set the target column
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step6.png
+.. image:: ../tutorials/images/converter/step6.gif
    :alt: Set target column
    :width: 600
 
@@ -92,9 +93,9 @@ This column can be labeled as "class" or "target" in the dataset.
 * Set the target column index.
 
 7. Start the conversion
-~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: ../tutorials/images/converter/step7.png
+.. image:: ../tutorials/images/converter/step7.gif
    :alt: Start conversion
    :width: 600
 
