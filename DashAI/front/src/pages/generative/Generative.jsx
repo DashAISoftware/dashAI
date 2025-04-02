@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
@@ -28,11 +28,15 @@ export default function Generative() {
     >
       <SessionBar />
       <MainGenerativeBox>
-        {/* Step 0 */}
-        <SelectTaskMenu task={task} />
-        {/* Step 1  */}
-        {/* ... */}
-        {/* or Chat */}
+        {selectedSession ? (
+          <Box>Chat</Box>
+        ) : stepIndex === 0 ? (
+          <SelectTaskMenu task={task} />
+        ) : stepIndex === 1 ? (
+          <Box>Second step: select a model and display hiperparameters</Box>
+        ) : (
+          (stepIndex) => (2 ? <Typography>Not a valid step</Typography> : null)
+        )}
       </MainGenerativeBox>
     </Box>
   );

@@ -2,6 +2,7 @@ import { Box, Typography, Avatar } from "@mui/material";
 import SessionBox from "./SessionBox";
 import NewSession from "./NewSession";
 import SearchBar from "./SearchBar";
+import InfoSessionModal from "./InfoSessionModal";
 import { getSessions } from "../../api/session";
 import { useEffect, useState } from "react";
 import { removeSession } from "../../api/session";
@@ -10,6 +11,7 @@ export default function SessionBar() {
   const [sessions, setSessions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState([]);
+  const [selectedInfoSession, setSelectedInfoSession] = useState(null);
 
   useEffect(() => {
     getSessions().then((data) => {
@@ -47,7 +49,11 @@ export default function SessionBar() {
   };
 
   const handleSessionInfo = (id) => {
-    console.log("Session info", id);
+    // Find the session with the matching id
+    const session = sessions.find((session) => session.id === id);
+    if (session) {
+      setSelectedInfoSession(session);
+    }
   };
 
   return (
@@ -134,6 +140,14 @@ export default function SessionBar() {
           sx={{ width: 120, p: 0, mr: 3, my: 1, mt: 2 }}
         />
       </Box>
+      {/* Session Info Modal */}
+      {selectedInfoSession && (
+        <InfoSessionModal
+          sessionData={selectedInfoSession}
+          open={!!selectedInfoSession}
+          onClose={() => setSelectedInfoSession(null)}
+        />
+      )}
     </Box>
   );
 }

@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import SessionMenu from "./SessionMenu";
-import { removeSession } from "../../api/session";
 
 export default function SessionBox({ name, id, onClick, onDelete, onInfo }) {
   return (
