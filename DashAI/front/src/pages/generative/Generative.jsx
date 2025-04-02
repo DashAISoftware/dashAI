@@ -4,6 +4,7 @@ import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import { getGenerativeTask } from "../../api/generativeTask";
+import GenerativeChat from "../../components/generative/GenerativeChat";
 
 export default function Generative() {
   const [task, setTask] = useState([]);
@@ -29,7 +30,7 @@ export default function Generative() {
       <SessionBar />
       <MainGenerativeBox>
         {selectedSession ? (
-          <Box>Chat</Box>
+          <GenerativeChat />
         ) : stepIndex === 0 ? (
           <SelectTaskMenu task={task} />
         ) : stepIndex === 1 ? (
