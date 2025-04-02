@@ -1,11 +1,11 @@
 import uuid
 from typing import Any, Optional
 
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.base_task import BaseTask
-from DashAI.back.tasks.generative_task import GenerativeTask
 
 
-class ImageGenerationTask(BaseTask):
+class ImageGenerationTask(BaseGenerativeTask):
     """Base class for image generation tasks.
 
     Here you can change the methods provided by class Task.

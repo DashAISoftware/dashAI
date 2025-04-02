@@ -12,7 +12,7 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.tasks import GenerativeTask
+from DashAI.back.tasks import BaseGenerativeTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class GenerativeJob(BaseJob):
         output: Any = model.generate(input_data)
 
         # Process output and store it
-        task: GenerativeTask = component_registry[generative_session.task_name][
+        task: BaseGenerativeTask = component_registry[generative_session.task_name][
             "class"
         ]()
         output: Any = task.process_output(output, config["LOCAL_PATH"])
