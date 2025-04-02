@@ -139,12 +139,11 @@ const ConverterTable = ({
         valueGetter: (params) => params.row.scope.columns,
         renderCell: ({ row }) => {
           const columns = row.scope.columns;
-          const columnsLabel =
-            row.isStepInChain
-              ? "-"
-              : columns.length > 0
-              ? parseIndexToRange(columns).join(", ")
-              : "All columns";
+          const columnsLabel = row.isStepInChain
+            ? "-"
+            : columns.length > 0
+            ? parseIndexToRange(columns).join(", ")
+            : "All columns";
           return <Typography variant="p">{columnsLabel}</Typography>;
         },
       },
@@ -157,12 +156,11 @@ const ConverterTable = ({
         valueGetter: (params) => params.row.scope.rows,
         renderCell: ({ row }) => {
           const rows = row.scope.rows;
-          const rowsLabel =
-            row.isStepInChain
-              ? "-"
-              : rows.length > 0
-              ? parseIndexToRange(rows).join(", ")
-              : "All rows";
+          const rowsLabel = row.isStepInChain
+            ? "-"
+            : rows.length > 0
+            ? parseIndexToRange(rows).join(", ")
+            : "All rows";
           return <Typography variant="p">{rowsLabel}</Typography>;
         },
       },
