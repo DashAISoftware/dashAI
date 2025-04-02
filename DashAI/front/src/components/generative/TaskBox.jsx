@@ -1,9 +1,10 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 
-export default function TaskBox({ taskName, description }) {
+export default function TaskBox({ taskName, description, onClick }) {
   return (
     <Button
+      onClick={onClick}
       sx={{
         width: "300px",
         minHeight: "40px",

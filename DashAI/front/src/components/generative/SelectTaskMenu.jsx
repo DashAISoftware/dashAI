@@ -3,18 +3,7 @@ import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
 import IconAvatar from "../../components/generative/IconAvatar";
 
-const top100Films = [
-  { label: "The Shawshank Redemption", year: 1994 },
-  { label: "The Godfather", year: 1972 },
-  { label: "The Godfather: Part II", year: 1974 },
-  { label: "Pulp Fiction", year: 1994 },
-  { label: "Schindler's List", year: 1993 },
-  { label: "Raging Bull", year: 1980 },
-  { label: "Casablanca", year: 1942 },
-  { label: "Citizen Kane", year: 1941 },
-];
-
-export default function SelectTaskMenu({ task }) {
+export default function SelectTaskMenu({ task, goToNextStep }) {
   return (
     <Box
       display={"flex"}
@@ -83,6 +72,7 @@ export default function SelectTaskMenu({ task }) {
             key={index}
             taskName={task.display_name}
             description={task.description}
+            onClick={goToNextStep}
           />
         ))}
       </Box>

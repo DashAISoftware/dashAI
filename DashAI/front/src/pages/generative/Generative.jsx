@@ -32,7 +32,7 @@ export default function Generative() {
         {selectedSession ? (
           <GenerativeChat />
         ) : stepIndex === 0 ? (
-          <SelectTaskMenu task={task} />
+          <SelectTaskMenu task={task} goToNextStep={() => setStepIndex(1)}/>
         ) : stepIndex === 1 ? (
           <Box>Second step: select a model and display hiperparameters</Box>
         ) : (
