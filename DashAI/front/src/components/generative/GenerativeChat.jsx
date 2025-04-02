@@ -9,6 +9,7 @@ import {
 import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
+import { ChatBubble } from "./ChatBubble";
 
 export default function GenerativeChat() {
   const [message, setMessage] = React.useState("");
@@ -40,6 +41,7 @@ export default function GenerativeChat() {
           alignItems: "center",
           borderRadius: 1,
           opacity: 0.5,
+          mb: 1,
         }}
       >
         <Box
@@ -77,6 +79,7 @@ export default function GenerativeChat() {
         width={"100%"}
         height={"100%"}
         overflow={"auto"}
+        mt={1}
         sx={{
           "&::-webkit-scrollbar": {
             width: "8px",
@@ -90,10 +93,17 @@ export default function GenerativeChat() {
           },
         }}
       >
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Repellendus
-        blanditiis, dolores ipsum unde voluptatem consectetur accusamus
-        explicabo ex repudiandae voluptas vitae consequatur ea recusandae aut
-        distinctio officiis deleniti sint maiores!
+        <ChatBubble
+          message="Hi! I need help with my project."
+          sender="User"
+          timestamp={new Date().toLocaleTimeString()}
+          isUser={true}
+        />
+        <ChatBubble
+          message="Hello! How can I assist you today?"
+          sender="Model"
+          timestamp={new Date().toLocaleTimeString()}
+        />
       </Box>
 
       {/* Chat input */}
