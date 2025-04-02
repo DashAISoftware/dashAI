@@ -18,6 +18,8 @@ class ImageGenerationTask(BaseGenerativeTask):
         "outputs_cardinality": 1,
     }
 
+    DESCRIPTION: str = "This task generates images based on the provided input text."
+
     def prepare_for_task(self, input: str) -> str:
         """Change the inputs to suit the image generation task.
 
