@@ -1,8 +1,18 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
 import IconAvatar from "../../components/generative/IconAvatar";
-import SearchBar from "../../components/generative/SearchBar";
+
+const top100Films = [
+  { label: "The Shawshank Redemption", year: 1994 },
+  { label: "The Godfather", year: 1972 },
+  { label: "The Godfather: Part II", year: 1974 },
+  { label: "Pulp Fiction", year: 1994 },
+  { label: "Schindler's List", year: 1993 },
+  { label: "Raging Bull", year: 1980 },
+  { label: "Casablanca", year: 1942 },
+  { label: "Citizen Kane", year: 1941 },
+];
 
 export default function SelectTaskMenu({ task }) {
   return (
@@ -20,7 +30,10 @@ export default function SelectTaskMenu({ task }) {
           fontSize: "16px",
           whiteSpace: "normal",
           wordBreak: "break-word",
-          margin: 5,
+          ml: 5,
+          mt: 1,
+          mr: 5,
+          mb: 5,
         }}
       >
         Select a generative task
@@ -34,7 +47,7 @@ export default function SelectTaskMenu({ task }) {
         alignItems={"flex-start"}
         justifyContent={"center"}
         gap={1}
-        sx={{ margin: 5 }}
+        sx={{ mt: 2, mb: 5, ml: 5, mr: 5 }}
       >
         <Typography
           variant="h1"
@@ -68,15 +81,18 @@ export default function SelectTaskMenu({ task }) {
         {task.map((task, index) => (
           <TaskBox
             key={index}
-            taskName={task.task_name}
+            taskName={task.display_name}
             description={task.description}
           />
         ))}
       </Box>
       {/* Search Bar */}
-      <Box sx={{ m: 5 }}>
-        <SearchBar placeholder={"Task"} />
-      </Box>
+      <Autocomplete
+        disablePortal
+        options={task.map((t) => t.display_name)}
+        sx={{ m: 5 }}
+        renderInput={(params) => <TextField {...params} label="Task" />}
+      />
     </Box>
   );
 }
