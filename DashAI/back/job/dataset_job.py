@@ -74,17 +74,17 @@ class DatasetJob(BaseJob):
                 dataset_save_path = folder_path / "dataset"
                 if dataloader == ImageDataLoader:
                     new_dataset = dataloader.load_data(
-                        filepath_or_buffer=str(file_path)
-                        if file_path is not None
-                        else url,
+                        filepath_or_buffer=(
+                            str(file_path) if file_path is not None else url
+                        ),
                         temp_path=str(dataset_save_path),
                         params=parsed_params.model_dump(),
                     )
                 else:
                     new_dataset = dataloader.load_data(
-                        filepath_or_buffer=str(file_path)
-                        if file_path is not None
-                        else url,
+                        filepath_or_buffer=(
+                            str(file_path) if file_path is not None else url
+                        ),
                         temp_path=str(temp_dir),
                         params=parsed_params.model_dump(),
                     )
