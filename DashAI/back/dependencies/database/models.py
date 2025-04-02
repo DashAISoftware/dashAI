@@ -204,16 +204,6 @@ class LocalExplainer(Base):
         self.status = ExplainerStatus.ERROR
 
 
-class GenerativeModel(Base):
-    __tablename__ = "generative_model"
-    """
-    Table to store all the information about a generative model.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    task_name: Mapped[str] = mapped_column(String, nullable=False)
-
-
 class GenerativeProcess(Base):
     __tablename__ = "generative_process"
     """
@@ -270,8 +260,10 @@ class GenerativeSession(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
+    # task name
+    task_name: Mapped[str] = mapped_column(String, nullable=False)
     # model and parameters
-    model_id: Mapped[int] = mapped_column(ForeignKey("generative_model.id"))
+    model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
     # metadata
     name: Mapped[str] = mapped_column(String)

@@ -1,0 +1,213 @@
+import React from "react";
+import { Box, Typography, Divider } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import FolderIcon from "@mui/icons-material/Folder";
+import SearchBar from "./SearchBar";
+import SessionBox from "./SessionBox";
+import Avatar from "@mui/material/Avatar";
+import { getSessions } from "../../api/session";
+import { useEffect, useState } from "react";
+import { removeSession } from "../../api/session";
+import InfoSessionModal from "./InfoSessionModal";
+
+export default function SessionBar() {
+  const [sessions, setSessions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredSessions, setFilteredSessions] = useState([]);
+  const [selectedInfoSession, setSelectedInfoSession] = useState(null);
+  const [isGenerativeOpen, setIsGenerativeOpen] = useState(true);
+
+  useEffect(() => {
+    getSessions().then((data) => {
+      setSessions(data);
+      setFilteredSessions(data);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredSessions(sessions);
+    } else {
+      const filtered = sessions.filter((session) =>
+        session.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+      setFilteredSessions(filtered);
+    }
+  }, [searchQuery, sessions]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSessionDelete = (id) => {
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session.id !== id),
+    );
+    removeSession(id).then(() => {
+      console.log("Session deleted", id);
+    });
+  };
+
+  const handleSessionClick = (id) => {
+    console.log("Session clicked", id);
+  };
+
+  const handleSessionInfo = (id) => {
+    // Find the session with the matching id
+    const session = sessions.find((session) => session.id === id);
+    if (session) {
+      setSelectedInfoSession(session);
+    }
+  };
+
+  return (
+    <Box
+      width="285px"
+      height="auto"
+      borderRadius={2}
+      display={"flex"}
+      flexDirection={"column"}
+      justifyContent={"space-between"}
+      sx={{
+        bgcolor: "#151521",
+        color: "white",
+        display: "flex",
+        flexDirection: "column",
+        borderRight: "1px solid #252836",
+      }}
+    >
+      <Box>
+        {/* Header */}
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          height={"70px"}
+          px={2}
+          py={1.5}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: "bold",
+              "& span": { color: "#16FFFF" },
+            }}
+          >
+            <span>D</span>a<span>sh</span>
+          </Typography>
+        </Box>
+        <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+
+        {/* Create new session button */}
+        <Box px={2} py={1}>
+          <Box
+            sx={{
+              bgcolor: "#16FFFF",
+              color: "black",
+              borderRadius: 1,
+              mt: 1,
+              py: 1,
+              px: 2,
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              "&:hover": {
+                bgcolor: "#002884",
+              },
+              height: "35px",
+            }}
+          >
+            <AddIcon sx={{ mr: 1 }} />
+            <Typography>New session</Typography>
+          </Box>
+        </Box>
+
+        {/* Search Bar */}
+        <Box px={2} py={1}>
+          <SearchBar
+            placeholder={"Search"}
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </Box>
+
+        {/* Sessions */}
+        <Box px={2} py={1}>
+          {/* Sessions Header */}
+          <Box display="flex" alignItems="center" pb={1}>
+            <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
+            <Typography>Sessions</Typography>
+            <Box
+              sx={{
+                ml: 1,
+                bgcolor: "#16FFFF",
+                color: "black",
+                borderRadius: "50%",
+                width: 20,
+                height: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+              }}
+            >
+              {filteredSessions.length}
+            </Box>
+          </Box>
+
+          {/* Sessions Display */}
+          <Box display={"flex"} flexDirection={"column"}>
+            {filteredSessions.length > 0 ? (
+              filteredSessions.map((session) => (
+                <SessionBox
+                  name={session.name}
+                  key={session.id}
+                  id={session.id}
+                  onClick={() => handleSessionClick(session.id)}
+                  onDelete={handleSessionDelete}
+                  onInfo={handleSessionInfo}
+                />
+              ))
+            ) : (
+              <Typography
+                sx={{
+                  color: "#ffffff",
+                  opacity: 0.5,
+                  textAlign: "center",
+                  padding: 2,
+                }}
+              >
+                No sessions found
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Footer */}
+      <Box
+        display={"flex"}
+        justifyContent={"center"}
+        alignItems={"center"}
+        flexDirection={"column"}
+        py={2}
+      >
+        <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+        <Avatar
+          alt="DashAI Logo"
+          src="/images/logo.png"
+          variant="square"
+          sx={{ width: 120, p: 0, mr: 3, my: 1, mt: 2 }}
+        />
+      </Box>
+      {/* Session Info Modal */}
+      {selectedInfoSession && (
+        <InfoSessionModal
+          sessionData={selectedInfoSession}
+          open={!!selectedInfoSession}
+          onClose={() => setSelectedInfoSession(null)}
+        />
+      )}
+    </Box>
+  );
+}

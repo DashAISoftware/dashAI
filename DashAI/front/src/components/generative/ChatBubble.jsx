@@ -1,0 +1,78 @@
+import {
+  Box,
+  Paper,
+  Typography,
+  Avatar as MuiAvatar,
+  styled,
+} from "@mui/material";
+
+export function ChatBubble({
+  message,
+  sender = "",
+  timestamp,
+  isUser = false,
+}) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "flex-start",
+        justifyContent: isUser ? "flex-end" : "flex-start",
+        mb: 2,
+        width: "100%",
+      }}
+    >
+      {!isUser && (
+        <MuiAvatar
+          src={"/dai_circle.png"}
+          alt={sender || "User"}
+          sx={{ mr: 1, width: 32, height: 32 }}
+        />
+      )}
+
+      <Box sx={{ maxWidth: "80%" }}>
+        {!isUser && sender && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ ml: 1, mb: 0.5, display: "block" }}
+          >
+            {sender}
+          </Typography>
+        )}
+
+        <Paper
+          sx={{
+            backgroundColor: (theme) => theme.palette.primary.main,
+            color: (theme) => theme.palette.primary.contrastText,
+            padding: (theme) => theme.spacing(1.5, 2),
+            maxWidth: "100%",
+            borderTopRightRadius: isUser ? 0 : "inherit",
+            borderTopLeftRadius: isUser ? "inherit" : 0,
+            position: "relative",
+          }}
+        >
+          <Typography variant="body2">{message}</Typography>
+        </Paper>
+
+        {timestamp && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: "block",
+              mt: 0.5,
+              textAlign: isUser ? "right" : "left",
+              px: 1,
+            }}
+          >
+            {timestamp}
+          </Typography>
+        )}
+      </Box>
+
+      {isUser && <MuiAvatar alt="User" sx={{ ml: 1, width: 32, height: 32 }} />}
+    </Box>
+  );
+}

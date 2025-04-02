@@ -36,6 +36,7 @@ from DashAI.back.models import (
     OpusMtEnESTransformer,
     QwenModel,
     RandomForestClassifier,
+    StableDiffusionModel,
     RandomForestRegression,
     RidgeRegression,
     ViTTransformer,
@@ -43,6 +44,7 @@ from DashAI.back.models import (
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.tasks import (
     ImageClassificationTask,
+    ImageGenerationTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
@@ -60,6 +62,7 @@ INITIAL_COMPONENTS = [
     TranslationTask,
     ImageClassificationTask,
     LLMGenerationTask,
+    ImageGenerationTask,
     RegressionTask,
     # Models
     SVC,
@@ -78,6 +81,7 @@ INITIAL_COMPONENTS = [
     BagOfWordsTextClassificationModel,
     QwenModel,
     GemmaModel,
+    StableDiffusionModel,
     RidgeRegression,
     LinearSVR,
     LinearRegression,

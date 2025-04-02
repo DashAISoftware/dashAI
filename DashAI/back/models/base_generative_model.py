@@ -6,7 +6,7 @@ from DashAI.back.config_object import ConfigObject
 
 class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
 
-    TYPE: Final[str] = "Model"
+    TYPE: Final[str] = "GenerativeModel"
 
     @abstractmethod
     def __init__(self, **kwargs):

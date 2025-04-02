@@ -6,14 +6,13 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.dependencies.database.models import (
-    GenerativeModel,
     GenerativeProcess,
     GenerativeSession,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.tasks import GenerativeTask
+from DashAI.back.tasks import BaseGenerativeTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -58,11 +57,7 @@ class GenerativeJob(BaseJob):
             GenerativeSession, generative_process.session_id
         )
 
-        generative_model: GenerativeModel = db.get(
-            GenerativeModel, generative_session.model_id
-        )
-
-        model_class = component_registry[generative_model.name]["class"]
+        model_class = component_registry[generative_session.model_name]["class"]
         params = generative_session.parameters
 
         try:
@@ -81,7 +76,9 @@ class GenerativeJob(BaseJob):
         output: Any = model.generate(input_data)
 
         # Process output and store it
-        task: GenerativeTask = component_registry[generative_model.task_name]["class"]()
+        task: BaseGenerativeTask = component_registry[generative_session.task_name][
+            "class"
+        ]()
         output: Any = task.process_output(output, config["LOCAL_PATH"])
         generative_process.output = output
 

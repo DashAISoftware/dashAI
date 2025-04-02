@@ -11,6 +11,7 @@ import ExplainersPage from "./pages/ExplainersPage";
 import ExplainerData from "./components/explainers/ExplainerData";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
 import PredictionPage from "./pages/predictions/PredictionPage";
+import Generative from "./pages/generative/Generative";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             element={<ExplainerData />}
           />
         </Route>
+        <Route path="/app/generative" element={<Generative />} />
       </Routes>
     </BrowserRouter>
   );
