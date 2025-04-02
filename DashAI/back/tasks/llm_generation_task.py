@@ -1,8 +1,6 @@
-import uuid
-from typing import Any, Optional
+from typing import Any
 
 from DashAI.back.tasks.base_task import BaseTask
-from DashAI.back.tasks.generative_task import GenerativeTask
 
 
 class LLMGenerationTask(BaseTask):
