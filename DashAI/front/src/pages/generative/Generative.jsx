@@ -3,17 +3,11 @@ import { useEffect, useState } from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
-import { getGenerativeTask } from "../../api/generativeTask";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 
 export default function Generative() {
-  const [task, setTask] = useState([]);
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
-
-  useEffect(() => {
-    getGenerativeTask().then(setTask);
-  }, []);
 
   return (
     <Box
@@ -32,7 +26,7 @@ export default function Generative() {
         {selectedSession ? (
           <GenerativeChat />
         ) : stepIndex === 0 ? (
-          <SelectTaskMenu task={task} goToNextStep={() => setStepIndex(1)}/>
+          <SelectTaskMenu goToNextStep={() => setStepIndex(1)}/>
         ) : stepIndex === 1 ? (
           <Box>Second step: select a model and display hiperparameters</Box>
         ) : (

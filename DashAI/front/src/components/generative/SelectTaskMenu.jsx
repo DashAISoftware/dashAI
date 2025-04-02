@@ -2,8 +2,15 @@ import React from "react";
 import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
 import IconAvatar from "../../components/generative/IconAvatar";
+import { useEffect, useState } from "react";
+import { getGenerativeTask } from "../../api/generativeTask";
+export default function SelectTaskMenu({ goToNextStep }) {
+  const [task, setTask] = useState([]);
 
-export default function SelectTaskMenu({ task, goToNextStep }) {
+  useEffect(() => {
+    getGenerativeTask().then(setTask);
+  }, []);
+
   return (
     <Box
       display={"flex"}
