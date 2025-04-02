@@ -16,7 +16,7 @@ class LLMGenerationSchema(BaseSchema):
     )  # type: ignore   
 
 class LLMGenerationModel(BaseGenerativeModel):
-    """Class for models associated to ImageGenerationTasks."""
+    """Class for models associated to LLMGenerationTask."""
 
     COMPATIBLE_COMPONENTS = ["LLMGenerationTask"]
 

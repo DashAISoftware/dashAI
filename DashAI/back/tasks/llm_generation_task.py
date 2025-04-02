@@ -1,9 +1,9 @@
 from typing import Any
 
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
-class LLMGenerationTask(BaseTask):
+class LLMGenerationTask(BaseGenerativeTask):
     """Base class for image generation tasks.
 
     Here you can change the methods provided by class Task.
@@ -15,6 +15,10 @@ class LLMGenerationTask(BaseTask):
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
+
+    DESCRIPTION: str = "This task generates text from a given prompt."
+
+    DISPLAY_NAME: str = "Text to Text"
 
     def prepare_for_task(self, input: str) -> str:
         """Change the inputs to suit the image generation task.
