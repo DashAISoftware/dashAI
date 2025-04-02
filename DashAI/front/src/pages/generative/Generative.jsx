@@ -39,6 +39,13 @@ export default function Generative() {
           (stepIndex) => (2 ? <Typography>Not a valid step</Typography> : null)
         )}
       </MainGenerativeBox>
+      <Box
+        width={"502px"}
+        height={"auto"}
+        borderRadius={2}
+        p={2}
+        bgcolor={"#161925"}
+      ></Box>
     </Box>
   );
 }
