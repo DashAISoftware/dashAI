@@ -1,63 +1,50 @@
-import { useRef } from "react";
-import { Paper, TextField, Box } from "@mui/material";
+import React, { useRef } from "react";
+import { Box, InputBase } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 export default function SearchBar({ placeholder, onChange, value }) {
   const inputRef = useRef(null);
 
   const handleContainerClick = () => {
-    // Focus the input when clicking anywhere on the search bar
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
   return (
-    <Paper
-      component="form"
+    <Box
+      onClick={handleContainerClick}
       sx={{
-        p: "2px 4px",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
+        bgcolor: "#1A1E2E",
         borderRadius: 1,
-        backgroundColor: "#161925",
-        cursor: "text", // Show text cursor on hover
+        px: 2,
+        py: 1,
+        cursor: "text",
         "&:hover": {
-          backgroundColor: "#1e2231", // Subtle hover effect
+          bgcolor: "#1E2231",
         },
       }}
-      onClick={handleContainerClick}
-      onSubmit={(e) => e.preventDefault()} // Prevent form submission
     >
-      <TextField
-        variant="standard"
+      <SearchIcon sx={{ color: "#6E7191", mr: 1 }} />
+      <InputBase
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         inputRef={inputRef}
         fullWidth
-        InputProps={{
-          disableUnderline: true,
-          sx: {
-            color: "#ffffff",
-            "& .MuiInputBase-input": {
-              padding: "0px",
-              marginLeft: "8px",
-            },
+        sx={{
+          color: "white",
+          "& .MuiInputBase-input": {
+            p: 0,
+          },
+          "& .MuiInputBase-input::placeholder": {
+            color: "#6E7191",
+            opacity: 1,
           },
         }}
       />
-      <Box
-        sx={{ p: "10px" }}
-        aria-label="search"
-        display={"flex"}
-        justifyContent={"center"}
-        alignItems={"center"}
-      >
-        <SearchIcon sx={{ color: "#ffffff" }} />
-      </Box>
-    </Paper>
+    </Box>
   );
 }

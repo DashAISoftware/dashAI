@@ -7,16 +7,17 @@ export default function TaskBox({ taskName, description }) {
       sx={{
         width: "300px",
         minHeight: "40px",
+        color: "black",
         height: "auto",
         display: "flex",
         justifyContent: "center",
         textTransform: "none",
-        backgroundColor: "#4d4d4d",
+        backgroundColor: "#16FFFF",
         "&:hover": {
-          backgroundColor: "#3a3a3a",
+          backgroundColor: "#002884",
         },
+        borderRadius: 3,
       }}
-      borderRadius={1}
       p={0.5}
       variant="contained"
     >

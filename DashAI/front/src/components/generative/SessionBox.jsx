@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import SessionMenu from "./SessionMenu";
 
 export default function SessionBox({ name, id, onClick, onDelete, onInfo }) {
@@ -7,7 +8,7 @@ export default function SessionBox({ name, id, onClick, onDelete, onInfo }) {
     <Box
       sx={{
         width: "100%",
-        height: "40px",
+        height: "50px",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -22,21 +23,18 @@ export default function SessionBox({ name, id, onClick, onDelete, onInfo }) {
     >
       <Box
         display="flex"
-        flexDirection="column"
         alignItems="center"
-        justifyContent="center"
-        gap={0.5}
+        justifyContent={"flex-start"}
+        width="100%"
       >
-        <Typography
-          variant="h1"
-          sx={{ fontSize: "12px", textOverflow: "ellipsis" }}
-        >
-          {name}
-        </Typography>
+        <AutoAwesomeIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 18 }} />
+        <Box>
+          <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
+            {name}
+          </Typography>
+        </Box>
       </Box>
-      <Box onClick={(e) => e.stopPropagation()}>
-        <SessionMenu sessionId={id} onInfo={onInfo} onDelete={onDelete} />
-      </Box>
+      <SessionMenu sessionId={id} onInfo={onInfo} onDelete={onDelete} />
     </Box>
   );
 }

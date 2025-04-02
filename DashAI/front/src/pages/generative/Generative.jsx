@@ -44,7 +44,7 @@ export default function Generative() {
         height={"auto"}
         borderRadius={2}
         p={2}
-        bgcolor={"#161925"}
+        bgcolor={"#151521"}
       ></Box>
     </Box>
   );
