@@ -60,15 +60,12 @@ class ImageDataLoader(BaseDataLoader):
 
         def convert_image_to_bytes(example):
             import io
+
             buffer = io.BytesIO()
             format = example["image"].format
             example["image"].save(buffer, format=format)
-            return {
-                "image": {
-                    "bytes": buffer.getvalue(),
-                    "format": format
-                }
-            }
+            return {"image": {"bytes": buffer.getvalue(), "format": format}}
+
         if prepared_path[1] == "dir":
             dataset = load_dataset("imagefolder", data_dir=prepared_path[0])
             dataset = dataset.map(convert_image_to_bytes)
