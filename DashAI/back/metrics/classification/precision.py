@@ -14,7 +14,9 @@ class Precision(ClassificationMetric):
     """Precision metric to classification tasks."""
 
     @staticmethod
-    def score(true_labels: DashAIDataset, probs_pred_labels: np.ndarray) -> float:
+    def score(
+        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
+    ) -> float:
         """Calculate precision between true labels and predicted labels.
 
         Parameters
@@ -25,6 +27,9 @@ class Precision(ClassificationMetric):
             A two-dimensional matrix in which each column represents a class
             and the row values represent the probability that an example belongs
             to the class associated with the column.
+        multiclass : bool, optional
+            Whether the task is a multiclass classification. If None, it will be
+            determined automatically from the number of unique labels.
 
         Returns
         -------
@@ -32,7 +37,11 @@ class Precision(ClassificationMetric):
             Precision score between true labels and predicted labels
         """
         true_labels, pred_labels = prepare_to_metric(true_labels, probs_pred_labels)
-        multiclass = len(np.unique(true_labels)) > 2
+
+        # Use the provided multiclass parameter or determine it using is_multiclass
+        if multiclass is None:
+            multiclass = ClassificationMetric.is_multiclass(true_labels)
+
         if multiclass:
             return precision_score(true_labels, pred_labels, average="macro")
         else:
