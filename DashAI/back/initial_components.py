@@ -1,29 +1,42 @@
 import logging
 
-from DashAI.back.dataloaders import CSVDataLoader, ImageDataLoader, JSONDataLoader
+from DashAI.back.dataloaders import (
+    CSVDataLoader,
+    ExcelDataLoader,
+    ImageDataLoader,
+    JSONDataLoader,
+)
 from DashAI.back.explainability import (
     KernelShap,
     PartialDependence,
     PermutationFeatureImportance,
 )
-from DashAI.back.job import ExplainerJob, ModelJob
-from DashAI.back.metrics import F1, Accuracy, Bleu, Precision, Recall
+from DashAI.back.job import DatasetJob, ExplainerJob, ModelJob, PredictJob
+from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
+    GradientBoostingR,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
+    LinearRegression,
+    LinearSVR,
     LogisticRegression,
+    MLPRegression,
     OpusMtEnESTransformer,
     RandomForestClassifier,
+    RandomForestRegression,
+    RidgeRegression,
     ViTTransformer,
 )
+from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ImageClassificationTask,
+    RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
     TranslationTask,
@@ -50,31 +63,47 @@ def get_initial_components():
         TextClassificationTask,
         TranslationTask,
         ImageClassificationTask,
+        RegressionTask,
         # Models
         SVC,
         DecisionTreeClassifier,
         DummyClassifier,
+        GradientBoostingR,
         HistGradientBoostingClassifier,
         KNeighborsClassifier,
         LogisticRegression,
+        MLPRegression,
         RandomForestClassifier,
+        RandomForestRegression,
         DistilBertTransformer,
         ViTTransformer,
         OpusMtEnESTransformer,
         BagOfWordsTextClassificationModel,
+        RidgeRegression,
+        LinearSVR,
+        LinearRegression,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,
         ImageDataLoader,
+        ExcelDataLoader,
         # Metrics
         F1,
         Accuracy,
         Precision,
         Recall,
         Bleu,
+        Ter,
+        MAE,
+        RMSE,
+        # Optimizers
+        OptunaOptimizer,
+        HyperOptOptimizer,
         # Jobs
         ExplainerJob,
         ModelJob,
+        PredictJob,
+        DatasetJob,
         # Explainers
         KernelShap,
         PartialDependence,
