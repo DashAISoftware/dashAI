@@ -88,6 +88,7 @@ function PredictionModal({ open, onClose, updatePredictions }) {
     try {
       enqueueSnackbar("Starting prediction job...", {
         autoHideDuration: 2000,
+        variant: "success",
       });
 
       handleCloseDialog();
@@ -98,12 +99,15 @@ function PredictionModal({ open, onClose, updatePredictions }) {
         predictName,
       );
 
-      if (response?.status === 201) {
+      console.log("Prediction job response:", response);
+      if (response?.id) {
         enqueueSnackbar("Prediction job enqueued successfully", {
+          autoHideDuration: 2000,
           variant: "success",
         });
       } else {
-        enqueueSnackbar("Unexpected response from the server", {
+        enqueueSnackbar("Unexpected response format from the server", {
+          autoHideDuration: 2000,
           variant: "warning",
         });
       }
@@ -113,12 +117,20 @@ function PredictionModal({ open, onClose, updatePredictions }) {
       await startJobQueue();
     } catch (error) {
       console.error("Error submitting prediction job:", error);
-
-      const statusCode = error.response?.status;
-      if (statusCode === 400) {
-        enqueueSnackbar("Invalid dataset", { variant: "error" });
+      if (error.response) {
+        enqueueSnackbar(
+          `Error: ${error.response.data?.detail || "Unknown error"}`,
+          { variant: "error" },
+        );
+      } else if (error.request) {
+        enqueueSnackbar(
+          "No response from the server. Please try again later.",
+          {
+            variant: "error",
+          },
+        );
       } else {
-        enqueueSnackbar("Error submitting prediction job", {
+        enqueueSnackbar("An unexpected error occurred. Please try again.", {
           variant: "error",
         });
       }
