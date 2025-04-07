@@ -6,6 +6,7 @@ import { getRelatedComponents } from "../../api/generativeTask";
 
 export default function SelectModelMenu({ selectedTaskName }) {
   const [relatedComponents, setRelatedComponents] = useState([]);
+  const [selectedModel, setSelectedModel] = useState(null);
 
   useEffect(() => {
     if (!selectedTaskName) return;
@@ -63,9 +64,16 @@ export default function SelectModelMenu({ selectedTaskName }) {
       <Autocomplete
         disablePortal
         options={relatedComponents.map((t) => t.name)}
+        onChange={(event, newValue) => {
+          setSelectedModel(newValue);
+        }}
         sx={{ mr: 5, ml: 5 }}
         renderInput={(params) => <TextField {...params} label="Model" />}
       />
+      {/* Model params */}
+      <Box display={selectedModel ? "flex" : "none"} flexDirection={"column"}>
+        {selectedModel}
+      </Box>
     </Box>
   );
 }
