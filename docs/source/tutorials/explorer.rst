@@ -83,7 +83,7 @@ You may repeat this step to add more explorers to the exploration.
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When explorers gets added, They are configured automatically.
-You can configure them to suit your needs through the actions available in their rows. 
+You can configure them to suit your needs through the actions available in their rows.
 
 * Click on the columns icon to edit the columns used by the explorer.
 
@@ -135,7 +135,7 @@ After configuring the explorers, you can save the exploration by clicking the "S
 
 * Click the query-stats icon to view all the results of the exploration.
 
-Here you will see the available results of all the explorers you ran. 
+Here you will see the available results of all the explorers you ran.
 
 .. note::
    You can switch to see more details about each explorer with the following steps:
