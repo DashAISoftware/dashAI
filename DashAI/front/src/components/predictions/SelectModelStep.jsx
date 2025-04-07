@@ -86,26 +86,36 @@ function SelectModelStep({
     setSelectedModelId(params.row.id);
     setTrainDataset(params.row.dataset_id);
     setRowClicked(true);
+    validateAndUpdateNextButton(predictName, true);
   };
 
-  const handlePredictNameInput = (event) => {
-    const value = event.target.value;
-    onPredictNameInput(value);
-    setPredictName(value);
-    if (value.length < 4) {
-      setPredictNameError(true);
-    } else {
-      setPredictNameError(false);
-    }
+  const isValidPredictName = (name) => {
+    return name.length >= 4 && /^[a-zA-Z0-9_-]+$/.test(name);
   };
+
+  const validateAndUpdateNextButton = useCallback(
+    (name, rowIsClicked) => {
+      const isValid = isValidPredictName(name);
+      setPredictNameError(!isValid && name.length > 0);
+      setNextEnabled(isValid && (rowIsClicked || rowClicked));
+      return isValid;
+    },
+    [rowClicked, setNextEnabled],
+  );
+
+  const handlePredictNameInput = useCallback(
+    (event) => {
+      const value = event.target.value;
+      setPredictName(value);
+      onPredictNameInput(value);
+      validateAndUpdateNextButton(value, rowClicked);
+    },
+    [rowClicked, onPredictNameInput],
+  );
 
   useEffect(() => {
-    if (predictName.length >= 4 && rowClicked) {
-      setNextEnabled(true);
-    } else {
-      setNextEnabled(false);
-    }
-  }, [predictName, rowClicked, setNextEnabled]);
+    setNextEnabled(false);
+  }, []);
 
   useEffect(() => {
     get_Models();
