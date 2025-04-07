@@ -71,24 +71,15 @@ class DatasetJob(BaseJob):
 
             try:
                 log.debug("Storing dataset in %s", folder_path)
-                dataset_save_path = folder_path / "dataset"
-                if isinstance(dataloader, ImageDataLoader):
-                    new_dataset = dataloader.load_data(
-                        filepath_or_buffer=str(file_path)
-                        if file_path is not None
-                        else url,
-                        temp_path=str(dataset_save_path),
-                        params=parsed_params.model_dump(),
-                    )
-                else:
-                    new_dataset = dataloader.load_data(
-                        filepath_or_buffer=str(file_path)
-                        if file_path is not None
-                        else url,
-                        temp_path=str(temp_dir),
-                        params=parsed_params.model_dump(),
-                    )
+                new_dataset = dataloader.load_data(
+                    filepath_or_buffer=str(file_path)
+                    if file_path is not None
+                    else url,
+                    temp_path=str(temp_dir),
+                    params=parsed_params.model_dump(),
+                )
                 gc.collect()
+                dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))
                 save_dataset(new_dataset, dataset_save_path)
             except Exception as e:
