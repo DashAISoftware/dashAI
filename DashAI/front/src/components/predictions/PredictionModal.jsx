@@ -92,14 +92,21 @@ function PredictionModal({ open, onClose, updatePredictions }) {
 
       handleCloseDialog();
 
-      await enqueuePredictionJob(
+      const response = await enqueuePredictionJob(
         selectedModelId,
         selectedDatasetId,
         predictName,
       );
-      enqueueSnackbar("Prediction job enqueued successfully", {
-        variant: "success",
-      });
+
+      if (response?.status === 201) {
+        enqueueSnackbar("Prediction job enqueued successfully", {
+          variant: "success",
+        });
+      } else {
+        enqueueSnackbar("Unexpected response from the server", {
+          variant: "warning",
+        });
+      }
 
       updatePredictions();
 
