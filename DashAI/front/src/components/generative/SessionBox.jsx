@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import SessionMenu from "./SessionMenu";
 
 export default function SessionBox({
+  isSelected,
   name,
   modelName,
   id,
@@ -19,13 +20,13 @@ export default function SessionBox({
         justifyContent: "space-between",
         alignItems: "center",
         borderRadius: 1,
-        cursor: "pointer",
+        cursor: isSelected ? "default" : "pointer",
         p: 0.5,
         "&:hover": {
-          backgroundColor: "#1E1E2F",
+          backgroundColor: isSelected ? "transparent" : "#1E1E2F",
         },
       }}
-      onClick={onClick}
+      onClick={isSelected ? undefined : onClick}
     >
       <Box
         sx={{

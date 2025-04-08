@@ -8,9 +8,19 @@ import SelectModelMenu from "../../components/generative/SelectModelMenu";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedSessionId, setSelectedSessionId] = useState(25);
   const [selectedTaskName, setSelectedTaskName] = useState("");
   const [selectedModelName, setSelectedModelName] = useState("");
+
+  const handleSessionClick = (sessionId) => {
+    setSelectedSessionId(sessionId);
+  };
+
+  const handleNewSessionButton = () => {
+    setSelectedSessionId(null);
+    setStepIndex(0);
+    setSelectedTaskName("");
+  };
 
   return (
     <Box
@@ -24,10 +34,14 @@ export default function Generative() {
       p={1.5}
       alignItems={"stretch"}
     >
-      <SessionBar />
+      <SessionBar
+        selectedSessionIdId={selectedSessionId}
+        handleSessionClick={handleSessionClick}
+        handleNewSessionButton={handleNewSessionButton}
+      />
       <MainGenerativeBox>
-        {selectedSession ? (
-          <GenerativeChat />
+        {selectedSessionId ? (
+          <GenerativeChat sessionId={selectedSessionId} />
         ) : stepIndex === 0 ? (
           <SelectTaskMenu
             goToNextStep={(taskName) => {

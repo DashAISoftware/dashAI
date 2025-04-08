@@ -1,17 +1,20 @@
-import { Box, Typography, Divider, Collapse } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import { Box, Typography, Divider } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import SearchBar from "./SearchBar";
-import SessionBox from "./SessionBox";
-import Avatar from "@mui/material/Avatar";
 import { getSessions } from "../../api/session";
 import { useEffect, useState } from "react";
 import { removeSession } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
+import Footer from "./Footer";
+import SessionList from "./SessionList";
+import NewSessionButton from "./NewSessionButton";
+import SessionBarHeader from "./SessionBarHeader";
 
-export default function SessionBar() {
+export default function SessionBar({
+  selectedSessionId,
+  handleSessionClick,
+  handleNewSessionButton,
+}) {
   const [sessions, setSessions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState([]);
@@ -59,10 +62,6 @@ export default function SessionBar() {
     });
   };
 
-  const handleSessionClick = (id) => {
-    console.log("Session clicked", id);
-  };
-
   const handleSessionInfo = (id) => {
     // Find the session with the matching id
     const session = sessions.find((session) => session.id === id);
@@ -106,49 +105,11 @@ export default function SessionBar() {
     >
       <Box>
         {/* Header */}
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-          height={"70px"}
-          px={2}
-          py={1.5}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: "bold",
-              "& span": { color: "#16FFFF" },
-            }}
-          >
-            <span>D</span>a<span>sh</span>
-          </Typography>
-        </Box>
+        <SessionBarHeader />
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
         {/* Create new session button */}
-        <Box px={2} py={1}>
-          <Box
-            sx={{
-              bgcolor: "#374151",
-              color: "white",
-              borderRadius: 1,
-              mt: 1,
-              py: 1,
-              px: 2,
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
-              "&:hover": {
-                bgcolor: "#475569",
-              },
-              height: "45px",
-            }}
-          >
-            <AddIcon sx={{ mr: 1 }} />
-            <Typography>New session</Typography>
-          </Box>
-        </Box>
+        <NewSessionButton onClick={handleNewSessionButton} />
 
         {/* Search Bar */}
         <Box px={2} py={1}>
@@ -161,7 +122,7 @@ export default function SessionBar() {
 
         {/* Sessions */}
         <Box px={2} py={1}>
-          {/* Sessions Header */}
+          {/* Header */}
           <Box display="flex" alignItems="center" pb={1}>
             <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
             <Typography>Sessions</Typography>
@@ -184,114 +145,20 @@ export default function SessionBar() {
           </Box>
 
           {/* Sessions Display Grouped by Task */}
-          <Box display={"flex"} flexDirection={"column"}>
-            {Object.keys(groupedSessions).length > 0 ? (
-              Object.entries(groupedSessions).map(
-                ([taskName, taskSessions]) => (
-                  <Box key={taskName} mb={1}>
-                    {/* Task Section Header */}
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      sx={{
-                        cursor: "pointer",
-                        py: 0.5,
-                        px: 1,
-                        borderRadius: 1,
-                        "&:hover": {
-                          bgcolor: "rgba(255, 255, 255, 0.05)",
-                        },
-                      }}
-                      onClick={() => toggleSection(taskName)}
-                    >
-                      {openSections[taskName] ? (
-                        <KeyboardArrowDownIcon
-                          sx={{ fontSize: 20, color: "#16FFFF" }}
-                        />
-                      ) : (
-                        <KeyboardArrowRightIcon
-                          sx={{ fontSize: 20, color: "#16FFFF" }}
-                        />
-                      )}
-                      <Typography
-                        sx={{
-                          ml: 1,
-                          fontSize: "0.9rem",
-                          fontWeight: "medium",
-                          textTransform: "capitalize",
-                        }}
-                      >
-                        {taskName}
-                      </Typography>
-                      <Box
-                        sx={{
-                          ml: 1,
-                          bgcolor: "#374151",
-                          color: "white",
-                          borderRadius: "50%",
-                          width: 20,
-                          height: 20,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                        }}
-                      >
-                        {taskSessions.length}
-                      </Box>
-                    </Box>
-
-                    {/* Task Sessions */}
-                    <Collapse in={openSections[taskName]} timeout="auto">
-                      <Box pl={2}>
-                        {taskSessions.map((session) => (
-                          <SessionBox
-                            name={session.name}
-                            modelName={session.model_name}
-                            key={session.id}
-                            id={session.id}
-                            onClick={() => handleSessionClick(session.id)}
-                            onDelete={handleSessionDelete}
-                            onInfo={handleSessionInfo}
-                          />
-                        ))}
-                      </Box>
-                    </Collapse>
-                  </Box>
-                ),
-              )
-            ) : (
-              <Typography
-                sx={{
-                  color: "#ffffff",
-                  opacity: 0.5,
-                  textAlign: "center",
-                  padding: 2,
-                }}
-              >
-                No sessions found
-              </Typography>
-            )}
-          </Box>
+          <SessionList
+            selectedSessionId={selectedSessionId}
+            groupedSessions={groupedSessions}
+            openSections={openSections}
+            handleSessionClick={handleSessionClick}
+            handleSessionDelete={handleSessionDelete}
+            handleSessionInfo={handleSessionInfo}
+            toggleSection={toggleSection}
+          />
         </Box>
       </Box>
 
       {/* Footer */}
-      <Box
-        display={"flex"}
-        justifyContent={"center"}
-        alignItems={"center"}
-        flexDirection={"column"}
-        py={2}
-      >
-        <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
-        <Avatar
-          alt="DashAI Logo"
-          src="/images/logo.png"
-          variant="square"
-          sx={{ width: 120, p: 0, mt: 2 }}
-        />
-      </Box>
+      <Footer />
       {/* Session Info Modal */}
       {selectedInfoSession && (
         <InfoSessionModal

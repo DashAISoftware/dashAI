@@ -25,7 +25,7 @@ export default function GenerativeChat({ sessionId }) {
 
   useEffect(() => {
     getMessages();
-  }, []);
+  }, [sessionId]);
 
   return (
     <Box
@@ -101,17 +101,6 @@ export default function GenerativeChat({ sessionId }) {
           },
         }}
       >
-        {/* <ChatBubble
-          message="Hi! I need help with my project."
-          sender="User"
-          timestamp={new Date().toLocaleTimeString()}
-          isUser={true}
-        />
-        <ChatBubble
-          message="Hello! How can I assist you today?"
-          sender="Model"
-          timestamp={new Date().toLocaleTimeString()}
-        /> */}
         {messages.map((process) => {
           return (
             <Box
