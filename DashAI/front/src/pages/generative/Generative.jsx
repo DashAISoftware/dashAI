@@ -10,6 +10,7 @@ export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
+  const [selectedModelName, setSelectedModelName] = useState("");
 
   return (
     <Box
@@ -36,8 +37,10 @@ export default function Generative() {
           />
         ) : stepIndex === 1 ? (
           <SelectModelMenu selectedTaskName={selectedTaskName} />
+        ) : stepIndex === 2 ? (
+          <Typography>Parameters</Typography>
         ) : (
-          (stepIndex) => (2 ? <Typography>Not a valid step</Typography> : null)
+          (stepIndex) => (3 ? <Typography>Not a valid step</Typography> : null)
         )}
       </MainGenerativeBox>
       <Box

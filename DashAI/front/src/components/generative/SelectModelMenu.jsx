@@ -67,7 +67,7 @@ export default function SelectModelMenu({ selectedTaskName }) {
         onChange={(event, newValue) => {
           setSelectedModel(newValue);
         }}
-        sx={{ mr: 5, ml: 5 }}
+        sx={{ mr: 5, ml: 5, mb: 5 }}
         renderInput={(params) => <TextField {...params} label="Model" />}
       />
       {/* Model params */}
