@@ -39,7 +39,7 @@ export default function SessionBox({
           <Typography
             variant="body2"
             noWrap
-            sx={{ maxWidth: 150, fontSize: 14 }}
+            sx={{ maxWidth: 180, fontSize: 14 }}
           >
             {name}
           </Typography>
