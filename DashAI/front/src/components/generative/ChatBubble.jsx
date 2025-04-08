@@ -44,10 +44,11 @@ export function ChatBubble({
 
         <Paper
           sx={{
-            backgroundColor: (theme) => theme.palette.primary.main,
-            color: (theme) => theme.palette.primary.contrastText,
+            backgroundColor: "#374151",
+            color: "#fff",
             padding: (theme) => theme.spacing(1.5, 2),
             maxWidth: "100%",
+            borderRadius: 2,
             borderTopRightRadius: isUser ? 0 : "inherit",
             borderTopLeftRadius: isUser ? "inherit" : 0,
             position: "relative",
