@@ -10,15 +10,22 @@ import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
 import { ChatBubble } from "./ChatBubble";
+import { getProcesses } from "../../api/process";
+import { useState, useEffect } from "react";
 
-export default function GenerativeChat() {
-  const [message, setMessage] = React.useState("");
+export default function GenerativeChat({ sessionId }) {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
 
-  const handleSend = () => {
-    // Handle sending the message here
-    console.log("Message sent:", message);
-    setMessage(""); // Clear the input field after sending
+  const getMessages = () => {
+    getProcesses(sessionId).then((response) => {
+      setMessages(response);
+    });
   };
+
+  useEffect(() => {
+    getMessages();
+  }, []);
 
   return (
     <Box
@@ -53,7 +60,7 @@ export default function GenerativeChat() {
           width={"100%"}
         >
           <Typography>
-            {"Model name"} : {"Model Description"}
+            {"Model name"} {sessionId} : {"Model Description"}
           </Typography>
           <IconButton>
             <InfoIcon
@@ -80,6 +87,7 @@ export default function GenerativeChat() {
         height={"100%"}
         overflow={"auto"}
         mt={1}
+        p={2}
         sx={{
           "&::-webkit-scrollbar": {
             width: "8px",
@@ -93,7 +101,7 @@ export default function GenerativeChat() {
           },
         }}
       >
-        <ChatBubble
+        {/* <ChatBubble
           message="Hi! I need help with my project."
           sender="User"
           timestamp={new Date().toLocaleTimeString()}
@@ -103,7 +111,36 @@ export default function GenerativeChat() {
           message="Hello! How can I assist you today?"
           sender="Model"
           timestamp={new Date().toLocaleTimeString()}
-        />
+        /> */}
+        {messages.map((process) => {
+          return (
+            <Box
+              display="flex"
+              flexDirection="column"
+              justifyContent="flex-start"
+              gap={1}
+              width={"100%"}
+              height={"100%"}
+              mt={1}
+            >
+              <ChatBubble
+                message={process.input}
+                sender={"User"}
+                timestamp={new Date(process.created).toLocaleTimeString()}
+                isUser={true}
+              />
+              {process.status === 3 ? (
+                <ChatBubble
+                  message={process.output}
+                  sender={"Model"}
+                  timestamp={process.end_time}
+                />
+              ) : (
+                <ChatBubble message={"..."} sender="Model"></ChatBubble>
+              )}
+            </Box>
+          );
+        })}
       </Box>
 
       {/* Chat input */}
@@ -112,13 +149,13 @@ export default function GenerativeChat() {
           fullWidth
           variant="outlined"
           label="Type a message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
         />
         <Button
           variant="contained"
           color="primary"
-          onClick={handleSend}
+          onClick={() => setInput("")}
           endIcon={<SendIcon />}
         >
           Send
