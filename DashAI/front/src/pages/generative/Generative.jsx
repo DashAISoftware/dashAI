@@ -1,5 +1,5 @@
 import { Box, Typography, Autocomplete, TextField } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
@@ -45,7 +45,7 @@ export default function Generative() {
         height={"auto"}
         borderRadius={2}
         p={2}
-        bgcolor={"#151521"}
+        bgcolor={"#030712"}
       ></Box>
     </Box>
   );

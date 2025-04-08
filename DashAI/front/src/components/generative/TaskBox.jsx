@@ -8,14 +8,14 @@ export default function TaskBox({ taskName, description, onClick }) {
       sx={{
         width: "300px",
         minHeight: "40px",
-        color: "black",
+        color: "white",
         height: "auto",
         display: "flex",
         justifyContent: "center",
         textTransform: "none",
-        backgroundColor: "#16FFFF",
+        backgroundColor: "#374151",
         "&:hover": {
-          backgroundColor: "#002884",
+          backgroundColor: "#475569",
         },
         borderRadius: 3,
       }}
