@@ -23,13 +23,13 @@ export default function SessionBar() {
       setSessions(data);
       setFilteredSessions(data);
 
-      // Initialize all sections as open
+      // Initialize all sections as closed
       const taskNames = [
         ...new Set(data.map((session) => session.task_name || "Other")),
       ];
       const initialOpenState = {};
       taskNames.forEach((task) => {
-        initialOpenState[task] = true;
+        initialOpenState[task] = false;
       });
       setOpenSections(initialOpenState);
     });
