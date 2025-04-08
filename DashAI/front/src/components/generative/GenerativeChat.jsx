@@ -12,14 +12,44 @@ import SendIcon from "@mui/icons-material/Send";
 import { ChatBubble } from "./ChatBubble";
 import { getProcesses } from "../../api/process";
 import { useState, useEffect } from "react";
+import { postProcess } from "../../api/process";
+import { enqueueGenerativeProcessJob } from "../../api/job";
+import { startJobQueue } from "../../api/job";
 
 export default function GenerativeChat({ sessionId }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [isLoadingMessage, setIsLoadingMessage] = useState(false);
 
   const getMessages = () => {
     getProcesses(sessionId).then((response) => {
+      setIsLoadingMessage(false);
       setMessages(response);
+    });
+  };
+
+  const handleSendMessage = () => {
+    // Set the Loading state to true
+    setIsLoadingMessage(true);
+
+    // Send the message to the server
+    postProcess(sessionId, input).then((response) => {
+      // Update the messages state with the new message
+      // and reset the input field
+      setMessages((prevMessages) => [...prevMessages, response]);
+      setInput("");
+
+      // Enqueue the job
+      enqueueGenerativeProcessJob(response.id).then(() => {
+        // Start the job queue
+        startJobQueue().then(() => {
+          // TODO: Handle this differently
+          setTimeout(() => {
+            // Refresh the messages after 6 seconds
+            getMessages();
+          }, 6000);
+        });
+      });
     });
   };
 
@@ -140,14 +170,16 @@ export default function GenerativeChat({ sessionId }) {
           label="Type a message"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          disabled={isLoadingMessage}
         />
         <Button
           variant="contained"
           color="primary"
-          onClick={() => setInput("")}
+          onClick={handleSendMessage}
           endIcon={<SendIcon />}
+          disabled={isLoadingMessage}
         >
-          Send
+          {isLoadingMessage ? "Sending..." : "Send"}
         </Button>
       </Box>
     </Box>
