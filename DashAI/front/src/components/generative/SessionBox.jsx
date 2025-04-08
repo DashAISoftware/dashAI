@@ -21,9 +21,10 @@ export default function SessionBox({
         alignItems: "center",
         borderRadius: 1,
         cursor: isSelected ? "default" : "pointer",
+        bgcolor: isSelected ? "#1E1E2F" : "transparent",
         p: 0.5,
         "&:hover": {
-          backgroundColor: isSelected ? "transparent" : "#1E1E2F",
+          backgroundColor: isSelected ? "#1E1E2F" : "#1E1E2F",
         },
       }}
       onClick={isSelected ? undefined : onClick}
