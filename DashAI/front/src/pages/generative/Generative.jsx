@@ -35,7 +35,7 @@ export default function Generative() {
       alignItems={"stretch"}
     >
       <SessionBar
-        selectedSessionIdId={selectedSessionId}
+        selectedSessionId={selectedSessionId}
         handleSessionClick={handleSessionClick}
         handleNewSessionButton={handleNewSessionButton}
       />
