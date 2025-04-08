@@ -122,7 +122,7 @@ export default function GenerativeChat({ sessionId }) {
                 <ChatBubble
                   message={process.output}
                   sender={"Model"}
-                  timestamp={process.end_time}
+                  timestamp={new Date(process.end_time).toLocaleTimeString()}
                 />
               ) : (
                 <ChatBubble message={"..."} sender="Model"></ChatBubble>
