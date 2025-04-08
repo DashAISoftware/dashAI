@@ -1,7 +1,13 @@
-import React from "react";
-import { Box, Typography, Autocomplete, TextField } from "@mui/material";
-import IconAvatar from "../../components/generative/IconAvatar";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Typography,
+  Autocomplete,
+  TextField,
+  Button,
+} from "@mui/material";
+import { useFormik } from "formik";
+import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
 import { getRelatedComponents } from "../../api/generativeTask";
 
 export default function SelectModelMenu({ selectedTaskName }) {
@@ -14,6 +20,26 @@ export default function SelectModelMenu({ selectedTaskName }) {
     getRelatedComponents(selectedTaskName).then(setRelatedComponents);
   }, [selectedTaskName]);
 
+  const formik = useFormik({
+    initialValues: {},
+    onSubmit: (values) => {
+      console.log("Form submitted with values:", values);
+    },
+  });
+
+  useEffect(() => {
+    if (selectedModel?.schema?.properties) {
+      const initialValues = Object.keys(selectedModel.schema.properties).reduce(
+        (acc, key) => {
+          acc[key] = selectedModel.schema.properties[key].placeholder || "";
+          return acc;
+        },
+        {},
+      );
+      formik.setValues(initialValues);
+    }
+  }, [selectedModel]);
+
   return (
     <Box
       display={"flex"}
@@ -23,9 +49,7 @@ export default function SelectModelMenu({ selectedTaskName }) {
       justifyContent={"flex-start"}
     >
       <Typography
-        variant="h1"
         sx={{
-          fontFamily: "Roboto",
           fontSize: "16px",
           whiteSpace: "normal",
           wordBreak: "break-word",
@@ -37,43 +61,59 @@ export default function SelectModelMenu({ selectedTaskName }) {
       >
         Select a model
       </Typography>
-      <Box sx={{ ml: 5 }}>
-        <IconAvatar src="/dai_circle.png" size={32} />{" "}
-      </Box>
-      <Box
-        display={"flex"}
-        flexDirection={"column"}
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        gap={1}
-        sx={{ mt: 2, mb: 2, ml: 5, mr: 5 }}
-      >
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "24px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            color: "#aba5a5",
-          }}
-        >
-          Select a model from the list
-        </Typography>
-      </Box>
-      {/* Search Bar */}
       <Autocomplete
         disablePortal
         options={relatedComponents.map((t) => t.name)}
         onChange={(event, newValue) => {
-          setSelectedModel(newValue);
+          const selected = relatedComponents.find(
+            (model) => model.name === newValue,
+          );
+          setSelectedModel(selected);
         }}
         sx={{ mr: 5, ml: 5, mb: 5 }}
         renderInput={(params) => <TextField {...params} label="Model" />}
       />
-      {/* Model params */}
-      <Box display={selectedModel ? "flex" : "none"} flexDirection={"column"}>
-        {selectedModel}
-      </Box>
+      {selectedModel && selectedModel.schema && (
+        <form onSubmit={formik.handleSubmit}>
+          <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
+            <Typography
+              sx={{
+                fontSize: "16px",
+                whiteSpace: "normal",
+                wordBreak: "break-word",
+                mb: 2,
+              }}
+            >
+              Parameters
+            </Typography>
+            <FormSchemaRenderFields
+              modelSchema={selectedModel.schema.properties}
+              formik={formik}
+              autoSave={false}
+              handleUpdateSchema={(updatedValues) => {
+                formik.setValues((prevValues) => ({
+                  ...prevValues,
+                  ...updatedValues,
+                }));
+              }}
+              onFormSubmit={formik.handleSubmit}
+              setError={(error) => console.error(error)}
+              errorsMessage={formik.errors}
+            />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                mt: 2,
+              }}
+            >
+              <Button type="submit" variant="contained">
+                Submit
+              </Button>
+            </Box>
+          </Box>
+        </form>
+      )}
     </Box>
   );
 }
