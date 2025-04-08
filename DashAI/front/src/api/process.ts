@@ -7,3 +7,17 @@ export const getProcesses = async (sessionId: string): Promise<IProcess[]> => {
   );
   return response.data;
 };
+
+export const postProcess = async (
+  sessionId: number,
+  input: string,
+): Promise<IProcess> => {
+  const data = {
+    session_id: sessionId,
+    input: input,
+  };
+  const response = await api.post<IProcess>(`/v1/generative-process/`, data, {
+    headers: { "Content-Type": "application/json" },
+  });
+  return response.data;
+};
