@@ -1,4 +1,6 @@
 import logging
+import os
+import pathlib
 from typing import List, Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,11 +8,13 @@ from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
+from DashAI.back.config import DefaultSettings
 from DashAI.back.dependencies.database.models import Pipeline
 from DashAI.back.api.api_v1.schemas.pipelines_params import (
     PipelineCreateParams,
     PipelineUpdateParams,
 )
+from DashAI.back.job.pipeline_job import run_pipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -67,6 +71,7 @@ async def create_pipeline(
 ):
     """Create a new pipeline."""
     logger.debug("Creating a new pipeline with params: %s", params)
+    settings = DefaultSettings()
     with session_factory() as db:
         try:
             steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
@@ -79,6 +84,11 @@ async def create_pipeline(
             db.add(new_pipeline)
             db.commit()
             db.refresh(new_pipeline)
+
+            sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+            sqlite_db_path = pathlib.Path(sqlite_local, settings.SQLITE_DB_PATH)
+            run_pipeline(sqlite_db_path, logging_level=logging.DEBUG, pipeline_id=new_pipeline.id)
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -146,3 +156,28 @@ async def delete_pipeline(
                 detail="Internal database error",
             ) from e
     return {"message": "Pipeline deleted successfully"}
+
+from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
+from fastapi import Request
+
+@router.post("/validate_node")
+@inject
+async def validate_node(
+    request: Request,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Validate a single node configuration."""
+    payload = await request.json()
+    node_type = payload.get("type")
+    node_data = payload.get("config")
+
+    validator_class = VALIDATOR_MAP.get(node_type)
+    if not validator_class:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown node type: {node_type}",
+        )
+
+    with session_factory() as db:
+        validator = validator_class(node_data, db)
+        return validator.validate()

@@ -22,13 +22,13 @@ function PipelinesPage() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [dragging, setDragging] = useState(null);
   const [runNode, setRunNode] = useState(null);
-  //const [nodeData, setNodeData] = useState({});
-  const [nodeData, setNodeData] = useState({
-    "DataLoader-0": { filePath: "data.csv" },
-    "DataExploration-1": { analysisType: "summary" },
-    "TaskSelector-2": { task: "classification" },
-    "Metrics-3": { metric: "accuracy" },
-  });
+  const [nodeData, setNodeData] = useState({});
+  // const [nodeData, setNodeData] = useState({
+  //   "DataLoader-0": { filePath: `C:\Users\carla\.DashAI\datasets\iris\dataset` },
+  //   "DataExploration-1": { analysisType: "summary" },
+  //   "TaskSelector-2": { task: "classification" },
+  //   "Metrics-3": { metric: "accuracy" },
+  // });
 
   const onDragStart = (event, nodeType) => {
     setDragging(nodeType);
@@ -44,6 +44,8 @@ function PipelinesPage() {
       type: dragging, 
       position,
       data: { label: `${dragging} Node` },
+      sourcePosition: "right",
+      targetPosition: "left",
     };
 
     setNodes((nds) => nds.concat(newNode));
@@ -76,11 +78,11 @@ function PipelinesPage() {
     const { type, id } = selectedNode;
 
     if (type === "DataLoader") {
-      return <DataLoaderNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)}/>;
+      return <DataLoaderNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]}/>;
     } else if (type === "DataExploration") {
-      return <DataExplorationNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} />;
+      return <DataExplorationNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} data={nodeData}/>;
     } else if (type === "TaskSelector") {
-      return <TaskSelectorNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedTask={nodeData[id]?.task || ""}/>;
+      return <TaskSelectorNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]}/>;
     } else if (type === "Metrics") {
       return <MetricsNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedMetrics={nodeData[id]?.metrics || []} />;
     }
@@ -133,11 +135,6 @@ function PipelinesPage() {
         <Dialog open={!!selectedNode} onClose={handleCloseDialog}>
           <DialogTitle>{selectedNode?.data?.label || "Node Details"}</DialogTitle>
           {renderNodeDialogContent()}
-          <DialogActions>
-            <Button onClick={handleCloseDialog} color="primary">
-              Close
-            </Button>
-          </DialogActions>
         </Dialog>
         {runNode && renderRunNodeContent()}
       </Box>

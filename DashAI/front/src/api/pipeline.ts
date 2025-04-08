@@ -30,3 +30,14 @@ export const deletePipeline = async (id: number): Promise<object> => {
   const response = await api.delete<object>(`${pipelineEndpoint}/${id}`);
   return response.data;
 };
+
+export const validateNode = async (
+  nodeType: string,
+  config: object
+): Promise<{ status: string; message?: string }> => {
+  const response = await api.post(`${pipelineEndpoint}/validate_node`, {
+    type: nodeType,
+    config: config,
+  });
+  return response.data;
+};

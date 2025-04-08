@@ -5,7 +5,7 @@ const MetricsNode = ({ open, onClose, taskType, onSave, savedMetrics }) => {
   const [selectedMetrics, setSelectedMetrics] = useState(savedMetrics || []);
 
   const availableMetrics = {
-    classification: ["Accuracy", "Precision", "Recall", "F1-Score", "ROC-AUC"],
+    classification: ["accuracy", "f1", "precision", "recall"],
     regression: ["MSE (Mean Squared Error)", "MAE (Mean Absolute Error)", "R2 Score", "RMSE (Root Mean Squared Error)"],
     clustering: ["Silhouette Score", "Calinski-Harabasz Index", "Davies-Bouldin Index"],
     time_series: ["MAE", "RMSE", "MAPE (Mean Absolute Percentage Error)"],
