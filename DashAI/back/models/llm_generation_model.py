@@ -19,6 +19,7 @@ class LLMGenerationModel(BaseGenerativeModel):
     """Class for models associated to LLMGenerationTask."""
 
     COMPATIBLE_COMPONENTS = ["LLMGenerationTask"]
+    SCHEMA = LLMGenerationSchema
 
     def __init__(self, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
