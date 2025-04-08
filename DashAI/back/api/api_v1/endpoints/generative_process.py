@@ -57,3 +57,41 @@ async def upload_generative_process(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.get("/{session_id}", status_code=status.HTTP_200_OK)
+async def get_generative_process(
+    session_id: str,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get a generative process by its session ID.
+
+    Parameters
+    ----------
+    session_id : str
+        The ID of the generative process to retrieve.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    dict
+        A dictionary with the generative process data.
+
+    Raises
+    ------
+    HTTPException
+        If the generative process is not found or if there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            process = db.query(GenerativeProcess).filter_by(session_id=session_id).all()
+            return process
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
