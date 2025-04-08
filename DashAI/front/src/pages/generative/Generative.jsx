@@ -8,7 +8,7 @@ import SelectModelMenu from "../../components/generative/SelectModelMenu";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedSessionId, setSelectedSessionId] = useState(25);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
   const [selectedModelName, setSelectedModelName] = useState("");
 
