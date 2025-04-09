@@ -43,11 +43,11 @@ export default function GenerativeChat({ sessionId }) {
       enqueueGenerativeProcessJob(response.id).then(() => {
         // Start the job queue
         startJobQueue().then(() => {
-          // TODO: Handle this differently
+          // Set a timeout to refresh the messages
           setTimeout(() => {
-            // Refresh the messages after 6 seconds
+            // Refresh the messages after 1 seconds
             getMessages();
-          }, 6000);
+          }, 1000);
         });
       });
     });
