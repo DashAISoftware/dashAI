@@ -9,8 +9,12 @@ import {
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
 import { getRelatedComponents } from "../../api/generativeTask";
+import { createGenerativeSession } from "../../api/generativeTask";
 
-export default function SelectModelMenu({ selectedTaskName }) {
+export default function SelectModelMenu({
+  selectedTaskName,
+  setSelectedSessionId,
+}) {
   const [relatedComponents, setRelatedComponents] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
 
@@ -21,9 +25,27 @@ export default function SelectModelMenu({ selectedTaskName }) {
   }, [selectedTaskName]);
 
   const formik = useFormik({
-    initialValues: {},
-    onSubmit: (values) => {
-      console.log("Form submitted with values:", values);
+    initialValues: {
+      name: "",
+      description: "",
+    },
+    onSubmit: async (values) => {
+      try {
+        const sessionData = {
+          name: values.name,
+          description: values.description,
+          task_name: selectedTaskName,
+          model_name: selectedModel?.name || "",
+          parameters: values,
+        };
+
+        const createdSession = await createGenerativeSession(sessionData);
+
+        setSelectedSessionId(createdSession.id);
+        console.log("Session created successfully:", createdSession);
+      } catch (error) {
+        console.error("Error creating session:", error);
+      }
     },
   });
 
@@ -34,7 +56,7 @@ export default function SelectModelMenu({ selectedTaskName }) {
           acc[key] = selectedModel.schema.properties[key].placeholder || "";
           return acc;
         },
-        {},
+        { name: "", description: "" },
       );
       formik.setValues(initialValues);
     }
@@ -100,6 +122,38 @@ export default function SelectModelMenu({ selectedTaskName }) {
               setError={(error) => console.error(error)}
               errorsMessage={formik.errors}
             />
+            <Typography
+              sx={{
+                fontSize: "16px",
+                whiteSpace: "normal",
+                wordBreak: "break-word",
+                mb: 2,
+              }}
+            >
+              Name your session
+            </Typography>
+            {/* Session name */}
+            <TextField
+              fullWidth
+              label="Session Name"
+              name="name"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              error={Boolean(formik.errors.name)}
+              helperText={formik.errors.name}
+              sx={{ mb: 2 }}
+            />
+            {/* Session description */}
+            <TextField
+              fullWidth
+              label="Session Description"
+              name="description"
+              value={formik.values.description}
+              onChange={formik.handleChange}
+              error={Boolean(formik.errors.description)}
+              helperText={formik.errors.description}
+              sx={{ mb: 2 }}
+            />
             <Box
               sx={{
                 display: "flex",
@@ -108,7 +162,7 @@ export default function SelectModelMenu({ selectedTaskName }) {
               }}
             >
               <Button type="submit" variant="contained">
-                Submit
+                Create a session
               </Button>
             </Box>
           </Box>

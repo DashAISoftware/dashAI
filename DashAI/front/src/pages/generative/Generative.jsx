@@ -1,4 +1,4 @@
-import { Box, Typography, Autocomplete, TextField } from "@mui/material";
+import { Box } from "@mui/material";
 import { useState } from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
@@ -10,7 +10,6 @@ export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
-  const [selectedModelName, setSelectedModelName] = useState("");
 
   const handleSessionClick = (sessionId) => {
     setSelectedSessionId(sessionId);
@@ -49,12 +48,11 @@ export default function Generative() {
               setStepIndex(1);
             }}
           />
-        ) : stepIndex === 1 ? (
-          <SelectModelMenu selectedTaskName={selectedTaskName} />
-        ) : stepIndex === 2 ? (
-          <Typography>Parameters</Typography>
         ) : (
-          (stepIndex) => (3 ? <Typography>Not a valid step</Typography> : null)
+          <SelectModelMenu
+            selectedTaskName={selectedTaskName}
+            setSelectedSessionId={setSelectedSessionId}
+          />
         )}
       </MainGenerativeBox>
       <Box
