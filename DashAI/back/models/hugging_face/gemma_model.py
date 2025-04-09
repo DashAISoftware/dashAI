@@ -19,9 +19,12 @@ class GemmaModel(LLMGenerationModel):
     def generate(self, prompt: str) -> str:
         """Generate text based on prompts."""
         output = self.model(
-            f"Q: {prompt} A:", max_tokens=self.max_tokens, stop=["\n", "Q:"], echo=True
+            f"Q: {prompt} A:", max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["\n", "Q:"], echo=True
         )
-        return output["choices"][0]["text"]
+        generated_text = output["choices"][0]["text"]
+        clean_text = generated_text.replace(f"Q: {prompt} A:", "").strip()
+        return clean_text
+    
     
     def __call__(self, prompt: str) -> str:
         return self.generate(prompt)
