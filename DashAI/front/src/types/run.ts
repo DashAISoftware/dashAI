@@ -7,6 +7,11 @@ export interface IRun {
   parameters: object;
   optimizer_name: string;
   optimizer_parameters: object;
+  plot_history_path: string;
+  plot_slice_path: string;
+  plot_contour_path: string;
+  plot_importance_path: string;
+  goal_metric: string;
   plot_path: string;
   train_metrics: object;
   test_metrics: object;

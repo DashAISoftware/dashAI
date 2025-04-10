@@ -10,7 +10,6 @@ export const useTimestamp = ({ eventName }) => {
 
   const handleClick = () => {
     const newEvent = { eventName, timestamp: new Date().getTime() };
-    console.log(newEvent);
     setEvents([...events, newEvent]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...events, newEvent]));
   };

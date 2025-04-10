@@ -20,7 +20,6 @@ export default function useModelParents({ parent }) {
 
         setModels(result);
       } catch (error) {
-        console.log(error);
       } finally {
         setLoading(false);
       }

@@ -1,6 +1,9 @@
 import logging
+import os
 from typing import Union
 
+import pyarrow as pa
+import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
@@ -11,10 +14,7 @@ from DashAI.back.api.api_v1.schemas.experiments_params import (
     ColumnsValidationParams,
     ExperimentParams,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    get_column_names_from_indexes,
-    load_dataset,
-)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Dataset, Experiment
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.tasks.base_task import BaseTask
@@ -101,6 +101,7 @@ async def validate_columns(
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
+    """Validate if dataset columns are compatible with a task."""
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, params.dataset_id)
@@ -109,18 +110,28 @@ async def validate_columns(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-            datasetdict = load_dataset(f"{dataset.file_path}/dataset")
-            if not datasetdict:
+
+            dataset_path = f"{dataset.file_path}/dataset"
+            data_filepath = os.path.join(dataset_path, "data.arrow")
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = ipc.open_file(source)
+                batch = reader.get_batch(0)
+                sample_size = min(5, batch.num_rows)
+                sample_batch = batch.slice(0, sample_size)
+
+            table = pa.Table.from_batches([sample_batch])
+            minimal_dataset = DashAIDataset(table)
+
+            column_names = minimal_dataset.column_names
+
+            if max(params.inputs_columns + params.outputs_columns) > len(column_names):
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Error while loading the dataset.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Column index out of range",
                 )
-            inputs_names = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.inputs_columns
-            )
-            outputs_names = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.outputs_columns
-            )
+
+            inputs_names = [column_names[i - 1] for i in params.inputs_columns]
+            outputs_names = [column_names[i - 1] for i in params.outputs_columns]
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -128,16 +139,19 @@ async def validate_columns(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
     if params.task_name not in component_registry:
         raise HTTPException(
             status_code=404,
             detail=f"Task {params.task_name} not found in the registry.",
         )
+
     task: BaseTask = component_registry[params.task_name]["class"]()
     validation_response = {}
+
     try:
         prepared_dataset = task.prepare_for_task(
-            datasetdict=datasetdict,
+            datasetdict=minimal_dataset,
             outputs_columns=outputs_names,
         )
         task.validate_dataset_for_task(
@@ -186,18 +200,22 @@ async def create_experiment(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
                 )
-            datasetdict = load_dataset(f"{dataset.file_path}/dataset")
-            if not datasetdict:
+            dataset_path = f"{dataset.file_path}/dataset"
+            data_filepath = os.path.join(dataset_path, "data.arrow")
+
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = ipc.open_file(source)
+                schema = reader.schema
+                column_names = schema.names
+
+            if max(params.input_columns + params.output_columns) > len(column_names):
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Error while loading the dataset.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Column index out of range",
                 )
-            inputs_columns = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.input_columns
-            )
-            outputs_columns = get_column_names_from_indexes(
-                datasetdict=datasetdict, indexes=params.output_columns
-            )
+
+            inputs_columns = [column_names[i - 1] for i in params.input_columns]
+            outputs_columns = [column_names[i - 1] for i in params.output_columns]
             experiment = Experiment(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,

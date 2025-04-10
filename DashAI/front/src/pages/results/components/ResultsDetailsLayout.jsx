@@ -16,6 +16,15 @@ function ResultsDetailsLayout({
   handleTabChange,
   handleCloseCustomLayout,
 }) {
+  const optimizables = runData?.parameters
+    ? Object.keys(runData.parameters).filter(
+        (key) => runData.parameters[key]?.optimize === true,
+      ).length
+    : 0;
+  const updatedTabs = tabsResultsDetails.map((tab) => ({
+    ...tab,
+    disabled: tab.value === 3 ? optimizables === 0 : tab.disabled,
+  }));
   return (
     <CustomLayout>
       <Button
@@ -27,7 +36,7 @@ function ResultsDetailsLayout({
 
       <Paper sx={{ mt: 2 }}>
         <Tabs value={currentTab} onChange={handleTabChange}>
-          {tabsResultsDetails.map((tab) => (
+          {updatedTabs.map((tab) => (
             <Tab
               key={tab.value}
               value={tab.value}

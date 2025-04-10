@@ -12,10 +12,11 @@ export const getRunById = async (runId: string): Promise<IRun> => {
   return response.data;
 };
 
-export const getHyperparameterPlot = async (runId: string): Promise<IRun> => {
-  const response = await api.get<IRun>(`/v1/run/plot/${runId}`);
-  console.log("response hyperparameter");
-  console.log(response);
+export const getHyperparameterPlot = async (
+  runId: string,
+  plotType: string,
+): Promise<IRun> => {
+  const response = await api.get<IRun>(`/v1/run/plot/${runId}/${plotType}`);
   return response.data;
 };
 
@@ -26,6 +27,11 @@ export const createRun = async (
   parameters: object,
   optimizerName: string,
   optimizerParameters: object,
+  plotHistoryPath: string,
+  plotSlicePath: string,
+  plotContourPath: string,
+  plotImportancePath: string,
+  goalMetric: string,
   description: string,
 ): Promise<IRun> => {
   const data = {
@@ -35,6 +41,11 @@ export const createRun = async (
     parameters,
     optimizer_name: optimizerName,
     optimizer_parameters: optimizerParameters,
+    plot_history_path: plotHistoryPath,
+    plot_slice_path: plotSlicePath,
+    plot_contour_path: plotContourPath,
+    plot_importance_path: plotImportancePath,
+    goal_metric: goalMetric,
     description,
   };
 

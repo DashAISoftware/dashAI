@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     select_columns,
-    update_dataset_splits,
+    split_dataset,
+    split_indexes,
 )
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -125,7 +126,7 @@ class ExplainerJob(BaseJob):
                 f"Dataset {instance_id} to be explained does not exist in DB."
             )
         try:
-            loaded_instance: DatasetDict = load_dataset(f"{instance.file_path}/dataset")
+            loaded_instance = load_dataset(f"{instance.file_path}/dataset")
         except Exception as e:
             log.exception(e)
             raise JobError(
@@ -135,6 +136,7 @@ class ExplainerJob(BaseJob):
             prepared_instance = task.prepare_for_task(
                 loaded_instance, outputs_columns=self.output_columns
             )
+            prepared_instance = DatasetDict({"train": prepared_instance})
             X, _ = select_columns(
                 prepared_instance,
                 self.input_columns,
@@ -269,16 +271,30 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 splits = json.loads(experiment.splits)
-                if splits["has_changed"]:
-                    new_splits = {
-                        "train": splits["train"],
-                        "test": splits["test"],
-                        "validation": splits["validation"],
-                    }
-                    loaded_dataset = update_dataset_splits(
-                        loaded_dataset, new_splits, splits["is_random"]
+                if isinstance(splits.get("train"), list):
+                    splits_index = splits
+                    loaded_dataset = split_dataset(
+                        loaded_dataset,
+                        train_indexes=splits_index["train"],
+                        test_indexes=splits_index["test"],
+                        val_indexes=splits_index["validation"],
                     )
-                prepared_dataset = task.prepare_for_task(
+                else:
+                    n = len(loaded_dataset)
+                    train_indexes, test_indexes, val_indexes = split_indexes(
+                        n,
+                        splits["train"],
+                        splits["test"],
+                        splits["validation"],
+                    )
+                    loaded_dataset = split_dataset(
+                        loaded_dataset,
+                        train_indexes=train_indexes,
+                        test_indexes=test_indexes,
+                        val_indexes=val_indexes,
+                    )
+
+                prepared_dataset: DatasetDict = task.prepare_for_task(
                     datasetdict=loaded_dataset,
                     outputs_columns=self.output_columns,
                 )

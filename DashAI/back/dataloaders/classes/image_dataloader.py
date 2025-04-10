@@ -1,31 +1,48 @@
 """DashAI Image Dataloader."""
 
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from beartype import beartype
-from datasets import DatasetDict, load_dataset
-from starlette.datastructures import UploadFile
+from datasets import load_dataset
 
+from DashAI.back.core.schema_fields import none_type, schema_field, string_field
+from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+
+
+class ImageDataloaderSchema(BaseSchema):
+    name: schema_field(
+        none_type(string_field()),
+        "",
+        (
+            "Custom name to register your dataset. If no name is specified, "
+            "the name of the uploaded file will be used."
+        ),
+    )  # type: ignore
 
 
 class ImageDataLoader(BaseDataLoader):
     """Data loader for data from image files."""
 
     COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    SCHEMA = ImageDataloaderSchema
 
     @beartype
     def load_data(
         self,
-        filepath_or_buffer: Union[UploadFile, str],
+        filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-    ) -> DatasetDict:
+    ) -> DashAIDataset:
         """Load an image dataset.
 
         Parameters
         ----------
-        filepath_or_buffer : Union[UploadFile, str], optional
+        filepath_or_buffer : str
             An URL where the dataset is located or a FastAPI/Uvicorn uploaded file
             object.
         temp_path : str
@@ -39,20 +56,12 @@ class ImageDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
-        if isinstance(filepath_or_buffer, str):
-            dataset = load_dataset("imagefolder", data_files=filepath_or_buffer)
-        elif isinstance(filepath_or_buffer, UploadFile):
-            if filepath_or_buffer.content_type == "application/zip":
-                extracted_files_path = self.extract_files(temp_path, filepath_or_buffer)
-                dataset = load_dataset(
-                    "imagefolder",
-                    data_dir=extracted_files_path,
-                )
-            else:
-                raise Exception(
-                    "The image dataloader requires the input file to be a zip file. "
-                    f"The following content type was delivered: "
-                    f"{filepath_or_buffer.content_type}"
-                )
+        prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
 
-        return dataset
+        if prepared_path[1] == "dir":
+            dataset = load_dataset("imagefolder", data_dir=prepared_path[0])
+        else:
+            raise Exception(
+                "The image dataloader requires the input file to be a zip file."
+            ) from None
+        return to_dashai_dataset(dataset)

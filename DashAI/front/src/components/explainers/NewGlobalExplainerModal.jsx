@@ -55,7 +55,7 @@ export default function NewGlobalExplainerModal({
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { runId } = explainerConfig;
+  const { runId, taskName } = explainerConfig;
 
   const defaultNewGlobalExpl = {
     name: "",
@@ -246,6 +246,7 @@ export default function NewGlobalExplainerModal({
             setNewExpl={setNewGlobalExpl}
             setNextEnabled={setNextEnabled}
             scope={"Global"}
+            taskName={taskName}
           />
         )}
         {activeStep === 1 && (
