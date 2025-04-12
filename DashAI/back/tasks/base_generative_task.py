@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from typing import Any, Dict, Final, Optional
 
-
 class BaseGenerativeTask:
     """Base task for generative processes."""
 

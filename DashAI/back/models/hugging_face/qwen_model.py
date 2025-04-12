@@ -9,7 +9,7 @@ class QwenModel(LLMGenerationModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.model_id = "Qwen/Qwen2-0.5B-Instruct-GGUF"
+        self.model_id = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
         self.filename = "*q8_0.gguf"
 
         self.model = Llama.from_pretrained(
@@ -17,11 +17,13 @@ class QwenModel(LLMGenerationModel):
         )
 
     def generate(self, prompt: str) -> str:
+
         """Generate text based on prompts."""
+
         output = self.model(
-            f"Q: {prompt} A:", max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["\n", "Q:"], echo=True
+            prompt, max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["\n", "Q:"], echo=True
         )
 
         generated_text = output["choices"][0]["text"]
-        clean_text = generated_text.replace(f"Q: {prompt} A:", "").strip()
+        clean_text = generated_text.replace(prompt, "").strip()
         return clean_text

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Tuple
 
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -20,20 +20,28 @@ class LLMGenerationTask(BaseGenerativeTask):
 
     DISPLAY_NAME: str = "Text to Text"
 
-    def prepare_for_task(self, input: str) -> str:
-        """Change the inputs to suit the image generation task.
+    USE_HISTORY: bool = True
+
+    def prepare_for_task(self, input: str, history: List[Tuple[str, str]]) -> str:
+        """Prepare the input by including the history in Q: A: format.
 
         Parameters
         ----------
-        inputs : str
-            Input to be changed
+        input : str
+            The current input to be processed.
+        history : list[tuple[str, str]]
+            A list of tuples where each tuple contains a previous input and its corresponding output.
 
         Returns
         -------
         str
-            Input with the new types
+            The input prepared with the history in Q: A: format.
         """
-        return input
+        context = "\n".join([f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history])
+
+        prepared_input = f"{context}\nQ: {input}\nA:"
+
+        return prepared_input
 
     def process_output(
         self,

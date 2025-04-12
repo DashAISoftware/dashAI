@@ -16,6 +16,7 @@ class GemmaModel(LLMGenerationModel):
             repo_id=self.model_id, filename=self.filename, verbose=True
         )
 
+    #def generate(self, prompt: str, history: list[tuple[str, str]]) -> str:
     def generate(self, prompt: str) -> str:
         """Generate text based on prompts."""
         output = self.model(

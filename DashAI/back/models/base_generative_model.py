@@ -22,3 +22,4 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
         input (Any): Input to the generative model.
         """
         raise NotImplementedError
+    
