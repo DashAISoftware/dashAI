@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Settings } from "@mui/icons-material";
 import FormSchemaDialog from "../../shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
-import { Tooltip, Typography } from "@mui/material";
+import TooltipedCellItem from "../../shared/TooltipedCellItem";
 
 /**
  * Modal to set parameters for a converter
@@ -27,20 +26,13 @@ const ConverterEditorModal = ({
 
   return (
     <React.Fragment>
-      <Tooltip
-        title={<Typography>Set parameters</Typography>}
-        placement="top"
-        arrow
-      >
-        <GridActionsCellItem
-          key="edit-button"
-          icon={<Settings />}
-          label="Set"
-          onClick={() => setOpen(true)}
-        >
-          Set
-        </GridActionsCellItem>
-      </Tooltip>
+      <TooltipedCellItem
+        key="edit-button"
+        icon={<Settings />}
+        label="Set"
+        tooltip="Set parameters"
+        onClick={() => setOpen(true)}
+      />
       <FormSchemaDialog
         modelToConfigure={converterToConfigure}
         open={open}

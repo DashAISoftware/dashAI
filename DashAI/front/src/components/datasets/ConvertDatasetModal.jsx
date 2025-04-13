@@ -29,6 +29,7 @@ import { ConverterListStatus } from "../../types/converter";
 import { getExperimentsExist } from "../../api/datasets";
 import CopyDatasetModal from "./converterModals/CopyDatasetModal";
 import ConverterClassColumnModal from "./converterModals/ConverterClassColumnModal";
+import TooltipedCellItem from "../shared/TooltipedCellItem";
 
 /**
  * Modal to modify a dataset by applying a list of converters
@@ -196,19 +197,14 @@ function ConvertDatasetModal({ datasetId }) {
 
   return (
     <React.Fragment>
-      <Tooltip
-        title={<Typography>Modify dataset</Typography>}
-        placement="top"
-        arrow
-      >
-        <GridActionsCellItem
-          key="converter-component"
-          icon={<Settings />}
-          label="Modify dataset"
-          onClick={() => setOpen(true)}
-          sx={{ color: "warning.main" }}
-        />
-      </Tooltip>
+      <TooltipedCellItem
+        key="converter-component"
+        icon={<Settings />}
+        label="Modify dataset"
+        tooltip="Modify dataset"
+        onClick={() => setOpen(true)}
+        sx={{ color: "warning.main" }}
+      />
       <Dialog
         open={open}
         onClose={() => setOpen(false)}

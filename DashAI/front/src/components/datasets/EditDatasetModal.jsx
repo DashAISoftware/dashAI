@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import {
   Button,
@@ -10,11 +9,11 @@ import {
   DialogTitle,
   Grid,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { updateDataset as updateDatasetRequest } from "../../api/datasets";
 import { useSnackbar } from "notistack";
+import TooltipedCellItem from "../shared/TooltipedCellItem";
 
 function EditDatasetModal({ datasetId, name, updateDatasets }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -47,19 +46,14 @@ function EditDatasetModal({ datasetId, name, updateDatasets }) {
 
   return (
     <React.Fragment>
-      <Tooltip
-        title={<Typography>Rename dataset</Typography>}
-        placement="top"
-        arrow
-      >
-        <GridActionsCellItem
-          key="edit-button"
-          icon={<EditIcon />}
-          label="Edit"
-          onClick={() => setOpen(true)}
-          sx={{ color: "warning.main" }}
-        />
-      </Tooltip>
+      <TooltipedCellItem
+        key="edit-dataset-button"
+        icon={<EditIcon />}
+        label="Edit dataset"
+        tooltip="Edit dataset"
+        onClick={() => setOpen(true)}
+        sx={{ color: "warning.main" }}
+      />
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
