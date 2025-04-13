@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { GridActionsCellItem } from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import PropTypes from "prop-types";
 import {
@@ -9,22 +9,36 @@ import {
   Button,
   ButtonGroup,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
-  TextField,
+  Stack,
+  Tooltip,
   RadioGroup,
   FormControlLabel,
   Radio,
-  Stack,
-  DialogContentText,
-  Tooltip,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
-import BoxWithTitle from "../../shared/BoxWithTitle";
-import InputWithDebounce from "../../shared/InputWithDebounce";
 import { parseIndexToRange } from "../../../utils/parseRange";
+import TooltipedCellItem from "../../shared/TooltipedCellItem";
+import InputWithDebounce from "../../shared/InputWithDebounce";
+
+const columns = [
+  {
+    field: "columnName",
+    headerName: "Column Name",
+    flex: 1,
+  },
+  {
+    field: "valueType",
+    headerName: "Value Type",
+    flex: 0.5,
+  },
+  {
+    field: "dataType",
+    headerName: "Data Type",
+    flex: 0.5,
+  },
+];
 
 /**
  * Modal to define the scope of a converter
@@ -35,12 +49,14 @@ import { parseIndexToRange } from "../../../utils/parseRange";
  * @param {Object} props.datasetInfo - Information about the dataset
  * @param {number} props.datasetInfo.total_columns - Total number of columns in the dataset
  * @param {number} props.datasetInfo.total_rows - Total number of rows in the dataset
+ * @param {Array} props.datasetColumns - Array of dataset columns
  */
 const ConverterScopeModal = ({
   elementToConfigure,
   updateScope,
   scopeInitialValues,
   datasetInfo,
+  datasetColumns,
 }) => {
   const [open, setOpen] = useState(false);
   const [inputError, setInputError] = useState({
@@ -48,272 +64,278 @@ const ConverterScopeModal = ({
     rows: "",
   });
   const [selectedRadioButtons, setSelectedRadioButtons] = useState({
-    columns: "all-columns",
     rows: "all-rows",
   });
-  const [scope, setScope] = useState({
-    columns: "",
-    rows: "",
-  });
 
-  const totalColumns = datasetInfo.total_columns;
+  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [selectedRows, setSelectedRows] = useState("");
+
   const totalRows = datasetInfo.total_rows;
 
-  const handleRadioChange = (event) => {
-    const radioToUpdate = event.target.name;
-    const value = event.target.value;
-    setSelectedRadioButtons((previousState) => ({
-      ...previousState,
-      [radioToUpdate]: value,
-    }));
-    // Clean the error message so the user can save the changes when uses all columns or rows
+  useEffect(() => {
+    if (open) {
+      setInputError({ columns: "", rows: "" });
+      setSelectedColumns(
+        scopeInitialValues.columns.length === 0
+          ? datasetColumns.map((column) => column.id)
+          : scopeInitialValues.columns.map((index) => index - 1),
+      );
+      setSelectedRadioButtons({
+        rows: scopeInitialValues.rows.length === 0 ? "all-rows" : "custom-rows",
+      });
+      setSelectedRows(
+        scopeInitialValues.rows.length === 0
+          ? ""
+          : parseIndexToRange(scopeInitialValues.rows).join(","),
+      );
+    }
+  }, [open, scopeInitialValues, datasetColumns]);
+
+  const handleColumnSelection = (newSelection) => {
+    setSelectedColumns(newSelection);
     setInputError((previousError) => ({
       ...previousError,
-      [radioToUpdate]: "",
-    }));
-    // Clean the input field when the user selects a radio button
-    // It helps to avoid inconsistencies between the input field and the error now not displayed
-    setScope((previousState) => ({
-      ...previousState,
-      [radioToUpdate]: "",
+      columns: "",
     }));
   };
 
-  const handleInputChange = (scopeToUpdate, value) => {
-    // If the user writes a custom range, we update the radio button
-    setSelectedRadioButtons((previousState) => ({
-      ...previousState,
-      [scopeToUpdate]: "custom-" + scopeToUpdate,
+  const handleRadioChange = (event) => {
+    setInputError((previousError) => ({
+      ...previousError,
+      rows: "",
     }));
 
+    const value = event.target.value;
+    setSelectedRadioButtons({
+      rows: value,
+    });
+    setSelectedRows("");
+  };
+
+  const handleInputChange = (value) => {
+    setSelectedRadioButtons({
+      rows: "custom-rows",
+    });
+
     try {
-      const maxValue = scopeToUpdate === "columns" ? totalColumns : totalRows;
-      // Check if the range is valid
-      parseRangeToIndex(value, maxValue);
+      parseRangeToIndex(value, totalRows);
       setInputError((previousError) => ({
         ...previousError,
-        [scopeToUpdate]: "",
+        rows: "",
       }));
-      // Update the scope with the new range
-      // Local state uses string values
-      setScope((previousState) => ({
-        ...previousState,
-        [scopeToUpdate]: value,
-      }));
+      setSelectedRows(value);
     } catch (error) {
       setInputError((previousError) => ({
         ...previousError,
-        [scopeToUpdate]: error.message,
+        rows: error.message,
       }));
     }
   };
 
   const handleOnSave = () => {
     let errors = false;
-    if (
-      selectedRadioButtons.columns === "custom-columns" &&
-      scope.columns === ""
-    ) {
+
+    if (selectedColumns.length === 0) {
       setInputError((previousError) => ({
         ...previousError,
-        columns: "Please specify the columns range",
+        columns: "Please select at least one column",
       }));
       errors = true;
     }
-    if (selectedRadioButtons.rows === "custom-rows" && scope.rows === "") {
+
+    if (selectedRadioButtons.rows === "custom-rows" && selectedRows === "") {
       setInputError((previousError) => ({
         ...previousError,
         rows: "Please specify the rows range",
       }));
       errors = true;
     }
+
     if (errors) {
       return;
     }
-    // By this point, we know that the scope can be parsed
+
     const columnsArray =
-      selectedRadioButtons.columns === "all-columns"
+      selectedColumns.length === datasetColumns.length
         ? []
-        : parseRangeToIndex(scope.columns, totalColumns);
+        : selectedColumns.map((index) => index + 1);
     const rowsArray =
       selectedRadioButtons.rows === "all-rows"
         ? []
-        : parseRangeToIndex(scope.rows, totalRows);
+        : parseRangeToIndex(selectedRows, totalRows);
+
     const newScope = {
       columns: columnsArray,
       rows: rowsArray,
     };
-    // Parent component uses arrays
     updateScope(newScope);
     setOpen(false);
   };
 
-  const handleOnCancel = () => {
-    setOpen(false);
-  };
-
-  // When the modal is opened, we reset the state to the initial values
-  // This is useful when the user opens the modal multiple times after clicking on the save or back buttons
-  useEffect(() => {
-    setInputError({
-      columns: "",
-      rows: "",
-    });
-    setSelectedRadioButtons({
-      columns:
-        scopeInitialValues.columns.length === 0
-          ? "all-columns"
-          : "custom-columns",
-      rows: scopeInitialValues.rows.length === 0 ? "all-rows" : "custom-rows",
-    });
-    setScope({
-      columns:
-        scopeInitialValues.columns.length === 0
-          ? ""
-          : parseIndexToRange(scopeInitialValues.columns).join(","),
-      rows:
-        scopeInitialValues.rows.length === 0
-          ? ""
-          : parseIndexToRange(scopeInitialValues.rows).join(","),
-    });
-  }, [open]);
-
   return (
     <React.Fragment>
-      <Tooltip
-        title={<Typography>Define scope</Typography>}
-        placement="top"
-        arrow
-      >
-        <GridActionsCellItem
-          key="edit-scope-button"
-          icon={<ViewColumn />}
-          label="Set scope"
-          onClick={() => setOpen(true)}
+      <TooltipedCellItem
+        key="edit-scope-button"
+        icon={<ViewColumn />}
+        label="Set scope"
+        tooltip="Define scope"
+        onClick={() => setOpen(true)}
+      />
+      {open && (
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          PaperProps={{
+            sx: {
+              width: { md: 820, lg: 1000 },
+              maxHeight: { lg: 700, xl: "auto" },
+              maxWidth: 2000,
+              transition: "width 0.3s ease, height 0.3s ease",
+            },
+          }}
         >
-          Set scope
-        </GridActionsCellItem>
-      </Tooltip>
-      <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>
-          <Box display="flex" alignItems="center">
-            <IconButton onClick={() => setOpen(false)}>
-              <ArrowBackOutlined />
-            </IconButton>
-            <Typography variant="h5" sx={{ ml: 2 }}>
-              {elementToConfigure} scope
-            </Typography>
+          <DialogTitle>
+            <Box display="flex" alignItems="center">
+              <IconButton onClick={() => setOpen(false)}>
+                <ArrowBackOutlined />
+              </IconButton>
+              <Typography variant="h5" sx={{ ml: 2 }}>
+                {elementToConfigure} scope
+              </Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ height: "100%", width: "100%" }}>
+              <Stack spacing={4} sx={{ py: 2 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    Columns
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
+                    Select the columns that will be transformed by this
+                    converter. The selected columns will be used as input for
+                    the conversion process.
+                  </Typography>
+                  {inputError.columns && (
+                    <Box
+                      sx={{
+                        backgroundColor: "error.light",
+                        color: "error.contrastText",
+                        p: 2,
+                        mx: 2,
+                        my: 2,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {inputError.columns}
+                      </Typography>
+                    </Box>
+                  )}
+                  <DataGrid
+                    rows={datasetColumns}
+                    columns={columns}
+                    checkboxSelection
+                    onRowSelectionModelChange={handleColumnSelection}
+                    rowSelectionModel={selectedColumns}
+                    slots={{
+                      toolbar: GridToolbar,
+                    }}
+                    slotProps={{
+                      toolbar: {
+                        showQuickFilter: true,
+                      },
+                    }}
+                    initialState={{
+                      pagination: {
+                        paginationModel: { pageSize: 25 },
+                      },
+                    }}
+                    sx={{
+                      height: 300,
+                      "& .MuiDataGrid-cell:focus": {
+                        outline: "none",
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    Rows
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
+                    Select specific rows to be used for training the converter.
+                    This allows you to focus on particular data patterns or
+                    segments of your dataset.
+                  </Typography>
+                  <Box
+                    sx={{
+                      px: 2,
+                      overflowY: "auto",
+                      py: 4,
+                      height: "auto",
+                      width: "inherit",
+                      transition: "opacity 0.3s ease",
+                    }}
+                  >
+                    <RadioGroup
+                      name="rows"
+                      value={selectedRadioButtons.rows}
+                      onChange={handleRadioChange}
+                    >
+                      <FormControlLabel
+                        value="all-rows"
+                        control={<Radio />}
+                        label="Use all rows of the selected columns"
+                        sx={{ my: 1 }}
+                      />
+                      <FormControlLabel
+                        value="custom-rows"
+                        control={<Radio />}
+                        label="Specify the range from which this converter will learn"
+                        sx={{ my: 1 }}
+                      />
+                      <InputWithDebounce
+                        variant="outlined"
+                        id="custom-rows"
+                        label={"Row(s)"}
+                        name={"rows"}
+                        value={selectedRows}
+                        onChange={(value) => handleInputChange(value)}
+                        error={inputError["rows"] !== ""}
+                        helperText={inputError["rows"]}
+                        fullWidth
+                        sx={{ mt: 2 }}
+                      />
+                    </RadioGroup>
+                  </Box>
+                </Box>
+              </Stack>
+            </Box>
+          </DialogContent>
+          <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
+            <ButtonGroup>
+              <Button onClick={() => setOpen(false)}>Back</Button>
+              <Button
+                variant="contained"
+                onClick={handleOnSave}
+                disabled={inputError.rows !== "" || inputError.columns !== ""}
+              >
+                Save
+              </Button>
+            </ButtonGroup>
           </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={4} sx={{ py: 2 }} transition="ease">
-            <DialogContentText>
-              The selected range will be used to train the converter and should
-              be type-compatible with its input.
-            </DialogContentText>
-            <BoxWithTitle title="Columns">
-              <Box
-                sx={{
-                  px: 2,
-                  overflowY: "auto",
-                  py: 4,
-                  height: "auto",
-                  width: "inherit",
-                  transition: "opacity 0.3s ease",
-                }}
-              >
-                <RadioGroup
-                  name="columns"
-                  value={selectedRadioButtons.columns}
-                  onChange={handleRadioChange}
-                >
-                  <FormControlLabel
-                    value="all-columns"
-                    control={<Radio />}
-                    label="Use all columns of the dataset"
-                    sx={{ my: 1 }}
-                  />
-                  <FormControlLabel
-                    value="custom-columns"
-                    control={<Radio />}
-                    label="Specify the range from which this converter will learn"
-                    sx={{ my: 1 }}
-                  />
-                  <React.Fragment>
-                    <InputWithDebounce
-                      variant="outlined"
-                      id="custom-columns"
-                      label={"Column(s)"}
-                      name={"columns"}
-                      value={scope.columns}
-                      onChange={(value) => handleInputChange("columns", value)}
-                      error={inputError["columns"] !== ""}
-                      helperText={inputError["columns"]}
-                    />
-                  </React.Fragment>
-                </RadioGroup>
-              </Box>
-            </BoxWithTitle>
-          </Stack>
-          <Stack spacing={4} sx={{ py: 2 }} transition="ease">
-            <BoxWithTitle title="Rows">
-              <Box
-                sx={{
-                  px: 2,
-                  overflowY: "auto",
-                  py: 4,
-                  height: "auto",
-                  width: "inherit",
-                  transition: "opacity 0.3s ease",
-                }}
-              >
-                <RadioGroup
-                  name="rows"
-                  value={selectedRadioButtons.rows}
-                  onChange={handleRadioChange}
-                >
-                  <FormControlLabel
-                    value="all-rows"
-                    control={<Radio />}
-                    label="Use all rows of the dataset"
-                    sx={{ my: 1 }}
-                  />
-                  <FormControlLabel
-                    value="custom-rows"
-                    control={<Radio />}
-                    label="Specify the range from which this converter will learn"
-                    sx={{ my: 1 }}
-                  />
-                  <React.Fragment>
-                    <InputWithDebounce
-                      variant="outlined"
-                      id="custom-rows"
-                      label={"Row(s)"}
-                      name={"rows"}
-                      value={scope.rows}
-                      onChange={(value) => handleInputChange("rows", value)}
-                      error={inputError["rows"] !== ""}
-                      helperText={inputError["rows"]}
-                    />
-                  </React.Fragment>
-                </RadioGroup>
-              </Box>
-            </BoxWithTitle>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <ButtonGroup>
-            <Button onClick={handleOnCancel}>Back</Button>
-            <Button
-              variant="contained"
-              onClick={handleOnSave}
-              disabled={inputError.columns !== "" || inputError.rows !== ""}
-            >
-              Save
-            </Button>
-          </ButtonGroup>
-        </DialogActions>
-      </Dialog>
+        </Dialog>
+      )}
     </React.Fragment>
   );
 };
@@ -329,6 +351,14 @@ ConverterScopeModal.propTypes = {
     total_columns: PropTypes.number,
     total_rows: PropTypes.number,
   }),
+  datasetColumns: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      columnName: PropTypes.string.isRequired,
+      valueType: PropTypes.string.isRequired,
+      dataType: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
 };
 
 ConverterScopeModal.defaultProps = {
