@@ -28,6 +28,7 @@ import {
 import { ConverterListStatus } from "../../types/converter";
 import { getExperimentsExist } from "../../api/datasets";
 import CopyDatasetModal from "./converterModals/CopyDatasetModal";
+import ConverterClassColumnModal from "./converterModals/ConverterClassColumnModal";
 
 /**
  * Modal to modify a dataset by applying a list of converters
@@ -256,7 +257,7 @@ function ConvertDatasetModal({ datasetId }) {
                 </Grid>
                 <Grid item xs={6} display={"flex"} alignItems={"center"}>
                   <Typography variant="subtitle2" component="h3" mb={1}>
-                    Target column index
+                    Class/Target column index
                   </Typography>
                   <Tooltip
                     title={`Supervised converters will include this column in their learning process.`}
@@ -266,19 +267,10 @@ function ConvertDatasetModal({ datasetId }) {
                       <Help />
                     </IconButton>
                   </Tooltip>
-                  <TextField
-                    id="target-column-index"
-                    label="Index"
-                    value={targetColumnIndex}
-                    placeholder="1"
-                    autoComplete="off"
-                    onChange={(event) =>
-                      setTargetColumnIndex(event.target.value)
-                    }
-                    variant="outlined"
-                    size="small"
-                    required
-                    type="number"
+                  <ConverterClassColumnModal
+                    datasetId={datasetIdToModify}
+                    classColumnInitialValue={targetColumnIndex}
+                    updateClassColumn={setTargetColumnIndex}
                   />
                 </Grid>
               </Grid>
