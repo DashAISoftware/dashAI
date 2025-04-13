@@ -53,7 +53,7 @@ const ConverterClassColumnModal = ({
 
   useEffect(() => {
     if (open) {
-      setSelectedColumn(classColumnInitialValue-1);
+      setSelectedColumn(classColumnInitialValue - 1);
       fetchDatasetColumns();
     }
   }, [open, classColumnInitialValue]);
@@ -96,7 +96,7 @@ const ConverterClassColumnModal = ({
     if (selectedColumn === null) {
       return;
     }
-    updateClassColumn(selectedColumn+1);
+    updateClassColumn(selectedColumn + 1);
     setOpen(false);
   };
 
@@ -107,14 +107,17 @@ const ConverterClassColumnModal = ({
         onClick={() => setOpen(true)}
         variant="outlined"
         size="small"
-        sx={{ 
+        sx={{
           mr: 1,
-          color: classColumnInitialValue === null ? 'error.main' : 'inherit',
-          borderColor: classColumnInitialValue === null ? 'error.main' : 'inherit',
-          '&:hover': {
-            borderColor: classColumnInitialValue === null ? 'error.main' : 'inherit',
-            backgroundColor: classColumnInitialValue === null ? 'error.light' : 'inherit'
-          }
+          color: classColumnInitialValue === null ? "error.main" : "inherit",
+          borderColor:
+            classColumnInitialValue === null ? "error.main" : "inherit",
+          "&:hover": {
+            borderColor:
+              classColumnInitialValue === null ? "error.main" : "inherit",
+            backgroundColor:
+              classColumnInitialValue === null ? "error.light" : "inherit",
+          },
         }}
       >
         Set column
@@ -154,14 +157,17 @@ const ConverterClassColumnModal = ({
                     color="text.secondary"
                     sx={{ mb: 2 }}
                   >
-                    Select one column to be used as the target variable for supervised learning.
+                    Select one column to be used as the target variable for
+                    supervised learning.
                   </Typography>
                   <DataGrid
                     rows={datasetColumns}
                     columns={columns}
                     checkboxSelection
                     onRowSelectionModelChange={handleColumnSelection}
-                    rowSelectionModel={selectedColumn !== null ? [selectedColumn] : []}
+                    rowSelectionModel={
+                      selectedColumn !== null ? [selectedColumn] : []
+                    }
                     slots={{
                       toolbar: GridToolbar,
                     }}
@@ -188,7 +194,9 @@ const ConverterClassColumnModal = ({
             </Box>
           </DialogContent>
           <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
-            <Button onClick={() => setOpen(false)} sx={{ mr: 2 }}>Back</Button>
+            <Button onClick={() => setOpen(false)} sx={{ mr: 2 }}>
+              Back
+            </Button>
             <Button
               variant="contained"
               onClick={handleOnSave}

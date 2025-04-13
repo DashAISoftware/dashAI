@@ -5,7 +5,11 @@ import DeleteItemModal from "../custom/DeleteItemModal";
 import ConverterEditorModal from "./converterModals/ConverterEditorModal";
 import PropTypes from "prop-types";
 import ConverterScopeModal from "./converterModals/ConverterScopeModal";
-import { getDatasetInfo as getDatasetInfoRequest, getDatasetSample, getDatasetTypes } from "../../api/datasets";
+import {
+  getDatasetInfo as getDatasetInfoRequest,
+  getDatasetSample,
+  getDatasetTypes,
+} from "../../api/datasets";
 import { parseIndexToRange } from "../../utils/parseRange";
 import { useSnackbar } from "notistack";
 
@@ -32,7 +36,7 @@ const ConverterTable = ({
       const [dataset, types, info] = await Promise.all([
         getDatasetSample(datasetId),
         getDatasetTypes(datasetId),
-        getDatasetInfoRequest(datasetId)
+        getDatasetInfoRequest(datasetId),
       ]);
 
       const rowsArray = Object.keys(dataset).map((name, idx) => ({
