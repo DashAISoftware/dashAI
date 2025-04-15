@@ -5,6 +5,7 @@ import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
+import ParamsBar from "../../components/generative/ParamsBar";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -65,7 +66,11 @@ export default function Generative() {
         borderRadius={2}
         p={2}
         bgcolor={"#030712"}
-      ></Box>
+      >
+        {selectedSessionId ? (
+          <ParamsBar selectedSessionId={selectedSessionId} />
+        ) : null}
+      </Box>
     </Box>
   );
 }
