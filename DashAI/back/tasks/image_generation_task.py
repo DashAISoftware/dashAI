@@ -1,5 +1,9 @@
+import base64
+import io
 import uuid
 from typing import Any, Optional
+
+from PIL import Image
 
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.base_task import BaseTask
@@ -13,7 +17,7 @@ class ImageGenerationTask(BaseGenerativeTask):
 
     metadata: dict = {
         "inputs_types": [str],
-        "outputs_types": [str],
+        "outputs_types": [Image],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
@@ -60,3 +64,27 @@ class ImageGenerationTask(BaseGenerativeTask):
         output.save(image_path, format="PNG")
 
         return str(image_path)
+
+    def process_output_from_database(self, output):
+        """Process the output of an image generation model from the database.
+
+        Parameters
+        ----------
+        output : Any
+            Output to be processed
+
+        Returns
+        -------
+        str
+            Encoded image string
+        """
+        image_path = output
+        if not image_path:
+            return None
+
+        with open(image_path, "rb") as image_file:
+            buffer = io.BytesIO(image_file.read())
+            buffer.seek(0)
+
+        encoded_string = base64.b64encode(buffer.read()).decode("utf-8")
+        return encoded_string

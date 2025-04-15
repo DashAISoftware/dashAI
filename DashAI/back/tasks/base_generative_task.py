@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Dict, Final, Optional
 
+
 class BaseGenerativeTask:
     """Base task for generative processes."""
 
@@ -61,6 +62,22 @@ class BaseGenerativeTask:
         path: Optional[str] = None,
     ) -> Any:
         """Process output data of the task.
+
+        Parameters
+        ----------
+        output : Any
+            Output data to be processed
+
+        Returns
+        -------
+        Any
+            Processed output data
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def process_output_from_database(self, output: str) -> Any:
+        """Process output data from the database.
 
         Parameters
         ----------

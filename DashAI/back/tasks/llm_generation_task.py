@@ -37,7 +37,9 @@ class LLMGenerationTask(BaseGenerativeTask):
         str
             The input prepared with the history in Q: A: format.
         """
-        context = "\n".join([f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history])
+        context = "\n".join(
+            [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
+        )
 
         prepared_input = f"{context}\nQ: {input}\nA:"
 
@@ -52,6 +54,22 @@ class LLMGenerationTask(BaseGenerativeTask):
 
         file_name (Str): Indicates the name of the file.
         path (Str): Indicates the path where the output will be stored.
+        """
+
+        return output
+
+    def process_output_from_database(self, output):
+        """Process the output from the database.
+
+        Parameters
+        ----------
+        output : Any
+            The output data to be processed.
+
+        Returns
+        -------
+        str
+            The processed output data.
         """
 
         return output
