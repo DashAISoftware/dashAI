@@ -16,7 +16,7 @@ class StableDiffusionModel(ImageGenerationModel):
         self.model_name = "stabilityai/stable-diffusion-2-1"
         self.model = DiffusionPipeline.from_pretrained(
             self.model_name,
-            torch_dtype=torch.float32 if self.device == "cuda" else torch.float16,
+            torch_dtype=torch.float32,
         ).to(self.device)
 
     def generate(self, input: Any) -> Any:
