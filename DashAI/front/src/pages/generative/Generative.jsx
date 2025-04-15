@@ -11,8 +11,9 @@ export default function Generative() {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
 
-  const handleSessionClick = (sessionId) => {
+  const handleSessionClick = (sessionId, taskName) => {
     setSelectedSessionId(sessionId);
+    setSelectedTaskName(taskName);
   };
 
   const handleNewSessionButton = () => {
@@ -40,7 +41,10 @@ export default function Generative() {
       />
       <MainGenerativeBox>
         {selectedSessionId ? (
-          <GenerativeChat sessionId={selectedSessionId} />
+          <GenerativeChat
+            sessionId={selectedSessionId}
+            taskName={selectedTaskName}
+          />
         ) : stepIndex === 0 ? (
           <SelectTaskMenu
             goToNextStep={(taskName) => {

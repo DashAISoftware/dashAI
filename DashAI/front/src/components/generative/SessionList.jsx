@@ -80,7 +80,7 @@ export default function SessionList({
                     modelName={session.model_name}
                     key={session.id}
                     id={session.id}
-                    onClick={() => handleSessionClick(session.id)}
+                    onClick={() => handleSessionClick(session.id, taskName)}
                     onDelete={handleSessionDelete}
                     onInfo={handleSessionInfo}
                   />

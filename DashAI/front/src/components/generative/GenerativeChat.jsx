@@ -15,16 +15,27 @@ import { useState, useEffect } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
+import { getComponents } from "../../api/component";
+import { use } from "react";
 
-export default function GenerativeChat({ sessionId }) {
+export default function GenerativeChat({ sessionId, taskName }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
 
   const getMessages = () => {
     getProcesses(sessionId).then((response) => {
       setIsLoadingMessage(false);
       setMessages(response);
+    });
+  };
+
+  const getTask = () => {
+    getComponents({ selectTypes: ["GenerativeTask"] }).then((response) => {
+      const task = response.find((task) => task.name === taskName);
+      setTask(task);
+      console.log("Task", task);
     });
   };
 
@@ -56,6 +67,10 @@ export default function GenerativeChat({ sessionId }) {
   useEffect(() => {
     getMessages();
   }, [sessionId]);
+
+  useEffect(() => {
+    getTask();
+  }, [taskName]);
 
   return (
     <Box
@@ -146,16 +161,22 @@ export default function GenerativeChat({ sessionId }) {
                 message={process.input}
                 sender={"User"}
                 timestamp={new Date(process.created).toLocaleTimeString()}
+                messageType={task.metadata.inputs_types[0]}
                 isUser={true}
               />
               {process.status === 3 ? (
                 <ChatBubble
                   message={process.output}
                   sender={"Model"}
+                  messageType={task.metadata.outputs_types[0]}
                   timestamp={new Date(process.end_time).toLocaleTimeString()}
                 />
               ) : (
-                <ChatBubble message={"..."} sender="Model"></ChatBubble>
+                <ChatBubble
+                  message={"..."}
+                  messageType={"str"}
+                  sender="Model"
+                ></ChatBubble>
               )}
             </Box>
           );

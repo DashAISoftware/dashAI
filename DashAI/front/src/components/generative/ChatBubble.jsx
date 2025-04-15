@@ -8,6 +8,7 @@ import {
 
 export function ChatBubble({
   message,
+  messageType,
   sender = "",
   timestamp,
   isUser = false,
@@ -54,7 +55,24 @@ export function ChatBubble({
             position: "relative",
           }}
         >
-          <Typography variant="body2">{message}</Typography>
+          {messageType === "str" && (
+            <Typography variant="body2" color="text.primary">
+              {message}
+            </Typography>
+          )}
+          {messageType === "PIL.Image" && (
+            <img
+              src={`data:image/png;base64,${message}`}
+              alt="Image"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "300px",
+                objectFit: "contain",
+                borderRadius: 8,
+                marginTop: 8,
+              }}
+            />
+          )}
         </Paper>
 
         {timestamp && (
