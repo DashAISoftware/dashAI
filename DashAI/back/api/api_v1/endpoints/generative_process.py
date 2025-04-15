@@ -8,7 +8,12 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas.generative_process_params import (
     GenerativeProcessParams,
 )
-from DashAI.back.dependencies.database.models import GenerativeProcess
+from DashAI.back.dependencies.database.models import (
+    GenerativeProcess,
+    GenerativeSession,
+)
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.tasks import BaseGenerativeTask
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -59,10 +64,11 @@ async def upload_generative_process(
             ) from e
 
 
-@router.get("/{session_id}", status_code=status.HTTP_200_OK)
+@router.get("/{session_id}", status_code=status.HTTP_200_OK, response_model=None)
 async def get_generative_process(
     session_id: str,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ):
     """Get a generative process by its session ID.
 
@@ -88,6 +94,24 @@ async def get_generative_process(
     with session_factory() as db:
         try:
             process = db.query(GenerativeProcess).filter_by(session_id=session_id).all()
+            generative_session: GenerativeSession = db.get(
+                GenerativeSession, session_id
+            )
+
+            task: BaseGenerativeTask = component_registry[generative_session.task_name][
+                "class"
+            ]()
+
+            process = [p.__dict__ for p in process]
+
+            process = [
+                {
+                    **p,
+                    "output": task.process_output_from_database(p["output"]),
+                }
+                for p in process
+            ]
+
             return process
         except exc.SQLAlchemyError as e:
             log.exception(e)
