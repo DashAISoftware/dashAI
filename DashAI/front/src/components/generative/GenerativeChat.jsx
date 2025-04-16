@@ -127,8 +127,8 @@ export default function GenerativeChat({ sessionId, taskName }) {
           width={"100%"}
         >
           <Typography>
-            {sessionInfo.id} - {sessionInfo.name}{" "}
-            {sessionInfo.description ? ":" : null} {sessionInfo.description}
+            {sessionInfo?.id} - {sessionInfo?.name}{" "}
+            {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
           </Typography>
 
           <Box>
