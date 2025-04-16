@@ -11,18 +11,25 @@ import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
 import { ChatBubble } from "./ChatBubble";
 import { getProcesses } from "../../api/process";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getComponents } from "../../api/component";
-import { use } from "react";
 
 export default function GenerativeChat({ sessionId, taskName }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
+  const chatContainerRef = useRef(null);
+
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  };
 
   const getMessages = () => {
     getProcesses(sessionId).then((response) => {
@@ -71,6 +78,10 @@ export default function GenerativeChat({ sessionId, taskName }) {
   useEffect(() => {
     getTask();
   }, [taskName]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
     <Box
@@ -133,6 +144,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
         overflow={"auto"}
         mt={1}
         p={2}
+        ref={chatContainerRef}
         sx={{
           "&::-webkit-scrollbar": {
             width: "8px",
@@ -149,6 +161,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
         {messages.map((process) => {
           return (
             <Box
+              key={process.id}
               display="flex"
               flexDirection="column"
               justifyContent="flex-start"
@@ -192,6 +205,12 @@ export default function GenerativeChat({ sessionId, taskName }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={isLoadingMessage}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && !isLoadingMessage) {
+              e.preventDefault();
+              handleSendMessage();
+            }
+          }}
         />
         <Button
           variant="contained"
