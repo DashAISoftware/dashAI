@@ -90,7 +90,7 @@ export default function SessionBar({
   return (
     <Box
       width="285px"
-      height="auto"
+      height="100%"
       borderRadius={2}
       display={"flex"}
       flexDirection={"column"}
@@ -103,7 +103,7 @@ export default function SessionBar({
         borderRight: "1px solid #252836",
       }}
     >
-      <Box>
+      <Box height={"100%"} overflow={"hidden"}>
         {/* Header */}
         <SessionBarHeader />
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
@@ -121,7 +121,7 @@ export default function SessionBar({
         </Box>
 
         {/* Sessions */}
-        <Box px={2} py={1}>
+        <Box px={2} py={1} height={"100%"}>
           {/* Header */}
           <Box display="flex" alignItems="center" pb={1}>
             <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />

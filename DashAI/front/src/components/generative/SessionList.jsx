@@ -1,5 +1,4 @@
-import React from "react";
-import { Box, Collapse, Typography } from "@mui/material";
+import { Box, Typography, Collapse } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import SessionBox from "./SessionBox";
@@ -14,7 +13,28 @@ export default function SessionList({
   toggleSection,
 }) {
   return (
-    <Box display={"flex"} flexDirection={"column"}>
+    <Box
+      display={"flex"}
+      flexDirection={"column"}
+      height={"100%"}
+      width={"100%"}
+      overflow={"auto"}
+      pb={1}
+      sx={{
+        "&::-webkit-scrollbar": {
+          width: "6px",
+        },
+        "&::-webkit-scrollbar-thumb": {
+          backgroundColor: "#374151",
+          borderRadius: "3px",
+        },
+        "&::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: "#4B5563",
+        },
+        overflowY: "auto",
+        flex: 1,
+      }}
+    >
       {Object.keys(groupedSessions).length > 0 ? (
         Object.entries(groupedSessions).map(([taskName, taskSessions]) => (
           <Box key={taskName} mb={1}>
