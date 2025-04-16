@@ -118,6 +118,15 @@ class ModelJob(BaseJob):
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )
+                n_labels = None
+                if experiment.task_name in [
+                    "TextClassificationTask",
+                    "TabularClassificationTask",
+                    "ImageClassificationTask",
+                ]:
+                    all_classes = prepared_dataset.unique(experiment.output_columns[0])
+                    n_labels = len(all_classes)
+
                 splits = json.loads(experiment.splits)
                 prepared_dataset = prepare_for_experiment(
                     dataset=prepared_dataset,
@@ -148,7 +157,9 @@ class ModelJob(BaseJob):
                     f"Unable to find Model with name {run.model_name} in registry.",
                 ) from e
             try:
-                factory = ModelFactory(run_model_class, run.parameters)
+                factory = ModelFactory(
+                    run_model_class, run.parameters, n_labels=n_labels
+                )
                 model: BaseModel = factory.model
                 run_optimizable_parameters = factory.optimizable_parameters
 

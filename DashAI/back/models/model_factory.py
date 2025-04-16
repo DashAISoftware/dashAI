@@ -1,6 +1,8 @@
 import torch
 from sklearn.exceptions import NotFittedError
 
+from DashAI.back.metrics.classification_metric import ClassificationMetric
+
 
 class ModelFactory:
     """
@@ -22,12 +24,17 @@ class ModelFactory:
         Extracts fixed and optimizable parameters from a dictionary.
     """
 
-    def __init__(self, model, params: dict):
+    def __init__(self, model, params: dict, n_labels=None):
         self.fixed_parameters, self.optimizable_parameters = self._extract_parameters(
             params
         )
+
+        self.num_labels = n_labels
+
         self.model = model(**self.fixed_parameters)
         self.fitted = False
+        if n_labels is not None:
+            self._adjust_params_after_init(n_labels)
 
         if hasattr(self.model, "optimizable_params"):
             self.optimizable_parameters = self.model.optimizable_params
@@ -44,6 +51,34 @@ class ModelFactory:
         result = self.original_fit(*args, **kwargs)
         self.fitted = True
         return result
+
+    def _adjust_params_after_init(self, num_labels):
+        """
+        Adjust model parameters based on the number of labels after model
+        initialization.
+
+        This method checks the instantiated model to see if it has num_labels attribute
+        and updates it accordingly.
+
+        Parameters
+        ----------
+        num_labels : int
+            Number of unique labels in the classification task.
+        """
+        # For Hugging Face models
+        if hasattr(self.model, "config") and hasattr(self.model.config, "num_labels"):
+            self.model.config.num_labels = num_labels
+            return
+
+        # For scikit-learn models
+        if hasattr(self.model, "n_classes_"):
+            self.model.n_classes_ = num_labels
+            return
+
+        # For other models that have the num_labels attribute
+        if hasattr(self.model, "num_labels"):
+            self.model.num_labels = num_labels
+            return
 
     def _extract_parameters(self, parameters: dict) -> dict:
         """
@@ -79,13 +114,48 @@ class ModelFactory:
         return fixed_params, optimizable_params
 
     def evaluate(self, x, y, metrics):
-        """Computes metrics only if the model is fitted."""
+        """
+        Computes metrics only if the model is fitted.
+
+        Parameters
+        ----------
+        x : dict
+            Dictionary with input data for each split.
+        y : dict
+            Dictionary with output data for each split.
+        metrics : list
+            List of metric classes to evaluate.
+
+        Returns
+        -------
+        dict
+            Dictionary with metrics scores for each split.
+        """
         if not self.fitted:
             raise NotFittedError("Model must be trained before evaluating metrics.")
-        return {
-            split: {
-                metric.__name__: metric.score(y[split], self.model.predict(x[split]))
-                for metric in metrics
-            }
-            for split in ["train", "validation", "test"]
-        }
+
+        multiclass = None
+        if hasattr(self, "num_labels") and self.num_labels is not None:
+            multiclass = self.num_labels > 2
+
+        results = {}
+        for split in ["train", "validation", "test"]:
+            split_results = {}
+            predictions = self.model.predict(x[split])
+            for metric in metrics:
+                if (
+                    isinstance(metric, type)
+                    and issubclass(metric, ClassificationMetric)
+                    and "multiclass" in metric.score.__code__.co_varnames
+                    and multiclass is not None
+                ):
+                    score = metric.score(y[split], predictions, multiclass=multiclass)
+                else:
+                    # For metrics that don't accept the multiclass parameter
+                    score = metric.score(y[split], predictions)
+
+                split_results[metric.__name__] = score
+
+            results[split] = split_results
+
+        return results
