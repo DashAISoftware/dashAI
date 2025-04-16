@@ -16,6 +16,9 @@ import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getComponents } from "../../api/component";
+import { getSessionById } from "../../api/session";
+import InfoSessionModal from "./InfoSessionModal";
+import HistoryIcon from "@mui/icons-material/History";
 
 export default function GenerativeChat({ sessionId, taskName }) {
   const [input, setInput] = useState("");
@@ -23,12 +26,20 @@ export default function GenerativeChat({ sessionId, taskName }) {
   const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
+  const [sessionInfo, setSessionInfo] = useState(null);
+  const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
+  };
+
+  const getSessionInfo = () => {
+    getSessionById(sessionId).then((response) => {
+      setSessionInfo(response);
+    });
   };
 
   const getMessages = () => {
@@ -72,6 +83,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
 
   useEffect(() => {
     getMessages();
+    getSessionInfo();
   }, [sessionId]);
 
   useEffect(() => {
@@ -115,18 +127,33 @@ export default function GenerativeChat({ sessionId, taskName }) {
           width={"100%"}
         >
           <Typography>
-            {"Model name"} {sessionId} : {"Model Description"}
+            {sessionInfo.id} - {sessionInfo.name}{" "}
+            {sessionInfo.description ? ":" : null} {sessionInfo.description}
           </Typography>
-          <IconButton>
-            <InfoIcon
-              sx={{
-                color: "#a0a0a0",
-                "&:hover": {
-                  color: "#ffffff",
-                },
-              }}
-            />
-          </IconButton>
+
+          <Box>
+            <IconButton>
+              <HistoryIcon
+                sx={{
+                  color: "#a0a0a0",
+                  "&:hover": {
+                    color: "#ffffff",
+                  },
+                }}
+              />
+            </IconButton>
+
+            <IconButton onClick={() => setSessionInfoVisible(true)}>
+              <InfoIcon
+                sx={{
+                  color: "#a0a0a0",
+                  "&:hover": {
+                    color: "#ffffff",
+                  },
+                }}
+              />
+            </IconButton>
+          </Box>
         </Box>
       </Box>
 
@@ -220,6 +247,15 @@ export default function GenerativeChat({ sessionId, taskName }) {
         >
           {isLoadingMessage ? "Sending..." : "Send"}
         </Button>
+
+        {/* Session Info Modal */}
+        {sessionInfo && (
+          <InfoSessionModal
+            sessionData={sessionInfo}
+            open={sessionInfoVisible}
+            onClose={() => setSessionInfoVisible(false)}
+          />
+        )}
       </Box>
     </Box>
   );
