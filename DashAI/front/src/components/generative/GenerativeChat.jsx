@@ -42,7 +42,6 @@ export default function GenerativeChat({ sessionId, taskName }) {
     getComponents({ selectTypes: ["GenerativeTask"] }).then((response) => {
       const task = response.find((task) => task.name === taskName);
       setTask(task);
-      console.log("Task", task);
     });
   };
 
