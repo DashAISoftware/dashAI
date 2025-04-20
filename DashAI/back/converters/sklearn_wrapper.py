@@ -25,7 +25,9 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
                 transform="pandas"
             )  # Cast the output from numpy ndarray to pandas DataFrame
 
-    def fit(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None) -> Type[BaseConverter]:
+    def fit(
+        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+    ) -> Type[BaseConverter]:
         """Generic fit method for sklearn transformers"""
 
         x_pandas = x.to_pandas()
@@ -47,11 +49,11 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
         return self
 
-    def transform(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None) -> pd.DataFrame:
+    def transform(
+        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+    ) -> pd.DataFrame:
         """Generic transform method for sklearn transformers"""
 
         x_pandas = x.to_pandas()
-        if y is not None:
-            y_pandas = y.to_pandas()
         x_new_pandas = super(BaseConverter, self).transform(x_pandas)
         return to_dashai_dataset(x_new_pandas)
