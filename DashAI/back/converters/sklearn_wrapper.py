@@ -1,9 +1,13 @@
 from abc import ABCMeta
-from typing import Type
+from typing import Type, Union
 
 import pandas as pd
 
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 
 
 class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -21,8 +25,12 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
                 transform="pandas"
             )  # Cast the output from numpy ndarray to pandas DataFrame
 
-    def fit(self, x: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
+    def fit(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None) -> Type[BaseConverter]:
         """Generic fit method for sklearn transformers"""
+
+        x_pandas = x.to_pandas()
+        if y is not None:
+            y_pandas = y.to_pandas()
 
         requires_y = hasattr(self, "_get_tags") and self._get_tags().get(
             "requires_y", False
@@ -33,14 +41,17 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             raise ValueError("This transformer requires y for fitting")
 
         if requires_y:
-            super(BaseConverter, self).fit(x, y)
+            super(BaseConverter, self).fit(x_pandas, y_pandas)
         else:
-            super(BaseConverter, self).fit(x)
+            super(BaseConverter, self).fit(x_pandas)
 
         return self
 
-    def transform(self, x: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+    def transform(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None) -> pd.DataFrame:
         """Generic transform method for sklearn transformers"""
 
-        x_new = super(BaseConverter, self).transform(x)
-        return x_new
+        x_pandas = x.to_pandas()
+        if y is not None:
+            y_pandas = y.to_pandas()
+        x_new_pandas = super(BaseConverter, self).transform(x_pandas)
+        return to_dashai_dataset(x_new_pandas)
