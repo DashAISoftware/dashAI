@@ -1,9 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from typing import Type
 
-import pandas as pd
+from datasets import concatenate_datasets
 
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+)
 
 
 class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
@@ -18,32 +21,37 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _process_batch(self, batch: pd.DataFrame) -> pd.DataFrame:
+    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
         """Process a batch of data through the model."""
         raise NotImplementedError
 
-    def fit(self, x: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
+    def fit(self, x: DashAIDataset, y: DashAIDataset = None) -> Type[BaseConverter]:
         """Validate parameters and prepare for transformation."""
-        if x.empty:
-            raise ValueError("Input DataFrame is empty")
+        if len(x) == 0:
+            raise ValueError("Input dataset is empty")
 
         # Check that all columns contain string data
-        non_string_cols = [col for col in x.columns if x[col].dtype != object]
-        if non_string_cols:
-            raise ValueError(f"Columns {non_string_cols} must contain string data")
+        for column in x.column_names:
+            if not isinstance(x[0][column], str):
+                raise ValueError(f"Column {column} must contain string data")
 
         # Load model if not already loaded
         self._load_model()
 
         return self
 
-    def transform(self, x: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+    def transform(self, x: DashAIDataset, y: DashAIDataset = None) -> DashAIDataset:
         """Transform the input data using the model."""
         all_results = []
 
+        # Process in batches
         for i in range(0, len(x), self.batch_size):
-            batch = x.iloc[i : i + self.batch_size]
+            # Get the current batch
+            batch = x.select(range(i, min(i + self.batch_size, len(x))))
+            # Process the batch
             batch_results = self._process_batch(batch)
             all_results.append(batch_results)
 
-        return pd.concat(all_results, axis=0, ignore_index=True)
+        # Concatenate all results
+        concatenated_dataset = concatenate_datasets(all_results)
+        return DashAIDataset(concatenated_dataset.data.table)

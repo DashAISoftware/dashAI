@@ -1,6 +1,6 @@
-import pandas as pd
 import torch
 from transformers import AutoModel, AutoTokenizer
+from datasets import Dataset, concatenate_datasets
 
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import (
@@ -9,6 +9,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class EmbeddingSchema(BaseSchema):
@@ -45,7 +46,7 @@ class EmbeddingSchema(BaseSchema):
 
     device: schema_field(
         enum_field(["cuda", "cpu"]),
-        "cuda",
+        "cpu",
         "Device to use for computation",
     )  # type: ignore
 
@@ -68,7 +69,7 @@ class Embedding(HuggingFaceWrapper):
         self.model_name = kwargs.get(
             "model_name", "sentence-transformers/all-MiniLM-L6-v2"
         )
-        self.device = kwargs.get("device", "cuda")
+        self.device = kwargs.get("device", "cpu")
         self.max_length = kwargs.get("max_length", 512)
         self.batch_size = kwargs.get("batch_size", 32)
         self.model = None
@@ -80,12 +81,13 @@ class Embedding(HuggingFaceWrapper):
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
         self.model.eval()
 
-    def _process_batch(self, batch: pd.DataFrame) -> pd.DataFrame:
+    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
         """Process a batch of text into embeddings."""
         all_column_embeddings = []
 
-        for column in batch.columns:
-            texts = batch[column].tolist()
+        for column in batch.column_names:
+            # Get text data from dataset
+            texts = [row[column] for row in batch]
 
             # Tokenize
             encoded = self.tokenizer(
@@ -113,13 +115,21 @@ class Embedding(HuggingFaceWrapper):
                     embeddings = torch.max(hidden_states, dim=1)[0]
 
             embeddings_np = embeddings.cpu().numpy()
-            column_df = pd.DataFrame(
-                embeddings_np,
-                columns=[
-                    f"{column}_embedding_{i}" for i in range(embeddings_np.shape[1])
-                ],
-            )
-            all_column_embeddings.append(column_df)
+            
+            # Create a dictionary with embedding columns
+            embedding_dict = {
+                f"{column}_embedding_{i}": embeddings_np[:, i].tolist()
+                for i in range(embeddings_np.shape[1])
+            }
+            
+            # Create a HuggingFace Dataset and convert it to a PyArrow table
+            hf_dataset = Dataset.from_dict(embedding_dict)
+            arrow_table = hf_dataset.data.table
+            
+            # Create a new dataset for this column's embeddings
+            column_dataset = DashAIDataset(arrow_table)
+            all_column_embeddings.append(column_dataset)
 
-        # Concatenate embeddings from all columns
-        return pd.concat(all_column_embeddings, axis=1)
+        # Concatenate all column embeddings
+        concatenated_dataset = concatenate_datasets(all_column_embeddings)
+        return DashAIDataset(concatenated_dataset.data.table)
