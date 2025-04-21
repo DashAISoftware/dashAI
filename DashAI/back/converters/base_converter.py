@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Final, Type
-
-import pandas as pd
+from typing import Final, Type, Union
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+)
 
 
 class BaseConverter(ConfigObject, metaclass=ABCMeta):
@@ -19,15 +20,17 @@ class BaseConverter(ConfigObject, metaclass=ABCMeta):
     TYPE: Final[str] = "Converter"
 
     @abstractmethod
-    def fit(self, x: pd.DataFrame, y: pd.Series = None) -> Type[BaseConverter]:
+    def fit(
+        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+    ) -> Type[BaseConverter]:
         """Fit the converter.
         This method should allow to validate the converter's parameters.
 
         Parameters
         ----------
-        X : Pandas DataFrame
+        X : DashAIDataset
             Training data
-        y: Pandas Series
+        y: DashAIDataset
             Target data for supervised learning
 
         Returns
@@ -38,14 +41,16 @@ class BaseConverter(ConfigObject, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def transform(self, x: pd.DataFrame, y: pd.Series = None) -> pd.DataFrame:
+    def transform(
+        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
+    ) -> DashAIDataset:
         """Transform the dataset.
 
         Parameters
         ----------
-        X : Pandas DataFrame
+        X : DashAIDataset
             Dataset to be converted
-        y: Pandas Series
+        y: DashAIDataset
             Target vectors
 
         Returns
