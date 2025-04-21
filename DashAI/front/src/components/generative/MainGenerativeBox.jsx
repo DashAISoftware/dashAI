@@ -4,7 +4,7 @@ import { Box } from "@mui/material";
 export default function MainGenerativeBox({ children }) {
   return (
     <Box
-      width={"1063px"}
+      width={"100%"}
       height={"auto"}
       borderRadius={2}
       bgcolor={"#121212"}
