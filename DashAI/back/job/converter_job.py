@@ -1,9 +1,9 @@
 import logging
-import os
 import re
 from importlib import import_module
 from typing import Dict, List
 
+from pathlib import Path
 import pyarrow as pa
 from datasets.arrow_dataset import update_metadata_with_features
 from datasets.features import Features
@@ -239,22 +239,28 @@ class ConverterListJob(BaseJob):
             # Regex to convert camel case to snake case
             camel_to_snake = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 
-            # Create a dictionary with the submodule for each converter
-            converters_list_dir = os.listdir("DashAI/back/converters")
-            existing_submodules = [
-                submodule
-                for submodule in converters_list_dir
-                if os.path.isdir(f"DashAI/back/converters/{submodule}")
-            ]
+            # Get the absolute path to the converters directory
+            current_file = Path(__file__)
+            project_root = (
+                current_file.parent.parent.parent
+            )  # Go up three levels to reach project root
+            converters_base_path = project_root / "back" / "converters"
 
-            # Build converter name to submodule mapping
-            converter_submodule_inverse_index = {}
-            for submodule in existing_submodules:
-                existing_converters = os.listdir(f"DashAI/back/converters/{submodule}")
-                for file in existing_converters:
-                    if file.endswith(".py"):
-                        converter_name = file[:-3]
-                        converter_submodule_inverse_index[converter_name] = submodule
+            if not converters_base_path.exists():
+                raise JobError(
+                    f"Converters directory not found at {converters_base_path}"
+                )
+
+            # Build converter name to submodule mapping using a more functional approach
+            converter_submodule_inverse_index = {
+                file.stem: submodule.name
+                for submodule in converters_base_path.iterdir()
+                if submodule.is_dir()
+                for file in submodule.glob("*.py")
+                if not file.name.startswith(
+                    "_"
+                )  # Skip __init__.py and other special files
+            }
 
             # Get stored converter configurations
             converters_stored_info = converter_list.converters
