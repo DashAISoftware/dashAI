@@ -8,3 +8,10 @@ export interface ISession {
   model_name: string;
   parameters: object;
 }
+
+export interface ISessionParameterHistory {
+  id: number;
+  session_id: number;
+  parameters: Record<string, any>;
+  modified_at: string;
+}

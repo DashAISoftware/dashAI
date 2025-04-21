@@ -244,3 +244,64 @@ async def update_generative_session_params(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+        
+
+@router.get("/{session_id}/parameters-history", status_code=status.HTTP_200_OK)
+async def get_generative_session_parameters_history(
+    session_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """
+    Get all parameter history entries for a generative session.
+
+    Parameters
+    ----------
+    session_id : int
+        The ID of the generative session to retrieve the parameter history for.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    list
+        A list of dictionaries with all parameter history entries for the session.
+
+    Raises
+    ------
+    HTTPException
+        If the generative session does not exist or if there's an internal database error.
+    """
+    with session_factory() as db:
+        try:
+            # Verificar si la sesión generativa existe
+            session = db.get(GenerativeSession, session_id)
+            if not session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative session {session_id} does not exist in DB.",
+                )
+
+            # Obtener el historial de parámetros de la sesión
+            parameters_history = (
+                db.query(GenerativeSessionParameterHistory)
+                .filter(GenerativeSessionParameterHistory.session_id == session_id)
+                .order_by(GenerativeSessionParameterHistory.modified_at.asc())
+                .all()
+            )
+
+            # Formatear los resultados como una lista de diccionarios
+            return [
+                {
+                    "id": entry.id,
+                    "session_id": entry.session_id,
+                    "parameters": entry.parameters,
+                    "modified_at": entry.modified_at,
+                }
+                for entry in parameters_history
+            ]
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e        
