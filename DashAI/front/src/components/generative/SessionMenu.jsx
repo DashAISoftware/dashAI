@@ -24,6 +24,7 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
   const open = Boolean(anchorEl);
 
   const handleClick = (event) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
@@ -68,6 +69,7 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
           vertical: "top",
           horizontal: "right",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <MenuItem onClick={() => handleAction(onInfo, sessionId)}>
           <ListItemIcon>

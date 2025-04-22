@@ -54,6 +54,10 @@ export default function SessionBar({
   };
 
   const handleSessionDelete = (id) => {
+    if (id === selectedSessionId) {
+      handleSessionClick(null);
+    }
+
     setSessions((prevSessions) =>
       prevSessions.filter((session) => session.id !== id),
     );
