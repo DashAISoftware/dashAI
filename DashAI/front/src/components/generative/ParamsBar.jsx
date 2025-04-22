@@ -8,7 +8,7 @@ import {
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
 
-export default function ParamsBar({ selectedSessionId }) {
+export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
   const [parameters, setParameters] = useState({});
   const [schema, setSchema] = useState(null);
 
@@ -55,6 +55,7 @@ export default function ParamsBar({ selectedSessionId }) {
         updatedParams,
       );
       setParameters(updatedSession.parameters);
+      onParamsUpdate(updatedSession.parameters);
       console.log("Session parameters updated:", updatedSession);
     } catch (error) {
       console.error("Failed to update session parameters:", error);

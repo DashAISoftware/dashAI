@@ -14,6 +14,7 @@ export default function Generative() {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
   const [sessions, setSessions] = useState([]);
+  const [paramsVersion, setParamsVersion] = useState(0);
 
   const handleSessionClick = (sessionId, taskName) => {
     setSelectedSessionId(sessionId);
@@ -24,6 +25,11 @@ export default function Generative() {
     setSelectedSessionId(null);
     setStepIndex(0);
     setSelectedTaskName("");
+  };
+
+  const onParamsUpdate = (newParams) => {
+    console.log("Params updated", newParams);
+    setParamsVersion(prev => prev + 1); 
   };
 
   useEffect(() => {
@@ -76,6 +82,7 @@ export default function Generative() {
           <GenerativeChat
             sessionId={selectedSessionId}
             taskName={selectedTaskName}
+            paramsVersion={paramsVersion}
           />
         ) : stepIndex === 0 ? (
           <SelectTaskMenu
@@ -100,7 +107,10 @@ export default function Generative() {
         bgcolor={"#030712"}
       >
         {selectedSessionId ? (
-          <ParamsBar selectedSessionId={selectedSessionId} />
+          <ParamsBar
+            selectedSessionId={selectedSessionId}
+            onParamsUpdate={onParamsUpdate}
+          />
         ) : null}
       </Box>
     </Box>

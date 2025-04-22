@@ -21,7 +21,7 @@ import InfoSessionModal from "./InfoSessionModal";
 import HistoryIcon from "@mui/icons-material/History";
 import ParameterHistoryModal from "./SessionHistoryModal";
 
-export default function GenerativeChat({ sessionId, taskName }) {
+export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
@@ -102,7 +102,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
     getMessages();
     getSessionInfo();
     getHistory();
-  }, [sessionId]);
+  }, [sessionId, paramsVersion]);
 
   useEffect(() => {
     getTask();
