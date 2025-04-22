@@ -390,16 +390,35 @@ async def get_generative_session_parameter_history_entry(
                 .all()
             )
 
-            # Format the results as a list of dictionaries
-            return [
-                {
-                    "id": entry.id,
-                    "session_id": entry.session_id,
-                    "parameters": entry.parameters,
-                    "modified_at": entry.modified_at,
-                }
-                for entry in parameters_history
-            ]
+            parameters_history = [p.__dict__ for p in parameters_history]
+
+            events = []
+            prev_params = parameters_history[0]["parameters"]
+
+            for i in range(1, len(parameters_history)):
+                curr = parameters_history[i]
+                curr_params = curr["parameters"]
+                changes = []
+
+                for key in curr_params:
+                    old_val = prev_params.get(key)
+                    new_val = curr_params[key]
+                    if old_val != new_val:
+                        changes.append(
+                            {"parameter": key, "oldValue": old_val, "newValue": new_val}
+                        )
+
+                events.append(
+                    {
+                        "id": curr["id"],
+                        "timestamp": curr["modified_at"],
+                        "changes": changes,
+                    }
+                )
+                prev_params = curr_params
+
+            return events
+
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
