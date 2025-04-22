@@ -26,6 +26,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [messagesWithHistory, setMessagesWithHistory] = useState([]);
   const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
@@ -110,7 +111,43 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messagesWithHistory]);
+
+  useEffect(() => {
+    let messagesObject = messages.map((process) => {
+      return {
+        type: "message",
+        timestamp: process.created,
+        id: process.id,
+        input: process.input,
+        output: process.output,
+        status: process.status,
+        end_time: process.end_time,
+      };
+    });
+
+    let historyObject = history.map((entry) => {
+      return {
+        type: "history",
+        timestamp: entry.timestamp,
+        id: entry.id,
+        changedMessage:
+          "Params updated: " +
+          entry.changes
+            .map(
+              (change) =>
+                `${change.parameter}: ${change.oldValue} -> ${change.newValue}`,
+            )
+            .join(", "),
+      };
+    });
+
+    let combinedMessages = [...messagesObject, ...historyObject];
+    combinedMessages.sort(
+      (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+    );
+    setMessagesWithHistory(combinedMessages);
+  }, [messages, history]);
 
   return (
     <Box
@@ -202,10 +239,10 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           },
         }}
       >
-        {messages.map((process) => {
+        {messagesWithHistory.map((message) => {
           return (
             <Box
-              key={process.id}
+              key={`${message.type}_${message.id}`}
               display="flex"
               flexDirection="column"
               justifyContent="flex-start"
@@ -214,26 +251,39 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
               height={"100%"}
               mt={1}
             >
-              <ChatBubble
-                message={process.input}
-                sender={"User"}
-                timestamp={new Date(process.created).toLocaleTimeString()}
-                messageType={task.metadata.inputs_types[0]}
-                isUser={true}
-              />
-              {process.status === 3 ? (
+              {message.type === "history" ? (
                 <ChatBubble
-                  message={process.output}
+                  message={message.changedMessage}
                   sender={"Model"}
                   messageType={task?.metadata.outputs_types[0]}
-                  timestamp={new Date(process.end_time).toLocaleTimeString()}
+                  timestamp={new Date(message.timestamp).toLocaleTimeString()}
                 />
               ) : (
-                <ChatBubble
-                  message={"..."}
-                  messageType={"str"}
-                  sender="Model"
-                ></ChatBubble>
+                <>
+                  <ChatBubble
+                    message={message.input}
+                    sender={"User"}
+                    timestamp={new Date(message.timestamp).toLocaleTimeString()}
+                    messageType={task.metadata.inputs_types[0]}
+                    isUser={true}
+                  />
+                  {message.status === 3 ? (
+                    <ChatBubble
+                      message={message.output}
+                      sender={"Model"}
+                      messageType={task?.metadata.outputs_types[0]}
+                      timestamp={new Date(
+                        message.end_time,
+                      ).toLocaleTimeString()}
+                    />
+                  ) : (
+                    <ChatBubble
+                      message={"..."}
+                      messageType={"str"}
+                      sender="Model"
+                    />
+                  )}
+                </>
               )}
             </Box>
           );
