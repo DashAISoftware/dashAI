@@ -10,7 +10,7 @@ import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
 import { ChatBubble } from "./ChatBubble";
-import { getProcesses } from "../../api/process";
+import { getProcessById, getProcessesBySessionId } from "../../api/process";
 import { useState, useEffect, useRef } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
@@ -43,7 +43,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
   };
 
   const getMessages = () => {
-    getProcesses(sessionId).then((response) => {
+    getProcessesBySessionId(sessionId).then((response) => {
       setIsLoadingMessage(false);
       setMessages(response);
     });
@@ -74,7 +74,15 @@ export default function GenerativeChat({ sessionId, taskName }) {
           // Set a timeout to refresh the messages
           setTimeout(() => {
             // Refresh the messages after 1 seconds
-            getMessages();
+            getProcessById(response.id).then((response) => {
+              setIsLoadingMessage(false);
+              setMessages((prevMessages) => {
+                const updatedMessages = prevMessages.map((message) =>
+                  message.id === response.id ? response : message,
+                );
+                return updatedMessages;
+              });
+            });
           }, 1000);
         });
       });

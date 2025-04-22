@@ -1,9 +1,18 @@
 import api from "./api";
 import type { IProcess } from "../types/process";
 
-export const getProcesses = async (sessionId: string): Promise<IProcess[]> => {
+export const getProcessesBySessionId = async (
+  sessionId: string,
+): Promise<IProcess[]> => {
   const response = await api.get<IProcess[]>(
-    `/v1/generative-process/${sessionId}`,
+    `/v1/generative-process/session/${sessionId}`,
+  );
+  return response.data;
+};
+
+export const getProcessById = async (processId: string): Promise<IProcess> => {
+  const response = await api.get<IProcess>(
+    `/v1/generative-process/${processId}`,
   );
   return response.data;
 };
