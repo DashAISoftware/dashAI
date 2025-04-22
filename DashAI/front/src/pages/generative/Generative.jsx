@@ -37,14 +37,18 @@ export default function Generative() {
   };
 
   const handleSessionDelete = (id) => {
+    if (id === selectedSessionId) {
+      setSelectedSessionId(null);
+      setStepIndex(0);
+    }
+
     setSessions((prevSessions) =>
       prevSessions.filter((session) => session.id !== id),
     );
+
     removeSession(id).then(() => {
       console.log("Session deleted", id);
     });
-    setSelectedSessionId(null);
-    setStepIndex(0);
   };
 
   return (

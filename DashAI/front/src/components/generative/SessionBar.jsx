@@ -48,20 +48,6 @@ export default function SessionBar({
     setSearchQuery(e.target.value);
   };
 
-  {/* Function to handle session deletion 
-  const handleSessionDelete = (id) => {
-    if (id === selectedSessionId) {
-      handleSessionClick(null);
-    }
-
-    setSessions((prevSessions) =>
-      prevSessions.filter((session) => session.id !== id),
-    );
-    removeSession(id).then(() => {
-      console.log("Session deleted", id);
-    });
-  }; */}
-
   const handleSessionInfo = (id) => {
     // Find the session with the matching id
     const session = sessions.find((session) => session.id === id);
