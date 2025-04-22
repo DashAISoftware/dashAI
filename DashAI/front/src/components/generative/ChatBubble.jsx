@@ -3,8 +3,14 @@ import {
   Paper,
   Typography,
   Avatar as MuiAvatar,
-  styled,
+  Dialog,
+  IconButton,
+  Fade,
+  useTheme,
+  Zoom,
 } from "@mui/material";
+import { useState } from "react";
+import CloseIcon from "@mui/icons-material/Close";
 
 export function ChatBubble({
   message,
@@ -13,6 +19,19 @@ export function ChatBubble({
   timestamp,
   isUser = false,
 }) {
+  const [isImageFullscreen, setIsImageFullscreen] = useState(false);
+  const theme = useTheme();
+
+  const handleImageClick = () => {
+    if (messageType === "PIL.Image") {
+      setIsImageFullscreen(true);
+    }
+  };
+
+  const handleCloseFullscreen = () => {
+    setIsImageFullscreen(false);
+  };
+
   return (
     <Box
       sx={{
@@ -61,17 +80,28 @@ export function ChatBubble({
             </Typography>
           )}
           {messageType === "PIL.Image" && (
-            <img
-              src={`data:image/png;base64,${message}`}
-              alt="Image"
-              style={{
-                maxWidth: "100%",
-                maxHeight: "300px",
-                objectFit: "contain",
-                borderRadius: 8,
-                marginTop: 8,
+            <Box
+              onClick={handleImageClick}
+              sx={{
+                cursor: "pointer",
+                "&:hover": {
+                  opacity: 0.9,
+                },
+                transition: theme.transitions.create("opacity"),
               }}
-            />
+            >
+              <img
+                src={`data:image/png;base64,${message}`}
+                alt="Image"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "300px",
+                  objectFit: "contain",
+                  borderRadius: theme.shape.borderRadius,
+                  marginTop: theme.spacing(1),
+                }}
+              />
+            </Box>
           )}
         </Paper>
 
@@ -92,6 +122,69 @@ export function ChatBubble({
       </Box>
 
       {isUser && <MuiAvatar alt="User" sx={{ ml: 1, width: 32, height: 32 }} />}
+
+      {/* Fullscreen Image Dialog */}
+      <Dialog
+        open={isImageFullscreen}
+        onClose={handleCloseFullscreen}
+        maxWidth="xl"
+        fullWidth
+        TransitionComponent={Fade}
+        transitionDuration={{
+          enter: theme.transitions.duration.enteringScreen,
+          exit: theme.transitions.duration.leavingScreen,
+        }}
+        PaperProps={{
+          sx: {
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            boxShadow: "none",
+            position: "relative",
+            m: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        }}
+      >
+        <IconButton
+          onClick={handleCloseFullscreen}
+          sx={{
+            position: "absolute",
+            top: theme.spacing(2),
+            right: theme.spacing(2),
+            color: "white",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+            },
+            zIndex: 1,
+          }}
+          aria-label="close"
+          size="large"
+        >
+          <CloseIcon />
+        </IconButton>
+        <Zoom in={isImageFullscreen}>
+          <Box
+            component="img"
+            src={
+              messageType === "PIL.Image"
+                ? `data:image/png;base64,${message}`
+                : ""
+            }
+            alt="Fullscreen Image"
+            sx={{
+              maxWidth: "90%",
+              maxHeight: "90%",
+              objectFit: "contain",
+              cursor: "pointer",
+            }}
+            onClick={handleCloseFullscreen}
+          />
+        </Zoom>
+      </Dialog>
     </Box>
   );
 }
