@@ -12,6 +12,30 @@ export default function SessionList({
   handleSessionInfo,
   toggleSection,
 }) {
+  console.log("Grouped Sessions:", groupedSessions);
+  if (groupedSessions === undefined) {
+    return (
+      <Box
+        display={"flex"}
+        justifyContent={"center"}
+        alignItems={"center"}
+        height={"100%"}
+        width={"100%"}
+      >
+        <Typography
+          sx={{
+            color: "#ffffff",
+            opacity: 0.5,
+            textAlign: "center",
+            padding: 2,
+          }}
+        >
+          No sessions found
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box
       display={"flex"}

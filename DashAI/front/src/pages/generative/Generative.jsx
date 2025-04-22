@@ -6,11 +6,14 @@ import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
+import { getSessions, removeSession } from "../../api/session";
+import { useEffect } from "react";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedTaskName, setSelectedTaskName] = useState("");
+  const [sessions, setSessions] = useState([]);
 
   const handleSessionClick = (sessionId, taskName) => {
     setSelectedSessionId(sessionId);
@@ -21,6 +24,27 @@ export default function Generative() {
     setSelectedSessionId(null);
     setStepIndex(0);
     setSelectedTaskName("");
+  };
+
+  useEffect(() => {
+    getSessions().then((data) => {
+      setSessions(data);
+    });
+  }, []);
+
+  const handleAddSession = (session) => {
+    setSessions((prevSessions) => [...prevSessions, session]);
+  };
+
+  const handleSessionDelete = (id) => {
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session.id !== id),
+    );
+    removeSession(id).then(() => {
+      console.log("Session deleted", id);
+    });
+    setSelectedSessionId(null);
+    setStepIndex(0);
   };
 
   return (
@@ -36,9 +60,12 @@ export default function Generative() {
       alignItems={"stretch"}
     >
       <SessionBar
+        sessions={sessions}
+        setSessions={() => setSessions()}
         selectedSessionId={selectedSessionId}
         handleSessionClick={handleSessionClick}
         handleNewSessionButton={handleNewSessionButton}
+        handleSessionDelete={handleSessionDelete}
       />
       <MainGenerativeBox>
         {selectedSessionId ? (
@@ -55,6 +82,7 @@ export default function Generative() {
           />
         ) : (
           <SelectModelMenu
+            handleAddSession={handleAddSession}
             selectedTaskName={selectedTaskName}
             setSelectedSessionId={setSelectedSessionId}
           />
