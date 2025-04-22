@@ -1,9 +1,7 @@
 import { Box, Typography, Divider } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "./SearchBar";
-import { getSessions } from "../../api/session";
 import { useEffect, useState } from "react";
-import { removeSession } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
@@ -11,31 +9,28 @@ import NewSessionButton from "./NewSessionButton";
 import SessionBarHeader from "./SessionBarHeader";
 
 export default function SessionBar({
+  sessions,
+  setSessions,
   selectedSessionId,
   handleSessionClick,
   handleNewSessionButton,
+  handleSessionDelete,
 }) {
-  const [sessions, setSessions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredSessions, setFilteredSessions] = useState([]);
+  const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
 
   useEffect(() => {
-    getSessions().then((data) => {
-      setSessions(data);
-      setFilteredSessions(data);
-
-      // Initialize all sections as closed
-      const taskNames = [
-        ...new Set(data.map((session) => session.task_name || "Other")),
-      ];
-      const initialOpenState = {};
-      taskNames.forEach((task) => {
-        initialOpenState[task] = false;
-      });
-      setOpenSections(initialOpenState);
+    // Initialize all sections as closed
+    const taskNames = [
+      ...new Set(sessions.map((session) => session.task_name || "Other")),
+    ];
+    const initialOpenState = {};
+    taskNames.forEach((task) => {
+      initialOpenState[task] = false;
     });
+    setOpenSections(initialOpenState);
   }, []);
 
   useEffect(() => {
@@ -53,6 +48,7 @@ export default function SessionBar({
     setSearchQuery(e.target.value);
   };
 
+  {/* Function to handle session deletion 
   const handleSessionDelete = (id) => {
     if (id === selectedSessionId) {
       handleSessionClick(null);
@@ -64,7 +60,7 @@ export default function SessionBar({
     removeSession(id).then(() => {
       console.log("Session deleted", id);
     });
-  };
+  }; */}
 
   const handleSessionInfo = (id) => {
     // Find the session with the matching id
@@ -82,7 +78,7 @@ export default function SessionBar({
   };
 
   // Group sessions by task_name
-  const groupedSessions = filteredSessions.reduce((groups, session) => {
+  const groupedSessions = filteredSessions?.reduce((groups, session) => {
     const taskName = session.task_name || "Other";
     if (!groups[taskName]) {
       groups[taskName] = [];
@@ -144,7 +140,7 @@ export default function SessionBar({
                 fontSize: 12,
               }}
             >
-              {filteredSessions.length}
+              {filteredSessions?.length}
             </Box>
           </Box>
 

@@ -16,3 +16,12 @@ export const getSessionById = async (sessionId: string): Promise<ISession> => {
   );
   return response.data;
 };
+
+export const getHistoryBySessionId = async (
+  sessionId: string,
+): Promise<ISession[]> => {
+  const response = await api.get<ISession[]>(
+    `/v1/generative-session/parameters-history/${sessionId}`,
+  );
+  return response.data;
+};

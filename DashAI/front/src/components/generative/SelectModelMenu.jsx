@@ -14,6 +14,7 @@ import { createGenerativeSession } from "../../api/generativeTask";
 export default function SelectModelMenu({
   selectedTaskName,
   setSelectedSessionId,
+  handleAddSession,
 }) {
   const [relatedComponents, setRelatedComponents] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
@@ -42,6 +43,7 @@ export default function SelectModelMenu({
         const createdSession = await createGenerativeSession(sessionData);
 
         setSelectedSessionId(createdSession.id);
+        handleAddSession(createdSession);
         console.log("Session created successfully:", createdSession);
       } catch (error) {
         console.error("Error creating session:", error);

@@ -3,13 +3,20 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
+from pydantic import ValidationError
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
-from DashAI.back.dependencies.database.models import GenerativeSession, GenerativeSessionParameterHistory
+from DashAI.back.dependencies.database.models import (
+    GenerativeSession,
+    GenerativeSessionParameterHistory,
+)
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.models import BaseGenerativeModel
+from DashAI.back.tasks import BaseGenerativeTask
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -19,11 +26,43 @@ log = logging.getLogger(__name__)
 async def upload_generative_session(
     params: GenerativeSessionParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ):
     """Create a new generative session and log the initial parameters in the history."""
     with session_factory() as db:
         try:
-            # Crear la nueva sesión generativa
+            # Check if the model is registered
+            try:
+                model_class = component_registry[params.model_name]["class"]
+            except KeyError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Model {params.model_name} is not registered.",
+                )
+
+            # Check if the model is a subclass of GenerativeModel
+            if not issubclass(model_class, BaseGenerativeModel):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Model {params.model_name} is not a valid generative model.",
+                )
+
+            # Check if the task is registered
+            try:
+                task_class = component_registry[params.task_name]["class"]
+            except KeyError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Task {params.task_name} is not registered.",
+                )
+
+            # Check if the task is a subclass of BaseGenerativeTask
+            if not issubclass(task_class, BaseGenerativeTask):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Task {params.task_name} is not a valid generative task.",
+                )
+
             session = GenerativeSession(
                 model_name=params.model_name,
                 task_name=params.task_name,
@@ -59,6 +98,7 @@ async def upload_generative_session(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
 
 @router.get("/{session_id}", status_code=status.HTTP_200_OK)
 async def get_generative_session(
@@ -185,6 +225,7 @@ async def delete_generative_session(
             db.rollback()
             db.close()
 
+
 @router.put("/{session_id}/parameters", status_code=status.HTTP_200_OK)
 async def update_generative_session_params(
     session_id: int,
@@ -244,7 +285,7 @@ async def update_generative_session_params(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        
+
 
 @router.get("/{session_id}/parameters-history", status_code=status.HTTP_200_OK)
 async def get_generative_session_parameters_history(
@@ -304,4 +345,83 @@ async def get_generative_session_parameters_history(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
-            ) from e        
+            ) from e
+
+
+@router.get("/parameters-history/{session_id}", status_code=status.HTTP_200_OK)
+async def get_generative_session_parameter_history_entry(
+    session_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """
+    Get history entry for a generative session by its ID.
+    Parameters
+    ----------
+    session_id : int
+        The ID of the generative session to retrieve.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+    Returns
+    -------
+    list
+        A list of dictionaries with the parameter history entries for the session.
+    Raises
+    ------
+    HTTPException
+        If the generative session does not exist or if there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            # Check if the generative session exists
+            session = db.get(GenerativeSession, session_id)
+            if not session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative session {session_id} does not exist in DB.",
+                )
+
+            # Get the parameter history entry for the session
+            parameters_history = (
+                db.query(GenerativeSessionParameterHistory)
+                .filter(GenerativeSessionParameterHistory.session_id == session_id)
+                .order_by(GenerativeSessionParameterHistory.modified_at.asc())
+                .all()
+            )
+
+            parameters_history = [p.__dict__ for p in parameters_history]
+
+            events = []
+            prev_params = parameters_history[0]["parameters"]
+
+            for i in range(1, len(parameters_history)):
+                curr = parameters_history[i]
+                curr_params = curr["parameters"]
+                changes = []
+
+                for key in curr_params:
+                    old_val = prev_params.get(key)
+                    new_val = curr_params[key]
+                    if old_val != new_val:
+                        changes.append(
+                            {"parameter": key, "oldValue": old_val, "newValue": new_val}
+                        )
+
+                events.append(
+                    {
+                        "id": curr["id"],
+                        "timestamp": curr["modified_at"],
+                        "changes": changes,
+                    }
+                )
+                prev_params = curr_params
+
+            return events
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e

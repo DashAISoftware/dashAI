@@ -10,18 +10,21 @@ import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
 import { ChatBubble } from "./ChatBubble";
-import { getProcesses } from "../../api/process";
+import { getProcessById, getProcessesBySessionId } from "../../api/process";
 import { useState, useEffect, useRef } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getComponents } from "../../api/component";
-import { getSessionById } from "../../api/session";
+import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
 import HistoryIcon from "@mui/icons-material/History";
+import ParameterHistoryModal from "./SessionHistoryModal";
 
 export default function GenerativeChat({ sessionId, taskName }) {
   const [input, setInput] = useState("");
+  const [history, setHistory] = useState([]);
+  const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
@@ -43,9 +46,15 @@ export default function GenerativeChat({ sessionId, taskName }) {
   };
 
   const getMessages = () => {
-    getProcesses(sessionId).then((response) => {
+    getProcessesBySessionId(sessionId).then((response) => {
       setIsLoadingMessage(false);
       setMessages(response);
+    });
+  };
+
+  const getHistory = () => {
+    getHistoryBySessionId(sessionId).then((response) => {
+      setHistory(response);
     });
   };
 
@@ -74,7 +83,15 @@ export default function GenerativeChat({ sessionId, taskName }) {
           // Set a timeout to refresh the messages
           setTimeout(() => {
             // Refresh the messages after 1 seconds
-            getMessages();
+            getProcessById(response.id).then((response) => {
+              setIsLoadingMessage(false);
+              setMessages((prevMessages) => {
+                const updatedMessages = prevMessages.map((message) =>
+                  message.id === response.id ? response : message,
+                );
+                return updatedMessages;
+              });
+            });
           }, 1000);
         });
       });
@@ -84,6 +101,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
   useEffect(() => {
     getMessages();
     getSessionInfo();
+    getHistory();
   }, [sessionId]);
 
   useEffect(() => {
@@ -132,7 +150,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
           </Typography>
 
           <Box>
-            <IconButton>
+            <IconButton onClick={() => setHistoryInfoVisible(true)}>
               <HistoryIcon
                 sx={{
                   color: "#a0a0a0",
@@ -256,6 +274,14 @@ export default function GenerativeChat({ sessionId, taskName }) {
             onClose={() => setSessionInfoVisible(false)}
           />
         )}
+
+        {/* Parameter History Modal */}
+        <ParameterHistoryModal
+          historyChanges={history}
+          open={historyInfoVisible}
+          taskName={taskName}
+          setOpen={setHistoryInfoVisible}
+        />
       </Box>
     </Box>
   );
