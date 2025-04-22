@@ -100,7 +100,7 @@ export default function Generative() {
         )}
       </MainGenerativeBox>
       <Box
-        width={"502px"}
+        width={"700px"}
         height={"100%"}
         borderRadius={2}
         p={2}
