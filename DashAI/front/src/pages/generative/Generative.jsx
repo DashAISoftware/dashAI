@@ -29,7 +29,7 @@ export default function Generative() {
       style={{ position: "absolute" }}
       justifyContent={"flex-start"}
       gap={3}
-      height={"90%"}
+      height={"calc(100vh - 74px)"}
       flexGrow={1}
       width={"100%"}
       p={1.5}
@@ -62,7 +62,7 @@ export default function Generative() {
       </MainGenerativeBox>
       <Box
         width={"502px"}
-        height={"auto"}
+        height={"100%"}
         borderRadius={2}
         p={2}
         bgcolor={"#030712"}

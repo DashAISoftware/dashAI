@@ -5,7 +5,7 @@ export default function MainGenerativeBox({ children }) {
   return (
     <Box
       width={"100%"}
-      height={"auto"}
+      height={"100%"}
       borderRadius={2}
       bgcolor={"#121212"}
       p={2}

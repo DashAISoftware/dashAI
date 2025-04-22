@@ -70,7 +70,14 @@ export default function ParamsBar({ selectedSessionId }) {
   if (!schema) return null;
 
   return (
-    <Box>
+    <Box
+      display={"flex"}
+      height={"100%"}
+      width={"100%"}
+      flexDirection={"column"}
+      justifyContent={"flex-start"}
+      overflow={"auto"}
+    >
       <Typography
         sx={{
           fontSize: "16px",
