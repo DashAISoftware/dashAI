@@ -225,7 +225,7 @@ export default function GenerativeChat({ sessionId, taskName }) {
                 <ChatBubble
                   message={process.output}
                   sender={"Model"}
-                  messageType={task.metadata.outputs_types[0]}
+                  messageType={task?.metadata.outputs_types[0]}
                   timestamp={new Date(process.end_time).toLocaleTimeString()}
                 />
               ) : (
