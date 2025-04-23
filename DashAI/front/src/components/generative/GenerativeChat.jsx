@@ -256,7 +256,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
               mt={1}
             >
               {message.type === "history" ? (
-                <Typography>
+                <Typography sx={{ fontSize: "0.875rem", opacity: 0.8 }} >
                   Params updated: {message.changedMessage}
                 </Typography>
               ) : (
