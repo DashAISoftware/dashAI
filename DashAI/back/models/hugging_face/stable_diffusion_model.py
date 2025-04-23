@@ -4,7 +4,6 @@ import torch
 from diffusers import DiffusionPipeline
 
 from DashAI.back.core.schema_fields import (
-    bool_field,
     enum_field,
     float_field,
     int_field,
