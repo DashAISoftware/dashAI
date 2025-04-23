@@ -9,6 +9,7 @@ import {
 import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
+import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ChatBubble } from "./ChatBubble";
 import { getProcessById, getProcessesBySessionId } from "../../api/process";
 import { useState, useEffect, useRef } from "react";
@@ -131,14 +132,15 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
         type: "history",
         timestamp: entry.timestamp,
         id: entry.id,
-        changedMessage:
-          "Params updated: " +
-          entry.changes
-            .map(
-              (change) =>
-                `${change.parameter}: ${change.oldValue} -> ${change.newValue}`,
-            )
-            .join(", "),
+        changedMessage: entry.changes.map((change) => (
+          <span
+            key={change.parameter}
+            style={{ display: "inline-flex", alignItems: "center" }}
+          >
+            {change.parameter}: {change.oldValue}{" "}
+            <ArrowRightAltIcon fontSize="small" /> {change.newValue}
+          </span>
+        )),
       };
     });
 
@@ -219,6 +221,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
         display="flex"
         flexDirection="column"
         justifyContent="flex-start"
+        alignItems="flex-start"
         gap={1}
         width={"100%"}
         height={"100%"}
@@ -246,18 +249,16 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
               display="flex"
               flexDirection="column"
               justifyContent="flex-start"
+              flexGrow={0}
               gap={1}
               width={"100%"}
-              height={"100%"}
+              //height={"100%"}
               mt={1}
             >
               {message.type === "history" ? (
-                <ChatBubble
-                  message={message.changedMessage}
-                  sender={"Model"}
-                  messageType={task?.metadata.outputs_types[0]}
-                  timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                />
+                <Typography>
+                  Params updated: {message.changedMessage}
+                </Typography>
               ) : (
                 <>
                   <ChatBubble
