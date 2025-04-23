@@ -135,10 +135,14 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
         changedMessage: entry.changes.map((change) => (
           <span
             key={change.parameter}
-            style={{ display: "inline-flex", alignItems: "center" }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              whiteSpace: "pre-wrap",
+            }}
           >
             {change.parameter}: {change.oldValue}{" "}
-            <ArrowRightAltIcon fontSize="small" /> {change.newValue}
+            <ArrowRightAltIcon fontSize="small" /> {change.newValue}{" "}
           </span>
         )),
       };
