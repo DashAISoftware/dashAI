@@ -43,11 +43,17 @@ async def upload_generative_process(
     Raises
     ------
     HTTPException
-        If there's an internal database error.
+        If there's an internal database error or if the session ID does not exist.
     """
 
     with session_factory() as db:
         try:
+            session = db.query(GenerativeSession).filter_by(id=params.session_id).first()
+            if not session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Session with ID {params.session_id} does not exist.",
+                )
             process = GenerativeProcess(
                 input=params.input,
                 session_id=params.session_id,
