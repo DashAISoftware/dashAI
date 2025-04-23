@@ -217,7 +217,9 @@ class GenerativeProcess(Base):
         onupdate=datetime.now,
     )
     # metadata
-    session_id: Mapped[int] = mapped_column(ForeignKey("generative_session.id", ondelete="CASCADE"))
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE")
+    )
     status: Mapped[Enum] = mapped_column(
         Enum(RunStatus), nullable=False, default=RunStatus.NOT_STARTED
     )
@@ -226,10 +228,10 @@ class GenerativeProcess(Base):
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
 
     input: Mapped[str] = mapped_column(String)
-    output: Mapped[str] = mapped_column(String, nullable=True)
+    output: Mapped[List[str]] = mapped_column(JSON, nullable=True)
 
     session = relationship("GenerativeSession", back_populates="processes")
-    
+
     def set_status_as_delivered(self) -> None:
         """Update the status of the process to delivered and set delivery_time to now."""
         self.status = RunStatus.DELIVERED
@@ -272,8 +274,12 @@ class GenerativeSession(Base):
     description: Mapped[str] = mapped_column(String, nullable=True)
 
     # Relationship with GenerativeSessionParameterHistory
-    parameters_history: Mapped[List["GenerativeSessionParameterHistory"]] = relationship(
-        "GenerativeSessionParameterHistory", cascade="all, delete-orphan", back_populates="session"
+    parameters_history: Mapped[List["GenerativeSessionParameterHistory"]] = (
+        relationship(
+            "GenerativeSessionParameterHistory",
+            cascade="all, delete-orphan",
+            back_populates="session",
+        )
     )
 
     # Relationship with GenerativeProcess
@@ -288,9 +294,13 @@ class GenerativeSessionParameterHistory(Base):
     Table to store the parameters of a generative session and their modification history.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False
+    )
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
     modified_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
 
     # Relationship with GenerativeSession
-    session = relationship("GenerativeSession", back_populates="parameters_history", cascade="all, delete")
+    session = relationship(
+        "GenerativeSession", back_populates="parameters_history", cascade="all, delete"
+    )

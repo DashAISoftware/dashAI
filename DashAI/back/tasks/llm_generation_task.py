@@ -47,7 +47,7 @@ class LLMGenerationTask(BaseGenerativeTask):
 
     def process_output(
         self,
-        output: Any,
+        output: List[Any],
         *args: Any,
     ) -> str:
         """Process the output of a generative model.
@@ -58,17 +58,17 @@ class LLMGenerationTask(BaseGenerativeTask):
 
         return output
 
-    def process_output_from_database(self, output):
+    def process_output_from_database(self, output: List[str]) -> List[str]:
         """Process the output from the database.
 
         Parameters
         ----------
-        output : Any
+        output : list[str]
             The output data to be processed.
 
         Returns
         -------
-        str
+        list[str]
             The processed output data.
         """
 

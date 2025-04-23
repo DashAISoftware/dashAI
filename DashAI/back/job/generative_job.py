@@ -68,22 +68,20 @@ class GenerativeJob(BaseJob):
 
         input_data = generative_process.input
 
-        task_class = component_registry[generative_session.task_name]["class"] 
+        task_class = component_registry[generative_session.task_name]["class"]
         task: BaseGenerativeTask = task_class()
         use_history = getattr(task_class, "USE_HISTORY", False)
 
         if use_history:
             history = [
-                (process.input, process.output)
+                (process.input, " ".join(process.output))
                 for process in db.query(GenerativeProcess)
                 .filter(GenerativeProcess.session_id == generative_session.id)
                 .filter(GenerativeProcess.status == "FINISHED")
                 .all()
             ]
-            
-            input_data = task.prepare_for_task(
-                input_data, history
-            ) 
+
+            input_data = task.prepare_for_task(input_data, history)
 
         # Start the generation process
         generative_process.set_status_as_started()

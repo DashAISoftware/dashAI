@@ -13,23 +13,24 @@ import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 
 export function ChatBubble({
-  message,
+  messages,
   messageType,
   sender = "",
   timestamp,
   isUser = false,
 }) {
-  const [isImageFullscreen, setIsImageFullscreen] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const theme = useTheme();
+  console.log("ChatBubble messages", messages);
 
-  const handleImageClick = () => {
+  const handleImageClick = (imageData) => {
     if (messageType === "PIL.Image") {
-      setIsImageFullscreen(true);
+      setFullscreenImage(imageData);
     }
   };
 
   const handleCloseFullscreen = () => {
-    setIsImageFullscreen(false);
+    setFullscreenImage(null);
   };
 
   return (
@@ -75,32 +76,42 @@ export function ChatBubble({
           }}
         >
           {messageType === "str" && (
-            <Typography variant="body2" color="text.primary">
-              {message}
-            </Typography>
+            <Box>
+              {messages?.map((message, index) => (
+                <Typography key={index} variant="body2" color="text.primary">
+                  {message}
+                  {index < messages.length - 1 && <br />}
+                </Typography>
+              ))}
+            </Box>
           )}
+
           {messageType === "PIL.Image" && (
-            <Box
-              onClick={handleImageClick}
-              sx={{
-                cursor: "pointer",
-                "&:hover": {
-                  opacity: 0.9,
-                },
-                transition: theme.transitions.create("opacity"),
-              }}
-            >
-              <img
-                src={`data:image/png;base64,${message}`}
-                alt="Image"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "300px",
-                  objectFit: "contain",
-                  borderRadius: theme.shape.borderRadius,
-                  marginTop: theme.spacing(1),
-                }}
-              />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {messages?.map((message, index) => (
+                <Box
+                  key={index}
+                  onClick={() => handleImageClick(message)}
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": {
+                      opacity: 0.9,
+                    },
+                    transition: theme.transitions.create("opacity"),
+                  }}
+                >
+                  <img
+                    src={`data:image/png;base64,${message}`}
+                    alt={`Image ${index + 1}`}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "300px",
+                      objectFit: "contain",
+                      borderRadius: theme.shape.borderRadius,
+                    }}
+                  />
+                </Box>
+              ))}
             </Box>
           )}
         </Paper>
@@ -125,7 +136,7 @@ export function ChatBubble({
 
       {/* Fullscreen Image Dialog */}
       <Dialog
-        open={isImageFullscreen}
+        open={fullscreenImage !== null}
         onClose={handleCloseFullscreen}
         maxWidth="xl"
         fullWidth
@@ -166,12 +177,13 @@ export function ChatBubble({
         >
           <CloseIcon />
         </IconButton>
-        <Zoom in={isImageFullscreen}>
+
+        <Zoom in={fullscreenImage !== null}>
           <Box
             component="img"
             src={
-              messageType === "PIL.Image"
-                ? `data:image/png;base64,${message}`
+              messageType === "PIL.Image" && fullscreenImage
+                ? `data:image/png;base64,${fullscreenImage}`
                 : ""
             }
             alt="Fullscreen Image"
