@@ -1,4 +1,5 @@
-from typing import Any
+from typing import Any, List
+
 from llama_cpp import Llama
 
 from DashAI.back.models.llm_generation_model import LLMGenerationModel
@@ -16,16 +17,20 @@ class GemmaModel(LLMGenerationModel):
             repo_id=self.model_id, filename=self.filename, verbose=True
         )
 
-    #def generate(self, prompt: str, history: list[tuple[str, str]]) -> str:
-    def generate(self, prompt: str) -> str:
+    # def generate(self, prompt: str, history: list[tuple[str, str]]) -> str:
+    def generate(self, prompt: str) -> List[str]:
         """Generate text based on prompts."""
         output = self.model(
-            f"Q: {prompt} A:", max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["\n", "Q:"], echo=True
+            f"Q: {prompt} A:",
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            frequency_penalty=self.frequency_penalty,
+            stop=["\n", "Q:"],
+            echo=True,
         )
         generated_text = output["choices"][0]["text"]
         clean_text = generated_text.replace(f"Q: {prompt} A:", "").strip()
-        return clean_text
-    
-    
-    def __call__(self, prompt: str) -> str:
+        return [clean_text]
+
+    def __call__(self, prompt: str) -> List[str]:
         return self.generate(prompt)

@@ -1,12 +1,11 @@
 import base64
 import io
 import uuid
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from PIL import Image
 
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
-from DashAI.back.tasks.base_task import BaseTask
 
 
 class ImageGenerationTask(BaseGenerativeTask):
@@ -43,48 +42,67 @@ class ImageGenerationTask(BaseGenerativeTask):
 
     def process_output(
         self,
-        output: Any,
+        output: List[Any],
         path: Optional[str] = None,
-    ) -> str:
+    ) -> List[str]:
         """Process the output of a generative model.
 
-        file_name (Str): Indicates the name of the file.
-        path (Str): Indicates the path where the output will be stored.
+        Parameters
+        ----------
+        output : List[Any]
+            list of images to be processed
+        path : Optional[str], optional
+            Path to save the output, by default None
+
+        Returns
+        -------
+        List[str]
+            List of paths to the processed images
         """
         save_dir = path / "generative-images"
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
 
-        # Generate a unique file name
-        file_name = str(uuid.uuid4())
+        image_paths = []
 
-        image_path = save_dir / f"{file_name}.png"
+        for img in output:
+            # Generate a unique file name
+            file_name = str(uuid.uuid4())
 
-        # Save the image
-        output.save(image_path, format="PNG")
+            image_path = save_dir / f"{file_name}.png"
 
-        return str(image_path)
+            # Save the image
+            img.save(image_path, format="PNG")
 
-    def process_output_from_database(self, output):
+            image_paths.append(str(image_path))
+
+        return image_paths
+
+    def process_output_from_database(self, output: List[str]) -> List[str]:
         """Process the output of an image generation model from the database.
 
         Parameters
         ----------
-        output : Any
-            Output to be processed
+        output : List[str]
+            List of paths to the images
 
         Returns
         -------
-        str
-            Encoded image string
+        List[str]
+            List of base64 encoded images
         """
-        image_path = output
-        if not image_path:
-            return None
+        encoded_images = []
 
-        with open(image_path, "rb") as image_file:
-            buffer = io.BytesIO(image_file.read())
-            buffer.seek(0)
+        for image_path in output:
+            if not image_path:
+                encoded_images.append(None)
+                continue
 
-        encoded_string = base64.b64encode(buffer.read()).decode("utf-8")
-        return encoded_string
+            with open(image_path, "rb") as image_file:
+                buffer = io.BytesIO(image_file.read())
+                buffer.seek(0)
+
+                encoded_string = base64.b64encode(buffer.read()).decode("utf-8")
+                encoded_images.append(encoded_string)
+
+        return encoded_images

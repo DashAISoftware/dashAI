@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Final, Optional
+from typing import Any, Dict, Final, List, Optional
 
 
 class BaseGenerativeTask:
@@ -58,35 +58,37 @@ class BaseGenerativeTask:
     @abstractmethod
     def process_output(
         self,
-        output: Any,
+        output: List[Any],
         path: Optional[str] = None,
-    ) -> Any:
+    ) -> List[str]:
         """Process output data of the task.
 
         Parameters
         ----------
-        output : Any
+        output : List[Any]
             Output data to be processed
+        path : Optional[str], optional
+            Path to save the output data, by default None
 
         Returns
         -------
-        Any
+        List[str]
             Processed output data
         """
         raise NotImplementedError
 
     @abstractmethod
-    def process_output_from_database(self, output: str) -> Any:
+    def process_output_from_database(self, output: List[str]) -> List[str]:
         """Process output data from the database.
 
         Parameters
         ----------
-        output : Any
+        output : List[str]
             Output data to be processed
 
         Returns
         -------
-        Any
+        List[str]
             Processed output data
         """
         raise NotImplementedError

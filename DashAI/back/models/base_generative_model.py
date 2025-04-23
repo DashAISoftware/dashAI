@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Final
+from typing import Any, Final, List
 
 from DashAI.back.config_object import ConfigObject
 
@@ -10,16 +10,21 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, **kwargs):
-        """Initialize the generative model.
-        model_id (str): The ID of the model.
-        """
+        """Initialize the generative model."""
         raise NotImplementedError
 
     @abstractmethod
-    def generate(self, input: Any) -> Any:
+    def generate(self, input: Any) -> List[Any]:
         """Generate output from a generative model.
 
-        input (Any): Input to the generative model.
+        Parameters
+        ----------
+        input : Any
+            Input data to be generated
+
+        Returns
+        -------
+        List[Any]
+            Generated output data in a list
         """
         raise NotImplementedError
-    

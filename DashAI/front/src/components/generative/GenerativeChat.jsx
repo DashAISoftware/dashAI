@@ -266,7 +266,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
               ) : (
                 <>
                   <ChatBubble
-                    message={message.input}
+                    messages={[message.input]}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
                     messageType={task.metadata.inputs_types[0]}
@@ -274,7 +274,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                   />
                   {message.status === 3 ? (
                     <ChatBubble
-                      message={message.output}
+                      messages={message.output}
                       sender={"Model"}
                       messageType={task?.metadata.outputs_types[0]}
                       timestamp={new Date(
@@ -283,7 +283,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     />
                   ) : (
                     <ChatBubble
-                      message={"..."}
+                      messages={["..."]}
                       messageType={"str"}
                       sender="Model"
                     />

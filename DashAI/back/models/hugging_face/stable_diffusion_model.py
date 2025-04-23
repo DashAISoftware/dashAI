@@ -1,10 +1,9 @@
-from typing import Any
+from typing import Any, List
 
 import torch
 from diffusers import DiffusionPipeline
 
 from DashAI.back.core.schema_fields import (
-    bool_field,
     enum_field,
     float_field,
     int_field,
@@ -91,10 +90,19 @@ class StableDiffusionModel(ImageGenerationModel):
         self.height = kwargs.get("height")
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
 
-    def generate(self, input: Any) -> Any:
+    def generate(self, input: str) -> List[Any]:
         """Generate output from a generative model.
 
-        input (Any): Input to the generative model.
+        Parameters
+        ----------
+        input : str
+            Input data to be generated
+
+        Returns
+        -------
+        List[Any]
+            Generated output images in a list
+
         """
         generator = None
         if self.seed is not None and self.seed > 0:
@@ -111,4 +119,4 @@ class StableDiffusionModel(ImageGenerationModel):
             num_images_per_prompt=self.num_images_per_prompt,
         )
 
-        return output.images[0]
+        return output.images
