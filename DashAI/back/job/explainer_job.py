@@ -13,7 +13,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     select_columns,
     split_dataset,
-    split_indexes,
 )
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -271,28 +270,12 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 splits = json.loads(experiment.splits)
-                if isinstance(splits.get("train"), list):
-                    splits_index = splits
-                    loaded_dataset = split_dataset(
-                        loaded_dataset,
-                        train_indexes=splits_index["train"],
-                        test_indexes=splits_index["test"],
-                        val_indexes=splits_index["validation"],
-                    )
-                else:
-                    n = len(loaded_dataset)
-                    train_indexes, test_indexes, val_indexes = split_indexes(
-                        n,
-                        splits["train"],
-                        splits["test"],
-                        splits["validation"],
-                    )
-                    loaded_dataset = split_dataset(
-                        loaded_dataset,
-                        train_indexes=train_indexes,
-                        test_indexes=test_indexes,
-                        val_indexes=val_indexes,
-                    )
+                loaded_dataset = split_dataset(
+                    loaded_dataset,
+                    train_indexes=splits["train_indexes"],
+                    test_indexes=splits["test_indexes"],
+                    val_indexes=splits["val_indexes"],
+                )
 
                 prepared_dataset: DatasetDict = task.prepare_for_task(
                     datasetdict=loaded_dataset,
@@ -302,6 +285,20 @@ class ExplainerJob(BaseJob):
                     prepared_dataset,
                     self.input_columns,
                     self.output_columns,
+                )
+
+                # print(f"""DATA: {data[0].splits["split_indices"]["train"]}""")
+                data_x = split_dataset(
+                    data[0],
+                    train_indexes=splits["train_indexes"],
+                    test_indexes=splits["test_indexes"],
+                    val_indexes=splits["val_indexes"]
+                )
+                data_y = split_dataset(
+                    data[1],
+                    train_indexes=splits["train_indexes"],
+                    test_indexes=splits["test_indexes"],
+                    val_indexes=splits["val_indexes"]
                 )
 
             except Exception as e:
@@ -319,12 +316,15 @@ class ExplainerJob(BaseJob):
                 ) from e
 
             if explainer_scope == "global":
-                self._generate_global_explanation(explainer=explainer, dataset=data)
+                self._generate_global_explanation(
+                    explainer=explainer,
+                    dataset=(data_x, data_y)
+                )
 
             elif explainer_scope == "local":
                 self._generate_local_explanation(
                     explainer=explainer,
-                    dataset=data,
+                    dataset=(data_x, data_y),
                     task=task,
                 )
             else:
