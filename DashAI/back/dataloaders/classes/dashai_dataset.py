@@ -1,6 +1,7 @@
 """DashAI Dataset implementation."""
 
 import json
+import logging
 import os
 from typing import Dict, List, Literal, Tuple, Union
 
@@ -11,6 +12,8 @@ from beartype import beartype
 from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
 from datasets.features import Features
 from sklearn.model_selection import train_test_split
+
+log = logging.getLogger(__name__)
 
 
 def get_arrow_table(ds: Dataset) -> pa.Table:
@@ -825,11 +828,28 @@ def prepare_for_experiment(
         )
     else:
         n = len(dataset)
-        if splits.get("stratify", False):
-            output_column = output_columns
-            labels = dataset[output_column]
-        else:
-            labels = None
+        labels = None
+        if splits.get("stratify", False) and output_columns:
+            output_column = output_columns[0]
+            try:
+                column_values = dataset[output_column]
+
+                # Check column type and convert to numerical indices if needed
+                if isinstance(column_values[0], str):
+                    import pandas as pd
+
+                    labels_array, unique_values = pd.factorize(column_values)
+                    labels = labels_array.tolist()
+                else:
+                    labels = [
+                        int(x) if not isinstance(x, (list, tuple)) else int(x[0])
+                        for x in column_values
+                    ]
+            except Exception as e:
+                raise ValueError(
+                    f"Error while trying to stratify the dataset: {e}"
+                ) from e
+
         train_indexes, test_indexes, val_indexes = split_indexes(
             n,
             splits["train"],
