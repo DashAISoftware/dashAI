@@ -214,12 +214,8 @@ class KernelShap(BaseLocalExplainer):
         dict
             dictionary with the shap values for each instance.
         """
-        splits = list(instances.keys())
-        X = instances[splits[0]]
-        for split in splits[1:]:
-            X = concatenate_datasets([X, instances[split]])
 
-        X = X.to_pandas()
+        X = instances.to_pandas()
 
         predictions = self.model.predict(x_pred=X)
 

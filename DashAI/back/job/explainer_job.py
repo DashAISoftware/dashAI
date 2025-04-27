@@ -65,7 +65,7 @@ class ExplainerJob(BaseJob):
         explainer: BaseGlobalExplainer,
         dataset=Tuple[DatasetDict, DatasetDict],
         config: Dict[str, Any] = lambda di: di["config"],
-    ):
+    ) -> None:
         explainer_id: int = self.kwargs["explainer_id"]
         db: Session = self.kwargs["db"]
 
@@ -112,7 +112,7 @@ class ExplainerJob(BaseJob):
         dataset: Tuple[DatasetDict, DatasetDict],
         task: BaseTask,
         config: Dict[str, Any] = lambda di: di["config"],
-    ):
+    ) -> None:
         explainer_id: int = self.kwargs["explainer_id"]
         db: Session = self.kwargs["db"]
 
@@ -292,13 +292,13 @@ class ExplainerJob(BaseJob):
                     data[0],
                     train_indexes=splits["train_indexes"],
                     test_indexes=splits["test_indexes"],
-                    val_indexes=splits["val_indexes"]
+                    val_indexes=splits["val_indexes"],
                 )
                 data_y = split_dataset(
                     data[1],
                     train_indexes=splits["train_indexes"],
                     test_indexes=splits["test_indexes"],
-                    val_indexes=splits["val_indexes"]
+                    val_indexes=splits["val_indexes"],
                 )
 
             except Exception as e:
@@ -317,8 +317,7 @@ class ExplainerJob(BaseJob):
 
             if explainer_scope == "global":
                 self._generate_global_explanation(
-                    explainer=explainer,
-                    dataset=(data_x, data_y)
+                    explainer=explainer, dataset=(data_x, data_y)
                 )
 
             elif explainer_scope == "local":
