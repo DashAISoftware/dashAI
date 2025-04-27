@@ -1,9 +1,9 @@
 import logging
 import re
 from importlib import import_module
+from pathlib import Path
 from typing import Dict, List
 
-from pathlib import Path
 import pyarrow as pa
 from datasets.arrow_dataset import update_metadata_with_features
 from datasets.features import Features

@@ -1,6 +1,6 @@
 import torch
-from transformers import AutoModel, AutoTokenizer
 from datasets import Dataset, concatenate_datasets
+from transformers import AutoModel, AutoTokenizer
 
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import (
@@ -115,17 +115,17 @@ class Embedding(HuggingFaceWrapper):
                     embeddings = torch.max(hidden_states, dim=1)[0]
 
             embeddings_np = embeddings.cpu().numpy()
-            
+
             # Create a dictionary with embedding columns
             embedding_dict = {
                 f"{column}_embedding_{i}": embeddings_np[:, i].tolist()
                 for i in range(embeddings_np.shape[1])
             }
-            
+
             # Create a HuggingFace Dataset and convert it to a PyArrow table
             hf_dataset = Dataset.from_dict(embedding_dict)
             arrow_table = hf_dataset.data.table
-            
+
             # Create a new dataset for this column's embeddings
             column_dataset = DashAIDataset(arrow_table)
             all_column_embeddings.append(column_dataset)
