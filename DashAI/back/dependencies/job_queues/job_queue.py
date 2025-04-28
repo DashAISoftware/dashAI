@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from kink import inject
 from sqlalchemy import exc
@@ -9,29 +11,29 @@ from DashAI.back.job.base_job import BaseJob, JobError
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+executor = ThreadPoolExecutor(max_workers=4)  
+
+
+def _safe_job_run(job: BaseJob):
+    """Corre el job, captura errores."""
+    try:
+        job.run()
+    except exc.SQLAlchemyError as e:
+        logger.exception(f"SQLAlchemy error running job {job}: {e}")
+    except JobError as e:
+        logger.exception(f"Job error running job {job}: {e}")
+    except Exception as e:
+        logger.exception(f"Unexpected error running job {job}: {e}")
 
 @inject
 async def job_queue_loop(
     stop_when_queue_empties: bool,
     job_queue: BaseJobQueue = lambda di: di["job_queue"],
 ):
-    """Loop function to execute all the pending jobs in the job queue.
-    If the the param stop_when_queue_empties is True, the loop returns when
-    the queue empties, else it waits until  new jobs come in.
+    """Loop para procesar trabajos en segundo plano."""
+    loop = asyncio.get_running_loop()
 
-    Parameters
-    ----------
-    job_queue : BaseJobQueue
-        The current app job queue.
-    stop_when_queue_empties: bool
-        boolean to set the while loop condition.
-
-    """
     while not job_queue.is_empty() if stop_when_queue_empties else True:
-        try:
-            job: BaseJob = await job_queue.async_get()
-            job.run()
-        except exc.SQLAlchemyError as e:
-            logger.exception(e)
-        except JobError as e:
-            logger.exception(e)
+        job: BaseJob = await job_queue.async_get()
+
+        loop.run_in_executor(executor, _safe_job_run, job)

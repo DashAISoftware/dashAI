@@ -1,3 +1,4 @@
+import gc
 import json
 import logging
 import os
@@ -305,3 +306,5 @@ class ModelJob(BaseJob):
             run.set_status_as_error()
             db.commit()
             raise e
+        finally:
+            gc.collect()

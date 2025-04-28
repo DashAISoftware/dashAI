@@ -11,8 +11,8 @@ from DashAI.back.job.base_job import BaseJob
 
 class SimpleJobQueue(BaseJobQueue):
     """JobQueue implementation using asyncio Queue."""
-
-    queue: Queue = Queue()
+    def __init__(self):
+        self.queue = Queue()
 
     def _search_and_split(
         self, job_id: int

@@ -171,26 +171,31 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
     getRuns();
   }, []);
 
-  // polling to update the state of the runs
   useEffect(() => {
+    const fetchRuns = async () => {
+      await getRuns({ showLoading: false });
+    };
+
     if (expRunning[experiment.id]) {
-      // Fetch data initially
-      const initialGetRuns = async () => {
-        await getRuns({ showLoading: false });
-      };
-      initialGetRuns().then(() => {
-        // clear previous interval
-        clearInterval(intervalRef.current);
-        // start polling
-        intervalRef.current = setInterval(
-          () => getRuns({ showLoading: false }),
-          1000, // Poll every 1 second
-        );
-      });
+      fetchRuns();
+
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(fetchRuns, 1000);
+      }
     } else {
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
-  }, [expRunning]);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [expRunning[experiment.id]]);
 
   return (
     <React.Fragment>
