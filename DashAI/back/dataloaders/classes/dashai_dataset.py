@@ -11,6 +11,8 @@ from beartype import beartype
 from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets, Features
 from sklearn.model_selection import train_test_split
 import DashAI.back.types.value_types as vt
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import new_types_iterator, dashai_to_arrow_types
 
 def get_arrow_table(ds: Dataset) -> pa.Table:
     """
@@ -42,6 +44,7 @@ class DashAIDataset(Dataset):
         self,
         table: pa.Table,
         splits: dict = None,
+        types: Dict[str, Dict] = None,
         *args,
         **kwargs,
     ):
@@ -54,6 +57,7 @@ class DashAIDataset(Dataset):
         """
         super().__init__(table, *args, **kwargs)
         self.splits = splits or {}
+        self.types = types or {}
 
     @beartype
     def cast(self, *args, **kwargs) -> "DashAIDataset":
@@ -292,7 +296,7 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
 
 
 @beartype
-def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
+def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) -> None:
     """
     Saves a DashAIDataset in a custom format using two files in the specified directory:
       - "data.arrow": contains the dataset's PyArrow table.
@@ -307,8 +311,33 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
 
     os.makedirs(path, exist_ok=True)
 
-    table = dataset.arrow_table
-    dashai_schema = vt.arrow_to_dashai_schema(table) 
+    print("types dataset:", dataset.types)  
+    print("xd schema:", schema)
+    
+
+    table = get_arrow_table(dataset)
+    print("save_dataset table:", table)
+    dashai_schema = schema
+    hola = {}
+    my_schema = pa.schema([])
+    for column_name, info in schema.items():
+        print("column_name:", column_name)
+        print("info:", info)
+        dtype = info.get("dtype")
+        print("dtype:", dtype)
+        
+        pa.field(column_name, dashai_to_arrow_types(dtype))
+        my_schema = my_schema.append(pa.field(column_name, dashai_to_arrow_types(dtype)))
+
+        hola[column_name] = dashai_to_arrow_types(dtype)
+
+    table = table.cast(target_schema = my_schema)
+    print("casted table:", table)
+        
+
+
+
+
 
     data_filepath = os.path.join(path, "data.arrow")
     with pa.OSFile(data_filepath, "wb") as sink:
@@ -351,8 +380,15 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
             splits = json.load(f)
     else:
         splits = {}
+    
+    schema_filepath = os.path.join(dataset_path, "dashai_schema.json")
+    if os.path.exists(schema_filepath):
+        with open(schema_filepath, "r") as f:
+            schema = json.load(f)
+    else:
+        schema = {}
 
-    return DashAIDataset(data, splits=splits)
+    return DashAIDataset(data, splits=splits, types=schema)
 
 
 @beartype
@@ -560,9 +596,7 @@ def to_dashai_dataset(
         DashAIDataset: A unified dataset containing all data and metadata
         about the original splits.
     """
-
-    #print("\n\n\n", "to_dashai_dataset:", dataset, "\n\n\n")
-
+    
     if isinstance(dataset, DashAIDataset):
         #If is already a DashAIDataset, return it
         return dataset
@@ -580,7 +614,6 @@ def to_dashai_dataset(
         return merge_splits_with_metadata(dataset)
 
     dashai_dataset = DashAIDataset(arrow_tbl)
-    #print("este es el dashai_dataset:", dashai_dataset)
 
     return dashai_dataset
 
@@ -731,19 +764,36 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
         Dict with the columns and types
     """
     dataset = load_dataset(dataset_path)
-    dataset_features = dataset.features
+    
     column_types = {}
-    for column in dataset_features:
-        if dataset_features[column]._type == "Value":
-            column_types[column] = {
-                "type": "Value",
-                "dtype": dataset_features[column].dtype,
-            }
-        elif dataset_features[column]._type == "ClassLabel":
-            column_types[column] = {
-                "type": "Classlabel",
-                "dtype": "",
-            }
+    print("dataset features:", dataset.features)
+    dataset_features = dataset.features
+    print("dataset types:", dataset.types)
+    for column in dataset.types:
+        print("column:", column)
+        print("dataset.types[column]:", dataset.types[column])
+        column_spec = dataset.types[column]
+        column_types[column] = {
+            "type": column_spec.get("type", None),
+            "dtype": column_spec.get("dtype", None), #Arreglarlo para que muestre la metadata
+            #"names": column_spec.get("names", None),
+        }
+        print("column types:", column_types[column])
+    
+    # dataset_features = dataset.features
+    # column_types = {}
+    # for column in dataset_features:
+    #     print("column:", column)
+    #     if dataset_features[column]._type == "Value":
+    #         column_types[column] = {
+    #             "type": "Value",
+    #             "dtype": dataset_features[column].dtype,
+    #         }
+    #     elif dataset_features[column]._type == "ClassLabel":
+    #         column_types[column] = {
+    #             "type": "Classlabel",
+    #             "dtype": "",
+    #         }
     return column_types
 
 
@@ -768,28 +818,17 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
 
     # load the dataset from where its stored
     dataset = load_dataset(dataset_path)
-    #print("dataset ucs:", dataset)
-    # copy the features with the columns ans types
     new_features = dataset.features
-    #print("new_features ucs:", new_features)
-    for column in columns:
-        #print("columns[column]:", columns[column])
-        if columns[column].type == "ClassLabel":
-            names = list(set(dataset[column]))
-            new_features[column] = ClassLabel(names=names)
-            #print("names:", names)
-            #print("new_features:", new_features)
-        elif columns[column].type == "Value":
-            new_features[column] = Value(columns[column].dtype)
-            #print("new_features:", new_features)
+    print("pre_types:", dataset.types)
+    print("new_types:", new_types_iterator(columns))
+    dataset.types = new_types_iterator(columns)
 
-        # cast the column types with the changes
-        try:
-            dataset = dataset.cast(new_features)
+    print("dataset types:", dataset.types)
 
-        except ValueError as e:
-            raise ValueError("Error while trying to cast the columns") from e
-        #print("dataset casted:", dataset)
+    types_path = os.path.join(dataset_path, "dashai_schema.json")
+    with open(types_path, "w", encoding="utf-8") as f:
+        json.dump(dataset.types, f, indent=2)
+        
     return dataset
 
 

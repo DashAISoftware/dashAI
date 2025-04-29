@@ -27,4 +27,4 @@ export const dataTypesList = [
   "large_string",
 ];
 
-export const columnTypesList = ["Value", "ClassLabel"];
+export const columnTypesList = ["Integer", "Float", "Text", "Time", "Boolean", "Timestamp", "Duration", "Decimal", "Date", "Binary", "Categorical"];

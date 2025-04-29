@@ -3,7 +3,7 @@ import os
 import shutil
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, status, File, UploadFile
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
@@ -18,6 +18,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     update_columns_spec,
 )
 from DashAI.back.dependencies.database.models import Dataset
+import pandas as pd
+import pyarrow as pa
+from DashAI.back.types.value_types import arrow_to_dashai_schema
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -297,7 +300,7 @@ async def update_dataset(
         try:
             dataset = db.get(Dataset, dataset_id)
             if params.columns:
-                update_columns_spec(f"{dataset.file_path}/dataset", params.columns)
+                update_columns_spec(os.path.join(dataset.file_path, "dataset"), params.columns)
             if params.name:
                 setattr(dataset, "name", params.name)
                 new_folder_path = config["DATASETS_PATH"] / params.name
@@ -316,3 +319,50 @@ async def update_dataset(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+@router.post("/load_preview")
+async def load_preview(
+    file: UploadFile = File(...),
+    ):
+    """Load a small preview of the dataset from a file, without saving it to the database.
+
+    Parameters
+    ----------
+    file : UploadFile
+        The file uploaded by the user.
+        This file is expected to be a dataset file (e.g., CSV, Excel, json, etc.).
+    
+    Returns
+    -------
+    Dict
+        A dictionary containing a preview of the dataset, including the first 10 rows and column types.
+    """
+    try:
+        if file.filename.endswith(".csv"):
+            df = pd.read_csv(file.file, nrows=50)
+        elif file.filename.endswith(".xlsx"):
+            df = pd.read_excel(file.file, nrows=50)
+        elif file.filename.endswith(".json"):
+            df = pd.read_json(file.file, lines=True, nrows=50)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Unsupported file type. Only CSV, Excel, and JSON files are supported.",
+            )
+        
+        table = pa.Table.from_pandas(df)
+        schema = arrow_to_dashai_schema(table)
+        sample = df.head(10).to_dict(orient="records")
+        print("struct:", {"sample": sample, "schema": schema})
+        return {
+            "sample": sample,
+            "schema": schema,
+        }
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load preview",
+        ) from e
+
+

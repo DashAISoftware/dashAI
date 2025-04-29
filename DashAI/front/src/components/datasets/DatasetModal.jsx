@@ -21,12 +21,15 @@ import {
   enqueueDatasetJob as enqueueDatasetRequest,
   startJobQueue,
 } from "../../api/job";
-import DatasetSummaryStep from "./DatasetSummaryStep";
-
+import DatasetPreviewStep from "./DatasetPreviewStep";
+import { loadPreview } from "../../api/datasets";
+import { Update } from "@mui/icons-material";
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },
   { name: "uploadDataset", label: "Configure and upload your dataset" },
+  { name: "previewDataset", label: "Preview dataset" },
 ];
+
 
 const defaultNewDataset = {
   dataloader: "",
@@ -50,6 +53,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const [columnsSpec, setColumnsSpec] = useState({});
   const formSubmitRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
+  const [previewData, setPreviewData] = useState({});
+  const [showSummary, setShowSummary] = useState(false);
 
   const handleSubmitNewDataset = async () => {
     try {
@@ -58,14 +63,21 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           ? newDataset.file.name
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
+      
+      
       await enqueueDatasetRequest(
         newDataset.file,
         name,
         newDataset.url,
-        newDataset.params,
+       {
+        ...newDataset.params,
+        schema: columnsSpec
+      }
+        
       );
-      await startJobQueue();
 
+
+      await startJobQueue();
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
       updateDatasets();
       handleCloseDialog();
@@ -75,6 +87,41 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       enqueueSnackbar("Error when trying to upload the dataset.");
     } finally {
       setUploaded(true);
+    }
+  };
+
+
+  const handlePreviewDataset = async (file, url) => {
+    setNewDataset({ ...newDataset, file, url });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      
+
+      const preview = await loadPreview(formData);
+
+      setPreviewData(preview);
+      setShowSummary(true);
+
+      //Save the columns spec to be used in the preview table
+      const initialColumnsSpec = {};
+      Object.keys(preview.schema).forEach((columnName) => {
+        initialColumnsSpec[columnName] = {
+          type: preview.schema[columnName].type,
+          dtype: preview.schema[columnName].dtype,
+        };
+      });
+
+      setColumnsSpec(initialColumnsSpec);
+      
+    } catch (error) {
+      enqueueSnackbar("Error while trying to obtain preview of the uploaded file",);
+      setRequestError(true);
+      setPreviewData(null);
+      setShowSummary(false);
+      setNextEnabled(false);
     }
   };
 
@@ -95,6 +142,12 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       setActiveStep(activeStep + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
+      
+      //handleSubmitNewDataset();
+      handlePreviewDataset(newDataset.file, newDataset.url);
+      setActiveStep(2);
+    }
+    else if (activeStep === 2) {
       handleSubmitNewDataset();
     }
   };
@@ -178,6 +231,19 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             formSubmitRef={formSubmitRef}
           />
         )}
+          
+          {/* Step 3: Preview dataset */}
+        {activeStep === 2 && (
+          <DatasetPreviewStep
+            previewData={previewData}
+            newDataset={newDataset}
+            setNewDataset={setNewDataset}
+            onConfirm={handleSubmitNewDataset}
+            setNextEnabled={setNextEnabled}
+            columnsSpec={columnsSpec}
+            setColumnsSpec={setColumnsSpec}
+          />
+        )}
       </DialogContent>
 
       {/* Actions - Back and Next */}
@@ -193,7 +259,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             color="primary"
             disabled={!nextEnabled}
           >
-            {activeStep === 1 ? "Upload" : "Next"}
+            {activeStep === 0 ? "Next" : activeStep === 1 ? "Preview" : "Upload"}
           </Button>
         </ButtonGroup>
       </DialogActions>

@@ -44,6 +44,7 @@ export const enqueueDatasetJob = async (
       filename: encodeURIComponent(file.name),
     },
   });
+  console.log("enqueueDatasetJob response", response.data);
   return response.data;
 };
 

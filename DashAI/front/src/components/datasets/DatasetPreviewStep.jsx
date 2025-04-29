@@ -1,19 +1,22 @@
 import React, { useEffect } from "react";
 import { Paper, Grid, Typography, CircularProgress } from "@mui/material";
 import PropTypes from "prop-types";
-import DatasetSummaryTable from "./DatasetSummaryTable";
-function DatasetSummaryStep({
-  datasetId,
-  setNextEnabled,
-  datasetUploaded,
-  columnsSpec,
-  setColumnsSpec,
+import DatasetPreviewTable from "./DatasetPreviewTable";
+
+function DatasetPreviewStep({
+  previewData, // preview data from the API
+  setNextEnabled, // function to enable or disable the "Next" button in the modal
+  columnsSpec, // columns specification for the dataset
+  setColumnsSpec, // function to set the columns specification
 }) {
   useEffect(() => {
-    if (datasetUploaded) {
+    if (previewData && Object.keys(previewData).length > 0) {
       setNextEnabled(true);
     }
-  }, [datasetUploaded]);
+    else {
+      setNextEnabled(false);
+    }
+  }, [previewData, setNextEnabled]);
   return (
     <Paper
       variant="outlined"
@@ -33,9 +36,9 @@ function DatasetSummaryStep({
           </Typography>
         </Grid>
         <Grid item>
-          {datasetUploaded ? (
-            <DatasetSummaryTable
-              datasetId={datasetId}
+          {previewData  ? (
+            <DatasetPreviewTable
+              previewData={previewData}
               isEditable={true}
               columnsSpec={columnsSpec}
               setColumnsSpec={setColumnsSpec}
@@ -48,11 +51,11 @@ function DatasetSummaryStep({
     </Paper>
   );
 }
-DatasetSummaryStep.propTypes = {
-  datasetId: PropTypes.number,
+DatasetPreviewStep.propTypes = {
+  previewData: PropTypes.object.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   datasetUploaded: PropTypes.bool,
   columnsSpec: PropTypes.object.isRequired,
   setColumnsSpec: PropTypes.func.isRequired,
 };
-export default DatasetSummaryStep;
+export default DatasetPreviewStep;

@@ -54,6 +54,8 @@ class DatasetJob(BaseJob):
             file_path = self.kwargs.get("file_path")
             temp_dir = self.kwargs.get("temp_dir")
             url = self.kwargs.get("url", "")
+            schema = self.kwargs.get("params", {}).get("schema", {})
+            print("ds job schema:", schema)
 
             parsed_params = parse_params(DatasetParams, json.dumps(params))
             dataloader = component_registry[parsed_params.dataloader]["class"]()
@@ -78,7 +80,7 @@ class DatasetJob(BaseJob):
                 gc.collect()
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))
-                save_dataset(new_dataset, dataset_save_path)
+                save_dataset(new_dataset, dataset_save_path, schema)
             except Exception as e:
                 log.exception(e)
                 shutil.rmtree(folder_path, ignore_errors=True)

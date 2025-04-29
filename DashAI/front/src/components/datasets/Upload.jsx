@@ -101,7 +101,9 @@ function Upload({ onFileUpload }) {
                   </Typography>
                 </Grid>
                 <Grid item>
-                  <Button variant="contained">Upload a file</Button>
+                  <Button variant="contained" onClick= {handleButtonClick}>
+                    Upload a file
+                  </Button>
                 </Grid>
               </React.Fragment>
             )}
