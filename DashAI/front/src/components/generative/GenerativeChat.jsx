@@ -81,7 +81,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       // Enqueue the job
       enqueueGenerativeProcessJob(response.id).then(() => {
         // Start the job queue
-        startJobQueue().then(() => {
+        startJobQueue(true).then(() => {
           // Set a timeout to refresh the messages
           setTimeout(() => {
             // Refresh the messages after 1 seconds
