@@ -25,13 +25,13 @@ class StableDiffusionSchema(BaseSchema):
 
     num_inference_steps: schema_field(
         int_field(ge=1),
-        placeholder=10,
+        placeholder=15,
         description="Number of denoising steps. Higher usually leads to better quality but slower inference.",
     )  # type: ignore
 
     guidance_scale: schema_field(
         float_field(ge=0.0),
-        placeholder=7.5,
+        placeholder=3.5,
         description="How strongly the model follows the prompt. Higher = closer to prompt, but may reduce image quality.",
     )  # type: ignore
 
@@ -43,7 +43,7 @@ class StableDiffusionSchema(BaseSchema):
 
     seed: schema_field(
         int_field(),
-        placeholder=42,
+        placeholder=-1,
         description="Random seed for reproducibility. Use negative value for random seed.",
     )  # type: ignore
 
