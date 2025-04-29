@@ -246,7 +246,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           },
         }}
       >
-        {messagesWithHistory.map((message) => {
+        {messagesWithHistory?.map((message) => {
           return (
             <Box
               key={`${message.type}_${message.id}`}
@@ -269,7 +269,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     messages={[message.input]}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    messageType={task.metadata.inputs_types[0]}
+                    messageType={task?.metadata.inputs_types[0]}
                     isUser={true}
                   />
                   {message.status === 3 ? (
@@ -282,11 +282,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                       ).toLocaleTimeString()}
                     />
                   ) : (
-                    <ChatBubble
-                      messages={["..."]}
-                      messageType={"str"}
-                      sender="Model"
-                    />
+                    <ChatBubble isWaiting={true} sender="Model" />
                   )}
                 </>
               )}
