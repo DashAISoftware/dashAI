@@ -91,8 +91,10 @@ class ImageGenerationTask(BaseGenerativeTask):
         List[str]
             List of base64 encoded images
         """
-        encoded_images = []
+        if output is None:
+            return output
 
+        encoded_images = []
         for image_path in output:
             if not image_path:
                 encoded_images.append(None)
