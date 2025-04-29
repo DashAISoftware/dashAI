@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import List
 
 from llama_cpp import Llama
 
@@ -14,19 +14,18 @@ class GemmaModel(LLMGenerationModel):
         self.filename = "*.gguf"
 
         self.model = Llama.from_pretrained(
-            repo_id=self.model_id, filename=self.filename, verbose=True
+            repo_id=self.model_id, filename=self.filename, verbose=True, n_ctx=self.n_ctx,
         )
 
     # def generate(self, prompt: str, history: list[tuple[str, str]]) -> str:
     def generate(self, prompt: str) -> List[str]:
         """Generate text based on prompts."""
+        full_prompt = f"Q: {prompt} A:"
+        if len(full_prompt) > self.model.n_ctx:
+            full_prompt = full_prompt[-self.model.n_ctx:]
+
         output = self.model(
-            f"Q: {prompt} A:",
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            frequency_penalty=self.frequency_penalty,
-            stop=["\n", "Q:"],
-            echo=True,
+            full_prompt, max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["\n", "Q:"], echo=True
         )
         generated_text = output["choices"][0]["text"]
         clean_text = generated_text.replace(f"Q: {prompt} A:", "").strip()

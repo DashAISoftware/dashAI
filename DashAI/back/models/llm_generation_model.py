@@ -28,6 +28,12 @@ class LLMGenerationSchema(BaseSchema):
         description="Penalty for repeated tokens in the output. Higher values reduce the likelihood of repetition, encouraging more diverse text generation.",
     )  # type: ignore
 
+    n_ctx: schema_field(
+        int_field(ge=1),
+        placeholder=512,
+        description="Maximum number of tokens the model can process in a single forward pass (context window size).",
+    ) # type: ignore
+
 class LLMGenerationModel(BaseGenerativeModel):
     """Class for models associated to LLMGenerationTask."""
 
@@ -39,3 +45,4 @@ class LLMGenerationModel(BaseGenerativeModel):
         self.max_tokens = kwargs.pop("max_tokens", 100)
         self.temperature = kwargs.pop("temperature", 0.7)
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
+        self.n_ctx = kwargs.pop("n_ctx", 512)

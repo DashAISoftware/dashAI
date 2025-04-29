@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import List
 
 from llama_cpp import Llama
 
@@ -14,10 +14,14 @@ class QwenModel(LLMGenerationModel):
         self.filename = "*q8_0.gguf"
 
         self.model = Llama.from_pretrained(
-            repo_id=self.model_id, filename=self.filename, verbose=True
+            repo_id=self.model_id, filename=self.filename, verbose=True, n_ctx=self.n_ctx
         )
 
     def generate(self, prompt: str) -> List[str]:
+
+        if len(prompt) > self.model.n_ctx():
+            prompt = prompt[-self.model.n_ctx():]
+
         """Generate text based on prompts."""
 
         output = self.model(
