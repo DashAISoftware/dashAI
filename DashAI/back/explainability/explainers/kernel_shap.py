@@ -5,7 +5,7 @@ import pandas as pd
 import plotly
 import plotly.graph_objs as go
 import shap
-from datasets import DatasetDict, concatenate_datasets
+from datasets import DatasetDict
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,

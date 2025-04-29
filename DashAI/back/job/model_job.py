@@ -127,9 +127,9 @@ class ModelJob(BaseJob):
 
                 experiment.splits = json.dumps(
                     {
-                        "train_indexes": splits["train_indexes"], 
+                        "train_indexes": splits["train_indexes"],
                         "test_indexes": splits["test_indexes"],
-                        "val_indexes": splits["val_indexes"]
+                        "val_indexes": splits["val_indexes"],
                     }
                 )
 
