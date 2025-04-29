@@ -81,7 +81,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       // Enqueue the job
       enqueueGenerativeProcessJob(response.id).then(() => {
         // Start the job queue
-        startJobQueue().then(() => {
+        startJobQueue(true).then(() => {
           // Set a timeout to refresh the messages
           setTimeout(() => {
             // Refresh the messages after 1 seconds
@@ -246,7 +246,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           },
         }}
       >
-        {messagesWithHistory.map((message) => {
+        {messagesWithHistory?.map((message) => {
           return (
             <Box
               key={`${message.type}_${message.id}`}
@@ -269,7 +269,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     messages={[message.input]}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    messageType={task.metadata.inputs_types[0]}
+                    messageType={task?.metadata.inputs_types[0]}
                     isUser={true}
                   />
                   {message.status === 3 ? (
@@ -282,11 +282,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                       ).toLocaleTimeString()}
                     />
                   ) : (
-                    <ChatBubble
-                      messages={["..."]}
-                      messageType={"str"}
-                      sender="Model"
-                    />
+                    <ChatBubble isWaiting={true} sender="Model" />
                   )}
                 </>
               )}
