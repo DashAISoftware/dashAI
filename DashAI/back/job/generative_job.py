@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+import torch
 from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
@@ -100,3 +101,8 @@ class GenerativeJob(BaseJob):
         # Finish the generation process
         generative_process.set_status_as_finished()
         db.commit()
+
+        # Free up GPU memory
+        del model
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
