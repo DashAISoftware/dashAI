@@ -24,8 +24,6 @@ class StableDiffusionSchema(BaseSchema):
                 "stabilityai/stable-diffusion-2-base",
                 "stabilityai/stable-diffusion-2-1",
                 "stabilityai/stable-diffusion-2-1-base",
-                "stabilityai/stable-diffusion-2-1-unclip",
-                "stabilityai/stable-diffusion-2-1-unclip-small",
             ]
         ),
         placeholder="stabilityai/stable-diffusion-2",
