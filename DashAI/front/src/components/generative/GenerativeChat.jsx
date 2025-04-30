@@ -90,7 +90,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           setTimeout(() => {
             // Refresh the messages after 1 seconds
             getProcessById(response.id).then((response) => {
-              if (response.output === null) {
+              if (response.output === null && response.status === 4) {
                 setIsLoadingMessage(false);
                 deleteProcessById(response.id).then(() => {
                   setMessages((prevMessages) =>
