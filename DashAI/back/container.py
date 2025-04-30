@@ -17,7 +17,13 @@ from DashAI.back.explainability import (
     PartialDependence,
     PermutationFeatureImportance,
 )
-from DashAI.back.job import DatasetJob, ExplainerJob, ModelJob, PredictJob, GenerativeJob
+from DashAI.back.job import (
+    DatasetJob,
+    ExplainerJob,
+    GenerativeJob,
+    ModelJob,
+    PredictJob,
+)
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -25,6 +31,7 @@ from DashAI.back.models import (
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
+    FluxBasicModel,
     GemmaModel,
     GradientBoostingR,
     HistGradientBoostingClassifier,
@@ -36,20 +43,21 @@ from DashAI.back.models import (
     OpusMtEnESTransformer,
     QwenModel,
     RandomForestClassifier,
-    StableDiffusionModel,
     RandomForestRegression,
     RidgeRegression,
+    StableDiffusionV2Model,
+    StableDiffusionV3Model,
     ViTTransformer,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.tasks import (
     ImageClassificationTask,
     ImageGenerationTask,
+    LLMGenerationTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
     TranslationTask,
-    LLMGenerationTask,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,7 +89,9 @@ INITIAL_COMPONENTS = [
     BagOfWordsTextClassificationModel,
     QwenModel,
     GemmaModel,
-    StableDiffusionModel,
+    StableDiffusionV2Model,
+    StableDiffusionV3Model,
+    FluxBasicModel,
     RidgeRegression,
     LinearSVR,
     LinearRegression,
