@@ -17,6 +17,10 @@ export const getProcessById = async (processId: string): Promise<IProcess> => {
   return response.data;
 };
 
+export const deleteProcessById = async (processId: string): Promise<void> => {
+  await api.delete(`/v1/generative-process/${processId}`);
+};
+
 export const postProcess = async (
   sessionId: number,
   input: string,
