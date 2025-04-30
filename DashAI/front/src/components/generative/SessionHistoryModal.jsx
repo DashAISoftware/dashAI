@@ -53,15 +53,6 @@ export default function SessionHistoryModal({
 
   return (
     <>
-      <IconButton
-        onClick={handleOpen}
-        size="small"
-        aria-label="Ver historial de cambios"
-        sx={{ color: "text.secondary" }}
-      >
-        <HistoryIcon fontSize="small" />
-      </IconButton>
-
       <Dialog
         open={open}
         onClose={handleClose}
