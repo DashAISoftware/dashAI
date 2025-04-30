@@ -147,7 +147,7 @@ async def get_generative_session(
 async def get_all_generative_sessions(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Get all generative sessions.
+    """Get all generative sessions ordered by creation date.
 
     Parameters
     ----------
@@ -158,7 +158,7 @@ async def get_all_generative_sessions(
     Returns
     -------
     list
-        A list of dictionaries with all generative sessions on the database
+        A list of dictionaries with all generative sessions on the database, ordered by creation date.
 
     Raises
     ------
@@ -168,7 +168,11 @@ async def get_all_generative_sessions(
 
     with session_factory() as db:
         try:
-            sessions = db.query(GenerativeSession).all()
+            sessions = (
+                db.query(GenerativeSession)
+                .order_by(GenerativeSession.created.desc())
+                .all()
+            )
             return sessions
         except exc.SQLAlchemyError as e:
             log.exception(e)
