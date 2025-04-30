@@ -11,7 +11,11 @@ import InfoIcon from "@mui/icons-material/Info";
 import SendIcon from "@mui/icons-material/Send";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ChatBubble } from "./ChatBubble";
-import { getProcessById, getProcessesBySessionId } from "../../api/process";
+import {
+  getProcessById,
+  getProcessesBySessionId,
+  deleteProcessById,
+} from "../../api/process";
 import { useState, useEffect, useRef } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
@@ -86,13 +90,23 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           setTimeout(() => {
             // Refresh the messages after 1 seconds
             getProcessById(response.id).then((response) => {
-              setIsLoadingMessage(false);
-              setMessages((prevMessages) => {
-                const updatedMessages = prevMessages.map((message) =>
-                  message.id === response.id ? response : message,
-                );
-                return updatedMessages;
-              });
+              if (response.output === null) {
+                deleteProcessById(response.id).then(() => {
+                  setMessages((prevMessages) =>
+                    prevMessages.filter(
+                      (message) => message.id !== response.id,
+                    ),
+                  );
+                });
+              } else {
+                setIsLoadingMessage(false);
+                setMessages((prevMessages) => {
+                  const updatedMessages = prevMessages.map((message) =>
+                    message.id === response.id ? response : message,
+                  );
+                  return updatedMessages;
+                });
+              }
             });
           }, 1000);
         });
