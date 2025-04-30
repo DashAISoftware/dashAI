@@ -11,6 +11,7 @@ import {
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
+import DeleteSessionConfirmationModal from "./DeleteSessionConfirmationModal";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   color: theme.palette.error.main,
@@ -21,6 +22,7 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
 
 export default function SessionMenu({ sessionId, onInfo, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleClick = (event) => {
@@ -33,10 +35,19 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
   };
 
   const handleAction = (action, id) => {
-    if (action) {
+    if (action === onDelete) {
+      // Open confirmation modal instead of deleting immediately
+      setDeleteModalOpen(true);
+    } else if (action) {
       action(id);
     }
     handleClose();
+  };
+
+  const handleDeleteConfirm = (id) => {
+    if (onDelete) {
+      onDelete(id);
+    }
   };
 
   return (
@@ -71,20 +82,45 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <MenuItem onClick={() => handleAction(onInfo, sessionId)}>
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAction(onInfo, sessionId);
+          }}
+        >
           <ListItemIcon>
             <InfoIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Info</ListItemText>
         </MenuItem>
         <Divider />
-        <DeleteMenuItem onClick={() => handleAction(onDelete, sessionId)}>
+        <DeleteMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAction(onDelete, sessionId);
+          }}
+        >
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Delete</ListItemText>
         </DeleteMenuItem>
       </Menu>
+
+      {/* Confirmation Modal */}
+      <DeleteSessionConfirmationModal
+        open={deleteModalOpen}
+        sessionId={sessionId}
+        onClose={(e) => {
+          e.stopPropagation();
+          setDeleteModalOpen(false);
+        }}
+        onConfirm={(e) => {
+          e.stopPropagation();
+          handleDeleteConfirm(sessionId);
+          setDeleteModalOpen(false);
+        }}
+      />
     </>
   );
 }
