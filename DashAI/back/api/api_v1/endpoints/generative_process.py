@@ -48,7 +48,9 @@ async def upload_generative_process(
 
     with session_factory() as db:
         try:
-            session = db.query(GenerativeSession).filter_by(id=params.session_id).first()
+            session = (
+                db.query(GenerativeSession).filter_by(id=params.session_id).first()
+            )
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -118,6 +120,50 @@ async def get_generative_process(
             ]
 
             return process[0]
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.delete(
+    "/{process_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None
+)
+async def delete_generative_process(
+    process_id: str,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Delete a generative process by its ID.
+
+    Parameters
+    ----------
+    process_id : str
+        The ID of the generative process to delete.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    HTTPException
+        If the generative process is not found or if there's an internal database error.
+    """
+    with session_factory() as db:
+        try:
+            process = db.query(GenerativeProcess).filter_by(id=process_id).first()
+            if not process:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative process with ID {process_id} does not exist.",
+                )
+            db.delete(process)
+            db.commit()
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
