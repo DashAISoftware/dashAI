@@ -1,6 +1,7 @@
 import { Box, useTheme } from "@mui/material";
 import { useState } from "react";
 import { FullscreenImageChat } from "./FullscreenImageChat";
+import api from "../../api/api";
 
 export function ImageMessage({ images }) {
   const theme = useTheme();
@@ -29,7 +30,7 @@ export function ImageMessage({ images }) {
           }}
         >
           <img
-            src={`data:image/png;base64,${image}`}
+            src={`${api.defaults.baseURL}/v1/generative-process/image/${image}`}
             alt={`Image ${index + 1}`}
             style={{
               maxWidth: "100%",
