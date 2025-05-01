@@ -1,5 +1,7 @@
 """DashAI implementation of DistilBERT model for image classification."""
 
+import json
+import os
 import shutil
 from typing import Optional
 
@@ -216,10 +218,35 @@ class ViTTransformer(ImageClassificationModel):
 
         return np.array(probabilities)
 
-    def save(self, filename=None):
-        self.model.save_pretrained(filename)
+    def save(self, save_dir: str) -> None:
+        """Guarda el modelo, el feature extractor y los hiperparámetros en una carpeta."""
+        os.makedirs(save_dir, exist_ok=True)
+
+        # Guardar el modelo y el feature extractor (esto usa internamente huggingface)
+        self.model.save_pretrained(save_dir)
+        self.feature_extractor.save_pretrained(save_dir)
+
+        # Guardar hiperparámetros en JSON
+        metadata = {
+            "model_name": self.model_name,
+            "batch_size": self.batch_size,
+            "device": self.device,
+            "training_args": self.training_args,
+        }
+        with open(os.path.join(save_dir, "metadata.json"), "w") as f:
+            json.dump(metadata, f)
 
     @classmethod
-    def load(cls, filename):
-        model = ViTForImageClassification.from_pretrained(filename)
-        return cls(model=model)
+    def load(cls, save_dir: str):
+        """Carga el modelo, el feature extractor y los hiperparámetros desde una carpeta."""
+        with open(os.path.join(save_dir, "metadata.json"), "r") as f:
+            metadata = json.load(f)
+
+        model = ViTForImageClassification.from_pretrained(save_dir)
+
+        return cls(
+            model=model,
+            batch_size=metadata["batch_size"],
+            device=metadata["device"],
+            **metadata["training_args"]
+        )
