@@ -4,7 +4,6 @@ from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTra
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
-from DashAI.back.models.hugging_face.vit_transformer import ViTTransformer
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
@@ -22,13 +21,13 @@ from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsCla
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
 from DashAI.back.models.scikit_learn.logistic_regression import LogisticRegression
+from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
 from DashAI.back.models.scikit_learn.random_forest_regression import (
     RandomForestRegression,
 )
-from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,

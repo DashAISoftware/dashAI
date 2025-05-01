@@ -30,7 +30,6 @@ from DashAI.back.models import (
     RandomForestClassifier,
     RandomForestRegression,
     RidgeRegression,
-    ViTTransformer,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.plugins.utils import get_available_plugins
@@ -76,7 +75,6 @@ def get_initial_components():
         RandomForestClassifier,
         RandomForestRegression,
         DistilBertTransformer,
-        ViTTransformer,
         OpusMtEnESTransformer,
         BagOfWordsTextClassificationModel,
         RidgeRegression,
