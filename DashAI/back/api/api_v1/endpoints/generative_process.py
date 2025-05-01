@@ -1,6 +1,9 @@
 import logging
+import os
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from kink import di
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
@@ -229,3 +232,33 @@ async def get_generative_process(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.get("/image/{image_path}", status_code=200, response_model=None)
+async def get_generative_image(
+    image_path: str,
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+):
+    """
+    Get a generated image by its path.
+
+    Parameters
+    ----------
+    image_path : str
+        The relative path or filename of the generated image to retrieve.
+
+    Returns
+    -------
+    FileResponse
+        The image file to be served to the client.
+    """
+
+    print(image_path)
+
+    image_path = os.path.join(config["LOCAL_PATH"], "generative-images", image_path)
+    print(image_path)
+
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return FileResponse(image_path, media_type="image/png")
