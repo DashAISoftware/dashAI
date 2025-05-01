@@ -1,11 +1,6 @@
 import logging
 
-from DashAI.back.dataloaders import (
-    CSVDataLoader,
-    ExcelDataLoader,
-    ImageDataLoader,
-    JSONDataLoader,
-)
+from DashAI.back.dataloaders import CSVDataLoader, ExcelDataLoader, JSONDataLoader
 from DashAI.back.explainability import (
     KernelShap,
     PartialDependence,
@@ -83,7 +78,6 @@ def get_initial_components():
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,
-        ImageDataLoader,
         ExcelDataLoader,
         # Metrics
         F1,
