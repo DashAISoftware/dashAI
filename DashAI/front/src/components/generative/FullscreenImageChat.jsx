@@ -1,5 +1,6 @@
 import { Dialog, IconButton, Fade, Zoom, Box, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import api from "../../api/api";
 
 export function FullscreenImageChat({ open, onClose, imageData }) {
   const theme = useTheme();
@@ -51,7 +52,11 @@ export function FullscreenImageChat({ open, onClose, imageData }) {
       <Zoom in={open}>
         <Box
           component="img"
-          src={imageData ? `data:image/png;base64,${imageData}` : ""}
+          src={
+            imageData
+              ? `${api.defaults.baseURL}/v1/generative-process/image/${imageData}`
+              : ""
+          }
           alt="Fullscreen Image"
           sx={{
             maxWidth: "90%",
