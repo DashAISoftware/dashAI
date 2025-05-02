@@ -2,14 +2,20 @@
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
+from DashAI.back.models.hugging_face.flux_basic_model import FluxBasicModel
+from DashAI.back.models.hugging_face.gemma_model import GemmaModel
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
 
 from DashAI.back.models.hugging_face.deep_seek_model import DeepSeekModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
-from DashAI.back.models.hugging_face.gemma_model import GemmaModel
-from DashAI.back.models.hugging_face.stable_diffusion_model import StableDiffusionModel
+from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
+    StableDiffusionV2Model,
+)
+from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
+    StableDiffusionV3Model,
+)
 from DashAI.back.models.hugging_face.vit_transformer import ViTTransformer
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
@@ -28,13 +34,13 @@ from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsCla
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
 from DashAI.back.models.scikit_learn.logistic_regression import LogisticRegression
+from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
 from DashAI.back.models.scikit_learn.random_forest_regression import (
     RandomForestRegression,
 )
-from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,

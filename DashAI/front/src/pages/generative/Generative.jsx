@@ -29,7 +29,7 @@ export default function Generative() {
 
   const onParamsUpdate = (newParams) => {
     console.log("Params updated", newParams);
-    setParamsVersion(prev => prev + 1); 
+    setParamsVersion((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function Generative() {
   }, []);
 
   const handleAddSession = (session) => {
-    setSessions((prevSessions) => [...prevSessions, session]);
+    setSessions((prevSessions) => [session, ...prevSessions]);
   };
 
   const handleSessionDelete = (id) => {

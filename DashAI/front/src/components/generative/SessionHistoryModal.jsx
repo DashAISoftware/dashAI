@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import {
   Dialog,
@@ -16,11 +14,10 @@ import {
   Box,
   styled,
 } from "@mui/material";
-import HistoryIcon from "@mui/icons-material/History";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-// Componente estilizado para el área de desplazamiento
+// Styled component for the scrollable area
 const ScrollableContent = styled(DialogContent)(({ theme }) => ({
   maxHeight: "calc(80vh - 120px)",
   overflowY: "auto",
@@ -53,15 +50,6 @@ export default function SessionHistoryModal({
 
   return (
     <>
-      <IconButton
-        onClick={handleOpen}
-        size="small"
-        aria-label="Ver historial de cambios"
-        sx={{ color: "text.secondary" }}
-      >
-        <HistoryIcon fontSize="small" />
-      </IconButton>
-
       <Dialog
         open={open}
         onClose={handleClose}
@@ -82,7 +70,7 @@ export default function SessionHistoryModal({
             justifyContent="space-between"
           >
             <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="h6">Historial de Cambios</Typography>
+              <Typography variant="h6">Change History</Typography>
               <Chip
                 label={taskName}
                 variant="outlined"
@@ -95,7 +83,7 @@ export default function SessionHistoryModal({
             </IconButton>
           </Box>
           <Typography variant="body2" color="text.secondary" mt={1}>
-            Historial de cambios de parámetros para la sesión actual
+            Parameter change history for the current session
           </Typography>
         </DialogTitle>
 
@@ -142,7 +130,7 @@ export default function SessionHistoryModal({
                     {event.description}
                   </Typography>
                   <Chip
-                    label={`${event.changes.length} cambios`}
+                    label={`${event.changes.length} changes`}
                     size="small"
                     color="primary"
                     sx={{ height: 24 }}
@@ -160,7 +148,13 @@ export default function SessionHistoryModal({
                         borderColor: "divider",
                       }}
                     >
-                      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                      <CardContent
+                        sx={{
+                          p: 2,
+                          "&:last-child": { pb: 2 },
+                          overflowX: "auto",
+                        }}
+                      >
                         <Box
                           sx={{
                             display: "grid",
@@ -183,7 +177,7 @@ export default function SessionHistoryModal({
                             }}
                           >
                             <Typography variant="body2" color="text.secondary">
-                              De:
+                              From:
                             </Typography>
                             <Chip
                               label={change.oldValue.toString()}
@@ -199,7 +193,7 @@ export default function SessionHistoryModal({
                             }}
                           >
                             <Typography variant="body2" color="text.secondary">
-                              A:
+                              To:
                             </Typography>
                             <Chip
                               label={change.newValue.toString()}

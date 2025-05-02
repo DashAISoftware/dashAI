@@ -1,6 +1,9 @@
 import logging
+import os
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from kink import di
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
@@ -48,7 +51,9 @@ async def upload_generative_process(
 
     with session_factory() as db:
         try:
-            session = db.query(GenerativeSession).filter_by(id=params.session_id).first()
+            session = (
+                db.query(GenerativeSession).filter_by(id=params.session_id).first()
+            )
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -126,6 +131,50 @@ async def get_generative_process(
             ) from e
 
 
+@router.delete(
+    "/{process_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None
+)
+async def delete_generative_process(
+    process_id: str,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Delete a generative process by its ID.
+
+    Parameters
+    ----------
+    process_id : str
+        The ID of the generative process to delete.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    HTTPException
+        If the generative process is not found or if there's an internal database error.
+    """
+    with session_factory() as db:
+        try:
+            process = db.query(GenerativeProcess).filter_by(id=process_id).first()
+            if not process:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative process with ID {process_id} does not exist.",
+                )
+            db.delete(process)
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
 @router.get(
     "/session/{session_id}", status_code=status.HTTP_200_OK, response_model=None
 )
@@ -183,3 +232,33 @@ async def get_generative_process(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.get("/image/{image_path}", status_code=200, response_model=None)
+async def get_generative_image(
+    image_path: str,
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+):
+    """
+    Get a generated image by its path.
+
+    Parameters
+    ----------
+    image_path : str
+        The relative path or filename of the generated image to retrieve.
+
+    Returns
+    -------
+    FileResponse
+        The image file to be served to the client.
+    """
+
+    print(image_path)
+
+    image_path = os.path.join(config["LOCAL_PATH"], "generative-images", image_path)
+    print(image_path)
+
+    if not os.path.exists(image_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return FileResponse(image_path, media_type="image/png")

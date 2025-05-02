@@ -1,5 +1,3 @@
-import base64
-import io
 import uuid
 from typing import Any, List, Optional
 
@@ -91,20 +89,7 @@ class ImageGenerationTask(BaseGenerativeTask):
         List[str]
             List of base64 encoded images
         """
-        if output is None:
-            return output
 
-        encoded_images = []
-        for image_path in output:
-            if not image_path:
-                encoded_images.append(None)
-                continue
+        output = list(map(lambda x: x.split("\\")[-1], output)) if output else None
 
-            with open(image_path, "rb") as image_file:
-                buffer = io.BytesIO(image_file.read())
-                buffer.seek(0)
-
-                encoded_string = base64.b64encode(buffer.read()).decode("utf-8")
-                encoded_images.append(encoded_string)
-
-        return encoded_images
+        return output
