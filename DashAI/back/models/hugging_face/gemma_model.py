@@ -25,7 +25,7 @@ class GemmaModel(LLMGenerationModel):
             full_prompt = full_prompt[-self.model.n_ctx:]
 
         output = self.model(
-            full_prompt, max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["\n", "Q:"], echo=True
+            full_prompt, max_tokens=self.max_tokens, temperature=self.temperature, frequency_penalty=self.frequency_penalty, stop=["Q:"], echo=False
         )
         generated_text = output["choices"][0]["text"]
         clean_text = generated_text.replace(f"Q: {prompt} A:", "").strip()

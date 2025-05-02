@@ -29,8 +29,8 @@ class QwenModel(LLMGenerationModel):
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             frequency_penalty=self.frequency_penalty,
-            stop=["\n", "Q:"],
-            echo=True,
+            stop=["Q:"],
+            echo=False,
         )
 
         generated_text = output["choices"][0]["text"]
