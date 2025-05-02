@@ -23,6 +23,7 @@ from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
     DecisionTreeClassifier,
+    DeepSeekModel,
     DistilBertTransformer,
     DummyClassifier,
     GemmaModel,
@@ -67,6 +68,7 @@ INITIAL_COMPONENTS = [
     # Models
     SVC,
     DecisionTreeClassifier,
+    DeepSeekModel,
     DummyClassifier,
     GradientBoostingR,
     HistGradientBoostingClassifier,

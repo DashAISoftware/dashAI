@@ -6,6 +6,7 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
 
+from DashAI.back.models.hugging_face.deep_seek_model import DeepSeekModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
 from DashAI.back.models.hugging_face.gemma_model import GemmaModel
 from DashAI.back.models.hugging_face.stable_diffusion_model import StableDiffusionModel
