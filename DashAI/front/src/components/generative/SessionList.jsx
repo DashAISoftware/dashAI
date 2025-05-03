@@ -42,7 +42,6 @@ export default function SessionList({
       flexDirection={"column"}
       height={"100%"}
       width={"100%"}
-      overflow={"auto"}
       pb={1}
       sx={{
         "&::-webkit-scrollbar": {

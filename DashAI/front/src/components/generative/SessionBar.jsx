@@ -89,7 +89,13 @@ export default function SessionBar({
         borderRight: "1px solid #252836",
       }}
     >
-      <Box height={"100%"} overflow={"hidden"}>
+      <Box
+        display="flex"
+        flexDirection="column"
+        flex={1}
+        justifyContent={"flex-start"}
+        minHeight={0}
+      >
         {/* Header */}
         <SessionBarHeader />
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
@@ -98,7 +104,7 @@ export default function SessionBar({
         <NewSessionButton onClick={handleNewSessionButton} />
 
         {/* Search Bar */}
-        <Box px={2} py={1}>
+        <Box px={2} py={1} flex={"0 0 auto"}>
           <SearchBar
             placeholder={"Search"}
             value={searchQuery}
@@ -107,7 +113,7 @@ export default function SessionBar({
         </Box>
 
         {/* Sessions */}
-        <Box px={2} py={1} height={"100%"}>
+        <Box px={2} py={1} flex={1} minHeight={0} overflow="auto">
           {/* Header */}
           <Box display="flex" alignItems="center" pb={1}>
             <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
@@ -129,17 +135,18 @@ export default function SessionBar({
               {filteredSessions?.length}
             </Box>
           </Box>
-
           {/* Sessions Display Grouped by Task */}
-          <SessionList
-            selectedSessionId={selectedSessionId}
-            groupedSessions={groupedSessions}
-            openSections={openSections}
-            handleSessionClick={handleSessionClick}
-            handleSessionDelete={handleSessionDelete}
-            handleSessionInfo={handleSessionInfo}
-            toggleSection={toggleSection}
-          />
+          <Box>
+            <SessionList
+              selectedSessionId={selectedSessionId}
+              groupedSessions={groupedSessions}
+              openSections={openSections}
+              handleSessionClick={handleSessionClick}
+              handleSessionDelete={handleSessionDelete}
+              handleSessionInfo={handleSessionInfo}
+              toggleSection={toggleSection}
+            />
+          </Box>
         </Box>
       </Box>
 
