@@ -77,9 +77,10 @@ async def create_pipeline(
             steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
                           
             new_pipeline = Pipeline(
-                name=params.name,
-                description=params.description,
                 steps=steps_dict,
+                exploration=None,
+                train=None,
+                prediction=None,
             )
             db.add(new_pipeline)
             db.commit()
@@ -115,9 +116,10 @@ async def update_pipeline(
                     detail="Pipeline not found",
                 )
 
-            pipeline.name = params.name or pipeline.name
-            pipeline.description = params.description or pipeline.description
             pipeline.steps = params.steps or pipeline.steps
+            pipeline.exploration = params.exploration or pipeline.exploration
+            pipeline.train = params.train or pipeline.train
+            pipeline.prediction = params.prediction or pipeline.prediction
 
             db.commit()
             db.refresh(pipeline)

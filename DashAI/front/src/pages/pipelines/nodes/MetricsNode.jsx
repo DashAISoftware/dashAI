@@ -11,7 +11,6 @@ const MetricsNode = ({ open, onClose, taskType, onSave, savedMetrics }) => {
     time_series: ["MAE", "RMSE", "MAPE (Mean Absolute Percentage Error)"],
   };
 
-  // Actualiza el estado cuando cambia savedMetrics
   useEffect(() => {
     setSelectedMetrics(savedMetrics || []);
   }, [savedMetrics]);
@@ -25,8 +24,8 @@ const MetricsNode = ({ open, onClose, taskType, onSave, savedMetrics }) => {
   };
 
   const saveMetricsSelection = () => {
-    onSave({ metrics: selectedMetrics }); // Guarda las métricas seleccionadas
-    onClose(); // Cierra el diálogo
+    onSave({ metrics: selectedMetrics });
+    onClose();
   };
 
   return (

@@ -10,7 +10,7 @@ import {
   Chip,
 } from "@mui/material";
 
-const TaskModelSelectorNode = ({ open, onClose, onSave, savedConfig }) => {
+const TaskModelNode = ({ open, onClose, onSave, savedConfig }) => {
   const [selectedTask, setSelectedTask] = useState(savedConfig?.task || "");
   const [selectedModels, setSelectedModels] = useState(savedConfig?.models || []);
 
@@ -69,28 +69,18 @@ const TaskModelSelectorNode = ({ open, onClose, onSave, savedConfig }) => {
       {selectedTask && (
         <>
           <Typography variant="body1" gutterBottom mt={3}>
-            Choose models:
+            Choose model:
           </Typography>
           <Box mt={2}>
             <Select
-              multiple
               value={selectedModels}
               onChange={handleModelChange}
               displayEmpty
               fullWidth
-              input={<OutlinedInput />}
-              renderValue={(selected) =>
-                selected.length > 0 ? (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} />
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography color="textSecondary">Select Models</Typography>
-                )
-              }
             >
+              <MenuItem value="" disabled>
+                Select Model
+              </MenuItem>
               {taskModelOptions[selectedTask].map((model) => (
                 <MenuItem key={model} value={model}>
                   {model}
@@ -116,4 +106,4 @@ const TaskModelSelectorNode = ({ open, onClose, onSave, savedConfig }) => {
   );
 };
 
-export default TaskModelSelectorNode;
+export default TaskModelNode;

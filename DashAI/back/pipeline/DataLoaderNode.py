@@ -1,56 +1,47 @@
-import json
 import logging
 import pathlib
 from typing import Any, Dict
 
-import pandas as pd
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, load_dataset
 from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
 
 class DataLoader(BaseJob):
-    def __init__(self, filePath: str) -> None:
-        super().__init__(kwargs={"filePath": filePath})
+    TYPE = "DataLoader"
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(kwargs=kwargs)
 
     def set_status_as_delivered(self) -> None:
         log.info("DataLoader executed successfully.")
 
     def run(self, context: Dict[str, Any]) -> Any:
-        #dataset_dir = pathlib.Path(self.kwargs['filePath'])
-        dataset_dir = ""
+        context["dataset_name"] = self.kwargs["name"]
+        dataset_dir = pathlib.Path(self.kwargs["file_path"])
+        data_path = dataset_dir / "dataset/data.arrow"
 
-        dataset_dict_path = dataset_dir / "dataset_dict.json"
-        if not dataset_dict_path.exists():
-            raise JobError(f"No se encontró el dataset_dict.json en {dataset_dict_path}")
+        if not data_path.exists():
+            raise JobError("No se encontró el dataset en: {}".format(data_path))
 
         try:
-            with open(dataset_dict_path, 'r') as f:
-                dataset_dict = json.load(f)
-
-            train_data_path = dataset_dir / "train" / "dataset_info.json"
-            test_data_path = dataset_dir / "test" / "dataset_info.json"
-            validation_data_path = dataset_dir / "validation" / "dataset_info.json"
-
-            with open(train_data_path, 'r') as f:
-                train_data = json.load(f)
-
-            with open(test_data_path, 'r') as f:
-                test_data = json.load(f)
-
-            with open(validation_data_path, 'r') as f:
-                validation_data = json.load(f)
-
+            loaded_dataset: DashAIDataset = load_dataset(
+                    f"{dataset_dir}/dataset"
+                )
         except Exception as e:
-            log.error(f"Error cargando el dataset desde {dataset_dir}: {e}")
+                log.exception(e)
+                raise JobError(
+                    f"Can not load dataset from path {dataset_dir}",
+                ) from e
+            
+        except Exception as e:
+            log.error(f"Error al cargar el dataset: {e}")
             raise JobError(f"Error cargando el dataset: {e}")
 
         log.info(f"Dataset cargado correctamente desde: {dataset_dir}")
 
+        dataset_info = {k: v for k, v in self.kwargs.items() if k != "status"}
+
         return {
-            "dataset": {
-                "metadata": dataset_dict,
-                "train": train_data,
-                "test": test_data,
-                "validation": validation_data
-            }
+            "dataset": loaded_dataset,
         }

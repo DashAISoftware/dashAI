@@ -24,7 +24,7 @@ export function RunOrder(node, edges, nodes, nodeData) {
   return orderedNodes;
 }
 
-export default function RunNode({ node, edges, nodes, pipelineName = "Default Pipeline", onSaved, nodeData }) {
+export function RunNode({ node, edges, nodes, pipelineName = "pipeline", onSaved, nodeData }) {
   useEffect(() => {
     const order = RunOrder(node, edges, nodes, nodeData);
 
@@ -55,3 +55,33 @@ export default function RunNode({ node, edges, nodes, pipelineName = "Default Pi
 
   return null;
 }
+
+export function Run(nodes, nodeData){
+  const steps = nodes.map((node) => ({
+    id: node.id,
+    type: node.type,
+    label: node.data.label,
+    config: nodeData[node.id] || {},
+  }));
+
+  const savePipeline = async () => {
+    try {
+      const formData = {
+        steps: steps,
+        exploration: null,
+        train: null,
+        prediction: null,
+      };
+      console.log(formData);
+
+      const response = await createPipeline(formData);
+      console.log("Pipeline saved successfully:", response);
+      alert("Pipeline saved successfully!");
+    } catch (error) {
+      console.error("Error saving pipeline:", error);
+      alert("Failed to save pipeline. Check the console for details.");
+    }
+  };
+
+  savePipeline();
+} 

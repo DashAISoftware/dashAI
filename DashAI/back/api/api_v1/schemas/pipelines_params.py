@@ -9,12 +9,11 @@ class Step(BaseModel):
 
 
 class PipelineCreateParams(BaseModel):
-    name: str
-    description: Optional[str]
     steps: Optional[List[Step]]
 
 
 class PipelineUpdateParams(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
     steps: Optional[List[Step]]
+    exploration: Optional[Dict[str, Any]]
+    train: Optional[Dict[str, Any]]
+    prediction: Optional[Dict[str, Any]]
