@@ -271,7 +271,7 @@ async def update_generative_session_params(
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
-                parameters=updated_parameters,  # Guardar los parámetros actualizados en el historial
+                parameters=updated_parameters, 
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)
@@ -318,7 +318,7 @@ async def get_generative_session_parameters_history(
     """
     with session_factory() as db:
         try:
-            # Verificar si la sesión generativa existe
+            # Check if the generative session exists
             session = db.get(GenerativeSession, session_id)
             if not session:
                 raise HTTPException(
@@ -326,7 +326,7 @@ async def get_generative_session_parameters_history(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
-            # Obtener el historial de parámetros de la sesión
+            # Get the session parameter history
             parameters_history = (
                 db.query(GenerativeSessionParameterHistory)
                 .filter(GenerativeSessionParameterHistory.session_id == session_id)
@@ -334,7 +334,7 @@ async def get_generative_session_parameters_history(
                 .all()
             )
 
-            # Formatear los resultados como una lista de diccionarios
+            # Convert the objects to dictionaries
             return [
                 {
                     "id": entry.id,
