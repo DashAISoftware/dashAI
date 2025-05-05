@@ -11,7 +11,9 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.models.image_generation_model import ImageGenerationModel
+from DashAI.back.models.text_to_image_generation_model import (
+    TextToImageGenerationTaskModel,
+)
 
 
 class StableDiffusionSchema(BaseSchema):
@@ -79,7 +81,7 @@ class StableDiffusionSchema(BaseSchema):
     )  # type: ignore
 
 
-class StableDiffusionV2Model(ImageGenerationModel):
+class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     """Wrapper model for all Stable Diffusion 2.x models from stability.ai."""
 
     SCHEMA = StableDiffusionSchema

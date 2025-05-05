@@ -3,8 +3,8 @@ from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.llm_generation_task import LLMGenerationTask
-from DashAI.back.tasks.image_generation_task import ImageGenerationTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
+from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.translation_task import TranslationTask

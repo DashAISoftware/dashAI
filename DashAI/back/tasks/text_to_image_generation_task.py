@@ -1,0 +1,95 @@
+import uuid
+from typing import Any, List, Optional
+
+from PIL import Image
+
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+
+
+class TextToImageGenerationTask(BaseGenerativeTask):
+    """Base class for image generation tasks.
+
+    Here you can change the methods provided by class Task.
+    """
+
+    metadata: dict = {
+        "inputs_types": [str],
+        "outputs_types": [Image],
+        "inputs_cardinality": 1,
+        "outputs_cardinality": 1,
+    }
+
+    DESCRIPTION: str = "This task generates images based on the provided input text."
+
+    DISPLAY_NAME: str = "Text to Image"
+
+    def prepare_for_task(self, input: str) -> str:
+        """Change the inputs to suit the image generation task.
+
+        Parameters
+        ----------
+        inputs : str
+            Input to be changed
+
+        Returns
+        -------
+        str
+            Input with the new types
+        """
+        return input
+
+    def process_output(
+        self,
+        output: List[Any],
+        path: Optional[str] = None,
+    ) -> List[str]:
+        """Process the output of a generative model.
+
+        Parameters
+        ----------
+        output : List[Any]
+            list of images to be processed
+        path : Optional[str], optional
+            Path to save the output, by default None
+
+        Returns
+        -------
+        List[str]
+            List of paths to the processed images
+        """
+        save_dir = path / "generative-images"
+        if not save_dir.exists():
+            save_dir.mkdir(parents=True)
+
+        image_paths = []
+
+        for img in output:
+            # Generate a unique file name
+            file_name = str(uuid.uuid4())
+
+            image_path = save_dir / f"{file_name}.png"
+
+            # Save the image
+            img.save(image_path, format="PNG")
+
+            image_paths.append(str(image_path))
+
+        return image_paths
+
+    def process_output_from_database(self, output: List[str]) -> List[str]:
+        """Process the output of an image generation model from the database.
+
+        Parameters
+        ----------
+        output : List[str]
+            List of paths to the images
+
+        Returns
+        -------
+        List[str]
+            List of base64 encoded images
+        """
+
+        output = list(map(lambda x: x.split("\\")[-1], output)) if output else None
+
+        return output

@@ -53,11 +53,11 @@ from DashAI.back.models import (
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.tasks import (
     ImageClassificationTask,
-    ImageGenerationTask,
     LLMGenerationTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
+    TextToImageGenerationTask,
     TranslationTask,
 )
 
@@ -71,7 +71,7 @@ INITIAL_COMPONENTS = [
     TranslationTask,
     ImageClassificationTask,
     LLMGenerationTask,
-    ImageGenerationTask,
+    TextToImageGenerationTask,
     RegressionTask,
     # Models
     SVC,

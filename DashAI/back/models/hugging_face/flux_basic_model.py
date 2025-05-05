@@ -12,7 +12,9 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.models.image_generation_model import ImageGenerationModel
+from DashAI.back.models.text_to_image_generation_model import (
+    TextToImageGenerationTaskModel,
+)
 
 
 class FluxBasicSchema(BaseSchema):
@@ -84,7 +86,7 @@ class FluxBasicSchema(BaseSchema):
     )  # type: ignore
 
 
-class FluxBasicModel(ImageGenerationModel):
+class FluxBasicModel(TextToImageGenerationTaskModel):
     """Wrapper model for Flux Basic models from Black Forest Labs."""
 
     SCHEMA = FluxBasicSchema
