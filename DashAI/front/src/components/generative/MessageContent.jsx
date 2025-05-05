@@ -1,9 +1,15 @@
-import { Paper, useTheme } from "@mui/material";
+import { Box, Paper, useTheme } from "@mui/material";
 import { TextMessage } from "./TextMessage";
 import { ImageMessage } from "./ImageMessage";
 import { WaitingAnimationChat } from "./WaitingAnimationChat";
 
-export function MessageContent({ messageType, messages, isUser, isWaiting }) {
+export function MessageContent({
+  messageType,
+  messages,
+  cardinality,
+  isUser,
+  isWaiting,
+}) {
   const theme = useTheme();
 
   return (
@@ -22,10 +28,16 @@ export function MessageContent({ messageType, messages, isUser, isWaiting }) {
       {isWaiting ? (
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
-        <>
-          {messageType === "str" && <TextMessage messages={messages} />}
-          {messageType === "PIL.Image" && <ImageMessage images={messages} />}
-        </>
+        messages?.map((message, index) => (
+          <Box key={index}>
+            {cardinality
+              ? messageType[index] === "str"
+              : messageType[0] === "str" && <TextMessage message={message} />}
+            {cardinality
+              ? messageType[index] === "Image"
+              : messageType[0] === "Image" && <ImageMessage image={message} />}
+          </Box>
+        ))
       )}
     </Paper>
   );

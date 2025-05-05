@@ -290,14 +290,16 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     messages={[message.input]}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    messageType={task?.metadata.inputs_types[0]}
+                    messageType={task?.metadata.inputs_types}
+                    cardinality={task?.metadata.inputs_cardinality}
                     isUser={true}
                   />
                   {message.status === 3 ? (
                     <ChatBubble
                       messages={message.output}
                       sender={"Model"}
-                      messageType={task?.metadata.outputs_types[0]}
+                      messageType={task?.metadata.outputs_types}
+                      cardinality={task?.metadata.outputs_cardinality}
                       timestamp={new Date(
                         message.end_time,
                       ).toLocaleTimeString()}

@@ -14,9 +14,9 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
     metadata: dict = {
         "inputs_types": [str],
-        "outputs_types": [Image],
+        "outputs_types": [Image.Image],
         "inputs_cardinality": 1,
-        "outputs_cardinality": 1,
+        "outputs_cardinality": None,
     }
 
     DESCRIPTION: str = "This task generates images based on the provided input text."

@@ -3,12 +3,12 @@ import { useState } from "react";
 import { FullscreenImageChat } from "./FullscreenImageChat";
 import api from "../../api/api";
 
-export function ImageMessage({ images }) {
+export function ImageMessage({ image }) {
   const theme = useTheme();
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
-  const handleImageClick = (imageData) => {
-    setFullscreenImage(imageData);
+  const handleImageClick = () => {
+    setFullscreenImage(image);
   };
 
   const handleCloseFullscreen = () => {
@@ -17,30 +17,27 @@ export function ImageMessage({ images }) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {images?.map((image, index) => (
-        <Box
-          key={index}
-          onClick={() => handleImageClick(image)}
-          sx={{
-            cursor: "pointer",
-            "&:hover": {
-              opacity: 0.9,
-            },
-            transition: theme.transitions.create("opacity"),
+      <Box
+        onClick={handleImageClick}
+        sx={{
+          cursor: "pointer",
+          "&:hover": {
+            opacity: 0.9,
+          },
+          transition: theme.transitions.create("opacity"),
+        }}
+      >
+        <img
+          src={`${api.defaults.baseURL}/v1/generative-process/image/${image}`}
+          alt="Image"
+          style={{
+            maxWidth: "100%",
+            maxHeight: "300px",
+            objectFit: "contain",
+            borderRadius: theme.shape.borderRadius,
           }}
-        >
-          <img
-            src={`${api.defaults.baseURL}/v1/generative-process/image/${image}`}
-            alt={`Image ${index + 1}`}
-            style={{
-              maxWidth: "100%",
-              maxHeight: "300px",
-              objectFit: "contain",
-              borderRadius: theme.shape.borderRadius,
-            }}
-          />
-        </Box>
-      ))}
+        />
+      </Box>
       <FullscreenImageChat
         open={fullscreenImage !== null}
         onClose={handleCloseFullscreen}
