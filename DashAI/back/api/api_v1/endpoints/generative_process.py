@@ -253,10 +253,7 @@ async def get_generative_image(
         The image file to be served to the client.
     """
 
-    print(image_path)
-
     image_path = os.path.join(config["LOCAL_PATH"], "generative-images", image_path)
-    print(image_path)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail="Image not found")
