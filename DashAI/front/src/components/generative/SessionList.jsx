@@ -64,7 +64,7 @@ export default function SessionList({
             {/* Task Section Header */}
             <Box
               display="flex"
-              alignItems="center"
+              alignItems="space-between"
               sx={{
                 cursor: "pointer",
                 py: 0.5,
@@ -91,6 +91,11 @@ export default function SessionList({
                   fontSize: "0.9rem",
                   fontWeight: "medium",
                   textTransform: "capitalize",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  wordBreak: "break-all",
+                  whiteSpace: "nowrap",
+                  width: "100%",
                 }}
               >
                 {taskName}

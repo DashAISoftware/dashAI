@@ -75,7 +75,7 @@ export default function SessionBar({
 
   return (
     <Box
-      width="285px"
+      maxWidth="250px"
       height="100%"
       borderRadius={2}
       display={"flex"}
