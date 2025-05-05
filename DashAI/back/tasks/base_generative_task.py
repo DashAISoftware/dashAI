@@ -40,6 +40,7 @@ class BaseGenerativeTask:
     def prepare_for_task(
         self,
         input: Any,
+        **kwargs: Any,
     ) -> Any:
         """Prepare input data for the task.
 
@@ -56,10 +57,31 @@ class BaseGenerativeTask:
         raise NotImplementedError
 
     @abstractmethod
+    def prepare_input_for_database(
+        self,
+        input: List[Any],
+        **kwargs: Any,
+    ) -> List[Any]:
+        """Prepare input data for the database.
+
+        Parameters
+        ----------
+        input : List[Any]
+            Input data to be prepared
+
+        Returns
+        -------
+        List[Any]
+            Prepared input data
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def process_output(
         self,
         output: List[Any],
         path: Optional[str] = None,
+        **kwargs: Any,
     ) -> List[str]:
         """Process output data of the task.
 
@@ -78,7 +100,11 @@ class BaseGenerativeTask:
         raise NotImplementedError
 
     @abstractmethod
-    def process_output_from_database(self, output: List[str]) -> List[str]:
+    def process_output_from_database(
+        self,
+        output: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
         """Process output data from the database.
 
         Parameters

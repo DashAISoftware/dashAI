@@ -23,7 +23,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
     DISPLAY_NAME: str = "Text to Image"
 
-    def prepare_for_task(self, input: str) -> str:
+    def prepare_for_task(self, input: List[str], **kwargs: Any) -> str:
         """Change the inputs to suit the image generation task.
 
         Parameters
@@ -36,12 +36,31 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         str
             Input with the new types
         """
+        return input[0]
+
+    def prepare_input_for_database(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
+        """Prepare the input for the database.
+
+        Parameters
+        ----------
+        input : str
+            Input to be changed
+
+        Returns
+        -------
+        str
+            Input with the new types
+        """
         return input
 
     def process_output(
         self,
         output: List[Any],
-        path: Optional[str] = None,
+        **kwargs: Any,
     ) -> List[str]:
         """Process the output of a generative model.
 
@@ -57,7 +76,9 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         List[str]
             List of paths to the processed images
         """
-        save_dir = path / "generative-images"
+        path = kwargs.get("path")
+
+        save_dir = path / "images"
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
 
@@ -76,7 +97,11 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
         return image_paths
 
-    def process_output_from_database(self, output: List[str]) -> List[str]:
+    def process_output_from_database(
+        self,
+        output: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
         """Process the output of an image generation model from the database.
 
         Parameters

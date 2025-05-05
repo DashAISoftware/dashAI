@@ -1,8 +1,8 @@
 import logging
 import os
-from typing import Any, Dict
+from typing import Annotated, Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from kink import di
 from sqlalchemy import exc
@@ -24,7 +24,8 @@ log = logging.getLogger(__name__)
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_generative_process(
-    params: GenerativeProcessParams,
+    request: Request,
+    session_id: Annotated[int, Form(...)],
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Create a new generative session.
@@ -48,20 +49,38 @@ async def upload_generative_process(
     HTTPException
         If there's an internal database error or if the session ID does not exist.
     """
+    form = await request.form()
+    input_items = []
+
+    # Filter and sort only indexed keys like 'text_0', 'file_1'
+    indexed_keys = [
+        key for key in form.keys() if "_" in key and key.split("_")[1].isdigit()
+    ]
+    for key in sorted(indexed_keys, key=lambda x: int(x.split("_")[1])):
+        value = form[key]
+        if isinstance(value, UploadFile):
+            content = await value.read()
+            input_items.append(content)  # raw image bytes
+        else:
+            input_items.append(str(value))  # text string
 
     with session_factory() as db:
         try:
-            session = (
-                db.query(GenerativeSession).filter_by(id=params.session_id).first()
-            )
+            session = db.query(GenerativeSession).filter_by(id=session_id).first()
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Session with ID {params.session_id} does not exist.",
+                    detail=f"Session with ID {session_id} does not exist.",
                 )
+
+            task: BaseGenerativeTask = di["component_registry"][session.task_name][
+                "class"
+            ]()
+            processed_input = task.prepare_input_for_database(input_items)
+
             process = GenerativeProcess(
-                input=params.input,
-                session_id=params.session_id,
+                input=processed_input,
+                session_id=session_id,
             )
             db.add(process)
             db.commit()
@@ -253,7 +272,7 @@ async def get_generative_image(
         The image file to be served to the client.
     """
 
-    image_path = os.path.join(config["LOCAL_PATH"], "generative-images", image_path)
+    image_path = os.path.join(config["LOCAL_PATH"], "images", image_path)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail="Image not found")

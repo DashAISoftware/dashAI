@@ -26,9 +26,9 @@ import InfoSessionModal from "./InfoSessionModal";
 import HistoryIcon from "@mui/icons-material/History";
 import ParameterHistoryModal from "./SessionHistoryModal";
 import { useSnackbar } from "notistack";
+import { ChatInput } from "./ChatInput";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
-  const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -73,7 +73,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (input) => {
     // Set the Loading state to true
     setIsLoadingMessage(true);
 
@@ -82,7 +82,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       // Update the messages state with the new message
       // and reset the input field
       setMessages((prevMessages) => [...prevMessages, response]);
-      setInput("");
 
       // Enqueue the job
       enqueueGenerativeProcessJob(response.id).then(() => {
@@ -287,7 +286,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
               ) : (
                 <>
                   <ChatBubble
-                    messages={[message.input]}
+                    messages={message.input}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
                     messageType={task?.metadata.inputs_types}
@@ -315,48 +314,29 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       </Box>
 
       {/* Chat input */}
-      <Box display="flex" alignItems="center" gap={2} width={"100%"}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          label="Type a message"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          disabled={isLoadingMessage}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !isLoadingMessage) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSendMessage}
-          endIcon={<SendIcon />}
-          disabled={isLoadingMessage || input.trim() === ""}
-        >
-          {isLoadingMessage ? "Sending..." : "Send"}
-        </Button>
+      <ChatInput
+        onSendMessage={(input) => {
+          handleSendMessage(input);
+        }}
+        isLoading={isLoadingMessage}
+      />
 
-        {/* Session Info Modal */}
-        {sessionInfo && (
-          <InfoSessionModal
-            sessionData={sessionInfo}
-            open={sessionInfoVisible}
-            onClose={() => setSessionInfoVisible(false)}
-          />
-        )}
-
-        {/* Parameter History Modal */}
-        <ParameterHistoryModal
-          historyChanges={history}
-          open={historyInfoVisible}
-          taskName={taskName}
-          setOpen={setHistoryInfoVisible}
+      {/* Session Info Modal */}
+      {sessionInfo && (
+        <InfoSessionModal
+          sessionData={sessionInfo}
+          open={sessionInfoVisible}
+          onClose={() => setSessionInfoVisible(false)}
         />
-      </Box>
+      )}
+
+      {/* Parameter History Modal */}
+      <ParameterHistoryModal
+        historyChanges={history}
+        open={historyInfoVisible}
+        taskName={taskName}
+        setOpen={setHistoryInfoVisible}
+      />
     </Box>
   );
 }

@@ -22,21 +22,28 @@ class LLMGenerationTask(BaseGenerativeTask):
 
     USE_HISTORY: bool = True
 
-    def prepare_for_task(self, input: str, history: List[Tuple[str, str]]) -> str:
+    def prepare_for_task(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> str:
         """Prepare the input by including the history in Q: A: format.
 
         Parameters
         ----------
         input : str
             The current input to be processed.
-        history : list[tuple[str, str]]
-            A list of tuples where each tuple contains a previous input and its corresponding output.
 
         Returns
         -------
         str
             The input prepared with the history in Q: A: format.
         """
+        input = input[0]
+        history = kwargs.get("history", None)  # type: Optional[List[Tuple[str, str]]]
+        if not history:
+            return f"Q: {input}\nA:"
+
         context = "\n".join(
             [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
         )
@@ -45,10 +52,29 @@ class LLMGenerationTask(BaseGenerativeTask):
 
         return prepared_input
 
+    def prepare_input_for_database(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
+        """Prepare the input for the database.
+
+        Parameters
+        ----------
+        input : str
+            The input to be prepared.
+
+        Returns
+        -------
+        str
+            The prepared input.
+        """
+        return input
+
     def process_output(
         self,
         output: List[Any],
-        *args: Any,
+        **kwargs: Any,
     ) -> str:
         """Process the output of a generative model.
 
@@ -58,7 +84,11 @@ class LLMGenerationTask(BaseGenerativeTask):
 
         return output
 
-    def process_output_from_database(self, output: List[str]) -> List[str]:
+    def process_output_from_database(
+        self,
+        output: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
         """Process the output from the database.
 
         Parameters

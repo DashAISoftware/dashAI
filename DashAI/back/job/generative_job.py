@@ -127,7 +127,10 @@ class GenerativeJob(BaseJob):
                         .filter(GenerativeProcess.status == "FINISHED")
                         .all()
                     ]
-                    input_data = task.prepare_for_task(input_data, history)
+                    input_data = task.prepare_for_task(
+                        input_data,
+                        history=history,
+                    )
                 else:
                     input_data = task.prepare_for_task(input_data)
             except Exception as e:
@@ -157,7 +160,7 @@ class GenerativeJob(BaseJob):
                 raise JobError("Error during model generation.") from e
 
             try:
-                output: Any = task.process_output(output, config["LOCAL_PATH"])
+                output: Any = task.process_output(output, path=config["LOCAL_PATH"])
                 generative_process.output = output
                 generative_process.set_status_as_finished()
                 db.commit()

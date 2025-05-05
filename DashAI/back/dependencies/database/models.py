@@ -227,7 +227,7 @@ class GenerativeProcess(Base):
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
 
-    input: Mapped[str] = mapped_column(String)
+    input: Mapped[List[str]] = mapped_column(JSON, nullable=True)
     output: Mapped[List[str]] = mapped_column(JSON, nullable=True)
 
     session = relationship("GenerativeSession", back_populates="processes")

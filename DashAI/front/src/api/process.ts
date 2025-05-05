@@ -23,14 +23,24 @@ export const deleteProcessById = async (processId: string): Promise<void> => {
 
 export const postProcess = async (
   sessionId: number,
-  input: string,
+  input: Array<File | string>,
 ): Promise<IProcess> => {
-  const data = {
-    session_id: sessionId,
-    input: input,
-  };
-  const response = await api.post<IProcess>(`/v1/generative-process/`, data, {
-    headers: { "Content-Type": "application/json" },
+  const formData = new FormData();
+  formData.append("session_id", sessionId.toString());
+
+  input.forEach((item, index) => {
+    if (item instanceof File) {
+      formData.append(`file_${index}`, item);
+    } else if (typeof item === "string") {
+      formData.append(`text_${index}`, item);
+    } else {
+      console.error("Unsupported input type:", typeof item);
+    }
   });
+
+  const response = await api.post<IProcess>(
+    `/v1/generative-process/`,
+    formData,
+  );
   return response.data;
 };
