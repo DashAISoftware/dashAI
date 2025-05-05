@@ -25,6 +25,7 @@ import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
 import HistoryIcon from "@mui/icons-material/History";
 import ParameterHistoryModal from "./SessionHistoryModal";
+import { useSnackbar } from "notistack";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [input, setInput] = useState("");
@@ -37,6 +38,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const chatContainerRef = useRef(null);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -90,8 +92,12 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           setTimeout(() => {
             // Refresh the messages after 1 seconds
             getProcessById(response.id).then((response) => {
-              if (response.output === null && response.status === 4) {
+              // Check if the process is finished
+              if (response.status === 4) {
                 setIsLoadingMessage(false);
+                enqueueSnackbar("The process has failed. Deleting it...");
+
+                console.error("response error:", response.output);
                 deleteProcessById(response.id).then(() => {
                   setMessages((prevMessages) =>
                     prevMessages.filter(
