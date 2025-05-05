@@ -27,6 +27,7 @@ async def upload_generative_process(
     request: Request,
     session_id: Annotated[int, Form(...)],
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Create a new generative session.
 
@@ -76,7 +77,9 @@ async def upload_generative_process(
             task: BaseGenerativeTask = di["component_registry"][session.task_name][
                 "class"
             ]()
-            processed_input = task.prepare_input_for_database(input_items)
+            processed_input = task.prepare_input_for_database(
+                input_items, path=config["LOCAL_PATH"]
+            )
 
             process = GenerativeProcess(
                 input=processed_input,
