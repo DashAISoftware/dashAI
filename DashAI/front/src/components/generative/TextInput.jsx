@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box, TextField, Button } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 
-export function ChatInput({ onSendMessage, isLoading }) {
+export function TextInput({ onSendMessage, isLoading }) {
   const [input, setInput] = useState("");
 
   const handleSendMessage = () => {
@@ -39,4 +39,4 @@ export function ChatInput({ onSendMessage, isLoading }) {
   );
 }
 
-export default ChatInput;
+export default TextInput;

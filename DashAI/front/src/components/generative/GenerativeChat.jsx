@@ -26,7 +26,8 @@ import InfoSessionModal from "./InfoSessionModal";
 import HistoryIcon from "@mui/icons-material/History";
 import ParameterHistoryModal from "./SessionHistoryModal";
 import { useSnackbar } from "notistack";
-import { ChatInput } from "./ChatInput";
+import { TextInput } from "./TextInput";
+import { MediaInput } from "./MediaInput";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
@@ -314,12 +315,21 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       </Box>
 
       {/* Chat input */}
-      <ChatInput
-        onSendMessage={(input) => {
-          handleSendMessage(input);
-        }}
-        isLoading={isLoadingMessage}
-      />
+      {taskName === "ControlNetTask" ? (
+        <MediaInput
+          onSendMessage={(input) => {
+            handleSendMessage(input);
+          }}
+          isLoading={isLoadingMessage}
+        />
+      ) : (
+        <TextInput
+          onSendMessage={(input) => {
+            handleSendMessage(input);
+          }}
+          isLoading={isLoadingMessage}
+        />
+      )}
 
       {/* Session Info Modal */}
       {sessionInfo && (
