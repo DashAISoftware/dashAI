@@ -85,8 +85,6 @@ class SimpleControlNetModel(BaseControlNetModel):
                 raise ValueError(
                     "Failed to login to Hugging Face. Please check your API key."
                 ) from e
-        else:
-            raise ValueError("Hugging Face API key is required for private models.")
 
         self.controlnet = ControlNetModel.from_pretrained(
             "diffusers/controlnet-depth-sdxl-1.0-small",
