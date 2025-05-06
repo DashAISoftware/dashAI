@@ -1,14 +1,6 @@
-import {
-  Box,
-  Divider,
-  IconButton,
-  Typography,
-  TextField,
-  Button,
-} from "@mui/material";
+import { Box, Divider, IconButton, Typography } from "@mui/material";
 import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
-import SendIcon from "@mui/icons-material/Send";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ChatBubble } from "./ChatBubble";
 import {
@@ -124,6 +116,8 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   };
 
   useEffect(() => {
+    setTask(null);
+    setMessages([]);
     getMessages();
     getSessionInfo();
     getHistory();
