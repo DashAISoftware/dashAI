@@ -39,6 +39,7 @@ async def get_components(
     ignore_types: Annotated[Union[List[str], None], Query()] = None,
     related_component: Union[str, None] = None,
     component_parent: Union[str, None] = None,
+    has_related_of_type: Union[str, None] = None,
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ) -> List[Dict[str, Any]]:
     """Retrieve components from the register according to the provided parameters.
@@ -67,6 +68,10 @@ async def get_components(
     component_parent : Union[str , None], optional
         If specified, the function return only the components that inheirts the
         indicated component (e.g., ScikitLearnLikeModel), by default None.
+    has_related_of_type : Union[str, None], optional
+        If specified, the function returns only components that have at least one
+        related component of the specified type (e.g., "Model"). This is useful for
+        filtering tasks that have associated models, by default None.
     component_registry : ComponentRegistry
         The current app component registry provided by dependency injection.
 
@@ -116,6 +121,19 @@ async def get_components(
             ),
         )
 
+    # When has_related_type is not none, check if it exists in the registry.
+    if (
+        has_related_of_type is not None
+        and has_related_of_type not in component_registry._registry
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Type '{has_related_of_type}' does not exist in the registry. "
+                f"Available types: {list(component_registry._registry.keys())}."
+            ),
+        )
+
     # 1. obtain all components from the selected registry/registries
     # if none, get_components_by_type returns all components.
     selected_components = {
@@ -144,6 +162,18 @@ async def get_components(
         selected_components = _intersect_component_lists(
             selected_components,
             component_registry.get_child_components(component_parent, recursive=True),
+        )
+
+    # 5. filter if "has_related_of_type" was specified.
+    if has_related_of_type is not None:
+        components_with_related_type = []
+        for comp_name, component_dict in selected_components.items():
+            related_components = component_registry.get_related_components(comp_name)
+            if any(rel["type"] == has_related_of_type for rel in related_components):
+                components_with_related_type.append(component_dict)
+        selected_components = _intersect_component_lists(
+            selected_components,
+            components_with_related_type,
         )
 
     return [
