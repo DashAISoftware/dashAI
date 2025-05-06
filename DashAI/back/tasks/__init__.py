@@ -1,6 +1,7 @@
 # flake8: noqa
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.llm_generation_task import LLMGenerationTask
 from DashAI.back.tasks.regression_task import RegressionTask
