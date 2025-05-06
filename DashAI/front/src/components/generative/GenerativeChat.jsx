@@ -116,14 +116,14 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   };
 
   useEffect(() => {
-    setTask(null);
-    setMessages([]);
     getMessages();
     getSessionInfo();
     getHistory();
   }, [sessionId, paramsVersion]);
 
   useEffect(() => {
+    setTask(null);
+    setMessages([]);
     getTask();
   }, [taskName]);
 
