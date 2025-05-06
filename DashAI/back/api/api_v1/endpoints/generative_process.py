@@ -58,7 +58,6 @@ async def upload_generative_process(
     for key in sorted(indexed_keys, key=lambda x: int(x.split("_")[1])):
         value = form[key]
         if isinstance(value, UploadFile):
-            print("A File !")
             content = await value.read()
             input_items.append(content)  # raw image bytes
         else:

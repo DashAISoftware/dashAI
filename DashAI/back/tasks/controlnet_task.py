@@ -155,6 +155,4 @@ class ControlNetTask(BaseGenerativeTask):
                 # If the input is not an image, just append it as is
                 input_processed.append(ip)
 
-        print(input_processed)
-
         return input_processed
