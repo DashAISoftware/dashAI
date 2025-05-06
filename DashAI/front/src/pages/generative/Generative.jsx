@@ -68,6 +68,7 @@ export default function Generative() {
       width={"100%"}
       p={1.5}
       alignItems={"stretch"}
+      overflow={"hidden"}
     >
       <SessionBar
         sessions={sessions}
