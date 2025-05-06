@@ -118,3 +118,23 @@ class BaseGenerativeTask:
             Processed output data
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def process_input_from_database(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> List[Any]:
+        """Process input data from the database.
+
+        Parameters
+        ----------
+        input : List[str]
+            Input data to be processed
+
+        Returns
+        -------
+        List[Any]
+            Processed input data
+        """
+        raise NotImplementedError

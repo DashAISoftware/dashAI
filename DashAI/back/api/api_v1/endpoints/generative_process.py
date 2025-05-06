@@ -2,15 +2,13 @@ import logging
 import os
 from typing import Annotated, Any, Dict
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from kink import di
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
+from starlette.datastructures import UploadFile
 
-from DashAI.back.api.api_v1.schemas.generative_process_params import (
-    GenerativeProcessParams,
-)
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -60,6 +58,7 @@ async def upload_generative_process(
     for key in sorted(indexed_keys, key=lambda x: int(x.split("_")[1])):
         value = form[key]
         if isinstance(value, UploadFile):
+            print("A File !")
             content = await value.read()
             input_items.append(content)  # raw image bytes
         else:
@@ -88,6 +87,10 @@ async def upload_generative_process(
             db.add(process)
             db.commit()
             db.refresh(process)
+
+            process = process.__dict__
+            process["input"] = task.process_input_from_database(process["input"])
+
             return process
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -139,6 +142,7 @@ async def get_generative_process(
             process = [
                 {
                     **p,
+                    "input": task.process_input_from_database(p["input"]),
                     "output": task.process_output_from_database(p["output"]),
                 }
                 for p in process
@@ -200,7 +204,7 @@ async def delete_generative_process(
 @router.get(
     "/session/{session_id}", status_code=status.HTTP_200_OK, response_model=None
 )
-async def get_generative_process(
+async def get_generative_process_by_session_id(
     session_id: str,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
@@ -242,6 +246,7 @@ async def get_generative_process(
             process = [
                 {
                     **p,
+                    "input": task.process_input_from_database(p["input"]),
                     "output": task.process_output_from_database(p["output"]),
                 }
                 for p in process

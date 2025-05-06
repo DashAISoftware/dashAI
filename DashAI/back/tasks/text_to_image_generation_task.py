@@ -118,3 +118,22 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         output = list(map(lambda x: x.split("\\")[-1], output)) if output else None
 
         return output
+
+    def process_input_from_database(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
+        """Process the input of an image generation model from the database.
+
+        Parameters
+        ----------
+        input : List[str]
+            List of paths to the images
+
+        Returns
+        -------
+        List[str]
+            List of base64 encoded images
+        """
+        return input

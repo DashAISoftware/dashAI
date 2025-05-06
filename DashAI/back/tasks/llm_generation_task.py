@@ -103,3 +103,22 @@ class LLMGenerationTask(BaseGenerativeTask):
         """
 
         return output
+
+    def process_input_from_database(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
+        """Process the input from the database.
+
+        Parameters
+        ----------
+        input : list[str]
+            The input data to be processed.
+
+        Returns
+        -------
+        list[str]
+            The processed input data.
+        """
+        return input
