@@ -105,8 +105,6 @@ class FluxV1Model(TextToImageGenerationTaskModel):
                 raise ValueError(
                     "Failed to login to Hugging Face. Please check your API key."
                 ) from e
-        else:
-            raise ValueError("Hugging Face API key is required for private models.")
 
         try:
             self.model = DiffusionPipeline.from_pretrained(
