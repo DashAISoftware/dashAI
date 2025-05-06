@@ -83,41 +83,43 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       // Update the messages state with the new message
       // and reset the input field
       setMessages((prevMessages) => [...prevMessages, response]);
+      // Wait 1/2 second before enqueing the job to get the input properly from the server
+      setTimeout(() => {
+        // Enqueue the job
+        enqueueGenerativeProcessJob(response.id).then(() => {
+          // Start the job queue
+          startJobQueue(true).then(() => {
+            // Set a timeout to refresh the messages
+            setTimeout(() => {
+              // Refresh the messages after 1 seconds
+              getProcessById(response.id).then((response) => {
+                // Check if the process is finished
+                if (response.status === 4) {
+                  setIsLoadingMessage(false);
+                  enqueueSnackbar("The process has failed. Deleting it...");
 
-      // Enqueue the job
-      enqueueGenerativeProcessJob(response.id).then(() => {
-        // Start the job queue
-        startJobQueue(true).then(() => {
-          // Set a timeout to refresh the messages
-          setTimeout(() => {
-            // Refresh the messages after 1 seconds
-            getProcessById(response.id).then((response) => {
-              // Check if the process is finished
-              if (response.status === 4) {
-                setIsLoadingMessage(false);
-                enqueueSnackbar("The process has failed. Deleting it...");
-
-                console.error("response error:", response.output);
-                deleteProcessById(response.id).then(() => {
-                  setMessages((prevMessages) =>
-                    prevMessages.filter(
-                      (message) => message.id !== response.id,
-                    ),
-                  );
-                });
-              } else {
-                setIsLoadingMessage(false);
-                setMessages((prevMessages) => {
-                  const updatedMessages = prevMessages.map((message) =>
-                    message.id === response.id ? response : message,
-                  );
-                  return updatedMessages;
-                });
-              }
-            });
-          }, 1000);
+                  console.error("response error:", response.output);
+                  deleteProcessById(response.id).then(() => {
+                    setMessages((prevMessages) =>
+                      prevMessages.filter(
+                        (message) => message.id !== response.id,
+                      ),
+                    );
+                  });
+                } else {
+                  setIsLoadingMessage(false);
+                  setMessages((prevMessages) => {
+                    const updatedMessages = prevMessages.map((message) =>
+                      message.id === response.id ? response : message,
+                    );
+                    return updatedMessages;
+                  });
+                }
+              });
+            }, 1000);
+          });
         });
-      });
+      }, 500);
     });
   };
 
