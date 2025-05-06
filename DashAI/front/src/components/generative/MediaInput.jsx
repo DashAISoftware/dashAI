@@ -67,7 +67,12 @@ export function MediaInput({
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2 }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        gap: 2,
+      }}
     >
       {/* Image previews */}
       {previews.length > 0 && (
@@ -111,7 +116,7 @@ export function MediaInput({
           fullWidth
           multiline
           minRows={3}
-          maxRows={5}
+          maxRows={3}
           placeholder={placeholder}
           value={text}
           onChange={(e) => setText(e.target.value)}
