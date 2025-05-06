@@ -39,7 +39,10 @@ export function MessageContent({
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
         messages?.map((message, index) => {
-          const type = cardinality ? messageType[index] : messageType[0];
+          const type =
+            cardinality && messageType
+              ? messageType[index]
+              : messageType?.[0] || "str";
           const key = `${type}-${index}-${simpleHash(String(message))}`;
           return (
             <Box key={key}>
