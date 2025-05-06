@@ -17,8 +17,8 @@ export default function Generative() {
   const [paramsVersion, setParamsVersion] = useState(0);
 
   const handleSessionClick = (sessionId, taskName) => {
-    setSelectedSessionId(sessionId);
     setSelectedTaskName(taskName);
+    setSelectedSessionId(sessionId);
   };
 
   const handleNewSessionButton = () => {
