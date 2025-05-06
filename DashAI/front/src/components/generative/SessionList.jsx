@@ -12,7 +12,6 @@ export default function SessionList({
   handleSessionInfo,
   toggleSection,
 }) {
-  console.log("Grouped Sessions:", groupedSessions);
   if (groupedSessions === undefined) {
     return (
       <Box
