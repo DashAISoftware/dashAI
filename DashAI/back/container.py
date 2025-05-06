@@ -46,12 +46,15 @@ from DashAI.back.models import (
     RandomForestClassifier,
     RandomForestRegression,
     RidgeRegression,
+    SimpleControlNetModel,
+    StableDiffusionControlNetModel,
     StableDiffusionV2Model,
     StableDiffusionV3Model,
     ViTTransformer,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.tasks import (
+    ControlNetTask,
     ImageClassificationTask,
     LLMGenerationTask,
     RegressionTask,
@@ -71,6 +74,7 @@ INITIAL_COMPONENTS = [
     TranslationTask,
     ImageClassificationTask,
     LLMGenerationTask,
+    ControlNetTask,
     TextToImageGenerationTask,
     RegressionTask,
     # Models
@@ -92,6 +96,8 @@ INITIAL_COMPONENTS = [
     QwenModel,
     GemmaModel,
     StableDiffusionV2Model,
+    StableDiffusionControlNetModel,
+    SimpleControlNetModel,
     StableDiffusionV3Model,
     FluxBasicModel,
     RidgeRegression,
