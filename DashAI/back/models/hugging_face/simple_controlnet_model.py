@@ -12,6 +12,7 @@ from PIL import Image
 from transformers import DPTFeatureExtractor, DPTForDepthEstimation
 
 from DashAI.back.core.schema_fields import (
+    enum_field,
     float_field,
     int_field,
     schema_field,
@@ -35,6 +36,12 @@ class SimpleSchema(BaseSchema):
         description="Scale for the ControlNet conditioning. Higher values make the model follow the controlnet more closely.",
     )  # type: ignore
 
+    device: schema_field(
+        enum_field(enum=["cuda", "cpu"] if torch.cuda.is_available() else ["cpu"]),
+        placeholder="cuda" if torch.cuda.is_available() else "cpu",
+        description="Device for generation. Use 'cuda' if GPU is available.",
+    )  # type: ignore
+
     huggingface_key: schema_field(
         string_field(),
         placeholder="",
@@ -42,14 +49,14 @@ class SimpleSchema(BaseSchema):
     )  # type: ignore
 
 
-def get_depth_map(image):
+def get_depth_map(image, device):
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
-    ).to("cuda")
+    ).to(device)
     feature_extractor = DPTFeatureExtractor.from_pretrained("Intel/dpt-hybrid-midas")
 
-    image = feature_extractor(images=image, return_tensors="pt").pixel_values.to("cuda")
-    with torch.no_grad(), torch.autocast("cuda"):
+    image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
+    with torch.no_grad(), torch.autocast(device):
         depth_map = depth_estimator(image).predicted_depth
 
     depth_map = torch.nn.functional.interpolate(
@@ -77,6 +84,7 @@ class SimpleControlNetModel(BaseControlNetModel):
         """Initialize the generative model."""
         kwargs = self.validate_and_transform(kwargs)
         self.huggingface_key = kwargs.get("huggingface_key")
+        self.device = kwargs.get("device")
 
         if self.huggingface_key:
             try:
@@ -91,11 +99,11 @@ class SimpleControlNetModel(BaseControlNetModel):
             variant="fp16",
             use_safetensors=True,
             torch_dtype=torch.float16,
-        ).to("cuda")
+        ).to(self.device)
 
         self.vae = AutoencoderKL.from_pretrained(
             "madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16
-        ).to("cuda")
+        ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
             "stabilityai/stable-diffusion-xl-base-1.0",
@@ -104,7 +112,7 @@ class SimpleControlNetModel(BaseControlNetModel):
             variant="fp16",
             use_safetensors=True,
             torch_dtype=torch.float16,
-        ).to("cuda")
+        ).to(self.device)
 
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_inference_steps = kwargs.get("num_inference_steps")
@@ -127,7 +135,7 @@ class SimpleControlNetModel(BaseControlNetModel):
         image = input[0]
         prompt = input[1]
 
-        depth_map = get_depth_map(image)
+        depth_map = get_depth_map(image, self.device)
         image = self.pipe(
             prompt=prompt,
             image=depth_map,
