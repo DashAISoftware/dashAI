@@ -20,20 +20,8 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.models.controlnet_model import ControlNetModel
 
 
-class StableDiffusionControlNetSchema(BaseSchema):
-    """Schema for Flux Basic models."""
-
-    model_name: schema_field(
-        enum_field(
-            enum=[
-                "stabilityai/stable-diffusion-3.5-large-controlnet-blur",
-                "stabilityai/stable-diffusion-3.5-large-controlnet-canny",
-                "stabilityai/stable-diffusion-3.5-large-controlnet-depth",
-            ]
-        ),
-        placeholder="stabilityai/stable-diffusion-3.5-large-controlnet-canny",
-        description="The specific Stable Diffusion model version to use.",
-    )  # type: ignore
+class StableDiffusionControlNetCannySchema(BaseSchema):
+    """Schema for Stable Diffusion ControlNet with canny model."""
 
     huggingface_key: schema_field(
         string_field(),
@@ -111,10 +99,10 @@ class SD3CannyImageProcessor(VaeImageProcessor):
         return image
 
 
-class StableDiffusionControlNetModel(ControlNetModel):
-    """Model for Stable Diffusion ControlNet."""
+class StableDiffusionControlNetCannyModel(ControlNetModel):
+    """Model for Stable Diffusion ControlNet using canny as preprocessor."""
 
-    SCHEMA = StableDiffusionControlNetSchema
+    SCHEMA = StableDiffusionControlNetCannySchema
 
     def __init__(self, **kwargs):
         """Initialize the model."""
@@ -133,7 +121,7 @@ class StableDiffusionControlNetModel(ControlNetModel):
 
         try:
             self.controlnet = SD3ControlNetModel.from_pretrained(
-                self.model_name,
+                "stabilityai/stable-diffusion-3.5-large-controlnet-canny",
                 torch_dtype=torch.float16,
             )
 

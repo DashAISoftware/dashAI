@@ -12,8 +12,8 @@ from DashAI.back.models.hugging_face.qwen_model import QwenModel
 from DashAI.back.models.hugging_face.simple_controlnet_model import (
     SimpleControlNetModel,
 )
-from DashAI.back.models.hugging_face.stable_diffusion_controlnet_model import (
-    StableDiffusionControlNetModel,
+from DashAI.back.models.hugging_face.stable_diffusion_controlnet_canny_model import (
+    StableDiffusionControlNetCannyModel,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
     StableDiffusionV2Model,
