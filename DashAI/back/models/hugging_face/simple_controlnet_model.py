@@ -49,14 +49,17 @@ class SimpleSchema(BaseSchema):
     )  # type: ignore
 
 
-def get_depth_map(image, device):
+def get_depth_map(image, device, dtype):
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
     ).to(device)
     feature_extractor = DPTFeatureExtractor.from_pretrained("Intel/dpt-hybrid-midas")
 
     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
-    with torch.no_grad(), torch.autocast(device):
+
+    with torch.no_grad(), torch.autocast(
+        device, dtype=torch.bfloat16 if device == "cuda" else torch.float16
+    ):
         depth_map = depth_estimator(image).predicted_depth
 
     depth_map = torch.nn.functional.interpolate(
@@ -102,7 +105,8 @@ class SimpleControlNetModel(BaseControlNetModel):
         ).to(self.device)
 
         self.vae = AutoencoderKL.from_pretrained(
-            "madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16
+            "madebyollin/sdxl-vae-fp16-fix",
+            torch_dtype=torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
