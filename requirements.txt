@@ -60,6 +60,7 @@ datasets==3.1.0
     # via
     #   -r requirements.in
     #   evaluate
+diffusers==0.32.2
 dill==0.3.8
     # via
     #   datasets
@@ -193,6 +194,7 @@ numpy==1.24.4
     #   scipy
     #   shap
     #   transformers
+opencv-python==4.11.0.86
 openpyxl==3.1.5
     # via -r requirements.in
 optuna==4.2.1
