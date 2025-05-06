@@ -17,8 +17,8 @@ from DashAI.back.models.text_to_image_generation_model import (
 )
 
 
-class FluxBasicSchema(BaseSchema):
-    """Schema for Flux Basic models."""
+class FluxV1Schema(BaseSchema):
+    """Schema for Flux v1 model."""
 
     model_name: schema_field(
         enum_field(
@@ -86,10 +86,10 @@ class FluxBasicSchema(BaseSchema):
     )  # type: ignore
 
 
-class FluxBasicModel(TextToImageGenerationTaskModel):
-    """Wrapper model for Flux Basic models from Black Forest Labs."""
+class FluxV1Model(TextToImageGenerationTaskModel):
+    """Wrapper model for flux.1-dev and flux.1-schnell models from Black Forest Labs."""
 
-    SCHEMA = FluxBasicSchema
+    SCHEMA = FluxV1Schema
 
     def __init__(self, **kwargs):
         """Initialize the model."""

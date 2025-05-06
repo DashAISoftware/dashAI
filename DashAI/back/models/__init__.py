@@ -3,7 +3,7 @@ from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.hugging_face.deep_seek_model import DeepSeekModel
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
-from DashAI.back.models.hugging_face.flux_basic_model import FluxBasicModel
+from DashAI.back.models.hugging_face.flux_v1_model import FluxV1Model
 from DashAI.back.models.hugging_face.gemma_model import GemmaModel
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
