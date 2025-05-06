@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Final, List
+from typing import Any, Final, List, Union
 
 from DashAI.back.config_object import ConfigObject
 
@@ -14,7 +14,7 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def generate(self, input: Any) -> List[Any]:
+    def generate(self, input: Union[Any, tuple[Any, Any]]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters
