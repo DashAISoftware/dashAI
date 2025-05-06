@@ -29,7 +29,7 @@ export function MessageContent({
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
         messages?.map((message, index) => (
-          <Box key={index}>
+          <Box key={`${messageType[index]}-${index}`}>
             {cardinality
               ? messageType[index] === "str"
               : messageType[0] === "str" && <TextMessage message={message} />}
