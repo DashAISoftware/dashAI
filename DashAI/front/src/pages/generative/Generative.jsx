@@ -51,9 +51,7 @@ export default function Generative() {
       prevSessions.filter((session) => session.id !== id),
     );
 
-    removeSession(id).then(() => {
-      console.log("Session deleted", id);
-    });
+    removeSession(id);
   };
 
   return (
