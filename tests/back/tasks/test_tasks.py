@@ -1,5 +1,3 @@
-import shutil
-
 import pytest
 from datasets import DatasetDict
 
@@ -10,7 +8,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.translation_task import TranslationTask
