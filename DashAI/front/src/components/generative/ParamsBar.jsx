@@ -56,7 +56,6 @@ export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
       );
       setParameters(updatedSession.parameters);
       onParamsUpdate(updatedSession.parameters);
-      console.log("Session parameters updated:", updatedSession);
     } catch (error) {
       console.error("Failed to update session parameters:", error);
     }

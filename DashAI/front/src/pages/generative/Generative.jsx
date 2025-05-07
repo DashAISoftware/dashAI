@@ -28,7 +28,6 @@ export default function Generative() {
   };
 
   const onParamsUpdate = (newParams) => {
-    console.log("Params updated", newParams);
     setParamsVersion((prev) => prev + 1);
   };
 
