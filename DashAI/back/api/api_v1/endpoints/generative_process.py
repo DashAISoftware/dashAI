@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Annotated, Any, Dict
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import FileResponse
@@ -8,6 +8,7 @@ from kink import di
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 from starlette.datastructures import UploadFile
+from typing_extensions import Annotated
 
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
