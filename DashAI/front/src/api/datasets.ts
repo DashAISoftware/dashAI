@@ -44,3 +44,12 @@ export const loadPreview  = async (formData: FormData): Promise<object> => {
   });
   return response.data;
 }
+
+export const inferDataTypes = async (formData: FormData): Promise<object> => {
+  const response = await api.post(`${datasetEndpoint}/infer_datatypes`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}

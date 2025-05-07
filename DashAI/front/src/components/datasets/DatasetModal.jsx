@@ -29,6 +29,7 @@ const steps = [
   { name: "uploadDataset", label: "Configure and upload your dataset" },
   { name: "previewDataset", label: "Preview dataset" },
 ];
+import { inferDataTypes } from "../../api/datasets";
 
 
 const defaultNewDataset = {
@@ -125,6 +126,37 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     }
   };
 
+  const handleInferDataTypes = async () => {
+    console.log("corriendo infer")
+    const formData = new FormData();
+    formData.append("file", newDataset.file);
+    console.log("newDataset.file", newDataset.file);
+    console.log("formData", formData);
+    try {
+      const response = await inferDataTypes(formData); // este hace fetch al endpoint /infer_datatypes
+      console.log("Infered datatypes:", response);
+      
+      const updatedTypes =  Object.fromEntries(
+        Object.entries(response).map(([key, value]) => [
+          key,
+          {
+            type: value.type,
+            dtype: value.dtype,
+          }
+        ])
+);
+
+      
+      setColumnsSpec(updatedTypes); // actualiza el esquema inferido
+      console.log("columnsSpec", columnsSpec);
+      enqueueSnackbar("Inferred datatypes successfully", { variant: "success" });
+    } catch (error) {
+      console.error("Failed to infer datatypes", error);
+      enqueueSnackbar("Failed to infer datatypes", { variant: "error" });
+    }
+  };
+
+
   const handleCloseDialog = () => {
     setActiveStep(0);
     setNewDataset(defaultNewDataset);
@@ -142,8 +174,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       setActiveStep(activeStep + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
-      
-      //handleSubmitNewDataset();
       handlePreviewDataset(newDataset.file, newDataset.url);
       setActiveStep(2);
     }
@@ -242,6 +272,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             setNextEnabled={setNextEnabled}
             columnsSpec={columnsSpec}
             setColumnsSpec={setColumnsSpec}
+            handleInferDataTypes={handleInferDataTypes}
           />
         )}
       </DialogContent>

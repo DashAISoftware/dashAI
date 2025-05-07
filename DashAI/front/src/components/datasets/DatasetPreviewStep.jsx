@@ -2,12 +2,14 @@ import React, { useEffect } from "react";
 import { Paper, Grid, Typography, CircularProgress } from "@mui/material";
 import PropTypes from "prop-types";
 import DatasetPreviewTable from "./DatasetPreviewTable";
+import { Button } from "@mui/material"; 
 
 function DatasetPreviewStep({
   previewData, // preview data from the API
   setNextEnabled, // function to enable or disable the "Next" button in the modal
   columnsSpec, // columns specification for the dataset
   setColumnsSpec, // function to set the columns specification
+  handleInferDataTypes, // function to infer categorical types
 }) {
   useEffect(() => {
     if (previewData && Object.keys(previewData).length > 0) {
@@ -37,12 +39,22 @@ function DatasetPreviewStep({
         </Grid>
         <Grid item>
           {previewData  ? (
+            <>
             <DatasetPreviewTable
               previewData={previewData}
               isEditable={true}
               columnsSpec={columnsSpec}
               setColumnsSpec={setColumnsSpec}
             />
+            <Button
+              variant="outlined"
+              color="secondary"
+              sx={{ mt: 2 }}
+              onClick ={() => handleInferDataTypes()}
+            >
+              Inferir tipos categóricos
+            </Button>
+          </>
           ) : (
             <CircularProgress />
           )}

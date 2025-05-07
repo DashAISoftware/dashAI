@@ -142,20 +142,13 @@ class DashAIDataset(Dataset):
                     "exist in dataset."
                 )
         new_features = self.features.copy()
-        #print("method change_columns_type:", new_features, " /n/n/n/n")
         for column in column_types:
-            #print("column:", column)
             if column_types[column] == "Categorical":
                 names = list(set(self[column]))
                 new_features[column] = ClassLabel(names=names)
-                #print("names:", names)
-                #print("new_features:", new_features)
             elif column_types[column] == "Numerical":
                 new_features[column] = Value("float32")
-                #print("new_features:", new_features)
-        #print("dataset precasted:", self)
         dataset = self.cast(new_features)
-        #print("dataset casted:", dataset)
         return dataset
 
     @beartype
@@ -311,20 +304,12 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
 
     os.makedirs(path, exist_ok=True)
 
-    print("types dataset:", dataset.types)  
-    print("xd schema:", schema)
-    
-
     table = get_arrow_table(dataset)
-    print("save_dataset table:", table)
     dashai_schema = schema
     hola = {}
     my_schema = pa.schema([])
     for column_name, info in schema.items():
-        print("column_name:", column_name)
-        print("info:", info)
         dtype = info.get("dtype")
-        print("dtype:", dtype)
         
         pa.field(column_name, dashai_to_arrow_types(dtype))
         my_schema = my_schema.append(pa.field(column_name, dashai_to_arrow_types(dtype)))
@@ -332,12 +317,6 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
         hola[column_name] = dashai_to_arrow_types(dtype)
 
     table = table.cast(target_schema = my_schema)
-    print("casted table:", table)
-        
-
-
-
-
 
     data_filepath = os.path.join(path, "data.arrow")
     with pa.OSFile(data_filepath, "wb") as sink:
@@ -766,19 +745,19 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     dataset = load_dataset(dataset_path)
     
     column_types = {}
-    print("dataset features:", dataset.features)
     dataset_features = dataset.features
-    print("dataset types:", dataset.types)
+    print("dataset features:", dataset_features)
+    for column in dataset_features:
+        print("dsft[column]:", dataset_features[column])
+        print("dsft[column]._type:", dataset_features[column]._type)
     for column in dataset.types:
-        print("column:", column)
-        print("dataset.types[column]:", dataset.types[column])
         column_spec = dataset.types[column]
+
         column_types[column] = {
             "type": column_spec.get("type", None),
             "dtype": column_spec.get("dtype", None), #Arreglarlo para que muestre la metadata
             #"names": column_spec.get("names", None),
         }
-        print("column types:", column_types[column])
     
     # dataset_features = dataset.features
     # column_types = {}

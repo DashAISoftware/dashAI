@@ -448,6 +448,16 @@ dtype_arrow_map = {
     "large_binary": pa.large_binary(),
 }
 
+PTYPE_TO_DASHAI = {
+    "integer": {"type": "Integer", "dtype": "int64"},
+    "float": {"type": "Float", "dtype": "float64"},
+    "string": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    "boolean": {"type": "Boolean", "dtype": "bool"},
+    "categorical": {"type": "Categorical", "dtype": "string"},
+    "date-iso-8601": {"type": "Date", "dtype": "date64"},
+    "date-eu": {"type": "Date", "dtype": "date64"},
+    "date-non-std": {"type": "Date", "dtype": "date64"},
+}
 
 def arrow_to_dashai_types(arrow_type) -> DashAIValue:
     """Convert an Arrow type to a DashAI value."""

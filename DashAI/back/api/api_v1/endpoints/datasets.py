@@ -20,7 +20,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset
 import pandas as pd
 import pyarrow as pa
-from DashAI.back.types.value_types import arrow_to_dashai_schema
+from DashAI.back.types.value_types import arrow_to_dashai_schema, PTYPE_TO_DASHAI
+from ptype.PtypeCat import PtypeCat
+import json
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -339,20 +341,28 @@ async def load_preview(
     """
     try:
         if file.filename.endswith(".csv"):
-            df = pd.read_csv(file.file, nrows=50)
+            df = pd.read_csv(file.file, nrows=100)
         elif file.filename.endswith(".xlsx"):
-            df = pd.read_excel(file.file, nrows=50)
+            df = pd.read_excel(file.file, nrows=100)
         elif file.filename.endswith(".json"):
-            df = pd.read_json(file.file, lines=True, nrows=50)
+            try:
+                df = pd.read_json(file.file, lines=True, nrows=100)
+            except ValueError:
+                # If the JSON is not in lines format, try loading it as a regular JSON
+                file.file.seek(0)
+                #Hay que mirar el json dataloaderrrrr porque carga a partir de una key dada por el user
+
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported file type. Only CSV, Excel, and JSON files are supported.",
             )
+        if len(df) > 100:
+            df = df.head(100)
         
         table = pa.Table.from_pandas(df)
         schema = arrow_to_dashai_schema(table)
-        sample = df.head(10).to_dict(orient="records")
+        sample = df.to_dict(orient="records")
         print("struct:", {"sample": sample, "schema": schema})
         return {
             "sample": sample,
@@ -366,3 +376,51 @@ async def load_preview(
         ) from e
 
 
+@router.post("/infer_datatypes")
+async def infer_datatypes(
+    file: UploadFile = File(...),
+    ):
+    """Infer the datatypes of the dataset.
+
+    Parameters
+    ----------
+    file : UploadFile
+        The Dataset from load_preview, as a json.
+    
+    Returns
+    -------
+    Dict
+        A dictionary containing the inferred datatypes of the dataset columns.
+    """
+    try:
+        if file.filename.endswith(".csv"):
+            df = pd.read_csv(file.file)
+        elif file.filename.endswith(".xlsx"):
+            df = pd.read_excel(file.file)
+        elif file.filename.endswith(".json"):
+            df = pd.read_json(file.file, lines=True)
+        #print("df:", df.head())
+        if len(df)>100:
+            df = df.head(100)
+        ptype_cat = PtypeCat()
+        schema = ptype_cat.schema_fit(df)
+        first_row = schema.show().iloc[0]
+        print("ptypecat schema:", first_row)
+        processed_schema = {}
+
+        for col_name, column_object in schema.cols.items():
+            dashai_type = PTYPE_TO_DASHAI.get(max(column_object.p_t, key=column_object.p_t.get))
+            processed_schema[col_name] = {
+                **dashai_type,
+                "probabilities": column_object.p_t,
+                "unique_vals_count": len(column_object.unique_vals),
+            }
+        #print("processed schema:", processed_schema)
+        return processed_schema
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to infer datatypes",
+        ) from e

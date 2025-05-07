@@ -24,6 +24,7 @@ function DatasetPreviewTable({
   useEffect(() => {
     if (previewData.sample && previewData.sample.length > 0) {
       const columnNames = Object.keys(previewData.schema);
+
       const rows = columnNames.map((name, idx) => {
         const columnInfo = previewData.schema[name];
         return {
@@ -35,6 +36,16 @@ function DatasetPreviewTable({
         };
       });
 
+      // const newColumnsSpec = {};
+      // for (const columnName of columnNames) {
+      //   const columnInfo = previewData.schema[columnName];
+      //   newColumnsSpec[columnName] = {
+      //     type: columnInfo.type,
+      //     dtype: columnInfo.dtype,
+      //   };
+      // }
+
+      // setColumnsSpec(newColumnsSpec);
       setLoading(false);
       setRows(rows);
     }
