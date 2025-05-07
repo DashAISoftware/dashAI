@@ -36,6 +36,7 @@ def create_app(
 ) -> FastAPI:
     """Create the main application.
 
+
     Steps:
     1. Create the configuration dictionary and sets it as container configuration.
     2. Set the logging level for all subpackages.
@@ -58,7 +59,6 @@ def create_app(
         The created FastAPI application.
     """
     # generating config dict and setting logging level
-
     config = build_config_dict(
         local_path=local_path,
         logging_level=logging_level,

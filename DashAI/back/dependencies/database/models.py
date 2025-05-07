@@ -6,7 +6,8 @@ from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from DashAI.back.core.enums.status import ExplainerStatus, RunStatus
+from DashAI.back.core.enums.plugin_tags import PluginTag
+from DashAI.back.core.enums.status import ExplainerStatus, PluginStatus, RunStatus
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +118,44 @@ class Run(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the run to error."""
         self.status = RunStatus.ERROR
+
+
+class Plugin(Base):
+    __tablename__ = "plugin"
+    """
+    Table to store all the information related to a plugin
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    author: Mapped[str] = mapped_column(String, nullable=False)
+    installed_version: Mapped[str] = mapped_column(String, nullable=False)
+    lastest_version: Mapped[str] = mapped_column(String, nullable=False)
+    tags: Mapped[List["Tag"]] = relationship(
+        back_populates="plugin", cascade="all, delete", lazy="selectin"
+    )
+    status: Mapped[Enum] = mapped_column(
+        Enum(PluginStatus), nullable=False, default=PluginStatus.REGISTERED
+    )
+    summary: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    description_content_type: Mapped[str] = mapped_column(String, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+
+class Tag(Base):
+    __tablename__ = "tag"
+    """
+    Table to store all the tags related to a plugin
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plugin: Mapped["Plugin"] = relationship(back_populates="tags")
+    plugin_id: Mapped[int] = mapped_column(ForeignKey("plugin.id"))
+    name: Mapped[Enum] = mapped_column(Enum(PluginTag), nullable=False)
 
 
 class GlobalExplainer(Base):
