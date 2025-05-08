@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.llm_generation_model import LLMGenerationModel
 
 class DeepSeekSchema(BaseSchema):
-    """Schema for Llama text generation model."""
+    """Schema for DeepSeek model."""
 
     max_tokens: schema_field(
         int_field(ge=1),
@@ -38,7 +38,7 @@ class DeepSeekSchema(BaseSchema):
     ) # type: ignore
 
 class DeepSeekModel(LLMGenerationModel):
-    """Llama model for text generation using llama.cpp library."""
+    """DeepSeek model for text generation using llama.cpp library."""
 
     SCHEMA = DeepSeekSchema
 

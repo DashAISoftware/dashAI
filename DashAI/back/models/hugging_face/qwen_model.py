@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.llm_generation_model import LLMGenerationModel
 
 class QwenSchema(BaseSchema):
-    """Schema for Llama text generation model."""
+    """Schema for Qwen model."""
 
     max_tokens: schema_field(
         int_field(ge=1),
@@ -39,7 +39,7 @@ class QwenSchema(BaseSchema):
 
 
 class QwenModel(LLMGenerationModel):
-    """Llama model for text generation using llama.cpp library."""
+    """Qwen model for text generation using llama.cpp library."""
 
     SCHEMA = QwenSchema
 

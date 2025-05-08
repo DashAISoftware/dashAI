@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.llm_generation_model import LLMGenerationModel
 
 class GemmaSchema(BaseSchema):
-    """Schema for Llama text generation model."""
+    """Schema for Gemma model."""
 
     max_tokens: schema_field(
         int_field(ge=1),
@@ -38,7 +38,7 @@ class GemmaSchema(BaseSchema):
     ) # type: ignore
 
 class GemmaModel(LLMGenerationModel):
-    """Llama model for text generation using llama.cpp library."""
+    """Gemma model for text generation using llama.cpp library."""
 
     SCHEMA = GemmaSchema
 
