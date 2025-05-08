@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple 
 
 from PIL import Image
 
@@ -25,7 +25,7 @@ class ControlNetTask(BaseGenerativeTask):
 
     DISPLAY_NAME: str = "ControlNet"
 
-    def prepare_for_task(self, input: tuple[str, str]) -> tuple[Image.Image, str]:
+    def prepare_for_task(self, input: Tuple[str, str]) -> Tuple[Image.Image, str]:
         """Change the inputs to suit the image generation task.
 
         Parameters
@@ -46,18 +46,18 @@ class ControlNetTask(BaseGenerativeTask):
         return [image, prompt]
 
     def prepare_input_for_database(
-        self, input: tuple[bytes, str], **kwargs: Any
-    ) -> tuple[str, str]:
+        self, input: Tuple[bytes, str], **kwargs: Any
+    ) -> Tuple[str, str]:
         """Prepare the input for the database.
 
         Parameters
         ----------
-        input : tuple[Image, str]
+        input : Tuple[Image, str]
             Image and prompt to be processed
 
         Returns
         -------
-        tuple[str, str]
+        Tuple[str, str]
             Image path and prompt
         """
 

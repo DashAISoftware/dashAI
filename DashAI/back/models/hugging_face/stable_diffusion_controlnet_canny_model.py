@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 
 import cv2
 import PIL
@@ -144,7 +144,7 @@ class StableDiffusionControlNetCannyModel(ControlNetModel):
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
 
-    def generate(self, input: tuple[PIL.Image.Image, str]) -> List[Any]:
+    def generate(self, input: Tuple[PIL.Image.Image, str]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters

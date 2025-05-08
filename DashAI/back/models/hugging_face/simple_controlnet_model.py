@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 
 import numpy as np
 import torch
@@ -121,12 +121,12 @@ class SimpleControlNetModel(BaseControlNetModel):
 
         self.pipe.enable_model_cpu_offload()
 
-    def generate(self, input: tuple[Image.Image, str]) -> List[Any]:
+    def generate(self, input: Tuple[Image.Image, str]) -> List[Any]:
         """Generate output from a generative model.
 
         Parameters
         ----------
-        input : tuple[Image.Image, str]
+        input : Tuple[Image.Image, str]
             Input data to be generated
 
         Returns
