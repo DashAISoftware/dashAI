@@ -121,7 +121,7 @@ class GenerativeJob(BaseJob):
                 use_history = getattr(task_class, "USE_HISTORY", False)
                 if use_history:
                     history = [
-                        (proc.input, " ".join(proc.output))
+                        (proc.input, proc.output)
                         for proc in db.query(GenerativeProcess)
                         .filter(GenerativeProcess.session_id == generative_session.id)
                         .filter(GenerativeProcess.status == "FINISHED")
