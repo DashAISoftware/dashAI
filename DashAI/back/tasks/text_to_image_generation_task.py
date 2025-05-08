@@ -88,10 +88,10 @@ class TextToImageGenerationTask(BaseGenerativeTask):
             # Generate a unique file name
             file_name = str(uuid.uuid4())
 
-            image_path = save_dir / f"{file_name}.png"
+            image_path = f"{file_name}.png"
 
             # Save the image
-            img.save(image_path, format="PNG")
+            img.save( save_dir / image_path, format="PNG")
 
             image_paths.append(str(image_path))
 
