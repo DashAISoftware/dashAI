@@ -93,7 +93,7 @@ export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
       </Typography>
       <form onSubmit={formik.handleSubmit}>
         <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
-          {/* Renderizar los campos de parámetros */}
+          {/* Render the parameter fields */}
           <FormSchemaRenderFields
             modelSchema={schema.properties}
             formik={{
