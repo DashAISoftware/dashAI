@@ -100,6 +100,7 @@ Jobs
    DashAI.back.job.ExplainerJob
    DashAI.back.job.ModelJob
    DashAI.back.job.PredictJob
+   DashAI.back.job.ExplorerJob
 
 Explainers
 ==========
@@ -110,3 +111,24 @@ Explainers
    DashAI.back.explainability.KernelShap
    DashAI.back.explainability.PartialDependence
    DashAI.back.explainability.PermutationFeatureImportance
+
+Explorers
+==========
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.exploration.BoxPlotExplorer
+   DashAI.back.exploration.CorrelationMatrixExplorer
+   DashAI.back.exploration.CovarianceMatrixExplorer
+   DashAI.back.exploration.DensityHeatmapExplorer
+   DashAI.back.exploration.DescribeExplorer
+   DashAI.back.exploration.ECDFPlotExplorer
+   DashAI.back.exploration.HistogramPlotExplorer
+   DashAI.back.exploration.MultiColumnBoxPlotExplorer
+   DashAI.back.exploration.ParallelCategoriesExplorer
+   DashAI.back.exploration.ParallelCordinatesExplorer
+   DashAI.back.exploration.RowExplorer
+   DashAI.back.exploration.ScatterMatrixExplorer
+   DashAI.back.exploration.ScatterPlotExplorer
+   DashAI.back.exploration.WordcloudExplorer

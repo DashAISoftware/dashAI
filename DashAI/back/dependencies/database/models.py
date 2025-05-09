@@ -1,13 +1,19 @@
 import logging
+import pathlib
 from datetime import datetime
-from typing import List
 
+from beartype.typing import List
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from DashAI.back.core.enums.plugin_tags import PluginTag
-from DashAI.back.core.enums.status import ExplainerStatus, PluginStatus, RunStatus
+from DashAI.back.core.enums.status import (
+    ExplainerStatus,
+    ExplorerStatus,
+    PluginStatus,
+    RunStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +35,7 @@ class Dataset(Base):
     experiments: Mapped[List["Experiment"]] = relationship(
         "Experiment", cascade="all, delete-orphan", back_populates="dataset"
     )
+    explorations: Mapped[List["Exploration"]] = relationship(back_populates="dataset")
 
 
 class Experiment(Base):
@@ -241,3 +248,96 @@ class LocalExplainer(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the local explainer to error."""
         self.status = ExplainerStatus.ERROR
+
+
+class Exploration(Base):
+    __tablename__ = "exploration"
+    """
+    Table to store all the information about a exploration session.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    # Relationships
+    dataset: Mapped["Dataset"] = relationship(back_populates="explorations")
+    explorers: Mapped[List["Explorer"]] = relationship(back_populates="exploration")
+
+
+class Explorer(Base):
+    __tablename__ = "explorer"
+    """
+    Table to store all the information about a explorer.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    exploration_id: Mapped[int] = mapped_column(ForeignKey("exploration.id"))
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+    # explorer
+    columns: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    exploration_type: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    exploration_path: Mapped[str] = mapped_column(String, nullable=True)
+    # Metadata
+    name: Mapped[str] = mapped_column(String, nullable=True)
+
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(ExplorerStatus), nullable=False, default=ExplorerStatus.NOT_STARTED
+    )
+    # Relationships
+    exploration: Mapped["Exploration"] = relationship(back_populates="explorers")
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status to delivered and set delivery_time to now."""
+        self.status = ExplorerStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status to started and set start_time to now."""
+        self.status = ExplorerStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status to finished and set end_time to now."""
+        self.status = ExplorerStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """Update the status to error."""
+        self.status = ExplorerStatus.ERROR
+
+    def delete_result(self) -> None:
+        """Delete the result of the explorer."""
+        if self.exploration_path is not None:
+            path = pathlib.Path(self.exploration_path)
+            if path.exists():
+                if path.is_dir():
+                    if len(list(path.iterdir())) == 0:
+                        path.rmdir()
+                    else:
+                        raise FileExistsError(
+                            f"Error deleting the exploration result, "
+                            f"directory {path} is not empty."
+                        )
+                else:
+                    path.unlink()
+
+            self.exploration_path = None
+            self.status = ExplorerStatus.NOT_STARTED
+            self.delivery_time = None
+            self.start_time = None
+            self.end_time = None

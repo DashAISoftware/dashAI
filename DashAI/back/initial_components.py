@@ -6,7 +6,23 @@ from DashAI.back.explainability import (
     PartialDependence,
     PermutationFeatureImportance,
 )
-from DashAI.back.job import DatasetJob, ExplainerJob, ModelJob, PredictJob
+from DashAI.back.exploration import (
+    BoxPlotExplorer,
+    CorrelationMatrixExplorer,
+    CovarianceMatrixExplorer,
+    DensityHeatmapExplorer,
+    DescribeExplorer,
+    ECDFPlotExplorer,
+    HistogramPlotExplorer,
+    MultiColumnBoxPlotExplorer,
+    ParallelCategoriesExplorer,
+    ParallelCordinatesExplorer,
+    RowExplorer,
+    ScatterMatrixExplorer,
+    ScatterPlotExplorer,
+    WordcloudExplorer,
+)
+from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -94,12 +110,28 @@ def get_initial_components():
         # Jobs
         ExplainerJob,
         ModelJob,
+        ExplorerJob,
         PredictJob,
         DatasetJob,
         # Explainers
         KernelShap,
         PartialDependence,
         PermutationFeatureImportance,
+        # Explorers
+        DescribeExplorer,
+        ScatterPlotExplorer,
+        WordcloudExplorer,
+        RowExplorer,
+        BoxPlotExplorer,
+        MultiColumnBoxPlotExplorer,
+        CorrelationMatrixExplorer,
+        CovarianceMatrixExplorer,
+        DensityHeatmapExplorer,
+        ECDFPlotExplorer,
+        HistogramPlotExplorer,
+        ScatterMatrixExplorer,
+        ParallelCategoriesExplorer,
+        ParallelCordinatesExplorer,
     ]
 
     # Obtener plugins instalados
