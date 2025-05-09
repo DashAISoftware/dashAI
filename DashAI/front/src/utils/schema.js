@@ -86,6 +86,8 @@ const getTypeValidator = (type) => {
       return Yup.number().integer();
     case "number":
       return Yup.number();
+    case "array":
+      return Yup.array();
     case "string":
       return Yup.string();
     case "boolean":
@@ -126,11 +128,33 @@ const applyMinMax = (validator, minimum, maximum, exclusiveMinimum) => {
   return validator;
 };
 
+const applyArrayConstraints = (validator, itemSchema, minItems, maxItems) => {
+  if (itemSchema) {
+    validator = validator.of(itemSchema);
+  }
+  if (minItems !== undefined) {
+    validator = validator.min(minItems);
+  }
+  if (maxItems !== undefined) {
+    validator = validator.max(maxItems);
+  }
+  return validator;
+};
+
 // Generate a Yup validator from a JSON schema object
 export const getValidator = (option) => {
   let validator;
 
   validator = getTypeValidator(option.type);
+  if (option.type === "array" && option.items) {
+    const itemValidator = getValidator(option.items);
+    validator = applyArrayConstraints(
+      validator,
+      itemValidator,
+      option.minItems,
+      option.maxItems,
+    );
+  }
   validator = applyEnum(validator, option.enum);
   validator = applyMinMax(
     validator,

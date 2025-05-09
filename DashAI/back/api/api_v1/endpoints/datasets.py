@@ -6,6 +6,7 @@ from typing import Any, Dict
 import pyarrow as pa
 import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
@@ -106,7 +107,11 @@ async def get_sample(
     dataset_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Return the dataset with id dataset_id from the database.
+    """Return a sample of 10 rows from the dataset with id dataset_id from the
+    database.
+
+    If a column is not JSON serializable, it will be converted to a list of
+    strings.
 
     Parameters
     ----------
@@ -142,6 +147,15 @@ async def get_sample(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+        try:
+            jsonable_encoder(sample)
+        except ValueError:
+            for key, value in sample.items():
+                try:
+                    jsonable_encoder({key: value})
+                except ValueError:
+                    value = list(map(str, value))
+                sample[key] = value
     return sample
 
 
