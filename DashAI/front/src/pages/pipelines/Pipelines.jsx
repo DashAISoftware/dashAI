@@ -1,9 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Box, Typography, Dialog, DialogTitle, DialogActions, Button } from "@mui/material";
 import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState } from "reactflow";
 import 'reactflow/dist/style.css';
 import CustomLayout from "../../components/custom/CustomLayout";
-import { RunNode, Run } from "./nodes/Run";
+import RunPipeline from "./nodes/Run";
 import DataLoaderNode from "./nodes/DataLoaderNode";
 import DataExplorationNode from "./nodes/DataExplorationNode";
 import TaskModelNode from "./nodes/TaskSelectorNode";
@@ -13,14 +13,24 @@ import SplitDataNode from "./nodes/SplitDataNode";
 import PredictionNode from "./nodes/PredictionNode";
 import PipelineResults from "./Results";
 
+const nodeTypes = {
+  DataSeldector: DataLoaderNode,
+  DataExploration: DataExplorationNode,
+  SplitData: SplitDataNode,
+  TaskModel: TaskModelNode,
+  Train: TrainNode,
+  Evaluate: MetricsNode,
+  Prediction: PredictionNode,
+};
+
 function PipelinesPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [dragging, setDragging] = useState(null);
-  const [runNode, setRunNode] = useState(null);
   const [nodeData, setNodeData] = useState({});
   const [activeTab, setActiveTab] = useState("flow");
+  const [resultId, setResultId] = useState(null);
 
   const onDragStart = (event, nodeType) => {
     setDragging(nodeType);
@@ -55,14 +65,6 @@ function PipelinesPage() {
     ));
   };
 
-  const onNodeClick = (event, node) => {
-    if (node.type === "Run") {
-      setRunNode(node);
-    } else {
-      setSelectedNode(node);
-    }
-  };
-
   const handleCloseDialog = () => {
     setSelectedNode(null);
   };
@@ -75,8 +77,20 @@ function PipelinesPage() {
     handleCloseDialog();
   };
 
-  const handleRun = () => {
-    Run(nodes, nodeData);
+  const handleRun = async () => {
+    const pipelineId = await RunPipeline(nodes, nodeData);
+    console.log("Pipeline IDdd:", pipelineId);
+    if (pipelineId) {
+      handleResultId(pipelineId);
+    }
+  };  
+
+  const handleResultId = (id) => {
+    setResultId(id);
+  };
+
+  const onNodeClick = (event, node) => {
+    setSelectedNode(node);
   };
 
   const renderNodeDialogContent = () => {
@@ -87,26 +101,13 @@ function PipelinesPage() {
       return <DataLoaderNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]}/>;
     } else if (type === "DataExploration") {
       return <DataExplorationNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} data={nodeData}/>;
-    } else if (type === "SplitData") {
-      return <SplitDataNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} data={nodeData}/>;
-    } else if (type === "TaskModel") {
-      return <TaskModelNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]}/>;
     } else if (type === "Train") {
       return <TrainNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} data={nodeData} />;
-    } else if (type === "Evaluate") {
-      return <MetricsNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedMetrics={nodeData[id]?.metrics || []} />;
     } else if (type === "Prediction") {
       return <PredictionNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} />;
     } return null;
   };
 
-  const renderRunNodeContent = () => {
-    if (!runNode) return null;
-    return <RunNode node={runNode} edges={edges} nodes={nodes} pipelineName="My Pipeline" onSaved={() => setRunNode(null)} nodeData={nodeData} />;
-  };
-
-  const pipelineId = 5;
-  
   return (
     <CustomLayout title="Pipelines Module" subtitle="Create and manage your pipelines.">
       <Box sx={{ borderBottom: 1, borderColor: 'divider', display: "flex", justifyContent: "center", px: 2, pb: 1 }}>
@@ -157,7 +158,7 @@ function PipelinesPage() {
             onDrop={onDrop}
             onDragOver={(event) => event.preventDefault()}
             onNodeClick={onNodeClick} 
-            // nodeTypes={nodeTypes}
+            //nodeTypes={nodeTypes}
             fitView
             style={{ width: '100%', height: '100%' }}
           >
@@ -165,12 +166,15 @@ function PipelinesPage() {
             <Controls />
           </ReactFlow>
         </Box>
+        <Dialog open={!!selectedNode} onClose={handleCloseDialog}>
+           {renderNodeDialogContent()}
+         </Dialog>
       </Box>
       </>
         ) : (
           <Box sx={{ p: 2 }}>
-          {pipelineId ? (
-            <PipelineResults pipelineId={pipelineId} />
+          {resultId ? (
+            <PipelineResults pipelineId={resultId} />
           ) : (
             <Typography>No results yet.</Typography>
           )}

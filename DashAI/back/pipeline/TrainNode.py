@@ -156,7 +156,12 @@ class Train(BaseJob):
 
         
         return {
-            "train": model_metrics,
+            "train": 
+                {
+                    "info": self.model,
+                    "parameters": self.parameters,
+                    "metrics":model_metrics
+                }
         }
 
 

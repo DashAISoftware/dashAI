@@ -1,9 +1,10 @@
+import json
 import logging
 import os
 import pathlib
 from typing import List, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
@@ -18,6 +19,63 @@ from DashAI.back.job.pipeline_job import run_pipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+@router.get("/predict_summary")
+@inject
+async def pipeline_predict_summary(
+    pred_name: str = Query(...),
+):
+    settings = DefaultSettings()
+    sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+    path = os.path.join(sqlite_local, "pipelines", "predictions", pred_name)
+    summary = {}
+    try:
+        with open(path, "r") as f:
+            try:
+                data = json.load(f)["prediction"]
+            except json.JSONDecodeError as e:
+                raise HTTPException(
+                    status_code=400, detail="Invalid JSON format"
+                ) from e
+
+            summary["total_data_points"] = len(data)
+
+            # Verificar si los datos son strings
+            if isinstance(data[0], str):
+                summary["data_type"] = "string"
+            else:
+                summary["data_type"] = "numeric"
+                class_set = set(data)
+                classes = [str(item) for item in class_set]
+                summary["Unique_classes"] = len(classes)
+                class_distribution = []
+                id = 1
+                for class_name in classes:
+                    try:
+                        occurrences = data.count(int(class_name))
+                    except ValueError as e:
+                        raise HTTPException(
+                            status_code=400, detail=f"Invalid class value: {class_name}"
+                        ) from e
+                    distribution = {
+                        "id": id,
+                        "Class": class_name,
+                        "Ocurrences": occurrences,
+                        "Percentage": round(occurrences / len(data) * 100, 2),
+                    }
+                    id += 1
+                    class_distribution.append(distribution)
+                summary["class_distribution"] = class_distribution
+
+            sample_data = [
+                {"id": idx, "value": value} for idx, value in enumerate(data[:50], 1)
+            ]
+            summary["sample_data"] = sample_data
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail="Prediction not found") from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    return summary
 
 @router.get("/")
 @inject
