@@ -25,7 +25,7 @@ def schema_field(t: T, placeholder: T, description: str, alias: str = None) -> T
     """
     field_params = {
         "description": description,
-        "json_schema_extra": {"placeholder": placeholder}
+        "json_schema_extra": {"placeholder": placeholder},
     }
     if alias:
         field_params["alias"] = alias

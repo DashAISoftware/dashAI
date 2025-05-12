@@ -14,8 +14,8 @@ class BinarizerSchema(BaseSchema):
     use_copy: schema_field(
         bool_field(),
         True,
-        "Set to False to perform inplace binarization.", 
-        alias="copy"
+        "Set to False to perform inplace binarization.",
+        alias="copy",
     )  # type: ignore
 
 
