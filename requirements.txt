@@ -145,6 +145,7 @@ joblib==1.4.2
     #   -r requirements.in
     #   scikit-learn
 kink==0.8.1
+llama-cpp-python==0.2.90
     # via -r requirements.in
 llvmlite==0.41.1
     # via numba
