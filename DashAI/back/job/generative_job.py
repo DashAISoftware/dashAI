@@ -160,7 +160,9 @@ class GenerativeJob(BaseJob):
                 raise JobError("Error during model generation.") from e
 
             try:
-                output: Any = task.process_output(output, path=config["LOCAL_PATH"])
+                output: Any = task.process_output(
+                    output, images_path=config["IMAGES_PATH"]
+                )
                 generative_process.output = output
                 generative_process.set_status_as_finished()
                 db.commit()

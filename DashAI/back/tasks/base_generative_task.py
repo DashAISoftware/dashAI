@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Final, List, Optional
+from typing import Any, Dict, Final, List
 
 
 class BaseGenerativeTask:
@@ -80,7 +80,6 @@ class BaseGenerativeTask:
     def process_output(
         self,
         output: List[Any],
-        path: Optional[str] = None,
         **kwargs: Any,
     ) -> List[str]:
         """Process output data of the task.
@@ -89,8 +88,6 @@ class BaseGenerativeTask:
         ----------
         output : List[Any]
             Output data to be processed
-        path : Optional[str], optional
-            Path to save the output data, by default None
 
         Returns
         -------

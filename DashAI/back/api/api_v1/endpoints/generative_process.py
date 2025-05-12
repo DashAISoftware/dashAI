@@ -77,7 +77,7 @@ async def upload_generative_process(
                 "class"
             ]()
             processed_input = task.prepare_input_for_database(
-                input_items, path=config["LOCAL_PATH"]
+                input_items, images_path=config["IMAGES_PATH"]
             )
 
             process = GenerativeProcess(
@@ -261,9 +261,9 @@ async def get_generative_process_by_session_id(
             ) from e
 
 
-@router.get("/image/{image_path}", status_code=200, response_model=None)
+@router.get("/image/{filename}", status_code=200, response_model=None)
 async def get_generative_image(
-    image_path: str,
+    filename: str,
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """
@@ -271,8 +271,8 @@ async def get_generative_image(
 
     Parameters
     ----------
-    image_path : str
-        The relative path or filename of the generated image to retrieve.
+    filename : str
+        The relative path or filename of the image to retrieve.
 
     Returns
     -------
@@ -280,7 +280,7 @@ async def get_generative_image(
         The image file to be served to the client.
     """
 
-    image_path = os.path.join(config["LOCAL_PATH"], "images", image_path)
+    image_path = os.path.join(config["IMAGES_PATH"], filename)
 
     if not os.path.exists(image_path):
         raise HTTPException(status_code=404, detail="Image not found")

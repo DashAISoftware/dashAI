@@ -1,5 +1,6 @@
+import os
 import uuid
-from typing import Any, List, Optional
+from typing import Any, List
 
 from PIL import Image
 
@@ -23,7 +24,11 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
     DISPLAY_NAME: str = "Text to Image"
 
-    def prepare_for_task(self, input: List[str], **kwargs: Any) -> str:
+    def prepare_for_task(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> str:
         """Change the inputs to suit the image generation task.
 
         Parameters
@@ -68,17 +73,14 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         ----------
         output : List[Any]
             list of images to be processed
-        path : Optional[str], optional
-            Path to save the output, by default None
 
         Returns
         -------
         List[str]
             List of paths to the processed images
         """
-        path = kwargs.get("path")
+        save_dir = kwargs.get("images_path")
 
-        save_dir = path / "images"
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
 
@@ -91,7 +93,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
             image_path = f"{file_name}.png"
 
             # Save the image
-            img.save( save_dir / image_path, format="PNG")
+            img.save(save_dir / image_path, format="PNG")
 
             image_paths.append(str(image_path))
 
@@ -115,7 +117,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
             List of base64 encoded images
         """
 
-        output = list(map(lambda x: x.split("\\")[-1], output)) if output else None
+        output = list(map(lambda x: os.path.basename(x), output)) if output else None
 
         return output
 

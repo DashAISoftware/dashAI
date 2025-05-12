@@ -1,5 +1,6 @@
+import os
 import uuid
-from typing import Any, List, Optional, Tuple 
+from typing import Any, List, Tuple
 
 from PIL import Image
 
@@ -25,7 +26,11 @@ class ControlNetTask(BaseGenerativeTask):
 
     DISPLAY_NAME: str = "ControlNet"
 
-    def prepare_for_task(self, input: Tuple[str, str]) -> Tuple[Image.Image, str]:
+    def prepare_for_task(
+        self,
+        input: Tuple[str, str],
+        **kwargs: Any,
+    ) -> Tuple[Image.Image, str]:
         """Change the inputs to suit the image generation task.
 
         Parameters
@@ -46,7 +51,9 @@ class ControlNetTask(BaseGenerativeTask):
         return [image, prompt]
 
     def prepare_input_for_database(
-        self, input: Tuple[bytes, str], **kwargs: Any
+        self,
+        input: Tuple[bytes, str],
+        **kwargs: Any,
     ) -> Tuple[str, str]:
         """Prepare the input for the database.
 
@@ -61,8 +68,7 @@ class ControlNetTask(BaseGenerativeTask):
             Image path and prompt
         """
 
-        path = kwargs.get("path")
-        path = path / "images"
+        path = kwargs.get("images_path")
 
         # Save the image to a temporary file
         image_path = path / f"{uuid.uuid4()}.png"
@@ -74,7 +80,7 @@ class ControlNetTask(BaseGenerativeTask):
     def process_output(
         self,
         output: List[Any],
-        path: Optional[str] = None,
+        **kwargs: Any,
     ) -> List[str]:
         """Process the output of a generative model.
 
@@ -90,7 +96,7 @@ class ControlNetTask(BaseGenerativeTask):
         List[str]
             List of paths to the processed images
         """
-        save_dir = path / "images"
+        save_dir = kwargs.get("images_path")
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
 
@@ -127,11 +133,15 @@ class ControlNetTask(BaseGenerativeTask):
             List of base64 encoded images
         """
 
-        output = list(map(lambda x: x.split("\\")[-1], output)) if output else None
+        output = list(map(lambda x: os.path.basename(x), output)) if output else None
 
         return output
 
-    def process_input_from_database(self, input: List[str]) -> List[str]:
+    def process_input_from_database(
+        self,
+        input: List[str],
+        **kwargs: Any,
+    ) -> List[str]:
         """Process the input of an image generation model from the database.
 
         Parameters
@@ -149,7 +159,7 @@ class ControlNetTask(BaseGenerativeTask):
         for ip in input:
             if ip.endswith(".png") or ip.endswith(".jpg"):
                 # Extract the image name from the path
-                ip = ip.split("\\")[-1]
+                ip = os.path.basename(ip)
                 input_processed.append(ip)
             else:
                 # If the input is not an image, just append it as is
