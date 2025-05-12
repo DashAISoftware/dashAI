@@ -10,8 +10,10 @@ pydantic-settings
 starlette
 scikit-learn
 datasets
+diffusers
 evaluate
 accelerate
+llama-cpp-python==0.2.90
 Pillow
 beartype
 plotly
@@ -19,6 +21,7 @@ shap
 typer
 rich
 torch
+torchvision
 transformers
 sacrebleu
 sentencepiece
