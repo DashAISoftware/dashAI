@@ -20,7 +20,8 @@ plotly
 shap
 typer
 rich
-torch
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch==2.4.1
 torchvision
 transformers
 sacrebleu
