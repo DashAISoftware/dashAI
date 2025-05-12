@@ -22,7 +22,6 @@ Tasks
    :toctree: generated/
 
    DashAI.back.tasks.BaseTask
-   DashAI.back.tasks.ImageClassificationTask
    DashAI.back.tasks.RegressionTask
    DashAI.back.tasks.TabularClassificationTask
    DashAI.back.tasks.TextClassificationTask
@@ -53,7 +52,6 @@ Models
    DashAI.back.models.RandomForestClassifier
    DashAI.back.models.RandomForestRegression
    DashAI.back.models.RidgeRegression
-   DashAI.back.models.ViTTransformer
 
 Dataloaders
 ===========
@@ -63,7 +61,6 @@ Dataloaders
 
    DashAI.back.dataloaders.CSVDataLoader
    DashAI.back.dataloaders.ExcelDataLoader
-   DashAI.back.dataloaders.ImageDataLoader
    DashAI.back.dataloaders.JSONDataLoader
 
 Metrics
@@ -98,9 +95,11 @@ Jobs
    :toctree: generated/
 
    DashAI.back.job.ExplainerJob
+   DashAI.back.job.DatasetJob
    DashAI.back.job.ModelJob
    DashAI.back.job.PredictJob
    DashAI.back.job.ExplorerJob
+   DashAI.back.job.ConverterListJob
 
 Explainers
 ==========
@@ -111,6 +110,18 @@ Explainers
    DashAI.back.explainability.KernelShap
    DashAI.back.explainability.PartialDependence
    DashAI.back.explainability.PermutationFeatureImportance
+
+Converters
+==========
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.base_converter.BaseConverter
+   DashAI.back.converters.sklearn_wrapper.SklearnWrapper
+   DashAI.back.converters.hugging_face_wrapper.HuggingFaceWrapper
+   DashAI.back.converters.scikit_learn.sklearn_like_converter.SklearnLikeConverter
+   DashAI.back.converters.scikit_learn.converter_chain.ConverterChain
 
 Explorers
 ==========

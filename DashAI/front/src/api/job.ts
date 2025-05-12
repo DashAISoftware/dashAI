@@ -109,6 +109,30 @@ export const enqueuePredictionJob = async (
   return response.data;
 };
 
+export const enqueueConverterJob = async (
+  converterListId: number,
+  targetColumnIndex: number,
+): Promise<object> => {
+  const data = {
+    job_type: "ConverterListJob",
+    kwargs: {
+      converter_list_id: converterListId,
+      target_column_index: targetColumnIndex,
+    },
+  };
+
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const startJobQueue = async (
   stopWhenQueueEmpties: boolean | undefined,
 ): Promise<object> => {
