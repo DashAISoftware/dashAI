@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Search } from "@mui/icons-material";
 import {
   Dialog,
@@ -12,6 +11,7 @@ import {
 } from "@mui/material";
 import DatasetSummaryTable from "./DatasetSummaryTable";
 import { ExplorationModuleLauncher } from "../explorations";
+import TooltipedCellItem from "../shared/TooltipedCellItem";
 
 function DatasetSummaryModal({ datasetId }) {
   const [open, setOpen] = useState(false);
@@ -21,10 +21,11 @@ function DatasetSummaryModal({ datasetId }) {
   };
   return (
     <React.Fragment>
-      <GridActionsCellItem
+      <TooltipedCellItem
         key="dataset-summary-button"
         icon={<Search />}
         label="Dataset Summary"
+        tooltip="Dataset summary"
         onClick={() => setOpen(true)}
         sx={{ color: "warning.main" }}
       />
