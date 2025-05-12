@@ -55,6 +55,7 @@ def build_config_dict(
     config["DATASETS_PATH"] = local_path / config["DATASETS_PATH"]
     config["EXPLANATIONS_PATH"] = local_path / config["EXPLANATIONS_PATH"]
     config["RUNS_PATH"] = local_path / config["RUNS_PATH"]
+    config["IMAGES_PATH"] = local_path / config["IMAGES_PATH"]
     config["FRONT_BUILD_PATH"] = pathlib.Path(config["FRONT_BUILD_PATH"]).absolute()
     config["LOGGING_LEVEL"] = getattr(logging, logging_level)
 
