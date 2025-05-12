@@ -10,7 +10,6 @@ from DashAI.back.api.api_v1.endpoints import (
     jobs,
     predict,
     runs,
-    task
 )
 
 api_router_v1 = APIRouter()
@@ -23,4 +22,3 @@ api_router_v1.include_router(runs.router, prefix="/run")
 api_router_v1.include_router(predict.router, prefix="/predict")
 api_router_v1.include_router(generative_session.router, prefix="/generative-session")
 api_router_v1.include_router(generative_process.router, prefix="/generative-process")
-api_router_v1.include_router(task.router, prefix="/task")
