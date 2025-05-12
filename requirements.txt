@@ -337,7 +337,7 @@ torch==2.4.1
     # via
     #   -r requirements.in
     #   accelerate
-torchvision==0.21.0
+torchvision==0.19.1
 tqdm==4.67.1
     # via
     #   datasets
