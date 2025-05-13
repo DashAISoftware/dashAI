@@ -233,7 +233,10 @@ class GenerativeProcess(Base):
     session = relationship("GenerativeSession", back_populates="processes")
 
     def set_status_as_delivered(self) -> None:
-        """Update the status of the process to delivered and set delivery_time to now."""
+        """
+        Update the status of the run to delivered and set delivery_time
+        to now.
+        """
         self.status = RunStatus.DELIVERED
         self.delivery_time = datetime.now()
 
@@ -291,16 +294,23 @@ class GenerativeSession(Base):
 class GenerativeSessionParameterHistory(Base):
     __tablename__ = "generative_session_parameter_history"
     """
-    Table to store the parameters of a generative session and their modification history.
+    Table to store the parameters of a generative session and their
+    modification history.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     session_id: Mapped[int] = mapped_column(
-        ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("generative_session.id", ondelete="CASCADE"),
+        nullable=False,
     )
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
-    modified_at: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    modified_at: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+    )
 
     # Relationship with GenerativeSession
     session = relationship(
-        "GenerativeSession", back_populates="parameters_history", cascade="all, delete"
+        "GenerativeSession",
+        back_populates="parameters_history",
+        cascade="all, delete",
     )

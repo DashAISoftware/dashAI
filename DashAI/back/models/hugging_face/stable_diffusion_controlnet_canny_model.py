@@ -38,13 +38,19 @@ class StableDiffusionControlNetCannySchema(BaseSchema):
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,
-        description="Number of denoising steps. Higher usually leads to better quality but slower inference.",
+        description=(
+            "Number of denoising steps. Higher usually leads to better quality but "
+            "slower inference."
+        ),
     )  # type: ignore
 
     guidance_scale: schema_field(
         float_field(ge=0.0),
         placeholder=3.5,
-        description="How strongly the model follows the prompt. Higher = closer to prompt, but may reduce image quality.",
+        description=(
+            "How strongly the model follows the prompt. Higher = closer to prompt, "
+            "but may reduce image quality."
+        ),
     )  # type: ignore
 
     device: schema_field(
@@ -56,7 +62,9 @@ class StableDiffusionControlNetCannySchema(BaseSchema):
     seed: schema_field(
         int_field(),
         placeholder=-1,
-        description="Random seed for reproducibility. Use negative value for random seed.",
+        description=(
+            "Random seed for reproducibility. Use negative value for random seed."
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -80,7 +88,10 @@ class StableDiffusionControlNetCannySchema(BaseSchema):
     controlnet_conditioning_scale: schema_field(
         float_field(ge=0.0),
         placeholder=1.0,
-        description="Scale for the ControlNet conditioning. Higher values make the model follow the controlnet more closely.",
+        description=(
+            "Scale for the ControlNet conditioning. Higher values make the model "
+            "follow the controlnet more closely."
+        ),
     )  # type: ignore
 
 
@@ -150,7 +161,8 @@ class StableDiffusionControlNetCannyModel(ControlNetModel):
         Parameters
         ----------
         input : List[PIL.Image.Image, str]
-            Input data to be generated. The first element is the input image and the second element is the prompt.
+            Input data to be generated. The first element is the input image and the
+            second element is the prompt.
 
         Returns
         -------

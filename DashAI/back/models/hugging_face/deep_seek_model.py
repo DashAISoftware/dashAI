@@ -23,19 +23,28 @@ class DeepSeekSchema(BaseSchema):
     temperature: schema_field(
         float_field(ge=0.0, le=1.0),
         placeholder=0.7,
-        description="Sampling temperature. Higher values make the output more random, while lower values make it more focused and deterministic.",
+        description=(
+            "Sampling temperature. Higher values make the output more random, "
+            "while lower values make it more focused and deterministic."
+        ),
     )  # type: ignore
 
     frequency_penalty: schema_field(
         float_field(ge=0.0, le=2.0),
         placeholder=0.1,
-        description="Penalty for repeated tokens in the output. Higher values reduce the likelihood of repetition, encouraging more diverse text generation.",
+        description=(
+            "Penalty for repeated tokens in the output. Higher values reduce the "
+            "likelihood of repetition, encouraging more diverse text generation."
+        ),
     )  # type: ignore
 
     n_ctx: schema_field(
         int_field(ge=1),
         placeholder=4096,
-        description="Maximum number of tokens the model can process in a single forward pass (context window size).",
+        description=(
+            "Maximum number of tokens the model can process in a single forward pass "
+            "(context window size)."
+        ),
     )  # type: ignore
 
 
