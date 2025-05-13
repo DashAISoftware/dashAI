@@ -69,6 +69,8 @@ class ControlNetTask(BaseGenerativeTask):
         """
 
         path = kwargs.get("images_path")
+        if not path.exists():
+            path.mkdir(parents=True)
 
         # Save the image to a temporary file
         image_path = path / f"{uuid.uuid4()}.png"
