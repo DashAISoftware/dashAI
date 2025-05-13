@@ -19,3 +19,4 @@ class DefaultSettings(BaseSettings):
     IMAGES_PATH: str = "images"
     RUNS_PATH: str = "runs"
     EXPLANATIONS_PATH: str = "explanations"
+    EXPLORATIONS_PATH: str = "explorations"

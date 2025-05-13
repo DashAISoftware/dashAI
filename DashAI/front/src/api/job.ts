@@ -68,6 +68,25 @@ export const enqueueExplainerJob = async (
   return response.data;
 };
 
+export const enqueueExplorerJob = async (
+  explorerId: number,
+): Promise<object> => {
+  const formData = new FormData();
+  const kwargs = {
+    explorer_id: explorerId,
+  };
+
+  formData.append("job_type", "ExplorerJob");
+  formData.append("kwargs", JSON.stringify(kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const enqueuePredictionJob = async (
   run_id: number,
   id: number,
@@ -96,6 +115,30 @@ export const enqueueGenerativeProcessJob = async (
   const data = {
     job_type: "GenerativeJob",
     kwargs: { generative_process_id: processId },
+  };
+
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
+export const enqueueConverterJob = async (
+  converterListId: number,
+  targetColumnIndex: number,
+): Promise<object> => {
+  const data = {
+    job_type: "ConverterListJob",
+    kwargs: {
+      converter_list_id: converterListId,
+      target_column_index: targetColumnIndex,
+    },
   };
 
   const formData = new FormData();

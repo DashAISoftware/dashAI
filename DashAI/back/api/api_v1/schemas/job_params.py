@@ -5,8 +5,13 @@ from pydantic import BaseModel, ConfigDict
 
 class JobParams(BaseModel):
     model_config = ConfigDict(extra="allow")
-
     job_type: Literal[
-        "ModelJob", "ExplainerJob", "PredictJob", "DatasetJob", "GenerativeJob"
+        "ModelJob",
+        "ExplainerJob",
+        "PredictJob",
+        "DatasetJob",
+        "ExplorerJob",
+        "ConverterListJob",
+        "GenerativeJob",
     ]
     kwargs: dict

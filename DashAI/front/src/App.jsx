@@ -10,6 +10,8 @@ import ExplainersDashboard from "./components/explainers/ExplainersDashboard";
 import ExplainersPage from "./pages/ExplainersPage";
 import ExplainerData from "./components/explainers/ExplainerData";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
+import PluginsPage from "./pages/plugins/Plugins";
+import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import PredictionPage from "./pages/predictions/PredictionPage";
 import Generative from "./pages/generative/Generative";
 
@@ -32,6 +34,13 @@ function App() {
           />
         </Route>
         <Route path="/app/generative" element={<Generative />} />
+        <Route path="/app/plugins">
+          <Route index element={<PluginsPage />} />
+          <Route path=":category">
+            <Route index element={<PluginsPage />} />
+            <Route path="details/:id" element={<PluginsDetails />} />
+          </Route>
+        </Route>
       </Routes>
     </BrowserRouter>
   );
