@@ -290,8 +290,6 @@ python-multipart==0.0.20
     # via fastapi
 pytz==2025.1
     # via pandas
-pywin32==310
-    # via portalocker
 pyyaml==6.0.2
     # via
     #   accelerate
