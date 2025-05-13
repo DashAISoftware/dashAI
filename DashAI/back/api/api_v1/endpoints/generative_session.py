@@ -131,7 +131,7 @@ async def get_generative_session(
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Generative session {session_id} does not exist in DB.",
+                    detail=(f"Generative session {session_id} does not exist in DB."),
                 )
             return session
         except exc.SQLAlchemyError as e:
