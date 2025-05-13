@@ -24,8 +24,6 @@ class ControlNetTask(BaseGenerativeTask):
         "This task generates images based on the provided input text and image."
     )
 
-    DISPLAY_NAME: str = "ControlNet"
-
     def prepare_for_task(
         self,
         input: Tuple[str, str],

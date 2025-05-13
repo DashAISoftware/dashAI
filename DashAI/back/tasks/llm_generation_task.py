@@ -18,8 +18,6 @@ class LLMGenerationTask(BaseGenerativeTask):
 
     DESCRIPTION: str = "This task generates text from a given prompt."
 
-    DISPLAY_NAME: str = "Text to Text"
-
     USE_HISTORY: bool = True
 
     def prepare_for_task(
