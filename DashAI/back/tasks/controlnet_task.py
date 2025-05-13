@@ -133,7 +133,7 @@ class ControlNetTask(BaseGenerativeTask):
             List of base64 encoded images
         """
 
-        output = list(map(lambda x: os.path.basename(x), output)) if output else None
+        output = [os.path.basename(x) for x in output] if output else None
 
         return output
 
@@ -157,7 +157,7 @@ class ControlNetTask(BaseGenerativeTask):
 
         input_processed = []
         for ip in input:
-            if ip.endswith(".png") or ip.endswith(".jpg"):
+            if ip.endswith((".png", ".jpg")):
                 # Extract the image name from the path
                 ip = os.path.basename(ip)
                 input_processed.append(ip)

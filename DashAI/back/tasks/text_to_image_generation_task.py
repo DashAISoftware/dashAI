@@ -117,7 +117,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
             List of base64 encoded images
         """
 
-        output = list(map(lambda x: os.path.basename(x), output)) if output else None
+        output = [os.path.basename(x) for x in output] if output else None
 
         return output
 

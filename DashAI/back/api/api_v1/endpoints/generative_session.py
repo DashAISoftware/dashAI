@@ -33,11 +33,11 @@ async def upload_generative_session(
             # Check if the model is registered
             try:
                 model_class = component_registry[params.model_name]["class"]
-            except KeyError:
+            except KeyError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Model {params.model_name} is not registered.",
-                )
+                ) from e
 
             # Check if the model is a subclass of GenerativeModel
             if not issubclass(model_class, BaseGenerativeModel):
@@ -50,11 +50,11 @@ async def upload_generative_session(
             # Check if the task is registered
             try:
                 task_class = component_registry[params.task_name]["class"]
-            except KeyError:
+            except KeyError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Task {params.task_name} is not registered.",
-                )
+                ) from e
 
             # Check if the task is a subclass of BaseGenerativeTask
             if not issubclass(task_class, BaseGenerativeTask):

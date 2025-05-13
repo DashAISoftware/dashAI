@@ -4,7 +4,7 @@ import cv2
 import PIL
 import PIL.Image
 import torch
-import torchvision.transforms.functional as F
+import torchvision.transforms.functional as f
 from diffusers import SD3ControlNetModel, StableDiffusion3ControlNetPipeline
 from diffusers.image_processor import VaeImageProcessor
 from huggingface_hub import login
@@ -144,7 +144,7 @@ class StableDiffusionControlNetCannyModel(ControlNetModel):
 
             self.model.image_processor = SD3CannyImageProcessor()
         except Exception as e:
-            raise ValueError(f"Failed to load model {self.model_name}. {e}")
+            raise ValueError(f"Failed to load model {self.model_name}. {e}") from e
 
         self.negative_prompt = kwargs.get("negative_prompt")
         self.num_inference_steps = kwargs.get("num_inference_steps")
@@ -178,7 +178,7 @@ class StableDiffusionControlNetCannyModel(ControlNetModel):
         image = input[0]
         prompt = input[1]
 
-        image = F.to_tensor(image)
+        image = f.to_tensor(image)
         image = cv2.cvtColor(image.transpose(1, 2, 0), cv2.COLOR_RGB2GRAY)
         image = cv2.Canny(image, 100, 200)
 

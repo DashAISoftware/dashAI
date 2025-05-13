@@ -120,7 +120,7 @@ class FluxV1Model(TextToImageGenerationTaskModel):
                 torch_dtype=torch.float32,
             ).to(self.device)
         except Exception as e:
-            raise ValueError(f"Failed to load model {self.model_name}. {e}")
+            raise ValueError(f"Failed to load model {self.model_name}. {e}") from e
 
         self.negative_prompt = kwargs.get("negative_prompt")
         self.num_inference_steps = kwargs.get("num_inference_steps")

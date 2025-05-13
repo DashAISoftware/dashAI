@@ -53,9 +53,7 @@ async def upload_generative_process(
     input_items = []
 
     # Filter and sort only indexed keys like 'text_0', 'file_1'
-    indexed_keys = [
-        key for key in form.keys() if "_" in key and key.split("_")[1].isdigit()
-    ]
+    indexed_keys = [key for key in form if "_" in key and key.split("_")[1].isdigit()]
     for key in sorted(indexed_keys, key=lambda x: int(x.split("_")[1])):
         value = form[key]
         if isinstance(value, UploadFile):
