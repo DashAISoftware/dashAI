@@ -23,7 +23,6 @@ from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNe
 
 
 class SimpleSchema(BaseSchema):
-
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,

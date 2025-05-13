@@ -1,11 +1,10 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Final, List, Union, Tuple
+from typing import Any, Final, List, Tuple, Union
 
 from DashAI.back.config_object import ConfigObject
 
 
 class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
-
     TYPE: Final[str] = "GenerativeModel"
 
     @abstractmethod

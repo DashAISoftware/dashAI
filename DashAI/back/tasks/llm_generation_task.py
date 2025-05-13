@@ -1,5 +1,4 @@
-from typing import Any, List, Tuple
-from itertools import chain
+from typing import Any, List
 
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -45,7 +44,7 @@ class LLMGenerationTask(BaseGenerativeTask):
         if not history:
             return f"Q: {input}\nA:"
 
-        history = [ (input[0], output[0]) for (input, output) in history]
+        history = [(input[0], output[0]) for (input, output) in history]
         context = "\n".join(
             [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
         )

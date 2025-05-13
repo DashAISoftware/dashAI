@@ -12,8 +12,3 @@ export interface IGenerativeTask {
   description: string;
   display_name: string;
 }
-
-
-
-
-  

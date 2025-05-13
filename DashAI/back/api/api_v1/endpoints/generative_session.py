@@ -3,7 +3,6 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from pydantic import ValidationError
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
@@ -271,7 +270,7 @@ async def update_generative_session_params(
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
-                parameters=updated_parameters, 
+                parameters=updated_parameters,
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)

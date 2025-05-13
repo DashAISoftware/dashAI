@@ -1,14 +1,15 @@
 from typing import List
+
 from llama_cpp import Llama
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
-    int_field,
     float_field,
+    int_field,
     schema_field,
 )
-
 from DashAI.back.models.llm_generation_model import LLMGenerationModel
+
 
 class QwenSchema(BaseSchema):
     """Schema for Qwen model."""
@@ -17,7 +18,7 @@ class QwenSchema(BaseSchema):
         int_field(ge=1),
         placeholder=100,
         description="Maximum number of tokens to generate.",
-    )  # type: ignore   
+    )  # type: ignore
 
     temperature: schema_field(
         float_field(ge=0.0, le=1.0),
@@ -35,7 +36,7 @@ class QwenSchema(BaseSchema):
         int_field(ge=1),
         placeholder=512,
         description="Maximum number of tokens the model can process in a single forward pass (context window size).",
-    ) # type: ignore
+    )  # type: ignore
 
 
 class QwenModel(LLMGenerationModel):
@@ -54,13 +55,15 @@ class QwenModel(LLMGenerationModel):
         self.filename = "*q8_0.gguf"
 
         self.model = Llama.from_pretrained(
-            repo_id=self.model_id, filename=self.filename, verbose=True, n_ctx=self.n_ctx
+            repo_id=self.model_id,
+            filename=self.filename,
+            verbose=True,
+            n_ctx=self.n_ctx,
         )
 
     def generate(self, prompt: str) -> List[str]:
-
         if len(prompt) > self.model.n_ctx():
-            prompt = prompt[-self.model.n_ctx():]
+            prompt = prompt[-self.model.n_ctx() :]
 
         """Generate text based on prompts."""
 
