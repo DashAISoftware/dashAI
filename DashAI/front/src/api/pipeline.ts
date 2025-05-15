@@ -22,7 +22,7 @@ export const updatePipeline = async (
   id: number,
   formData: object
 ): Promise<IPipeline> => {
-  const response = await api.patch<IPipeline>(`${pipelineEndpoint}/${id}`, formData);
+  const response = await api.put<IPipeline>(`${pipelineEndpoint}/${id}`, formData);
   return response.data;
 };
 

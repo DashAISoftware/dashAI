@@ -8,6 +8,8 @@ import {
   MenuItem,
   Grid,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import useSchema from "../../../hooks/useSchema";
@@ -24,8 +26,8 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
       "LogisticRegression",
       "RandomForestClassifier",
     ],
-    TextClassificationTask: ["text"],
-    TranslationTask: ["translation"],
+    TextClassificationTask: ["DistilBertTransformer", "BagOfWordsTextClassificationModel"],
+    TranslationTask: ["OpusMtEnESTransformer"],
     ImageClassificationTask: ["image"],
   };
 
@@ -42,10 +44,11 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
     savedConfig?.splits || { train: 60, validation: 20, test: 20, shuffle: true, stratify: false, splitType: "random" }
   );
   const [task, setTask] = useState(savedConfig?.task || "");
-  const [model, setModel] = useState(savedConfig?.models || "");
+  const [model, setModel] = useState(savedConfig?.model || "");
   const [metrics, setMetrics] = useState(savedConfig?.metrics || []);
   const [openSettings, setOpenSettings] = useState(false);
-  const [modelParams, setModelParams] = useState({});
+  const [modelParams, setModelParams] = useState(savedConfig?.parameters || {});
+  const [initialized, setInitialized] = useState(false);
 
   const {
     defaultValues,
@@ -57,21 +60,35 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
   useEffect(() => {
     setInputColumns(savedConfig?.input_columns || ["1-4"]);
     setOutputColumns(savedConfig?.output_columns || ["5"]);
-    setSplits(savedConfig?.splits || { train: 60, validation: 20, test: 20, shuffle: true, stratify: false, splitType: "random" });
+    setSplits(savedConfig?.splits || { train: 0.6, validation: 0.2, test: 0.2, shuffle: true, stratify: false, splitType: "random" });
     setTask(savedConfig?.task || "");
-    setModel(savedConfig?.models || "");
+    setModel(savedConfig?.model || "");
     setMetrics(savedConfig?.metrics || []);
+    setModelParams(savedConfig?.parameters || {});
   }, [savedConfig]);
 
   useEffect(() => {
+    setInitialized(false);
+  }, [model]);
+
+  useEffect(() => {
+    if (loading || initialized) return;
+
     if (
-        defaultValues &&
-        Object.keys(defaultValues).length > 0 &&
-        Object.keys(modelParams).length === 0
-      ) {
-        setModelParams(defaultValues);
-      }
-    }, [defaultValues]);
+      savedConfig?.model === model &&
+      savedConfig?.parameters &&
+      Object.keys(savedConfig.parameters).length > 0
+    ) {
+      setModelParams(savedConfig.parameters);
+    } else if (defaultValues && Object.keys(defaultValues).length > 0) {
+      setModelParams(defaultValues);
+    } else {
+      setModelParams({});
+    }
+
+    setInitialized(true);
+  }, [loading, model, defaultValues, savedConfig, initialized]);
+
 
   const parseArray = (input) => {
     const items = typeof input === 'string'
@@ -94,9 +111,9 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
       input_columns: parseArray(inputColumns),
       output_columns: parseArray(outputColumns),
       splits: {
-        train: splits.train / 100,
-        validation: splits.validation / 100,
-        test: splits.test / 100,
+        train: splits.train,
+        validation: splits.validation,
+        test: splits.test,
         shuffle: splits.shuffle,
         stratify: splits.stratify,
         splitType: splits.splitType,
@@ -136,31 +153,57 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
               onChange={(e) => setOutputColumns(e.target.value)}
               margin="normal"
             />
+
+            <Grid item xs={12} sx={{ mt: 3 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={splits.shuffle}
+                    onChange={(e) =>
+                      setSplits({ ...splits, shuffle: e.target.checked })
+                    }
+                  />
+                }
+                label="Shuffle"
+                sx={{ ml: 1 }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={splits.stratify}
+                    onChange={(e) =>
+                      setSplits({ ...splits, stratify: e.target.checked })
+                    }
+                  />
+                }
+                label="Stratify"
+              />
+            </Grid>
           </Grid>
 
           <Grid item xs={12} md={6}>
             <TextField
-              label="Training (%)"
+              label="Training"
               type="number"
               fullWidth
               value={splits.train}
-              onChange={(e) => setSplits({ ...splits, train: parseInt(e.target.value, 10) })}
+              onChange={(e) => setSplits({ ...splits, train: parseFloat(e.target.value, 10) })}
               margin="normal"
             />
             <TextField
-              label="Validation (%)"
+              label="Validation"
               type="number"
               fullWidth
               value={splits.validation}
-              onChange={(e) => setSplits({ ...splits, validation: parseInt(e.target.value, 10) })}
+              onChange={(e) => setSplits({ ...splits, validation: parseFloat(e.target.value, 10) })}
               margin="normal"
             />
             <TextField
-              label="Testing (%)"
+              label="Testing"
               type="number"
               fullWidth
               value={splits.test}
-              onChange={(e) => setSplits({ ...splits, test: parseInt(e.target.value, 10) })}
+              onChange={(e) => setSplits({ ...splits, test: parseFloat(e.target.value, 10) })}
               margin="normal"
             />
           </Grid>
@@ -179,6 +222,7 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
                 setTask(e.target.value);
                 setModel("");
                 setMetrics([]);
+                setModelParams({});
               }}
               margin="normal"
             >
@@ -198,7 +242,9 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
                   select
                   fullWidth
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
+                  onChange={(e) => {
+                    setModel(e.target.value)
+                  }}
                   margin="normal"
                   disabled={!task}
                 >
@@ -256,7 +302,7 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
               loading ||
               inputColumns.length === 0 ||
               outputColumns.length === 0 ||
-              splits.train + splits.validation + splits.test !== 100 ||
+              splits.train + splits.validation + splits.test !== 1 ||
               !task ||
               !model ||
               metrics.length === 0

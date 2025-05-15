@@ -135,7 +135,9 @@ async def create_pipeline(
             steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
                           
             new_pipeline = Pipeline(
+                name=params.name,
                 steps=steps_dict,
+                edges=params.edges,
                 exploration=None,
                 train=None,
                 prediction=None,
@@ -162,9 +164,9 @@ async def update_pipeline(
     pipeline_id: int,
     params: PipelineUpdateParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    settings = DefaultSettings(),
 ):
     """Update a specific pipeline."""
-    logger.debug("Updating pipeline with id %s", pipeline_id)
     with session_factory() as db:
         try:
             pipeline = db.get(Pipeline, pipeline_id)
@@ -173,14 +175,20 @@ async def update_pipeline(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Pipeline not found",
                 )
+            
+            steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
 
-            pipeline.steps = params.steps or pipeline.steps
-            pipeline.exploration = params.exploration or pipeline.exploration
-            pipeline.train = params.train or pipeline.train
-            pipeline.prediction = params.prediction or pipeline.prediction
+            pipeline.name = params.name or pipeline.name
+            pipeline.steps = steps_dict or pipeline.steps
+            pipeline.edges = params.edges or pipeline.edges
 
             db.commit()
             db.refresh(pipeline)
+
+            sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+            sqlite_db_path = pathlib.Path(sqlite_local, settings.SQLITE_DB_PATH)
+            run_pipeline(sqlite_db_path, logging_level=logging.DEBUG, pipeline_id=pipeline_id)
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(

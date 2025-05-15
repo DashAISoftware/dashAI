@@ -11,6 +11,7 @@ import ExplainersPage from "./pages/ExplainersPage";
 import ExplainerData from "./components/explainers/ExplainerData";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
 import PipelinesPage from "./pages/pipelines/Pipelines";
+import NewPipeline from "./pages/pipelines/NewPipeline";
 import PredictionPage from "./pages/predictions/PredictionPage";
 
 function App() {
@@ -32,6 +33,8 @@ function App() {
           />
         </Route>
         <Route path="/app/pipelines" element={<PipelinesPage />} />
+        <Route path="/app/pipelines/new" element={<NewPipeline />} />
+        <Route path="/app/pipelines/:pipelineId" element={<NewPipeline key="edit"/>} />
       </Routes>
     </BrowserRouter>
   );

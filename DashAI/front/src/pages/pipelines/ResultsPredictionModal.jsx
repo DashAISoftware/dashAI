@@ -7,7 +7,9 @@ import {
   Typography,
   Tabs,
   Tab,
+  IconButton
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { useSnackbar } from "notistack";
 import PredictionSummaryTab from "../../components/predictions/PredictionSummaryTab";
 import PredictionSampleTab from "../../components/predictions/PredictionSampleTab";
@@ -52,6 +54,15 @@ function PredictionSummaryModal({ predictName, open, onClose }) {
         <DialogTitle>
           <Grid container justifyContent="space-between">
             <Typography variant="h5">Prediction Summary</Typography>
+            <IconButton
+              aria-label="close"
+              onClick={onClose}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
           </Grid>
         </DialogTitle>
         <DialogContent>

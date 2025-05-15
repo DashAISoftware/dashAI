@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import Any, Dict, List
@@ -54,7 +55,6 @@ class Train(BaseJob):
     def run(self, context: Dict[str, Any]) -> Any:
         context["task_name"] = self.task
         context["model_name"] = self.model
-        #context["input_columns"] = self.input_columns
         pipeline_id = context["pipeline_id"]
         dataset = context["dataset"]
         task: BaseTask = component_registry[self.task][0]["class"]()
@@ -88,8 +88,6 @@ class Train(BaseJob):
                 ]:
                     all_classes = prepared_dataset.unique(output_columns_names[0])
                     n_labels = len(all_classes)
-
-            #splits = json.loads(self.splits)
 
             prepared_dataset = prepare_for_experiment(
                 dataset=prepared_dataset,

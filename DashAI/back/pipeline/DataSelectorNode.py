@@ -7,14 +7,14 @@ from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
 
-class DataLoader(BaseJob):
-    TYPE = "DataLoader"
+class DataSelector(BaseJob):
+    TYPE = "DataSelector"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(kwargs=kwargs)
 
     def set_status_as_delivered(self) -> None:
-        log.info("DataLoader executed successfully.")
+        log.info("DataSelector executed successfully.")
 
     def run(self, context: Dict[str, Any]) -> Any:
         context["dataset_name"] = self.kwargs["name"]

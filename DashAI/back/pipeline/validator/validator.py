@@ -10,7 +10,7 @@ class BaseNodeValidator:
         raise NotImplementedError("Subclasses must implement this method")
 
 
-class DataLoaderValidator(BaseNodeValidator):
+class DataSelectorValidator(BaseNodeValidator):
     def validate(self):
             dataset_name = self.data.get("datasetName")
             dataset_path = self.data.get("datasetPath")
@@ -27,13 +27,13 @@ class DataLoaderValidator(BaseNodeValidator):
 class DataExplorationValidator(BaseNodeValidator):
     def validate(self):
         options = self.data.get("options")
-        dataloader = self.data.get("dataloader")
+        dataselector = self.data.get("dataselector")
 
-        if not dataloader:
+        if not dataselector:
             return {"status": "error", "message": "No previous node connected"}
 
-        if dataloader.get("status") != "ok":
-            return {"status": "error", "message": "The connected DataLoader node is not valid"}
+        if dataselector.get("status") != "ok":
+            return {"status": "error", "message": "The connected DataSelector node is not valid"}
 
         if not options or not isinstance(options, list) or len(options) == 0:
             return {"status": "error", "message": "No exploration options selected"}
@@ -53,7 +53,7 @@ class MetricsValidator(BaseNodeValidator):
 
 
 VALIDATOR_MAP = {
-    "DataLoader": DataLoaderValidator,
+    "DataSelector": DataSelectorValidator,
     "DataExploration": DataExplorationValidator,
     "Task": TaskValidator,
     "Metrics": MetricsValidator,

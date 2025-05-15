@@ -12,7 +12,7 @@ import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import { getDatasets } from "../../../api/datasets";
 
-function DataLoaderNode({ onClose, onSave, savedConfig }) {
+function DataSelectorNode({ onClose, onSave, savedConfig }) {
   const [datasetId, setDatasetId] = useState(savedConfig ? savedConfig.id : "");
   const [openModal, setOpenModal] = useState(false);
   const [datasets, setDatasets] = useState([]);
@@ -51,7 +51,7 @@ function DataLoaderNode({ onClose, onSave, savedConfig }) {
       datasetPath: selected.file_path,
     };
 
-    const validationResponse = await validateNode("DataLoader", config);
+    const validationResponse = await validateNode("DataSelector", config);
 
     if (validationResponse.status === "ok") {
       console.log("Validation successful");
@@ -121,4 +121,4 @@ function DataLoaderNode({ onClose, onSave, savedConfig }) {
   );
 }
 
-export default DataLoaderNode;
+export default DataSelectorNode;

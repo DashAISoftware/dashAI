@@ -1,21 +1,26 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { createPipeline } from "../../../api/pipeline";
 
-async function RunPipeline(nodes, nodeData) {
-  const steps = nodes.map((node) => ({
-    id: node.id,
-    type: node.type,
-    label: node.data.label,
-    config: nodeData[node.id] || {},
-  }));
+async function RunPipeline(nodes, nodeData, name, edges) {
+  const steps = nodes.map((node) => {
+    const config = nodeData[node.id] || {};
+
+    return {
+      id: node.id,
+      type: node.type,
+      label: node.data.label,
+      config: config,
+    };
+  });
 
   const formData = {
+    name: name,
     steps: steps,
+    edges: edges,
     exploration: null,
     train: null,
     prediction: null,
   };
-  console.log(formData);
 
   try {
     const response = await createPipeline(formData);

@@ -26,11 +26,11 @@ const DataExplorationNode = ({ open, onClose, onSave, savedConfig, data }) => {
   };
 
   const saveExplorationOptions = async () => {
-    const dataloaderKey = Object.keys(data).find((key) => key.startsWith("DataLoader"));
-    const dataloaderNode = data[dataloaderKey];
+    const dataselectorKey = Object.keys(data).find((key) => key.startsWith("DataSelector"));
+    const dataselectorNode = data[dataselectorKey];
     const config = {
       options: selectedOptions,
-      dataloader: dataloaderNode,
+      dataselector: dataselectorNode,
     };
 
     const validationResponse = await validateNode("DataExploration", config);

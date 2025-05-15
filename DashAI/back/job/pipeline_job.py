@@ -56,7 +56,7 @@ class PipelineJob(BaseJob):
 
             try:
                 output = node_instance.run(context=context)
-                if node_type == "DataLoader":
+                if node_type == "DataSelector":
                     context["dataset"] = output["dataset"]
                 elif node_type == "DataExploration":
                     context["exploration"] = output["exploration"]
@@ -115,7 +115,7 @@ def run_pipeline(sqlite_db_path: Path,  logging_level: int, pipeline_id: int) ->
         else:
             print(f"❌ No se encontró el pipeline con ID {pipeline_id}.")
 
-from DashAI.back.pipeline.DataLoaderNode import DataLoader
+from DashAI.back.pipeline.DataSelectorNode import DataSelector
 from DashAI.back.pipeline.ExplorationNode import DataExploration   
 from DashAI.back.pipeline.TaskNode import TaskSelector
 from DashAI.back.pipeline.MetricsNode import Metrics
@@ -123,7 +123,7 @@ from DashAI.back.pipeline.TrainNode import Train
 from DashAI.back.pipeline.SplitDataNode import SplitData
 from DashAI.back.pipeline.PredictionNode import Prediction
 
-component_registry.register("DataLoader", DataLoader)
+component_registry.register("DataSelector", DataSelector)
 component_registry.register("DataExploration", DataExploration)
 component_registry.register("TaskSelector", TaskSelector)
 component_registry.register("Metrics", Metrics)

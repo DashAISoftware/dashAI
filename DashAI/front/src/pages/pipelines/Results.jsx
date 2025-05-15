@@ -15,6 +15,7 @@ import { getPipelineById } from "../../api/pipeline";
 import PipelineResultsMetrics from "./ResultsMetrics";
 import PipelineResultsGraphs from "./ResultsGraphs";
 import PipelineResultsPrediction from "./ResultsPrediction";
+import ResultsTabParameters from "../results/components/ResultsTabParameters";
 
 function PipelineResults({ pipelineId, onClose }) {
   const [results, setResults] = useState(null);
@@ -51,9 +52,29 @@ function PipelineResults({ pipelineId, onClose }) {
     return value;
   };
 
-  const hasExploration = results.exploration && results.exploration !== "No exploration data";
+  const hasExploration =
+    results.exploration && results.exploration !== "No exploration data";
   const hasTrain = results.train && Object.keys(results.train).length > 0;
-  const hasPrediction = results.prediction && results.prediction !== "No prediction data";
+  const hasPrediction =
+    results.prediction && results.prediction !== "No prediction data";
+
+  const paramData = {
+    parameters:
+      results.train && results.train.parameters ? results.train.parameters : null,
+  };
+
+  if (!hasExploration && !hasTrain && !hasPrediction) {
+    return (
+      <Box sx={{ p: 2 }}>
+        {onClose && (
+          <Button startIcon={<ArrowBackIosNew />} onClick={onClose}>
+            Volver
+          </Button>
+        )}
+        <Typography>No results available</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 2 }}>
@@ -83,36 +104,39 @@ function PipelineResults({ pipelineId, onClose }) {
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
             <Box mx={10} my={2}>
-            <Paper sx={{ width: "100%" }}>
-              <Tabs value={trainTab} onChange={handleTabChange} variant="scrollable">
-                <Tab label="Info" />
-                <Tab label="Parameters" />
-                <Tab label="Metrics" />
-                <Tab label="Graphs" />
-              </Tabs>
-              <Box sx={{ p: 3 }}>
-                {trainTab === 0 && (
-                  <Box>
-                    {renderValue(results.train.info || {})}
-                  </Box>
-                )}
-                {trainTab === 1 && (
-                  <Box>
-                    {renderValue(results.train.parameters || {})}
-                  </Box>
-                )}
-                {trainTab === 2 && (
-                  <Box>
-                    <PipelineResultsMetrics metricsData={results.train.metrics} />
-                  </Box>
-                )}
-                {trainTab === 3 && (
-                  <Box>
-                    <PipelineResultsGraphs metrics={results.train.metrics}/>
-                  </Box>
-                )}
-              </Box>
-            </Paper>
+              <Paper sx={{ width: "100%" }}>
+                <Tabs value={trainTab} onChange={handleTabChange} variant="scrollable">
+                  <Tab label="Info" />
+                  <Tab label="Parameters" />
+                  <Tab label="Metrics" />
+                  <Tab label="Graphs" />
+                </Tabs>
+                <Box sx={{ p: 3 }}>
+                  {trainTab === 0 && (
+                    <Box>
+                      <Typography variant="subtitle1">Model Name</Typography>
+                      <Typography variant="p" sx={{ color: "gray" }}>
+                        {results.train.info ?? "-"}
+                      </Typography>
+                    </Box>
+                  )}
+                  {trainTab === 1 && (
+                    <Box>
+                      <ResultsTabParameters runData={paramData} />
+                    </Box>
+                  )}
+                  {trainTab === 2 && (
+                    <Box>
+                      <PipelineResultsMetrics metricsData={results.train.metrics} />
+                    </Box>
+                  )}
+                  {trainTab === 3 && (
+                    <Box>
+                      <PipelineResultsGraphs metrics={results.train.metrics} />
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
             </Box>
           </AccordionDetails>
         </Accordion>
@@ -125,14 +149,10 @@ function PipelineResults({ pipelineId, onClose }) {
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
             <Box mx={10} my={2}>
-              <PipelineResultsPrediction prediction={results.prediction}/>
+              <PipelineResultsPrediction prediction={results.prediction} />
             </Box>
           </AccordionDetails>
         </Accordion>
-      )}
-
-      {!hasExploration && !hasTrain && !hasPrediction && (
-        <Typography>No results available</Typography>
       )}
     </Box>
   );
