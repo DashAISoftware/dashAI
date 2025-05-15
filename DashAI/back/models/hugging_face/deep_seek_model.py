@@ -50,7 +50,7 @@ class DeepSeekModel(LLMGenerationModel):
         self.n_ctx = kwargs.pop("n_ctx", 512)
         
         self.model_id = "TheBloke/deepseek-llm-7B-base-GGUF"
-        self.filename = "*Q8_0.gguf"
+        self.filename = "*Q3_K_S.gguf"
 
         self.model = Llama.from_pretrained(
             repo_id=self.model_id, filename=self.filename, verbose=True, n_ctx=self.n_ctx, n_gpu_layers=-1

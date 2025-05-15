@@ -1,0 +1,1 @@
+from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline

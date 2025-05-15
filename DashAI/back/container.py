@@ -51,6 +51,8 @@ from DashAI.back.models import (
     StableDiffusionV2Model,
     StableDiffusionV3Model,
     ViTTransformer,
+    
+    RAGPipeline,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.tasks import (
@@ -61,7 +63,9 @@ from DashAI.back.tasks import (
     TabularClassificationTask,
     TextClassificationTask,
     TextToImageGenerationTask,
-    TranslationTask,
+    TranslationTask,    
+    
+    RAGTask,
 )
 
 logger = logging.getLogger(__name__)
@@ -130,6 +134,9 @@ INITIAL_COMPONENTS = [
     KernelShap,
     PartialDependence,
     PermutationFeatureImportance,
+
+    RAGTask,
+    RAGPipeline
 ]
 
 

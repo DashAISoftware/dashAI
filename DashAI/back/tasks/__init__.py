@@ -9,3 +9,5 @@ from DashAI.back.tasks.tabular_classification_task import TabularClassificationT
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.translation_task import TranslationTask
+
+from DashAI.back.tasks.RAG_task import RAGTask

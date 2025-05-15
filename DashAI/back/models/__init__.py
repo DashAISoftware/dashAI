@@ -53,3 +53,5 @@ from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 from DashAI.back.models.scikit_learn.svc import SVC
+
+from DashAI.back.models.RAG import RAGPipeline
