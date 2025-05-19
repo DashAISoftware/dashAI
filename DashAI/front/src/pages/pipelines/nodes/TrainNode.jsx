@@ -14,30 +14,9 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings";
 import useSchema from "../../../hooks/useSchema";
 import ParamsSettings from "./ParamsSettings";
+import { getComponents as getComponentsRequest } from "../../../api/component";
 
 const Train = ({ open, onClose, onSave, savedConfig }) => {
-  const taskModelOptions = {
-    TabularClassificationTask: [
-      "SVC",
-      "DecisionTreeClassifier",
-      "DummyClassifier",
-      "HistGradientBoostingClassifier",
-      "KNeighborsClassifier",
-      "LogisticRegression",
-      "RandomForestClassifier",
-    ],
-    TextClassificationTask: ["DistilBertTransformer", "BagOfWordsTextClassificationModel"],
-    TranslationTask: ["OpusMtEnESTransformer"],
-    ImageClassificationTask: ["image"],
-  };
-
-  const availableMetrics = {
-    TabularClassificationTask: ["Accuracy", "F1", "Precision", "Recall"],
-    TextClassificationTask: ["Accuracy", "F1", "Precision", "Recall"],
-    TranslationTask: ["Bleu", "Ter"],
-    ImageClassificationTask: ["Accuracy", "F1"],
-  };
-
   const [inputColumns, setInputColumns] = useState(savedConfig?.input_columns || []);
   const [outputColumns, setOutputColumns] = useState(savedConfig?.output_columns || []);
   const [splits, setSplits] = useState(
@@ -49,6 +28,27 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
   const [openSettings, setOpenSettings] = useState(false);
   const [modelParams, setModelParams] = useState(savedConfig?.parameters || {});
   const [initialized, setInitialized] = useState(false);
+  const [availableTasks, setAvailableTasks] = useState([]);
+  const [availableModels, setAvailableModels] = useState([]);
+  const [availableMetrics, setAvailableMetrics] = useState([]);
+
+  useEffect(() => {
+    const fetchComponents = async () => {
+      try {
+        const tasks = await getComponentsRequest({ selectTypes: ["Task"] });
+        const models = await getComponentsRequest({ selectTypes: ["Model"], relatedComponent: task });
+        const metrics = await getComponentsRequest({ selectTypes: ["Metric"], relatedComponent: task });
+
+        setAvailableTasks(tasks);
+        setAvailableModels(models);
+        setAvailableMetrics(metrics);
+      } catch (error) {
+        console.error("Error fetching components:", error);
+      }
+    };
+
+    fetchComponents();
+  }, [task]);
 
   const {
     defaultValues,
@@ -226,9 +226,9 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
               }}
               margin="normal"
             >
-              {Object.keys(taskModelOptions).map((taskKey) => (
-                <MenuItem key={taskKey} value={taskKey}>
-                  {taskKey}
+              {availableTasks.map((taskObj) => (
+                <MenuItem key={taskObj.name} value={taskObj.name}>
+                  {taskObj.name}
                 </MenuItem>
               ))}
             </TextField>
@@ -248,9 +248,9 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
                   margin="normal"
                   disabled={!task}
                 >
-                  {(taskModelOptions[task] || []).map((modelName) => (
-                    <MenuItem key={modelName} value={modelName}>
-                      {modelName}
+                  {availableModels.map((model) => (
+                    <MenuItem key={model.name} value={model.name}>
+                      {model.name}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -283,9 +283,9 @@ const Train = ({ open, onClose, onSave, savedConfig }) => {
               margin="normal"
               disabled={!task}
             >
-              {(availableMetrics[task] || []).map((metric) => (
-                <MenuItem key={metric} value={metric}>
-                  {metric}
+              {availableMetrics.map((metric) => (
+                <MenuItem key={metric.name} value={metric.name}>
+                  {metric.name}
                 </MenuItem>
               ))}
             </TextField>

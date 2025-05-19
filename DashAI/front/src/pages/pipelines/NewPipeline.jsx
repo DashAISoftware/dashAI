@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Box, Typography, Dialog, TextField, Button  } from "@mui/material";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Box, Typography, Dialog, TextField, Button, Tooltip } from "@mui/material";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState } from "reactflow";
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState, Handle, Position } from "reactflow";
 import 'reactflow/dist/style.css';
 import CustomLayout from "../../components/custom/CustomLayout";
 import RunPipeline from "./nodes/Run";
@@ -13,12 +14,15 @@ import PipelineResults from "./Results";
 import { getPipelineById, updatePipeline } from "../../api/pipeline";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import validatePipeline from "./ValidatePipeline"
+import CustomNode from "./CustomNode";
+import { ValidationError } from "yup";
 
 const nodeTypes = {
-  DataSelector: DataSelectorNode,
-  DataExploration: DataExplorationNode,
-  Train: TrainNode,
-  Prediction: PredictionNode,
+  DataSelector: CustomNode,
+  DataExploration: CustomNode,
+  Train: CustomNode,
+  Prediction: CustomNode,
 };
 
 function NewPipeline() {
@@ -33,6 +37,9 @@ function NewPipeline() {
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || "flow");
   const [resultId, setResultId] = useState(null);
   const [pipelineName, setPipelineName] = useState("undefined");
+  const [validationErrors, setValidationErrors] = useState({});
+  const [hoveredNode, setHoveredNode] = useState(null);
+  const flowWrapperRef = useRef(null);
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -46,20 +53,44 @@ function NewPipeline() {
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
-    const reactFlowBounds = event.target.getBoundingClientRect();
+    const reactFlowBounds = flowWrapperRef.current.getBoundingClientRect();
     const position = { x: event.clientX - reactFlowBounds.left, y: event.clientY - reactFlowBounds.top };
+    const nodeId = `${dragging}-${nodes.length}`;
+    const nodeErrors = validationErrors[nodeId] ?? [];
     
     const newNode = {
-      id: `${dragging}-${nodes.length}`, 
+      id: nodeId, 
       type: dragging, 
       position,
-      data: { label: `${dragging} Node` },
+      data: { label: dragging, hasError: validationErrors[`${dragging}-${nodes.length}`], errors: nodeErrors },
       sourcePosition: "right",
       targetPosition: "left",
     };
 
     setNodes((nds) => nds.concat(newNode));
   }, [dragging, nodes.length, setNodes]);
+
+  const requiresConfiguration = (type) => type !== "Prediction";
+
+  useEffect(() => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => {
+        const hasError = !!validationErrors[node.id];
+        const needsConfig = requiresConfiguration(node.type);
+        const isConfigured = nodeData[node.id] !== undefined;
+
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            hasError,
+            notConfigured: needsConfig && !isConfigured,
+            errors: validationErrors[node.id]
+          },
+        };
+      })
+    );
+  }, [validationErrors, nodeData]);
 
   const onConnect = (params) => {
     setEdges((eds) => addEdge(
@@ -71,7 +102,6 @@ function NewPipeline() {
       },
       eds
     ));
-    console.log("edges:", params);
   };
 
   useEffect(() => {
@@ -97,7 +127,7 @@ function NewPipeline() {
         setPipelineName(pipeline.name);
       })();
     }
-  }, [pipelineId, setNodes, setEdges, setNodeData, setPipelineName, setResultId]);
+  }, [pipelineId]);
 
   const handleCloseDialog = () => {
     setSelectedNode(null);
@@ -123,7 +153,27 @@ function NewPipeline() {
     });
   }
 
+  useEffect(() => {
+    const errors = validatePipeline(nodes, edges);
+    setValidationErrors(errors);
+
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          hasError: !!errors[node.id],
+        }
+      }))
+    );
+  }, [nodes.length, edges]);
+
   const handleRun = async () => {
+    const errors = validatePipeline(nodes, edges);
+    if (errors.length > 0) {
+      alert("Errores en el pipeline:\n" + errors.join("\n"));
+      return;
+    }
     let newId;
     if (pipelineId) {
       await updatePipeline(pipelineId, { name: pipelineName, steps: buildSteps(nodes, nodeData), edges: edges });
@@ -161,6 +211,14 @@ function NewPipeline() {
     } return null;
   };
 
+  const onNodeMouseEnter = (event, node) => {
+    if (validationErrors[node.id]) setHoveredNode(node);
+  };
+
+  const onNodeMouseLeave = () => {
+    setHoveredNode(null);
+  };
+
   return (
     <CustomLayout title="Pipelines Module" subtitle="Create and manage your pipelines.">
     
@@ -192,8 +250,8 @@ function NewPipeline() {
 
       {activeTab === "flow" ? (
       <>
-      <Box display="flex" height="100vh">
-        <Box sx={{ width: 300, p: 2, backgroundColor: "#212121", overflowY: "auto" }}>
+      <Box display="flex" height="85vh">
+        <Box sx={{ width: 250, p: 2, backgroundColor: "#212121", overflowY: "auto" }}>
           <Typography variant="h6" gutterBottom sx={{ color: "#fff" }}>
             Nodes
           </Typography>
@@ -234,6 +292,7 @@ function NewPipeline() {
             </Button>
           </Box>
 
+          <Box ref={flowWrapperRef} sx={{ width: '100%', height: '73vh' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -242,14 +301,42 @@ function NewPipeline() {
             onConnect={onConnect}
             onDrop={onDrop}
             onDragOver={(event) => event.preventDefault()}
-            onNodeClick={onNodeClick} 
-            //nodeTypes={nodeTypes}
+            onNodeDoubleClick={onNodeClick} 
+            onNodeMouseEnter={onNodeMouseEnter}
+            onNodeMouseLeave={onNodeMouseLeave}
+            nodeTypes={nodeTypes}
             fitView
-            style={{ width: '100%', height: '100%' }}
+            style={{
+              borderRadius: 12,
+              background: "#f5f5f5",
+              border: "1px solid #ccc",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            }}
           >
+            {hoveredNode && (
+              <Tooltip
+                open
+                title={Array.isArray(validationErrors[hoveredNode.id])
+                    ? validationErrors[hoveredNode.id].join('\n')
+                    : String(validationErrors[hoveredNode.id]).replace(/\. /g, '.\n')
+                }
+                placement="top"
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '15px',
+                      whiteSpace: 'pre-line',
+                    },
+                  },
+                }}
+              >
+                <div />
+              </Tooltip>
+            )}
             <Background />
             <Controls />
           </ReactFlow>
+          </Box>
         </Box>
         {renderNodeDialogContent() && (
           <Dialog open={true} onClose={handleCloseDialog}>
