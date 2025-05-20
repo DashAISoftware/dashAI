@@ -86,10 +86,14 @@ class DistilBertTransformer(TextClassificationModel):
         The process includes the instantiation of the pre-trained model and the
         associated tokenizer.
         """
-        self.num_labels = kwargs.get("num_labels")
+        self.num_labels = kwargs.pop("num_labels_from_factory", None)
+
         kwargs = self.validate_and_transform(kwargs)
+
         self.model_name = "distilbert-base-uncased"
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
         self.training_args = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
             "learning_rate": kwargs.get("learning_rate", 5e-5),
@@ -97,11 +101,21 @@ class DistilBertTransformer(TextClassificationModel):
         }
         self.batch_size = kwargs.get("batch_size", 16)
         self.device = kwargs.get("device", "gpu")
-        self.model = (
-            model
-            if model is not None
-            else AutoModelForSequenceClassification.from_pretrained(self.model_name)
-        )
+
+        if model is not None:
+            self.model = model
+            if self.num_labels is not None and hasattr(self.model, "config"):
+                self.model.config.num_labels = self.num_labels
+        else:
+            if self.num_labels is not None:
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    self.model_name, num_labels=self.num_labels
+                )
+            else:
+                # Fallback: num_labels will be determined in fit().
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    self.model_name
+                )
 
         self.fitted = False
 
@@ -137,9 +151,17 @@ class DistilBertTransformer(TextClassificationModel):
 
         """
         output_column_name = y_train.column_names[0]
+
         if self.num_labels is None:
-            self.num_labels = len(set(y_train[output_column_name]))
-        self.model.config.num_labels = self.num_labels
+            self.num_labels = len(y_train.unique(output_column_name))
+            # num_labels in __init__) needs to be re-instantiated/re-configured.
+            config = AutoConfig.from_pretrained(
+                self.model_name, num_labels=self.num_labels
+            )
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_name, config=config
+            )
+
         train_dataset = self.tokenize_data(x_train)
         train_dataset = train_dataset.add_column("label", y_train[output_column_name])
 
@@ -148,7 +170,7 @@ class DistilBertTransformer(TextClassificationModel):
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
             logging_strategy="steps",
             logging_steps=50,
-            save_strategy="epoch",  # Guarda checkpoints al final de cada época
+            save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
             no_cuda=self.device != "gpu",
             fp16=can_use_fp16,
@@ -161,7 +183,7 @@ class DistilBertTransformer(TextClassificationModel):
             args=training_args,
             train_dataset=train_dataset,
             data_collator=data_collator,
-            tokenizer=self.tokenizer,
+            # tokenizer=self.tokenizer,
         )
 
         trainer.train()

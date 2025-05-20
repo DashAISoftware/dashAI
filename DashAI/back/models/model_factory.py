@@ -31,10 +31,20 @@ class ModelFactory:
 
         self.num_labels = n_labels
 
-        self.model = model(**self.fixed_parameters)
+        model_constructor_params = self.fixed_parameters.copy()
+        if self.num_labels is not None:
+            model_constructor_params["num_labels_from_factory"] = self.num_labels
+
+        try:
+            self.model = model(**model_constructor_params)
+        except TypeError as e:
+            if "num_labels_from_factory" in str(e):
+                model_constructor_params.pop("num_labels_from_factory", None)
+                self.model = model(**model_constructor_params)
+            else:
+                raise e
+
         self.fitted = False
-        if n_labels is not None:
-            self._adjust_params_after_init(n_labels)
 
         if hasattr(self.model, "optimizable_params"):
             self.optimizable_parameters = self.model.optimizable_params
@@ -52,35 +62,7 @@ class ModelFactory:
         self.fitted = True
         return result
 
-    def _adjust_params_after_init(self, num_labels):
-        """
-        Adjust model parameters based on the number of labels after model
-        initialization.
-
-        This method checks the instantiated model to see if it has num_labels attribute
-        and updates it accordingly.
-
-        Parameters
-        ----------
-        num_labels : int
-            Number of unique labels in the classification task.
-        """
-        # For Hugging Face models
-        if hasattr(self.model, "config") and hasattr(self.model.config, "num_labels"):
-            self.model.config.num_labels = num_labels
-            return
-
-        # For scikit-learn models
-        if hasattr(self.model, "n_classes_"):
-            self.model.n_classes_ = num_labels
-            return
-
-        # For other models that have the num_labels attribute
-        if hasattr(self.model, "num_labels"):
-            self.model.num_labels = num_labels
-            return
-
-    def _extract_parameters(self, parameters: dict) -> dict:
+    def _extract_parameters(self, parameters: dict) -> tuple:
         """
         Extract fixed and optimizable parameters from a dictionary.
 
@@ -98,18 +80,20 @@ class ModelFactory:
             - optimizable_params: A dictionary of parameters that are intended to
             be optimized.
         """
-        fixed_params = {
-            key: (
-                param["fixed_value"]
-                if isinstance(param, dict) and "optimize" in param
-                else param
-            )
-            for key, param in parameters.items()
-        }
+        fixed_params = {}
+        for key, param_spec in parameters.items():
+            if isinstance(param_spec, dict):
+                if "fixed_value" in param_spec:
+                    fixed_params[key] = param_spec["fixed_value"]
+                else:
+                    fixed_params[key] = param_spec
+            else:
+                fixed_params[key] = param_spec
+
         optimizable_params = {
-            key: (param["lower_bound"], param["upper_bound"])
-            for key, param in parameters.items()
-            if isinstance(param, dict) and param.get("optimize") is True
+            key: (param_spec["lower_bound"], param_spec["upper_bound"])
+            for key, param_spec in parameters.items()
+            if isinstance(param_spec, dict) and param_spec.get("optimize") is True
         }
         return fixed_params, optimizable_params
 

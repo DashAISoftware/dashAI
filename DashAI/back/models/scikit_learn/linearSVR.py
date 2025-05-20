@@ -11,9 +11,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
-    SklearnLikeRegressor,
-)
+from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
 class LinearSVRSchema(BaseSchema):
@@ -62,7 +60,7 @@ class LinearSVRSchema(BaseSchema):
     )  # type: ignore
 
     fit_intercept: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Whether to calculate the intercept for this model.",
     )  # type: ignore
@@ -80,7 +78,7 @@ class LinearSVRSchema(BaseSchema):
     )  # type: ignore
 
     dual: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Select the algorithm to either solve the dual or primal"
         " optimization problem.",
