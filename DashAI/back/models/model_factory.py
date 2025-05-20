@@ -83,10 +83,7 @@ class ModelFactory:
         fixed_params = {}
         for key, param_spec in parameters.items():
             if isinstance(param_spec, dict):
-                if "fixed_value" in param_spec:
-                    fixed_params[key] = param_spec["fixed_value"]
-                else:
-                    fixed_params[key] = param_spec
+                fixed_params[key] = param_spec.get("fixed_value", param_spec)
             else:
                 fixed_params[key] = param_spec
 

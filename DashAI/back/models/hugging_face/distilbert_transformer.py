@@ -183,7 +183,6 @@ class DistilBertTransformer(TextClassificationModel):
             args=training_args,
             train_dataset=train_dataset,
             data_collator=data_collator,
-            # tokenizer=self.tokenizer,
         )
 
         trainer.train()

@@ -23,7 +23,7 @@ class LinearRegressionSchema(BaseSchema):
         "(e.g., data is expected to be centered).",
     )  # type: ignore
 
-    copy_X: schema_field(
+    copy_X: schema_field(  # noqa: N815
         bool_field(),
         placeholder=True,
         description="If True, X will be copied; else, it may be overwritten.",
