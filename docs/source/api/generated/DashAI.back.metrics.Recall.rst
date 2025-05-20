@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~Recall.__init__
+      ~Recall.is_multiclass
       ~Recall.score
    
    

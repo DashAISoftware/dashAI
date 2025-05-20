@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~Accuracy.__init__
+      ~Accuracy.is_multiclass
       ~Accuracy.score
    
    

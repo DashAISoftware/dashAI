@@ -5,7 +5,7 @@ from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
 class RAGTask(BaseGenerativeTask):
-    """Base class for image generation tasks.
+    """Class for RAG Task.
 
     Here you can change the methods provided by class Task.
     """

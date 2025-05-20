@@ -24,8 +24,6 @@ class ControlNetTask(BaseGenerativeTask):
         "This task generates images based on the provided input text and image."
     )
 
-    DISPLAY_NAME: str = "ControlNet"
-
     def prepare_for_task(
         self,
         input: Tuple[str, str],
@@ -69,6 +67,8 @@ class ControlNetTask(BaseGenerativeTask):
         """
 
         path = kwargs.get("images_path")
+        if not path.exists():
+            path.mkdir(parents=True)
 
         # Save the image to a temporary file
         image_path = path / f"{uuid.uuid4()}.png"
@@ -133,7 +133,7 @@ class ControlNetTask(BaseGenerativeTask):
             List of base64 encoded images
         """
 
-        output = list(map(lambda x: os.path.basename(x), output)) if output else None
+        output = [os.path.basename(x) for x in output] if output else None
 
         return output
 
@@ -157,7 +157,7 @@ class ControlNetTask(BaseGenerativeTask):
 
         input_processed = []
         for ip in input:
-            if ip.endswith(".png") or ip.endswith(".jpg"):
+            if ip.endswith((".png", ".jpg")):
                 # Extract the image name from the path
                 ip = os.path.basename(ip)
                 input_processed.append(ip)

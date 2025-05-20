@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cu118
 fastapi[all]
 SQLAlchemy
 streaming_form_data
@@ -20,7 +21,6 @@ plotly
 shap
 typer
 rich
---extra-index-url https://download.pytorch.org/whl/cu118
 torch==2.4.1
 torchvision
 transformers
@@ -30,3 +30,5 @@ optuna
 hyperopt
 openpyxl
 httpx
+wordcloud
+opencv-python

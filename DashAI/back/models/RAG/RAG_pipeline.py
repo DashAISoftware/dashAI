@@ -113,6 +113,7 @@ class RAGPipeline(BaseGenerativeModel):
     """Retrieval-Augmented Generation (RAG) pipeline."""
     
     COMPATIBLE_COMPONENTS = ["RAGTask"]
+
     SCHEMA = RAGPipelineSchema
 
     def __init__(   self, 
@@ -125,6 +126,7 @@ class RAGPipeline(BaseGenerativeModel):
             n_docs (int): The maximum number of documents to retrieve.
             max_distance (float): The maximum distance allowed for retrieved documents.
         """
+        kwargs = self.validate_and_transform(kwargs)
 
         print("Initializing RAG pipeline")
         # Initialize the LLM model

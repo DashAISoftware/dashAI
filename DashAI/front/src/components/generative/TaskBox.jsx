@@ -45,7 +45,7 @@ export default function TaskBox({ taskName, description, onClick }) {
         <Typography
           variant="h1"
           sx={{
-            fontSize: "16px",
+            fontSize: "14px",
             whiteSpace: "normal",
             wordBreak: "break-word",
           }}

@@ -78,7 +78,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
         {task.map((task, index) => (
           <TaskBox
             key={index}
-            taskName={task.display_name}
+            taskName={task.name}
             description={task.description}
             onClick={() => goToNextStep(task.name)}
           />
@@ -87,7 +87,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
       {/* Search Bar */}
       <Autocomplete
         disablePortal
-        options={task.map((t) => t.display_name)}
+        options={task.map((t) => t.name)}
         sx={{ m: 5 }}
         renderInput={(params) => <TextField {...params} label="Task" />}
       />

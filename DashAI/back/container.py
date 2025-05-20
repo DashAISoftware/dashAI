@@ -3,141 +3,11 @@ from typing import Dict
 
 from kink import Container, di
 
-from DashAI.back.dataloaders import (
-    CSVDataLoader,
-    ExcelDataLoader,
-    ImageDataLoader,
-    JSONDataLoader,
-)
 from DashAI.back.dependencies.database import setup_sqlite_db
 from DashAI.back.dependencies.job_queues import SimpleJobQueue
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.explainability import (
-    KernelShap,
-    PartialDependence,
-    PermutationFeatureImportance,
-)
-from DashAI.back.job import (
-    DatasetJob,
-    ExplainerJob,
-    GenerativeJob,
-    ModelJob,
-    PredictJob,
-)
-from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
-from DashAI.back.models import (
-    SVC,
-    BagOfWordsTextClassificationModel,
-    DecisionTreeClassifier,
-    DeepSeekModel,
-    DistilBertTransformer,
-    DummyClassifier,
-    FluxV1Model,
-    GemmaModel,
-    GradientBoostingR,
-    HistGradientBoostingClassifier,
-    KNeighborsClassifier,
-    LinearRegression,
-    LinearSVR,
-    LogisticRegression,
-    MLPRegression,
-    OpusMtEnESTransformer,
-    QwenModel,
-    RandomForestClassifier,
-    RandomForestRegression,
-    RidgeRegression,
-    SimpleControlNetModel,
-    StableDiffusionControlNetCannyModel,
-    StableDiffusionV2Model,
-    StableDiffusionV3Model,
-    ViTTransformer,
-    
-    RAGPipeline,
-)
-from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
-from DashAI.back.tasks import (
-    ControlNetTask,
-    ImageClassificationTask,
-    LLMGenerationTask,
-    RegressionTask,
-    TabularClassificationTask,
-    TextClassificationTask,
-    TextToImageGenerationTask,
-    TranslationTask,    
-    
-    RAGTask,
-)
 
 logger = logging.getLogger(__name__)
-
-
-INITIAL_COMPONENTS = [
-    # Tasks
-    TabularClassificationTask,
-    TextClassificationTask,
-    TranslationTask,
-    ImageClassificationTask,
-    LLMGenerationTask,
-    ControlNetTask,
-    TextToImageGenerationTask,
-    RegressionTask,
-    # Models
-    SVC,
-    DecisionTreeClassifier,
-    DeepSeekModel,
-    DummyClassifier,
-    GradientBoostingR,
-    HistGradientBoostingClassifier,
-    KNeighborsClassifier,
-    LogisticRegression,
-    MLPRegression,
-    RandomForestClassifier,
-    RandomForestRegression,
-    DistilBertTransformer,
-    ViTTransformer,
-    OpusMtEnESTransformer,
-    BagOfWordsTextClassificationModel,
-    QwenModel,
-    GemmaModel,
-    StableDiffusionV2Model,
-    StableDiffusionControlNetCannyModel,
-    SimpleControlNetModel,
-    StableDiffusionV3Model,
-    FluxV1Model,
-    RidgeRegression,
-    LinearSVR,
-    LinearRegression,
-    # Dataloaders
-    CSVDataLoader,
-    JSONDataLoader,
-    ImageDataLoader,
-    ExcelDataLoader,
-    # Metrics
-    F1,
-    Accuracy,
-    Precision,
-    Recall,
-    Bleu,
-    Ter,
-    MAE,
-    RMSE,
-    # Optimizers
-    OptunaOptimizer,
-    HyperOptOptimizer,
-    # Jobs
-    ExplainerJob,
-    ModelJob,
-    GenerativeJob,
-    PredictJob,
-    DatasetJob,
-    # Explainers
-    KernelShap,
-    PartialDependence,
-    PermutationFeatureImportance,
-
-    RAGTask,
-    RAGPipeline
-]
 
 
 def build_container(config: Dict[str, str]) -> Container:
@@ -165,7 +35,9 @@ def build_container(config: Dict[str, str]) -> Container:
     di["config"] = config
     di["engine"] = engine
     di["session_factory"] = session_factory
-    di["component_registry"] = ComponentRegistry(initial_components=INITIAL_COMPONENTS)
+    di["component_registry"] = ComponentRegistry(
+        initial_components=config["INITIAL_COMPONENTS"]
+    )
     di["job_queue"] = SimpleJobQueue()
 
     return di

@@ -20,7 +20,8 @@ const pages = [
   { name: "Predictions", to: "/app/predict", disabled: false },
   { name: "Explainability", to: "/app/explainers", disabled: false },
   { name: "Generative", to: "/app/generative", disabled: false },
-  // { name: "Play", to: "/app/play", disabled: true },
+  { name: "Play", to: "/app/play", disabled: true },
+  { name: "Plugins", to: "/app/plugins/browse", disabled: false },
 ];
 
 function ResponsiveAppBar() {

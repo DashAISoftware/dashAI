@@ -11,6 +11,7 @@ import pyarrow.ipc as ipc
 from beartype import beartype
 from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
 from datasets.features import Features
+from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 
 log = logging.getLogger(__name__)
@@ -519,34 +520,39 @@ def split_dataset(
 
 
 def to_dashai_dataset(
-    dataset: Union[DatasetDict, Dataset, DashAIDataset],
+    dataset: Union[DatasetDict, Dataset, DashAIDataset, DataFrame],
 ) -> DashAIDataset:
     """
-    Converts a DatasetDict into a unified DashAIDataset.
-
-    If the DatasetDict has only one split, it simply wraps it in a DashAIDataset
-    and records its indices. If there are multiple splits, it merges them using
-    merge_splits_with_metadata.
+    Converts various data formats into a unified DashAIDataset.
 
     Parameters:
-        dataset_dict (DatasetDict): The original dataset with one or more splits.
+        dataset: The original dataset which can be one of:
+            - DatasetDict: A Hugging Face DatasetDict
+            - Dataset: A Hugging Face Dataset
+            - DashAIDataset: Already a DashAIDataset (will be returned as is)
+            - pd.DataFrame: A pandas DataFrame
 
     Returns:
-        DashAIDataset: A unified dataset containing all data and metadata
-        about the original splits.
+        DashAIDataset: A unified dataset containing all data.
     """
     if isinstance(dataset, DashAIDataset):
         return dataset
     if isinstance(dataset, Dataset):
         arrow_tbl = get_arrow_table(dataset)
         return DashAIDataset(arrow_tbl)
-    elif len(dataset) == 1:
+    if isinstance(dataset, DataFrame):
+        hf_dataset = Dataset.from_pandas(dataset)
+        arrow_tbl = get_arrow_table(hf_dataset)
+        return DashAIDataset(arrow_tbl)
+    if isinstance(dataset, DatasetDict) and len(dataset) == 1:
         key = list(dataset.keys())[0]
         ds = dataset[key]
         arrow_tbl = get_arrow_table(ds)
         return DashAIDataset(arrow_tbl)
-    else:
+    if isinstance(dataset, DatasetDict):
         return merge_splits_with_metadata(dataset)
+    else:
+        raise TypeError(f"Unsupported dataset type: {type(dataset)}")
 
 
 @beartype
@@ -655,7 +661,10 @@ def select_columns(
 
 @beartype
 def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
-    """Return the column with their respective types
+    """Return the column with their respective types.
+
+    If the column isn't a Value or ClassLabel, the function will return
+    the type as "Other".
 
     Parameters
     ----------
@@ -687,12 +696,20 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
                 "type": "Classlabel",
                 "dtype": "",
             }
+        else:
+            column_types[column] = {
+                "type": "Other",
+                "dtype": "",
+            }
     return column_types
 
 
 @beartype
 def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
+
+    If the column type isn't a Value or ClassLabel, the function will
+    not change the type of the column.
 
     Parameters
     ----------

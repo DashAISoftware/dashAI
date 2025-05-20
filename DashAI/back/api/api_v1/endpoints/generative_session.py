@@ -3,7 +3,6 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from pydantic import ValidationError
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
@@ -34,33 +33,35 @@ async def upload_generative_session(
             # Check if the model is registered
             try:
                 model_class = component_registry[params.model_name]["class"]
-            except KeyError:
+            except KeyError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Model {params.model_name} is not registered.",
-                )
+                ) from e
 
             # Check if the model is a subclass of GenerativeModel
             if not issubclass(model_class, BaseGenerativeModel):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Model {params.model_name} is not a valid generative model.",
+                    detail=f"Model {params.model_name} is not a valid "
+                    f"generative model.",
                 )
 
             # Check if the task is registered
             try:
                 task_class = component_registry[params.task_name]["class"]
-            except KeyError:
+            except KeyError as e:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Task {params.task_name} is not registered.",
-                )
+                ) from e
 
             # Check if the task is a subclass of BaseGenerativeTask
             if not issubclass(task_class, BaseGenerativeTask):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Task {params.task_name} is not a valid generative task.",
+                    detail=f"Task {params.task_name} is not a valid "
+                    f"generative task.",
                 )
 
             session = GenerativeSession(
@@ -123,7 +124,8 @@ async def get_generative_session(
     Raises
     ------
     HTTPException
-        If the generative session does not exist or if there's an internal database error.
+        If the generative session does not exist or if there's an internal
+        database error.
     """
 
     with session_factory() as db:
@@ -132,7 +134,7 @@ async def get_generative_session(
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Generative session {session_id} does not exist in DB.",
+                    detail=(f"Generative session {session_id} does not exist in DB."),
                 )
             return session
         except exc.SQLAlchemyError as e:
@@ -158,7 +160,8 @@ async def get_all_generative_sessions(
     Returns
     -------
     list
-        A list of dictionaries with all generative sessions on the database, ordered by creation date.
+        A list of dictionaries with all generative sessions on the database,
+        ordered by creation date.
 
     Raises
     ------
@@ -200,7 +203,8 @@ async def delete_generative_session(
     Raises
     ------
     HTTPException
-        If the generative session does not exist or if there's an internal database error.
+        If the generative session does not exist or if there's an internal
+        database error.
     """
 
     with session_factory() as db:
@@ -255,7 +259,8 @@ async def update_generative_session_params(
     Raises
     ------
     HTTPException
-        If the generative session does not exist or if there's an internal database error.
+        If the generative session does not exist or if there's an internal
+        database error.
     """
 
     with session_factory() as db:
@@ -271,7 +276,7 @@ async def update_generative_session_params(
 
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
-                parameters=updated_parameters, 
+                parameters=updated_parameters,
                 modified_at=datetime.now(),
             )
             db.add(session_params_entry)
@@ -314,7 +319,8 @@ async def get_generative_session_parameters_history(
     Raises
     ------
     HTTPException
-        If the generative session does not exist or if there's an internal database error.
+        If the generative session does not exist or if there's an internal
+        database error.
     """
     with session_factory() as db:
         try:
@@ -359,6 +365,7 @@ async def get_generative_session_parameter_history_entry(
 ):
     """
     Get history entry for a generative session by its ID.
+
     Parameters
     ----------
     session_id : int
@@ -366,14 +373,17 @@ async def get_generative_session_parameter_history_entry(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+
     Returns
     -------
     list
         A list of dictionaries with the parameter history entries for the session.
+
     Raises
     ------
     HTTPException
-        If the generative session does not exist or if there's an internal database error.
+        If the generative session does not exist or if there's an internal
+        database error.
     """
 
     with session_factory() as db:
@@ -409,7 +419,11 @@ async def get_generative_session_parameter_history_entry(
                     new_val = curr_params[key]
                     if old_val != new_val:
                         changes.append(
-                            {"parameter": key, "oldValue": old_val, "newValue": new_val}
+                            {
+                                "parameter": key,
+                                "oldValue": old_val,
+                                "newValue": new_val,
+                            }
                         )
 
                 events.append(

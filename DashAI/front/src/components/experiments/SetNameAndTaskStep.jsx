@@ -26,7 +26,10 @@ function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
   const getTasks = async () => {
     setLoading(true);
     try {
-      const tasks = await getComponentsRequest({ selectTypes: ["Task"] });
+      const tasks = await getComponentsRequest({
+        selectTypes: ["Task"],
+        hasRelatedOfType: "Model",
+      });
       setTasks(tasks);
       // autoselect task and if some task was selected previously.
       if (typeof newExp.task_name === "string" && newExp.task_name !== "") {
