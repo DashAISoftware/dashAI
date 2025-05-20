@@ -86,6 +86,7 @@ class DistilBertTransformer(TextClassificationModel):
         The process includes the instantiation of the pre-trained model and the
         associated tokenizer.
         """
+
         self.num_labels = kwargs.pop("num_labels_from_factory", None)
 
         kwargs = self.validate_and_transform(kwargs)
@@ -94,7 +95,7 @@ class DistilBertTransformer(TextClassificationModel):
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-        self.training_args = {
+        self.training_args_params = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
             "learning_rate": kwargs.get("learning_rate", 5e-5),
             "weight_decay": kwargs.get("weight_decay", 0.01),
@@ -106,15 +107,18 @@ class DistilBertTransformer(TextClassificationModel):
             self.model = model
             if self.num_labels is not None and hasattr(self.model, "config"):
                 self.model.config.num_labels = self.num_labels
+                if self.num_labels > 1:
+                    self.model.config.problem_type = "single_label_classification"
         else:
+            model_config = AutoConfig.from_pretrained(self.model_name)
             if self.num_labels is not None:
-                self.model = AutoModelForSequenceClassification.from_pretrained(
-                    self.model_name, num_labels=self.num_labels
-                )
+                model_config.num_labels = self.num_labels
+                if self.num_labels > 1:
+                    model_config.problem_type = "single_label_classification"
             else:
                 # Fallback: num_labels will be determined in fit().
                 self.model = AutoModelForSequenceClassification.from_pretrained(
-                    self.model_name
+                    self.model_name, config=model_config
                 )
 
         self.fitted = False
@@ -158,6 +162,8 @@ class DistilBertTransformer(TextClassificationModel):
             config = AutoConfig.from_pretrained(
                 self.model_name, num_labels=self.num_labels
             )
+            if self.num_labels > 1:
+                config.problem_type = "single_label_classification"
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 self.model_name, config=config
             )
@@ -166,21 +172,21 @@ class DistilBertTransformer(TextClassificationModel):
         train_dataset = train_dataset.add_column("label", y_train[output_column_name])
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
-        training_args = TrainingArguments(
+        training_args_obj = TrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
             logging_strategy="steps",
-            logging_steps=50,
+            logging_steps=20,
             save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
-            no_cuda=self.device != "gpu",
+            use_cpu=self.device != "gpu",
             fp16=can_use_fp16,
-            **self.training_args,
+            **self.training_args_params,
         )
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
         trainer = Trainer(
             model=self.model,
-            args=training_args,
+            args=training_args_obj,
             train_dataset=train_dataset,
             data_collator=data_collator,
         )
@@ -238,11 +244,11 @@ class DistilBertTransformer(TextClassificationModel):
         self.model.save_pretrained(filename)
         config = AutoConfig.from_pretrained(filename)
         config.custom_params = {
-            "num_train_epochs": self.training_args.get("num_train_epochs"),
+            "num_train_epochs": self.training_args_params.get("num_train_epochs"),
             "batch_size": self.batch_size,
-            "learning_rate": self.training_args.get("learning_rate"),
+            "learning_rate": self.training_args_params.get("learning_rate"),
             "device": self.device,
-            "weight_decay": self.training_args.get("weight_decay"),
+            "weight_decay": self.training_args_params.get("weight_decay"),
             "num_labels": self.num_labels,
             "fitted": self.fitted,
         }
