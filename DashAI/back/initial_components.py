@@ -20,6 +20,7 @@ from DashAI.back.converters import (
     OneHotEncoder,
     OrdinalEncoder,
     PolynomialFeatures,
+    RandomUnderSamplerConverter,
     RBFSampler,
     SelectFdr,
     SelectFpr,
@@ -28,6 +29,8 @@ from DashAI.back.converters import (
     SelectPercentile,
     SimpleImputer,
     SkewedChi2Sampler,
+    SMOTEConverter,
+    SMOTEENNConverter,
     StandardScaler,
     TruncatedSVD,
     VarianceThreshold,
@@ -54,7 +57,14 @@ from DashAI.back.exploration import (
     ScatterPlotExplorer,
     WordcloudExplorer,
 )
-from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob
+from DashAI.back.job import (
+    ConverterListJob,
+    DatasetJob,
+    ExplainerJob,
+    ExplorerJob,
+    ModelJob,
+    PredictJob,
+)
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -144,6 +154,7 @@ def get_initial_components():
         ModelJob,
         ExplorerJob,
         PredictJob,
+        ConverterListJob,
         DatasetJob,
         # Explainers
         KernelShap,
@@ -203,6 +214,9 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        SMOTEConverter,
+        SMOTEENNConverter,
+        RandomUnderSamplerConverter,
     ]
 
     # Obtener plugins instalados

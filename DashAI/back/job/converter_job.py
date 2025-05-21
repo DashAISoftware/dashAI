@@ -4,6 +4,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import Dict, List
 
+import pandas as pd
 import pyarrow as pa
 from datasets.arrow_dataset import update_metadata_with_features
 from datasets.features import Features
@@ -11,11 +12,13 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
+from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapper
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
     save_dataset,
+    to_dashai_dataset,
 )
 from DashAI.back.dependencies.database.models import ConverterList
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
@@ -81,13 +84,15 @@ def _rebuild_dataset_with_transformed_columns(
     transformed_table = transformed.arrow_table
 
     new_arrays = []
+    final_names = new_columns_order.copy()
     for col in new_columns_order:
         if col in original_table.column_names:
             new_arrays.append(original_table[col])
         elif col in transformed_table.column_names:
             new_arrays.append(transformed_table[col])
         else:
-            raise ValueError(f"Column '{col}' not found in any dataset")
+            final_names.remove(col)
+    new_columns_order = final_names
 
     new_table = pa.Table.from_arrays(new_arrays, names=new_columns_order)
     new_dataset = DashAIDataset(new_table, splits=base.splits)
@@ -386,18 +391,42 @@ class ConverterListJob(BaseJob):
 
                 try:
                     transformed_dataset = converter.transform(X_full, y_full)
+                    print("probando todobn")
                 except Exception as e:
                     log.exception(e)
                     raise JobError(f"Error transforming data: {e}") from e
 
-                # Now we need to merge the transformed data back into the original
-                # dataset, preserving their original positions
-                loaded_dataset = _rebuild_dataset_with_transformed_columns(
-                    loaded_dataset,
-                    transformed_dataset,
-                    scope_column_names,
-                    scope_column_indexes,
-                )
+                if isinstance(converter, ImbalancedLearnWrapper):
+                    X_resampled_final_df = transformed_dataset.to_pandas().reset_index(
+                        drop=True
+                    )
+                    y_resampled_final_series = (
+                        converter.y_resampled_series_.reset_index(drop=True)
+                    )
+                    combined_df = pd.concat(
+                        [X_resampled_final_df, y_resampled_final_series], axis=1
+                    )
+
+                    loaded_dataset = to_dashai_dataset(combined_df)
+
+                    if "__index_level_0__" in loaded_dataset.column_names:
+                        log.info(
+                            "Removing '__index_level_0__' after sampler processing."
+                        )
+                        loaded_dataset = loaded_dataset.remove_columns(
+                            ["__index_level_0__"]
+                        )
+
+                else:
+                    # Now we need to merge the transformed data back into the original
+                    # dataset, preserving their original positions
+                    loaded_dataset = _rebuild_dataset_with_transformed_columns(
+                        loaded_dataset,
+                        transformed_dataset,
+                        scope_column_names,
+                        scope_column_indexes,
+                    )
+                    print("pasa ono")
 
             # Save the final dataset
             save_dataset(loaded_dataset, f"{dataset_path}")
