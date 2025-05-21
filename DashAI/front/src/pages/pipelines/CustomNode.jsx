@@ -88,8 +88,8 @@ const CustomNode = ({ data, isConnectable }) => {
         {data.label}
       </Typography>
 
-      {data.notConfigured ? (
-        <Tooltip title="Missing parameters" placement="top" arrow>
+      {data.notConfigured && !isDisabled ? (
+        <Tooltip title="Missing parameters" placement="bottom">
           {nodeContent}
         </Tooltip>
       ) : (

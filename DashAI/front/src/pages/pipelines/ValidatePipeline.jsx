@@ -40,6 +40,16 @@ function getExecutionOrder(graph, inDegree) {
   return order;
 }
 
+function sortNodes(nodes, edges) {
+  const { graph, inDegree } = buildGraph(nodes, edges);
+  const order = getExecutionOrder(graph, { ...inDegree });
+
+  const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const orderedNodes = order.map(id => nodeMap[id]).filter(Boolean);
+
+  return orderedNodes;
+}
+
 function validatePipeline(nodes, edges) {
   const { graph, inDegree } = buildGraph(nodes, edges);
   const executionOrder = getExecutionOrder(graph, { ...inDegree });
@@ -121,4 +131,4 @@ function validatePipeline(nodes, edges) {
   return errors;
 }
 
-export default validatePipeline;
+export { sortNodes, validatePipeline };

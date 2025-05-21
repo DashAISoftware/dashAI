@@ -1,7 +1,7 @@
 import React from "react";
 import { createPipeline } from "../../../api/pipeline";
 
-async function RunPipeline(nodes, nodeData, name, edges) {
+async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar) {
   const steps = nodes.map((node) => {
     const config = nodeData[node.id] || {};
 
@@ -25,7 +25,7 @@ async function RunPipeline(nodes, nodeData, name, edges) {
   try {
     const response = await createPipeline(formData);
     console.log("Pipeline saved successfully:", response);
-    alert("Pipeline saved successfully!");
+    enqueueSnackbar("Pipeline saved successfully.", { variant: "success" });
     return response.id;
   } catch (error) {
     console.error("Error saving pipeline:", error);

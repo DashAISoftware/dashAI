@@ -1,5 +1,6 @@
 import React from "react";
-import { Dialog, DialogContent, DialogTitle, DialogActions, Button, Stack } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, DialogActions, Button, Stack, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import FormSchemaField from "../../../components/shared/FormSchemaField";
 import FormSchemaFieldWithOptions from "../../../components/shared/FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "../../../components/shared/FormSchemaFieldWithCollapse";
@@ -147,14 +148,22 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Model Settings</DialogTitle>
+      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        Model Settings
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2}>{renderFields()}</Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="secondary">
-          Cancel
-        </Button>
         <Button onClick={handleSave} color="primary">
           Save
         </Button>

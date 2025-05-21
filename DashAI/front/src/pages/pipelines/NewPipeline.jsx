@@ -14,9 +14,10 @@ import PipelineResults from "./Results";
 import { getPipelineById, updatePipeline } from "../../api/pipeline";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import validatePipeline from "./ValidatePipeline"
 import CustomNode from "./CustomNode";
 import { ValidationError } from "yup";
+import { useSnackbar } from "notistack";
+import { validatePipeline, sortNodes } from "./ValidatePipeline"
 
 const nodeTypes = {
   DataSelector: CustomNode,
@@ -40,6 +41,7 @@ function NewPipeline() {
   const [validationErrors, setValidationErrors] = useState({});
   const [hoveredNode, setHoveredNode] = useState(null);
   const flowWrapperRef = useRef(null);
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -169,18 +171,19 @@ function NewPipeline() {
   }, [nodes.length, edges]);
 
   const handleRun = async () => {
-    const errors = validatePipeline(nodes, edges);
-    if (errors.length > 0) {
-      alert("Errores en el pipeline:\n" + errors.join("\n"));
+    const sortedNodes = sortNodes(nodes, edges);
+    const errors = validatePipeline(sortedNodes, edges);
+    if (Object.keys(errors).length > 0) {
+      enqueueSnackbar("Error in pipeline", { variant: "error" });
       return;
     }
     let newId;
     if (pipelineId) {
-      await updatePipeline(pipelineId, { name: pipelineName, steps: buildSteps(nodes, nodeData), edges: edges });
-      alert("Pipeline updated successfully!");
+      await updatePipeline(pipelineId, { name: pipelineName, steps: buildSteps(sortedNodes, nodeData), edges: edges });
+      enqueueSnackbar("Pipeline updated successfully.", { variant: "success" });
       newId = pipelineId;
     } else {
-      newId = await RunPipeline(nodes, nodeData, pipelineName, edges);
+      newId = await RunPipeline(sortedNodes, nodeData, pipelineName, edges, enqueueSnackbar);
     }
     if (newId) {
       handleResultId(newId);
@@ -218,6 +221,12 @@ function NewPipeline() {
   const onNodeMouseLeave = () => {
     setHoveredNode(null);
   };
+
+  useEffect(() => {
+    if (hoveredNode && !nodes.find((n) => n.id === hoveredNode.id)) {
+      setHoveredNode(null);
+    }
+  }, [nodes]);
 
   return (
     <CustomLayout title="Pipelines Module" subtitle="Create and manage your pipelines.">
