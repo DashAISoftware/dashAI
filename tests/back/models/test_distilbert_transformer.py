@@ -65,7 +65,6 @@ def sample_model():
         learning_rate=5e-5,
         device="cpu",
         weight_decay=0.01,
-        num_labels=2,
     )
     return model
 

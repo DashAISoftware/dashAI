@@ -104,13 +104,13 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     bootstrap: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Whether bootstrap samples are used when building trees.",
     )  # type: ignore
 
     oob_score: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="Whether to use out-of-bag samples to estimate the "
         "generalization score.",
@@ -141,7 +141,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     warm_start: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="When set to True, reuse the solution of the previous "
         "call to fit and add more estimators to the ensemble.",
