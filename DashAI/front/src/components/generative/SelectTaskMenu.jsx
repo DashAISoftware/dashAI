@@ -90,6 +90,12 @@ export default function SelectTaskMenu({ goToNextStep }) {
         options={task.map((t) => t.name)}
         sx={{ m: 5 }}
         renderInput={(params) => <TextField {...params} label="Task" />}
+        onChange={(event, value) => {
+          const selectedTask = task.find((t) => t.name === value);
+          if (selectedTask) {
+            goToNextStep(selectedTask.name);
+          }
+        }}
       />
     </Box>
   );
