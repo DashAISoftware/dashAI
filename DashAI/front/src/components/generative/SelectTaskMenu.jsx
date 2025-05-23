@@ -70,18 +70,26 @@ export default function SelectTaskMenu({ goToNextStep }) {
         </Typography>
       </Box>
       <Box
-        display={"flex"}
-        justifyContent={"space-evenly"}
-        alignItems={"stretch"}
-        width={"100%"}
+        display="flex"
+        justifyContent="space-evenly"
+        alignItems="stretch"
+        gap={2}
+        width="100%"
       >
         {task.map((task, index) => (
-          <TaskBox
+          <Box
             key={index}
-            taskName={task.name}
-            description={task.description}
-            onClick={() => goToNextStep(task.name)}
-          />
+            flex="1 1 30%" 
+            maxWidth="300px" 
+            minWidth="200px" 
+            minHeight="40px" 
+          >
+            <TaskBox
+              taskName={task.name}
+              description={task.description}
+              onClick={() => goToNextStep(task.name)}
+            />
+          </Box>
         ))}
       </Box>
       {/* Search Bar */}

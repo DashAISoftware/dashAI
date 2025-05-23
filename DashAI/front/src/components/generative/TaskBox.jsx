@@ -6,10 +6,9 @@ export default function TaskBox({ taskName, description, onClick }) {
     <Button
       onClick={onClick}
       sx={{
-        width: "300px",
-        minHeight: "40px",
+        width: "100%",
         color: "white",
-        height: "auto",
+        height: "100%",
         display: "flex",
         justifyContent: "center",
         textTransform: "none",
