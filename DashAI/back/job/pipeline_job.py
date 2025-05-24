@@ -1,18 +1,13 @@
 import logging
 from typing import Any, Dict, List
-from pathlib import Path
 
-from kink import inject
+from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.dependencies.registry import ComponentRegistry
-
-from DashAI.back.dependencies.database.sqlite_database import setup_sqlite_db
 from DashAI.back.dependencies.database.models import Pipeline
-from DashAI.back.pipeline.registry import component_registry
-
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -22,12 +17,17 @@ class PipelineJob(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.info("Pipeline execution finished successfully.")
 
-    def run(self, component_registry: ComponentRegistry) -> None:
+    def run(
+        self, 
+        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+    ) -> None:
         db: Session = self.kwargs["db"]
-        steps: List[Dict[str, Any]] = self.kwargs.get("steps", [])
         id: int = self.kwargs.get("id", None)
         pipeline: Pipeline = db.get(Pipeline, id)
+        steps: List[Dict[str, Any]] = self.kwargs.get("steps", []) or pipeline.steps
 
+        if not id:
+            raise JobError("No id provided to execute the pipeline.")
         if not steps:
             raise JobError("No steps provided to execute the pipeline.")
 
@@ -44,7 +44,7 @@ class PipelineJob(BaseJob):
             log.info(f"Executing node {idx + 1}/{len(steps)}: {node_label} ({node_type})")
 
             try:
-                node_class = component_registry[node_type][0]["class"]
+                node_class = component_registry(di)[node_type]["class"]
             except KeyError:
                 raise JobError(f"Component type {node_type} not found in registry.")
 
@@ -87,48 +87,3 @@ class PipelineJob(BaseJob):
         db.add(pipeline)
         db.commit()
         self.set_status_as_delivered()
-
-
-def run_pipeline(sqlite_db_path: Path,  logging_level: int, pipeline_id: int) -> None:
-    config = {
-        "SQLITE_DB_PATH": str(sqlite_db_path),
-        "LOGGING_LEVEL": logging_level,
-    }
-
-    engine, session_factory = setup_sqlite_db(config)
-
-    with session_factory() as db:
-        pipeline = db.get(Pipeline, pipeline_id)
-
-        if pipeline:
-            print(f"Steps: {pipeline.steps}")
-
-            steps = pipeline.steps
-            id = pipeline.id
-            pipeline_job = PipelineJob(kwargs={"steps": steps, "id": id, "db": db})
-
-            try:
-                pipeline_job.run(component_registry=component_registry)
-                print("✅ Pipeline ejecutado con éxito.")
-            except JobError as e:
-                print(f"❌ Error al ejecutar el pipeline: {e}")
-        else:
-            print(f"❌ No se encontró el pipeline con ID {pipeline_id}.")
-
-from DashAI.back.pipeline.DataSelectorNode import DataSelector
-from DashAI.back.pipeline.ExplorationNode import DataExploration   
-from DashAI.back.pipeline.TaskNode import TaskSelector
-from DashAI.back.pipeline.MetricsNode import Metrics
-from DashAI.back.pipeline.TrainNode import Train
-from DashAI.back.pipeline.SplitDataNode import SplitData
-from DashAI.back.pipeline.PredictionNode import Prediction
-
-component_registry.register("DataSelector", DataSelector)
-component_registry.register("DataExploration", DataExploration)
-component_registry.register("TaskSelector", TaskSelector)
-component_registry.register("Metrics", Metrics)
-component_registry.register("Train", Train)
-component_registry.register("SplitData", SplitData)
-component_registry.register("Prediction", Prediction)
-
-print("Componentes registrados:", component_registry)

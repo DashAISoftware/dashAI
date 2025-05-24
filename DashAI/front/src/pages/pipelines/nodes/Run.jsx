@@ -1,5 +1,6 @@
 import React from "react";
 import { createPipeline } from "../../../api/pipeline";
+import { enqueuePipelineJob, startJobQueue } from "../../../api/job";
 
 async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar) {
   const steps = nodes.map((node) => {
@@ -24,12 +25,14 @@ async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar) {
 
   try {
     const response = await createPipeline(formData);
-    console.log("Pipeline saved successfully:", response);
     enqueueSnackbar("Pipeline saved successfully.", { variant: "success" });
+    await enqueuePipelineJob(response.id);
+    enqueueSnackbar("Pipeline job enqueued successfully.", { variant: "info" });
+    await startJobQueue();
     return response.id;
   } catch (error) {
     console.error("Error saving pipeline:", error);
-    alert("Failed to save pipeline. Check the console for details.");
+    enqueueSnackbar("Failed to save pipeline.", { variant: "error" });
     return null;
   }
 }

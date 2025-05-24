@@ -19,6 +19,7 @@ import { validateColumns as validateColumnsRequest } from "../../../api/experime
 import { useSnackbar } from "notistack";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";
+import { validateNode } from "../../../api/pipeline";
 
 const Train = ({ open, onClose, onSave, savedConfig, data }) => {
   const [inputColumns, setInputColumns] = useState(savedConfig?.input_columns || "");
@@ -108,11 +109,11 @@ useEffect(() => {
     setModelParams(newValues);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const maxValue = datasetInfo?.total_columns;
     const parsedInput = inputColumns ? parseRangeToIndex(inputColumns, maxValue) : [];
     const parsedOutput = outputColumns ? parseRangeToIndex(outputColumns, maxValue) : [];
-    onSave({
+    const payload ={
       input_columns: parsedInput,
       output_columns: parsedOutput,
       splits: {
@@ -127,7 +128,16 @@ useEffect(() => {
       model: model,
       metrics: metrics,
       parameters: modelParams,
-    });
+    };
+
+    try {
+      await validateNode("Train", payload);
+    } catch (e) {
+      enqueueSnackbar("Error validating node", { variant: "error" });
+      console.error(e);
+    }
+
+    onSave(payload);
     onClose();
   };
 

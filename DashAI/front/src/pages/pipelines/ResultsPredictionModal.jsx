@@ -13,7 +13,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useSnackbar } from "notistack";
 import PredictionSummaryTab from "../../components/predictions/PredictionSummaryTab";
 import PredictionSampleTab from "../../components/predictions/PredictionSampleTab";
-import { get_pipeline_prediction_summary as getPipelinePredictionSummary } from "../../api/pipeline";
+import { getPipelinePredictionSummary } from "../../api/pipeline";
 
 function PredictionSummaryModal({ predictName, open, onClose }) {
     const [loading, setLoading] = useState(true);

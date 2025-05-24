@@ -25,7 +25,6 @@ function PipelineResults({ pipelineId, onClose }) {
     const fetchResults = async () => {
       try {
         const response = await getPipelineById(pipelineId);
-        console.log("Pipeline results:", response);
         setResults(response);
       } catch (error) {
         console.error("Error fetching results:", error);

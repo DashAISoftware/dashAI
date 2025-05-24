@@ -1,8 +1,6 @@
 import os
-from DashAI.back.dependencies.database.models import Dataset
 from abc import ABC, abstractmethod
 from typing import Any, Dict
-from DashAI.back.tasks.base_task import BaseTask
 
 class BaseNodeValidator(ABC):
     TYPE: str = "BaseNode"
@@ -24,7 +22,6 @@ class BaseNodeValidator(ABC):
 
 
 class DataSelectorValidator(BaseNodeValidator):
-    TYPE = "DataSelector"
     def validate(self) -> Dict[str, str]:
         dataset_name = self.data.get("datasetName")
         dataset_path = self.data.get("datasetPath")
@@ -47,13 +44,6 @@ class DataSelectorValidator(BaseNodeValidator):
 class DataExplorationValidator(BaseNodeValidator):
     def validate(self) -> Dict[str, str]:
         options = self.data.get("options")
-        dataselector = self.data.get("dataselector")
-
-        if not dataselector:
-            return {"status": "error", "message": "No DataSelector node connected"}
-
-        if dataselector.get("status") != "ok":
-            return {"status": "error", "message": "The connected DataSelector node is not valid"}
 
         if not options or not isinstance(options, list) or len(options) == 0:
             return {"status": "error", "message": "No exploration options selected"}
@@ -62,22 +52,13 @@ class DataExplorationValidator(BaseNodeValidator):
 
 
 class TrainValidator(BaseNodeValidator):
-    def validate(self) -> Dict[str, str]:
-        config = self.data.get("config")
-        dataselector = self.data.get("dataselector")
-
-        if not dataselector:
-            return {"status": "error", "message": "No DataSelector node connected"}
-
-        if dataselector.get("status") != "ok":
-            return {"status": "error", "message": "The connected DataSelector node is not valid"}
-        
-        input_cols = config.get("input_columns")
-        output_cols = config.get("output_columns")
-        task = config.get("task")
-        splits = config.get("splits", {})
-        metrics = config.get("metrics")
-        model = config.get("model")
+    def validate(self) -> Dict[str, str]:        
+        input_cols = self.data.get("input_columns")
+        output_cols = self.data.get("output_columns")
+        task = self.data.get("task")
+        splits = self.data.get("splits", {})
+        metrics = self.data.get("metrics")
+        model = self.data.get("model")
 
         if not input_cols or not output_cols:
             return {"status": "error", "message": "Input and output columns are required"}
@@ -98,27 +79,8 @@ class TrainValidator(BaseNodeValidator):
         return {"status": "ok"}
 
 
-class PredictionValidator(BaseNodeValidator):
-    def validate(self) -> Dict[str, str]:
-        dataselector = self.data.get("dataselector")
-        train = self.data.get("train")
-
-        if not train:
-            return {"status": "error", "message": "No Train node connected"}
-        elif not dataselector:
-            return {"status": "error", "message": "No DataSelector node connected"}
-
-        if train.get("status") != "ok":
-            return {"status": "error", "message": "The connected Train node is not valid"}
-        elif dataselector.get("status") != "ok":
-            return {"status": "error", "message": "The connected DataSelector node is not valid"}
-        
-        return {"status": "ok"}
-
-
 VALIDATOR_MAP = {
     "DataSelector": DataSelectorValidator,
     "DataExploration": DataExplorationValidator,
     "Train": TrainValidator,
-    "Prediction": PredictionValidator,
 }

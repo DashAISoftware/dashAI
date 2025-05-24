@@ -1,9 +1,7 @@
 import json
 import logging
 import os
-from pathlib import Path
-import pathlib
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from fastapi import HTTPException
 import numpy as np
@@ -11,8 +9,6 @@ import numpy as np
 from DashAI.back.config import DefaultSettings
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
-from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.pipeline.registry import component_registry
 
 log = logging.getLogger(__name__)
 

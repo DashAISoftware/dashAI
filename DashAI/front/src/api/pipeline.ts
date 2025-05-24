@@ -42,7 +42,7 @@ export const validateNode = async (
   return response.data;
 };
 
-export const get_pipeline_prediction_summary = async (predictionId: string) => {
+export const getPipelinePredictionSummary = async (predictionId: string) => {
     const response = await api.get(`${pipelineEndpoint}/predict_summary`, {
       params: {
         pred_name: predictionId,

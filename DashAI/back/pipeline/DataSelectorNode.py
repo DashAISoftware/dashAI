@@ -40,8 +40,6 @@ class DataSelector(BaseJob):
 
         log.info(f"Dataset cargado correctamente desde: {dataset_dir}")
 
-        dataset_info = {k: v for k, v in self.kwargs.items() if k != "status"}
-
         return {
             "dataset": loaded_dataset,
         }

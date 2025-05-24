@@ -36,7 +36,6 @@ function getExecutionOrder(graph, inDegree) {
       }
     }
   }
-  console.log("Execution order:", order);
   return order;
 }
 
@@ -127,7 +126,6 @@ function validatePipeline(nodes, edges) {
     }
   });
 
-  console.log(errors)
   return errors;
 }
 

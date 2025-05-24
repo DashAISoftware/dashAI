@@ -11,12 +11,14 @@ import {
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import { getDatasets } from "../../../api/datasets";
+import { useSnackbar } from "notistack";
 
 function DataSelectorNode({ onClose, onSave, savedConfig }) {
   const [datasetId, setDatasetId] = useState(savedConfig ? savedConfig.id : "");
   const [openModal, setOpenModal] = useState(false);
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
 
   const fetchDatasets = async () => {
     setLoading(true);
@@ -51,19 +53,15 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
       datasetPath: selected.file_path,
     };
 
-    const validationResponse = await validateNode("DataSelector", config);
-
-    if (validationResponse.status === "ok") {
-      console.log("Validation successful");
-      const nodeData = {
-        ...selected,
-        status: "ok",
-      };
-      onSave(nodeData);
-      onClose();
-    } else {
-      console.error("Validation failed:", validationResponse.message);
+    try {
+      await validateNode("DataSelector", config);
+    } catch (e) {
+      enqueueSnackbar("Error validating node", { variant: "error" });
+      console.error(e);
     }
+
+    onSave(selected);
+    onClose();
   };
 
   const columns = [

@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Typography, Dialog, TextField, Button, Tooltip } from "@mui/material";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState, Handle, Position } from "reactflow";
+import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState, useReactFlow } from "reactflow";
 import 'reactflow/dist/style.css';
 import CustomLayout from "../../components/custom/CustomLayout";
 import RunPipeline from "./nodes/Run";
@@ -15,9 +14,9 @@ import { getPipelineById, updatePipeline } from "../../api/pipeline";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import CustomNode from "./CustomNode";
-import { ValidationError } from "yup";
 import { useSnackbar } from "notistack";
 import { validatePipeline, sortNodes } from "./ValidatePipeline"
+import { enqueuePipelineJob, startJobQueue } from "../../api/job";
 
 const nodeTypes = {
   DataSelector: CustomNode,
@@ -42,6 +41,7 @@ function NewPipeline() {
   const [hoveredNode, setHoveredNode] = useState(null);
   const flowWrapperRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
+  const { screenToFlowPosition } = useReactFlow();
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -51,12 +51,23 @@ function NewPipeline() {
 
   const onDragStart = (event, nodeType) => {
     setDragging(nodeType);
+    event.dataTransfer.setData('text/plain', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
   };
+
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
-    const reactFlowBounds = flowWrapperRef.current.getBoundingClientRect();
-    const position = { x: event.clientX - reactFlowBounds.left, y: event.clientY - reactFlowBounds.top };
+    const position = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+
     const nodeId = `${dragging}-${nodes.length}`;
     const nodeErrors = validationErrors[nodeId] ?? [];
     
@@ -64,13 +75,13 @@ function NewPipeline() {
       id: nodeId, 
       type: dragging, 
       position,
-      data: { label: dragging, hasError: validationErrors[`${dragging}-${nodes.length}`], errors: nodeErrors },
+      data: { label: dragging, hasError: validationErrors[nodeId], errors: nodeErrors },
       sourcePosition: "right",
       targetPosition: "left",
     };
 
     setNodes((nds) => nds.concat(newNode));
-  }, [dragging, nodes.length, setNodes]);
+  }, [dragging, nodes.length, setNodes, screenToFlowPosition, validationErrors]);
 
   const requiresConfiguration = (type) => type !== "Prediction";
 
@@ -181,6 +192,9 @@ function NewPipeline() {
     if (pipelineId) {
       await updatePipeline(pipelineId, { name: pipelineName, steps: buildSteps(sortedNodes, nodeData), edges: edges });
       enqueueSnackbar("Pipeline updated successfully.", { variant: "success" });
+      await enqueuePipelineJob(pipelineId);
+      enqueueSnackbar("Pipeline job enqueued successfully.", { variant: "info" });
+      await startJobQueue();
       newId = pipelineId;
     } else {
       newId = await RunPipeline(sortedNodes, nodeData, pipelineName, edges, enqueueSnackbar);
@@ -301,7 +315,7 @@ function NewPipeline() {
             </Button>
           </Box>
 
-          <Box ref={flowWrapperRef} sx={{ width: '100%', height: '73vh' }}>
+          <Box sx={{ width: '100%', height: '73vh' }} ref={flowWrapperRef}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -309,13 +323,15 @@ function NewPipeline() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onDrop={onDrop}
-            onDragOver={(event) => event.preventDefault()}
+            onDragOver={onDragOver}
             onNodeDoubleClick={onNodeClick} 
             onNodeMouseEnter={onNodeMouseEnter}
             onNodeMouseLeave={onNodeMouseLeave}
             nodeTypes={nodeTypes}
             fitView
             style={{
+              width: '100%', 
+              height: '100%',
               borderRadius: 12,
               background: "#f5f5f5",
               border: "1px solid #ccc",
@@ -342,8 +358,8 @@ function NewPipeline() {
                 <div />
               </Tooltip>
             )}
-            <Background />
             <Controls />
+            <Background />
           </ReactFlow>
           </Box>
         </Box>
