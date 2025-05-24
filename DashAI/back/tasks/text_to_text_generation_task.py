@@ -3,7 +3,7 @@ from typing import Any, List
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
-class LLMGenerationTask(BaseGenerativeTask):
+class TextToTextGenerationTask(BaseGenerativeTask):
     """Base class for image generation tasks.
 
     Here you can change the methods provided by class Task.
@@ -16,7 +16,10 @@ class LLMGenerationTask(BaseGenerativeTask):
         "outputs_cardinality": 1,
     }
 
-    DESCRIPTION: str = "This task generates text from a given prompt."
+    DESCRIPTION: str = (
+    "This task uses a large language model (LLM) "
+    "to generate text from a given prompt.")
+
 
     USE_HISTORY: bool = True
 

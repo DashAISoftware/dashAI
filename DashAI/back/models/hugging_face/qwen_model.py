@@ -8,7 +8,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.llm_generation_model import LLMGenerationModel
+from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
 
 
 class QwenSchema(BaseSchema):
@@ -48,7 +48,7 @@ class QwenSchema(BaseSchema):
     )  # type: ignore
 
 
-class QwenModel(LLMGenerationModel):
+class QwenModel(TextToTextGenerationTaskModel):
     """Qwen model for text generation using llama.cpp library."""
 
     SCHEMA = QwenSchema
