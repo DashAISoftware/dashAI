@@ -3,6 +3,7 @@ from typing import List
 from llama_cpp import Llama
 
 from DashAI.back.core.schema_fields import (
+    enum_field,
     BaseSchema,
     float_field,
     int_field,
@@ -13,6 +14,16 @@ from DashAI.back.models.text_to_text_generation_model import TextToTextGeneratio
 
 class QwenSchema(BaseSchema):
     """Schema for Qwen model."""
+    model_name: schema_field(
+        enum_field(
+            enum=[
+                "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+                "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+            ]
+        ),
+        placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        description="The specific Qwen model version to use.",
+    )  # type: ignore
 
     max_tokens: schema_field(
         int_field(ge=1),
@@ -55,16 +66,17 @@ class QwenModel(TextToTextGenerationTaskModel):
 
     def __init__(self, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
+        self.model_name = kwargs.get("model_name", "Qwen/Qwen2.5-1.5B-Instruct-GGUF")
         self.max_tokens = kwargs.pop("max_tokens", 100)
         self.temperature = kwargs.pop("temperature", 0.7)
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("n_ctx", 512)
 
-        self.model_id = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+        #self.model_id = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
         self.filename = "*q8_0.gguf"
 
         self.model = Llama.from_pretrained(
-            repo_id=self.model_id,
+            repo_id=self.model_name,
             filename=self.filename,
             verbose=True,
             n_ctx=self.n_ctx,
