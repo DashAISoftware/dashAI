@@ -41,7 +41,7 @@ class DatasetJob(BaseJob):
         log.debug("DatasetJob marked as delivered")
 
     @inject
-    def run(
+    async def run(
         self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
         session_factory: sessionmaker = lambda di: di["session_factory"],
