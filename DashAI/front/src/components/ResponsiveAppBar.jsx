@@ -19,7 +19,6 @@ const pages = [
   { name: "Experiments", to: "/app/experiments", disabled: false },
   { name: "Predictions", to: "/app/predict", disabled: false },
   { name: "Explainability", to: "/app/explainers", disabled: false },
-  { name: "Play", to: "/app/play", disabled: true },
   { name: "Plugins", to: "/app/plugins/browse", disabled: false },
 ];
 
