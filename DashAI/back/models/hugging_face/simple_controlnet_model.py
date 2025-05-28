@@ -47,12 +47,6 @@ class SimpleSchema(BaseSchema):
         description="Device for generation. Use 'cuda' if GPU is available.",
     )  # type: ignore
 
-    huggingface_key: schema_field(
-        string_field(),
-        placeholder="",
-        description="Hugging Face API key for private models.",
-    )  # type: ignore
-
 
 def get_depth_map(image, device):
     depth_estimator = DPTForDepthEstimation.from_pretrained(
@@ -90,16 +84,7 @@ class SimpleControlNetModel(BaseControlNetModel):
     def __init__(self, **kwargs: Any):
         """Initialize the generative model."""
         kwargs = self.validate_and_transform(kwargs)
-        self.huggingface_key = kwargs.get("huggingface_key")
         self.device = kwargs.get("device")
-
-        if self.huggingface_key:
-            try:
-                login(token=self.huggingface_key)
-            except Exception as e:
-                raise ValueError(
-                    "Failed to login to Hugging Face. Please check your API key."
-                ) from e
 
         self.controlnet = ControlNetModel.from_pretrained(
             "diffusers/controlnet-depth-sdxl-1.0-small",
