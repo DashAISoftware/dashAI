@@ -127,6 +127,11 @@ async def get_generative_process(
     with session_factory() as db:
         try:
             process = db.query(GenerativeProcess).filter_by(id=process_id).all()
+            if not process:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Generative process with ID {process_id} does not exist.",
+                )
             generative_session: GenerativeSession = db.get(
                 GenerativeSession, process[0].session_id
             )
