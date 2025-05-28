@@ -391,7 +391,6 @@ class ConverterListJob(BaseJob):
 
                 try:
                     transformed_dataset = converter.transform(X_full, y_full)
-                    print("probando todobn")
                 except Exception as e:
                     log.exception(e)
                     raise JobError(f"Error transforming data: {e}") from e
@@ -426,7 +425,6 @@ class ConverterListJob(BaseJob):
                         scope_column_names,
                         scope_column_indexes,
                     )
-                    print("pasa ono")
 
             # Save the final dataset
             save_dataset(loaded_dataset, f"{dataset_path}")

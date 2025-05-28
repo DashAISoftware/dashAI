@@ -80,7 +80,7 @@ class RandomForestRegressionSchema(BaseSchema):
             optimizer_float_field(gt=0.0, le=1.0),
             enum_field(enum=["auto", "sqrt", "log2", None]),
         ),
-        placeholder="auto",
+        placeholder="sqrt",
         description="The number of features to consider when looking for the"
         " best split.",
     )  # type: ignore
@@ -163,13 +163,6 @@ class RandomForestRegressionSchema(BaseSchema):
         placeholder=None,
         description="If bootstrap is True, the number of samples to draw from"
         " X to train each base estimator.",
-    )  # type: ignore
-
-    monotonic_cst: schema_field(
-        none_type((float)),
-        placeholder=None,
-        description="A constraint vector indicating the monotonicity "
-        "constraint on each feature.",
     )  # type: ignore
 
 

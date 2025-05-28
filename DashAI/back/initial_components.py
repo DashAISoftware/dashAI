@@ -4,6 +4,7 @@ from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
     Binarizer,
+    ColumnRemover,
     ConverterChain,
     Embedding,
     FastICA,
@@ -217,6 +218,7 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
+        ColumnRemover,
     ]
 
     # Obtener plugins instalados
