@@ -132,11 +132,11 @@ def test_get_session_by_id(client: TestClient, response_1):
 
 def test_get_non_existent_session(client: TestClient):
     """Test retrieving a non-existent session."""
-    non_existent_id = "99999999-9999-9999-9999-999999999999"
+    non_existent_id = 9999
     response = client.get(f"/api/v1/generative-session/{non_existent_id}")
 
     assert response.status_code == 404, "Expected 404 for non-existent session"
-    assert response.json()["detail"] == "Session not found."
+    assert response.json()["detail"] == "Generative session 9999 does not exist in DB."
 
 
 def test_get_all_sessions(
