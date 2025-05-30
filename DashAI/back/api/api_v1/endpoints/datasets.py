@@ -20,9 +20,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset
 import pandas as pd
 import pyarrow as pa
-from DashAI.back.types.value_types import arrow_to_dashai_schema, PTYPE_TO_DASHAI
-from ptype.PtypeCat import PtypeCat
-import json
+from DashAI.back.types.utils import arrow_to_dashai_schema, PTYPE_TO_DASHAI
+from DashAI.back.types.inf.ptype.PtypeCat import PtypeCat
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -361,9 +360,11 @@ async def load_preview(
             df = df.head(100)
         
         table = pa.Table.from_pandas(df)
+        print("table:", table.schema)
         schema = arrow_to_dashai_schema(table)
         sample = df.to_dict(orient="records")
-        print("struct:", {"sample": sample, "schema": schema})
+        print("dashai schema:", schema)
+        #print("struct:", {"sample": sample, "schema": schema})
         return {
             "sample": sample,
             "schema": schema,
@@ -405,7 +406,7 @@ async def infer_datatypes(
         ptype_cat = PtypeCat()
         schema = ptype_cat.schema_fit(df)
         first_row = schema.show().iloc[0]
-        print("ptypecat schema:", first_row)
+        #print("ptypecat schema:", first_row)
         processed_schema = {}
 
         for col_name, column_object in schema.cols.items():

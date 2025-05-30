@@ -11,11 +11,6 @@ class DashAIDataType(ABC):
     #     pass
 
     @abstractmethod
-    def transform(self, arrow_column: pa.Array, target_library: str) -> pa.Array:
-        """Transform column to the specified library format."""
-        pass
-
-    @abstractmethod
     def to_string(self) -> str:
         """Convert to string representation."""
         pass

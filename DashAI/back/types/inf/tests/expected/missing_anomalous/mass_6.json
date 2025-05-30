@@ -1,0 +1,269 @@
+﻿{
+  "# of Students Engaged": {
+    "anomalous_values": [
+      "NR"
+    ],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Cohort Completion Year": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "-",
+      "NA"
+    ]
+  },
+  "Dist Rate": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "LRE Ages 3-5 - Full Incl #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "-",
+      "N/A",
+      "NA"
+    ]
+  },
+  "LRE Ages 3-5 - Full Incl %": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "-"
+    ]
+  },
+  "LRE Ages 3-5 - Students #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "-",
+      "NA"
+    ]
+  },
+  "LRE Ages 6-21 - Full Incl #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "LRE Ages 6-21 - Full Incl %": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "LRE Ages 6-21 - Students #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "NA"
+    ]
+  },
+  "Org Code": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Org Name": {
+    "anomalous_values": [
+      "Abby Kelley Foster Charter Public (District)",
+      "Acad/Strategic Learn HMCS",
+      "Acad/Strategic Learning HMCS",
+      "Academy Of the Pacific Rim Charter Public (District)",
+      "Academy of Strategic Learning Charter (District)",
+      "Adv Math & Science Acad CS",
+      "Advanced Math and Science Academy Charter (District)",
+      "Alma del Mar Charter School (District)",
+      "Amesbury Academy Charter Public (District)",
+      "Atlantis Charter (District)",
+      "Barnstable Community Horace Mann Charter Public (Dist",
+      "Barnstable Horace Mann Charter (District)",
+      "Benjamin Banneker Charter Public (District)",
+      "Benjamin Franklin Classical Charter Public (District)",
+      "Berkshire Arts & Tech CS",
+      "Berkshire Arts and Technology Charter (District)",
+      "Berkshire Arts and Technology Charter Public (Distric",
+      "Boston Collegiate Charter (District)",
+      "Boston Day and Evening Academy Charter (District)",
+      "Boston Green Academy Horace Mann Charter School (Dist",
+      "Boston Preparatory Charter Public (District)",
+      "Boston Renaissance Charter (District)",
+      "Boston Renaissance Charter Public (District)",
+      "Bridge Boston Charter School (District)",
+      "Cape Cod Lighthouse Charter (District)",
+      "Champion Charter (District)",
+      "Christa McAuliffe Regional Charter Public (District)",
+      "City On A Hill Charter Public (District)",
+      "Codman Academy Charter Public (District)",
+      "Community Charter School of Cambridge (District)",
+      "Community Day Charter Public (District)",
+      "Community Day Charter Public School í¢äåäóì R. Kingman Webster",
+      "Conservatory Lab Charter (District)",
+      "Dorchester Collegiate Academy Charter (District)",
+      "Edward Brooke Charter (District)",
+      "Edward M. Kennedy Academy for Health Careers (Horace",
+      "Edward M. Kennedy Academy for Health Careers (Horace Mann Charter School)",
+      "Edward W. Brooke Charter School 2 (District)",
+      "Excel Academy Charter (District)",
+      "Excel Academy Charter School - Chelsea (District)",
+      "Four Rivers Charter Public (District)",
+      "Foxboro Regional Charter (District)",
+      "Foxborough Regional Charter (District)",
+      "Francis W. Parker Charter Essential (District)",
+      "Global Learning Charter Public (District)",
+      "Gloucester Community Arts Charter (District)",
+      "Grove Hall Preparatory Charter School (District)",
+      "Hampden Charter School of Science (District)",
+      "Health Careers Academy Charter (District)",
+      "Hill View Montessori Charter Public (District)",
+      "Hilltown Cooperative Charter Public (District)",
+      "Holyoke Community Charter (District)",
+      "Innovation Academy Charter (District)",
+      "KIPP Academy Lynn Charter (District)",
+      "Kipp Academy Lynn Charter (District)",
+      "Lawrence Family Development Charter (District)",
+      "Lowell Community Charter Public (District)",
+      "Lowell Middlesex Academy Charter (District)",
+      "MATCH Charter Public High (District)",
+      "MATCH Charter Public School (District)",
+      "MATCH Community Day Charter Public School (District)",
+      "Ma Academy/Math & Science",
+      "Marblehead Community Charter (District)",
+      "Marblehead Community Charter Public (District)",
+      "Marstons Mills East HM Charter Public (District)",
+      "Marstons Mills East Horace Mann Charter (District)",
+      "Martha's Vineyard CS",
+      "Martha's Vineyard Charter",
+      "Martha's Vineyard Charter (District)",
+      "Martin Luther King Jr. Charter School of Excellence (",
+      "Media & Tech CS",
+      "Media and Technology Charter (District)",
+      "Murdoch Middle Public Charter (District)",
+      "Mystic Valley Regional Charter (District)",
+      "Neighborhood House Charter (District)",
+      "New Bedford Global Learning Charter (District)",
+      "New Leadership Charter (District)",
+      "North Central Charter Essential (District)",
+      "Phoenix Charter Academy (District)",
+      "Pioneer Charter School of Science (District)",
+      "Pioneer Valley Chinese Immersion Charter(District)",
+      "Pioneer Valley Performing Arts Charter Public (Distri",
+      "Pioneer Valley Performing Arts Charter Public (District)",
+      "Prospect Hill Academy Charter (District)",
+      "Rising Tide Charter (District)",
+      "Rising Tide Charter Public (District)",
+      "River Valley Charter (District)",
+      "Robert M. Hughes Academy Charter (District)",
+      "Roxbury Charter HS (District)",
+      "Roxbury Preparatory Charter (District)",
+      "Sabis International Charter (District)",
+      "Salem Academy Charter (District)",
+      "Salem Community Charter School (District)",
+      "Seven Hills Charter (District)",
+      "Seven Hills Charter Public (District)",
+      "Silver Hill Horace Mann Charter (District)",
+      "Smith Leadership Academy Charter Public (District)",
+      "South Shore Charter Public (District)",
+      "Spirit of Knowledge Charter School (District)",
+      "Sturgis Charter Public (District)",
+      "UP Academy Charter School of Boston (District)",
+      "Uphams Corner Charter (District)"
+    ],
+    "missing_values": []
+  },
+  "Sch Yr Rev": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "NA"
+    ]
+  },
+  "Spec Ed. Dropout - Drop #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Spec Ed. Dropout - Drop %": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Spec Ed. Dropout - Enr #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Spec Ed. Grad Rate - Grad #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Spec Ed. Grad Rate - Grad %": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Spec Ed. Grad Rate - Grad Cohort #": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Substantial growth of knowledge & skills": {
+    "anomalous_values": [],
+    "missing_values": [
+      "",
+      "-",
+      "N/A",
+      "NA"
+    ]
+  },
+  "Surv Meet Std #": {
+    "anomalous_values": [
+      "NR"
+    ],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Surv Meet Std %": {
+    "anomalous_values": [],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Survey Period": {
+    "anomalous_values": [
+      "All Indicators Annually*"
+    ],
+    "missing_values": [
+      "-",
+      "NA"
+    ]
+  },
+  "Year": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

@@ -1,0 +1,23 @@
+﻿{
+  "ARC_City": "string",
+  "ARC_State": "integer",
+  "ARC_Street": "string",
+  "ARC_ZIP": "integer",
+  "Addr_type": "string",
+  "Address": "string",
+  "Loc_name": "string",
+  "Match_addr": "string",
+  "Match_type": "string",
+  "Municipa_1": "string",
+  "Municipali": "string",
+  "Name": "string",
+  "OBJECTID": "integer",
+  "Ref_ID": "integer",
+  "Score": "float",
+  "Side": "string",
+  "Status": "string",
+  "User_fld": "boolean",
+  "X": "float",
+  "Y": "float",
+  "ZipCodes": "integer"
+}

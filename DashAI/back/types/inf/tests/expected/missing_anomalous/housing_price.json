@@ -1,0 +1,399 @@
+﻿{
+  "1stFlrSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "2ndFlrSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "3SsnPorch": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Alley": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "BedroomAbvGr": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "BldgType": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "BsmtCond": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "BsmtExposure": {
+    "anomalous_values": [
+      "Av",
+      "Gd",
+      "Mn"
+    ],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "BsmtFinSF1": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "BsmtFinSF2": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "BsmtFinType1": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "BsmtFinType2": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "BsmtFullBath": {
+    "anomalous_values": [
+      "2",
+      "3"
+    ],
+    "missing_values": []
+  },
+  "BsmtHalfBath": {
+    "anomalous_values": [
+      "2"
+    ],
+    "missing_values": []
+  },
+  "BsmtQual": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "BsmtUnfSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "CentralAir": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Condition1": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Condition2": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Electrical": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "EnclosedPorch": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "ExterCond": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "ExterQual": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Exterior1st": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Exterior2nd": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Fence": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "FireplaceQu": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "Fireplaces": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Foundation": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "FullBath": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Functional": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "GarageArea": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "GarageCars": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "GarageCond": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "GarageFinish": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "GarageQual": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "GarageType": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "GarageYrBlt": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "GrLivArea": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "HalfBath": {
+    "anomalous_values": [
+      "2"
+    ],
+    "missing_values": []
+  },
+  "Heating": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "HeatingQC": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "HouseStyle": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Id": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "KitchenAbvGr": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "KitchenQual": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "LandContour": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "LandSlope": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "LotArea": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "LotConfig": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "LotFrontage": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "LotShape": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "LowQualFinSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "MSSubClass": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "MSZoning": {
+    "anomalous_values": [
+      "C (all)"
+    ],
+    "missing_values": []
+  },
+  "MasVnrArea": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "MasVnrType": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "MiscFeature": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "MiscVal": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "MoSold": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Neighborhood": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "OpenPorchSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "OverallCond": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "OverallQual": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "PavedDrive": {
+    "anomalous_values": [
+      "P"
+    ],
+    "missing_values": []
+  },
+  "PoolArea": {
+    "anomalous_values": [
+      "480",
+      "512",
+      "519",
+      "555",
+      "576",
+      "648",
+      "738"
+    ],
+    "missing_values": []
+  },
+  "PoolQC": {
+    "anomalous_values": [],
+    "missing_values": [
+      "NA"
+    ]
+  },
+  "RoofMatl": {
+    "anomalous_values": [
+      "Tar&Grv"
+    ],
+    "missing_values": []
+  },
+  "RoofStyle": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "SaleCondition": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "SalePrice": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "SaleType": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "ScreenPorch": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Street": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "TotRmsAbvGrd": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "TotalBsmtSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Utilities": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "WoodDeckSF": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "YearBuilt": {
+    "anomalous_values": [
+      "1872",
+      "1875",
+      "1880",
+      "1882",
+      "1885",
+      "1890",
+      "1892",
+      "1893",
+      "1898"
+    ],
+    "missing_values": []
+  },
+  "YearRemodAdd": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "YrSold": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

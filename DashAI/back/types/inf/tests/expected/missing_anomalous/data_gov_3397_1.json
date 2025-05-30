@@ -1,0 +1,102 @@
+﻿{
+  "college_career_rate_2013": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "college_career_rate_2014": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "college_career_rate_boro": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "dbn": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "graduation_rate_2013": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "graduation_rate_2014": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "graduation_rate_boro": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "ontrack_year1_2013": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "ontrack_year1_2014": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "ontrack_year1_boro": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "pct_stu_enough_variety_2014": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "pct_stu_safe_2014": {
+    "anomalous_values": [],
+    "missing_values": [
+      "N/A"
+    ]
+  },
+  "qr_assessing_student_learning": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "qr_curriculum": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "qr_high_expectations": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "qr_instruction": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "qr_teacher_collaboration": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "quality_review_year": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  }
+}

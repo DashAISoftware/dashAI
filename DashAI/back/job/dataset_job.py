@@ -55,7 +55,7 @@ class DatasetJob(BaseJob):
             temp_dir = self.kwargs.get("temp_dir")
             url = self.kwargs.get("url", "")
             schema = self.kwargs.get("params", {}).get("schema", {})
-            print("ds job schema:", schema)
+            #print("ds job schema:", schema)
 
             parsed_params = parse_params(DatasetParams, json.dumps(params))
             dataloader = component_registry[parsed_params.dataloader]["class"]()

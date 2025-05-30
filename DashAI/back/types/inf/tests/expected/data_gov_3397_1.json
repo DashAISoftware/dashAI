@@ -1,0 +1,20 @@
+{
+  "college_career_rate_2013": "string",
+  "college_career_rate_2014": "string",
+  "college_career_rate_boro": "string",
+  "dbn": "string",
+  "graduation_rate_2013": "string",
+  "graduation_rate_2014": "string",
+  "graduation_rate_boro": "string",
+  "ontrack_year1_2013": "string",
+  "ontrack_year1_2014": "string",
+  "ontrack_year1_boro": "string",
+  "pct_stu_enough_variety_2014": "string",
+  "pct_stu_safe_2014": "string",
+  "qr_assessing_student_learning": "string",
+  "qr_curriculum": "string",
+  "qr_high_expectations": "string",
+  "qr_instruction": "string",
+  "qr_teacher_collaboration": "string",
+  "quality_review_year": "string"
+}

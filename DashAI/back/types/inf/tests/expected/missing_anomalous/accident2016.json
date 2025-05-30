@@ -1,0 +1,77 @@
+﻿{
+  "1st Road Class": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "1st Road Class & No": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Accident Date": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Age of Casualty": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Casualty Class": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Casualty Severity": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Grid Ref: Easting": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Grid Ref: Northing": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Lighting Conditions": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Local Authority": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Number of Vehicles": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Reference Number": {
+    "anomalous_values": [
+      "3.10E+244",
+      "3.70E+304"
+    ],
+    "missing_values": []
+  },
+  "Road Surface": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Sex of Casualty": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Time (24hr)": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Type of Vehicle": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Vehicle Number": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Weather Conditions": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

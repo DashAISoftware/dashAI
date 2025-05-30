@@ -1,0 +1,120 @@
+﻿{
+  "aspiration": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "body-style": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "bore": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "city-mpg": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "compression-ratio": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "curb-weight": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "drive-wheels": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "engine-location": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "engine-size": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "engine-type": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "fuel-system": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "fuel-type": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "height": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "highway-mpg": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "horsepower": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "length": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "make": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "normalized-losses": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "num-of-cylinders": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "num-of-doors": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "peak-rpm": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "price": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "stroke": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "symboling": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "wheel-base": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "width": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

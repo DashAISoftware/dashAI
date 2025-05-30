@@ -1,0 +1,7 @@
+,ptype
+overall-accuracy,0.93
+boolean,0.65
+date,0.62
+float,0.92
+integer,0.87
+string,0.93

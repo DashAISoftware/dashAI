@@ -1,0 +1,20 @@
+{
+  "1st Road Class": "integer",
+  "1st Road Class & No": "string",
+  "Accident Date": "date-eu",
+  "Age of Casualty": "integer",
+  "Casualty Class": "integer",
+  "Casualty Severity": "integer",
+  "Grid Ref: Easting": "integer",
+  "Grid Ref: Northing": "integer",
+  "Lighting Conditions": "integer",
+  "Local Authority": "string",
+  "Number of Vehicles": "integer",
+  "Reference Number": "string",
+  "Road Surface": "integer",
+  "Sex of Casualty": "integer",
+  "Time (24hr)": "integer",
+  "Type of Vehicle": "integer",
+  "Vehicle Number": "integer",
+  "Weather Conditions": "integer"
+}

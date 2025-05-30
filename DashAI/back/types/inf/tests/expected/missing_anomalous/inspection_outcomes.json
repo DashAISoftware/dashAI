@@ -1,0 +1,105 @@
+﻿{
+  "Address 1": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Address 2": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "County": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Event number": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Event type": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Government Office Region": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Inspection date": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Leadership and management": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Local authority": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Name": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Outcomes for children and young people": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Overall effectiveness": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Places": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Postcode": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Provision type": {
+    "anomalous_values": [
+      "Children's Home",
+      "Children's home",
+      "Residential special school (registered as a children's home)",
+      "Secure children's home"
+    ],
+    "missing_values": []
+  },
+  "Quality of care": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Registration Status": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Safeguarding children and young people": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Sector": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Town": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "URN": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Web link": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "Date": "date-non-std-subtype",
+  "Time": "time",
+  "Latitude": "float",
+  "Longitude": "float",
+  "Type": "categorical",
+  "Depth": "float",
+  "Depth Error": "float",
+  "Depth Seismic Stations": "float",
+  "Magnitude": "float",
+  "Magnitude Type": "categorical",
+  "Magnitude Error": "float",
+  "Magnitude Seismic Stations": "float",
+  "Azimuthal Gap": "float",
+  "Horizontal Distance": "float",
+  "Horizontal Error": "float",
+  "Root Mean Square": "float",
+  "ID": "string",
+  "Source": "string",
+  "Location Source": "string",
+  "Magnitude Source": "string",
+  "Status": "categorical"
+}

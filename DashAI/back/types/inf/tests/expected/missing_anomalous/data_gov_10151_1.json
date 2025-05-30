@@ -1,0 +1,117 @@
+﻿{
+  "ARC_City": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "ARC_State": {
+    "anomalous_values": [],
+    "missing_values": [""]
+  },
+  "ARC_Street": {
+    "anomalous_values": [
+      "3812 O'Neil Boulevard"
+    ],
+    "missing_values": [
+      ""
+    ]
+  },
+  "ARC_ZIP": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Addr_type": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Address": {
+    "anomalous_values": [
+      "3812 O'Neil Boulevard"
+    ],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Loc_name": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Match_addr": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Match_type": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Municipa_1": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Municipali": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Name": {
+    "anomalous_values": [
+      "(formerly CE Kelly Commissary)",
+      "Kuhn's"
+    ],
+    "missing_values": [
+      ""
+    ]
+  },
+  "OBJECTID": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Ref_ID": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Score": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Side": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "Status": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "User_fld": {
+    "anomalous_values": [],
+    "missing_values": [
+      ""
+    ]
+  },
+  "X": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "Y": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "ZipCodes": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

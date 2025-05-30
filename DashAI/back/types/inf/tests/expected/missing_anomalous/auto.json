@@ -1,0 +1,120 @@
+﻿{
+  "0": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "1": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "10": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "11": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "12": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "13": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "14": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "15": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "16": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "17": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "18": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "19": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "2": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "20": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "21": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "22": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "23": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "24": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "25": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "3": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "4": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "5": {
+    "anomalous_values": [],
+    "missing_values": [
+      "?"
+    ]
+  },
+  "6": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "7": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "8": {
+    "anomalous_values": [],
+    "missing_values": []
+  },
+  "9": {
+    "anomalous_values": [],
+    "missing_values": []
+  }
+}

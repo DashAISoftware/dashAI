@@ -1,0 +1,7 @@
+,ptype-cat
+overall-accuracy,0.13
+boolean,
+date,
+float,0.08
+integer,0.07
+string,

@@ -1,0 +1,14 @@
+{
+    "User ID": "integer",
+    "Age": "integer",
+    "Gender": "boolean",
+    "Sleep Quality": "integer",
+    "Bedtime": "time",
+    "Wake-up Time": "time",
+    "Daily Steps": "integer",
+    "Calories Burned": "integer",
+    "Physical Activity Level": "string",
+    "Dietary Habits": "string",
+    "Sleep Disorders": "boolean",
+    "Medication Usage": "boolean"
+}
