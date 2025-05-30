@@ -1,4 +1,7 @@
 import pyarrow as pa
+import json
+from typing import Dict
+from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import DashAIValue, Integer, Float, Text, Time, Boolean, Timestamp, Duration, Decimal, Date, Binary
 from DashAI.back.types.categorical import Categorical
 
@@ -118,3 +121,77 @@ def bp(dtype):
         raise ValueError(f"Unsupported DashAI type: {dtype_arrow_map[dtype]}")
 
 
+def save_types_in_arrow_metadata(pa_table: pa.Table, datatypes: Dict[str, Dict]) -> pa.Table:
+    """
+    Save DashAI types in Arrow metadata.
+    This doesn't modify the Arrow schema, but adds metadata to the table.
+    
+    Parameters:
+    ----------
+    pa_table : pa.Table
+        The Arrow table to which the metadata will be added.
+    types : dict[str, DashAIValue]
+        A dictionary mapping column names to DashAIValue types.
+    Returns:
+    -------
+    pa.Table
+        The Arrow table with updated metadata containing DashAI types.
+    
+    """
+
+    #We serialize the data
+    metadata_serialized = json.dumps(datatypes).encode('utf-8')
+
+    #We obtain the current metadata
+    metadata = pa_table.schema.metadata or {}
+
+    #We add the serialized metadata to the Arrow table
+    new_metadata = dict(metadata)
+    new_metadata[b"dashai_types"] = metadata_serialized
+    print("new_metadata:", new_metadata)
+    print("decoded:", new_metadata[b"dashai_types"].decode('utf-8'))
+    #We return the Arrow table with the new metadata
+    return pa_table.replace_schema_metadata(new_metadata)
+
+def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataType]:
+    """
+    Get DashAI types from Arrow metadata.
+    
+    Parameters:
+    ----------
+    pa_table : pa.Table
+        The Arrow table from which the metadata will be extracted.
+    
+    Returns:
+    -------
+    dict[str, DashAIDataType]
+        A dictionary mapping column names to DashAIDataType types.
+    
+    Raises:
+    ------
+    ValueError
+        If the metadata does not contain DashAI types.
+    """
+    
+    metadata = pa_table.schema.metadata or {}
+    
+    # Deserialize the metadata
+    try:
+        types_serialized = metadata[b"dashai_types"].decode('utf-8')
+        types = json.loads(types_serialized)
+
+        dashai_types = {}
+        for column, info in types.items():
+            _type = info.get("type")
+            if _type == "Categorical":
+                cats = info.get("categories", [])
+                dashai_types[column] = Categorical(cats)
+            else:
+                dtype = info.get("dtype")
+                dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
+    except:
+        dashai_types = {}
+    
+    print("dashai_types:", dashai_types)
+    
+    return dashai_types

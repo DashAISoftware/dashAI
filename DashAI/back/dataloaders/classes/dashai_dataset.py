@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 import DashAI.back.types.value_types as vt
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.utils import bp, to_arrow_types, arrow_to_dashai_schema, arrow_to_dashai_types, dtype_arrow_map
+from DashAI.back.types.utils import save_types_in_arrow_metadata, get_types_from_arrow_metadata, to_arrow_types, arrow_to_dashai_schema, arrow_to_dashai_types, dtype_arrow_map
 
 def get_arrow_table(ds: Dataset) -> pa.Table:
     """
@@ -58,7 +58,7 @@ class DashAIDataset(Dataset):
         """
         super().__init__(table, *args, **kwargs)
         self.splits = splits or {}
-        self._types = types or {}
+        self._types = get_types_from_arrow_metadata(table) if types is None else types
     
     @property
     def types(self):
@@ -68,6 +68,7 @@ class DashAIDataset(Dataset):
     @types.setter
     def types(self, value):
         self._types = value
+
     @beartype
     def cast(self, *args, **kwargs) -> "DashAIDataset":
         """Override of the cast method to leave it in DashAI dataset format.
@@ -79,7 +80,7 @@ class DashAIDataset(Dataset):
         """
         ds = super().cast(*args, **kwargs)
         arrow_tbl = get_arrow_table(ds)
-        return DashAIDataset(arrow_tbl, splits=self.splits)
+        return DashAIDataset(arrow_tbl, splits=self.splits, types=self.types)
 
     @property
     def arrow_table(self) -> pa.Table:
@@ -307,7 +308,6 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
     Saves a DashAIDataset in a custom format using two files in the specified directory:
       - "data.arrow": contains the dataset's PyArrow table.
       - "splits.json": contains the dataset's splits indices.
-      - "dashai_schema.json": contains the dataset's schema.
 
     Parameters:
         dataset (DashAIDataset): The dataset to save.
@@ -340,6 +340,8 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
     for column_name in dashai_types:
         types[column_name] = dashai_types[column_name].to_string()
     
+    table = save_types_in_arrow_metadata(table, types)
+
     data_filepath = os.path.join(path, "data.arrow")
     with pa.OSFile(data_filepath, "wb") as sink:
         writer = ipc.new_file(sink, table.schema)
@@ -350,9 +352,9 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
     with open(metadata_filepath, "w") as f:
         json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
     
-    schema_filepath = os.path.join(path, "dashai_schema.json")
-    with open(schema_filepath, "w") as f:
-        json.dump(types, f, indent=2, sort_keys=True, ensure_ascii=False)
+    # schema_filepath = os.path.join(path, "dashai_schema.json")
+    # with open(schema_filepath, "w") as f:
+    #     json.dump(types, f, indent=2, sort_keys=True, ensure_ascii=False)
 
 @beartype
 def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
@@ -381,25 +383,25 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     else:
         splits = {}
 
-    schema_filepath = os.path.join(dataset_path, "dashai_schema.json")
-    if os.path.exists(schema_filepath):
-        with open(schema_filepath, "r") as f:
-            schema = json.load(f)
-    else:
-        schema = {}
+    # schema_filepath = os.path.join(dataset_path, "dashai_schema.json")
+    # if os.path.exists(schema_filepath):
+    #     with open(schema_filepath, "r") as f:
+    #         schema = json.load(f)
+    # else:
+    #     schema = {}
 
-    types = {}
-    for column_name, info in schema.items():
-        _type = info.get("type")
-        print("info:", info)
-        if _type == "Categorical":
-            values = info.get("categories")
-            types[column_name] = Categorical(values=values)
-        else:
-            dtype = info.get("dtype")
-            types[column_name] = arrow_to_dashai_types(dtype_arrow_map[dtype])
-    #print(DashAIDataset(data, splits=splits, types=types).types)
-    return DashAIDataset(data, splits=splits, types=types)
+    # types = {}
+    # for column_name, info in schema.items():
+    #     _type = info.get("type")
+    #     print("info:", info)
+    #     if _type == "Categorical":
+    #         values = info.get("categories")
+    #         types[column_name] = Categorical(values=values)
+    #     else:
+    #         dtype = info.get("dtype")
+    #         types[column_name] = arrow_to_dashai_types(dtype_arrow_map[dtype])
+
+    return DashAIDataset(data, splits=splits)#, types=types)
 
 
 @beartype
