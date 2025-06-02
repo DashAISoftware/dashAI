@@ -4,9 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Final, Type, Union
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseConverter(ConfigObject, metaclass=ABCMeta):
@@ -18,6 +16,13 @@ class BaseConverter(ConfigObject, metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "Converter"
+
+    def changes_row_count(self) -> bool:
+        """
+        Indicates if the converter changes the number of rows in the dataset.
+        Samplers typically do, while most other transformers do not.
+        """
+        return False
 
     @abstractmethod
     def fit(

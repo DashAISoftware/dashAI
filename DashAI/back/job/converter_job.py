@@ -369,13 +369,13 @@ class ConverterListJob(BaseJob):
                 ]
 
                 # Select data for fitting using DashAIDataset operations
-                X_dataset = loaded_dataset.select_columns(scope_column_names)
-                y_dataset = loaded_dataset.select_columns([target_column_name])
+                X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
+                y_dataset_fit = loaded_dataset.select_columns([target_column_name])
 
                 # Select specified rows if provided
                 if scope_rows_indexes:
-                    X_dataset = X_dataset.select(scope_rows_indexes)
-                    y_dataset = y_dataset.select(scope_rows_indexes)
+                    X_dataset = X_dataset_fit.select(scope_rows_indexes)
+                    y_dataset = y_dataset_fit.select(scope_rows_indexes)
 
                 try:
                     converter = converter.fit(X_dataset, y_dataset)
@@ -386,36 +386,23 @@ class ConverterListJob(BaseJob):
                     ) from e
 
                 # Transform data using full dataset for selected columns
-                X_full = loaded_dataset.select_columns(scope_column_names)
-                y_full = loaded_dataset.select_columns([target_column_name])
+                # Samplers will ignore x_full and y_full, and use internally stored
+                # resampled data.
+                X_full_transform = loaded_dataset.select_columns(scope_column_names)
+                y_full_transform = loaded_dataset.select_columns([target_column_name])
 
                 try:
-                    transformed_dataset = converter.transform(X_full, y_full)
+                    transformed_dataset = converter.transform(
+                        X_full_transform, y_full_transform
+                    )
                 except Exception as e:
                     log.exception(e)
-                    raise JobError(f"Error transforming data: {e}") from e
+                    raise JobError(
+                        f"Error transforming data with {converter_name}: {e}"
+                    ) from e
 
-                if isinstance(converter, ImbalancedLearnWrapper):
-                    X_resampled_final_df = transformed_dataset.to_pandas().reset_index(
-                        drop=True
-                    )
-                    y_resampled_final_series = (
-                        converter.y_resampled_series_.reset_index(drop=True)
-                    )
-                    combined_df = pd.concat(
-                        [X_resampled_final_df, y_resampled_final_series], axis=1
-                    )
-
-                    loaded_dataset = to_dashai_dataset(combined_df)
-
-                    if "__index_level_0__" in loaded_dataset.column_names:
-                        log.info(
-                            "Removing '__index_level_0__' after sampler processing."
-                        )
-                        loaded_dataset = loaded_dataset.remove_columns(
-                            ["__index_level_0__"]
-                        )
-
+                if converter.changes_row_count():
+                    loaded_dataset = transformed_dataset
                 else:
                     # Now we need to merge the transformed data back into the original
                     # dataset, preserving their original positions
@@ -426,6 +413,10 @@ class ConverterListJob(BaseJob):
                         scope_column_indexes,
                     )
 
+            dataset_original_columns = loaded_dataset.column_names
+            log.info(
+                f"Dataset after {converter_name}: Shape {loaded_dataset.shape}, Columns: {loaded_dataset.column_names}"
+            )
             # Save the final dataset
             save_dataset(loaded_dataset, f"{dataset_path}")
             converter_list.set_status_as_finished()

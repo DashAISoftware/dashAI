@@ -177,6 +177,7 @@ def get_initial_components():
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         # Converters
+        ColumnRemover,
         FastICA,
         IncrementalPCA,
         PCA,
@@ -218,7 +219,6 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
-        ColumnRemover,
     ]
 
     # Obtener plugins instalados

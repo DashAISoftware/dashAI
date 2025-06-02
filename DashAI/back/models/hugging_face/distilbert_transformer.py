@@ -115,11 +115,10 @@ class DistilBertTransformer(TextClassificationModel):
                 model_config.num_labels = self.num_labels
                 if self.num_labels > 1:
                     model_config.problem_type = "single_label_classification"
-            else:
-                # Fallback: num_labels will be determined in fit().
-                self.model = AutoModelForSequenceClassification.from_pretrained(
-                    self.model_name, config=model_config
-                )
+            # Fallback: num_labels will be determined in fit().
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_name, config=model_config
+            )
 
         self.fitted = False
 
