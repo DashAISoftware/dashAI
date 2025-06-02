@@ -4,7 +4,6 @@ from importlib import import_module
 from pathlib import Path
 from typing import Dict, List
 
-import pandas as pd
 import pyarrow as pa
 from datasets.arrow_dataset import update_metadata_with_features
 from datasets.features import Features
@@ -12,13 +11,11 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
-from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapper
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
     save_dataset,
-    to_dashai_dataset,
 )
 from DashAI.back.dependencies.database.models import ConverterList
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
@@ -415,7 +412,8 @@ class ConverterListJob(BaseJob):
 
             dataset_original_columns = loaded_dataset.column_names
             log.info(
-                f"Dataset after {converter_name}: Shape {loaded_dataset.shape}, Columns: {loaded_dataset.column_names}"
+                f"Dataset after {converter_name}: Shape {loaded_dataset.shape}, "
+                f"Columns: {loaded_dataset.column_names}"
             )
             # Save the final dataset
             save_dataset(loaded_dataset, f"{dataset_path}")

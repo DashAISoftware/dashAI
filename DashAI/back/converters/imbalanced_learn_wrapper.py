@@ -25,7 +25,10 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         return True
 
     def fit(self, x: DashAIDataset, y: DashAIDataset) -> Type[BaseConverter]:
-        """Fit the sampler using imbalanced-learn's fit_resample and store the combined result."""
+        """
+        Fit the sampler using imbalanced-learn's fit_resample and store the combined
+        result.
+        """
         if y is None or len(y) == 0:
             raise ValueError(
                 "Imbalanced-learn samplers require a non-empty target dataset (y)."
@@ -48,7 +51,10 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             X_resampled_df.columns = self.original_X_column_names_
         else:
             raise TypeError(
-                f"Unexpected type for X_resampled_data from imblearn: {type(X_resampled_data)}"
+                (
+                    "Unexpected type for X_resampled_data from imblearn: "
+                    f"{type(X_resampled_data)}"
+                )
             )
 
         if isinstance(y_resampled_data, np.ndarray):
@@ -60,7 +66,10 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             y_resampled_series.name = self.original_target_column_name_
         else:
             raise TypeError(
-                f"Unexpected type for y_resampled_data from imblearn: {type(y_resampled_data)}"
+                (
+                    "Unexpected type for y_resampled_data from imblearn: "
+                    f"{type(y_resampled_data)}"
+                )
             )
 
         combined_df = pd.concat(
