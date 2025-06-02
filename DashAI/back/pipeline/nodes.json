@@ -1,0 +1,34 @@
+[
+  {
+    "type": "DataSelector",
+    "name": "Data Selector",
+    "icon": "FolderIcon",
+    "requiresConfiguration": true,
+    "source": true,
+    "target": false
+  },
+  {
+    "type": "DataExploration",
+    "name": "Data Exploration",
+    "icon": "InsertChartIcon",
+    "requiresConfiguration": true,
+    "source": false,
+    "target": true
+  },
+  {
+    "type": "Train",
+    "name": "Train Model",
+    "icon": "SettingsIcon",
+    "requiresConfiguration": true,
+    "source": true,
+    "target": true
+  },
+  {
+    "type": "Prediction",
+    "name": "Prediction",
+    "icon": "EmojiObjectsIcon",
+    "requiresConfiguration": false,
+    "source": false,
+    "target": true
+  }
+]

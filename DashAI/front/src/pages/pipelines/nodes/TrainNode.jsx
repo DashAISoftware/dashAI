@@ -21,7 +21,7 @@ import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import { validateNode } from "../../../api/pipeline";
 
-const Train = ({ open, onClose, onSave, savedConfig, data }) => {
+const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const [inputColumns, setInputColumns] = useState(savedConfig?.input_columns || "");
   const [outputColumns, setOutputColumns] = useState(savedConfig?.output_columns || "");
   const [splits, setSplits] = useState(
@@ -37,8 +37,8 @@ const Train = ({ open, onClose, onSave, savedConfig, data }) => {
   const [availableModels, setAvailableModels] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
-  const datasetEntry = Object.entries(data || {}).find(([key]) => key.startsWith("DataSelector-"));
-  const datasetId = datasetEntry?.[1]?.id || null;
+  const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
+  const datasetId = datasetNode?.id ?? null;
   const [validTasks, setValidTasks] = useState([]);
   const [datasetInfo, setDatasetInfo] = useState({});
   const [infoLoading, setInfoLoading] = useState(true);
@@ -46,6 +46,7 @@ const Train = ({ open, onClose, onSave, savedConfig, data }) => {
   const [outputError, setOutputError] = useState(false);
   const [inputErrorMessage, setInputErrorMessage] = useState("");
   const [outputErrorMessage, setOutputErrorMessage] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
 
   useEffect(() => {
     const fetchComponents = async () => {
@@ -131,14 +132,20 @@ useEffect(() => {
     };
 
     try {
-      await validateNode("Train", payload);
+      const response = await validateNode("Train", payload);
+      if (response.status === "ok") {
+        setValidationStatus("ok");
+        onSave(payload);
+        onClose();
+      } else {
+        setValidationStatus("error");
+        enqueueSnackbar("Validation failed", { variant: "error" });
+      }
     } catch (e) {
+      setValidationStatus("error");
       enqueueSnackbar("Error validating node", { variant: "error" });
       console.error(e);
     }
-
-    onSave(payload);
-    onClose();
   };
 
   const getDatasetInfo = async () => {

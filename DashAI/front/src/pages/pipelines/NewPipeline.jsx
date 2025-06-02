@@ -1,29 +1,19 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Box, Typography, Dialog, TextField, Button, Tooltip } from "@mui/material";
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState, useReactFlow } from "reactflow";
 import 'reactflow/dist/style.css';
 import CustomLayout from "../../components/custom/CustomLayout";
 import RunPipeline from "./nodes/Run";
-import DataSelectorNode from "./nodes/DataSelectorNode";
-import DataExplorationNode from "./nodes/DataExplorationNode";
-import TrainNode from "./nodes/TrainNode";
-import PredictionNode from "./nodes/PredictionNode";
 import PipelineResults from "./Results";
-import { getPipelineById, updatePipeline } from "../../api/pipeline";
+import { getPipelineById, getNodes } from "../../api/pipeline";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import CustomNode from "./CustomNode";
 import { useSnackbar } from "notistack";
 import { validatePipeline, sortNodes } from "./ValidatePipeline"
-import { enqueuePipelineJob, startJobQueue } from "../../api/job";
-
-const nodeTypes = {
-  DataSelector: CustomNode,
-  DataExploration: CustomNode,
-  Train: CustomNode,
-  Prediction: CustomNode,
-};
+import { getNodeHelp } from "./nodeHelp";
+import { getNodeTypesMap, getNodeTypes } from "./nodeTypes";
+import nodeComponentRegistry from "./nodeComponentRegistry";
 
 function NewPipeline() {
   const location = useLocation();
@@ -42,6 +32,30 @@ function NewPipeline() {
   const flowWrapperRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
   const { screenToFlowPosition } = useReactFlow();
+  const [nodeHelp, setNodeHelp] = useState({});
+  const [availableNodes, setAvailableNodes] = useState([]);
+  const [nodeTypesMap, setNodeTypesMap] = useState([]);
+  const [nodeIdCounter, setNodeIdCounter] = useState(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const nodes = await getNodeTypes();
+      setAvailableNodes(nodes);
+    };
+    fetchData();
+    async function loadNodeTypes() {
+      const types = await getNodeTypesMap();
+      setNodeTypesMap(types);
+    }
+    loadNodeTypes();
+  }, []);
+
+  const nodeTypes = useMemo(
+    () => ({
+      ...nodeTypesMap
+    }),
+    [nodeTypesMap],
+  );
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -68,7 +82,7 @@ function NewPipeline() {
       y: event.clientY,
     });
 
-    const nodeId = `${dragging}-${nodes.length}`;
+    const nodeId = `${dragging}-${nodeIdCounter}`;
     const nodeErrors = validationErrors[nodeId] ?? [];
     
     const newNode = {
@@ -81,15 +95,15 @@ function NewPipeline() {
     };
 
     setNodes((nds) => nds.concat(newNode));
-  }, [dragging, nodes.length, setNodes, screenToFlowPosition, validationErrors]);
-
-  const requiresConfiguration = (type) => type !== "Prediction";
+    setNodeIdCounter((prev) => prev + 1);
+  }, [dragging, nodes.length, setNodes, screenToFlowPosition, validationErrors, nodeIdCounter]);
 
   useEffect(() => {
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
+        const nodeInfo = availableNodes.find((n) => n.type === node.type);
         const hasError = !!validationErrors[node.id];
-        const needsConfig = requiresConfiguration(node.type);
+        const needsConfig = nodeInfo?.requiresConfiguration ?? true;
         const isConfigured = nodeData[node.id] !== undefined;
 
         return {
@@ -98,7 +112,12 @@ function NewPipeline() {
             ...node.data,
             hasError,
             notConfigured: needsConfig && !isConfigured,
-            errors: validationErrors[node.id]
+            errors: validationErrors[node.id],
+            icon: nodeInfo?.icon || null,
+            name: nodeInfo?.name || node.type,
+            source: nodeInfo?.source || false,
+            target: nodeInfo?.target || false,
+            type: nodeInfo?.type || node.type,
           },
         };
       })
@@ -154,56 +173,26 @@ function NewPipeline() {
     handleCloseDialog();
   };
 
-  function buildSteps(nodes, nodeData) {
-    return nodes.map(n => {
-      const config = { ...nodeData[n.id] };
-      return {
-        id: n.id,
-        type: n.type,
-        label: n.data.label,
-        config: config,
-      };
-    });
-  }
-
   useEffect(() => {
-    const errors = validatePipeline(nodes, edges);
-    setValidationErrors(errors);
-
-    setNodes((prevNodes) =>
-      prevNodes.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          hasError: !!errors[node.id],
-        }
-      }))
-    );
+    const validate = async () => {
+      const errors = await validatePipeline(nodes, edges);
+      setValidationErrors(errors);
+    };
+    validate();
   }, [nodes.length, edges]);
 
   const handleRun = async () => {
     const sortedNodes = sortNodes(nodes, edges);
-    const errors = validatePipeline(sortedNodes, edges);
+    const errors = await validatePipeline(sortedNodes, edges);
     if (Object.keys(errors).length > 0) {
       enqueueSnackbar("Error in pipeline", { variant: "error" });
       return;
     }
-    let newId;
-    if (pipelineId) {
-      await updatePipeline(pipelineId, { name: pipelineName, steps: buildSteps(sortedNodes, nodeData), edges: edges });
-      enqueueSnackbar("Pipeline updated successfully.", { variant: "success" });
-      await enqueuePipelineJob(pipelineId);
-      enqueueSnackbar("Pipeline job enqueued successfully.", { variant: "info" });
-      await startJobQueue();
-      newId = pipelineId;
-    } else {
-      newId = await RunPipeline(sortedNodes, nodeData, pipelineName, edges, enqueueSnackbar);
-    }
+    const newId = await RunPipeline(sortedNodes, nodeData, pipelineName, edges, enqueueSnackbar, pipelineId);
     if (newId) {
       handleResultId(newId);
-      navigate(`/app/pipelines/${newId}`, { 
-        state: { activeTab: "results" }
-      });
+      setActiveTab("results");
+      navigate(`/app/pipelines/${newId}`);
     }
   };
 
@@ -215,17 +204,46 @@ function NewPipeline() {
     setSelectedNode(node);
   };
 
+  const onNodeHelp = (event, node) => {
+    setNodeHelp(node);
+  };
+
+  function getConnectedNodeData(selectedNode) {
+    const visited = new Set();
+    const result = [];
+
+    function traverseBackwards(nodeId) {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      const node = nodes.find(n => n.id === nodeId);
+      if (node && nodeData[nodeId]) {
+        result.push(nodeData[nodeId]);
+      }
+      const incomingEdges = edges.filter(edge => edge.target === nodeId);
+      for (const edge of incomingEdges) {
+        traverseBackwards(edge.source);
+      }
+    }
+
+    traverseBackwards(selectedNode.id);
+    return result;
+  }
+
   const renderNodeDialogContent = () => {
     if (!selectedNode) return null;
     const { type, id } = selectedNode;
+    const NodeComponent = nodeComponentRegistry[type];
+    if (!NodeComponent) return null;
 
-    if (type === "DataSelector") {
-      return <DataSelectorNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]}/>;
-    } else if (type === "DataExploration") {
-      return <DataExplorationNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} data={nodeData}/>;
-    } else if (type === "Train") {
-      return <TrainNode open={!!selectedNode} onClose={handleCloseDialog} onSave={(data) => handleSaveNodeData(id, data)} savedConfig={nodeData[id]} data={nodeData} />;
-    } return null;
+    return (
+      <NodeComponent
+        open={!!selectedNode}
+        onClose={handleCloseDialog}
+        onSave={(data) => handleSaveNodeData(id, data)}
+        savedConfig={nodeData[id]}
+        prevNodes={getConnectedNodeData(selectedNode)} 
+      />
+    );
   };
 
   const onNodeMouseEnter = (event, node) => {
@@ -237,7 +255,10 @@ function NewPipeline() {
   };
 
   useEffect(() => {
-    if (hoveredNode && !nodes.find((n) => n.id === hoveredNode.id)) {
+    if (
+      hoveredNode && 
+      (!nodes.find((n) => n.id === hoveredNode.id) || !validationErrors[hoveredNode.id])
+    ) {
       setHoveredNode(null);
     }
   }, [nodes]);
@@ -278,17 +299,48 @@ function NewPipeline() {
           <Typography variant="h6" gutterBottom sx={{ color: "#fff" }}>
             Nodes
           </Typography>
-          {["DataSelector", "DataExploration", "Train", "Prediction"].map((nodeType) => (
+          {availableNodes.map((node) => (
             <Box
-              key={nodeType}
-              onDragStart={(e) => onDragStart(e, nodeType)}
+              key={node.type}
+              onDragStart={(e) => onDragStart(e, node.type)}
               draggable
               sx={{ mb: 1, p: 1, backgroundColor: "#333", color: "#fff", borderRadius: 1, textAlign: "center", cursor: "grab" }}
             >
-              <Typography>{nodeType}</Typography>
+              <Typography>{node.name || node.type}</Typography>
             </Box>
           ))}
-        </Box>
+
+          <Box sx={{ p: 2, borderTop: '1px solid #ccc', backgroundColor: "#212121", mt: 2 }}>
+              <Typography variant="h6" sx={{ color: "#fff" }}>
+                {nodeHelp?.type || "Pipeline"} Help
+              </Typography>
+              {(() => {
+                const help = getNodeHelp(nodeHelp?.type || "Pipeline");
+                return (
+                  <>
+                    <Typography variant="body1" sx={{ mb: 1, color: "#ddd" }}>
+                      {help.description}
+                    </Typography>
+                    {help.input && (
+                      <Typography variant="body2" sx={{ color: "#ccc" }}>
+                        <u>Inputs:</u> {help.input || "None"}
+                      </Typography>
+                    )}
+                    {help.output && (
+                      <Typography variant="body2" sx={{ color: "#ccc" }}>
+                        <u>Outputs:</u> {help.output || "None"}
+                      </Typography>
+                    )}
+                    {help.next && (
+                      <Typography variant="body2" sx={{ color: "#ccc" }}>
+                        <u>Can be followed by:</u> {help.next || "None"}
+                      </Typography>
+                    )}
+                  </>
+                );
+              })()}
+            </Box>
+          </Box>
 
         <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#fff" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -296,7 +348,6 @@ function NewPipeline() {
               label="Pipeline Name"
               variant="outlined"
               size="small"
-              backgroundColor="primary"
               value={pipelineName}
               onChange={(e) => setPipelineName(e.target.value)}
               sx={{
@@ -324,6 +375,8 @@ function NewPipeline() {
             onConnect={onConnect}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            onNodeClick={onNodeHelp}
+            onPaneClick={() => setNodeHelp(null)}
             onNodeDoubleClick={onNodeClick} 
             onNodeMouseEnter={onNodeMouseEnter}
             onNodeMouseLeave={onNodeMouseLeave}

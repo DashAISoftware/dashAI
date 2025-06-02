@@ -18,6 +18,11 @@ export const getPipelineById = async (id: number): Promise<IPipeline> => {
   return response.data;
 };
 
+export const getNodes = async () => {
+  const response = await api.get(`${pipelineEndpoint}/nodes`);
+  return response.data;
+};
+
 export const updatePipeline = async (
   id: number,
   formData: object
@@ -38,6 +43,17 @@ export const validateNode = async (
   const response = await api.post(`${pipelineEndpoint}/validate_node`, {
     type: nodeType,
     config: config,
+  });
+  return response.data;
+};
+
+export const validatePipeline = async (
+  nodes: Array<object>,
+  edges: Array<object>
+): Promise<{ errors?: Record<string, string[]> }> => {
+  const response = await api.post(`${pipelineEndpoint}/validate_pipeline`, {
+    nodes: nodes,
+    edges: edges,
   });
   return response.data;
 };

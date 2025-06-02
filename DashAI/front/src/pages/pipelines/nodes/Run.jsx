@@ -1,8 +1,7 @@
-import React from "react";
-import { createPipeline } from "../../../api/pipeline";
+import { createPipeline, updatePipeline } from "../../../api/pipeline";
 import { enqueuePipelineJob, startJobQueue } from "../../../api/job";
 
-async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar) {
+async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar, pipelineId = null) {
   const steps = nodes.map((node) => {
     const config = nodeData[node.id] || {};
 
@@ -24,12 +23,19 @@ async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar) {
   };
 
   try {
-    const response = await createPipeline(formData);
-    enqueueSnackbar("Pipeline saved successfully.", { variant: "success" });
-    await enqueuePipelineJob(response.id);
-    enqueueSnackbar("Pipeline job enqueued successfully.", { variant: "info" });
-    await startJobQueue();
-    return response.id;
+    if (pipelineId) {
+      await updatePipeline(pipelineId, formData);
+      enqueueSnackbar("Pipeline updated successfully.", { variant: "success" });
+      await enqueuePipelineJob(pipelineId);
+      await startJobQueue();
+      return pipelineId;
+    } else {
+      const newPipeline = await createPipeline(formData);
+      enqueueSnackbar("Pipeline created successfully.", { variant: "success" });
+      await enqueuePipelineJob(newPipeline.id);
+      await startJobQueue();
+      return newPipeline.id;
+    }
   } catch (error) {
     console.error("Error saving pipeline:", error);
     enqueueSnackbar("Failed to save pipeline.", { variant: "error" });

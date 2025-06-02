@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from kink import di, inject
@@ -73,6 +74,20 @@ async def pipeline_predict_summary(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
     return summary
+
+@router.get("/nodes")
+async def get_nodes():
+    try:
+        json_path = Path(__file__).resolve().parents[3] / "pipeline" / "nodes.json"
+        with open(json_path, "r") as f:
+            nodes = json.load(f)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load node definitions",
+        ) from e
+
+    return nodes
 
 @router.get("/")
 @inject
@@ -167,6 +182,10 @@ async def update_pipeline(
                     detail="Pipeline not found",
                 )
             
+            pipeline.exploration = None
+            pipeline.train = None
+            pipeline.prediction = None
+
             steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
 
             pipeline.name = params.name or pipeline.name
@@ -212,6 +231,7 @@ async def delete_pipeline(
             ) from e
     return {"message": "Pipeline deleted successfully"}
 
+from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
 from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
 from fastapi import Request
 
@@ -236,3 +256,16 @@ async def validate_node(
     with session_factory() as db:
         validator = validator_class(node_data, db)
         return validator.validate()
+
+@router.post("/validate_pipeline")
+@inject
+async def validate_pipeline(
+    request: Request,
+):
+    """Validate a pipeline configuration."""
+    payload = await request.json()
+    nodes = payload.get("nodes", [])
+    edges = payload.get("edges", [])
+
+    validator = PipelineValidator(nodes, edges)
+    return validator.validate()

@@ -1,3 +1,5 @@
+import { validatePipeline as pipelineValidator } from "../../api/pipeline";
+
 function buildGraph(nodes, edges) {
   const graph = {};
   const inDegree = {};
@@ -49,84 +51,19 @@ function sortNodes(nodes, edges) {
   return orderedNodes;
 }
 
-function validatePipeline(nodes, edges) {
+async function validatePipeline(nodes, edges) {
   const { graph, inDegree } = buildGraph(nodes, edges);
   const executionOrder = getExecutionOrder(graph, { ...inDegree });
-  const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
 
-  const errors = {};
-  const addError = (nodeId, msg) => {
-    if (!errors[nodeId]) {
-      errors[nodeId] = [];
-    }
-    errors[nodeId].push(msg);
-  };
+  const orderedNodes = executionOrder.map(id => nodes.find(n => n.id === id));
 
-  const typeToNodes = {};
-  const duplicatedNodeIds = new Set();
-
-  nodes.forEach(node => {
-    if (!typeToNodes[node.type]) {
-      typeToNodes[node.type] = [];
-    }
-    typeToNodes[node.type].push(node.id);
-  });
-
-  Object.entries(typeToNodes).forEach(([type, ids]) => {
-    if (ids.length > 1) {
-      ids.slice(1).forEach(id => {
-        duplicatedNodeIds.add(id);
-        addError(id, `${type} already exists.`);
-      });
-    }
-  });
-
-  executionOrder.forEach(nodeId => {
-    if (duplicatedNodeIds.has(nodeId)) {
-      return;
-    }
-
-    const node = nodeMap[nodeId];
-    const predecessors = edges.filter(e => e.target === nodeId).map(e => nodeMap[e.source]?.type);
-    const successors = edges.filter(e => e.source === nodeId).map(e => nodeMap[e.target]?.type);
-
-    const predecessorIds = edges.filter(e => e.target === nodeId).map(e => e.source);
-    const successorIds = edges.filter(e => e.source === nodeId).map(e => e.target);
-
-    if (node.type === "DataSelector") {
-      if (predecessorIds.length > 0) {
-        addError(nodeId, "DataSelector should not have any inputs.");
-      }
-      if (successorIds.length > 0) {
-        if (!successors.every(t => ["DataExploration", "Train"].includes(t))) {
-          addError(nodeId, "DataSelector can only connect to DataExploration or Train Node.");
-        }
-      }
-    }
-
-    if (node.type === "DataExploration") {
-      if (!predecessors.includes("DataSelector")) {
-        addError(nodeId, "DataExploration must be connected to a DataSelector Node.");
-      }
-    }
-
-    if (node.type === "Train") {
-      if (!predecessors.some(t => t === "DataSelector" || t === "DataExploration")) {
-        addError(nodeId, "Train must be connected to a DataSelector Node.");
-      }
-    }
-
-    if (node.type === "Prediction") {
-      if (predecessors.length !== 1 || predecessors[0] !== "Train") {
-        addError(nodeId, "Prediction must be connected to a Train Node.");
-      }
-      if (successorIds.length > 0) {
-        addError(nodeId, "Prediction should not have any outputs.");
-      }
-    }
-  });
-
-  return errors;
+  try {
+    const response = await pipelineValidator(orderedNodes, edges);
+    return response || {};
+  } catch (error) {
+    console.error("Pipeline validation error:", error);
+    return { general: ["Error validating pipeline structure."] };
+  }
 }
 
-export { sortNodes, validatePipeline };
+export { sortNodes, validatePipeline, buildGraph, getExecutionOrder };

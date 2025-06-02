@@ -19,6 +19,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const [validationStatus, setValidationStatus] = useState("");
 
   const fetchDatasets = async () => {
     setLoading(true);
@@ -54,14 +55,20 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
     };
 
     try {
-      await validateNode("DataSelector", config);
+      const response = await validateNode("DataSelector", config);
+      if (response.status === "ok") {
+        setValidationStatus("ok");
+        onSave(selected);
+        onClose();
+      } else {
+        setValidationStatus("error");
+        enqueueSnackbar("Validation failed", { variant: "error" });
+      }
     } catch (e) {
+      setValidationStatus("error");
       enqueueSnackbar("Error validating node", { variant: "error" });
       console.error(e);
     }
-
-    onSave(selected);
-    onClose();
   };
 
   const columns = [

@@ -1,30 +1,24 @@
-import { Box, Typography, Tooltip } from '@mui/material';  // Importa Tooltip
+import { Box, Typography, Tooltip } from '@mui/material';
 import { Handle, Position } from 'reactflow';
 import FolderIcon from '@mui/icons-material/Folder';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
+import { useTheme } from '@mui/material/styles';
 
 const iconMap = {
-  DataSelector: FolderIcon,
-  DataExploration: InsertChartIcon,
-  Train: SettingsIcon,
-  Prediction: EmojiObjectsIcon,
-};
-
-const handleConfig = {
-  DataSelector: { source: true, target: false },
-  DataExploration: { source: false, target: true },
-  Train: { source: true, target: true },
-  Prediction: { source: false, target: true },
+  FolderIcon: FolderIcon,
+  InsertChartIcon: InsertChartIcon,
+  SettingsIcon: SettingsIcon,
+  EmojiObjectsIcon: EmojiObjectsIcon,
 };
 
 const CustomNode = ({ data, isConnectable }) => {
-  const IconComponent = iconMap[data.label] || FolderIcon;
-  const config = handleConfig[data.label] || { source: true, target: true };
+  const theme = useTheme();
+  const IconComponent = iconMap[data.icon] || FolderIcon;
   const isDisabled = data.errors?.some(err => err.includes("already exists")) ?? false;
   const borderColor = data.notConfigured && !isDisabled
-    ? '2px solid #FFDE21 '
+    ? `2px solid ${theme.palette.warning.main}`
     : '1px solid #ccc';
   const iconColor = isDisabled ? '#aaa' : '#555';
   const bgColor = isDisabled ? '#f0f0f0' : '#fff';
@@ -44,12 +38,12 @@ const CustomNode = ({ data, isConnectable }) => {
         position: 'relative',
       }}
     >
-      {!isDisabled && config.target && (
+      {!isDisabled && data.target && (
         <Handle
           type="target"
           position={Position.Left}
           style={{
-            background: data.hasError ? '#FF2C2C' : '#555',
+            background: data.hasError ? theme.palette.error.main : '#555',
             width: 8,
             height: 8,
             borderRadius: '50%',
@@ -60,7 +54,7 @@ const CustomNode = ({ data, isConnectable }) => {
 
       <IconComponent sx={{ fontSize: 30, color: iconColor }} />
 
-      {!isDisabled && config.source && (
+      {!isDisabled && data.source && (
         <Handle
           type="source"
           position={Position.Right}
@@ -85,7 +79,7 @@ const CustomNode = ({ data, isConnectable }) => {
       }}
     >
       <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#000' }}>
-        {data.label}
+        {data.name}
       </Typography>
 
       {data.notConfigured && !isDisabled ? (
