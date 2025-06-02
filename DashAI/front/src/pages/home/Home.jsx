@@ -3,6 +3,8 @@ import { Grid, Typography } from "@mui/material";
 import {
   FileUpload as FileUploadIcon,
   Science as ScienceIcon,
+  Assignment as AssignmentIcon,
+  Extension as ExtensionIcon,
   Insights as InsightsIcon,
   Merge as MergeIcon, // Add icon for pipelines
   Timeline as TimelineIcon,
@@ -66,6 +68,25 @@ function Home() {
             description="Create and manage pipelines."
             to="/app/pipelines" 
             Icon={MergeIcon}
+          />
+        </Grid>
+      </Grid>
+      <Typography variant="h5" component="h2" sx={{ mt: 6 }}>
+        Advanced
+      </Typography>
+      <Grid
+        container
+        direction="row"
+        justifyContent="flex-start"
+        alignItems="center"
+        sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
+      >
+        <Grid item md={4} sm={6} xs={12}>
+          <HomeButton
+            title="Plugins"
+            description={"Browse and manage plugins."}
+            to="/app/plugins/browse"
+            Icon={ExtensionIcon}
           />
         </Grid>
       </Grid>

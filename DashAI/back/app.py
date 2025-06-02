@@ -1,7 +1,9 @@
 """FastAPI Application module."""
 
+import asyncio
 import logging
 import pathlib
+from contextlib import asynccontextmanager, suppress
 from typing import Literal, Union
 
 import datasets
@@ -14,6 +16,7 @@ from DashAI.back.api.front_api import router as app_router
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.models import Base
+from DashAI.back.dependencies.job_queues.job_queue import job_queue_loop
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,24 @@ def _create_path_if_not_exists(new_path: pathlib.Path) -> None:
         logger.debug("Using existant path: %s.", str(new_path))
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifecycle handler for the FastAPI app.
+
+    Starts a persistent background task that runs the job queue loop and
+    ensures it is properly cancelled on application shutdown.
+    """
+    # Startup
+    app.state.job_loop = asyncio.create_task(
+        job_queue_loop(stop_when_queue_empties=False)
+    )
+    yield
+    # Shutdown
+    app.state.job_loop.cancel()
+    with suppress(asyncio.CancelledError):
+        await app.state.job_loop
+
+
 def create_app(
     local_path: Union[pathlib.Path, None] = None,
     logging_level: Literal[
@@ -35,6 +56,7 @@ def create_app(
     ] = "INFO",
 ) -> FastAPI:
     """Create the main application.
+
 
     Steps:
     1. Create the configuration dictionary and sets it as container configuration.
@@ -58,7 +80,6 @@ def create_app(
         The created FastAPI application.
     """
     # generating config dict and setting logging level
-
     config = build_config_dict(
         local_path=local_path,
         logging_level=logging_level,
@@ -77,13 +98,14 @@ def create_app(
     _create_path_if_not_exists(config["LOCAL_PATH"])
     _create_path_if_not_exists(config["DATASETS_PATH"])
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
+    _create_path_if_not_exists(config["EXPLORATIONS_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
 
     logger.debug("5. Creating database.")
     Base.metadata.create_all(bind=container["engine"])
 
     logger.debug("6. Initializing FastAPI application.")
-    app = FastAPI(title="DashAI")
+    app = FastAPI(title="DashAI", lifespan=lifespan)
     api_v0 = FastAPI(title="DashAI API v0")
     api_v1 = FastAPI(title="DashAI API v1")
 
@@ -105,5 +127,12 @@ def create_app(
     )
     app.container = container
     logger.debug("Application successfully created.")
+
+    @app.on_event("startup")
+    async def maybe_start_job_loop():
+        if not hasattr(app.state, "job_loop") or app.state.job_loop.done():
+            app.state.job_loop = asyncio.create_task(
+                job_queue_loop(stop_when_queue_empties=False)
+            )
 
     return app

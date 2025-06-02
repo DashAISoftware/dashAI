@@ -3,112 +3,11 @@ from typing import Dict
 
 from kink import Container, di
 
-from DashAI.back.dataloaders import (
-    CSVDataLoader,
-    ExcelDataLoader,
-    ImageDataLoader,
-    JSONDataLoader,
-)
 from DashAI.back.dependencies.database import setup_sqlite_db
 from DashAI.back.dependencies.job_queues import SimpleJobQueue
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.explainability import (
-    KernelShap,
-    PartialDependence,
-    PermutationFeatureImportance,
-)
-from DashAI.back.job import DatasetJob, ExplainerJob, ModelJob, PredictJob, PipelineJob
-from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
-from DashAI.back.models import (
-    SVC,
-    BagOfWordsTextClassificationModel,
-    DecisionTreeClassifier,
-    DistilBertTransformer,
-    DummyClassifier,
-    GradientBoostingR,
-    HistGradientBoostingClassifier,
-    KNeighborsClassifier,
-    LinearRegression,
-    LinearSVR,
-    LogisticRegression,
-    MLPRegression,
-    OpusMtEnESTransformer,
-    RandomForestClassifier,
-    RandomForestRegression,
-    RidgeRegression,
-    ViTTransformer,
-)
-from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
-from DashAI.back.pipeline import DataSelectorNode, ExplorationNode, TrainNode, PredictionNode
-from DashAI.back.tasks import (
-    ImageClassificationTask,
-    RegressionTask,
-    TabularClassificationTask,
-    TextClassificationTask,
-    TranslationTask,
-)
 
 logger = logging.getLogger(__name__)
-
-
-INITIAL_COMPONENTS = [
-    # Tasks
-    TabularClassificationTask,
-    TextClassificationTask,
-    TranslationTask,
-    ImageClassificationTask,
-    RegressionTask,
-    # Models
-    SVC,
-    DecisionTreeClassifier,
-    DummyClassifier,
-    GradientBoostingR,
-    HistGradientBoostingClassifier,
-    KNeighborsClassifier,
-    LogisticRegression,
-    MLPRegression,
-    RandomForestClassifier,
-    RandomForestRegression,
-    DistilBertTransformer,
-    ViTTransformer,
-    OpusMtEnESTransformer,
-    BagOfWordsTextClassificationModel,
-    RidgeRegression,
-    LinearSVR,
-    LinearRegression,
-    # Dataloaders
-    CSVDataLoader,
-    JSONDataLoader,
-    ImageDataLoader,
-    ExcelDataLoader,
-    # Metrics
-    F1,
-    Accuracy,
-    Precision,
-    Recall,
-    Bleu,
-    Ter,
-    MAE,
-    RMSE,
-    # Optimizers
-    OptunaOptimizer,
-    HyperOptOptimizer,
-    # Jobs
-    ExplainerJob,
-    ModelJob,
-    PredictJob,
-    DatasetJob,
-    PipelineJob,
-    # Explainers
-    KernelShap,
-    PartialDependence,
-    PermutationFeatureImportance,
-    # Pipelines
-    DataSelectorNode.DataSelector,
-    ExplorationNode.DataExploration,
-    TrainNode.Train,
-    PredictionNode.Prediction
-]
 
 
 def build_container(config: Dict[str, str]) -> Container:
@@ -136,7 +35,9 @@ def build_container(config: Dict[str, str]) -> Container:
     di["config"] = config
     di["engine"] = engine
     di["session_factory"] = session_factory
-    di["component_registry"] = ComponentRegistry(initial_components=INITIAL_COMPONENTS)
+    di["component_registry"] = ComponentRegistry(
+        initial_components=config["INITIAL_COMPONENTS"]
+    )
     di["job_queue"] = SimpleJobQueue()
 
     return di

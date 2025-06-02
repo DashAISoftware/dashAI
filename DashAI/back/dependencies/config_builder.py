@@ -5,6 +5,7 @@ from typing import Dict, Literal, Union
 from beartype import beartype
 
 from DashAI.back.config import DefaultSettings
+from DashAI.back.initial_components import get_initial_components
 
 
 @beartype
@@ -54,8 +55,10 @@ def build_config_dict(
     config["SQLITE_DB_PATH"] = local_path / config["SQLITE_DB_PATH"]
     config["DATASETS_PATH"] = local_path / config["DATASETS_PATH"]
     config["EXPLANATIONS_PATH"] = local_path / config["EXPLANATIONS_PATH"]
+    config["EXPLORATIONS_PATH"] = local_path / config["EXPLORATIONS_PATH"]
     config["RUNS_PATH"] = local_path / config["RUNS_PATH"]
     config["FRONT_BUILD_PATH"] = pathlib.Path(config["FRONT_BUILD_PATH"]).absolute()
     config["LOGGING_LEVEL"] = getattr(logging, logging_level)
+    config["INITIAL_COMPONENTS"] = get_initial_components()
 
     return config

@@ -21,6 +21,7 @@ const pages = [
   { name: "Explainability", to: "/app/explainers", disabled: false },
   { name: "Pipelines", to: "/app/pipelines", disabled: false },
   // { name: "Play", to: "/app/play", disabled: true },
+  { name: "Plugins", to: "/app/plugins/browse", disabled: false },
 ];
 
 function ResponsiveAppBar() {

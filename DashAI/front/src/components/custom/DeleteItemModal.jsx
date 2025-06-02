@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { GridActionsCellItem } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
   Button,
@@ -10,7 +9,13 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
+import TooltipedCellItem from "../shared/TooltipedCellItem";
 
+/**
+ * Modal to confirm deletion of an item from the table
+ * @param {Object} props
+ * @param {Function} props.deleteFromTable - Function to delete the item from the table
+ */
 function DeleteItemModal({ deleteFromTable }) {
   const [open, setOpen] = React.useState(false);
   const handleDelete = () => {
@@ -19,16 +24,14 @@ function DeleteItemModal({ deleteFromTable }) {
   };
   return (
     <React.Fragment>
-      {/* Delete icon button */}
-      <GridActionsCellItem
+      <TooltipedCellItem
         key="delete-button"
         icon={<DeleteIcon />}
         label="Delete"
+        tooltip="Delete item"
         onClick={() => setOpen(true)}
         sx={{ color: "error.main" }}
       />
-
-      {/* Modal to confirm deletion */}
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>

@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~F1.__init__
+      ~F1.is_multiclass
       ~F1.score
    
    
