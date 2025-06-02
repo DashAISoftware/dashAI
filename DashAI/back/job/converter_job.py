@@ -139,7 +139,7 @@ class ConverterListJob(BaseJob):
             raise JobError("Error setting converter list status as delivered") from e
 
     @inject
-    def run(
+    async def run(
         self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
     ) -> None:
