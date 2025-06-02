@@ -39,13 +39,15 @@ class SklearnLikeModel(BaseModel):
             The fitted estimator object.
         """
 
-        print("Tipos DashAI de x_train:")
-        for col, dtype in x_train.features.items():
-            print(f"{col}: {dtype}")
+        #print("Tipos DashAI de x_train:")
+        #print(x_train._types)
+        #for col, dtype in x_train._types.items():
+            #print(f"{col}: {dtype}")
 
-        print("Tipos DashAI de y_train:")
-        for col, dtype in y_train.features.items():
-            print(f"{col}: {dtype}")
+        #print("Tipos DashAI de y_train:")
+        #print(y_train._types)
+        #for col, dtype in y_train._types.items():
+            #print(f"{col}: {dtype}")
 
         x_pandas = x_train.to_pandas()
         y_pandas = y_train.to_pandas()

@@ -29,7 +29,9 @@ def get_arrow_table(ds: Dataset) -> pa.Table:
     Raises:
         ValueError: If the arrow table cannot be retrieved.
     """
-    if hasattr(ds, "arrow_table"):
+    if hasattr(ds, "types"):
+        return ds.arrow_table
+    elif hasattr(ds, "arrow_table"):
         return ds.arrow_table
     elif hasattr(ds, "data") and hasattr(ds.data, "table"):
         return ds.data.table
@@ -58,8 +60,9 @@ class DashAIDataset(Dataset):
         """
         super().__init__(table, *args, **kwargs)
         self.splits = splits or {}
-        self._types = get_types_from_arrow_metadata(table) if types is None else types
-    
+        self._table = table
+        self._types = get_types_from_arrow_metadata(self._table) if types is None else types
+
     @property
     def types(self):
         """Get the types of the dataset."""
@@ -80,7 +83,8 @@ class DashAIDataset(Dataset):
         """
         ds = super().cast(*args, **kwargs)
         arrow_tbl = get_arrow_table(ds)
-        return DashAIDataset(arrow_tbl, splits=self.splits, types=self.types)
+        #print("cast metadata:", arrow_tbl.schema.metadata)
+        return DashAIDataset(arrow_tbl, splits=self.splits, types=self._types)
 
     @property
     def arrow_table(self) -> pa.Table:
@@ -91,8 +95,8 @@ class DashAIDataset(Dataset):
             pa.Table: The underlying PyArrow table.
         """
         try:
-            #print("method arrow_table:", self._data.table)
-            return self._data.table
+            # Now we reference  the pa.table from here (DashAIDataset) and not the huggingface dataset, so we preserve the metadata
+            return self._table
         except AttributeError:
             raise ValueError("Unable to retrieve the underlying Arrow table.") from None
 
@@ -122,48 +126,6 @@ class DashAIDataset(Dataset):
             path where the dataset will be saved
         """
         save_dataset(self, dataset_path)
-
-    @beartype
-    def change_columns_type(self, column_types: Dict[str, str]) -> "DashAIDataset":
-        """Change the type of some columns.
-
-        Note: this is a temporal method, and it will probably will delete in the future.
-
-        Parameters
-        ----------
-        column_types : Dict[str, str]
-            dictionary whose keys are the names of the columns to be changed and the
-            values the new types.
-
-        Returns
-        -------
-        DashAIDataset
-            The dataset after columns type changes.
-        """
-        if not isinstance(column_types, dict):
-            raise TypeError(f"types should be a dict, got {type(column_types)}")
-
-        for column in column_types:
-            if column in self.column_names:
-                pass
-            else:
-                raise ValueError(
-                    f"Error while changing column types: column '{column}' does not "
-                    "exist in dataset."
-                )
-        new_features = self.features.copy()
-        
-        #print("arrow table features:", self.arrow_table.schema)
-        for column in column_types:
-            #print("column:", column)
-            #print("column_types[column]:", column_types[column])
-            if column_types[column] == "Categorical":
-                names = list(set(self[column]))
-                new_features[column] = ClassLabel(names=names)
-            elif column_types[column] == "Numerical":
-                new_features[column] = Value("float32")
-        dataset = self.cast(new_features)
-        return dataset
 
     @beartype
     def remove_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
@@ -263,10 +225,55 @@ class DashAIDataset(Dataset):
         subset = self.select(indices)
 
         new_splits = {"split_indices": {split_name: indices}}
-        arrow_table = subset.with_format("arrow")[:]
+        arrow_table = subset.arrow_table
         subset = DashAIDataset(arrow_table, splits=new_splits)
         return subset
 
+    @beartype
+    def select_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
+        """
+        Selects specific columns from the dataset and returns a new DashAIDataset
+        containing only those columns.
+
+        Parameters:
+            column_names (Union[str, List[str]]): The name or list of names of the
+            columns to select.
+
+        Returns:
+            DashAIDataset: A new DashAIDataset instance containing only the
+            specified columns.
+        """
+        if isinstance(column_names, str):
+            column_names = [column_names]
+        
+        subset_table = self.arrow_table.select(column_names)
+        subset_types = {col: self._types[col] for col in column_names if col in self._types}
+
+
+        return DashAIDataset(table=subset_table, splits=self.splits, types=subset_types)
+    
+    @beartype
+    def select(self, *args, **kwargs) -> "DashAIDataset":
+        """
+        Selects rows from the dataset based on the provided indices or boolean mask.
+
+        Parameters:
+            *args: Positional arguments for selection.
+            **kwargs: Keyword arguments for selection.
+
+        Returns:
+            DashAIDataset: A new DashAIDataset instance containing the selected rows.
+        """
+        print("estoy en el select de DashAIDataset")
+        selected_dataset = super().select(*args, **kwargs)
+        if isinstance(selected_dataset, DashAIDataset):
+            return selected_dataset
+        else:
+            # If the selected dataset is a Dataset, convert it to DashAIDataset
+            arrow_tbl = get_arrow_table(selected_dataset)
+            arrow_tblx = save_types_in_arrow_metadata(
+                arrow_tbl, {col: self._types[col].to_string() for col in self._types})
+            return DashAIDataset(arrow_tblx, splits=self.splits, types=self._types)
 
 @beartype
 def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
@@ -286,6 +293,10 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     concatenated_datasets = []
     split_index = {}
     current_index = 0
+
+    dashai_metadata = dataset_dict["train"].arrow_table.schema.metadata[b"dashai_types"]
+
+
     if len(dataset_dict.keys()) == 1:
         arrow_tbl = get_arrow_table(dataset_dict["train"])
         return DashAIDataset(arrow_tbl)
@@ -298,7 +309,14 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
         concatenated_datasets.append(ds)
     merged_dataset = concatenate_datasets(concatenated_datasets)
     arrow_tbl = get_arrow_table(merged_dataset)
+
+    #We overwrite the metadata with the original DashAI types because concatenate_datasets resets it to the huggingface default
+    new_metadata = dict(arrow_tbl.schema.metadata)
+    new_metadata[b"dashai_types"] = dashai_metadata
+    arrow_tbl = arrow_tbl.replace_schema_metadata(new_metadata)
+
     dashai_dataset = DashAIDataset(arrow_tbl, splits={"split_indices": split_index})
+
     return dashai_dataset
 
 
@@ -334,7 +352,7 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
         
     table = table.cast(target_schema = my_schema)
 
-    dataset.types = dashai_types
+    dataset._types = dashai_types
 
     types = {}
     for column_name in dashai_types:
@@ -351,10 +369,7 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
     metadata_filepath = os.path.join(path, "splits.json")
     with open(metadata_filepath, "w") as f:
         json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
-    
-    # schema_filepath = os.path.join(path, "dashai_schema.json")
-    # with open(schema_filepath, "w") as f:
-    #     json.dump(types, f, indent=2, sort_keys=True, ensure_ascii=False)
+
 
 @beartype
 def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
@@ -383,25 +398,7 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
     else:
         splits = {}
 
-    # schema_filepath = os.path.join(dataset_path, "dashai_schema.json")
-    # if os.path.exists(schema_filepath):
-    #     with open(schema_filepath, "r") as f:
-    #         schema = json.load(f)
-    # else:
-    #     schema = {}
-
-    # types = {}
-    # for column_name, info in schema.items():
-    #     _type = info.get("type")
-    #     print("info:", info)
-    #     if _type == "Categorical":
-    #         values = info.get("categories")
-    #         types[column_name] = Categorical(values=values)
-    #     else:
-    #         dtype = info.get("dtype")
-    #         types[column_name] = arrow_to_dashai_types(dtype_arrow_map[dtype])
-
-    return DashAIDataset(data, splits=splits)#, types=types)
+    return DashAIDataset(data, splits=splits)
 
 
 @beartype
@@ -546,9 +543,18 @@ def split_dataset(
         Must provide all indexes or none.
     """
     if all(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
+        print("pase por algo loco en el split_dataset")
+
         train_dataset = dataset.get_split("train")
+
         test_dataset = dataset.get_split("test")
+
         val_dataset = dataset.get_split("validation")
+
+        ("train_dataset metadata:", train_dataset.arrow_table)
+        ("test_dataset metadata:", test_dataset.arrow_table)
+        ("val_dataset metadata:", val_dataset.arrow_table)
+
         return DatasetDict(
             {
                 "train": train_dataset,
@@ -588,7 +594,7 @@ def split_dataset(
             "validation": DashAIDataset(val_table),
         }
     )
-
+    
     return separate_dataset_dict
 
 
@@ -627,41 +633,7 @@ def to_dashai_dataset(
         return merge_splits_with_metadata(dataset)
 
     dashai_dataset = DashAIDataset(arrow_tbl)
-    #print("dashai_Dataset features: ", dashai_dataset.features)
     return dashai_dataset
-
-def to_dashai_datatypes(dataset: DashAIDataset , path: Union[str, os.PathLike]):
-    """Creates and saves the DashAI data types from the dataset features.
-    
-    Parameters
-    ----------
-    dataset : DashAIDataset
-        The dataset to convert.
-    path : Union[str, os.PathLike]
-        The path where the data types will be saved.
-    
-    Returns
-    -------
-    """
-    arrow_tbl = get_arrow_table(dataset)
-    
-    dashai_schema = arrow_to_dashai_schema(arrow_tbl)    
-    arrow_tbl.features = Features(
-        {
-            col: vt.to_dashai_data_type(dtype)
-            for col, dtype in dashai_schema.items()
-        }
-    )
-    # Save the schema to a JSON file
-    schema_json = {col: str(dtype.__class__.__name__) for col, dtype in dashai_schema.items()}
-
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(schema_json, f, indent=2)
-    
-    return schema_json
-
-
 
 @beartype
 def validate_inputs_outputs(
@@ -762,8 +734,11 @@ def select_columns(
         Tuple with the separated datasets x and y
     """
     dataset = to_dashai_dataset(dataset)
-    input_columns_dataset = to_dashai_dataset(dataset.select_columns(input_columns))
-    output_columns_dataset = to_dashai_dataset(dataset.select_columns(output_columns))
+    #print("select_columns dataset types:", dataset._types)
+    input_columns_dataset = dataset.select_columns(input_columns)
+    output_columns_dataset = dataset.select_columns(output_columns)
+    #print("input_columns_dataset types:", input_columns_dataset._types)
+    #print("output_columns_dataset types:", output_columns_dataset._types)
     return (input_columns_dataset, output_columns_dataset)
 
 
@@ -842,7 +817,7 @@ def get_dataset_info(dataset_path: str) -> object:
     """
     dataset = load_dataset(dataset_path=dataset_path)
     total_rows = dataset.num_rows
-    total_columns = len(dataset.features)
+    total_columns = len(dataset._types)
     splits = dataset.splits.get("split_indices", {})
     train_indices = splits.get("train", [])
     test_indices = splits.get("test", [])

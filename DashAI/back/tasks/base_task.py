@@ -65,10 +65,7 @@ class BaseTask:
 
         # Check input types
         for input_col in input_columns:
-            print(f"Validating input column: {input_col}")
-            print("dataset types:", dataset.types)
-            print("dataset.types[input_col]:", dataset.types[input_col])
-            input_col_type = dataset.types[input_col]
+            input_col_type = dataset._types[input_col]
             
             if not isinstance(input_col_type, allowed_input_types):
                 raise TypeError(
@@ -77,8 +74,7 @@ class BaseTask:
 
         # Check output types
         for output_col in output_columns:
-            output_col_type = dataset.types[output_col]
-            print(f"Validating output column: {output_col} with type {output_col_type}")
+            output_col_type = dataset._types[output_col]
             if not isinstance(output_col_type, allowed_output_types):
                 raise TypeError(
                     f"{output_col_type} is not an allowed type for output columns."

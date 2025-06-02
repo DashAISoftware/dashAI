@@ -148,9 +148,6 @@ def save_types_in_arrow_metadata(pa_table: pa.Table, datatypes: Dict[str, Dict])
     #We add the serialized metadata to the Arrow table
     new_metadata = dict(metadata)
     new_metadata[b"dashai_types"] = metadata_serialized
-    print("new_metadata:", new_metadata)
-    print("decoded:", new_metadata[b"dashai_types"].decode('utf-8'))
-    #We return the Arrow table with the new metadata
     return pa_table.replace_schema_metadata(new_metadata)
 
 def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataType]:
@@ -192,6 +189,5 @@ def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataTyp
     except:
         dashai_types = {}
     
-    print("dashai_types:", dashai_types)
-    
     return dashai_types
+

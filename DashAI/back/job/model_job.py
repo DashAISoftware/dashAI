@@ -115,6 +115,9 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
+                #print("Experiment input columns:", experiment.input_columns)
+                #print("Experiment output columns:", experiment.output_columns)
+
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )
@@ -132,6 +135,12 @@ class ModelJob(BaseJob):
                 )
                 x = split_dataset(x)
                 y = split_dataset(y)
+                print("x splited:", x)
+                print("y splited:", y)
+                print("x[train]:", x["train"]._types)
+                print("y[train]:", y["train"]._types)
+   
+                #print("y:", y)
 
             except Exception as e:
                 log.exception(e)
