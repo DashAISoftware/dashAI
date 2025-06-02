@@ -771,6 +771,7 @@ def get_dataset_info(dataset_path: str) -> object:
     with pa.OSFile(data_filepath, "rb") as source:
         reader = ipc.open_file(source)
         schema = reader.schema
+        column_names = schema.names
 
         total_rows = 0
         for i in range(reader.num_record_batches):
@@ -784,6 +785,7 @@ def get_dataset_info(dataset_path: str) -> object:
     return {
         "total_rows": total_rows,
         "total_columns": len(schema),
+        "column_names": column_names,
         "train_size": len(train_indices),
         "test_size": len(test_indices),
         "val_size": len(val_indices),

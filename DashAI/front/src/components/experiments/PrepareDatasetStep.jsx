@@ -16,12 +16,10 @@ import { useSnackbar } from "notistack";
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
  */
 function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
-  // dataset info state
   const [datasetInfo, setDatasetInfo] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const [infoLoading, setInfoLoading] = useState(true);
 
-  // task requirements state
   const [taskRequirements, setTaskRequirements] = useState({
     name: "",
     metadata: {
@@ -32,16 +30,14 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     },
   });
 
-  // columns index state
-  const [inputColumns, setInputColumns] = useState([]);
-  const [outputColumns, setOutputColumns] = useState([]);
-  const [columnsReady, setColumnsReady] = useState(true);
+  const [inputColumnNames, setInputColumnNames] = useState([]);
+  const [outputColumnNames, setOutputColumnNames] = useState([]);
+  const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState();
 
-  // rows index state
   const defaultParitionsIndex = {
     train: [],
     validation: [],
@@ -52,11 +48,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     validation: 0.2,
     test: 0.2,
   };
-  const datasetPartitionsIndex = {
-    train: datasetInfo.train_indices,
-    validation: datasetInfo.val_indices,
-    test: datasetInfo.test_indices,
-  };
+
+  const [datasetPartitionsIndex, setDatasetPartitionsIndex] = useState({});
 
   const [rowsPartitionsIndex, setRowsPartitionsIndex] = useState(
     defaultParitionsIndex,
@@ -76,8 +69,63 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const getDatasetInfo = async () => {
     setInfoLoading(true);
     try {
-      const datasetInfo = await getDatasetInfoRequest(newExp.dataset.id);
-      setDatasetInfo(datasetInfo);
+      const fetchedDatasetInfo = await getDatasetInfoRequest(newExp.dataset.id);
+      setDatasetInfo(fetchedDatasetInfo);
+
+      if (fetchedDatasetInfo) {
+        setDatasetPartitionsIndex({
+          train: fetchedDatasetInfo.train_indices || [],
+          validation: fetchedDatasetInfo.val_indices || [],
+          test: fetchedDatasetInfo.test_indices || [],
+        });
+      }
+
+      if (
+        fetchedDatasetInfo &&
+        fetchedDatasetInfo.column_names &&
+        fetchedDatasetInfo.column_names.length > 0
+      ) {
+        const allNames = fetchedDatasetInfo.column_names;
+        if (
+          inputColumnNames.length === 0 &&
+          (!newExp.input_columns || newExp.input_columns.length === 0)
+        ) {
+          if (allNames.length > 1) {
+            setInputColumnNames(allNames.slice(0, -1));
+          } else if (allNames.length === 1) {
+            setInputColumnNames([allNames[0]]);
+          }
+        } else if (
+          newExp.input_columns &&
+          newExp.input_columns.length > 0 &&
+          allNames.length > 0
+        ) {
+          setInputColumnNames(
+            newExp.input_columns
+              .map((index) => allNames[index])
+              .filter((name) => name !== undefined),
+          );
+        }
+
+        if (
+          outputColumnNames.length === 0 &&
+          (!newExp.output_columns || newExp.output_columns.length === 0)
+        ) {
+          if (allNames.length > 0) {
+            setOutputColumnNames([allNames[allNames.length - 1]]);
+          }
+        } else if (
+          newExp.output_columns &&
+          newExp.output_columns.length > 0 &&
+          allNames.length > 0
+        ) {
+          setOutputColumnNames(
+            newExp.output_columns
+              .map((index) => allNames[index])
+              .filter((name) => name !== undefined),
+          );
+        }
+      }
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain the dataset info.");
       if (error.response) {
@@ -94,13 +142,27 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   const getTaskRequirements = async () => {
     try {
-      const task = await getComponentsRequest({
+      const taskComponents = await getComponentsRequest({
         selectTypes: ["Task"],
       });
 
-      setTaskRequirements(
-        task.filter((task) => task.name === newExp.task_name)[0],
+      const currentTask = taskComponents.find(
+        (task) => task.name === newExp.task_name,
       );
+      if (currentTask) {
+        setTaskRequirements(currentTask);
+      } else {
+        enqueueSnackbar(`Task requirements for ${newExp.task_name} not found.`);
+        setTaskRequirements({
+          name: newExp.task_name,
+          metadata: {
+            inputs_types: [],
+            inputs_cardinality: "",
+            outputs_types: [],
+            outputs_cardinality: "",
+          },
+        });
+      }
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain the task requirements.");
       if (error.response) {
@@ -113,13 +175,52 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     }
   };
 
+  const getIndicesFromNames = (selectedNames, allNames) => {
+    if (
+      !allNames ||
+      allNames.length === 0 ||
+      !selectedNames ||
+      selectedNames.length === 0
+    )
+      return [];
+    return selectedNames
+      .map((name) => {
+        const index = allNames.indexOf(name);
+        return index !== -1 ? index + 1 : -1;
+      })
+      .filter((index) => index !== -1);
+  };
+
   const validateColumns = async () => {
+    if (
+      !datasetInfo ||
+      !datasetInfo.column_names ||
+      datasetInfo.column_names.length === 0
+    ) {
+      setColumnsAreValid(false);
+      return;
+    }
+
+    const inputIndices = getIndicesFromNames(
+      inputColumnNames,
+      datasetInfo.column_names,
+    );
+    const outputIndices = getIndicesFromNames(
+      outputColumnNames,
+      datasetInfo.column_names,
+    );
+
+    if (inputIndices.length === 0 || outputIndices.length === 0) {
+      setColumnsAreValid(false);
+      return;
+    }
+
     try {
       const validation = await validateColumnsRequest(
         newExp.task_name,
         newExp.dataset.id,
-        inputColumns,
-        outputColumns,
+        inputIndices,
+        outputIndices,
       );
       setColumnsAreValid(validation.dataset_status === "valid");
     } catch (error) {
@@ -131,51 +232,83 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       } else {
         console.error("Unknown Error", error.message);
       }
+      setColumnsAreValid(false);
     }
   };
 
   const updateExperiment = () => {
-    if (splitType === SPLIT_TYPES.MANUAL) {
-      setNewExp({
-        ...newExp,
-        input_columns: inputColumns,
-        output_columns: outputColumns,
-        splits: {
-          ...rowsPartitionsIndex,
-          splitType: splitType,
-        },
-      });
-    } else if (splitType === SPLIT_TYPES.RANDOM) {
-      setNewExp({
-        ...newExp,
-        input_columns: inputColumns,
-        output_columns: outputColumns,
-        splits: {
-          ...rowsPartitionsPercentage,
-          shuffle: shuffle,
-          stratify: stratify,
-          seed: seed,
-          splitType: splitType,
-        },
-      });
-    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-      setNewExp({
-        ...newExp,
-        input_columns: inputColumns,
-        output_columns: outputColumns,
-        splits: {
-          ...datasetPartitionsIndex,
-          splitType: splitType,
-        },
-      });
+    if (
+      !datasetInfo ||
+      !datasetInfo.column_names ||
+      datasetInfo.column_names.length === 0
+    ) {
+      return;
     }
+
+    const inputIndices = getIndicesFromNames(
+      inputColumnNames,
+      datasetInfo.column_names,
+    );
+    const outputIndices = getIndicesFromNames(
+      outputColumnNames,
+      datasetInfo.column_names,
+    );
+
+    const updatedExpData = {
+      ...newExp,
+      input_columns: inputIndices,
+      output_columns: outputIndices,
+    };
+
+    if (splitType === SPLIT_TYPES.MANUAL) {
+      updatedExpData.splits = {
+        ...rowsPartitionsIndex,
+        splitType: splitType,
+      };
+    } else if (splitType === SPLIT_TYPES.RANDOM) {
+      updatedExpData.splits = {
+        ...rowsPartitionsPercentage,
+        shuffle: shuffle,
+        stratify: stratify,
+        seed: seed,
+        splitType: splitType,
+      };
+    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
+      updatedExpData.splits = {
+        ...datasetPartitionsIndex,
+        splitType: splitType,
+      };
+    }
+    setNewExp(updatedExpData);
   };
 
   useEffect(() => {
-    if (columnsReady && splitsReady) {
-      validateColumns();
+    if (inputColumnNames.length >= 1 && outputColumnNames.length >= 1) {
+      setColumnsReady(true);
+    } else {
+      setColumnsReady(false);
     }
-  }, [columnsReady, splitsReady]);
+  }, [inputColumnNames, outputColumnNames]);
+
+  useEffect(() => {
+    if (
+      columnsReady &&
+      splitsReady &&
+      datasetInfo &&
+      datasetInfo.column_names &&
+      datasetInfo.column_names.length > 0
+    ) {
+      validateColumns();
+    } else {
+      setColumnsAreValid(false);
+    }
+  }, [
+    columnsReady,
+    splitsReady,
+    inputColumnNames,
+    outputColumnNames,
+    datasetInfo,
+  ]);
 
   useEffect(() => {
     if (columnsAreValid && splitsReady && columnsReady) {
@@ -192,6 +325,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     shuffle,
     stratify,
     seed,
+    inputColumnNames,
+    outputColumnNames,
   ]);
 
   useEffect(() => {
@@ -200,8 +335,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   }, []);
 
   const parseListOfStrings = (stringsList) => {
+    if (!stringsList || stringsList.length === 0) return "any";
     return stringsList.join(" or ");
   };
+
   return (
     <React.Fragment>
       <Alert severity={columnsAreValid ? "success" : "error"} sx={{ mb: 1 }}>
@@ -234,13 +371,16 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       {!infoLoading ? (
         <Grid container spacing={1}>
           <DivideDatasetColumns
-            datasetInfo={datasetInfo}
-            inputColumns={inputColumns}
-            setInputColumns={setInputColumns}
-            outputColumns={outputColumns}
-            setOutputColumns={setOutputColumns}
-            setColumnsReady={setColumnsReady}
+            allColumnNames={datasetInfo.column_names || []}
+            selectedInputColumnNames={inputColumnNames}
+            onInputColumnNamesChange={setInputColumnNames}
+            selectedOutputColumnNames={outputColumnNames}
+            onOutputColumnNamesChange={setOutputColumnNames}
+            disabled={
+              infoLoading || (datasetInfo.column_names || []).length === 0
+            }
           />
+
           <SplitDatasetRows
             datasetInfo={datasetInfo}
             rowsPartitionsIndex={rowsPartitionsIndex}
@@ -260,7 +400,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           />
         </Grid>
       ) : (
-        <Box sx={{ display: "flex" }}>
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
           <CircularProgress />
         </Box>
       )}
@@ -276,11 +416,7 @@ PrepareDatasetStep.propTypes = {
     task_name: PropTypes.string,
     input_columns: PropTypes.arrayOf(PropTypes.number),
     output_columns: PropTypes.arrayOf(PropTypes.number),
-    splits: PropTypes.shape({
-      training: PropTypes.number,
-      validation: PropTypes.number,
-      testing: PropTypes.number,
-    }),
+    splits: PropTypes.object,
     step: PropTypes.string,
     created: PropTypes.instanceOf(Date),
     last_modified: PropTypes.instanceOf(Date),
