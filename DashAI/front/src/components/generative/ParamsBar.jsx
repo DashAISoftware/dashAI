@@ -112,6 +112,7 @@ export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
             onFormSubmit={formik.handleSubmit}
             setError={(error) => console.error(error)}
             errorsMessage={formik.errors || {}}
+            spacing={0}
           />
           <Box
             sx={{

@@ -97,11 +97,13 @@ export default function Generative() {
           />
         )}
       </MainGenerativeBox>
+
       <Box
-        width={"700px"}
+        width={"600px"}
+        maxWidth={"600px"}
         height={"100%"}
         borderRadius={2}
-        p={2}
+        //p={2}
         bgcolor={"#030712"}
       >
         {selectedSessionId ? (

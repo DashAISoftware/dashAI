@@ -15,6 +15,7 @@ function FormSchemaRenderFields({
   onFormSubmit,
   setError,
   errorsMessage,
+  spacing = 2,
 }) {
   if (!modelSchema) return null;
 
@@ -144,7 +145,7 @@ function FormSchemaRenderFields({
     return fields;
   }, [JSON.stringify(formik.values), modelSchema, autoSave]);
 
-  return <Stack spacing={2}>{renderFields()}</Stack>;
+  return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }
 
 export default FormSchemaRenderFields;
