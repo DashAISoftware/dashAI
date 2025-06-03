@@ -190,6 +190,11 @@ def create_experiment(client: TestClient, dataset_id: int):
             input_columns=input_columns,
             output_columns=output_columns,
             splits=splits,
+            indexes="""{
+                "train_indexes": [0, 1, 2, 3, 4],
+                "test_indexes": [5, 6, 7, 8],
+                "val_indexes": [9, 10, 11, 12]
+            }""",
         )
         db.add(experiment)
         db.commit()

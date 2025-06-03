@@ -43,6 +43,7 @@ class Experiment(Base):
     input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
     output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
+    indexes: Mapped[str] = mapped_column(JSON, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
