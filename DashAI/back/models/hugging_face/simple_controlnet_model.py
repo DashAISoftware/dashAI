@@ -52,7 +52,9 @@ def get_depth_map(image, device):
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
     ).to(device)
-    feature_extractor = DPTFeatureExtractor.from_pretrained("Intel/dpt-hybrid-midas")
+    feature_extractor = DPTFeatureExtractor.from_pretrained(
+        "Intel/dpt-hybrid-midas", device=device
+    )
 
     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
 
