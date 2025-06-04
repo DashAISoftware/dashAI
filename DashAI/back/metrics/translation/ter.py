@@ -35,9 +35,9 @@ class Ter(TranslationMetric):
             The calculated score.
         """
         metric = evaluate.load("ter")
-        source_sentences, target_sentences = prepare_to_metric(
-            source_sentences, target_sentences
-        )
+        # source_sentences, target_sentences = prepare_to_metric(
+        #     source_sentences, target_sentences
+        # )
         return metric.compute(
             references=source_sentences, predictions=target_sentences
         )["score"]

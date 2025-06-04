@@ -264,7 +264,6 @@ class DashAIDataset(Dataset):
         Returns:
             DashAIDataset: A new DashAIDataset instance containing the selected rows.
         """
-        print("estoy en el select de DashAIDataset")
         selected_dataset = super().select(*args, **kwargs)
         if isinstance(selected_dataset, DashAIDataset):
             return selected_dataset
@@ -543,18 +542,13 @@ def split_dataset(
         Must provide all indexes or none.
     """
     if all(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
-        print("pase por algo loco en el split_dataset")
 
         train_dataset = dataset.get_split("train")
 
         test_dataset = dataset.get_split("test")
 
         val_dataset = dataset.get_split("validation")
-
-        ("train_dataset metadata:", train_dataset.arrow_table)
-        ("test_dataset metadata:", test_dataset.arrow_table)
-        ("val_dataset metadata:", val_dataset.arrow_table)
-
+        
         return DatasetDict(
             {
                 "train": train_dataset,
@@ -913,3 +907,32 @@ def prepare_for_experiment(
             val_indexes=val_indexes,
         )
     return prepared_dataset
+
+
+def modify_table(dataset: DashAIDataset, columns: Dict[str, pa.Array]) -> DashAIDataset:
+    """Modify the pa.table and its pa.type of a column in a DashAIDataset.
+       This function serves as a tools for models to modify the data in order to process it.
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        The dataset to modify.
+    columns: dict[str, pa.Array]
+        A dictionary where keys are column names and values are the new PyArrow arrays.
+
+    Returns
+    -------
+    DashAIDataset
+        The modified dataset with the updated column type.
+    """
+    original_table = dataset.arrow_table
+    updated_columns = {}
+
+    for name in dataset.column_names:
+        if name in columns:
+            updated_columns[name] = columns[name]
+        else:
+            updated_columns[name] = original_table[name]
+    new_table = pa.table(updated_columns)
+    new_table = new_table.replace_schema_metadata(original_table.schema.metadata)
+
+    return DashAIDataset(new_table, splits=dataset.splits, types=dataset.types)

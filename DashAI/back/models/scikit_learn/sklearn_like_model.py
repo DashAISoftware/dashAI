@@ -2,12 +2,23 @@ from typing import Type
 
 import joblib
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, modify_table
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import to_arrow_types
 from DashAI.back.models.base_model import BaseModel
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+import pyarrow as pa
+
 
 
 class SklearnLikeModel(BaseModel):
     """Abstract class to define the way to save sklearn like models."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the SklearnLikeModel."""
+        super().__init__(*args, **kwargs)
+        self.label_encoders = {}
 
     def save(self, filename: str) -> None:
         """Save the model in the specified path."""
@@ -28,27 +39,70 @@ class SklearnLikeModel(BaseModel):
 
         Parameters
         ----------
-        x_train : pd.DataFrame
-            Dataframe with the input data.
-        y_train : pd.DataFrame
-            Dataframe with the output data.
+        x_train : DashAIDataset
+            Dataset with the input data.
+        y_train : DashAIDataset
+            Dataset with the target data.
 
         Returns
         -------
         self
             The fitted estimator object.
         """
+        x_processed = self.convert_format(x_train)
+        y_processed = self.convert_format(y_train)
+        # print("fit xd")
+        # print(x_train)
+        # print(y_train)
+        return super().fit(x_processed, y_processed)
+    
+    def convert_format(
+        self, dataset: DashAIDataset
+    ) -> pd.DataFrame:
+        """Convert the dataset to a format suitable for the model.
 
-        #print("Tipos DashAI de x_train:")
-        #print(x_train._types)
-        #for col, dtype in x_train._types.items():
-            #print(f"{col}: {dtype}")
+        Parameters
+        ----------
+        y : DashAIDataset
+            The dataset to be converted.
 
-        #print("Tipos DashAI de y_train:")
-        #print(y_train._types)
-        #for col, dtype in y_train._types.items():
-            #print(f"{col}: {dtype}")
+        Returns
+        -------
+        pd.DataFrame
+            The converted dataset in pandas DataFrame format.
+        """
+        
+        # Convert the DashAIDataset to a pandas DataFrame
+        
+        df = (self.apply_model_transformations(dataset)).to_pandas()
 
-        x_pandas = x_train.to_pandas()
-        y_pandas = y_train.to_pandas()
-        return super().fit(x_pandas, y_pandas)
+        
+        return df
+ 
+    
+    def apply_model_transformations(
+        self, dataset: DashAIDataset
+    ) -> DashAIDataset:
+        """Apply the model transformations to the dataset.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be transformed.
+
+        Returns
+        -------
+        DashAIDataset
+            The transformed dataset.
+        """
+        new_columns = {}
+        table = dataset.arrow_table
+        for col, _type in dataset._types.items():
+            array = table[col]
+            if isinstance(_type, Categorical):
+                values = [ _type.str2int(x.as_py()) for x in array ]
+                new_columns[col] = pa.array(values, type=pa.int64())
+            else:
+                new_columns[col] = pa.array(array, type=to_arrow_types(_type.dtype))
+        transformed_dataset = modify_table(dataset, columns=new_columns)
+        return transformed_dataset

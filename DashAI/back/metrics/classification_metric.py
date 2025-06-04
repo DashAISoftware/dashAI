@@ -33,7 +33,6 @@ def validate_inputs(true_labels: np.ndarray, pred_labels: np.ndarray) -> None:
             f"len(pred_labels) = {len(pred_labels)}."
         )
 
-
 def prepare_to_metric(
     y: DashAIDataset,
     probs_pred_labels: np.ndarray,
@@ -56,6 +55,11 @@ def prepare_to_metric(
     """
     column_name = y.column_names[0]
     true_labels = np.array(y[column_name])
+
+
+    # encoder = LabelEncoder()
+    # encoder.fit(true_labels)
+    # true_labels = encoder.transform(true_labels)
     validate_inputs(true_labels, probs_pred_labels)
     pred_labels = np.argmax(probs_pred_labels, axis=1)
     return true_labels, pred_labels

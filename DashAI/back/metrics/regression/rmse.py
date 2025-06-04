@@ -11,7 +11,7 @@ class RMSE(RegressionMetric):
     """Root Mean Squared Error metric for regression tasks."""
 
     @staticmethod
-    def score(true_values: DashAIDataset, predicted_values: np.ndarray) -> float:
+    def score(true_values: DashAIDataset, pred_values: np.ndarray) -> float:
         """Calculate the RMSE between true values and predicted values.
 
         Parameters
@@ -27,5 +27,5 @@ class RMSE(RegressionMetric):
         float
             RMSE score between true values and predicted values
         """
-        true_values, pred_values = prepare_to_metric(true_values, predicted_values)
+        #true_values, pred_values = prepare_to_metric(true_values, pred_values)
         return mean_squared_error(true_values, pred_values, squared=False)

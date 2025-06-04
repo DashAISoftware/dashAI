@@ -1,5 +1,10 @@
 """Base Metric abstract class."""
 
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from typing import Tuple, Union
+import numpy as np
+
+
 from typing import Final
 
 
@@ -7,3 +12,96 @@ class BaseMetric:
     """Abstract class of all metrics."""
 
     TYPE: Final[str] = "Metric"
+
+
+
+
+METRICS_MAP = {
+    "classification": ["Accuracy", "F1", "Precision", "Recall"],
+    "regression": ["RMSE", "MAE"],
+    "translation": ["Bleu", "Ter"],
+}
+
+def validate_inputs(true: Union[np.ndarray, list], pred: Union[np.ndarray, list], metric_category: str) -> None:
+    """Validate inputs.
+
+    Parameters
+    ----------
+    true: ndarray
+        True labels.
+    pred: list
+        Predict labels by the model.
+    metric_category: str
+        The name of the category of metric to be used as base to validate the labels.
+    
+    """
+
+    if len(true) != len(pred):
+        if metric_category in ["classification", "translation"]:
+            raise ValueError(
+                "The length of the true labels and the predicted labels must be equal, "
+                f"given: len(true_labels) = {len(true)} and "
+                f"len(pred_labels) = {len(pred)}."
+            )
+        elif metric_category in ["regression"]:
+            raise ValueError(
+                "The length of the true and the predicted values must be equal, "
+                f"given: len(true_values) = {len(true)} and "
+                f"len(pred_values) = {len(pred)}."
+            )
+
+
+
+def prepare_to_metric(
+    y: DashAIDataset,
+    pre_pred: Union[np.ndarray, list],
+    metric_type: str,
+) -> Tuple[np.ndarray, Union[np.ndarray, list]]:
+    """Prepare true and prediced labels to be used later in metrics.
+
+    Parameters
+    ----------
+    y : DashAIDataset
+        A DashAIDataset with the output columns of the data.
+    probs_pred_labels : np.ndarray
+        A two-dimensional matrix in which each column represents a class and the row
+        values represent the probability that an example belongs to the class
+        associated with the column.
+    metric_type : str
+        The name of the kind of metric to be used and how to prepare the labels.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple with the true and predicted labels in numpy format.
+    """
+
+    column_name = y.column_names[0]
+
+    for metric_category, metrics in METRICS_MAP.items():
+        print(f"metric_category: {metric_category}, metrics: {metrics}")
+        if metric_type in metrics:
+            if metric_category == "classification":
+                if not isinstance(pre_pred, np.ndarray):
+                    raise TypeError(f"Expected np.ndarray for regression, got {type(pre_pred)}")
+                _true = np.array(y[column_name])
+                validate_inputs(_true, pre_pred, metric_category)
+                _pred = np.argmax(pre_pred, axis=1)
+
+            elif metric_category == "regression":
+                if not isinstance(pre_pred, np.ndarray):
+                    raise TypeError(f"Expected np.ndarray for regression, got {type(pre_pred)}")
+                _true = np.array(y[column_name])
+                validate_inputs(_true, pre_pred, metric_category)
+                _pred = pre_pred
+                
+            elif metric_category == "translation":
+                if not isinstance(pre_pred, list):
+                    raise TypeError(f"Expected list for translation, got {type(pre_pred)}")
+                _true = np.array(y[column_name])
+                validate_inputs(_true, pre_pred, metric_category)
+                _pred = pre_pred
+            else:
+                raise ValueError(f"Unsupported metric type: {metric_type}")
+
+    return _true, _pred

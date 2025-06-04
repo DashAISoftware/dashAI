@@ -20,6 +20,7 @@ class SklearnLikeClassifier(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
-        if isinstance(x_pred, DashAIDataset):
-            x_pred = x_pred.to_pandas()
-        return super().predict_proba(x_pred)
+        print("SklearnLikeClassifier predict called")
+        x_pred = self.convert_format(self.apply_model_transformations(x_pred))
+        predictions = super().predict_proba(x_pred)
+        return predictions

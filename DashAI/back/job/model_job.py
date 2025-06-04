@@ -128,6 +128,10 @@ class ModelJob(BaseJob):
                     output_columns=experiment.output_columns,
                 )
 
+                # print("Prepared dataset types:", prepared_dataset._types)
+                # print("Prepared dataset columns:", prepared_dataset.columns)
+                #print("Prepared dataset:", prepared_dataset)
+
                 x, y = select_columns(
                     prepared_dataset,
                     experiment.input_columns,
@@ -135,13 +139,11 @@ class ModelJob(BaseJob):
                 )
                 x = split_dataset(x)
                 y = split_dataset(y)
-                print("x splited:", x)
-                print("y splited:", y)
-                print("x[train]:", x["train"]._types)
-                print("y[train]:", y["train"]._types)
-   
-                #print("y:", y)
 
+                print("x:", x)
+                print("y:", y)
+                
+                
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -267,7 +269,7 @@ class ModelJob(BaseJob):
                 raise JobError(
                     "Connection with the database failed",
                 ) from e
-
+            
             try:
                 model_metrics = factory.evaluate(x, y, metrics)
             except Exception as e:
