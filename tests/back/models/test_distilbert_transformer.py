@@ -7,7 +7,6 @@ import torch
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     select_columns,
     split_dataset,
-    split_indexes,
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
