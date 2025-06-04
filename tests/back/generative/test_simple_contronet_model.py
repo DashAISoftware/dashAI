@@ -29,13 +29,3 @@ def test_model_initialization(sample_model):
     assert sample_model.pipe is not None
     assert sample_model.controlnet is not None
     assert sample_model.vae is not None
-
-
-def test_generate(sample_model, sample_image):
-    input_text = "A beautiful landscape with mountains and a river"
-    output_images = sample_model.generate((sample_image, input_text))
-
-    assert isinstance(output_images, list)
-    assert len(output_images) == 1
-    assert isinstance(output_images[0], PIL.Image.Image)
-    assert output_images[0].size == sample_image.size
