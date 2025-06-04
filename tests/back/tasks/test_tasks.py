@@ -12,7 +12,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
@@ -283,7 +282,10 @@ def test_prepare_for_task_text_to_text_with_history():
     history = [(["What is the capital of Spain?"], ["Madrid"])]
     prepared_input = text_to_text_task.prepare_for_task(input_data, history=history)
 
-    expected_output = "Q: What is the capital of Spain?\nA: Madrid\nQ: What is the capital of France?\nA:"
+    expected_output = (
+        "Q: What is the capital of Spain?\nA: Madrid\n"
+        "Q: What is the capital of France?\nA:"
+    )
     assert prepared_input == expected_output
 
 

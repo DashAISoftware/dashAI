@@ -8,7 +8,9 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
+from DashAI.back.models.text_to_text_generation_model import (
+    TextToTextGenerationTaskModel,
+)
 
 
 class DeepSeekSchema(BaseSchema):

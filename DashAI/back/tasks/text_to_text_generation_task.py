@@ -17,9 +17,9 @@ class TextToTextGenerationTask(BaseGenerativeTask):
     }
 
     DESCRIPTION: str = (
-    "This task uses a large language model (LLM) "
-    "to generate text from a given prompt.")
-
+        "This task uses a large language model (LLM) "
+        "to generate text from a given prompt."
+    )
 
     USE_HISTORY: bool = True
 

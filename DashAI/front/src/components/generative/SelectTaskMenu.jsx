@@ -30,7 +30,6 @@ export default function SelectTaskMenu({ goToNextStep }) {
 
   let tasksToShow = task;
 
-
   if (containerWidth > 800) {
     tasksToShow = task.slice(0, 3);
   } else if (containerWidth > 500) {

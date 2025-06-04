@@ -122,7 +122,3 @@ Troubleshooting
     - If the generation fails, check the model configuration and ensure that all required parameters are set correctly. (e.g. width and height for image generation must be divisible by 8)
     - If your computer is running out of memory, the generation may fail.
     - Error modal displayed when an error happens is not a precise message of the error, instead check the logs of the browser console for more information.
-
-
-
-

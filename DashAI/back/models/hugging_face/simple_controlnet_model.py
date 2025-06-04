@@ -7,7 +7,6 @@ from diffusers import (
     ControlNetModel,
     StableDiffusionXLControlNetPipeline,
 )
-from huggingface_hub import login
 from PIL import Image
 from transformers import DPTFeatureExtractor, DPTForDepthEstimation
 
@@ -16,7 +15,6 @@ from DashAI.back.core.schema_fields import (
     float_field,
     int_field,
     schema_field,
-    string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel

@@ -3,17 +3,20 @@ from typing import List
 from llama_cpp import Llama
 
 from DashAI.back.core.schema_fields import (
-    enum_field,
     BaseSchema,
+    enum_field,
     float_field,
     int_field,
     schema_field,
 )
-from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
+from DashAI.back.models.text_to_text_generation_model import (
+    TextToTextGenerationTaskModel,
+)
 
 
 class QwenSchema(BaseSchema):
     """Schema for Qwen model."""
+
     model_name: schema_field(
         enum_field(
             enum=[
@@ -72,7 +75,6 @@ class QwenModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("n_ctx", 512)
 
-        #self.model_id = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
         self.filename = "*q8_0.gguf"
 
         self.model = Llama.from_pretrained(
