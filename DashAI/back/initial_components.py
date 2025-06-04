@@ -4,6 +4,7 @@ from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
     Binarizer,
+    CharacterReplacer,
     ColumnRemover,
     ConverterChain,
     Embedding,
@@ -178,6 +179,7 @@ def get_initial_components():
         ParallelCordinatesExplorer,
         # Converters
         ColumnRemover,
+        CharacterReplacer,
         FastICA,
         IncrementalPCA,
         PCA,
