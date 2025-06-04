@@ -26,7 +26,7 @@ class BaseJob(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def run() -> None:
+    async def run() -> None:
         """Run the job."""
         raise NotImplementedError
 

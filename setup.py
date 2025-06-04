@@ -19,14 +19,14 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.1.2",
+    version="0.1.3",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
         "state-of-the-art AI models."
     ),
     long_description=long_description,
-    url="https://github.com/OpenCENIA/DashAI",
+    url="https://github.com/DashAISoftware/DashAI",
     project_urls={
         "Documentation": "https://dash-ai.com/",
         "Changelog": "https://dash-ai.com/changelog.html",
