@@ -411,7 +411,7 @@ def split_indexes(
 
     # Generate shuffled indexes
     if seed is None:
-        np.random.seed(seed)
+        seed = 42
     indexes = np.arange(total_rows)
 
     test_val = test_size + val_size
@@ -852,13 +852,14 @@ def prepare_for_experiment(
             output_column = output_columns[0]
             try:
                 column_values = dataset[output_column]
-
                 # Check column type and convert to numerical indices if needed
                 if isinstance(column_values[0], str):
-                    import pandas as pd
-
-                    labels_array, unique_values = pd.factorize(column_values)
-                    labels = labels_array.tolist()
+                    unique_values = {}
+                    labels = []
+                    for val in column_values:
+                        if val not in unique_values:
+                            unique_values[val] = len(unique_values)
+                        labels.append(unique_values[val])
                 else:
                     labels = [
                         int(x) if not isinstance(x, (list, tuple)) else int(x[0])
