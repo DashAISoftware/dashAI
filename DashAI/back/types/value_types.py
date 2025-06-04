@@ -386,7 +386,7 @@ class Binary(DashAIValue):
     """
 
     binary_type: str = "binary"
-    dtype: pa.DataType = "binary"
+    dtype: str = "binary"
 
     def __init__(self, arrow_type: pa.DataType):
         if not (pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type)):
