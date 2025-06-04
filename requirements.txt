@@ -254,6 +254,8 @@ portalocker==3.0.0
     # via sacrebleu
 propcache==0.2.0
     # via yarl
+protobuf==6.31.1
+    # via -r .\requirements.in
 psutil==7.0.0
     # via accelerate
 py4j==0.10.9.9

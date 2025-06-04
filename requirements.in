@@ -32,3 +32,4 @@ openpyxl
 httpx
 wordcloud
 opencv-python
+protobuf
