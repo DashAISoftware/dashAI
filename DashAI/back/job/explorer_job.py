@@ -40,7 +40,7 @@ class ExplorerJob(BaseJob):
             ) from e
 
     @inject
-    def run(
+    async def run(
         self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
         config: Dict[str, Any] = lambda di: di["config"],
