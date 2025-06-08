@@ -83,7 +83,7 @@ export default function SelectModelMenu({
           mb: 5,
         }}
       >
-        Select a model
+        {selectedTaskName}: Select a model
       </Typography>
       <Autocomplete
         disablePortal

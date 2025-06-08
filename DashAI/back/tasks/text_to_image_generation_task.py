@@ -17,7 +17,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         "inputs_types": [str],
         "outputs_types": [Image.Image],
         "inputs_cardinality": 1,
-        "outputs_cardinality": None,
+        "outputs_cardinality": "n",
     }
 
     DESCRIPTION: str = "This task generates images based on the provided input text."

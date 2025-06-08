@@ -1,16 +1,42 @@
-import React from "react";
+import { useEffect, useState, useRef } from "react";
 import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
 import IconAvatar from "../../components/generative/IconAvatar";
-import { useEffect, useState } from "react";
 import { getGenerativeTask } from "../../api/generativeTask";
 
 export default function SelectTaskMenu({ goToNextStep }) {
   const [task, setTask] = useState([]);
 
+  const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     getGenerativeTask().then(setTask);
   }, []);
+
+  let tasksToShow = task;
+
+  if (containerWidth > 800) {
+    tasksToShow = task.slice(0, 3);
+  } else if (containerWidth > 500) {
+    tasksToShow = task.slice(0, 2);
+  } else {
+    tasksToShow = task.slice(0, 1);
+  }
 
   return (
     <Box
@@ -19,22 +45,8 @@ export default function SelectTaskMenu({ goToNextStep }) {
       width={"100%"}
       flexDirection={"column"}
       justifyContent={"flex-start"}
+      sx={{ pt: 2 }}
     >
-      <Typography
-        variant="h1"
-        sx={{
-          fontFamily: "Roboto",
-          fontSize: "16px",
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-          ml: 5,
-          mt: 1,
-          mr: 5,
-          mb: 5,
-        }}
-      >
-        Select a generative task
-      </Typography>
       <Box sx={{ ml: 5 }}>
         <IconAvatar src="/dai_circle.png" size={32} />{" "}
       </Box>
@@ -70,26 +82,42 @@ export default function SelectTaskMenu({ goToNextStep }) {
         </Typography>
       </Box>
       <Box
-        display={"flex"}
-        justifyContent={"space-evenly"}
-        alignItems={"stretch"}
-        width={"100%"}
+        ref={containerRef}
+        display="flex"
+        justifyContent="space-evenly"
+        alignItems="stretch"
+        gap={2}
+        width="100%"
       >
-        {task.map((task, index) => (
-          <TaskBox
+        {tasksToShow.map((task, index) => (
+          <Box
             key={index}
-            taskName={task.name}
-            description={task.description}
-            onClick={() => goToNextStep(task.name)}
-          />
+            flex="1 1 30%"
+            maxWidth="300px"
+            minWidth="200px"
+            minHeight="40px"
+          >
+            <TaskBox
+              key={index}
+              taskName={task.name}
+              description={task.description}
+              onClick={() => goToNextStep(task.name)}
+            />
+          </Box>
         ))}
       </Box>
-      {/* Search Bar */}
+
       <Autocomplete
         disablePortal
         options={task.map((t) => t.name)}
         sx={{ m: 5 }}
         renderInput={(params) => <TextField {...params} label="Task" />}
+        onChange={(event, value) => {
+          const selectedTask = task.find((t) => t.name === value);
+          if (selectedTask) {
+            goToNextStep(selectedTask.name);
+          }
+        }}
       />
     </Box>
   );

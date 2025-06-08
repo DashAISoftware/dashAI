@@ -40,7 +40,7 @@ export function MessageContent({
       ) : (
         messages?.map((message, index) => {
           const type =
-            cardinality && messageType
+            cardinality != "n" && messageType
               ? messageType[index]
               : messageType?.[0] || "str";
           const key = `${type}-${index}-${simpleHash(String(message))}`;

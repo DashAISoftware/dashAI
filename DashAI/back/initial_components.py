@@ -95,11 +95,11 @@ from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
     ImageClassificationTask,
-    LLMGenerationTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
     TextToImageGenerationTask,
+    TextToTextGenerationTask,
     TranslationTask,
     RAGTask
 )
@@ -126,8 +126,8 @@ def get_initial_components():
         TranslationTask,
         ImageClassificationTask,
         RegressionTask,
-        LLMGenerationTask,
         TextToImageGenerationTask,
+        TextToTextGenerationTask,
         ControlNetTask,
         RAGTask,
         # Models

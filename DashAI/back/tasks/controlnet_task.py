@@ -17,7 +17,7 @@ class ControlNetTask(BaseGenerativeTask):
         "inputs_types": [Image.Image, str],
         "outputs_types": [Image.Image],
         "inputs_cardinality": 2,
-        "outputs_cardinality": None,
+        "outputs_cardinality": "n",
     }
 
     DESCRIPTION: str = (
