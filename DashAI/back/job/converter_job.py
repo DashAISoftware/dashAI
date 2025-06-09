@@ -371,11 +371,11 @@ class ConverterListJob(BaseJob):
 
                 # Select specified rows if provided
                 if scope_rows_indexes:
-                    X_dataset = X_dataset_fit.select(scope_rows_indexes)
-                    y_dataset = y_dataset_fit.select(scope_rows_indexes)
+                    X_dataset_fit = X_dataset_fit.select(scope_rows_indexes)
+                    y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
 
                 try:
-                    converter = converter.fit(X_dataset, y_dataset)
+                    converter = converter.fit(X_dataset_fit, y_dataset_fit)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(

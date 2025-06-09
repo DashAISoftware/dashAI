@@ -3,22 +3,23 @@ from typing import List, Union
 from datasets import Value
 
 from DashAI.back.converters.base_converter import BaseConverter
-from DashAI.back.core.schema_fields import schema_field, string_field
+from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class CharacterReplacerSchema(BaseSchema):
     char_to_replace: schema_field(
-        string_field(min_length=1),
+        string_field(),
+        "",  # default: empty string
         description="The character or substring to be replaced. Cannot be empty.",
     )  # type: ignore
     replacement_char: schema_field(
-        string_field(allow_empty=True),
-        default="",
+        none_type(string_field()),
+        None,
         description=(
             "The character or substring to replace with. "
-            "If empty, 'char_to_replace' will be removed."
+            "If null, 'char_to_replace' will be removed."
         ),
     )  # type: ignore
 
@@ -36,10 +37,10 @@ class CharacterReplacer(BaseConverter):
         super().__init__()
         if not isinstance(char_to_replace, str) or not char_to_replace:
             raise ValueError("'char_to_replace' must be a non-empty string.")
-        if not isinstance(replacement_char, str):
-            raise ValueError("'replacement_char' must be a string.")
 
         self.char_to_replace = char_to_replace
+        if replacement_char is None or not isinstance(replacement_char, str):
+            replacement_char = ""
         self.replacement_char = replacement_char
         self._target_columns: List[str] = []
 
@@ -75,17 +76,25 @@ class CharacterReplacer(BaseConverter):
     ) -> DashAIDataset:
         """
         Replaces or removes characters in the target string columns of the dataset x.
+        If all values in a column become numeric after replacement, converts to int.
         """
         if not self._target_columns:
             # if no target columns were set, return the dataset unchanged
             return x
+
+        def try_convert_to_int(value):
+            """Try to convert a value to integer, return original if not possible."""
+            try:
+                return int(value)
+            except (ValueError, TypeError):
+                return value
 
         def replace_function(batch):
             processed_batch = {}
             for column_name, values in batch.items():
                 if column_name in self._target_columns:
                     if x.features[column_name] == Value(dtype="string", id=None):
-                        processed_batch[column_name] = [
+                        replaced_values = [
                             (
                                 val.replace(self.char_to_replace, self.replacement_char)
                                 if isinstance(val, str)
@@ -93,6 +102,19 @@ class CharacterReplacer(BaseConverter):
                             )
                             for val in values
                         ]
+
+                        all_numeric = all(
+                            isinstance(val, str) and val.strip().isdigit()
+                            for val in replaced_values
+                            if isinstance(val, str)
+                        )
+
+                        if all_numeric:
+                            processed_batch[column_name] = [
+                                try_convert_to_int(val) for val in replaced_values
+                            ]
+                        else:
+                            processed_batch[column_name] = replaced_values
                     else:
                         processed_batch[column_name] = values
                 else:
@@ -102,9 +124,8 @@ class CharacterReplacer(BaseConverter):
         transformed_hf_dataset = x.map(replace_function, batched=True)
 
         return DashAIDataset(
-            transformed_hf_dataset.arrow_table,
+            transformed_hf_dataset.data.table,
             splits=x.splits,
-            features=transformed_hf_dataset.features,
         )
 
     def changes_row_count(self) -> bool:
