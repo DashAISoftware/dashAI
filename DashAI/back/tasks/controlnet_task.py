@@ -63,7 +63,7 @@ class ControlNetTask(BaseGenerativeTask):
         self,
         input: List[Union[bytes, str]],
         **kwargs: Any,
-    ) -> Tuple[str, str]:
+    ) -> List[Tuple[str, str]]:
         """Prepare the input for the database.
 
         Parameters
@@ -73,7 +73,7 @@ class ControlNetTask(BaseGenerativeTask):
 
         Returns
         -------
-        Tuple[str, str]
+        List[Tuple[str, str]]
             Image path and prompt
         """
 
@@ -105,7 +105,7 @@ class ControlNetTask(BaseGenerativeTask):
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Process the output of a generative model.
 
         Parameters
@@ -117,7 +117,7 @@ class ControlNetTask(BaseGenerativeTask):
 
         Returns
         -------
-        List[tuple[str, str]]
+        List[Tuple[str, str]]
             Processed output data as a list of tuples containing the data and its type
         """
         save_dir = kwargs.get("images_path")

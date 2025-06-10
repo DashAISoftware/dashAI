@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from PIL import Image
 
@@ -46,7 +46,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         self,
         input: List[str],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Prepare the input for the database.
 
         Parameters
@@ -56,7 +56,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
         Returns
         -------
-        List[tuple[str, str]]
+        List[Tuple[str, str]]
             Input with the new types as a list of tuples containing the data
             and its type
 
@@ -67,7 +67,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Process the output of a generative model.
 
         Parameters
@@ -77,7 +77,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
         Returns
         -------
-        List[tuple[str, str]]
+        List[Tuple[str, str]]
             Processed output data as a list of tuples containing the data and its type
         """
         save_dir = kwargs.get("images_path")

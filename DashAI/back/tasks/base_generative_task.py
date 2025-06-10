@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Final, List
+from typing import Any, Dict, Final, List, Tuple
 
 from DashAI.back.dependencies.database.models import ProcessData
 
@@ -63,7 +63,7 @@ class BaseGenerativeTask:
         self,
         input: List[Any],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Prepare input data for the database.
 
         Parameters
@@ -73,7 +73,7 @@ class BaseGenerativeTask:
 
         Returns
         -------
-        List[tuple[str, str]]
+        List[Tuple[str, str]]
             Prepared input data as a list of tuples containing the data and its type
         """
         raise NotImplementedError
@@ -83,7 +83,7 @@ class BaseGenerativeTask:
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Process output data of the task.
 
         Parameters
@@ -93,7 +93,7 @@ class BaseGenerativeTask:
 
         Returns
         -------
-        List[tuple[str, str]]
+        List[Tuple[str, str]]
             Processed output data as a list of tuples containing the data and its type
         """
         raise NotImplementedError

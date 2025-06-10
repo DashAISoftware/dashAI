@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -59,7 +59,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         self,
         input: List[str],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Prepare the input for the database.
 
         Parameters
@@ -69,7 +69,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
 
         Returns
         -------
-        List[tuple[str, str]]
+        List[Tuple[str, str]]
             Input with the new types as a list of tuples containing the data
             and its type
 
@@ -80,7 +80,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> List[tuple[str, str]]:
+    ) -> List[Tuple[str, str]]:
         """Process the output of a generative model.
 
         file_name (Str): Indicates the name of the file.
