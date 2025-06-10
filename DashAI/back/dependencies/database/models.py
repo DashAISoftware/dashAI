@@ -43,7 +43,6 @@ class Experiment(Base):
     input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
     output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
-    indexes: Mapped[str] = mapped_column(JSON, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -69,6 +68,7 @@ class Run(Base):
     # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
+    split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)

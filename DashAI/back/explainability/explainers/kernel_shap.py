@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models import BaseModel
 
@@ -215,7 +216,8 @@ class KernelShap(BaseLocalExplainer):
             dictionary with the shap values for each instance.
         """
 
-        X = instances.to_pandas()
+        dataset_dashai = to_dashai_dataset(instances)
+        X = dataset_dashai.to_pandas()
 
         predictions = self.model.predict(x_pred=X)
 

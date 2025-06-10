@@ -269,7 +269,7 @@ class ExplainerJob(BaseJob):
                     f"Unable to find Task with name {experiment.task_name} in registry",
                 ) from e
             try:
-                splits = json.loads(experiment.indexes)
+                splits = json.loads(run.split_indexes)
                 loaded_dataset = split_dataset(
                     loaded_dataset,
                     train_indexes=splits["train_indexes"],

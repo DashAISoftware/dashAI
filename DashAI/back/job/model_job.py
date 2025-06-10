@@ -125,7 +125,7 @@ class ModelJob(BaseJob):
                     output_columns=experiment.output_columns,
                 )
 
-                experiment.indexes = json.dumps(
+                run.split_indexes = json.dumps(
                     {
                         "train_indexes": splits["train_indexes"],
                         "test_indexes": splits["test_indexes"],
