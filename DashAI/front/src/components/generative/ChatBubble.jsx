@@ -5,8 +5,6 @@ import { MessageContent } from "./MessageContent";
 
 export function ChatBubble({
   messages,
-  messageType,
-  cardinality,
   sender = "",
   timestamp = null,
   isUser = false,
@@ -42,9 +40,7 @@ export function ChatBubble({
         )}
 
         <MessageContent
-          messageType={messageType}
           messages={messages}
-          cardinality={cardinality}
           isUser={isUser}
           isWaiting={isWaiting}
         />

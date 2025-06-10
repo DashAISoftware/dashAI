@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from typing import Any, Dict, Final, List
 
+from DashAI.back.dependencies.database.models import ProcessData
+
 
 class BaseGenerativeTask:
     """Base task for generative processes."""
@@ -39,15 +41,15 @@ class BaseGenerativeTask:
     @abstractmethod
     def prepare_for_task(
         self,
-        input: Any,
+        input: List[ProcessData],
         **kwargs: Any,
     ) -> Any:
         """Prepare input data for the task.
 
         Parameters
         ----------
-        input : Any
-            Input data to be prepared
+        input : List[ProcessData]
+            Input data to be prepared, a list of ProcessData objects
 
         Returns
         -------
@@ -61,7 +63,7 @@ class BaseGenerativeTask:
         self,
         input: List[Any],
         **kwargs: Any,
-    ) -> List[Any]:
+    ) -> List[tuple[str, str]]:
         """Prepare input data for the database.
 
         Parameters
@@ -71,8 +73,8 @@ class BaseGenerativeTask:
 
         Returns
         -------
-        List[Any]
-            Prepared input data
+        List[tuple[str, str]]
+            Prepared input data as a list of tuples containing the data and its type
         """
         raise NotImplementedError
 
@@ -81,7 +83,7 @@ class BaseGenerativeTask:
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[tuple[str, str]]:
         """Process output data of the task.
 
         Parameters
@@ -91,47 +93,47 @@ class BaseGenerativeTask:
 
         Returns
         -------
-        List[str]
-            Processed output data
+        List[tuple[str, str]]
+            Processed output data as a list of tuples containing the data and its type
         """
         raise NotImplementedError
 
     @abstractmethod
     def process_output_from_database(
         self,
-        output: List[str],
+        output: List[ProcessData],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[ProcessData]:
         """Process output data from the database.
 
         Parameters
         ----------
-        output : List[str]
-            Output data to be processed
+        output : List[ProcessData]
+            Output data to be processed, a list of ProcessData objects
 
         Returns
         -------
-        List[str]
-            Processed output data
+        List[ProcessData]
+            Processed output data, a list of ProcessData objects
         """
         raise NotImplementedError
 
     @abstractmethod
     def process_input_from_database(
         self,
-        input: List[str],
+        input: List[ProcessData],
         **kwargs: Any,
-    ) -> List[Any]:
+    ) -> List[ProcessData]:
         """Process input data from the database.
 
         Parameters
         ----------
-        input : List[str]
-            Input data to be processed
+        input : List[ProcessData]
+            Input data to be processed, a list of ProcessData objects
 
         Returns
         -------
-        List[Any]
-            Processed input data
+        List[ProcessData]
+            Processed input data, a list of ProcessData objects
         """
         raise NotImplementedError

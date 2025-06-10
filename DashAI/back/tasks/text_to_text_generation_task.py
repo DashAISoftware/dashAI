@@ -1,5 +1,6 @@
 from typing import Any, List
 
+from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
@@ -25,7 +26,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
 
     def prepare_for_task(
         self,
-        input: List[str],
+        input: List[ProcessData],
         **kwargs: Any,
     ) -> str:
         """Prepare the input by including the history in Q: A: format.
@@ -40,7 +41,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         str
             The input prepared with the history in Q: A: format.
         """
-        input = input[0]
+        input = str(input[0].data)
         history = kwargs.get("history", None)  # type: Optional[List[Tuple[str, str]]]
         if not history:
             return f"Q: {input}\nA:"
@@ -58,7 +59,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         self,
         input: List[str],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[tuple[str, str]]:
         """Prepare the input for the database.
 
         Parameters
@@ -68,29 +69,31 @@ class TextToTextGenerationTask(BaseGenerativeTask):
 
         Returns
         -------
-        str
-            The prepared input.
+        List[tuple[str, str]]
+            Input with the new types as a list of tuples containing the data
+            and its type
+
         """
-        return input
+        return [(input[0], "str")]
 
     def process_output(
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> str:
+    ) -> List[tuple[str, str]]:
         """Process the output of a generative model.
 
         file_name (Str): Indicates the name of the file.
         path (Str): Indicates the path where the output will be stored.
         """
 
-        return output
+        return [(str(output[0]), "str")]
 
     def process_output_from_database(
         self,
-        output: List[str],
+        output: List[ProcessData],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[ProcessData]:
         """Process the output from the database.
 
         Parameters
@@ -108,9 +111,9 @@ class TextToTextGenerationTask(BaseGenerativeTask):
 
     def process_input_from_database(
         self,
-        input: List[str],
+        input: List[ProcessData],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[ProcessData]:
         """Process the input from the database.
 
         Parameters

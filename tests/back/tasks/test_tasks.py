@@ -12,6 +12,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
+from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -275,7 +276,7 @@ def test_get_text_to_text_task_metadata():
 
 def test_prepare_for_task_text_to_text():
     text_to_text_task = TextToTextGenerationTask()
-    input_data = ["What is the capital of France?"]
+    input_data = [ProcessData(data="What is the capital of France?")]
     prepared_input = text_to_text_task.prepare_for_task(input_data)
 
     assert prepared_input == "Q: What is the capital of France?\nA:"
@@ -283,7 +284,7 @@ def test_prepare_for_task_text_to_text():
 
 def test_prepare_for_task_text_to_text_with_history():
     text_to_text_task = TextToTextGenerationTask()
-    input_data = ["What is the capital of France?"]
+    input_data = [ProcessData(data="What is the capital of France?")]
     history = [(["What is the capital of Spain?"], ["Madrid"])]
     prepared_input = text_to_text_task.prepare_for_task(input_data, history=history)
 
@@ -332,7 +333,7 @@ def test_get_text_to_image_task_metadata():
 
 def test_prepare_for_task_text_to_image():
     text_to_image_task = TextToImageGenerationTask()
-    input_data = ["A beautiful landscape"]
+    input_data = [ProcessData(data="A beautiful landscape")]
     prepared_input = text_to_image_task.prepare_for_task(input_data)
 
     assert prepared_input == "A beautiful landscape"
@@ -343,7 +344,9 @@ def test_input_for_database_text_to_image():
     input_data = ["A beautiful landscape"]
     prepared_input = text_to_image_task.prepare_input_for_database(input_data)
 
-    assert prepared_input == input_data
+    assert isinstance(prepared_input, list)
+    assert isinstance(prepared_input[0][0], str)
+    assert prepared_input[0][1] == "str"
 
 
 def test_process_output_text_to_image(sample_image, temp_path):
@@ -354,21 +357,25 @@ def test_process_output_text_to_image(sample_image, temp_path):
     )
 
     assert isinstance(processed_output, list)
-    assert all(isinstance(img, str) for img in processed_output)
+    assert all(isinstance(img[0], str) for img in processed_output)
+    assert all(img[1] == "Image" for img in processed_output)
     # Check if the image is saved in the temp path
     assert len(os.listdir(temp_path)) == 1
 
 
 def test_process_output_from_database_text_to_image():
     text_to_image_task = TextToImageGenerationTask()
-    output_data = ["dir/sample_image_0.png", "dir/sample_image_1.png"]
+    output_data = [
+        ProcessData(data="dir/sample_image_0.png"),
+        ProcessData(data="dir/sample_image_1.png"),
+    ]
     processed_output = text_to_image_task.process_output_from_database(output_data)
 
     assert isinstance(processed_output, list)
-    assert all(isinstance(img, str) for img in processed_output)
+    assert all(isinstance(p.data, str) for p in processed_output)
     assert len(processed_output) == 2
-    assert processed_output[0] == "sample_image_0.png"
-    assert processed_output[1] == "sample_image_1.png"
+    assert processed_output[0].data == "sample_image_0.png"
+    assert processed_output[1].data == "sample_image_1.png"
 
 
 def test_process_input_from_database_text_to_image():
@@ -396,11 +403,14 @@ def test_prepare_for_task_controlnet(sample_image, temp_path):
     path_image = temp_path / "sample_controlnet_image.png"
     sample_image.save(path_image)
 
-    input_data = (path_image, "A beautiful landscape")
+    input_data = [
+        ProcessData(data=path_image, data_type="Image"),
+        ProcessData(data="A beautiful landscape", data_type="str"),
+    ]
 
     prepared_input = controlnet_task.prepare_for_task(input_data)
 
-    assert isinstance(prepared_input, list)
+    assert isinstance(prepared_input, tuple)
     assert isinstance(prepared_input[0], PIL.Image.Image)
     assert isinstance(prepared_input[1], str)
 
@@ -410,15 +420,18 @@ def test_prepare_input_for_database_controlnet(sample_image, temp_path):
 
     bytes_image = sample_image.tobytes()
 
-    input_data = (bytes_image, "A beautiful landscape")
+    input_data = [bytes_image, "A beautiful landscape"]
     prepared_input = controlnet_task.prepare_input_for_database(
         input_data, images_path=temp_path / "controlnet_prepare_for_database"
     )
 
     assert isinstance(prepared_input, list)
-    assert isinstance(prepared_input[0], str)
-    assert isinstance(prepared_input[1], str)
-    assert prepared_input[1] == "A beautiful landscape"
+    assert isinstance(prepared_input[0][0], str)
+    assert isinstance(prepared_input[1][0], str)
+    assert prepared_input[0][1] == "Image"
+    assert prepared_input[1][1] == "str"
+
+    assert prepared_input[1][0] == "A beautiful landscape"
     # Check if the image is saved in the temp path
     assert len(os.listdir(temp_path / "controlnet_prepare_for_database")) == 1
 
@@ -431,18 +444,22 @@ def test_process_output_controlnet(sample_image, temp_path):
     )
 
     assert isinstance(processed_output, list)
-    assert all(isinstance(img, str) for img in processed_output)
+    assert all(isinstance(img[0], str) for img in processed_output)
+    assert all(img[1] == "Image" for img in processed_output)
     # Check if the image is saved in the temp path
     assert len(os.listdir(temp_path / "controlnet_process_output")) == 1
 
 
 def test_process_output_from_database_controlnet():
     controlnet_task = ControlNetTask()
-    output_data = ["dir/sample_image_0.png", "dir/sample_image_1.png"]
+    output_data = [
+        ProcessData(data="dir/sample_image_0.png"),
+        ProcessData(data="dir/sample_image_1.png"),
+    ]
     processed_output = controlnet_task.process_output_from_database(output_data)
 
     assert isinstance(processed_output, list)
-    assert all(isinstance(img, str) for img in processed_output)
+    assert all(isinstance(img.data, str) for img in processed_output)
     assert len(processed_output) == 2
-    assert processed_output[0] == "sample_image_0.png"
-    assert processed_output[1] == "sample_image_1.png"
+    assert processed_output[0].data == "sample_image_0.png"
+    assert processed_output[1].data == "sample_image_1.png"

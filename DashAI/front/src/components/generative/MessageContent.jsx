@@ -13,13 +13,7 @@ function simpleHash(str) {
   return hash;
 }
 
-export function MessageContent({
-  messageType,
-  messages,
-  cardinality,
-  isUser,
-  isWaiting,
-}) {
+export function MessageContent({ messages, isUser, isWaiting }) {
   const theme = useTheme();
 
   return (
@@ -39,15 +33,12 @@ export function MessageContent({
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
         messages?.map((message, index) => {
-          const type =
-            cardinality != "n" && messageType
-              ? messageType[index]
-              : messageType?.[0] || "str";
-          const key = `${type}-${index}-${simpleHash(String(message))}`;
+          const type = message["data_type"];
+          const key = `${type}-${index}-${simpleHash(JSON.stringify(message))}`;
           return (
             <Box key={key}>
-              {type === "str" && <TextMessage message={message} />}
-              {type === "Image" && <ImageMessage image={message} />}
+              {type === "str" && <TextMessage message={message.data} />}
+              {type === "Image" && <ImageMessage image={message.data} />}
             </Box>
           );
         })

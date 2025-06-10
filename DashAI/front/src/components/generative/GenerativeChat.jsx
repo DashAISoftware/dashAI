@@ -12,7 +12,6 @@ import { useState, useEffect, useRef } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
-import { getComponents } from "../../api/component";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
 import HistoryIcon from "@mui/icons-material/History";
@@ -26,7 +25,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
-  const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -59,13 +57,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     });
   };
 
-  const getTask = () => {
-    getComponents({ selectTypes: ["GenerativeTask"] }).then((response) => {
-      const task = response.find((task) => task.name === taskName);
-      setTask(task);
-    });
-  };
-
   const handleSendMessage = (input) => {
     // Set the Loading state to true
     setIsLoadingMessage(true);
@@ -90,7 +81,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                   setIsLoadingMessage(false);
                   enqueueSnackbar("The process has failed. Deleting it...");
 
-                  console.error("response error:", response.output);
                   deleteProcessById(response.id).then(() => {
                     setMessages((prevMessages) =>
                       prevMessages.filter(
@@ -122,9 +112,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   }, [sessionId, paramsVersion]);
 
   useEffect(() => {
-    setTask(null);
     setMessages([]);
-    getTask();
   }, [taskName]);
 
   useEffect(() => {
@@ -286,16 +274,12 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     messages={message.input}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    messageType={task?.metadata.inputs_types}
-                    cardinality={task?.metadata.inputs_cardinality}
                     isUser={true}
                   />
                   {message.status === 3 ? (
                     <ChatBubble
                       messages={message.output}
                       sender={"Model"}
-                      messageType={task?.metadata.outputs_types}
-                      cardinality={task?.metadata.outputs_cardinality}
                       timestamp={new Date(
                         message.end_time,
                       ).toLocaleTimeString()}

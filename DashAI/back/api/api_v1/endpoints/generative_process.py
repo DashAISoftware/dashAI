@@ -13,6 +13,7 @@ from typing_extensions import Annotated
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
+    ProcessData,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.tasks import BaseGenerativeTask
@@ -32,17 +33,21 @@ async def upload_generative_process(
 
     Parameters
     ----------
-    params : GenerativeProcessParams
-        The parameters of the new generative process, which includes the model name,
-        task name, parameters, process name and description.
+    request : Request
+        The incoming HTTP request containing form data and files.
+    session_id : int
+        The ID of the generative session to which this process belongs.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    config : Dict[str, Any]
+        A dictionary containing configuration settings, including the path for images.
 
     Returns
     -------
     dict
         A dictionary with the new generative session on the database
+        and the input/output data.
 
     Raises
     ------
@@ -74,19 +79,33 @@ async def upload_generative_process(
             task: BaseGenerativeTask = di["component_registry"][session.task_name][
                 "class"
             ]()
-            processed_input = task.prepare_input_for_database(
-                input_items, images_path=config["IMAGES_PATH"]
-            )
 
             process = GenerativeProcess(
-                input=processed_input,
                 session_id=session_id,
             )
             db.add(process)
             db.commit()
             db.refresh(process)
 
+            processed_input = task.prepare_input_for_database(
+                input_items, images_path=config["IMAGES_PATH"]
+            )
+
+            processed_data = []
+            for data in processed_input:
+                input_data = ProcessData(
+                    data=data[0],
+                    data_type=data[1],
+                    is_input=True,
+                    process_id=process.id,
+                )
+                processed_data.append(input_data)
+            db.add_all(processed_data)
+            db.commit()
+            db.refresh(process)
+
             process = process.__dict__
+
             process["input"] = task.process_input_from_database(process["input"])
 
             return process
@@ -194,7 +213,11 @@ async def delete_generative_process(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Generative process with ID {process_id} does not exist.",
                 )
+            # Delete all associated input and output data
+            db.query(ProcessData).filter_by(process_id=process.id).delete()
+            # Delete the generative process itself
             db.delete(process)
+            # Commit the changes to the database
             db.commit()
         except exc.SQLAlchemyError as e:
             log.exception(e)

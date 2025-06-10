@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 
 from beartype.typing import List
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -274,10 +274,27 @@ class GenerativeProcess(Base):
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
 
-    input: Mapped[List[str]] = mapped_column(JSON, nullable=True)
-    output: Mapped[List[str]] = mapped_column(JSON, nullable=True)
-
     session = relationship("GenerativeSession", back_populates="processes")
+    input = relationship(
+        "ProcessData",
+        primaryjoin=(
+            "and_("
+            "GenerativeProcess.id == ProcessData.process_id, "
+            "ProcessData.is_input == True)"
+        ),
+        lazy="selectin",
+        overlaps="output,process",
+    )
+    output = relationship(
+        "ProcessData",
+        primaryjoin=(
+            "and_("
+            "GenerativeProcess.id == ProcessData.process_id, "
+            "ProcessData.is_input == False)"
+        ),
+        lazy="selectin",
+        overlaps="input,process",
+    )
 
     def set_status_as_delivered(self) -> None:
         """
@@ -300,6 +317,26 @@ class GenerativeProcess(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the process to error."""
         self.status = RunStatus.ERROR
+
+
+class ProcessData(Base):
+    __tablename__ = "process_data"
+    """
+    Base table to store the data of a generative process.
+    """
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    data: Mapped[str] = mapped_column(String, nullable=False)
+    data_type: Mapped[str] = mapped_column(String, nullable=False)
+    process_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_process.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    is_input: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    process = relationship(
+        "GenerativeProcess", foreign_keys=[process_id], overlaps="input,output"
+    )
 
 
 class GenerativeSession(Base):
