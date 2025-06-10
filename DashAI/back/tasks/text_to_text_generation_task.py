@@ -46,7 +46,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         if not history:
             return f"Q: {input}\nA:"
 
-        history = [(input[0], output[0]) for (input, output) in history]
+        history = [(input, output) for (input, output) in history]
         context = "\n".join(
             [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
         )
