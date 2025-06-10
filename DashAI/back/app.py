@@ -97,6 +97,7 @@ def create_app(
     logger.debug("Creating local paths.")
     _create_path_if_not_exists(config["LOCAL_PATH"])
     _create_path_if_not_exists(config["DATASETS_PATH"])
+    _create_path_if_not_exists(config["IMAGES_PATH"])
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
     _create_path_if_not_exists(config["EXPLORATIONS_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
