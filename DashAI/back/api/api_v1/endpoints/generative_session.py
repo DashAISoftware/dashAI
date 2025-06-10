@@ -359,7 +359,7 @@ async def get_generative_session_parameters_history(
 
 
 @router.get("/parameters-history/{session_id}", status_code=status.HTTP_200_OK)
-async def get_generative_session_parameter_history_entry(
+async def get_parameter_history_entry(
     session_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):

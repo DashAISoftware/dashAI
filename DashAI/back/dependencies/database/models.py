@@ -438,7 +438,7 @@ class Exploration(Base):
 
 
 class GenerativeSessionParameterHistory(Base):
-    __tablename__ = "generative_session_parameter_history"
+    __tablename__ = "parameter_history"
     """
     Table to store the parameters of a generative session and their
     modification history.
