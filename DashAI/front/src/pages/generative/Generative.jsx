@@ -110,6 +110,7 @@ export default function Generative() {
           <ParamsBar
             selectedSessionId={selectedSessionId}
             onParamsUpdate={onParamsUpdate}
+            taskName={selectedTaskName}
           />
         ) : null}
       </Box>

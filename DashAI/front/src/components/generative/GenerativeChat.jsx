@@ -14,15 +14,12 @@ import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
-import HistoryIcon from "@mui/icons-material/History";
-import ParameterHistoryModal from "./SessionHistoryModal";
 import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
-  const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
@@ -198,17 +195,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           </Typography>
 
           <Box>
-            <IconButton onClick={() => setHistoryInfoVisible(true)}>
-              <HistoryIcon
-                sx={{
-                  color: "#a0a0a0",
-                  "&:hover": {
-                    color: "#ffffff",
-                  },
-                }}
-              />
-            </IconButton>
-
             <IconButton onClick={() => setSessionInfoVisible(true)}>
               <InfoIcon
                 sx={{
@@ -319,14 +305,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
-
-      {/* Parameter History Modal */}
-      <ParameterHistoryModal
-        historyChanges={history}
-        open={historyInfoVisible}
-        taskName={taskName}
-        setOpen={setHistoryInfoVisible}
-      />
     </Box>
   );
 }
