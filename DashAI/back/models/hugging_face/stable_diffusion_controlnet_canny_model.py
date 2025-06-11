@@ -141,7 +141,7 @@ class StableDiffusionControlNetCannyModel(ControlNetModel):
             )
 
             self.model = StableDiffusion3ControlNetPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-3.5-large",
+                "stabilityai/stable-diffusion-3-medium-diffusers"
                 controlnet=self.controlnet,
                 torch_dtype=torch.float16,
             ).to(self.device)
