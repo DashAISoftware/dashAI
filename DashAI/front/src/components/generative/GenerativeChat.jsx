@@ -193,7 +193,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           width={"100%"}
         >
           <Typography>
-            {sessionInfo?.id} - {sessionInfo?.name}{" "}
+            {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
             {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
           </Typography>
 

@@ -43,7 +43,7 @@ export default function SessionBox({
             noWrap
             sx={{ maxWidth: 180, fontSize: 14 }}
           >
-            {name}
+            {name ? name : "Untitled Session"}
           </Typography>
           <Typography
             variant="caption"
