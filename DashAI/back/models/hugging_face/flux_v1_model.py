@@ -117,7 +117,7 @@ class FluxV1Model(TextToImageGenerationTaskModel):
         try:
             self.model = DiffusionPipeline.from_pretrained(
                 self.model_name,
-                torch_dtype=torch.float32,
+                torch_dtype=torch.float16,
             ).to(self.device)
         except Exception as e:
             raise ValueError(f"Failed to load model {self.model_name}. {e}") from e
