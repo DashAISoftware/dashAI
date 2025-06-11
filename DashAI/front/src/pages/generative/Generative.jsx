@@ -69,11 +69,11 @@ export default function Generative() {
     >
       <SessionBar
         sessions={sessions}
-        setSessions={() => setSessions()}
         selectedSessionId={selectedSessionId}
         handleSessionClick={handleSessionClick}
         handleNewSessionButton={handleNewSessionButton}
         handleSessionDelete={handleSessionDelete}
+        stepIndex={stepIndex}
       />
       <MainGenerativeBox>
         {selectedSessionId ? (

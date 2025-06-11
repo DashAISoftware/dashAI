@@ -10,11 +10,11 @@ import SessionBarHeader from "./SessionBarHeader";
 
 export default function SessionBar({
   sessions,
-  setSessions,
   selectedSessionId,
   handleSessionClick,
   handleNewSessionButton,
   handleSessionDelete,
+  stepIndex,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
@@ -104,7 +104,7 @@ export default function SessionBar({
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
         {/* Create new session button */}
-        {selectedSessionId ? (
+        {selectedSessionId || stepIndex !== 0 ? (
           <NewSessionButton
             onClick={handleNewSessionButton}
             tooltipText="Create New Session"
