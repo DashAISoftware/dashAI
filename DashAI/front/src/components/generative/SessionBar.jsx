@@ -85,7 +85,7 @@ export default function SessionBar({
       flexDirection={"column"}
       justifyContent={"space-between"}
       sx={{
-        bgcolor: "#030712",
+        bgcolor: "background.box",
         color: "white",
         display: "flex",
         flexDirection: "column",

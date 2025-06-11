@@ -103,8 +103,8 @@ export default function Generative() {
         maxWidth={"600px"}
         height={"100%"}
         borderRadius={2}
+        bgcolor={"background.box"}
         //p={2}
-        bgcolor={"#030712"}
       >
         {selectedSessionId ? (
           <ParamsBar

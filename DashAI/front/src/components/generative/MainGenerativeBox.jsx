@@ -7,7 +7,7 @@ export default function MainGenerativeBox({ children }) {
       width={"100%"}
       height={"100%"}
       borderRadius={2}
-      bgcolor={"#121212"}
+      bgcolor={"background.box"}
       p={2}
     >
       {children}

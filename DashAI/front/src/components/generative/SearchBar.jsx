@@ -17,17 +17,14 @@ export default function SearchBar({ placeholder, onChange, value }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        bgcolor: "#1A1E2E",
+        bgcolor: "background.default",
         borderRadius: 1,
         px: 2,
         py: 1,
         cursor: "text",
-        "&:hover": {
-          bgcolor: "#1E2231",
-        },
       }}
     >
-      <SearchIcon sx={{ color: "#6E7191", mr: 1 }} />
+      <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
       <InputBase
         placeholder={placeholder}
         value={value}
@@ -40,7 +37,7 @@ export default function SearchBar({ placeholder, onChange, value }) {
             p: 0,
           },
           "& .MuiInputBase-input::placeholder": {
-            color: "#6E7191",
+            color: "text.secondary",
             opacity: 1,
           },
         }}
