@@ -71,6 +71,7 @@ export default function SelectModelMenu({
       flexDirection={"column"}
       justifyContent={"flex-start"}
       overflow={"auto"}
+      //bgcolor={"background.box"}
     >
       <Typography
         sx={{

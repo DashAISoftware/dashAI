@@ -54,7 +54,7 @@ export default function Generative() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={0} display="flex">
+    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
       <Box width="22%" mr={1}>
         <SessionBar
           sessions={sessions}

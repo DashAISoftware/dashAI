@@ -1,5 +1,12 @@
 import React from "react";
-import { Box, Typography, Button, Paper, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 
 export default function TaskBox({ taskName, description, onClick }) {
   const theme = useTheme();
@@ -10,12 +17,15 @@ export default function TaskBox({ taskName, description, onClick }) {
       onClick={onClick}
       sx={{
         p: 0,
-        m: 0,
+        m: 1,
         width: "100%",
-        height: "128px",
+        height: "100%",
         textAlign: "left",
         textTransform: "none",
         borderRadius: 2,
+        "&:hover .task-paper": {
+          backgroundColor: "red",
+        },
       }}
     >
       <Paper
