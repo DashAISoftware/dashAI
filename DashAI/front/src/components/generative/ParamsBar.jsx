@@ -83,10 +83,8 @@ export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
           fontSize: "16px",
           whiteSpace: "normal",
           wordBreak: "break-word",
-          ml: 5,
-          mt: 1,
-          mr: 5,
-          mb: 5,
+          m: "40px",
+          mt: "30px",
         }}
       >
         Edit Parameters
