@@ -98,6 +98,8 @@ export default function ParamsBar({
       flexDirection={"column"}
       justifyContent={"flex-start"}
       overflow={"auto"}
+      bgcolor={"background.box"}
+      borderRadius={2}
     >
       <Box
         display={"flex"}
