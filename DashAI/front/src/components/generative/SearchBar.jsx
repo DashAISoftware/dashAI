@@ -1,47 +1,37 @@
-import React, { useRef } from "react";
-import { Box, InputBase } from "@mui/material";
+import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 export default function SearchBar({ placeholder, onChange, value }) {
-  const inputRef = useRef(null);
-
-  const handleContainerClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
   return (
-    <Box
-      onClick={handleContainerClick}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        bgcolor: "background.default",
-        borderRadius: 1,
-        px: 2,
-        py: 1,
-        cursor: "text",
+    <TextField
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      fullWidth
+      variant="outlined"
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon sx={{ color: "text.secondary" }} />
+          </InputAdornment>
+        ),
       }}
-    >
-      <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
-      <InputBase
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        inputRef={inputRef}
-        fullWidth
-        sx={{
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          bgcolor: "background.default",
+          borderRadius: 1,
+        },
+        "& .MuiInputBase-input": {
           color: "white",
-          "& .MuiInputBase-input": {
-            p: 0,
-          },
-          "& .MuiInputBase-input::placeholder": {
-            color: "text.secondary",
-            opacity: 1,
-          },
-        }}
-      />
-    </Box>
+          py: 1,
+          fontSize: "0.875rem",
+        },
+        "& .MuiInputBase-input::placeholder": {
+          color: "text.secondary",
+          opacity: 1,
+          fontSize: "0.875rem",
+        },
+      }}
+    />
   );
 }

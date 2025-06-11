@@ -120,7 +120,7 @@ export default function SessionBar({
         {/* Search Bar */}
         <Box px={2} py={1} flex={"0 0 auto"}>
           <SearchBar
-            placeholder={"Search"}
+            placeholder={"Search Sessions"}
             value={searchQuery}
             onChange={handleSearchChange}
           />

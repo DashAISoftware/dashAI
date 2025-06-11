@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { Box, Typography, Autocomplete, TextField, Grid } from "@mui/material";
+import { Box, InputAdornment, TextField, Grid } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
-import IconAvatar from "../../components/generative/IconAvatar";
+import SearchBar from "./SearchBar";
 import { getGenerativeTask } from "../../api/generativeTask";
 import CustomLayout from "../../components/custom/CustomLayout";
 
@@ -11,6 +11,12 @@ export default function SelectTaskMenu({ goToNextStep }) {
   useEffect(() => {
     getGenerativeTask().then(setTasks);
   }, []);
+
+  const [search, setSearch] = useState("");
+
+  const filteredTasks = tasks.filter((task) =>
+    task.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <CustomLayout
@@ -24,8 +30,15 @@ export default function SelectTaskMenu({ goToNextStep }) {
         width={"100%"}
         flexDirection={"column"}
         justifyContent={"flex-start"}
-        //marginTop={5}
       >
+        <Box width={"450px"}>
+          <SearchBar
+            placeholder="Search Tasks"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </Box>
+
         <Grid
           container
           direction="row"
@@ -34,10 +47,9 @@ export default function SelectTaskMenu({ goToNextStep }) {
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-          {tasks.map((task, index) => (
-            <Grid item xl={4} lg={6} md={6} sm={12} xs={12}>
+          {filteredTasks.map((task, index) => (
+            <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
               <TaskBox
-                key={index}
                 taskName={task.name}
                 description={task.description}
                 onClick={() => goToNextStep(task.name)}
@@ -45,19 +57,6 @@ export default function SelectTaskMenu({ goToNextStep }) {
             </Grid>
           ))}
         </Grid>
-
-        <Autocomplete
-          disablePortal
-          options={tasks.map((t) => t.name)}
-          sx={{ mt: 4, ml: 2, mr: 2 }}
-          renderInput={(params) => <TextField {...params} label="Task" />}
-          onChange={(event, value) => {
-            const selectedTask = tasks.find((t) => t.name === value);
-            if (selectedTask) {
-              goToNextStep(selectedTask.name);
-            }
-          }}
-        />
       </Box>
     </CustomLayout>
   );
