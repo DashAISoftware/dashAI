@@ -3,6 +3,7 @@ import { Box, Typography, Autocomplete, TextField } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
 import IconAvatar from "../../components/generative/IconAvatar";
 import { getGenerativeTask } from "../../api/generativeTask";
+import CustomLayout from "../../components/custom/CustomLayout";
 
 export default function SelectTaskMenu({ goToNextStep }) {
   const [task, setTask] = useState([]);
@@ -39,86 +40,58 @@ export default function SelectTaskMenu({ goToNextStep }) {
   }
 
   return (
-    <Box
-      display={"flex"}
-      height={"100%"}
-      width={"100%"}
-      flexDirection={"column"}
-      justifyContent={"flex-start"}
-      sx={{ pt: 2 }}
+    <CustomLayout
+      title="Generative Module"
+      subtitle="Select generative task to start a new session"
+      padding={0}
     >
-      <Box sx={{ ml: 5 }}>
-        <IconAvatar src="/dai_circle.png" size={32} />{" "}
-      </Box>
       <Box
         display={"flex"}
+        height={"100%"}
+        width={"100%"}
         flexDirection={"column"}
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        gap={1}
-        sx={{ mt: 2, mb: 5, ml: 5, mr: 5 }}
+        justifyContent={"flex-start"}
+        marginTop={5}
       >
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "24px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-          }}
+        <Box
+          ref={containerRef}
+          display="flex"
+          justifyContent="space-evenly"
+          alignItems="stretch"
+          gap={2}
+          width="100%"
         >
-          Hello
-        </Typography>
-
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "24px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            color: "#aba5a5",
-          }}
-        >
-          Select a generative task to start
-        </Typography>
-      </Box>
-      <Box
-        ref={containerRef}
-        display="flex"
-        justifyContent="space-evenly"
-        alignItems="stretch"
-        gap={2}
-        width="100%"
-      >
-        {tasksToShow.map((task, index) => (
-          <Box
-            key={index}
-            flex="1 1 30%"
-            maxWidth="300px"
-            minWidth="200px"
-            minHeight="40px"
-          >
-            <TaskBox
+          {tasksToShow.map((task, index) => (
+            <Box
               key={index}
-              taskName={task.name}
-              description={task.description}
-              onClick={() => goToNextStep(task.name)}
-            />
-          </Box>
-        ))}
-      </Box>
+              flex="1 1 30%"
+              maxWidth="300px"
+              minWidth="200px"
+              minHeight="40px"
+            >
+              <TaskBox
+                key={index}
+                taskName={task.name}
+                description={task.description}
+                onClick={() => goToNextStep(task.name)}
+              />
+            </Box>
+          ))}
+        </Box>
 
-      <Autocomplete
-        disablePortal
-        options={task.map((t) => t.name)}
-        sx={{ m: 5 }}
-        renderInput={(params) => <TextField {...params} label="Task" />}
-        onChange={(event, value) => {
-          const selectedTask = task.find((t) => t.name === value);
-          if (selectedTask) {
-            goToNextStep(selectedTask.name);
-          }
-        }}
-      />
-    </Box>
+        <Autocomplete
+          disablePortal
+          options={task.map((t) => t.name)}
+          sx={{ mt: 4, ml: 2, mr: 2 }}
+          renderInput={(params) => <TextField {...params} label="Task" />}
+          onChange={(event, value) => {
+            const selectedTask = task.find((t) => t.name === value);
+            if (selectedTask) {
+              goToNextStep(selectedTask.name);
+            }
+          }}
+        />
+      </Box>
+    </CustomLayout>
   );
 }
