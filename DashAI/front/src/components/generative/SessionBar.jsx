@@ -21,6 +21,8 @@ export default function SessionBar({
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
 
+  console.log(selectedSessionId);
+
   useEffect(() => {
     // Initialize all sections as closed
     const taskNames = [
@@ -102,7 +104,18 @@ export default function SessionBar({
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
         {/* Create new session button */}
-        <NewSessionButton onClick={handleNewSessionButton} />
+        {selectedSessionId ? (
+          <NewSessionButton
+            onClick={handleNewSessionButton}
+            tooltipText="Create New Session"
+          />
+        ) : (
+          <Box px={2} py={1}>
+            <Typography variant="body1" color="textSecondary">
+              Generative Module
+            </Typography>
+          </Box>
+        )}
 
         {/* Search Bar */}
         <Box px={2} py={1} flex={"0 0 auto"}>
