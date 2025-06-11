@@ -100,13 +100,17 @@ class SD3CannyImageProcessor(VaeImageProcessor):
         super().__init__(do_normalize=False)
 
     def preprocess(self, image, **kwargs):
-        image = super().preprocess(image, **kwargs)
+        image = super().preprocess(image, **kwargs).to(dtype=torch.float16)
         image = image * 255 * 0.5 + 0.5
         return image
 
     def postprocess(self, image, do_denormalize=True, **kwargs):
         do_denormalize = [True] * image.shape[0]
-        image = super().postprocess(image, **kwargs, do_denormalize=do_denormalize)
+        image = (
+            super()
+            .postprocess(image, **kwargs, do_denormalize=do_denormalize)
+            .to(dtype=torch.float16)
+        )
         return image
 
 
