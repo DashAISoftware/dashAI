@@ -60,20 +60,13 @@ class PipelineJob(BaseJob):
                     context["dataset"] = output["dataset"]
                 elif node_type == "DataExploration":
                     context["exploration"] = output["exploration"]
+                    pipeline.exploration = context["exploration"]
                 elif node_type == "Train":
                     context["train"] = output["train"]
                     pipeline.train = context["train"]
                 elif node_type == "Prediction":
                     context["prediction"] = output["prediction"]
                     pipeline.prediction = context["prediction"]
-                elif node_type == "TaskSelector":
-                    context["task"] = output["task"]
-                elif node_type == "SplitData":
-                    context["splits"] = output["splits"]
-                elif node_type == "TaskModel":
-                    context["model"] = output["model"]
-                elif node_type == "Metrics":
-                    context["metrics"] = output["metrics"]
                 else:
                     context[node_id] = output
 

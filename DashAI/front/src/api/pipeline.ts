@@ -66,3 +66,8 @@ export const getPipelinePredictionSummary = async (predictionId: string) => {
     });
     return response.data;
   };
+
+export const getExplorationResults = async (id: number) => {
+  const response = await api.get(`${pipelineEndpoint}/${id}/dataexploration/results`);
+  return response.data;
+};

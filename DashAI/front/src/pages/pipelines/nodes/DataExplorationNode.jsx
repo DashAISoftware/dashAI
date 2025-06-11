@@ -1,82 +1,42 @@
-import React, { useState, useEffect } from "react";
-import { Box, Button, DialogContent, Typography, Checkbox, FormControlLabel, FormGroup } from "@mui/material";
 import { validateNode } from "../../../api/pipeline";
+import ConfigureExplorersModal from "./ExplorationModal";
+import { ExplorationsProvider } from "../../../components/explorations/context";
+import { useSnackbar } from "notistack";
+import { useEffect, useRef } from "react";
 
-const DataExplorationNode = ({ open, onClose, onSave, savedConfig, data }) => {
-  const explorationOptions = [
-    "shape",
-    "columns",
-    "dtypes",
-    "null_values",
-    "unique_values",
-  ];
+const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
+  const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
+  const datasetId = datasetNode?.id ?? null;
+  const { enqueueSnackbar } = useSnackbar();
 
-  const [selectedOptions, setSelectedOptions] = useState(savedConfig?.options || []);
-
+  const hasWarnedRef = useRef(false);
   useEffect(() => {
-    setSelectedOptions(savedConfig?.options || []);
-  }, [savedConfig]);
-
-  const handleOptionChange = (option) => {
-    setSelectedOptions((prevOptions) =>
-      prevOptions.includes(option)
-        ? prevOptions.filter((opt) => opt !== option)
-        : [...prevOptions, option]
-    );
-  };
-
-  const saveExplorationOptions = async () => {
-    const dataselectorKey = Object.keys(data).find((key) => key.startsWith("DataSelector"));
-    const dataselectorNode = data[dataselectorKey];
-    const config = {
-      options: selectedOptions,
-      dataselector: dataselectorNode,
-    };
-
-    const validationResponse = await validateNode("DataExploration", config);
-
-    if (validationResponse.status === "ok") {
-      console.log("Node validated successfully");
-      onSave({ options: selectedOptions });
-      onClose();
-    } else {
-      console.error("Validation failed:", validationResponse.message);
+    if (open && !datasetId) {
+      if (!hasWarnedRef.current) {
+          enqueueSnackbar("No dataset connected yet.", { variant: "warning" });
+          hasWarnedRef.current = true;
+      }
+      return;
     }
+  }, [open, datasetId]);
+  
+  const handleClose = () => {
+    onClose();
   };
 
+  const handleSave = (explorers) => {
+    onSave(explorers);
+    onClose();
+  };
+  
   return (
-    <DialogContent>
-      <Typography variant="body1" gutterBottom>
-        Choose the data exploration options:
-      </Typography>
-      <Box mt={2}>
-        <FormGroup>
-          {explorationOptions.map((option) => (
-            <FormControlLabel
-              key={option}
-              control={
-                <Checkbox
-                  checked={selectedOptions.includes(option)}
-                  onChange={() => handleOptionChange(option)}
-                />
-              }
-              label={option}
-            />
-          ))}
-        </FormGroup>
-      </Box>
-      <Box mt={3}>
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          onClick={saveExplorationOptions}
-          disabled={selectedOptions.length === 0}
-        >
-          Save Exploration Options
-        </Button>
-      </Box>
-    </DialogContent>
+   <>
+    {open && datasetId && (
+      <ExplorationsProvider datasetId={datasetId}>
+        <ConfigureExplorersModal open={open} onClose={handleClose} onSave={handleSave} savedConfig={savedConfig} />
+      </ExplorationsProvider>
+    )}
+  </>
   );
 };
 

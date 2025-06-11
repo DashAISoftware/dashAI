@@ -1,54 +1,98 @@
 import logging
-from typing import Any, Dict
+import os
+import pathlib
+from typing import Any, Dict, List, Type
 
+from kink import di
 import pandas as pd
+from sqlalchemy import false
+from DashAI.back.config import DefaultSettings
+from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
 
 class DataExploration(BaseJob): 
-    def __init__(self, options: list = None) -> None:
-        super().__init__(kwargs={"options": options or []})
+    def __init__(
+        self, 
+        explorations: Dict[str, Any],
+    ) -> None:
+        super().__init__(
+            kwargs={
+                "explorations": explorations,
+            }
+        )
+        self.explorations = explorations
 
     def set_status_as_delivered(self) -> None:
         log.info("DataExploration executed successfully.")
 
-    def run(self, context: Dict[str, Any]) -> Any:
+    def run(
+        self, 
+        context: Dict[str, Any],
+        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+    ) -> Any:
+        
         try:
-            dataset = context.get("dataset")
-            if dataset is None:
-                raise JobError("No se encontró el dataset en el contexto.")
+            pipeline_id = context.get("pipeline_id")
+            loaded_dataset = context.get("dataset")
 
-            train_data = dataset.get("train")
-            if train_data is None:
-                raise JobError("No se encontró la partición de entrenamiento en el dataset.")
+            settings = DefaultSettings()
+            sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
+            base_path = pathlib.Path(sqlite_local) / "pipelines" / "exploration" / str(pipeline_id)
+            base_path.mkdir(parents=True, exist_ok=True)
 
-            df = pd.DataFrame(train_data["features"])
-            log.info(f"Explorando dataset con opciones: {self.kwargs['options']}")
+            results = {}
 
-            exploration_results = {}
+            for idx, option in enumerate(self.explorations):
+                try:
+                    exploration_type = option["exploration_type"]
+                    parameters = option.get("parameters", {})
+                    columns = option.get("columns", [])
+                    id = option.get("id", str(idx))
+                    name = option.get("name")
 
-            if "shape" in self.kwargs["options"]:
-                exploration_results["shape"] = df.shape
+                    explorer_component_class: Type[BaseExplorer] = component_registry(di)[exploration_type]["class"]
+                    explorer_instance = explorer_component_class(**parameters)
+                    assert isinstance(explorer_instance, BaseExplorer)
 
-            if "columns" in self.kwargs["options"]:
-                exploration_results["columns"] = list(df.columns)
+                    prepared_dataset = explorer_instance.prepare_dataset(
+                        loaded_dataset, columns
+                    )
 
-            if "dtypes" in self.kwargs["options"]:
-                exploration_results["dtypes"] = df.dtypes.astype(str).to_dict()
+                    explorer_info = Explorer(
+                        exploration_type=exploration_type,
+                        columns=columns,
+                        parameters=parameters,
+                        id=id,
+                    )
+                        
+                    result = explorer_instance.launch_exploration(
+                        prepared_dataset, explorer_info
+                    )
+                        
+                    save_path = explorer_instance.save_exploration(
+                        __exploration_info__=None,
+                        explorer_info=explorer_info,
+                        save_path=base_path,
+                        result=result,
+                    )
 
-            if "null_values" in self.kwargs["options"]:
-                exploration_results["null_values"] = df.isnull().sum().to_dict()
+                    results[str(id)] = {
+                        "exploration_type": exploration_type,
+                        "path": str(save_path),
+                        "parameters": parameters,
+                        "name": name,
+                    }
 
-            if "unique_values" in self.kwargs["options"]:
-                exploration_results["unique_values"] = {
-                    col: df[col].nunique() for col in df.columns
-                }
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(f"Failed to execute data exploration: {exploration_type}") from e
 
-            log.info("Exploración de datos completada exitosamente.")
-            print("resutls:::::", exploration_results)
-            return {"exploration": exploration_results}
-
+            return {"exploration": results}
+        
         except Exception as e:
-            log.error(f"Error durante la exploración de datos: {e}")
-            raise JobError(f"Error durante la exploración de datos: {e}")
+            log.exception(e)
+            raise JobError("Error while running DataExploration job.") from e

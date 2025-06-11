@@ -1,23 +1,12 @@
 from typing import List, Dict
+import json
+from pathlib import Path
+import re
 
-NODE_RULES = {
-    "DataSelector": {
-        "predecessors": set(),
-        "successors": {"DataExploration", "Train"},
-    },
-    "DataExploration": {
-        "predecessors": {"DataSelector"},
-        "successors": set(),
-    },
-    "Train": {
-        "predecessors": {"DataSelector"},
-        "successors": {"Prediction"},
-    },
-    "Prediction": {
-        "predecessors": {"Train"},
-        "successors": set(),
-    },
-}
+try:
+    NODE_TYPES = json.loads((Path(__file__).parent.parent / "nodes.json").read_text())
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    raise RuntimeError(f"Error loading node types: {e}")
 
 class PipelineValidator:
     def __init__(self, nodes: List[Dict], edges: List[Dict]):
@@ -27,20 +16,40 @@ class PipelineValidator:
         self.node_map = {n["id"]: n for n in nodes}
         self.duplicated_ids = set()
 
+        self.type_to_rule = {
+            nt["type"]: {
+                "predecessors": set(nt.get("predecessors", [])),
+                "successors": set(nt.get("successors", [])),
+            }
+            for nt in NODE_TYPES
+        }
+        self.type_to_name = {nt["type"]: nt["name"] for nt in NODE_TYPES}
+
     def validate(self) -> Dict[str, List[str]]:
         self._validate_duplicates()
         self._validate_structure()
         return self.errors
 
+    def _get_node_display_name(self, node: Dict) -> str:
+        node_type = node["type"]
+        return node["data"].get("name", self.type_to_name.get(node_type, node_type))
+
+    def _get_type_display_name(self, node_type: str) -> str:
+        return self.type_to_name.get(node_type, node_type)
+
     def _validate_duplicates(self):
+        def extract_number(id_str):
+            match = re.search(r'-(\d+)$', id_str)
+            return int(match.group(1)) if match else float('inf')
+
         type_to_ids = {}
         for node in self.nodes:
             node_type = node["type"]
-            node_name = node["data"].get("name", node_type)
+            node_name = self._get_node_display_name(node)
             type_to_ids.setdefault(node_type, []).append((node["id"], node_name))
 
         for t, ids in type_to_ids.items():
-            sorted_ids = sorted(ids)
+            sorted_ids = sorted(ids, key=lambda x: extract_number(x[0]))
             for id, name in sorted_ids[1:]:
                 self.duplicated_ids.add(id)
                 self.errors.setdefault(id, []).append(f"{name} already exists.")
@@ -52,13 +61,12 @@ class PipelineValidator:
                 continue
 
             node_type = node["type"]
-            node_name = node["data"].get("name", node_type)
-            rule = NODE_RULES.get(node_type)
+            node_name = self._get_node_display_name(node)
+            rule = self.type_to_rule.get(node_type)
             if not rule:
                 continue
 
             expected_predecessors = rule["predecessors"]
-
             predecessors = [e for e in self.edges if e["target"] == node_id]
             predecessor_types = [
                 self.node_map[e["source"]]["type"]
@@ -67,19 +75,11 @@ class PipelineValidator:
             ]
 
             if expected_predecessors:
-                if not all(req in predecessor_types for req in expected_predecessors):
-                    expected_names = []
-                    for expected_type in sorted(expected_predecessors):
-                        nodes_of_type = [
-                            n["data"].get("name", expected_type)
-                            for n in self.nodes
-                            if n["type"] == expected_type
-                        ]
-                        if nodes_of_type:
-                            expected_names.append("/".join(nodes_of_type))
-                        else:
-                            expected_names.append(expected_type)
-
+                if not expected_predecessors.issubset(predecessor_types):
+                    expected_names = [
+                        self._get_type_display_name(t)
+                        for t in expected_predecessors
+                    ]
                     expected_str = ", ".join(expected_names)
                     self.errors.setdefault(node_id, []).append(
                         f"{node_name} must be connected to {expected_str} node."

@@ -3,17 +3,22 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
+from DashAI.back.api.api_v0.endpoints.session_class import Session
 from DashAI.back.config import DefaultSettings
 from DashAI.back.dependencies.database.models import Pipeline
 from DashAI.back.api.api_v1.schemas.pipelines_params import (
     PipelineCreateParams,
     PipelineUpdateParams,
 )
+from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.exploration.base_explorer import BaseExplorer
+from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
+from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -231,10 +236,6 @@ async def delete_pipeline(
             ) from e
     return {"message": "Pipeline deleted successfully"}
 
-from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
-from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
-from fastapi import Request
-
 @router.post("/validate_node")
 @inject
 async def validate_node(
@@ -269,3 +270,70 @@ async def validate_pipeline(
 
     validator = PipelineValidator(nodes, edges)
     return validator.validate()
+
+@router.get("/{pipeline_id}/dataexploration/results/")
+@inject
+async def get_pipeline_dataexploration_results(
+    pipeline_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+):
+    """Get results for all Data Exploration steps of a pipeline."""
+    db: Session = session_factory()
+
+    try:
+        pipeline = db.get(Pipeline, pipeline_id)
+        if not pipeline:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Pipeline with id {pipeline_id} not found",
+            )
+    except exc.SQLAlchemyError as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving pipeline from the database",
+        ) from e
+
+    dataexploration = pipeline.exploration
+    if not dataexploration or not isinstance(dataexploration, dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Pipeline has no valid Data Exploration step",
+        )
+
+    results = {}
+
+    for exploration_id, exploration_info in dataexploration.items():
+        exploration_type = exploration_info["exploration_type"]
+        exploration_path = exploration_info["path"]
+        parameters = exploration_info.get("parameters", {})
+        name = exploration_info.get("name")
+
+        try:
+            explorer_component_class = component_registry[exploration_type]["class"]
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Exploration type '{exploration_type}' not found in registry",
+            )
+
+        try:
+            explorer_instance: BaseExplorer = explorer_component_class(**parameters)
+            result = explorer_instance.get_results(
+                exploration_path=exploration_path,
+                options={},
+            )
+            results[exploration_id] = {
+                "exploration_type": exploration_type,
+                "results": result,
+                "name": name,
+            }
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error while getting results for '{exploration_type}'",
+            ) from e
+
+    return results

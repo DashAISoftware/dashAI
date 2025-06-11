@@ -164,6 +164,6 @@ class Train(BaseJob):
                 {
                     "info": self.model,
                     "parameters": self.parameters,
-                    "metrics":model_metrics
+                    "metrics": model_metrics
                 }
         }

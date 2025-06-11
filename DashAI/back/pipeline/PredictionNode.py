@@ -76,7 +76,6 @@ class Prediction(BaseJob):
             with open(os.path.join(path, json_name), "w") as json_file:
                 json.dump(json_data, json_file, indent=4)
 
-            print(f"Prediction saved at {json_name}")
             return {"prediction": json_name}
         except Exception as e:
             log.exception(e)

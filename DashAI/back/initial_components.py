@@ -54,7 +54,7 @@ from DashAI.back.exploration import (
     ScatterPlotExplorer,
     WordcloudExplorer,
 )
-from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob
+from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob, PipelineJob
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -83,6 +83,7 @@ from DashAI.back.tasks import (
     TextClassificationTask,
     TranslationTask,
 )
+from DashAI.back.pipeline import DataSelectorNode, ExplorationNode, TrainNode, PredictionNode
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -145,6 +146,7 @@ def get_initial_components():
         ExplorerJob,
         PredictJob,
         DatasetJob,
+        PipelineJob,
         # Explainers
         KernelShap,
         PartialDependence,
@@ -203,6 +205,10 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        DataSelectorNode.DataSelector,
+        ExplorationNode.DataExploration,
+        TrainNode.Train,
+        PredictionNode.Prediction
     ]
 
     # Obtener plugins instalados

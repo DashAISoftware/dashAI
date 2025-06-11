@@ -11,7 +11,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { validatePipeline, sortNodes } from "./ValidatePipeline"
-import { getNodeHelp } from "./nodeHelp";
+import { getNodeHelp, buildNodeHelp } from "./nodeHelp";
 import { getNodeTypesMap, getNodeTypes } from "./nodeTypes";
 import nodeComponentRegistry from "./nodeComponentRegistry";
 
@@ -41,6 +41,7 @@ function NewPipeline() {
     const fetchData = async () => {
       const nodes = await getNodeTypes();
       setAvailableNodes(nodes);
+      buildNodeHelp(nodes)
     };
     fetchData();
     async function loadNodeTypes() {
@@ -143,7 +144,7 @@ function NewPipeline() {
         const loadedNodes = pipeline.steps.map((step, idx) => ({
           id: step.id,
           type: step.type,
-          position: { x: idx * 250, y: 100 },
+          position: { x: idx * 160, y: 100 + (idx % 2) * 100 },
           data: { label: step.label },
           sourcePosition: "right",
           targetPosition: "left",
@@ -175,6 +176,7 @@ function NewPipeline() {
 
   useEffect(() => {
     const validate = async () => {
+      console.log("nodes:", nodes);
       const errors = await validatePipeline(nodes, edges);
       setValidationErrors(errors);
     };
@@ -311,13 +313,13 @@ function NewPipeline() {
           ))}
 
           <Box sx={{ p: 2, borderTop: '1px solid #ccc', backgroundColor: "#212121", mt: 2 }}>
-              <Typography variant="h6" sx={{ color: "#fff" }}>
-                {nodeHelp?.type || "Pipeline"} Help
-              </Typography>
               {(() => {
                 const help = getNodeHelp(nodeHelp?.type || "Pipeline");
                 return (
                   <>
+                    <Typography variant="h6" sx={{ color: "#fff" }}>
+                      {help.name || nodeHelp?.type || "Pipeline"} Help
+                    </Typography>
                     <Typography variant="body1" sx={{ mb: 1, color: "#ddd" }}>
                       {help.description}
                     </Typography>

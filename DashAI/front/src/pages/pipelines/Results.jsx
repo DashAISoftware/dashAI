@@ -16,6 +16,7 @@ import PipelineResultsMetrics from "./ResultsMetrics";
 import PipelineResultsGraphs from "./ResultsGraphs";
 import PipelineResultsPrediction from "./ResultsPrediction";
 import ResultsTabParameters from "../results/components/ResultsTabParameters";
+import ResultsExploration from "./ResultsExploration";
 
 function PipelineResults({ pipelineId, onClose }) {
   const [results, setResults] = useState(null);
@@ -44,13 +45,6 @@ function PipelineResults({ pipelineId, onClose }) {
     return <Typography>Loading results...</Typography>;
   }
 
-  const renderValue = (value) => {
-    if (typeof value === "object" && value !== null) {
-      return <pre>{JSON.stringify(value, null, 2)}</pre>;
-    }
-    return value;
-  };
-
   const hasExploration =
     results.exploration && results.exploration !== "No exploration data";
   const hasTrain = results.train && Object.keys(results.train).length > 0;
@@ -77,20 +71,15 @@ function PipelineResults({ pipelineId, onClose }) {
 
   return (
     <Box sx={{ p: 2 }}>
-      {onClose && (
-        <Button startIcon={<ArrowBackIosNew />} onClick={onClose}>
-          Volver
-        </Button>
-      )}
 
       {hasExploration && (
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography>Exploration</Typography>
           </AccordionSummary>
-          <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
+          <AccordionDetails sx={{ borderTop: "1px solid #383838", display: "flex", justifyContent: "center" }}>
             <Box mx={10} my={2}>
-              {renderValue(results.exploration)}
+              <ResultsExploration pipelineId={pipelineId} />
             </Box>
           </AccordionDetails>
         </Accordion>

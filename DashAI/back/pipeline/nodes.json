@@ -5,7 +5,11 @@
     "icon": "FolderIcon",
     "requiresConfiguration": true,
     "source": true,
-    "target": false
+    "target": false,
+    "predecessors": [],
+    "successors": ["DataExploration", "Train"],
+    "description": "Loads a dataset stored in the system to be used in the pipeline.",
+    "output": "Path to the selected dataset"
   },
   {
     "type": "DataExploration",
@@ -13,7 +17,11 @@
     "icon": "InsertChartIcon",
     "requiresConfiguration": true,
     "source": false,
-    "target": true
+    "target": true,
+    "predecessors": ["DataSelector"],
+    "successors": [],
+    "description": "Analyzes the dataset to provide insights and visualizations.",
+    "input": "Selected dataset"
   },
   {
     "type": "Train",
@@ -21,7 +29,12 @@
     "icon": "SettingsIcon",
     "requiresConfiguration": true,
     "source": true,
-    "target": true
+    "target": true,
+    "predecessors": ["DataSelector"],
+    "successors": ["Prediction"],
+    "description": "Split dataset and train a model with specified parameters.",
+    "input": "Selected dataset",
+    "output": "Path to the trained model"
   },
   {
     "type": "Prediction",
@@ -29,6 +42,10 @@
     "icon": "EmojiObjectsIcon",
     "requiresConfiguration": false,
     "source": false,
-    "target": true
+    "target": true,
+    "predecessors": ["Train"],
+    "successors": [],
+    "description": "Generates predictions using a trained model.",
+    "input": "Trained model"
   }
 ]
