@@ -158,7 +158,7 @@ class OpusMtEnESTransformer(TranslationModel):
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
-            no_cuda=self.device != "gpu",
+            use_cpu=self.device != "gpu",
             **self.training_args,
         )
 

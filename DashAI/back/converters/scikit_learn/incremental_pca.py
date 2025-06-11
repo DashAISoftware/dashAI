@@ -13,7 +13,7 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 class IncrementalPCASchema(BaseSchema):
     n_components: schema_field(
         none_type(int_field(ge=1)),
-        None,
+        2,
         "Number of components to keep.",
     )  # type: ignore
     whiten: schema_field(

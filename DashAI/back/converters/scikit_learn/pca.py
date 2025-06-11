@@ -22,7 +22,7 @@ class PCASchema(BaseSchema):
                 enum_field(["mle"]),
             ),
         ),
-        None,
+        2,
         "Number of components to keep. If None, all components are kept.",
     )  # type: ignore
     use_copy: schema_field(

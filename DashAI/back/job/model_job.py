@@ -172,6 +172,7 @@ class ModelJob(BaseJob):
             if experiment.task_name in [
                 "TextClassificationTask",
                 "TabularClassificationTask",
+                "RegressionTask",
             ]:
                 try:
                     # Optimizer configuration

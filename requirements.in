@@ -27,3 +27,4 @@ hyperopt
 openpyxl
 httpx
 wordcloud
+imblearn
