@@ -12,7 +12,7 @@ export default function TaskBox({ taskName, description, onClick }) {
         p: 0,
         m: 0,
         width: "100%",
-        height: "100%",
+        height: "128px",
         textAlign: "left",
         textTransform: "none",
         borderRadius: 2,
