@@ -10,8 +10,10 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
 from DashAI.back.dependencies.database.models import (
+    GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
+    ProcessData,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models import BaseGenerativeModel
@@ -215,6 +217,35 @@ async def delete_generative_session(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
+
+            # Delete all the processes associated with the session
+            processes = (
+                db.query(GenerativeProcess)
+                .filter(GenerativeProcess.session_id == session_id)
+                .all()
+            )
+            # Delete all the process data associated with the processes
+            for process in processes:
+                process_data = (
+                    db.query(ProcessData)
+                    .filter(ProcessData.process_id == process.id)
+                    .all()
+                )
+                for data in process_data:
+                    db.delete(data)
+            # Delete the processes
+            for process in processes:
+                db.delete(process)
+
+            # Delete the session parameter history entries
+            parameters_history = (
+                db.query(GenerativeSessionParameterHistory)
+                .filter(GenerativeSessionParameterHistory.session_id == session_id)
+                .all()
+            )
+            for entry in parameters_history:
+                db.delete(entry)
+            # Finally, delete the session itself
             db.delete(session)
             db.commit()
         except exc.SQLAlchemyError as e:
