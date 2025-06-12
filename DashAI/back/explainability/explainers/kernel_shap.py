@@ -322,7 +322,7 @@ class KernelShap(BaseLocalExplainer):
             yanchor="bottom",
             xref="paper",
             yref="paper",
-            y=-0.3,
+            y=-0.27,
         )
 
         return plotly.io.to_json(fig)
