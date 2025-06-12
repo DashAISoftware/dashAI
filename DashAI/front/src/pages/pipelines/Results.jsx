@@ -75,7 +75,7 @@ function PipelineResults({ pipelineId, onClose }) {
       {hasExploration && (
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography>Exploration</Typography>
+            <Typography variant="h6">Exploration</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838", display: "flex", justifyContent: "center" }}>
             <Box mx={10} my={2}>
@@ -88,7 +88,7 @@ function PipelineResults({ pipelineId, onClose }) {
       {hasTrain && (
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography>Train</Typography>
+            <Typography variant="h6">Train</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
             <Box mx={10} my={2}>
@@ -133,7 +133,7 @@ function PipelineResults({ pipelineId, onClose }) {
       {hasPrediction && (
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography>Prediction</Typography>
+            <Typography variant="h6">Prediction</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
             <Box mx={10} my={2}>

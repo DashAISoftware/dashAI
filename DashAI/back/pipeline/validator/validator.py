@@ -43,10 +43,10 @@ class DataSelectorValidator(BaseNodeValidator):
 
 class DataExplorationValidator(BaseNodeValidator):
     def validate(self) -> Dict[str, str]:
-        options = self.data.get("options")
+        options = self.data.get("explorations")
 
         if not options or not isinstance(options, list) or len(options) == 0:
-            return {"status": "error", "message": "No exploration options selected"}
+            return {"status": "error", "message": "No explorations selected"}
 
         return {"status": "ok"}
 
@@ -77,10 +77,22 @@ class TrainValidator(BaseNodeValidator):
             return {"status": "error", "message": "Train, validation, and test splits must sum to 1"}
 
         return {"status": "ok"}
+    
+class RetrieveModelValidator(BaseNodeValidator):
+    def validate(self) -> Dict[str, str]:
+        model = self.data.get("model")
+        model_path = self.data.get("model_path")
+        input_columns = self.data.get("input_columns")
+        task = self.data.get("task")
 
+        if not model or not model_path or not input_columns or not task:
+            return {"status": "error", "message": "Error in trained model selected"}
+        
+        return {"status": "ok"}
 
 VALIDATOR_MAP = {
     "DataSelector": DataSelectorValidator,
     "DataExploration": DataExplorationValidator,
     "Train": TrainValidator,
+    "RetrieveModel": RetrieveModelValidator,
 }

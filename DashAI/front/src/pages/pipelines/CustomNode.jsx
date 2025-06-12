@@ -4,6 +4,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
+import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import { useTheme } from '@mui/material/styles';
 
 const iconMap = {
@@ -11,6 +12,7 @@ const iconMap = {
   InsertChartIcon: InsertChartIcon,
   SettingsIcon: SettingsIcon,
   EmojiObjectsIcon: EmojiObjectsIcon,
+  ManageHistoryIcon: ManageHistoryIcon
 };
 
 const CustomNode = ({ data, isConnectable }) => {

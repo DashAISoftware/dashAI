@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef  } from "react";
+import React, { useState, useEffect  } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,12 +13,15 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import ConfigureExplorersStep from "../../../components/explorations/Steps/ConfigureExplorersStep";
 import { useExplorationsContext } from "../../../components/explorations/context";
+import { validateNode } from "../../../api/pipeline";
+import { useSnackbar } from "notistack";
 
 function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [valid, setValid] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
 
   const { explorationData, setExplorerData, datasetColumns, setExplorationData } = useExplorationsContext();
 
@@ -48,8 +51,7 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
     }
   }, [datasetColumns, setExplorerData, savedConfig]);
 
-  const handleSave = () => {
-    console.log("explorerrr",explorationData.explorers)
+  const handleSave = async () => {
     const config = {
       explorations: explorationData.explorers.map((explorer, index) => ({
         exploration_type: explorer.exploration_type,
@@ -59,8 +61,19 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
         name: explorer.name,
       }))
     };
-    onSave(config);
-    onClose();
+
+    try {
+      const response = await validateNode("DataExploration", config);
+      if (response.status === "ok") {
+        onSave(config);
+        onClose();
+      } else {
+        enqueueSnackbar("Validation failed", { variant: "error" });
+      }
+    } catch (e) {
+      enqueueSnackbar("Error validating node", { variant: "error" });
+      console.error(e);
+    }
   };
 
   if (loading && open) {

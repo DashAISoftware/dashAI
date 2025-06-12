@@ -18,3 +18,6 @@ class PipelineUpdateParams(BaseModel):
     name: Optional[str]
     steps: Optional[List[Step]]
     edges: Optional[List[Dict[str, Any]]]
+
+class DatasetFilterParams(BaseModel):
+    dataset_id: int

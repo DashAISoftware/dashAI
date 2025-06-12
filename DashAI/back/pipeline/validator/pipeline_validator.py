@@ -68,6 +68,12 @@ class PipelineValidator:
 
             expected_predecessors = rule["predecessors"]
             predecessors = [e for e in self.edges if e["target"] == node_id]
+
+            if len(predecessors) > 1:
+                self.errors.setdefault(node_id, []).append(
+                    f"{node_name} cannot have more than one input."
+                )
+            
             predecessor_types = [
                 self.node_map[e["source"]]["type"]
                 for e in predecessors
@@ -75,12 +81,12 @@ class PipelineValidator:
             ]
 
             if expected_predecessors:
-                if not expected_predecessors.issubset(predecessor_types):
+                if not expected_predecessors.intersection(predecessor_types):
                     expected_names = [
                         self._get_type_display_name(t)
                         for t in expected_predecessors
                     ]
-                    expected_str = ", ".join(expected_names)
+                    expected_str = " or ".join(expected_names)
                     self.errors.setdefault(node_id, []).append(
                         f"{node_name} must be connected to {expected_str} node."
                     )

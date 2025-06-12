@@ -10,8 +10,10 @@ from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.api.api_v0.endpoints.session_class import Session
 from DashAI.back.config import DefaultSettings
-from DashAI.back.dependencies.database.models import Pipeline
+from DashAI.back.dependencies.database.models import Dataset, Pipeline
+from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.api.api_v1.schemas.pipelines_params import (
+    DatasetFilterParams,
     PipelineCreateParams,
     PipelineUpdateParams,
 )
@@ -337,3 +339,48 @@ async def get_pipeline_dataexploration_results(
             ) from e
 
     return results
+
+@router.post("/filter_models")
+async def filter_models_endpoint(
+    params: DatasetFilterParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    try:
+        with session_factory() as db:
+            base_dataset = db.get(Dataset, params.dataset_id)
+            if not base_dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found",
+                )
+
+            base_spec = get_columns_spec(str(Path(base_dataset.file_path, "dataset")))
+
+            pipelines = db.query(Pipeline).all()
+
+            compatible_pipelines = []
+
+            for pipeline in pipelines:
+                if not pipeline.train:
+                    continue
+
+                steps = pipeline.steps
+                dataset_path = None
+                dataset_spec = None
+
+                for step in steps:
+                    if step["type"] == "DataSelector":
+                        dataset_path = step["config"]["file_path"]
+                        dataset_spec = get_columns_spec(str(Path(dataset_path, "dataset")))
+
+                if dataset_spec == base_spec:
+                    compatible_pipelines.append(pipeline)
+
+            return compatible_pipelines
+
+    except Exception as e:
+        logger.exception("Error filtering pipelines: %s", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while filtering pipelines",
+        ) from e

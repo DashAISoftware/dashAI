@@ -6,7 +6,7 @@ import 'reactflow/dist/style.css';
 import CustomLayout from "../../components/custom/CustomLayout";
 import RunPipeline from "./nodes/Run";
 import PipelineResults from "./Results";
-import { getPipelineById, getNodes } from "../../api/pipeline";
+import { getPipelineById } from "../../api/pipeline";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -176,7 +176,6 @@ function NewPipeline() {
 
   useEffect(() => {
     const validate = async () => {
-      console.log("nodes:", nodes);
       const errors = await validatePipeline(nodes, edges);
       setValidationErrors(errors);
     };

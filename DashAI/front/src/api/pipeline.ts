@@ -71,3 +71,12 @@ export const getExplorationResults = async (id: number) => {
   const response = await api.get(`${pipelineEndpoint}/${id}/dataexploration/results`);
   return response.data;
 };
+
+export const filterModels = async (
+  dataset_id: string,
+): Promise<IPipeline[]> => {
+  const response = await api.post(`${pipelineEndpoint}/filter_models`, {
+    dataset_id: dataset_id,
+  });
+  return response.data;
+};

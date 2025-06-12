@@ -64,6 +64,8 @@ class PipelineJob(BaseJob):
                 elif node_type == "Train":
                     context["train"] = output["train"]
                     pipeline.train = context["train"]
+                elif node_type == "RetrieveModel":
+                    context["retrieve"] = output["retrieve"]
                 elif node_type == "Prediction":
                     context["prediction"] = output["prediction"]
                     pipeline.prediction = context["prediction"]

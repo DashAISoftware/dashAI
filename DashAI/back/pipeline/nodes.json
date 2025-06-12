@@ -43,9 +43,22 @@
     "requiresConfiguration": false,
     "source": false,
     "target": true,
-    "predecessors": ["Train"],
+    "predecessors": ["Train", "RetrieveModel"],
     "successors": [],
     "description": "Generates predictions using a trained model.",
     "input": "Trained model"
+  },
+  {
+    "type": "RetrieveModel",
+    "name": "Retrieve Model",
+    "icon": "ManageHistoryIcon",
+    "requiresConfiguration": true,
+    "source": true,
+    "target": true,
+    "predecessors": ["DataSelector"],
+    "successors": ["Prediction"],
+    "description": "Loads a trained model form saved pipelines",
+    "input": "Selected dataset",
+    "output": "Path to the trained model"
   }
 ]

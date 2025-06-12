@@ -83,7 +83,7 @@ from DashAI.back.tasks import (
     TextClassificationTask,
     TranslationTask,
 )
-from DashAI.back.pipeline import DataSelectorNode, ExplorationNode, TrainNode, PredictionNode
+from DashAI.back.pipeline import DataSelectorNode, ExplorationNode, RetrieveModelNode, TrainNode, PredictionNode
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -208,7 +208,8 @@ def get_initial_components():
         DataSelectorNode.DataSelector,
         ExplorationNode.DataExploration,
         TrainNode.Train,
-        PredictionNode.Prediction
+        PredictionNode.Prediction,
+        RetrieveModelNode.RetrieveModel
     ]
 
     # Obtener plugins instalados
