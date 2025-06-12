@@ -149,7 +149,8 @@ function SplitDatasetRows({
   };
 
   const handleSeedChange = (event) => {
-    setSeed(event.target.value);
+    const value = event.target.value === "" ? "" : Number(event.target.value);
+    setSeed(value);
   };
 
   useEffect(() => {

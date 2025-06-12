@@ -270,7 +270,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         ...rowsPartitionsPercentage,
         shuffle: shuffle,
         stratify: stratify,
-        seed: seed === "" || seed == null ? 42 : seed,
+        seed: seed === "" || seed == null ? 42 : Number(seed),
         splitType: splitType,
       };
     } else if (splitType === SPLIT_TYPES.PREDEFINED) {
