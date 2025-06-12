@@ -436,7 +436,7 @@ def split_indexes(
         shuffle=shuffle,
         stratify=stratify_labels_test_val,
     )
-    return list(train_indexes), list(test_indexes), list(val_indexes)
+    return train_indexes.tolist(), test_indexes.tolist(), val_indexes.tolist()
 
 
 @beartype
@@ -886,4 +886,8 @@ def prepare_for_experiment(
             test_indexes=test_indexes,
             val_indexes=val_indexes,
         )
-    return prepared_dataset
+    return prepared_dataset, {
+        "train_indexes": train_indexes,
+        "test_indexes": test_indexes,
+        "val_indexes": val_indexes,
+    }
