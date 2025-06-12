@@ -1,3 +1,4 @@
+import gc
 import json
 import logging
 import os
@@ -49,7 +50,7 @@ class ModelJob(BaseJob):
             ) from e
 
     @inject
-    def run(
+    async def run(
         self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
         config=lambda di: di["config"],
@@ -118,6 +119,15 @@ class ModelJob(BaseJob):
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )
+                n_labels = None
+                if experiment.task_name in [
+                    "TextClassificationTask",
+                    "TabularClassificationTask",
+                    "ImageClassificationTask",
+                ]:
+                    all_classes = prepared_dataset.unique(experiment.output_columns[0])
+                    n_labels = len(all_classes)
+
                 splits = json.loads(experiment.splits)
                 prepared_dataset, splits = prepare_for_experiment(
                     dataset=prepared_dataset,
@@ -157,7 +167,9 @@ class ModelJob(BaseJob):
                     f"Unable to find Model with name {run.model_name} in registry.",
                 ) from e
             try:
-                factory = ModelFactory(run_model_class, run.parameters)
+                factory = ModelFactory(
+                    run_model_class, run.parameters, n_labels=n_labels
+                )
                 model: BaseModel = factory.model
                 run_optimizable_parameters = factory.optimizable_parameters
 
@@ -169,6 +181,7 @@ class ModelJob(BaseJob):
             if experiment.task_name in [
                 "TextClassificationTask",
                 "TabularClassificationTask",
+                "RegressionTask",
             ]:
                 try:
                     # Optimizer configuration
@@ -181,23 +194,23 @@ class ModelJob(BaseJob):
                         f"Unable to find Model with name {run.optimizer_name} in "
                         "registry.",
                     ) from e
-
-                try:
-                    goal_metric = selected_metrics[run.goal_metric]
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Metric is not compatible with the Task",
-                    ) from e
-                try:
-                    optimizer: BaseOptimizer = run_optimizer_class(
-                        **run.optimizer_parameters
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Optimizer parameters are not compatible with the optimizer",
-                    ) from e
+                if run.goal_metric != "":
+                    try:
+                        goal_metric = selected_metrics[run.goal_metric]
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Metric is not compatible with the Task",
+                        ) from e
+                    try:
+                        optimizer: BaseOptimizer = run_optimizer_class(
+                            **run.optimizer_parameters
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            "Optimizer parameters not compatible with the optimizer",
+                        ) from e
             try:
                 run.set_status_as_started()
                 db.commit()
@@ -303,3 +316,5 @@ class ModelJob(BaseJob):
             run.set_status_as_error()
             db.commit()
             raise e
+        finally:
+            gc.collect()

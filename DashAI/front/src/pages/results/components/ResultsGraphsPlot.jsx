@@ -6,22 +6,24 @@ import Plot from "react-plotly.js";
 function ResultsGraphsPlot({ selectedChart, chartData }) {
   return (
     <Box>
-      <Plot
-        data={
-          selectedChart === "radar"
-            ? chartData.radarValues
-            : selectedChart === "bar"
-            ? chartData.barValues
-            : selectedChart === "pie"
-            ? chartData.pieValues
-            : []
-        }
-        layout={
-          selectedChart === "pie"
-            ? chartData.pieLayout
-            : chartData.generalLayout
-        }
-      />
+      {
+        <Plot
+          data={
+            selectedChart === "radar"
+              ? chartData.radarValues
+              : selectedChart === "bar"
+              ? chartData.barValues
+              : selectedChart === "pie"
+              ? chartData.pieValues
+              : []
+          }
+          layout={
+            selectedChart === "pie"
+              ? chartData.pieLayout
+              : chartData.generalLayout
+          }
+        />
+      }
     </Box>
   );
 }

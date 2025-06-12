@@ -56,6 +56,10 @@ colorama==0.4.6
     #   uvicorn
 colorlog==6.9.0
     # via optuna
+contourpy==1.1.1
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
 datasets==3.1.0
     # via
     #   -r requirements.in
@@ -85,6 +89,8 @@ filelock==3.16.1
     #   huggingface-hub
     #   torch
     #   transformers
+fonttools==4.56.0
+    # via matplotlib
 frozenlist==1.5.0
     # via
     #   aiohttp
@@ -132,7 +138,9 @@ importlib-metadata==8.5.0
     #   alembic
     #   numba
 importlib-resources==6.4.5
-    # via alembic
+    # via
+    #   alembic
+    #   matplotlib
 itsdangerous==2.2.0
     # via fastapi
 jinja2==3.1.5
@@ -145,6 +153,8 @@ joblib==1.4.2
     #   scikit-learn
 kink==0.8.1
     # via -r requirements.in
+kiwisolver==1.4.7
+    # via matplotlib
 llvmlite==0.41.1
     # via numba
 lxml==5.3.1
@@ -157,6 +167,8 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   mako
+matplotlib==3.7.5
+    # via wordcloud
 mdurl==0.1.2
     # via markdown-it-py
 mpmath==1.3.0
@@ -181,9 +193,11 @@ numpy==1.24.4
     # via
     #   -r requirements.in
     #   accelerate
+    #   contourpy
     #   datasets
     #   evaluate
     #   hyperopt
+    #   matplotlib
     #   numba
     #   optuna
     #   pandas
@@ -193,6 +207,7 @@ numpy==1.24.4
     #   scipy
     #   shap
     #   transformers
+    #   wordcloud
 openpyxl==3.1.5
     # via -r requirements.in
 optuna==4.2.1
@@ -205,6 +220,7 @@ packaging==24.2
     #   datasets
     #   evaluate
     #   huggingface-hub
+    #   matplotlib
     #   optuna
     #   plotly
     #   shap
@@ -215,7 +231,10 @@ pandas==2.0.3
     #   evaluate
     #   shap
 pillow==10.4.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   matplotlib
+    #   wordcloud
 plotly==6.0.0
     # via -r requirements.in
 portalocker==3.0.0
@@ -244,8 +263,12 @@ pydantic-settings==2.8.0
     #   fastapi
 pygments==2.19.1
     # via rich
+pyparsing==3.1.4
+    # via matplotlib
 python-dateutil==2.9.0.post0
-    # via pandas
+    # via
+    #   matplotlib
+    #   pandas
 python-dotenv==1.0.1
     # via
     #   pydantic-settings
@@ -382,6 +405,8 @@ watchfiles==0.24.0
     # via uvicorn
 websockets==13.1
     # via uvicorn
+wordcloud==1.9.4
+    # via -r requirements.in
 wrapt==1.17.2
     # via smart-open
 xxhash==3.5.0
@@ -394,3 +419,4 @@ zipp==3.20.2
     # via
     #   importlib-metadata
     #   importlib-resources
+imblearn

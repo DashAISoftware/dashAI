@@ -55,6 +55,7 @@ export default function SelectDatasetStep({
   const [selectedDatasetId, setSelectedDatasetId] = useState(false);
   const [isValidDataset, setIsValidDataset] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [datasetPaths, setDatasetPaths] = useState([]);
 
   const getDatasets = async () => {
     setLoading(true);
@@ -76,29 +77,6 @@ export default function SelectDatasetStep({
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
-  const validateDataset = async () => {
-    try {
-      const validation = await validateDatasetRequest(
-        newExpl.run_id,
-        selectedDatasetId,
-      );
-      setIsValidDataset(validation.dataset_status === "valid");
-      if (validation.dataset_status === "invalid") {
-        enqueueSnackbar("The selected dataset is not valid.");
-      }
-    } catch (error) {
-      enqueueSnackbar("Error while trying to validate the selected dataset.");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    }
-  };
-
   // fetch datasets when the component is mounting
   useEffect(() => {
     getDatasets();
@@ -113,12 +91,6 @@ export default function SelectDatasetStep({
       setSelectedDatasetId(dataset.id);
     }
   }, [rowSelectedDataset]);
-
-  useEffect(() => {
-    if (selectedDatasetId) {
-      validateDataset();
-    }
-  }, [selectedDatasetId]);
 
   useEffect(() => {
     if (isValidDataset) {

@@ -1,10 +1,11 @@
+import asyncio
 import json
 import logging
 import os
 import tempfile
 from urllib.parse import unquote
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import sessionmaker
@@ -27,24 +28,37 @@ router = APIRouter()
 
 @router.post("/start/")
 async def start_job_queue(
-    background_tasks: BackgroundTasks,
+    request: Request,
     stop_when_queue_empties: bool = False,
 ):
-    """Start the job queue to begin processing the jobs inside the jobs queue.
-    If the param stop_when_queue_empties is True, the loop stops when the job queue
-    becomes empty.
+    """Start the asynchronous job queue loop.
+
+    This endpoint starts a persistent background loop that executes pending jobs
+    from the job queue. If the loop is already running, no new loop will be started.
 
     Parameters
     ----------
-    stop_when_queue_empties: Optional bool
-        boolean to set the behavior of the loop.
+    request : Request
+        FastAPI request object, used to access app state.
+    stop_when_queue_empties : bool, optional
+        If True, the loop stops once the queue is empty (useful for one-off job runs).
+        If False, the loop waits indefinitely for new jobs.
 
     Returns
     -------
     Response
-        response with code 202 ACCEPTED
+        HTTP 202 if loop was started (or already running).
     """
-    background_tasks.add_task(job_queue_loop, stop_when_queue_empties)
+    app = request.app
+    # Start the loop only if it's not already running or was cancelled
+    if not hasattr(app.state, "job_loop") or app.state.job_loop.done():
+        app.state.job_loop = asyncio.create_task(
+            job_queue_loop(stop_when_queue_empties)
+        )
+        logger.info("Started job queue loop.")
+    else:
+        logger.debug("Job queue loop is already running.")
+
     return Response(status_code=status.HTTP_202_ACCEPTED)
 
 

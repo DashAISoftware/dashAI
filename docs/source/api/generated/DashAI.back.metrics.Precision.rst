@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~Precision.__init__
+      ~Precision.is_multiclass
       ~Precision.score
    
    
