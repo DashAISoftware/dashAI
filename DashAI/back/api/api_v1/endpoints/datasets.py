@@ -21,7 +21,7 @@ from DashAI.back.dependencies.database.models import Dataset
 import pandas as pd
 import pyarrow as pa
 from DashAI.back.types.utils import arrow_to_dashai_schema, PTYPE_TO_DASHAI
-from DashAI.back.types.inf.inference_methods import DashAIPtype
+from DashAI.back.types.inf.type_inference import infer_types
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -404,27 +404,12 @@ async def infer_datatypes(
             df = pd.read_excel(file.file)
         elif file.filename.endswith(".json"):
             df = pd.read_json(file.file, lines=True)
-        #print("df:", df.head())
         if len(df)>100:
             df = df.head(100)
-        ptype_cat = DashAIPtype()
-        schema = ptype_cat.schema_fit(df)
-        first_row = schema.show().iloc[0]
-        print("ptypecat schema:", first_row)
-        processed_schema = {}
+        #returns a dictionary with the inferred datatypes and column name for each
+        inferred_types = infer_types(df, method="Dummy")
 
-        for col_name, column_object in schema.cols.items():
-            print("col_name:", col_name)
-            #print("column_object:", column_object)
-            print("column_object.p_t:", column_object.p_t)
-            
-            dashai_type = PTYPE_TO_DASHAI.get(max(column_object.p_t, key=column_object.p_t.get))
-            processed_schema[col_name] = {
-                **dashai_type,
-                "probabilities": column_object.p_t,
-                "unique_vals_count": len(column_object.unique_vals),
-            }
-        return processed_schema
+        return inferred_types
 
     except Exception as e:
         logger.exception(e)

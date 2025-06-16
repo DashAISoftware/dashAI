@@ -159,3 +159,7 @@ def vectorize_text(
             new_columns[col] = pa.array(array, type=to_arrow_types(_type.dtype))
     transformed_dataset = modify_table(dataset, columns=new_columns)
     return transformed_dataset
+
+# Time Transformations
+
+# Date Transformations

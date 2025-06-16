@@ -43,7 +43,7 @@ class PtypeCat(Ptype.Ptype):
         self.verbose = False
         self.lr_clf = joblib.load(Path(__file__).parent.joinpath("LR.sav"))
         self.scaler = joblib.load(Path(__file__).parent.joinpath("scaler.pkl"))
-
+        self.cat_threshold = 0.5  # Threshold for categorical inference
 
     def _column(self, df, col_name, logP, counts):
         """Returns a Column object for a given data column."""
@@ -60,7 +60,12 @@ class PtypeCat(Ptype.Ptype):
             p_cat = self.lr_clf.predict_proba(feats.reshape(1, -1))[0][ind]
         else:
             p_cat = 0.0
-        col.set_p_t_cat(t_hat, p_cat)
+        
+        if p_cat > self.cat_threshold and t_hat == "string":
+            col.p_t = {k: 0.0 for k in col.p_t}
+            col.p_t["categorical"] = 1.0
+        else:
+           col.set_p_t_cat(t_hat, p_cat)
 
         return col
 

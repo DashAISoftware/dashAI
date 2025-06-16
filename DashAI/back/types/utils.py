@@ -51,10 +51,10 @@ PTYPE_TO_DASHAI = {
     "string": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
     "boolean": {"type": "Boolean", "dtype": "bool"},
     "categorical": {"type": "Categorical", "dtype": "string"},
-    "date-iso-8601": {"type": "Date", "dtype": "date64"},
-    "date-eu": {"type": "Date", "dtype": "date64"},
-    "date-non-std": {"type": "Date", "dtype": "date64"},
-    "time": {"type": "Time", "dtype": "time64(ns)"},
+    "date-iso-8601": {"type": "Date", "dtype": "date32"},
+    "date-eu": {"type": "Date", "dtype": "date32"},
+    "date-non-std": {"type": "Date", "dtype": "date32"},
+    "time": {"type": "Time", "dtype": "time32(s)"},
 }
 
 def arrow_to_dashai_types(arrow_type) -> DashAIValue:
