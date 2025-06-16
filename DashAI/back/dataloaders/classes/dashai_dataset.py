@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 import DashAI.back.types.value_types as vt
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.utils import save_types_in_arrow_metadata, get_types_from_arrow_metadata, to_arrow_types, arrow_to_dashai_schema, arrow_to_dashai_types, dtype_arrow_map, pyarrow_date_conversion 
+from DashAI.back.types.utils import save_types_in_arrow_metadata, get_types_from_arrow_metadata, to_arrow_types, arrow_to_dashai_schema, arrow_to_dashai_types, dtype_arrow_map, pyarrow_date_conversion, pyarrow_time_conversion 
 
 def get_arrow_table(ds: Dataset) -> pa.Table:
     """
@@ -350,10 +350,14 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
             values = table.column(column_name).unique().to_pylist()
             dashai_types[column_name] = Categorical(values=values)
             dai_table[column_name] = table.column(column_name)
-        elif dtype == "date32" or dtype == "date64":
+        elif _type == "Date":
             values = table.column(column_name).to_pylist()
             pa_type = pa.date32()
             dai_table[column_name] = pyarrow_date_conversion(table.column(column_name), format= "%m/%d/%Y")
+            dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+        elif _type == "Time":
+            values = table.column(column_name).to_pylist()
+            dai_table[column_name] = pyarrow_time_conversion(table.column(column_name), format="%H:%M:%S")
             dashai_types[column_name] = arrow_to_dashai_types(pa_type)
             
         else:
@@ -361,10 +365,10 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
             dai_table[column_name] = table.column(column_name)
 
         my_schema = my_schema.append(pa.field(column_name, pa_type))
-    
+        
     table = pa.table(dai_table)
-    print("dai_table schema:", table.schema)
     table = table.cast(target_schema = my_schema)
+
 
     dataset._types = dashai_types
 
@@ -372,8 +376,8 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
     for column_name in dashai_types:
         types[column_name] = dashai_types[column_name].to_string()
     
-
     table = save_types_in_arrow_metadata(table, types)
+
 
     data_filepath = os.path.join(path, "data.arrow")
     with pa.OSFile(data_filepath, "wb") as sink:
@@ -768,16 +772,12 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     """
     dataset = load_dataset(dataset_path)
     column_types = {}
-    print("dataset types:", dataset.types)
     for column in dataset.types:
-        print("column:", column)
-        print("column spec:", dataset.types[column])
         column_spec = dataset.types[column]
         column_types[column] = {
             "type": column_spec.to_string().get("type", None),
             "dtype": column_spec.to_string().get("dtype", None),
         }
-        print("column_types:", column_types[column])
     return column_types
 
 
@@ -803,10 +803,7 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     # load the dataset from where its stored
     dataset = load_dataset(dataset_path)
     new_features = dataset.features
-    print("dataset features:", new_features)
-    print("pre_types:", dataset.types)
-    #print("new_types:", new_types_iterator(columns))
-    #dataset.types = new_types_iterator(columns)
+
     
     types_path = os.path.join(dataset_path, "dashai_schema.json")
     with open(types_path, "w", encoding="utf-8") as f:

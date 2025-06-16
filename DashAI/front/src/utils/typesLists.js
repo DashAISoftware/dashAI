@@ -34,27 +34,27 @@ export const dataTypesbyColumnType = {
   Float: ["float16", "float32", "float64"],
   Text: ["string", "large_string"],
   Time: [
-    "time32[(s)]", 
-    "time32[(ms)]", 
-    "time64[(us)]", 
-    "time64[(ns)]"
+    "time32(s)", 
+    "time32(ms)", 
+    "time64(us)", 
+    "time64(ns)"
   ],
   Boolean: ["bool"],
   Timestamp: [
-    "timestamp[(s)]",
-    "timestamp[(ms)]",
-    "timestamp[(us)]",
-    "timestamp[(ns)]",
-    "timestamp[(s), tz=(tzstring)]",
-    "timestamp[(ms), tz=(tzstring)]",
-    "timestamp[(us), tz=(tzstring)]",
-    "timestamp[(ns), tz=(tzstring)]",
+    "timestamp(s)",
+    "timestamp(ms)",
+    "timestamp(us)",
+    "timestamp(ns)",
+    "timestamp(s), tz=(tzstring)",
+    "timestamp(ms), tz=(tzstring)",
+    "timestamp(us), tz=(tzstring)",
+    "timestamp(ns), tz=(tzstring)",
   ],
   Duration: [
-    "duration[(s)]", 
-    "duration[(ms)]", 
-    "duration[(us)]", 
-    "duration[(ns)]"
+    "duration(s)", 
+    "duration(ms)", 
+    "duration(us)", 
+    "duration(ns)"
   ],
   Decimal: ["decimal128", "decimal256"],
   Date: ["date32", "date64"],

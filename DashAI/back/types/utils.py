@@ -187,11 +187,35 @@ def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Ar
         parsed_dates = pd.to_datetime(str_dates, format=format, errors='coerce')
     except ValueError as e:
         raise ValueError(f"Invalid date format: {e} - expected format is {format} check, clean your data and try again.") 
-    #parsed_dates = parsed_dates.date
-    print(f"Parsed dates: {parsed_dates}")
-    print(f"Parsed dates type: {type(parsed_dates)}")
+
 
     return pa.array(parsed_dates, type=pa.date32())
+
+def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Array:
+    """
+    Convert a PyArrow array of time strings to a PyArrow time64 array.
+
+    Parameters
+    ----------
+    column : pa.Array
+        The PyArrow array containing time strings.
+    format : str, optional
+        The format of the time strings. Default is "%H:%M:%S".
+    
+    Returns
+    -------
+    pa.Array
+        A PyArrow array of time64 values.
+    """
+
+    str_times = column.to_pylist()
+
+    try:
+        parsed_times = pd.to_datetime(str_times, format=format, errors='coerce')
+    except ValueError as e:
+        raise ValueError(f"Invalid time format: {e} - expected format is {format} check, clean your data and try again.") 
+
+    return pa.array(parsed_times, type=pa.time32("s"))
 
 
     

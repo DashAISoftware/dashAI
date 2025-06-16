@@ -34,16 +34,6 @@ class Integer(DashAIValue):
             self.unsigned = False
         self.dtype = str(arrow_type)
         self.size = arrow_type.bit_width
-        
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
     
     def to_string(self):
         return {"type": "Integer", "dtype": self.dtype}
@@ -76,17 +66,6 @@ class Float(DashAIValue):
         elif pa.types.is_float64(arrow_type):
             self.size = 64
             self.dtype = "float64"
-        
-
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
     
     def to_string(self):
         return {"type": "Float", "dtype": self.dtype}
@@ -120,16 +99,6 @@ class Text(DashAIValue):
         else:
             self.large = False
     
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
-    
     def to_string(self):
         return {"type": "Text", "encoding": self.encoding, "dtype": self.dtype}
         
@@ -152,26 +121,13 @@ class Time(DashAIValue):
     def __init__(self, arrow_type: pa.DataType):
         if not pa.types.is_time(arrow_type):
             raise ValueError(
-                f"Arrow type {arrow_type} is not a time type.")
-        self.dtype = str(arrow_type)
+                f"Arrow type {arrow_type} is not a time type.") 
         self.size = arrow_type.bit_width
-        self.size = 32 if arrow_type.equals(pa.time32('s')) or arrow_type.equals(pa.time32('ms')) else 64
-        if self.size == 32:
-            self.dtype = "time32(s)" if arrow_type.equals(pa.time32('s')) else "time32(ms)"
-        elif self.size == 64:
-            self.dtype = "time64(us)" if arrow_type.equals(pa.time64('us')) else "time64(ns)"
+        if pa.types.is_time32(arrow_type):
+            self.dtype = "time32(s)" if arrow_type.unit == "s" else "time32(ms)"
+        elif pa.types.is_time64(arrow_type):
+            self.dtype = "time64(us)" if arrow_type.unit == "us" else "time64(ns)"
 
-    
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
-    
     def to_string(self):
         return {"type": "Time", "dtype": self.dtype}
     
@@ -189,16 +145,6 @@ class Boolean(DashAIValue):
             raise ValueError(
                 f"Arrow type {arrow_type} is not a boolean type.")
         self.dtype = str(arrow_type)
-        
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
     
     def to_string(self):
         return {"type": "Boolean", "dtype": self.dtype}
@@ -228,16 +174,6 @@ class Timestamp(DashAIValue):
         self.unit = arrow_type.unit
         self.timezone = arrow_type.tz
     
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
-    
     def to_string(self):
         return {"type": "Timestamp", "dtype": self.dtype}
 
@@ -261,16 +197,6 @@ class Duration(DashAIValue):
                 f"Arrow type {arrow_type} is not a duration type.")
         self.dtype = str(arrow_type)
         self.unit = arrow_type.unit
-    
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
 
     def to_string(self):
         return {"type": "Duration", "dtype": self.dtype}
@@ -312,8 +238,6 @@ class Decimal(DashAIValue):
             )
         self.precision = arrow_type.precision
         self.scale = arrow_type.scale
-    
-
     
     def to_string(self):
         return {"type": "Decimal", "dtype": self.dtype}
@@ -366,7 +290,7 @@ class Binary(DashAIValue):
         if not (pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type)):
             raise ValueError(
                 f"Arrow type {arrow_type} is not a binary type.")
-        self.dtype = arrow_type
+        self.dtype = str(arrow_type)
         if arrow_type.equals(pa.binary()):
             self.binary_type = "binary"
         elif arrow_type.equals(pa.large_binary()):
