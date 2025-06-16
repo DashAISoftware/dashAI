@@ -16,6 +16,7 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.types.categorical import Categorical
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -95,11 +96,16 @@ class PredictJob(BaseJob):
 
         try:
             prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
+            output_columns = loaded_dataset._types.get(exp.output_columns[0])
             y_pred_proba = np.array(trained_model.predict(prepared_dataset))
             if isinstance(y_pred_proba[0], str):
                 y_pred = y_pred_proba
             else:
-                y_pred = np.argmax(y_pred_proba, axis=1)
+                y_pred_prev = np.argmax(y_pred_proba, axis=1)
+                print("y_pred_prev:", y_pred_prev)
+                if isinstance(output_columns, Categorical):
+                    y_pred = [output_columns.int2str(i) for i in y_pred_prev]
+                
 
         except ValueError as ve:
             log.error(f"Validation Error: {ve}")
@@ -137,7 +143,7 @@ class PredictJob(BaseJob):
                     "dataset_name": dataset.name,
                     "task_name": exp.task_name,
                 },
-                "prediction": y_pred.tolist(),
+                "prediction": y_pred,
             }
 
             with open(os.path.join(path, json_name), "w") as json_file:

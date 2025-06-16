@@ -27,7 +27,7 @@ class TabularClassificationTask(BaseTask):
     Models are trained to learn patterns and relationships in the data, enabling
     accurate classification of new instances."""
     metadata: dict = {
-        "inputs_types": [DashAIValue, Categorical],
+        "inputs_types": [Integer, Float, Categorical],
         "outputs_types": [Categorical],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,

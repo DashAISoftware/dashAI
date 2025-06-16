@@ -6,7 +6,6 @@ from sklearn.metrics import precision_score
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
-    prepare_to_metric,
 )
 
 
@@ -31,7 +30,6 @@ class Precision(ClassificationMetric):
         float
             Precision score between true labels and predicted labels
         """
-        #true_labels, pred_labels = prepare_to_metric(true_labels, probs_pred_labels)
         multiclass = len(np.unique(true_labels)) > 2
         if multiclass:
             return precision_score(true_labels, pred_labels, average="macro")

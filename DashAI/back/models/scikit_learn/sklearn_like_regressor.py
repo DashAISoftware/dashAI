@@ -2,7 +2,7 @@ import numpy as np
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
-
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 class SklearnLikeRegressor(SklearnLikeModel):
     """Class for handling sklearn-like regressor models."""
@@ -21,5 +21,5 @@ class SklearnLikeRegressor(SklearnLikeModel):
             Array with the predicted target values for x_pred
         """
         print("SklearnLikeRegressor predict called")
-        x_pred = self.convert_format(self.apply_model_transformations(x_pred))
-        return super().predict(x_pred.to_pandas())
+        x_pred = dashai_to_pandas(self.prepare_dataset(x_pred))
+        return super().predict(x_pred)

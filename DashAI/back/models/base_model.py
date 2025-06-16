@@ -33,33 +33,19 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def convert_format(self, dataset: DashAIDataset) -> DashAIDataset:
-        """Convert the dataset to a format suitable for the model.
+    def prepare_dataset(
+        self, dataset: DashAIDataset
+    ) -> DashAIDataset:
+        """Apply the model transformations to the dataset.
 
         Parameters
         ----------
         dataset : DashAIDataset
-            The dataset to be converted.
+            The dataset to be transformed.
 
         Returns
         -------
-        Any
-            The converted dataset.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def apply_model_transformations(self, dataset: DashAIDataset) -> Any:
-        """Apply the needed transformations (type change, encodigns) for the model to be able to perform.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            The target dataset to be transformed.
-
-        Returns
-        -------
-        Any
-            The transformed target dataset.
+        DashAIDataset
+            The prepared dataset ready to be converted to an accepted format in the model.
         """
         raise NotImplementedError

@@ -14,6 +14,16 @@ from back.types.inf.ptype import Ptype
 from back.types.inf.ptype.Column import Column
 from back.types.inf.ptype.Machines import Machines
 
+CAT_TRAINED_TYPES = [
+    "integer",
+    "string",
+    "float",
+    "boolean",
+    "date-iso-8601",
+    "date-eu",
+    "date-non-std-subtype",
+    "date-non-std",
+]
 
 class PtypeCat(Ptype.Ptype):
     """The PtypeCat cat object. It uses the following data types: categorical, date, integer, float and string."""
@@ -23,6 +33,7 @@ class PtypeCat(Ptype.Ptype):
             "integer",
             "string",
             "float",
+            "boolean",
             "date-iso-8601",
             "date-eu",
             "date-non-std-subtype",
@@ -42,6 +53,7 @@ class PtypeCat(Ptype.Ptype):
         t_hat = col.inferred_type()
         if t_hat in ["integer", "string"]:
             feats = col._get_features(counts)
+            feats= feats[:len(CAT_TRAINED_TYPES)]
             # magic numbers
             feats[-2:] = self.scaler.transform(feats[-2:].reshape(1, -1))
             ind = np.where(self.lr_clf.classes_ == "categorical")[0][0]

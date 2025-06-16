@@ -28,3 +28,36 @@ export const dataTypesList = [
 ];
 
 export const columnTypesList = ["Integer", "Float", "Text", "Time", "Boolean", "Timestamp", "Duration", "Decimal", "Date", "Binary", "Categorical"];
+
+export const dataTypesbyColumnType = {
+  Integer: ["int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64"],
+  Float: ["float16", "float32", "float64"],
+  Text: ["string", "large_string"],
+  Time: [
+    "time32[(s)]", 
+    "time32[(ms)]", 
+    "time64[(us)]", 
+    "time64[(ns)]"
+  ],
+  Boolean: ["bool"],
+  Timestamp: [
+    "timestamp[(s)]",
+    "timestamp[(ms)]",
+    "timestamp[(us)]",
+    "timestamp[(ns)]",
+    "timestamp[(s), tz=(tzstring)]",
+    "timestamp[(ms), tz=(tzstring)]",
+    "timestamp[(us), tz=(tzstring)]",
+    "timestamp[(ns), tz=(tzstring)]",
+  ],
+  Duration: [
+    "duration[(s)]", 
+    "duration[(ms)]", 
+    "duration[(us)]", 
+    "duration[(ns)]"
+  ],
+  Decimal: ["decimal128", "decimal256"],
+  Date: ["date32", "date64"],
+  Binary: ["binary", "large_binary"],
+  Categorical: ["string", "integer"],
+};

@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
+from DashAI.back.metrics.regression_metric import RegressionMetric
 
 
 class RMSE(RegressionMetric):
@@ -27,5 +27,4 @@ class RMSE(RegressionMetric):
         float
             RMSE score between true values and predicted values
         """
-        #true_values, pred_values = prepare_to_metric(true_values, pred_values)
         return mean_squared_error(true_values, pred_values, squared=False)

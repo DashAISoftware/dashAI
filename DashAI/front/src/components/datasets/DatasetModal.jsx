@@ -144,9 +144,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             dtype: value.dtype,
           }
         ])
-);
+      );
 
-      
       setColumnsSpec(updatedTypes); // actualiza el esquema inferido
       console.log("columnsSpec", columnsSpec);
       enqueueSnackbar("Inferred datatypes successfully", { variant: "success" });

@@ -1,4 +1,5 @@
 import pyarrow as pa
+import pandas as pd
 import json
 from typing import Dict
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -53,6 +54,7 @@ PTYPE_TO_DASHAI = {
     "date-iso-8601": {"type": "Date", "dtype": "date64"},
     "date-eu": {"type": "Date", "dtype": "date64"},
     "date-non-std": {"type": "Date", "dtype": "date64"},
+    "time": {"type": "Time", "dtype": "time64(ns)"},
 }
 
 def arrow_to_dashai_types(arrow_type) -> DashAIValue:
@@ -85,40 +87,12 @@ def arrow_to_dashai_schema(arrow_tbl):
     for field in arrow_tbl.schema:
         column_name = field.name
         column_type = field.type
-        schema[column_name] = arrow_to_dashai_types(column_type)
+        schema[column_name] = arrow_to_dashai_types(column_type).to_string()
     return schema
 
 def to_arrow_types(dashai_type) -> pa.DataType:
     """Convert a DashAI type to an Arrow type."""
-    return dtype_arrow_map.get(dashai_type, None)
-    
-
-#Horrible pero temporal.
-def bp(dtype):
-    print("dtype:", dtype)
-    print("dtype_arrow_map:", dtype_arrow_map[dtype])
-    if dtype == "Integer":
-        return Integer(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Float":
-        return Float(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Text":
-        return Text(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Boolean":
-        return Boolean(arrow_type=pa.bool_())
-    elif dtype == "Time":
-        return Time(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Timestamp":
-        return Timestamp(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Duration":
-        return Duration(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Date":
-        return Date(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Decimal":
-        return Decimal(arrow_type=dtype_arrow_map[dtype])
-    elif dtype == "Binary":
-        return Binary(arrow_type=dtype_arrow_map[dtype])
-    else:
-        raise ValueError(f"Unsupported DashAI type: {dtype_arrow_map[dtype]}")
+    return dtype_arrow_map.get(dashai_type, None)    
 
 
 def save_types_in_arrow_metadata(pa_table: pa.Table, datatypes: Dict[str, Dict]) -> pa.Table:
@@ -191,3 +165,33 @@ def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataTyp
     
     return dashai_types
 
+def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Array:
+    """
+    Convert a PyArrow array of date strings to a PyArrow date32 array.
+
+    Parameters
+    ----------
+    column : pa.Array
+        The PyArrow array containing date strings.
+    format : str, optional
+        The format of the date strings. Default is "%Y-%m-%d".
+    Returns
+    -------
+    pa.Array
+        A PyArrow array of date32 values.
+    """
+
+    str_dates = column.to_pylist()
+
+    try:
+        parsed_dates = pd.to_datetime(str_dates, format=format, errors='coerce')
+    except ValueError as e:
+        raise ValueError(f"Invalid date format: {e} - expected format is {format} check, clean your data and try again.") 
+    #parsed_dates = parsed_dates.date
+    print(f"Parsed dates: {parsed_dates}")
+    print(f"Parsed dates type: {type(parsed_dates)}")
+
+    return pa.array(parsed_dates, type=pa.date32())
+
+
+    

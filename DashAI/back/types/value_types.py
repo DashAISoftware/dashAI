@@ -147,7 +147,6 @@ class Time(DashAIValue):
         Unit of time used. It should be 's' or 'ms'.
     """
     size: int = 32
-    unit: str = "s"
     dtype: str = "time32(s)"
 
     def __init__(self, arrow_type: pa.DataType):
@@ -156,20 +155,12 @@ class Time(DashAIValue):
                 f"Arrow type {arrow_type} is not a time type.")
         self.dtype = str(arrow_type)
         self.size = arrow_type.bit_width
-        if arrow_type.equals(pa.time32()):
-            if arrow_type.unit == "s":
-                self.unit = "s"
-            elif arrow_type.unit == "ms":
-                self.unit = "ms"
-        elif arrow_type.equals(pa.time64()):
-            if arrow_type.unit == "us":
-                self.unit = "us"
-            elif arrow_type.unit == "ns":
-                self.unit = "ns"
-        else:
-            raise ValueError(
-                f"Invalid time type: {arrow_type}. Expected time32 or time64."
-            )
+        self.size = 32 if arrow_type.equals(pa.time32('s')) or arrow_type.equals(pa.time32('ms')) else 64
+        if self.size == 32:
+            self.dtype = "time32(s)" if arrow_type.equals(pa.time32('s')) else "time32(ms)"
+        elif self.size == 64:
+            self.dtype = "time64(us)" if arrow_type.equals(pa.time64('us')) else "time64(ns)"
+
     
     def transform(self, values, library):
         if library == "numpy":
@@ -322,15 +313,7 @@ class Decimal(DashAIValue):
         self.precision = arrow_type.precision
         self.scale = arrow_type.scale
     
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
+
     
     def to_string(self):
         return {"type": "Decimal", "dtype": self.dtype}
@@ -348,8 +331,8 @@ class Date(DashAIValue):
 
     """
 
-    size: int = 64
-    dtype: str = "date64"
+    size: int = 32
+    dtype: str = "date32"
     def __init__ (self, arrow_type: pa.DataType):
         if not pa.types.is_date(arrow_type):
             raise ValueError(
@@ -359,17 +342,8 @@ class Date(DashAIValue):
             self.size = 32
         elif arrow_type.equals(pa.date64()):
             self.size = 64
-    
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
-    
+
+            
     def to_string(self):
         return {"type": "Date", "dtype": self.dtype}
 
@@ -397,16 +371,6 @@ class Binary(DashAIValue):
             self.binary_type = "binary"
         elif arrow_type.equals(pa.large_binary()):
             self.binary_type = "large_binary"
-    
-    def transform(self, values, library):
-        if library == "numpy":
-            return values.to_numpy()
-        elif library == "torch":
-            return values.to_torch()
-        elif library == "tensorflow":
-            return values.to_tensorflow()
-        else:
-            raise ValueError(f"Unsupported library: {library}")
     
     def to_string(self):
         return {"type": "Binary", "dtype": self.dtype}

@@ -6,7 +6,6 @@ from sklearn.metrics import f1_score
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
-    prepare_to_metric,
 )
 
 

@@ -82,17 +82,12 @@ class ModelFactory:
         """Computes metrics only if the model is fitted."""
         if not self.fitted:
             raise NotFittedError("Model must be trained before evaluating metrics.")
-        print("Evaluating metrics...")
-        print("metrics:", metrics)
-        print("y[train]:", y["train"])
-        print("x[train]:", x["train"])
-
         results = {}
         for split in ["train", "validation", "test"]:
             split_results = {}
             predictions = self.model.predict(x[split])
-            transformed_y = self.model.apply_model_transformations(y[split])
-            ###Falta pasar y por el transform wn, ese es el drama
+            transformed_y = self.model.prepare_dataset(y[split])
+            
             for metric in metrics:
                 prepared_true, prepared_predicted = prepare_to_metric(transformed_y, predictions, metric.__name__)
                 score = metric.score(prepared_true, prepared_predicted)
@@ -102,10 +97,3 @@ class ModelFactory:
         
         return results
 
-        # return {
-        #     split: {
-        #         metric.__name__: metric.score(prepared_y, self.model.predict(x[split]))
-        #         for metric in metrics
-        #     }
-        #     for split in ["train", "validation", "test"]
-        # }

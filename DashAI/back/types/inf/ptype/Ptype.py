@@ -26,7 +26,6 @@ class Ptype:
             "string",
             "float",
             "boolean",
-            "time",
             "date-iso-8601",
             "date-eu",
             "date-non-std-subtype",

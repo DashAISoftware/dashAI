@@ -7,7 +7,7 @@ import {
   getDatasetSample as getDatasetSampleRequest,
   getDatasetTypes as getDatasetTypesRequest,
 } from "../../api/datasets";
-import { dataTypesList, columnTypesList } from "../../utils/typesLists";
+import { dataTypesbyColumnType, columnTypesList } from "../../utils/typesLists";
 import SelectTypeCell from "../custom/SelectTypeCell";
 
 function DatasetPreviewTable({
@@ -31,45 +31,43 @@ function DatasetPreviewTable({
           id: idx,
           columnName: name,
           example: previewData.sample[0][name],
-          columnType: columnInfo.type,
-          dataType: columnInfo.dtype,
+          columnType: columnsSpec[name]?.type || columnInfo.type,
+          dataType: columnsSpec[name]?.dtype || columnInfo.dtype,
         };
       });
 
-      // const newColumnsSpec = {};
-      // for (const columnName of columnNames) {
-      //   const columnInfo = previewData.schema[columnName];
-      //   newColumnsSpec[columnName] = {
-      //     type: columnInfo.type,
-      //     dtype: columnInfo.dtype,
-      //   };
-      // }
-
-      // setColumnsSpec(newColumnsSpec);
       setLoading(false);
       setRows(rows);
     }
-  }, [previewData]);
+  }, [previewData, columnsSpec]);
 
 
   const updateCellValue = async (id, field, newValue) => {
     await apiRef.current.setEditCellValue({ id, field, value: newValue });
     apiRef.current.stopCellEditMode({ id, field });
     setRows((prevRows) =>
-      prevRows.map((row) =>
-        row.id === id ? { ...row, [field]: newValue } : row,
-      ),
+      prevRows.map((row) => {
+        if (row.id === id) {
+          if (field === "columnType") {
+            const baseDataType = dataTypesbyColumnType[newValue]?.[0] || "";
+            return { ...row, columnType: newValue, dataType: baseDataType };
+          }
+          if (field === "dataType") {
+            return { ...row, dataType: newValue };
+          }
+        }
+        return row;
+      }),
     );
 
     const columnName = rows.find((row) => row.id === id)?.columnName;
-    console.log("ucv columnName:", columnName);
     const updateColumns = { ...columnsSpec };
-    console.log("ucv updateColumns:", updateColumns);
-    console.log("ucv field:", field);
-    if (field === "dataType") {
-      updateColumns[columnName].dtype = newValue;
-    } else if (field === "columnType") {
+    if (field === "columnType") {
       updateColumns[columnName].type = newValue;
+      updateColumns[columnName].dtype = dataTypesbyColumnType[newValue]?.[0] || "";
+    }
+    else if (field === "dataType") {
+      updateColumns[columnName].dtype = newValue;
     }
 
     setColumnsSpec(updateColumns);
@@ -81,7 +79,16 @@ function DatasetPreviewTable({
     });
   };
 
-  const renderSelectCell = (params, options) => {
+  const renderSelectCell = (params) => {
+    let options = [];
+    if (params.field === "dataType") {
+      const column = rows.find((row) => row.id === params.id);
+      const selectedColumnType = column?.columnType;
+      options = dataTypesbyColumnType[selectedColumnType] || [];
+    } else if (params.field === "columnType") {
+      options = columnTypesList;
+    }
+  
     return (
       <SelectTypeCell
         id={params.id}
@@ -120,7 +127,7 @@ function DatasetPreviewTable({
       field: "dataType",
       headerName: "Data type",
       renderEditCell: (params) =>
-        isEditable && renderSelectCell(params, dataTypesList),
+        isEditable && renderSelectCell(params),
       minWidth: 200,
       editable: isEditable,
     },

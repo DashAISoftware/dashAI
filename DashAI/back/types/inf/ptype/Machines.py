@@ -12,7 +12,6 @@ MACHINES = {
     "float": Machine.Floats(),
     "boolean": Machine.Booleans(),
     "gender": Machine.Genders(),
-    "time": Machine.Time(),
     "date-iso-8601": Machine.DateISO_8601(),
     "date-eu": Machine.Date_EU(),
     "date-non-std-subtype": Machine.SubTypeNonstdDate(),
@@ -24,9 +23,11 @@ MACHINES = {
 
 
 class Machines:
-    def __init__(self, types):
+    def __init__(self, types, all_machines = None):
         self.types = types
-        self.forType = {t: MACHINES[t] for t in types}
+        if all_machines is None:
+            all_machines = MACHINES
+        self.forType = {t: all_machines[t] for t in types}
         self.anomalous = Machine.Anomaly()
         self.missing = Machine.Missing()
         self.normalize_params()

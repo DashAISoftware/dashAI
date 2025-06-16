@@ -4,7 +4,7 @@ import evaluate
 import numpy as np
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
+from DashAI.back.metrics.translation_metric import TranslationMetric
 
 
 class Bleu(TranslationMetric):
@@ -35,9 +35,6 @@ class Bleu(TranslationMetric):
             The calculated BLEU score ranging between 0 and 1.
         """
         metric = evaluate.load("bleu")
-        # source_sentences, target_sentences = prepare_to_metric(
-        #     source_sentences, target_sentences
-        # )
         return metric.compute(
             references=source_sentences, predictions=target_sentences
         )["bleu"]

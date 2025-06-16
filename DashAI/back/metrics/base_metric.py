@@ -27,10 +27,10 @@ def validate_inputs(true: Union[np.ndarray, list], pred: Union[np.ndarray, list]
 
     Parameters
     ----------
-    true: ndarray
+    true: ndarray, list
         True labels.
-    pred: list
-        Predict labels by the model.
+    pred: nndarray, list
+        Predicted labels by the model.
     metric_category: str
         The name of the category of metric to be used as base to validate the labels.
     
@@ -79,7 +79,6 @@ def prepare_to_metric(
     column_name = y.column_names[0]
 
     for metric_category, metrics in METRICS_MAP.items():
-        print(f"metric_category: {metric_category}, metrics: {metrics}")
         if metric_type in metrics:
             if metric_category == "classification":
                 if not isinstance(pre_pred, np.ndarray):

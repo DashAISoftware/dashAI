@@ -115,8 +115,6 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-                #print("Experiment input columns:", experiment.input_columns)
-                #print("Experiment output columns:", experiment.output_columns)
 
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
@@ -127,11 +125,7 @@ class ModelJob(BaseJob):
                     splits=splits,
                     output_columns=experiment.output_columns,
                 )
-
-                # print("Prepared dataset types:", prepared_dataset._types)
-                # print("Prepared dataset columns:", prepared_dataset.columns)
-                #print("Prepared dataset:", prepared_dataset)
-
+                
                 x, y = select_columns(
                     prepared_dataset,
                     experiment.input_columns,
