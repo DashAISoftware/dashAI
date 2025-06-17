@@ -48,7 +48,7 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         self.verbose = False
         self.lr_clf = joblib.load(Path(__file__).parent / "ptype" / "LR.sav")
         self.scaler = joblib.load(Path(__file__).parent / "ptype" / "scaler.pkl")
-        self.cat_threshold = 0.4
+        self.cat_threshold = 0.48
     
     def infer_types(self, data) -> dict:
         """
@@ -69,6 +69,7 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         # Convert the schema to a dashai format
         inferred_types = {}
         for col_name, col_object in schema.cols.items():
+            print("probabilities:", col_object.p_t)
             inferred_types[col_name] = PTYPE_TO_DASHAI[max(col_object.p_t, key=col_object.p_t.get)]
         
         return inferred_types

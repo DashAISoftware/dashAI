@@ -1,9 +1,9 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, Response, status, File, UploadFile
+from fastapi import APIRouter, Depends, Response, status, File, UploadFile, Form
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
@@ -20,8 +20,12 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset
 import pandas as pd
 import pyarrow as pa
+import ijson
+import json
 from DashAI.back.types.utils import arrow_to_dashai_schema, PTYPE_TO_DASHAI
 from DashAI.back.types.inf.type_inference import infer_types
+from itertools import islice
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -324,6 +328,7 @@ async def update_dataset(
 @router.post("/load_preview")
 async def load_preview(
     file: UploadFile = File(...),
+    params: str = Form(None)
     ):
     """Load a small preview of the dataset from a file, without saving it to the database.
 
@@ -340,35 +345,32 @@ async def load_preview(
     """
     try:
         if file.filename.endswith(".csv"):
-            df = pd.read_csv(file.file, nrows=100)
+            df = pd.read_csv(file.file, nrows=10)
         elif file.filename.endswith(".xlsx"):
-            df = pd.read_excel(file.file, nrows=100)
+            parsed_params = json.loads(params)
+            sheet = parsed_params.get("sheet", 0)
+            header = parsed_params.get("header", 0)
+            usecols = parsed_params.get("usecols", None)
+            df = pd.read_excel(file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10)
         elif file.filename.endswith(".json"):
-            try:
-                df = pd.read_json(file.file, lines=True, nrows=100)
-            except ValueError:
-                # If the JSON is not in lines format, try loading it as a regular JSON
-                file.file.seek(0)
-                #Hay que mirar el json dataloaderrrrr porque carga a partir de una key dada por el user
-
+            parsed_params = json.loads(params)
+            data_key = parsed_params.get("data_key", None)
+            items = ijson.items(file.file, f"{data_key}.item")
+            limited_items = list(islice(items, 10)) # We check the first 100 items without loading the entire file into memory
+            df = pd.DataFrame(limited_items)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported file type. Only CSV, Excel, and JSON files are supported.",
             )
-        if len(df) > 100:
-            df = df.head(100)
         
         table = pa.Table.from_pandas(df)
-        #print("table:", table.schema)
         schema = arrow_to_dashai_schema(table)
         import numpy as np
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
 
 
         sample = df.to_dict(orient="records")
-        print("dashai schema:", schema)
-        #print("struct:", {"sample": sample, "schema": schema})
         return {
             "sample": sample,
             "schema": schema,
@@ -384,6 +386,7 @@ async def load_preview(
 @router.post("/infer_datatypes")
 async def infer_datatypes(
     file: UploadFile = File(...),
+    params: str = Form(None)
     ):
     """Infer the datatypes of the dataset.
 
@@ -399,15 +402,23 @@ async def infer_datatypes(
     """
     try:
         if file.filename.endswith(".csv"):
-            df = pd.read_csv(file.file)
+            df = pd.read_csv(file.file, nrows=10000)
         elif file.filename.endswith(".xlsx"):
-            df = pd.read_excel(file.file)
+            parsed_params = json.loads(params)
+            sheet = parsed_params.get("sheet", 0)
+            header = parsed_params.get("header", 0)
+            usecols = parsed_params.get("usecols", None)
+            df = pd.read_excel(file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10000)
         elif file.filename.endswith(".json"):
-            df = pd.read_json(file.file, lines=True)
-        if len(df)>100:
-            df = df.head(100)
+            parsed_params = json.loads(params)
+            print("parsed_params:", parsed_params)
+            data_key = parsed_params.get("data_key", None)
+            items = ijson.items(file.file, f"{data_key}.item")
+            limited_items = list(islice(items, 10000)) # We check the first 10000 items without loading the entire file into memory
+            df = pd.DataFrame(limited_items)
+
         #returns a dictionary with the inferred datatypes and column name for each
-        inferred_types = infer_types(df, method="Dummy")
+        inferred_types = infer_types(df, method="DashAIPtype")
 
         return inferred_types
 
