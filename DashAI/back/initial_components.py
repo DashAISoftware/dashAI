@@ -85,7 +85,6 @@ from DashAI.back.models import (
     RandomForestRegression,
     RidgeRegression,
     SimpleControlNetModel,
-    StableDiffusionControlNetCannyModel,
     StableDiffusionV2Model,
     StableDiffusionV3Model,
 )
@@ -140,7 +139,6 @@ def get_initial_components():
         QwenModel,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
-        StableDiffusionControlNetCannyModel,
         SimpleControlNetModel,
         LogisticRegression,
         MLPRegression,
