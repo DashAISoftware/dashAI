@@ -9,7 +9,6 @@ import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import DeleteItemModal from "../custom/DeleteItemModal";
 import EditDatasetModal from "./EditDatasetModal";
 import DatasetSummaryModal from "./DatasetSummaryModal";
-import EditDataTypeModal from "./EditDataTypeModal";
 import {
   getDatasets as getDatasetsRequest,
   deleteDataset as deleteDatasetRequest,
@@ -132,11 +131,6 @@ function DatasetsTable({
             key="dataset-summary-component"
             datasetId={params.id}
           />,
-          <EditDataTypeModal
-            key="edit-data-type-component"
-            datasetId={params.id}
-            updateDatasets={() => setUpdateTableFlag(true)}
-          />, 
         ],
       },
     ],

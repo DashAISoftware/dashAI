@@ -37,19 +37,11 @@ export const deleteDataset = async (id: string): Promise<object> => {
 };
 
 export const loadPreview  = async (formData: FormData): Promise<object> => {
-  const response = await api.post(`${datasetEndpoint}/load_preview`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const response = await api.post(`${datasetEndpoint}/load_preview`, formData);
   return response.data;
 }
 
 export const inferDataTypes = async (formData: FormData): Promise<object> => {
-  const response = await api.post(`${datasetEndpoint}/infer_datatypes`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  const response = await api.post(`${datasetEndpoint}/infer_datatypes`, formData);
   return response.data;
 }

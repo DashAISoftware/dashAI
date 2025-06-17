@@ -12,6 +12,8 @@ import {
   Grid,
   Typography,
   StepButton,
+  Box,
+  Tooltip,
 } from "@mui/material";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
@@ -56,6 +58,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const { enqueueSnackbar } = useSnackbar();
   const [previewData, setPreviewData] = useState({});
   const [showSummary, setShowSummary] = useState(false);
+  const [loading, setLoading] = useState(false);
+
 
   const handleSubmitNewDataset = async () => {
     try {
@@ -97,7 +101,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
 
     const formData = new FormData();
     formData.append("file", file);
-
+    formData.append("params", JSON.stringify(newDataset.params));
+    
     try {
       
 
@@ -127,15 +132,13 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   };
 
   const handleInferDataTypes = async () => {
-    console.log("corriendo infer")
+    setLoading(true);
     const formData = new FormData();
     formData.append("file", newDataset.file);
-    console.log("newDataset.file", newDataset.file);
-    console.log("formData", formData);
+    formData.append("params", JSON.stringify(newDataset.params));
+
     try {
-      const response = await inferDataTypes(formData); // este hace fetch al endpoint /infer_datatypes
-      console.log("Infered datatypes:", response);
-      
+      const response = await inferDataTypes(formData);   
       const updatedTypes =  Object.fromEntries(
         Object.entries(response).map(([key, value]) => [
           key,
@@ -146,12 +149,14 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
         ])
       );
 
-      setColumnsSpec(updatedTypes); // actualiza el esquema inferido
+      setColumnsSpec(updatedTypes); 
       console.log("columnsSpec", columnsSpec);
       enqueueSnackbar("Inferred datatypes successfully", { variant: "success" });
     } catch (error) {
       console.error("Failed to infer datatypes", error);
       enqueueSnackbar("Failed to infer datatypes", { variant: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -271,27 +276,43 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             setNextEnabled={setNextEnabled}
             columnsSpec={columnsSpec}
             setColumnsSpec={setColumnsSpec}
-            handleInferDataTypes={handleInferDataTypes}
           />
         )}
       </DialogContent>
 
       {/* Actions - Back and Next */}
       <DialogActions>
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
-          </Button>
-          <Button
-            onClick={handleNextButton}
-            autoFocus
-            variant="contained"
-            color="primary"
-            disabled={!nextEnabled}
-          >
-            {activeStep === 0 ? "Next" : activeStep === 1 ? "Preview" : "Upload"}
-          </Button>
-        </ButtonGroup>
+        <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+          <Box sx={{ minWidth: "180px" }}>
+          {activeStep === 2 && (
+            <Tooltip title = "The methods used to infer columns datatypes are not perfect and can commit mistakes, please check yourself the types before pressing the Upload button." >  
+              <Button
+                  size = "large"
+                  variant="contained"
+                  color="primary"
+                  //sx={{ mt: 2 }}
+                  onClick ={() => handleInferDataTypes()}
+                >
+                Infer column Data Types
+              </Button>
+            </Tooltip>
+          )}
+          </Box>
+          <ButtonGroup size="large">
+            <Button onClick={handleBackButton}>
+              {activeStep === 0 ? "Close" : "Back"}
+            </Button>
+            <Button
+              onClick={handleNextButton}
+              autoFocus
+              variant="contained"
+              color="primary"
+              disabled={!nextEnabled}
+            >
+              {activeStep === 0 ? "Next" : activeStep === 1 ? "Preview" : "Upload"}
+            </Button>
+          </ButtonGroup>
+        </Box>
       </DialogActions>
     </Dialog>
   );

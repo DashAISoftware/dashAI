@@ -9,7 +9,6 @@ function DatasetPreviewStep({
   setNextEnabled, // function to enable or disable the "Next" button in the modal
   columnsSpec, // columns specification for the dataset
   setColumnsSpec, // function to set the columns specification
-  handleInferDataTypes, // function to infer categorical types
 }) {
   useEffect(() => {
     if (previewData && Object.keys(previewData).length > 0) {
@@ -46,14 +45,6 @@ function DatasetPreviewStep({
               columnsSpec={columnsSpec}
               setColumnsSpec={setColumnsSpec}
             />
-            <Button
-              variant="outlined"
-              color="secondary"
-              sx={{ mt: 2 }}
-              onClick ={() => handleInferDataTypes()}
-            >
-              Inferir tipos categóricos
-            </Button>
           </>
           ) : (
             <CircularProgress />
