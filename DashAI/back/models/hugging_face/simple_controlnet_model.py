@@ -19,6 +19,13 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 
+if torch.cuda.is_available():
+    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
+    DEVICE_PLACEHOLDER = "cuda:0"
+else:
+    DEVICE_ENUM = ["cpu"]
+    DEVICE_PLACEHOLDER = "cpu"
+
 
 class SimpleSchema(BaseSchema):
     num_inference_steps: schema_field(
@@ -40,8 +47,8 @@ class SimpleSchema(BaseSchema):
     )  # type: ignore
 
     device: schema_field(
-        enum_field(enum=["cuda", "cpu"] if torch.cuda.is_available() else ["cpu"]),
-        placeholder="cuda" if torch.cuda.is_available() else "cpu",
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
         description="Device for generation. Use 'cuda' if GPU is available.",
     )  # type: ignore
 

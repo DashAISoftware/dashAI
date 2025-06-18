@@ -15,6 +15,13 @@ from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
 
+if torch.cuda.is_available():
+    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
+    DEVICE_PLACEHOLDER = "cuda:0"
+else:
+    DEVICE_ENUM = ["cpu"]
+    DEVICE_PLACEHOLDER = "cpu"
+
 
 class StableDiffusionSchema(BaseSchema):
     """Schema for Stable Diffusion V2 image generation."""
@@ -57,8 +64,8 @@ class StableDiffusionSchema(BaseSchema):
     )  # type: ignore
 
     device: schema_field(
-        enum_field(enum=["cuda", "cpu"] if torch.cuda.is_available() else ["cpu"]),
-        placeholder="cuda" if torch.cuda.is_available() else "cpu",
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
         description="Device for generation. Use 'cuda' if GPU is available.",
     )  # type: ignore
 
