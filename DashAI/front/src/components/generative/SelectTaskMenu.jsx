@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { Box, InputAdornment, TextField, Grid } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Box, Grid } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
 import SearchBar from "./SearchBar";
 import { getGenerativeTask } from "../../api/generativeTask";
@@ -50,7 +50,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
           {filteredTasks.map((task, index) => (
             <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
               <TaskBox
-                taskName={task.name}
+                taskName={task.display_name}
                 description={task.description}
                 onClick={() => goToNextStep(task.name)}
               />
