@@ -17,6 +17,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         "outputs_cardinality": 1,
     }
 
+    DISPLAY_NAME: str = "Text to Text Generation"
     DESCRIPTION: str = (
         "This task uses a large language model (LLM) "
         "to generate text from a given prompt."

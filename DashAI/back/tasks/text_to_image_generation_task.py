@@ -20,7 +20,7 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         "inputs_cardinality": 1,
         "outputs_cardinality": "n",
     }
-
+    DISPLAY_NAME: str = "Text to Image Generation"
     DESCRIPTION: str = "This task generates images based on the provided input text."
 
     def prepare_for_task(

@@ -21,6 +21,7 @@ class ControlNetTask(BaseGenerativeTask):
         "outputs_cardinality": "n",
     }
 
+    DISPLAY_NAME: str = "ControlNet"
     DESCRIPTION: str = (
         "This task generates images based on the provided input text and image."
     )
