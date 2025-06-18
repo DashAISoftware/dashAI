@@ -285,7 +285,7 @@ def test_prepare_for_task_text_to_text():
 def test_prepare_for_task_text_to_text_with_history():
     text_to_text_task = TextToTextGenerationTask()
     input_data = [ProcessData(data="What is the capital of France?")]
-    history = [(["What is the capital of Spain?"], ["Madrid"])]
+    history = [("What is the capital of Spain?", "Madrid")]
     prepared_input = text_to_text_task.prepare_for_task(input_data, history=history)
 
     expected_output = (

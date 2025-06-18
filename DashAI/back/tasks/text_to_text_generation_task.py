@@ -47,13 +47,11 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         if not history:
             return f"Q: {input}\nA:"
 
-        history = [(input, output) for (input, output) in history]
         context = "\n".join(
-            [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
+            [f"Q: {h_input}\nA: {h_output}" for (h_input, h_output) in history]
         )
 
         prepared_input = f"{context}\nQ: {input}\nA:"
-        print(prepared_input)
         return prepared_input
 
     def prepare_input_for_database(
