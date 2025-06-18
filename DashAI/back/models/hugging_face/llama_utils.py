@@ -1,6 +1,7 @@
-import llama_cpp
 import os
 from pathlib import Path
+
+import llama_cpp
 
 
 def is_gpu_available_for_llama_cpp() -> bool:
@@ -15,5 +16,5 @@ def is_gpu_available_for_llama_cpp() -> bool:
             "llama", Path(os.path.dirname(llama_cpp.__file__)) / "lib"
         )
         return bool(lib.llama_supports_gpu_offload())
-    except Exception as e:
+    except Exception:
         return False
