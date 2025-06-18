@@ -1,5 +1,5 @@
-import { Box } from "@mui/material";
-import { useState } from "react";
+import { Box, Grid } from "@mui/material";
+import { useState, useEffect } from "react";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
@@ -7,7 +7,6 @@ import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { getSessions, removeSession } from "../../api/session";
-import { useEffect } from "react";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -55,63 +54,55 @@ export default function Generative() {
   };
 
   return (
-    <Box
-      display={"flex"}
-      style={{ position: "absolute" }}
-      justifyContent={"flex-start"}
-      gap={3}
-      height={"calc(100vh - 74px)"}
-      flexGrow={1}
-      width={"100%"}
-      p={1.5}
-      alignItems={"stretch"}
-      overflow={"hidden"}
-    >
-      <SessionBar
-        sessions={sessions}
-        setSessions={() => setSessions()}
-        selectedSessionId={selectedSessionId}
-        handleSessionClick={handleSessionClick}
-        handleNewSessionButton={handleNewSessionButton}
-        handleSessionDelete={handleSessionDelete}
-      />
-      <MainGenerativeBox>
-        {selectedSessionId ? (
-          <GenerativeChat
-            sessionId={selectedSessionId}
-            taskName={selectedTaskName}
-            paramsVersion={paramsVersion}
-          />
-        ) : stepIndex === 0 ? (
-          <SelectTaskMenu
-            goToNextStep={(taskName) => {
-              setSelectedTaskName(taskName);
-              setStepIndex(1);
-            }}
-          />
-        ) : (
-          <SelectModelMenu
-            handleAddSession={handleAddSession}
-            selectedTaskName={selectedTaskName}
-            setSelectedSessionId={setSelectedSessionId}
-          />
-        )}
-      </MainGenerativeBox>
-
-      <Box
-        width={"600px"}
-        maxWidth={"600px"}
-        height={"100%"}
-        borderRadius={2}
-        //p={2}
-        bgcolor={"#030712"}
-      >
-        {selectedSessionId ? (
-          <ParamsBar
-            selectedSessionId={selectedSessionId}
-            onParamsUpdate={onParamsUpdate}
-          />
-        ) : null}
+    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
+      <Box width="22%" mr={1}>
+        <SessionBar
+          sessions={sessions}
+          selectedSessionId={selectedSessionId}
+          handleSessionClick={handleSessionClick}
+          handleNewSessionButton={handleNewSessionButton}
+          handleSessionDelete={handleSessionDelete}
+          stepIndex={stepIndex}
+        />
+      </Box>
+      <Box width="56%" mr={1}>
+        <MainGenerativeBox>
+          {selectedSessionId ? (
+            <GenerativeChat
+              sessionId={selectedSessionId}
+              taskName={selectedTaskName}
+              paramsVersion={paramsVersion}
+            />
+          ) : stepIndex === 0 ? (
+            <SelectTaskMenu
+              goToNextStep={(taskName) => {
+                setSelectedTaskName(taskName);
+                setStepIndex(1);
+              }}
+            />
+          ) : (
+            <SelectModelMenu
+              handleAddSession={handleAddSession}
+              selectedTaskName={selectedTaskName}
+              setSelectedSessionId={setSelectedSessionId}
+            />
+          )}
+        </MainGenerativeBox>
+      </Box>
+      <Box width="22%">
+        <Box
+          width="100%"
+          height="100%"
+          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+        >
+          {selectedSessionId ? (
+            <ParamsBar
+              selectedSessionId={selectedSessionId}
+              onParamsUpdate={onParamsUpdate}
+              taskName={selectedTaskName}
+            />
+          ) : null}
+        </Box>
       </Box>
     </Box>
   );

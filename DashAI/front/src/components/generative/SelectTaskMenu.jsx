@@ -1,124 +1,63 @@
-import { useEffect, useState, useRef } from "react";
-import { Box, Typography, Autocomplete, TextField } from "@mui/material";
+import { useEffect, useState } from "react";
+import { Box, Grid } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
-import IconAvatar from "../../components/generative/IconAvatar";
+import SearchBar from "./SearchBar";
 import { getGenerativeTask } from "../../api/generativeTask";
+import CustomLayout from "../../components/custom/CustomLayout";
 
 export default function SelectTaskMenu({ goToNextStep }) {
-  const [task, setTask] = useState([]);
-
-  const containerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-
-    observer.observe(containerRef.current);
-
-    return () => observer.disconnect();
+    getGenerativeTask().then(setTasks);
   }, []);
 
-  useEffect(() => {
-    getGenerativeTask().then(setTask);
-  }, []);
+  const [search, setSearch] = useState("");
 
-  let tasksToShow = task;
-
-  if (containerWidth > 800) {
-    tasksToShow = task.slice(0, 3);
-  } else if (containerWidth > 500) {
-    tasksToShow = task.slice(0, 2);
-  } else {
-    tasksToShow = task.slice(0, 1);
-  }
+  const filteredTasks = tasks.filter((task) =>
+    task.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
-    <Box
-      display={"flex"}
-      height={"100%"}
-      width={"100%"}
-      flexDirection={"column"}
-      justifyContent={"flex-start"}
-      sx={{ pt: 2 }}
+    <CustomLayout
+      title="Generative Module"
+      subtitle="Select generative task to start a new session"
+      padding={0}
     >
-      <Box sx={{ ml: 5 }}>
-        <IconAvatar src="/dai_circle.png" size={32} />{" "}
-      </Box>
       <Box
         display={"flex"}
+        height={"100%"}
+        width={"100%"}
         flexDirection={"column"}
-        alignItems={"flex-start"}
-        justifyContent={"center"}
-        gap={1}
-        sx={{ mt: 2, mb: 5, ml: 5, mr: 5 }}
+        justifyContent={"flex-start"}
       >
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "24px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-          }}
-        >
-          Hello
-        </Typography>
+        <Box width={"450px"}>
+          <SearchBar
+            placeholder="Search Tasks"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </Box>
 
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "24px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            color: "#aba5a5",
-          }}
+        <Grid
+          container
+          direction="row"
+          justifyContent="flex-start"
+          alignItems="center"
+          spacing={1}
+          sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-          Select a generative task to start
-        </Typography>
+          {filteredTasks.map((task, index) => (
+            <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+              <TaskBox
+                taskName={task.display_name}
+                description={task.description}
+                onClick={() => goToNextStep(task.name)}
+              />
+            </Grid>
+          ))}
+        </Grid>
       </Box>
-      <Box
-        ref={containerRef}
-        display="flex"
-        justifyContent="space-evenly"
-        alignItems="stretch"
-        gap={2}
-        width="100%"
-      >
-        {tasksToShow.map((task, index) => (
-          <Box
-            key={index}
-            flex="1 1 30%"
-            maxWidth="300px"
-            minWidth="200px"
-            minHeight="40px"
-          >
-            <TaskBox
-              key={index}
-              taskName={task.name}
-              description={task.description}
-              onClick={() => goToNextStep(task.name)}
-            />
-          </Box>
-        ))}
-      </Box>
-
-      <Autocomplete
-        disablePortal
-        options={task.map((t) => t.name)}
-        sx={{ m: 5 }}
-        renderInput={(params) => <TextField {...params} label="Task" />}
-        onChange={(event, value) => {
-          const selectedTask = task.find((t) => t.name === value);
-          if (selectedTask) {
-            goToNextStep(selectedTask.name);
-          }
-        }}
-      />
-    </Box>
+    </CustomLayout>
   );
 }

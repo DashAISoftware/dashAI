@@ -8,27 +8,29 @@ export default function NewSessionButton({ onClick }) {
     <Box px={2} py={1}>
       <Button
         sx={{
-          bgcolor: "#374151",
+          bgcolor: "primary.main",
           color: "white",
           borderRadius: 1,
           mt: 1,
-          py: 1,
           px: 2,
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
           cursor: "pointer",
           "&:hover": {
-            bgcolor: "#475569",
+            bgcolor: "primary.dark",
           },
-          height: "45px",
+          height: "40px",
           width: "100%",
           textTransform: "none",
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
         }}
         onClick={onClick}
       >
-        <AddIcon sx={{ mr: 1 }} />
         <Typography>New session</Typography>
+        <AddIcon />
       </Button>
     </Box>
   );

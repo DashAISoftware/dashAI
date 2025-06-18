@@ -17,6 +17,7 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         "outputs_cardinality": 1,
     }
 
+    DISPLAY_NAME: str = "Text to Text Generation"
     DESCRIPTION: str = (
         "This task uses a large language model (LLM) "
         "to generate text from a given prompt."
@@ -46,13 +47,11 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         if not history:
             return f"Q: {input}\nA:"
 
-        history = [(input, output) for (input, output) in history]
         context = "\n".join(
-            [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
+            [f"Q: {h_input}\nA: {h_output}" for (h_input, h_output) in history]
         )
 
         prepared_input = f"{context}\nQ: {input}\nA:"
-        print(prepared_input)
         return prepared_input
 
     def prepare_input_for_database(

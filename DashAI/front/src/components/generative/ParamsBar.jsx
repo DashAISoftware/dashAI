@@ -1,16 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, IconButton } from "@mui/material";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
+import HistoryIcon from "@mui/icons-material/History";
+import ParameterHistoryModal from "./SessionHistoryModal";
+import { getHistoryBySessionId } from "../../api/session";
 import {
   getGenerativeSession,
   getRelatedComponents,
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
+import { use } from "react";
 
-export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
+export default function ParamsBar({
+  selectedSessionId,
+  onParamsUpdate,
+  taskName,
+}) {
   const [parameters, setParameters] = useState({});
+  const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
+  const [history, setHistory] = useState([]);
   const [schema, setSchema] = useState(null);
+
+  const getHistory = () => {
+    getHistoryBySessionId(selectedSessionId).then((response) => {
+      setHistory(response);
+    });
+  };
+
+  useEffect(() => {
+    if (!selectedSessionId) return;
+    getHistory();
+  }, []);
 
   useEffect(() => {
     if (!selectedSessionId) return;
@@ -77,20 +98,43 @@ export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
       flexDirection={"column"}
       justifyContent={"flex-start"}
       overflow={"auto"}
+      bgcolor={"background.box"}
+      borderRadius={2}
     >
-      <Typography
-        sx={{
-          fontSize: "16px",
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-          ml: 5,
-          mt: 1,
-          mr: 5,
-          mb: 5,
-        }}
+      <Box
+        display={"flex"}
+        justifyContent={"space-between"}
+        alignItems={"center"}
+        p="40px"
+        pt="30px"
       >
-        Edit Parameters
-      </Typography>
+        <Typography
+          sx={{
+            fontSize: "16px",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          }}
+        >
+          Edit Parameters
+        </Typography>
+
+        {/* Parameter History Modal */}
+        <IconButton
+          onClick={() => {
+            getHistory();
+            setHistoryInfoVisible(true);
+          }}
+        >
+          <HistoryIcon
+            sx={{
+              color: "#a0a0a0",
+              "&:hover": {
+                color: "#ffffff",
+              },
+            }}
+          />
+        </IconButton>
+      </Box>
       <form onSubmit={formik.handleSubmit}>
         <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
           {/* Render the parameter fields */}
@@ -127,6 +171,14 @@ export default function ParamsBar({ selectedSessionId, onParamsUpdate }) {
           </Box>
         </Box>
       </form>
+
+      {/* Parameter History Modal */}
+      <ParameterHistoryModal
+        historyChanges={history}
+        open={historyInfoVisible}
+        taskName={taskName}
+        setOpen={setHistoryInfoVisible}
+      />
     </Box>
   );
 }

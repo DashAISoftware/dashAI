@@ -71,6 +71,7 @@ export default function SelectModelMenu({
       flexDirection={"column"}
       justifyContent={"flex-start"}
       overflow={"auto"}
+      //bgcolor={"background.box"}
     >
       <Typography
         sx={{
@@ -100,30 +101,32 @@ export default function SelectModelMenu({
       {selectedModel && selectedModel.schema && (
         <form onSubmit={formik.handleSubmit}>
           <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
-            <Typography
-              sx={{
-                fontSize: "16px",
-                whiteSpace: "normal",
-                wordBreak: "break-word",
-                mb: 2,
-              }}
-            >
-              Parameters
-            </Typography>
-            <FormSchemaRenderFields
-              modelSchema={selectedModel.schema.properties}
-              formik={formik}
-              autoSave={false}
-              handleUpdateSchema={(updatedValues) => {
-                formik.setValues((prevValues) => ({
-                  ...prevValues,
-                  ...updatedValues,
-                }));
-              }}
-              onFormSubmit={formik.handleSubmit}
-              setError={(error) => console.error(error)}
-              errorsMessage={formik.errors}
-            />
+            <Box width="60%">
+              <Typography
+                sx={{
+                  fontSize: "16px",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  mb: 2,
+                }}
+              >
+                Parameters
+              </Typography>
+              <FormSchemaRenderFields
+                modelSchema={selectedModel.schema.properties}
+                formik={formik}
+                autoSave={false}
+                handleUpdateSchema={(updatedValues) => {
+                  formik.setValues((prevValues) => ({
+                    ...prevValues,
+                    ...updatedValues,
+                  }));
+                }}
+                onFormSubmit={formik.handleSubmit}
+                setError={(error) => console.error(error)}
+                errorsMessage={formik.errors}
+              />{" "}
+            </Box>
             <Typography
               sx={{
                 fontSize: "16px",
@@ -156,6 +159,7 @@ export default function SelectModelMenu({
               helperText={formik.errors.description}
               sx={{ mb: 2 }}
             />
+
             <Box
               sx={{
                 display: "flex",
