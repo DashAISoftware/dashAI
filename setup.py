@@ -19,7 +19,7 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.1.5",
+    version="0.1.6",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
