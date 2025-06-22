@@ -65,13 +65,13 @@ export default function SessionBar({
     }));
   };
 
-  // Group sessions by task_name
+  // Group sessions by display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
-    const taskName = session.task_name || "Other";
-    if (!groups[taskName]) {
-      groups[taskName] = [];
+    const displayName = session.display_name || "Other";
+    if (!groups[displayName]) {
+      groups[displayName] = [];
     }
-    groups[taskName].push(session);
+    groups[displayName].push(session);
     return groups;
   }, {});
 

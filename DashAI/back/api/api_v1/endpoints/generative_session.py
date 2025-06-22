@@ -94,6 +94,7 @@ async def upload_generative_session(
                 "description": session.description,
                 "created": session.created,
                 "last_modified": session.last_modified,
+                "display_name": component_registry[session.task_name]["display_name"],
             }
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -150,6 +151,7 @@ async def get_generative_session(
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"])
 ):
     """Get all generative sessions ordered by creation date.
 
@@ -178,15 +180,27 @@ async def get_all_generative_sessions(
                 .order_by(GenerativeSession.created.desc())
                 .all()
             )
-            return sessions
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-
-
+        
+        session_list = []
+        for session in sessions:
+            session_list.append({
+                "id": session.id,
+                "task_name": session.task_name,
+                "parameters": session.parameters,
+                "name": session.name,
+                "description": session.description,
+                "created": session.created,
+                "last_modified": session.last_modified,
+                "display_name": component_registry[session.task_name]["display_name"],
+            })
+        return session_list
+    
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_generative_session(
     session_id: int,
