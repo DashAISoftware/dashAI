@@ -31,12 +31,12 @@ function FormSchemaRenderFields({
         formik?.setFieldValue(name, {
           ...formik?.values[name],
           [subName]: value,
-        });
+        }, true);
         return;
       }
 
       handleUpdateSchema({ [name]: value }, autoSave ? onFormSubmit : null);
-      formik?.setFieldValue(name, value);
+      formik?.setFieldValue(name, value, true);
     };
 
     for (const key in modelSchema) {
