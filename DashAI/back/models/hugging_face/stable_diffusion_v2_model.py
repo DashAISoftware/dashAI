@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 
 import torch
 from diffusers import DiffusionPipeline
@@ -14,6 +14,13 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
+
+if torch.cuda.is_available():
+    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
+    DEVICE_PLACEHOLDER = "cuda:0"
+else:
+    DEVICE_ENUM = ["cpu"]
+    DEVICE_PLACEHOLDER = "cpu"
 
 
 class StableDiffusionSchema(BaseSchema):
@@ -32,11 +39,11 @@ class StableDiffusionSchema(BaseSchema):
         description="The specific Stable Diffusion model version to use.",
     )  # type: ignore
 
-    negative_prompt: schema_field(
+    negative_prompt: Optional[schema_field(
         string_field(),
         placeholder="",
         description="Text prompt for elements to avoid in the image.",
-    )  # type: ignore
+    )]  # type: ignore
 
     num_inference_steps: schema_field(
         int_field(ge=1),
@@ -57,8 +64,8 @@ class StableDiffusionSchema(BaseSchema):
     )  # type: ignore
 
     device: schema_field(
-        enum_field(enum=["cuda", "cpu"] if torch.cuda.is_available() else ["cpu"]),
-        placeholder="cuda" if torch.cuda.is_available() else "cpu",
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
         description="Device for generation. Use 'cuda' if GPU is available.",
     )  # type: ignore
 

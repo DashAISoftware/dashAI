@@ -18,9 +18,11 @@ const theme = {
     background: {
       default: "#2e3037",
       paper: "#121212",
+      box: "#212121",
     },
     text: {
       primary: "#ffffff",
+      secondary: "#b0b0b0",
     },
     error: {
       main: "#ff8383",

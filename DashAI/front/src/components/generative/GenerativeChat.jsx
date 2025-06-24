@@ -12,21 +12,16 @@ import { useState, useEffect, useRef } from "react";
 import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
-import { getComponents } from "../../api/component";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
 import InfoSessionModal from "./InfoSessionModal";
-import HistoryIcon from "@mui/icons-material/History";
-import ParameterHistoryModal from "./SessionHistoryModal";
 import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
-  const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
-  const [task, setTask] = useState(null);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -59,13 +54,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     });
   };
 
-  const getTask = () => {
-    getComponents({ selectTypes: ["GenerativeTask"] }).then((response) => {
-      const task = response.find((task) => task.name === taskName);
-      setTask(task);
-    });
-  };
-
   const handleSendMessage = (input) => {
     // Set the Loading state to true
     setIsLoadingMessage(true);
@@ -90,7 +78,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                   setIsLoadingMessage(false);
                   enqueueSnackbar("The process has failed. Deleting it...");
 
-                  console.error("response error:", response.output);
                   deleteProcessById(response.id).then(() => {
                     setMessages((prevMessages) =>
                       prevMessages.filter(
@@ -122,9 +109,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   }, [sessionId, paramsVersion]);
 
   useEffect(() => {
-    setTask(null);
     setMessages([]);
-    getTask();
   }, [taskName]);
 
   useEffect(() => {
@@ -181,6 +166,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       gap={1}
       width={"100%"}
       height={"100%"}
+      //bgcolor={"background.box"}
     >
       {/* Model display */}
       <Box
@@ -205,22 +191,11 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           width={"100%"}
         >
           <Typography>
-            {sessionInfo?.id} - {sessionInfo?.name}{" "}
+            {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
             {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
           </Typography>
 
           <Box>
-            <IconButton onClick={() => setHistoryInfoVisible(true)}>
-              <HistoryIcon
-                sx={{
-                  color: "#a0a0a0",
-                  "&:hover": {
-                    color: "#ffffff",
-                  },
-                }}
-              />
-            </IconButton>
-
             <IconButton onClick={() => setSessionInfoVisible(true)}>
               <InfoIcon
                 sx={{
@@ -286,16 +261,12 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     messages={message.input}
                     sender={"User"}
                     timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    messageType={task?.metadata.inputs_types}
-                    cardinality={task?.metadata.inputs_cardinality}
                     isUser={true}
                   />
                   {message.status === 3 ? (
                     <ChatBubble
                       messages={message.output}
                       sender={"Model"}
-                      messageType={task?.metadata.outputs_types}
-                      cardinality={task?.metadata.outputs_cardinality}
                       timestamp={new Date(
                         message.end_time,
                       ).toLocaleTimeString()}
@@ -335,14 +306,6 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
-
-      {/* Parameter History Modal */}
-      <ParameterHistoryModal
-        historyChanges={history}
-        open={historyInfoVisible}
-        taskName={taskName}
-        setOpen={setHistoryInfoVisible}
-      />
     </Box>
   );
 }

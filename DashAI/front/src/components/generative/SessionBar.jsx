@@ -10,16 +10,18 @@ import SessionBarHeader from "./SessionBarHeader";
 
 export default function SessionBar({
   sessions,
-  setSessions,
   selectedSessionId,
   handleSessionClick,
   handleNewSessionButton,
   handleSessionDelete,
+  stepIndex,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
+
+  console.log(selectedSessionId);
 
   useEffect(() => {
     // Initialize all sections as closed
@@ -63,27 +65,26 @@ export default function SessionBar({
     }));
   };
 
-  // Group sessions by task_name
+  // Group sessions by display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
-    const taskName = session.task_name || "Other";
-    if (!groups[taskName]) {
-      groups[taskName] = [];
+    const displayName = session.display_name || "Other";
+    if (!groups[displayName]) {
+      groups[displayName] = [];
     }
-    groups[taskName].push(session);
+    groups[displayName].push(session);
     return groups;
   }, {});
 
   return (
     <Box
-      maxWidth="250px"
-      minWidth="250px"
+      width="100%"
       height="100%"
       borderRadius={2}
       display={"flex"}
       flexDirection={"column"}
       justifyContent={"space-between"}
       sx={{
-        bgcolor: "#030712",
+        bgcolor: "background.box",
         color: "white",
         display: "flex",
         flexDirection: "column",
@@ -102,12 +103,23 @@ export default function SessionBar({
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
         {/* Create new session button */}
-        <NewSessionButton onClick={handleNewSessionButton} />
+        {selectedSessionId || stepIndex !== 0 ? (
+          <NewSessionButton
+            onClick={handleNewSessionButton}
+            tooltipText="Create New Session"
+          />
+        ) : (
+          <Box px={2} py={1}>
+            <Typography variant="body1" color="textSecondary">
+              Generative Module
+            </Typography>
+          </Box>
+        )}
 
         {/* Search Bar */}
         <Box px={2} py={1} flex={"0 0 auto"}>
           <SearchBar
-            placeholder={"Search"}
+            placeholder={"Search Sessions"}
             value={searchQuery}
             onChange={handleSearchChange}
           />

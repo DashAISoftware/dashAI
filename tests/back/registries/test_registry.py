@@ -77,6 +77,7 @@ COMPONENT1_DICT = {
     "schema": {"properties": {"parameter_1": {"type": "number"}}},
     "metadata": None,
     "description": None,
+    "display_name": None,
 }
 COMPONENT2_DICT = {
     "name": "Component2",
@@ -86,6 +87,7 @@ COMPONENT2_DICT = {
     "schema": {"properties": {"parameter_2": {"type": "string", "enum": ["a", "b"]}}},
     "metadata": None,
     "description": None,
+    "display_name": None,
 }
 SUBCOMPONENT1_DICT = {
     "name": "SubComponent1",
@@ -95,6 +97,7 @@ SUBCOMPONENT1_DICT = {
     "schema": {"properties": {"parameter_1": {"type": "number"}}},
     "metadata": None,
     "description": None,
+    "display_name": None,
 }
 COMPONENT3_DICT = {
     "name": "Component3",
@@ -104,6 +107,7 @@ COMPONENT3_DICT = {
     "schema": None,
     "metadata": None,
     "description": "Some static component",
+    "display_name": None,
 }
 RELATED_COMPONENT1_DICT = {
     "name": "RelatedComponent1",
@@ -113,6 +117,7 @@ RELATED_COMPONENT1_DICT = {
     "schema": None,
     "metadata": None,
     "description": None,
+    "display_name": None,
 }
 RELATED_COMPONENT2_DICT = {
     "name": "RelatedComponent2",
@@ -122,6 +127,7 @@ RELATED_COMPONENT2_DICT = {
     "schema": None,
     "metadata": None,
     "description": None,
+    "display_name": None,
 }
 
 

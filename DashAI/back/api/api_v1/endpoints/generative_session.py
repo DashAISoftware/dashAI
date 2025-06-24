@@ -10,8 +10,10 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
 from DashAI.back.dependencies.database.models import (
+    GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
+    ProcessData,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models import BaseGenerativeModel
@@ -46,6 +48,15 @@ async def upload_generative_session(
                     detail=f"Model {params.model_name} is not a valid "
                     f"generative model.",
                 )
+            
+            # Validate the model parameters
+            try:
+                model_class.SCHEMA.model_validate(params.parameters)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid parameters for model {params.model_name}: {e}",
+                ) from e
 
             # Check if the task is registered
             try:
@@ -92,6 +103,7 @@ async def upload_generative_session(
                 "description": session.description,
                 "created": session.created,
                 "last_modified": session.last_modified,
+                "display_name": component_registry[session.task_name]["display_name"],
             }
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -148,6 +160,7 @@ async def get_generative_session(
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"])
 ):
     """Get all generative sessions ordered by creation date.
 
@@ -176,15 +189,27 @@ async def get_all_generative_sessions(
                 .order_by(GenerativeSession.created.desc())
                 .all()
             )
-            return sessions
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-
-
+        
+        session_list = []
+        for session in sessions:
+            session_list.append({
+                "id": session.id,
+                "task_name": session.task_name,
+                "parameters": session.parameters,
+                "name": session.name,
+                "description": session.description,
+                "created": session.created,
+                "last_modified": session.last_modified,
+                "display_name": component_registry[session.task_name]["display_name"],
+            })
+        return session_list
+    
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_generative_session(
     session_id: int,
@@ -215,6 +240,35 @@ async def delete_generative_session(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
+
+            # Delete all the processes associated with the session
+            processes = (
+                db.query(GenerativeProcess)
+                .filter(GenerativeProcess.session_id == session_id)
+                .all()
+            )
+            # Delete all the process data associated with the processes
+            for process in processes:
+                process_data = (
+                    db.query(ProcessData)
+                    .filter(ProcessData.process_id == process.id)
+                    .all()
+                )
+                for data in process_data:
+                    db.delete(data)
+            # Delete the processes
+            for process in processes:
+                db.delete(process)
+
+            # Delete the session parameter history entries
+            parameters_history = (
+                db.query(GenerativeSessionParameterHistory)
+                .filter(GenerativeSessionParameterHistory.session_id == session_id)
+                .all()
+            )
+            for entry in parameters_history:
+                db.delete(entry)
+            # Finally, delete the session itself
             db.delete(session)
             db.commit()
         except exc.SQLAlchemyError as e:
@@ -359,7 +413,7 @@ async def get_generative_session_parameters_history(
 
 
 @router.get("/parameters-history/{session_id}", status_code=status.HTTP_200_OK)
-async def get_generative_session_parameter_history_entry(
+async def get_parameter_history_entry(
     session_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):

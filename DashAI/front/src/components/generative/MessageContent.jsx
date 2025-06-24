@@ -3,23 +3,7 @@ import { TextMessage } from "./TextMessage";
 import { ImageMessage } from "./ImageMessage";
 import { WaitingAnimationChat } from "./WaitingAnimationChat";
 
-// Helper to create a unique hash from a string
-function simpleHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-}
-
-export function MessageContent({
-  messageType,
-  messages,
-  cardinality,
-  isUser,
-  isWaiting,
-}) {
+export function MessageContent({ messages, isUser, isWaiting }) {
   const theme = useTheme();
 
   return (
@@ -38,16 +22,12 @@ export function MessageContent({
       {isWaiting ? (
         <WaitingAnimationChat isActive={isWaiting} />
       ) : (
-        messages?.map((message, index) => {
-          const type =
-            cardinality != "n" && messageType
-              ? messageType[index]
-              : messageType?.[0] || "str";
-          const key = `${type}-${index}-${simpleHash(String(message))}`;
+        messages?.map((message) => {
+          const type = message["data_type"];
           return (
-            <Box key={key}>
-              {type === "str" && <TextMessage message={message} />}
-              {type === "Image" && <ImageMessage image={message} />}
+            <Box key={message.id}>
+              {type === "str" && <TextMessage message={message.data} />}
+              {type === "Image" && <ImageMessage image={message.data} />}
             </Box>
           );
         })

@@ -1,9 +1,10 @@
 import os
 import uuid
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from PIL import Image
 
+from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
@@ -19,12 +20,12 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         "inputs_cardinality": 1,
         "outputs_cardinality": "n",
     }
-
+    DISPLAY_NAME: str = "Text to Image Generation"
     DESCRIPTION: str = "This task generates images based on the provided input text."
 
     def prepare_for_task(
         self,
-        input: List[str],
+        input: List[ProcessData],
         **kwargs: Any,
     ) -> str:
         """Change the inputs to suit the image generation task.
@@ -39,13 +40,13 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         str
             Input with the new types
         """
-        return input[0]
+        return str(input[0].data)
 
     def prepare_input_for_database(
         self,
         input: List[str],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[Tuple[str, str]]:
         """Prepare the input for the database.
 
         Parameters
@@ -55,16 +56,18 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
         Returns
         -------
-        str
-            Input with the new types
+        List[Tuple[str, str]]
+            Input with the new types as a list of tuples containing the data
+            and its type
+
         """
-        return input
+        return [(input[0], "str")]
 
     def process_output(
         self,
         output: List[Any],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[Tuple[str, str]]:
         """Process the output of a generative model.
 
         Parameters
@@ -74,8 +77,8 @@ class TextToImageGenerationTask(BaseGenerativeTask):
 
         Returns
         -------
-        List[str]
-            List of paths to the processed images
+        List[Tuple[str, str]]
+            Processed output data as a list of tuples containing the data and its type
         """
         save_dir = kwargs.get("images_path")
 
@@ -93,15 +96,15 @@ class TextToImageGenerationTask(BaseGenerativeTask):
             # Save the image
             img.save(save_dir / image_path, format="PNG")
 
-            image_paths.append(str(image_path))
+            image_paths.append((str(image_path), "Image"))
 
         return image_paths
 
     def process_output_from_database(
         self,
-        output: List[str],
+        output: List[ProcessData],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[ProcessData]:
         """Process the output of an image generation model from the database.
 
         Parameters
@@ -115,25 +118,26 @@ class TextToImageGenerationTask(BaseGenerativeTask):
             List of base64 encoded images
         """
 
-        output = [os.path.basename(x) for x in output] if output else None
+        for op in output:
+            op.data = os.path.basename(op.data)
 
         return output
 
     def process_input_from_database(
         self,
-        input: List[str],
+        input: List[ProcessData],
         **kwargs: Any,
-    ) -> List[str]:
+    ) -> List[ProcessData]:
         """Process the input of an image generation model from the database.
 
         Parameters
         ----------
         input : List[str]
-            List of paths to the images
+            List of prompts
 
         Returns
         -------
         List[str]
-            List of base64 encoded images
+            List of prompts
         """
         return input

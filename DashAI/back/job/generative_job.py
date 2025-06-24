@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
+    ProcessData,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -64,7 +65,6 @@ class GenerativeJob(BaseJob):
                     )
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Error retrieving generative process.") from e
@@ -79,7 +79,6 @@ class GenerativeJob(BaseJob):
                     )
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Error retrieving generative session.") from e
@@ -90,7 +89,6 @@ class GenerativeJob(BaseJob):
                 model: BaseGenerativeModel = model_class(**params)
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError(
@@ -104,7 +102,6 @@ class GenerativeJob(BaseJob):
                 task: BaseGenerativeTask = task_class()
             except KeyError as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError(
@@ -112,7 +109,6 @@ class GenerativeJob(BaseJob):
                 ) from e
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Error instantiating task.") from e
@@ -121,7 +117,7 @@ class GenerativeJob(BaseJob):
                 use_history = getattr(task_class, "USE_HISTORY", False)
                 if use_history:
                     history = [
-                        (proc.input, proc.output)
+                        (proc.input[0].data, proc.output[0].data)
                         for proc in db.query(GenerativeProcess)
                         .filter(GenerativeProcess.session_id == generative_session.id)
                         .filter(GenerativeProcess.status == "FINISHED")
@@ -135,7 +131,6 @@ class GenerativeJob(BaseJob):
                     input_data = task.prepare_for_task(input_data)
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Error preparing task with history.") from e
@@ -145,7 +140,6 @@ class GenerativeJob(BaseJob):
                 db.commit()
             except exc.SQLAlchemyError as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Failed to update process status in database.") from e
@@ -154,7 +148,6 @@ class GenerativeJob(BaseJob):
                 output: Any = model.generate(input_data)
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Error during model generation.") from e
@@ -163,12 +156,30 @@ class GenerativeJob(BaseJob):
                 output: Any = task.process_output(
                     output, images_path=config["IMAGES_PATH"]
                 )
-                generative_process.output = output
+                outputs_for_database = []
+                for o in output:
+                    if not isinstance(o, tuple) or len(o) != 2:
+                        raise JobError(
+                            "Output from task must be a list of tuples (data, type)."
+                        )
+                    output_data, output_type = o
+                    process_data = ProcessData(
+                        data=output_data,
+                        data_type=output_type,
+                        process_id=generative_process.id,
+                        is_input=False,
+                    )
+                    outputs_for_database.append(process_data)
+
+                db.add_all(outputs_for_database)
+                db.commit()
+
+                # Update the generative process with the output
+                db.refresh(generative_process)
                 generative_process.set_status_as_finished()
                 db.commit()
             except Exception as e:
                 log.exception(e)
-                generative_process.output = [str(e)]
                 generative_process.set_status_as_error()
                 db.commit()
                 raise JobError("Error processing and saving generation output.") from e

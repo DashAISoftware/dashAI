@@ -1,57 +1,63 @@
-import React from "react";
-import { Box, Typography, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 
 export default function TaskBox({ taskName, description, onClick }) {
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.up("md"));
+
   return (
     <Button
       onClick={onClick}
       sx={{
+        p: 0,
+        m: 1,
         width: "100%",
-        color: "white",
         height: "100%",
-        display: "flex",
-        justifyContent: "center",
+        textAlign: "left",
         textTransform: "none",
-        backgroundColor: "#374151",
-        "&:hover": {
-          backgroundColor: "#475569",
+        borderRadius: 2,
+        "&:hover .task-paper": {
+          backgroundColor: "red",
         },
-        borderRadius: 3,
       }}
-      p={0.5}
-      variant="contained"
     >
-      <Box
-        display={"flex"}
-        flexDirection={"column"}
-        alignItems={"center"}
-        justifyContent={"center"}
-        gap={0.5}
-        p={2}
+      <Paper
+        elevation={2}
+        sx={{
+          p: 2,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: matches ? "row" : "column",
+          alignItems: "center",
+          justifyContent: matches ? "space-between" : "center",
+          textAlign: matches ? "left" : "center",
+        }}
       >
-        <Typography
-          variant="h1"
+        <Box
           sx={{
-            fontSize: "16px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            fontWeight: "bold",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-evenly",
+            alignItems: matches ? "flex-start" : "center",
+            gap: 1,
           }}
         >
-          {taskName}
-        </Typography>
-
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: "14px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-          }}
-        >
-          {description}
-        </Typography>
-      </Box>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            {taskName}
+          </Typography>
+          <Typography variant="caption" component="p">
+            {description}
+          </Typography>
+        </Box>
+      </Paper>
     </Button>
   );
 }
