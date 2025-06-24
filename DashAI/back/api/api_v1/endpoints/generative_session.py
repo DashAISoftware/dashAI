@@ -48,6 +48,15 @@ async def upload_generative_session(
                     detail=f"Model {params.model_name} is not a valid "
                     f"generative model.",
                 )
+            
+            # Validate the model parameters
+            try:
+                model_class.SCHEMA.model_validate(params.parameters)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid parameters for model {params.model_name}: {e}",
+                ) from e
 
             # Check if the task is registered
             try:
