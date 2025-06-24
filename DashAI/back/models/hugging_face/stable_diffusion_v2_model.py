@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 
 import torch
 from diffusers import DiffusionPipeline
@@ -39,11 +39,11 @@ class StableDiffusionSchema(BaseSchema):
         description="The specific Stable Diffusion model version to use.",
     )  # type: ignore
 
-    negative_prompt: schema_field(
+    negative_prompt: Optional[schema_field(
         string_field(),
         placeholder="",
         description="Text prompt for elements to avoid in the image.",
-    )  # type: ignore
+    )]  # type: ignore
 
     num_inference_steps: schema_field(
         int_field(ge=1),
