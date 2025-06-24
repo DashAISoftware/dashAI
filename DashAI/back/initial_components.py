@@ -4,6 +4,8 @@ from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
     Binarizer,
+    CharacterReplacer,
+    ColumnRemover,
     ConverterChain,
     Embedding,
     FastICA,
@@ -20,6 +22,7 @@ from DashAI.back.converters import (
     OneHotEncoder,
     OrdinalEncoder,
     PolynomialFeatures,
+    RandomUnderSamplerConverter,
     RBFSampler,
     SelectFdr,
     SelectFpr,
@@ -28,6 +31,8 @@ from DashAI.back.converters import (
     SelectPercentile,
     SimpleImputer,
     SkewedChi2Sampler,
+    SMOTEConverter,
+    SMOTEENNConverter,
     StandardScaler,
     TruncatedSVD,
     VarianceThreshold,
@@ -55,10 +60,10 @@ from DashAI.back.exploration import (
     WordcloudExplorer,
 )
 from DashAI.back.job import (
+    ConverterListJob,
     DatasetJob,
     ExplainerJob,
     ExplorerJob,
-    GenerativeJob,
     ModelJob,
     PredictJob,
 )
@@ -177,6 +182,7 @@ def get_initial_components():
         ModelJob,
         ExplorerJob,
         PredictJob,
+        ConverterListJob,
         DatasetJob,
         GenerativeJob,
         # Explainers
@@ -199,6 +205,8 @@ def get_initial_components():
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         # Converters
+        ColumnRemover,
+        CharacterReplacer,
         FastICA,
         IncrementalPCA,
         PCA,
@@ -237,6 +245,9 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        SMOTEConverter,
+        SMOTEENNConverter,
+        RandomUnderSamplerConverter,
     ]
 
     # Obtener plugins instalados

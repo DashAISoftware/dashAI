@@ -31,5 +31,4 @@ hyperopt
 openpyxl
 httpx
 wordcloud
-opencv-python
-protobuf
+imblearn

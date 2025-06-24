@@ -129,10 +129,18 @@ class ModelJob(BaseJob):
                     n_labels = len(all_classes)
 
                 splits = json.loads(experiment.splits)
-                prepared_dataset = prepare_for_experiment(
+                prepared_dataset, splits = prepare_for_experiment(
                     dataset=prepared_dataset,
                     splits=splits,
                     output_columns=experiment.output_columns,
+                )
+
+                run.split_indexes = json.dumps(
+                    {
+                        "train_indexes": splits["train_indexes"],
+                        "test_indexes": splits["test_indexes"],
+                        "val_indexes": splits["val_indexes"],
+                    }
                 )
 
                 x, y = select_columns(
@@ -140,6 +148,7 @@ class ModelJob(BaseJob):
                     experiment.input_columns,
                     experiment.output_columns,
                 )
+
                 x = split_dataset(x)
                 y = split_dataset(y)
 
@@ -172,6 +181,7 @@ class ModelJob(BaseJob):
             if experiment.task_name in [
                 "TextClassificationTask",
                 "TabularClassificationTask",
+                "RegressionTask",
             ]:
                 try:
                     # Optimizer configuration
