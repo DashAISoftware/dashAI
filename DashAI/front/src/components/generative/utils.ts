@@ -17,25 +17,40 @@ export type SchemaProperties = {
   [key: string]: SchemaProperty;
 };
 
-// Función genérica para preprocesar cualquier campo nullable
+/**
+ * Preprocesses the schema properties to handle nullable types.
+ * If a property has an `anyOf` with two items, where the second is `null`,
+ * it replaces the property with the first item and marks it as nullable.
+ *
+ * @param properties - The schema properties to preprocess.
+ * @returns The preprocessed schema properties.
+ */
 export function preprocessSchema(properties: SchemaProperties): SchemaProperties {
   const newProps = { ...properties };
 
   for (const key in newProps) {
-    if (!('anyOf' in newProps[key])) continue; // Si no hay tipo, saltar
+    if (!('anyOf' in newProps[key])) continue; 
 
-    if (newProps[key].anyOf.length !== 2) continue; // Si no hay dos tipos, saltar
+    if (newProps[key].anyOf.length !== 2) continue; 
 
     if (newProps[key].anyOf[1].type === "null"){
       let replaceProp = newProps[key].anyOf[0];
-      replaceProp.title = newProps[key].title; // Marcar como nullable
-      replaceProp.nullable = true; // Añadir nullable
-      newProps[key] = replaceProp; // Reemplazar el tipo original
-    } // Si no hay null, saltar
+      replaceProp.title = newProps[key].title; 
+      replaceProp.nullable = true; 
+      newProps[key] = replaceProp;
+    } 
   }
   return newProps;
 }
 
+/**
+ * Builds a Yup validation schema from the given properties.
+ * It supports various types like integer, number, string, and boolean,
+ * and applies constraints based on the property definitions.
+ *
+ * @param properties - The schema properties to build the Yup schema from.
+ * @returns A Yup object schema.
+ */
 export function buildYupSchema(properties: SchemaProperties): Yup.ObjectSchema<any> {
   const shape: Record<string, any> = {};
   for (const key in properties) {

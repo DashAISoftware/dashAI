@@ -30,7 +30,7 @@ export default function SelectModelMenu({
 
   useEffect(() => {
     if (selectedModel?.schema?.properties) {
-      // Preprocesa el schema para campos nullable de cualquier tipo
+      // Preprocess the schema properties to ensure they are in the correct format
       const processedProps = preprocessSchema(selectedModel.schema.properties);
 
       setValidationSchema(buildYupSchema(processedProps));
@@ -43,7 +43,6 @@ export default function SelectModelMenu({
       );
       formik.setValues(initialValues);
     }
-    // eslint-disable-next-line
   }, [selectedModel]);
 
   const formik = useFormik({
