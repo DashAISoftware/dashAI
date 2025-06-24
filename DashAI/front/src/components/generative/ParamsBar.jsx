@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
@@ -10,7 +10,7 @@ import {
   getRelatedComponents,
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
-import { use } from "react";
+import { preprocessSchema, buildYupSchema } from "./utils"; 
 
 export default function ParamsBar({
   selectedSessionId,
@@ -21,6 +21,7 @@ export default function ParamsBar({
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [history, setHistory] = useState([]);
   const [schema, setSchema] = useState(null);
+  const [validationSchema, setValidationSchema] = useState(null);
 
   const getHistory = () => {
     getHistoryBySessionId(selectedSessionId).then((response) => {
@@ -46,7 +47,7 @@ export default function ParamsBar({
           );
 
           if (relatedModel && relatedModel.schema) {
-            const modelSchema = relatedModel.schema.properties;
+            const modelSchema = preprocessSchema(relatedModel.schema.properties);
             const combinedSchema = Object.keys(modelSchema).reduce(
               (acc, key) => {
                 acc[key] = {
@@ -63,6 +64,7 @@ export default function ParamsBar({
             );
 
             setSchema({ properties: combinedSchema });
+            setValidationSchema(buildYupSchema(combinedSchema));
           }
         });
       })
@@ -84,6 +86,7 @@ export default function ParamsBar({
 
   const formik = useFormik({
     initialValues: parameters,
+    validationSchema,
     enableReinitialize: true,
     onSubmit: (values) => handleUpdateParameters(values),
   });

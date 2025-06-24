@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -6,10 +6,12 @@ import {
   TextField,
   Button,
 } from "@mui/material";
-import { useFormik } from "formik";
+import { replace, useFormik } from "formik";
 import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
 import { getRelatedComponents } from "../../api/generativeTask";
 import { createGenerativeSession } from "../../api/generativeTask";
+import { preprocessSchema, buildYupSchema } from "./utils";
+
 
 export default function SelectModelMenu({
   selectedTaskName,
@@ -18,6 +20,7 @@ export default function SelectModelMenu({
 }) {
   const [relatedComponents, setRelatedComponents] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [validationSchema, setValidationSchema] = useState(null);
 
   useEffect(() => {
     if (!selectedTaskName) return;
@@ -25,11 +28,31 @@ export default function SelectModelMenu({
     getRelatedComponents(selectedTaskName).then(setRelatedComponents);
   }, [selectedTaskName]);
 
+  useEffect(() => {
+    if (selectedModel?.schema?.properties) {
+      // Preprocesa el schema para campos nullable de cualquier tipo
+      const processedProps = preprocessSchema(selectedModel.schema.properties);
+
+      setValidationSchema(buildYupSchema(processedProps));
+      const initialValues = Object.keys(processedProps).reduce(
+        (acc, key) => {
+          acc[key] = processedProps[key].placeholder || "";
+          return acc;
+        },
+        { name: "", description: "" },
+      );
+      formik.setValues(initialValues);
+    }
+    // eslint-disable-next-line
+  }, [selectedModel]);
+
   const formik = useFormik({
     initialValues: {
       name: "",
       description: "",
     },
+    validationSchema,
+    enableReinitialize: true,
     onSubmit: async (values) => {
       try {
         const sessionData = {
@@ -50,18 +73,10 @@ export default function SelectModelMenu({
     },
   });
 
-  useEffect(() => {
-    if (selectedModel?.schema?.properties) {
-      const initialValues = Object.keys(selectedModel.schema.properties).reduce(
-        (acc, key) => {
-          acc[key] = selectedModel.schema.properties[key].placeholder || "";
-          return acc;
-        },
-        { name: "", description: "" },
-      );
-      formik.setValues(initialValues);
-    }
-  }, [selectedModel]);
+  // Usa el schema preprocesado para el renderizador de campos
+  const processedProperties = selectedModel?.schema?.properties
+    ? preprocessSchema(selectedModel.schema.properties)
+    : {};
 
   return (
     <Box
@@ -71,7 +86,6 @@ export default function SelectModelMenu({
       flexDirection={"column"}
       justifyContent={"flex-start"}
       overflow={"auto"}
-      //bgcolor={"background.box"}
     >
       <Typography
         sx={{
@@ -113,7 +127,7 @@ export default function SelectModelMenu({
                 Parameters
               </Typography>
               <FormSchemaRenderFields
-                modelSchema={selectedModel.schema.properties}
+                modelSchema={processedProperties}
                 formik={formik}
                 autoSave={false}
                 handleUpdateSchema={(updatedValues) => {
@@ -125,7 +139,7 @@ export default function SelectModelMenu({
                 onFormSubmit={formik.handleSubmit}
                 setError={(error) => console.error(error)}
                 errorsMessage={formik.errors}
-              />{" "}
+              />
             </Box>
             <Typography
               sx={{
