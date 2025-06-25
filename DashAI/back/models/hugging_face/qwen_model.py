@@ -13,6 +13,16 @@ from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 
+from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
+
+
+if is_gpu_available_for_llama_cpp():
+    DEVICE_ENUM = ["gpu", "cpu"]
+    DEVICE_PLACEHOLDER = "gpu"
+else:
+    DEVICE_ENUM = ["cpu"]
+    DEVICE_PLACEHOLDER = "cpu"
+
 
 class QwenSchema(BaseSchema):
     """Schema for Qwen model."""
@@ -61,6 +71,12 @@ class QwenSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    device: schema_field(
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
+        description="The device to use for model inference.",
+    )  # type: ignore
+
 
 class QwenModel(TextToTextGenerationTaskModel):
     """Qwen model for text generation using llama.cpp library."""
@@ -74,6 +90,7 @@ class QwenModel(TextToTextGenerationTaskModel):
         self.temperature = kwargs.pop("temperature", 0.7)
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("n_ctx", 512)
+        self.use_gpu = kwargs.pop("use_gpu", True)
 
         self.filename = "*q8_0.gguf"
 
@@ -82,6 +99,7 @@ class QwenModel(TextToTextGenerationTaskModel):
             filename=self.filename,
             verbose=True,
             n_ctx=self.n_ctx,
+            n_gpu_layers=-1 if kwargs.get("device", "gpu") == "gpu" else 0,
         )
 
     def generate(self, prompt: str) -> List[str]:
