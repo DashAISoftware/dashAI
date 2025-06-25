@@ -90,7 +90,6 @@ class QwenModel(TextToTextGenerationTaskModel):
         self.temperature = kwargs.pop("temperature", 0.7)
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("n_ctx", 512)
-        self.use_gpu = kwargs.pop("use_gpu", True)
 
         self.filename = "*q8_0.gguf"
 
