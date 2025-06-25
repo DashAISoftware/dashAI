@@ -183,9 +183,10 @@ function NewPipeline() {
   }, [nodes.length, edges]);
 
   const handleRun = async () => {
+    const unconfiguredNodes = nodes.filter(node => node.data?.notConfigured);
     const sortedNodes = sortNodes(nodes, edges);
     const errors = await validatePipeline(sortedNodes, edges);
-    if (Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length > 0 || unconfiguredNodes.length > 0) {
       enqueueSnackbar("Error in pipeline", { variant: "error" });
       return;
     }
@@ -319,9 +320,15 @@ function NewPipeline() {
                     <Typography variant="h6" sx={{ color: "#fff" }}>
                       {help.name || nodeHelp?.type || "Pipeline"} Help
                     </Typography>
-                    <Typography variant="body1" sx={{ mb: 1, color: "#ddd" }}>
-                      {help.description}
-                    </Typography>
+                    {help.description && (
+                      <>
+                        {help.description.split('\n').map((paragraph, idx) => (
+                          <Typography key={idx} variant="body1" sx={{ mb: 1, color: "#ddd" }}>
+                            {paragraph}
+                          </Typography>
+                        ))}
+                      </>
+                    )}
                     {help.input && (
                       <Typography variant="body2" sx={{ color: "#ccc" }}>
                         <u>Inputs:</u> {help.input || "None"}

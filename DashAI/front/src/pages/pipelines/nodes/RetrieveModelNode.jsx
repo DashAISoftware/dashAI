@@ -31,7 +31,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
   useEffect(() => {
     const fetchCompatibleModels = async () => {
         if (!datasetId) {
-        enqueueSnackbar("No dataset connected yet.", { variant: "warning" });
+        enqueueSnackbar("Missing dataset", { variant: "warning" });
         setLoading(false);
         return;
         }
@@ -41,7 +41,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
         const result = await filterModels(datasetId);
         setPipelines(result);
         } catch (error) {
-        enqueueSnackbar("Error retrieving models.", { variant: "error" });
+        enqueueSnackbar("Error retrieving models", { variant: "error" });
         } finally {
         setLoading(false);
         }

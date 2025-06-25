@@ -12,7 +12,7 @@ const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) 
   useEffect(() => {
     if (open && !datasetId) {
       if (!hasWarnedRef.current) {
-          enqueueSnackbar("No dataset connected yet.", { variant: "warning" });
+          enqueueSnackbar("Missing dataset", { variant: "warning" });
           hasWarnedRef.current = true;
       }
       return;

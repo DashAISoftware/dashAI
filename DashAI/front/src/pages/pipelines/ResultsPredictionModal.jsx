@@ -1,101 +1,81 @@
 import React, { useEffect, useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Grid,
+  Box,
   Typography,
   Tabs,
   Tab,
-  IconButton
+  Paper,
+  CircularProgress,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import { useSnackbar } from "notistack";
 import PredictionSummaryTab from "../../components/predictions/PredictionSummaryTab";
 import PredictionSampleTab from "../../components/predictions/PredictionSampleTab";
 import { getPipelinePredictionSummary } from "../../api/pipeline";
 
-function PredictionSummaryModal({ predictName, open, onClose }) {
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState(0);
-    const { enqueueSnackbar } = useSnackbar();
-    const [error, setError] = useState(false);
-    const [summary, setSummary] = useState({});
-  
-    const handleTabChange = (event, newValue) => {
-      setActiveTab(newValue);
-    };
-  
-    const getPredictSummary = async () => {
-      setLoading(true);
-      try {
-        const summary = await getPipelinePredictionSummary(predictName);
-        setSummary(summary);
-        if (summary.data_type === "string") {
-          setActiveTab(1);
-        }
-      } catch (error) {
-        enqueueSnackbar("Error when trying to get the prediction summary");
-        setError(true);
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
+function PredictionSummary({ predictName }) {
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState(0);
+  const [summary, setSummary] = useState({});
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleTabChange = (_, newValue) => {
+    setTab(newValue);
+  };
+
+  const getPredictSummary = async () => {
+    setLoading(true);
+    try {
+      const res = await getPipelinePredictionSummary(predictName);
+      setSummary(res);
+      if (res.data_type === "string") {
+        setTab(2);
       }
-    };
-  
-    useEffect(() => {
-      if (open) {
-        getPredictSummary();
-      }
-    }, [open]);
-  
-    return (
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          <Grid container justifyContent="space-between">
-            <Typography variant="h5">Prediction Summary</Typography>
-            <IconButton
-              aria-label="close"
-              onClick={onClose}
-              sx={{
-                color: (theme) => theme.palette.grey[500],
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Grid>
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} onClick={(e) => e.stopPropagation()}>
-            <Grid item xs={12}>
-              {summary.data_type !== "string" && (
-                <Tabs
-                  value={activeTab}
-                  onChange={handleTabChange}
-                  aria-label="Prediction Tabs"
-                  centered
-                  sx={{ mb: 3 }}
-                >
-                  <Tab label="Summary" />
-                  <Tab label="Sample" />
-                </Tabs>
-              )}
-              {summary.data_type === "string" ? (
-                <PredictionSampleTab summary={summary} />
-              ) : (
-                <>
-                  {activeTab === 0 && <PredictionSummaryTab summary={summary} />}
-                  {activeTab === 1 && (
-                    <PredictionSampleTab summary={summary} type="numeric" />
-                  )}
-                </>
-              )}
-            </Grid>
-          </Grid>
-        </DialogContent>
-      </Dialog>
-    );
+    } catch (error) {
+      enqueueSnackbar("Error when trying to get the prediction summary");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getPredictSummary();
+  }, [predictName]);
+
+  if (loading) {
+    return <CircularProgress size={24} />;
   }
 
-export default PredictionSummaryModal;
-  
+  return (
+    <Box my={2}>
+      <Paper sx={{ width: "100%" }}>
+        <Tabs value={tab} onChange={handleTabChange} variant="scrollable">
+          <Tab label="Info" />
+          <Tab label="Summary" disabled={summary.data_type === "string"} />
+          <Tab label="Sample" />
+        </Tabs>
+        <Box sx={{ p: 3 }}>
+          {tab === 0 && (
+            <Box>
+              <Typography variant="subtitle1">Name</Typography>
+              <Typography variant="p" sx={{ color: "gray" }}>
+                {predictName ?? "-"}
+              </Typography>
+            </Box>
+          )}
+          {tab === 1 && summary.data_type !== "string" && (
+            <PredictionSummaryTab summary={summary} />
+          )}
+          {tab === 2 && (
+            <PredictionSampleTab
+              summary={summary}
+              type={summary.data_type === "string" ? undefined : "numeric"}
+            />
+          )}
+        </Box>
+      </Paper>
+    </Box>
+  );
+}
+
+export default PredictionSummary;

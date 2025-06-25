@@ -126,7 +126,6 @@ function Results({ pipelineId }) {
     const fetchResults = async () => {
       try {
         const response = await getExplorationResults(pipelineId);
-        console.log("Exploration results:", response);
         setExplorationResults(response);
       } catch (error) {
         console.error("Error fetching results:", error);

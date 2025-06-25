@@ -181,7 +181,7 @@ useEffect(() => {
     const validateAvailableTasks = async () => {
       if (!datasetId) {
         if (!hasWarnedRef.current) {
-          enqueueSnackbar("No dataset connected yet.", { variant: "warning" });
+          enqueueSnackbar("Missing dataset", { variant: "warning" });
           hasWarnedRef.current = true;
         }
         setValidTasks([]);
