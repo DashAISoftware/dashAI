@@ -40,33 +40,33 @@ const CustomNode = ({ data, isConnectable }) => {
         position: 'relative',
       }}
     >
-      {!isDisabled && data.target && (
+      {data.target && (
         <Handle
           type="target"
           position={Position.Left}
           style={{
-            background: data.hasError ? theme.palette.error.main : '#555',
+            background: isDisabled ? '#ccc' : data.hasError ? theme.palette.error.main : '#555',
             width: 8,
             height: 8,
             borderRadius: '50%',
           }}
-          isConnectable={isConnectable}
+          isConnectable={!isDisabled && isConnectable}
         />
       )}
 
       <IconComponent sx={{ fontSize: 30, color: iconColor }} />
 
-      {!isDisabled && data.source && (
+      {data.source && (
         <Handle
           type="source"
           position={Position.Right}
           style={{
-            background: '#555',
+            background: isDisabled ? '#ccc' : '#555',
             width: 8,
             height: 8,
             borderRadius: '50%',
           }}
-          isConnectable={isConnectable}
+          isConnectable={!isDisabled && isConnectable}
         />
       )}
     </Box>

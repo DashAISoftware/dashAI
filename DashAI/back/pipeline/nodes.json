@@ -9,7 +9,7 @@
     "predecessors": [],
     "successors": ["DataExploration", "Train"],
     "description": "Loads a dataset stored in the system to be used in the pipeline.",
-    "output": "Path to the selected dataset"
+    "output": "Dataset object"
   },
   {
     "type": "DataExploration",
@@ -20,8 +20,8 @@
     "target": true,
     "predecessors": ["DataSelector"],
     "successors": [],
-    "description": "Analyzes the dataset to provide insights and visualizations.",
-    "input": "Selected dataset"
+    "description": "Visualize and analyze your dataset to gain insights into its structure and content.",
+    "input": "Dataset object"
   },
   {
     "type": "Train",
@@ -32,9 +32,9 @@
     "target": true,
     "predecessors": ["DataSelector"],
     "successors": ["Prediction"],
-    "description": "Split dataset and train a model with specified parameters.",
-    "input": "Selected dataset",
-    "output": "Path to the trained model"
+    "description": "Trains a model using a selected dataset, with configurable columns, splits, task, model, and metrics.",
+    "input": "Dataset object",
+    "output": "Trained model object and evaluation results"
   },
   {
     "type": "Prediction",
@@ -46,7 +46,7 @@
     "predecessors": ["Train", "RetrieveModel"],
     "successors": [],
     "description": "Generates predictions using a trained model.",
-    "input": "Trained model"
+    "input": "Trained model and dataset object"
   },
   {
     "type": "RetrieveModel",
@@ -57,8 +57,8 @@
     "target": true,
     "predecessors": ["DataSelector"],
     "successors": ["Prediction"],
-    "description": "Loads a trained model form saved pipelines",
-    "input": "Selected dataset",
-    "output": "Path to the trained model"
+    "description": "Loads a trained model from saved pipelines.",
+    "input": "Dataset object",
+    "output": "Trained model object"
   }
 ]
