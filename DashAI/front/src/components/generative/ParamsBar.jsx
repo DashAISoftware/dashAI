@@ -10,7 +10,7 @@ import {
   getRelatedComponents,
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
-import { preprocessSchema, buildYupSchema } from "./utils"; 
+import { preprocessSchema, buildYupSchema } from "./utils";
 
 export default function ParamsBar({
   selectedSessionId,
@@ -20,7 +20,8 @@ export default function ParamsBar({
   const [parameters, setParameters] = useState({});
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [history, setHistory] = useState([]);
-  const [schema, setSchema] = useState(null);
+
+  const [selectedModel, setSelectedModel] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
 
   const getHistory = () => {
@@ -37,39 +38,37 @@ export default function ParamsBar({
   useEffect(() => {
     if (!selectedSessionId) return;
 
-    getGenerativeSession(selectedSessionId)
-      .then((session) => {
-        setParameters(session.parameters);
+    getGenerativeSession(selectedSessionId).then((session) => {
+      setParameters(session.parameters);
 
-        getRelatedComponents(session.task_name).then((relatedComponents) => {
-          const relatedModel = relatedComponents.find(
-            (component) => component.name === session.model_name,
-          );
+      getRelatedComponents(session.task_name).then((relatedComponents) => {
+        const relatedModel = relatedComponents.find(
+          (component) => component.name === session.model_name,
+        );
 
-          if (relatedModel && relatedModel.schema) {
-            const modelSchema = preprocessSchema(relatedModel.schema.properties);
-            const combinedSchema = Object.keys(modelSchema).reduce(
-              (acc, key) => {
-                acc[key] = {
-                  ...modelSchema[key],
-                  title: key
-                    .replace(/_/g, " ")
-                    .replace(/\b\w/g, (char) => char.toUpperCase()),
-                  placeholder:
-                    session.parameters[key] || modelSchema[key].default || "",
-                };
-                return acc;
-              },
-              {},
-            );
-
-            setSchema({ properties: combinedSchema });
-            setValidationSchema(buildYupSchema(combinedSchema));
-          }
-        });
-      })
-      .catch((error) => console.error("Error fetching session data:", error));
+        if (relatedModel && relatedModel.schema) {
+          setSelectedModel(relatedModel);
+        }
+      });
+    });
   }, [selectedSessionId]);
+
+
+  useEffect(() => {
+    if (selectedModel?.schema?.properties) {
+      const processedProps = preprocessSchema(selectedModel.schema.properties);
+
+      setValidationSchema(buildYupSchema(processedProps));
+      const initialValues = Object.keys(processedProps).reduce(
+        (acc, key) => {
+          acc[key] = processedProps[key].placeholder || "";
+          return acc;
+        },
+        { name: "", description: "" },
+      );
+      formik.setValues(initialValues);
+    }
+  }, [selectedModel]);
 
   const handleUpdateParameters = async (updatedParams) => {
     try {
@@ -91,7 +90,10 @@ export default function ParamsBar({
     onSubmit: (values) => handleUpdateParameters(values),
   });
 
-  if (!schema) return null;
+  const processedProperties = selectedModel?.schema?.properties
+    ? preprocessSchema(selectedModel.schema.properties)
+    : {};
+
 
   return (
     <Box
@@ -142,10 +144,10 @@ export default function ParamsBar({
         <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
           {/* Render the parameter fields */}
           <FormSchemaRenderFields
-            modelSchema={schema.properties}
+            modelSchema={processedProperties}
             formik={{
               values: formik.values,
-              setFieldValue: formik.setFieldValue,
+              setFieldValue: formik.setFieldValue,  
               handleSubmit: formik.handleSubmit,
               errors: formik.errors || {},
             }}

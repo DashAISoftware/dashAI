@@ -6,7 +6,7 @@ import {
   TextField,
   Button,
 } from "@mui/material";
-import { replace, useFormik } from "formik";
+import { useFormik } from "formik";
 import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
 import { getRelatedComponents } from "../../api/generativeTask";
 import { createGenerativeSession } from "../../api/generativeTask";
@@ -72,7 +72,6 @@ export default function SelectModelMenu({
     },
   });
 
-  // Usa el schema preprocesado para el renderizador de campos
   const processedProperties = selectedModel?.schema?.properties
     ? preprocessSchema(selectedModel.schema.properties)
     : {};
