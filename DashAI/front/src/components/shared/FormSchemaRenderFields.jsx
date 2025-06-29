@@ -19,6 +19,8 @@ function FormSchemaRenderFields({
 }) {
   if (!modelSchema) return null;
 
+  console.debug("Rendering FormSchemaRenderFields with modelSchema:", modelSchema);
+
   const renderFields = useCallback(() => {
     const fields = [];
 

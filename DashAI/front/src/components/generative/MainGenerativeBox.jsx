@@ -7,8 +7,8 @@ export default function MainGenerativeBox({ children }) {
       width={"100%"}
       height={"100%"}
       sx={{
-        border: "0.2px solid",
-        borderColor: "grey.600", // o el color que prefieras
+        //border: "0.2px solid",
+        //borderColor: "grey.600", // o el color que prefieras
       }}
       borderRadius={2}
       //bgcolor={"background.box"}

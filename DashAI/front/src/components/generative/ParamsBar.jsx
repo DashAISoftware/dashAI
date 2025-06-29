@@ -40,7 +40,7 @@ export default function ParamsBar({
     getGenerativeSession(selectedSessionId)
       .then((session) => {
         setParameters(session.parameters);
-
+        console.log("Session task name:", session.task_name);
         getRelatedComponents(session.task_name).then((relatedComponents) => {
           const relatedModel = relatedComponents.find(
             (component) => component.name === session.model_name,

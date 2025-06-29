@@ -20,7 +20,7 @@ import ClearIcon from "@mui/icons-material/Clear";
  * newDataset state in the modal
  * @param {function} onFileUpload function to handle when the user "uploads" a dataset
  */
-function Upload({ onFileUpload }) {
+function Upload({ onFileUpload, emptyUploadText }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(EMPTY);
   const [dragActive, setDragActive] = useState(false);
@@ -129,14 +129,10 @@ function Upload({ onFileUpload }) {
         {/* state text */}
         <Grid item sx={{ textAlign: "center" }}>
           <DialogContentText>
-            {datasetState === EMPTY && "Upload your dataset"}
             {datasetState === LOADING && "Loading..."}
             {datasetState === LOADED && "Loaded"}
-            {datasetState === EMPTY && (
-              <Typography variant="body2" component="div">
-                If your dataset have splits, upload it as a zip file
-              </Typography>
-            )}
+            {/* {datasetState === EMPTY && "Upload your dataset"} */}
+            {datasetState === EMPTY &&emptyUploadText}
           </DialogContentText>
         </Grid>
 
@@ -190,6 +186,10 @@ function Upload({ onFileUpload }) {
 
 Upload.propTypes = {
   onFileUpload: PropTypes.func.isRequired,
+  emptyUploadText: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.node,
+  ])
 };
 
 export default Upload;

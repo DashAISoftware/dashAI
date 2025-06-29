@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Grid, Paper } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
 import PropTypes from "prop-types";
-import Upload from "./Upload";
+import Upload from "../shared/Upload";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
@@ -77,7 +77,18 @@ function ConfigureAndUploadDataset({
       >
         {/* Upload file */}
         <Grid item xs={12} md={5}>
-          <Upload onFileUpload={handleFileUpload} />
+          <Upload
+            onFileUpload={handleFileUpload}
+            emptyUploadText={
+              <>
+                Upload your dataset
+                <Typography variant="body2" component="div">
+                  If your dataset have splits, upload it as a zip file
+                </Typography>
+              </>
+            } 
+          />
+
         </Grid>
 
         {/* Configure dataloader parameters */}

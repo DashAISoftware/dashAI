@@ -66,6 +66,7 @@ from DashAI.back.job import (
     ExplorerJob,
     ModelJob,
     PredictJob,
+    GenerativeJob
 )
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (

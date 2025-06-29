@@ -12,10 +12,14 @@ export const getGenerativeTask = async (): Promise<IGenerativeTask[]> => {
 export const getRelatedComponents = async (
   relatedComponent: string,
 ): Promise<IGenerativeTask[]> => {
-  const response = await api.get<IGenerativeTask[]>(
-    `/v1/component/?related_component=${encodeURIComponent(relatedComponent)}`,
-  );
-  return response.data;
+  try{
+    const response = await api.get<IGenerativeTask[]>(
+      `/v1/component/?related_component=${encodeURIComponent(relatedComponent)}`,
+    );
+    return response.data;
+  } catch (error) {
+    return [];
+  }
 };
 
 export const createGenerativeSession = async (

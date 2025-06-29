@@ -1,6 +1,7 @@
 import api from "./api";
 import type { IComponent } from "../types/component";
 
+
 interface componentQuery {
   model?: string;
   selectTypes?: string[];

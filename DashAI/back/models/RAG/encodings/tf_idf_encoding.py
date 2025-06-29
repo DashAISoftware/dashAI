@@ -1,10 +1,10 @@
-from chromadb import EmbeddingFunction, Embeddings
+#from chromadb import EmbeddingFunction, Embeddings
 from typing import List
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 import os
 
-class TfidfEmbeddingFunction(EmbeddingFunction):
+class TfidfEmbeddingFunction:#(EmbeddingFunction):
     """A dummy embedding function using TF-IDF."""
     def __init__(self, corpus: List[str], collection_name: str = None):
         if collection_name:
@@ -23,7 +23,7 @@ class TfidfEmbeddingFunction(EmbeddingFunction):
             with open(stored_path, "wb") as f:
                 pickle.dump(self.vectorizer, f)
 
-    def __call__(self, texts: List[str]) -> Embeddings:
+    def __call__(self, texts: List[str]):# -> Embeddings:
         """Transform the texts into TF-IDF embeddings."""
         return self.vectorizer.transform(texts).toarray().tolist()
     

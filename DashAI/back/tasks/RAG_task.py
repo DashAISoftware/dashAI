@@ -17,9 +17,8 @@ class RAGTask(BaseGenerativeTask):
         "outputs_cardinality": 1,
     }
 
-    DESCRIPTION: str = "This task generates a text response based on documents provided and chat."
-
     DISPLAY_NAME: str = "Retreival-Augmented Generation (RAG) Task"
+    DESCRIPTION: str = "This task generates a text response based on documents provided and chat."
 
     USE_HISTORY: bool = True
 
@@ -63,10 +62,11 @@ class RAGTask(BaseGenerativeTask):
 
         Returns
         -------
-        str
-            The prepared input.
+        List[Tuple[str, str]]
+            Input with the new types as a list of tuples containing the data
+            and its type
         """
-        return input[0], kwargs.get("history", None)  # type: Optional[List[Tuple[str, str]]]
+        return [(input[0], "str")]
 
 
     def process_output(

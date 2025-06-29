@@ -13,7 +13,7 @@ from DashAI.back.core.schema_fields import (
 
 from DashAI.back.models.hugging_face.deep_seek_model import DeepSeekModel
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
-from DashAI.back.models.llm_generation_model import LLMGenerationModel
+from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
 from DashAI.back.models.RAG.dummy_retriever import DummyRetriever
 from DashAI.back.models.RAG.prompts import (
     BasePrompt,
@@ -109,7 +109,7 @@ class RAGPipelineSchema(BaseSchema):
         description="Maximum number of tokens the model can process in a single forward pass (context window size).",
     ) # type: ignore
 
-class RAGPipeline(BaseGenerativeModel):
+class RAGPipeline(TextToTextGenerationTaskModel):
     """Retrieval-Augmented Generation (RAG) pipeline."""
     
     COMPATIBLE_COMPONENTS = ["RAGTask"]
@@ -143,7 +143,7 @@ class RAGPipeline(BaseGenerativeModel):
         }
 
         print("Initializing LLM model")
-        self.llm_model: LLMGenerationModel = llm_classes[kwargs.get("model_name")](**llm_kwargs)
+        self.llm_model: TextToTextGenerationTaskModel = llm_classes[kwargs.get("model_name")](**llm_kwargs)
 
         # Initialize the retriever
         retriever_params = {

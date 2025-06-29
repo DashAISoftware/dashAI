@@ -1,6 +1,6 @@
 import os
-import chromadb
-from chromadb import Settings
+#import chromadb
+#from chromadb import Settings
 from typing import List, Dict
 from pypdf import PdfReader
 from DashAI.back.models.RAG.encodings.tf_idf_encoding import TfidfEmbeddingFunction
@@ -52,7 +52,7 @@ class DummyRetriever:
         self.max_distance = max_distance
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        self.collection: chromadb.Collection = None
+        self.collection = None #chromadb.Collection = None
         self.embedding = TfidfEmbeddingFunction(
             corpus=self.load_documents().values(),
             collection_name=self.collection_name,
@@ -68,36 +68,37 @@ class DummyRetriever:
 
         """
         print("Initializing ChromaDB client")
-        client = chromadb.PersistentClient(
+        client = None
+        return
+        """ chromadb.PersistentClient(
             settings=Settings(
                 anonymized_telemetry=False,
-                ))
+                )) """
 
         print("Initializing ChromaDB collection")
-        self.collection = client.get_or_create_collection(
-            name=self.collection_name,
-            configuration={
-                "embedding_function": self.embedding.name(),
-            },  
-            embedding_function=self.embedding,
-            metadata={
-                "distance_function": self.distance_function,
+        stored_collections = client.list_collections()
+        stored_collections_names = [collection.name for collection in stored_collections]
+        if self.collection_name in stored_collections_names:
+            print(f"Collection {self.collection_name} already exists. Loading existing collection.")
+            self.collection = client.get_collection(name=self.collection_name)
+        else:
+            print(f"Collection {self.collection_name} does not exist. Creating a new collection.")
+            # Create a new collection with the specified embedding function
+            self.collection = client.create_collection(
+                name=self.collection_name,
+                configuration={
+                    "embedding_function": self.embedding.name(),
+                },  
+                embedding_function=self.embedding,
+                metadata={
+                    "distance_function": self.distance_function,
                 },
-        )
-        print(f"Collection {self.collection_name} initialized.")
-        try:
-            print("Checking if collection exists")
-            if self.collection.count() == 0:
-                print(f"Collection {self.collection_name} does not exist. Creating a new one.")
-                documents = self.load_documents()
-                self.add_documents_to_collection(documents)
-            else:
-                print(f"Collection {self.collection_name} already exists. Loading existing documents.")
-            print(f"Collection {self.collection_name} initialized with {self.collection.count()} documents.")
-        except Exception as e:
-            print(f"Error initializing collection {self.collection_name}: {e}")
-            raise e
-        
+            )
+        print(f"Collection {self.collection_name} initialized with distance function {self.distance_function}.")
+
+        documents = self.load_documents()
+        self.add_documents_to_collection(documents)
+            
     def parse_txt_file(self, file_path: str):
         """Parse a txt file and return its content."""
         with open(file_path, "r", encoding="utf-8") as file:
@@ -152,6 +153,7 @@ class DummyRetriever:
         for i, (filename, chunk_index, chunk_text) in enumerate(splitted_documents):
             embedding = self.embedding([chunk_text])[0]
             try:
+                print(f"Adding document {i+1}/{len(splitted_documents)}: {filename} chunk {chunk_index}")
                 self.collection.add(
                     documents=chunk_text,
                     metadatas={"filename": filename, "chunk_index": chunk_index},

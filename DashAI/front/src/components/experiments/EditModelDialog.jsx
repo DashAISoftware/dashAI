@@ -36,12 +36,12 @@ function EditModelDialog({
         }}
       >
         <FormSchemaWithSelectedModel
+          modelToConfigure={modelToConfigure}
+          initialValues={paramsInitialValues}
           onFormSubmit={(values) => {
             updateParameters(values);
             setOpen(false);
           }}
-          modelToConfigure={modelToConfigure}
-          initialValues={paramsInitialValues}
           onCancel={() => setOpen(false)}
         />
       </FormSchemaDialog>
