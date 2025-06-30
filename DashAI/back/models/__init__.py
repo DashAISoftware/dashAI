@@ -7,8 +7,8 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
 from DashAI.back.models.hugging_face.qwen_model import QwenModel
-from DashAI.back.models.hugging_face.simple_controlnet_model import (
-    SimpleControlNetModel,
+from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
+    StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
     StableDiffusionV2Model,

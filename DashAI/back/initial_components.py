@@ -82,9 +82,9 @@ from DashAI.back.models import (
     RandomForestClassifier,
     RandomForestRegression,
     RidgeRegression,
-    SimpleControlNetModel,
     StableDiffusionV2Model,
     StableDiffusionV3Model,
+    StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.plugins.utils import get_available_plugins
@@ -135,7 +135,7 @@ def get_initial_components():
         QwenModel,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
-        SimpleControlNetModel,
+        StableDiffusionXLV1ControlNet,
         LogisticRegression,
         MLPRegression,
         RandomForestClassifier,

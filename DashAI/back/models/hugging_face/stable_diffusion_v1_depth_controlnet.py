@@ -27,7 +27,7 @@ else:
     DEVICE_PLACEHOLDER = "cpu"
 
 
-class SimpleSchema(BaseSchema):
+class StableDiffusionXLV1ControlNetSchema(BaseSchema):
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,
@@ -82,11 +82,11 @@ def get_depth_map(image, device):
     return image
 
 
-class SimpleControlNetModel(BaseControlNetModel):
-    """A simple implementation of ControlNet with depth preprocessing and stable
+class StableDiffusionXLV1ControlNet(BaseControlNetModel):
+    """A wrapper implementation of ControlNet with depth preprocessing and stable
     diffusion xl 1.0 as pipeline."""
 
-    SCHEMA = SimpleSchema
+    SCHEMA = StableDiffusionXLV1ControlNetSchema
 
     def __init__(self, **kwargs: Any):
         """Initialize the generative model."""

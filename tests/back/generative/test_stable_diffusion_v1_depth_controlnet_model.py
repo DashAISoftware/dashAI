@@ -2,14 +2,14 @@ import PIL
 import PIL.Image
 import pytest
 
-from DashAI.back.models.hugging_face.simple_controlnet_model import (
-    SimpleControlNetModel,
+from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
+    StableDiffusionXLV1ControlNet,
 )
 
 
 @pytest.fixture(scope="module", name="sample_model")
 def sample_model():
-    model = SimpleControlNetModel(
+    model = StableDiffusionXLV1ControlNet(
         num_inference_steps=1,
         device="cpu",
         controlnet_conditioning_scale=1,
