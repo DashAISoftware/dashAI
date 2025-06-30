@@ -1,0 +1,124 @@
+import React, { useState, useEffect  } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+  Box,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import ConfigureExplorersStep from "../../../components/explorations/Steps/ConfigureExplorersStep";
+import { useExplorationsContext } from "../../../components/explorations/context";
+import { validateNode } from "../../../api/pipeline";
+import { useSnackbar } from "notistack";
+
+function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const [valid, setValid] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { explorationData, setExplorerData, datasetColumns, setExplorationData } = useExplorationsContext();
+
+  useEffect(() => {
+    if (datasetColumns && datasetColumns.length > 0) {
+      if (savedConfig?.explorations?.length > 0) {
+        const transformedExplorers = savedConfig.explorations.map((explorer) => {
+          return {
+            exploration_type: explorer.exploration_type,
+            parameters: explorer.parameters,
+            columns: explorer.columns,
+            id: explorer.id,
+            name: explorer.name,
+          };
+        });
+        setExplorationData(prev => ({
+          ...prev,
+          explorers: transformedExplorers,
+        }));
+
+      } else {
+        setExplorerData(prev => ({ ...prev }));
+      }
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [datasetColumns, setExplorerData, savedConfig]);
+
+  const handleSave = async () => {
+    const config = {
+      explorations: explorationData.explorers.map((explorer, index) => ({
+        exploration_type: explorer.exploration_type,
+        parameters: explorer.parameters,
+        columns: explorer.columns,
+        id: index,
+        name: explorer.name,
+      }))
+    };
+
+    try {
+      const response = await validateNode("DataExploration", config);
+      if (response.status === "ok") {
+        onSave(config);
+        onClose();
+      } else {
+        enqueueSnackbar("Validation failed", { variant: "error" });
+      }
+    } catch (e) {
+      enqueueSnackbar("Error validating node", { variant: "error" });
+      console.error(e);
+    }
+  };
+
+  if (loading && open) {
+    return null;
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullScreen={fullScreen}
+      maxWidth="lg"
+      fullWidth
+      PaperProps={{
+        sx: { minHeight: "80vh" },
+      }}
+    >
+      <DialogTitle>
+        Configure Explorers
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Box mt={2}>
+          <ConfigureExplorersStep onValidation={setValid} />
+        </Box>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleSave} variant="contained" disabled={!valid}>
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+export default ConfigureExplorersModal;

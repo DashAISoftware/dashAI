@@ -60,6 +60,7 @@ from DashAI.back.job import (
     ExplorerJob,
     GenerativeJob,
     ModelJob,
+    PipelineJob,
     PredictJob,
 )
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
@@ -87,6 +88,13 @@ from DashAI.back.models import (
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
+from DashAI.back.pipeline import (
+    DataSelectorNode,
+    ExplorationNode,
+    PredictionNode,
+    RetrieveModelNode,
+    TrainNode,
+)
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
@@ -169,6 +177,7 @@ def get_initial_components():
         PredictJob,
         DatasetJob,
         GenerativeJob,
+        PipelineJob,
         # Explainers
         KernelShap,
         PartialDependence,
@@ -227,6 +236,11 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        DataSelectorNode.DataSelector,
+        ExplorationNode.DataExploration,
+        TrainNode.Train,
+        PredictionNode.Prediction,
+        RetrieveModelNode.RetrieveModel,
     ]
 
     # Obtener plugins instalados

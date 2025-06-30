@@ -1,6 +1,7 @@
 import logging
 import pathlib
 from datetime import datetime
+from typing import Any, Dict, List
 
 from beartype.typing import List
 from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
@@ -250,6 +251,24 @@ class LocalExplainer(Base):
         """Update the status of the local explainer to error."""
         self.status = ExplainerStatus.ERROR
 
+class Pipeline(Base):
+    __tablename__ = "pipeline"
+    """
+    Table to store all the information about a pipeline.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+    steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
 
 class GenerativeProcess(Base):
     __tablename__ = "generative_process"
