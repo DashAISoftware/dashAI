@@ -82,6 +82,7 @@ export default function Generative() {
             />
           ) : (
             <SelectModelMenu
+              goToBackStep={() => setStepIndex(0)}
               handleAddSession={handleAddSession}
               selectedTaskName={selectedTaskName}
               setSelectedSessionId={setSelectedSessionId}

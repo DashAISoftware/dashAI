@@ -101,7 +101,7 @@ export default function SessionBar({
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
         {/* Create new session button */}
-        {selectedSessionId || stepIndex !== 0 ? (
+        {selectedSessionId ? (
           <NewSessionButton
             onClick={handleNewSessionButton}
             tooltipText="Create New Session"
