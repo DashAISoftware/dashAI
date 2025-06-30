@@ -97,7 +97,7 @@ function PipelineResults({ pipelineId, onClose }) {
                   <Tab label="Info" />
                   <Tab label="Parameters" />
                   <Tab label="Metrics" />
-                  <Tab label="Graphs" />
+                  {/* <Tab label="Graphs" /> */}
                 </Tabs>
                 <Box sx={{ p: 3 }}>
                   {trainTab === 0 && (
@@ -118,11 +118,11 @@ function PipelineResults({ pipelineId, onClose }) {
                       <PipelineResultsMetrics metricsData={results.train.metrics} />
                     </Box>
                   )}
-                  {trainTab === 3 && (
+                  {/* {trainTab === 3 && (
                     <Box>
                       <PipelineResultsGraphs metrics={results.train.metrics} />
                     </Box>
-                  )}
+                  )} */}
                 </Box>
               </Paper>
             </Box>
