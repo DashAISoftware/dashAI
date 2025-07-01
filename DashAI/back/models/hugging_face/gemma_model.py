@@ -50,7 +50,7 @@ class GemmaSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    n_ctx: schema_field(
+    context_window: schema_field(
         int_field(ge=1),
         placeholder=512,
         description=(
@@ -76,7 +76,7 @@ class GemmaModel(TextToTextGenerationTaskModel):
         self.max_tokens = kwargs.pop("max_tokens", 100)
         self.temperature = kwargs.pop("temperature", 0.7)
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
-        self.n_ctx = kwargs.pop("n_ctx", 512)
+        self.n_ctx = kwargs.pop("context_window", 512)
 
         self.model_id = "ggml-org/gemma-1.1-7b-it-Q4_K_M-GGUF"
         self.filename = "*.gguf"
