@@ -111,7 +111,7 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
             vae=self.vae,
             variant="fp16",
             use_safetensors=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32,
         ).to(self.device)
 
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
