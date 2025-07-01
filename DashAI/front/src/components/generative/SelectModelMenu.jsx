@@ -5,6 +5,7 @@ import {
   Autocomplete,
   TextField,
   Button,
+  IconButton,
 } from "@mui/material";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
@@ -12,8 +13,8 @@ import { getRelatedComponents } from "../../api/generativeTask";
 import { createGenerativeSession } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
 
-
 export default function SelectModelMenu({
+  goToBackStep,
   selectedTaskName,
   selectedDisplayName,
   setSelectedSessionId,
@@ -85,19 +86,20 @@ export default function SelectModelMenu({
       flexDirection={"column"}
       justifyContent={"flex-start"}
       overflow={"auto"}
+      pl={5}
+      pr={5}
     >
       <Typography
+        variant="h5"
+        component="h2"
         sx={{
-          fontSize: "16px",
           whiteSpace: "normal",
           wordBreak: "break-word",
-          ml: 5,
-          mt: 1,
-          mr: 5,
-          mb: 5,
+          mt: 2,
+          mb: 4,
         }}
       >
-        {selectedDisplayName}: Select a model
+        {selectedDisplayName}: Select a model and configure parameters
       </Typography>
       <Autocomplete
         disablePortal
@@ -108,12 +110,23 @@ export default function SelectModelMenu({
           );
           setSelectedModel(selected);
         }}
-        sx={{ mr: 5, ml: 5, mb: 5 }}
+        sx={{ mb: 5 }}
         renderInput={(params) => <TextField {...params} label="Model" />}
       />
+      {!selectedModel && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+          <Button variant="outlined" onClick={goToBackStep} sx={{ mr: 1 }}>
+            Back to Task Selection
+          </Button>
+          <Button variant="contained" disabled>
+            Create a session
+          </Button>
+        </Box>
+      )}
+
       {selectedModel && selectedModel.schema && (
         <form onSubmit={formik.handleSubmit}>
-          <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
+          <Box sx={{ mb: 5 }}>
             <Box width="60%">
               <Typography
                 sx={{
@@ -180,6 +193,9 @@ export default function SelectModelMenu({
                 mt: 2,
               }}
             >
+              <Button variant="outlined" onClick={goToBackStep} sx={{ mr: 1 }}>
+                Back to Task Selection
+              </Button>
               <Button type="submit" variant="contained">
                 Create a session
               </Button>
