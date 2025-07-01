@@ -43,7 +43,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
           container
           direction="row"
           justifyContent="flex-start"
-          alignItems="center"
+          alignItems="stretch"
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
