@@ -11,13 +11,16 @@ import { getSessions, removeSession } from "../../api/session";
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  // TODO: Combine selectedTaskName and selectedDisplayName into a single selectedTask State
   const [selectedTaskName, setSelectedTaskName] = useState("");
+  const [selectedDisplayName, setSelectedDisplayName] = useState("");
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
 
-  const handleSessionClick = (sessionId, taskName) => {
+  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     setSelectedTaskName(taskName);
     setSelectedSessionId(sessionId);
+    setSelectedDisplayName(taskDisplayName)
   };
 
   const handleNewSessionButton = () => {
@@ -75,7 +78,8 @@ export default function Generative() {
             />
           ) : stepIndex === 0 ? (
             <SelectTaskMenu
-              goToNextStep={(taskName) => {
+              goToNextStep={(taskName, displayName) => {
+                setSelectedDisplayName(displayName);
                 setSelectedTaskName(taskName);
                 setStepIndex(1);
               }}
@@ -85,6 +89,7 @@ export default function Generative() {
               goToBackStep={() => setStepIndex(0)}
               handleAddSession={handleAddSession}
               selectedTaskName={selectedTaskName}
+              selectedDisplayName={selectedDisplayName}
               setSelectedSessionId={setSelectedSessionId}
             />
           )}

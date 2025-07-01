@@ -128,7 +128,7 @@ export default function SessionList({
                     key={session.id}
                     id={session.id}
                     onClick={() =>
-                      handleSessionClick(session.id, session.task_name)
+                      handleSessionClick(session.id, session.task_name, session.display_name)
                     }
                     onDelete={handleSessionDelete}
                     onInfo={handleSessionInfo}

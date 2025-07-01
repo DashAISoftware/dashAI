@@ -52,7 +52,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
               <TaskBox
                 taskName={task.display_name}
                 description={task.description}
-                onClick={() => goToNextStep(task.name)}
+                onClick={() => goToNextStep(task.name, task.display_name)}
               />
             </Grid>
           ))}
