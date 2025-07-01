@@ -63,9 +63,7 @@ def get_depth_map(image, device):
 
     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
 
-    with torch.no_grad(), torch.autocast(
-        device, dtype=torch.float32 if device == "cpu" else torch.float16
-    ):
+    with torch.no_grad(), torch.autocast(device, dtype=torch.float16):
         depth_map = depth_estimator(image).predicted_depth
 
     depth_map = torch.nn.functional.interpolate(
