@@ -90,7 +90,17 @@ function NewPipeline() {
       id: nodeId, 
       type: dragging, 
       position,
-      data: { label: dragging, hasError: validationErrors[nodeId], errors: nodeErrors },
+      data: { label: dragging, hasError: validationErrors[nodeId], errors: nodeErrors, 
+        onDelete: () => {
+          setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+          setNodeData((prev) => {
+            const newData = { ...prev };
+            delete newData[nodeId];
+            return newData;
+          });
+          setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+        }
+      },
       sourcePosition: "right",
       targetPosition: "left",
     };
@@ -145,7 +155,17 @@ function NewPipeline() {
           id: step.id,
           type: step.type,
           position: { x: idx * 160, y: 100 + (idx % 2) * 100 },
-          data: { label: step.label },
+          data: { label: step.label, 
+            onDelete: () => {
+              setNodes((nds) => nds.filter((n) => n.id !== step.id));
+              setNodeData((prev) => {
+                const newData = { ...prev };
+                delete newData[step.id];
+                return newData;
+              });
+              setEdges((eds) => eds.filter(e => e.source !== step.id && e.target !== step.id));
+            }
+          },
           sourcePosition: "right",
           targetPosition: "left",
         }));

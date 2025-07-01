@@ -1,11 +1,13 @@
-import { Box, Typography, Tooltip } from '@mui/material';
+import { Box, Typography, Tooltip, IconButton } from '@mui/material';
 import { Handle, Position } from 'reactflow';
 import FolderIcon from '@mui/icons-material/Folder';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
 import SettingsIcon from '@mui/icons-material/Settings';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
+import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
+import { useState } from 'react';
 
 const iconMap = {
   FolderIcon: FolderIcon,
@@ -17,6 +19,8 @@ const iconMap = {
 
 const CustomNode = ({ data, isConnectable }) => {
   const theme = useTheme();
+  const [hovered, setHovered] = useState(false);
+
   const IconComponent = iconMap[data.icon] || FolderIcon;
   const isDisabled = data.errors?.some(err => err.includes("already exists")) ?? false;
   const borderColor = data.notConfigured && !isDisabled
@@ -27,6 +31,8 @@ const CustomNode = ({ data, isConnectable }) => {
 
   const nodeContent = (
     <Box
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       sx={{
         width: 70,
         height: 70,
@@ -40,6 +46,28 @@ const CustomNode = ({ data, isConnectable }) => {
         position: 'relative',
       }}
     >
+      {data.onDelete && hovered && (
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            data.onDelete();
+          }}
+          sx={{
+            position: 'absolute',
+            top: 2,
+            right: 2,
+            padding: '2px',
+            zIndex: 2,
+            backgroundColor: 'transparent',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.05)',
+            },
+          }}
+        >
+          <CloseIcon sx={{ fontSize: 10, color: '#888' }} />
+        </IconButton>
+      )}
+
       {data.target && (
         <Handle
           type="target"
