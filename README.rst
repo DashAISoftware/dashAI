@@ -162,8 +162,8 @@ Later, install the requirements:
 
 .. code:: bash
 
-    $ pip install -r requirements.txt
-    $ pip install -r requirements-dev.txt
+    $ pip install pip-tools
+    $ pip-sync requirements.txt requirements-dev.txt
 
 
 Running the Backend
