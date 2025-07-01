@@ -63,7 +63,7 @@ def get_depth_map(image, device):
 
     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
 
-    with torch.no_grad(), torch.autocast(device, dtype=torch.float16):
+    with torch.no_grad(), torch.autocast(device, dtype=torch.float32):
         depth_map = depth_estimator(image).predicted_depth
 
     depth_map = torch.nn.functional.interpolate(
@@ -97,12 +97,12 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
             "diffusers/controlnet-depth-sdxl-1.0-small",
             variant="fp16",
             use_safetensors=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32,
         ).to(self.device)
 
         self.vae = AutoencoderKL.from_pretrained(
             "madebyollin/sdxl-vae-fp16-fix",
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
