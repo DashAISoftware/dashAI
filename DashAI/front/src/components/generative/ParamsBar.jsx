@@ -57,16 +57,7 @@ export default function ParamsBar({
   useEffect(() => {
     if (selectedModel?.schema?.properties) {
       const processedProps = preprocessSchema(selectedModel.schema.properties);
-
       setValidationSchema(buildYupSchema(processedProps));
-      const initialValues = Object.keys(processedProps).reduce(
-        (acc, key) => {
-          acc[key] = processedProps[key].placeholder || "";
-          return acc;
-        },
-        { name: "", description: "" },
-      );
-      formik.setValues(initialValues);
     }
   }, [selectedModel]);
 
@@ -145,12 +136,7 @@ export default function ParamsBar({
           {/* Render the parameter fields */}
           <FormSchemaRenderFields
             modelSchema={processedProperties}
-            formik={{
-              values: formik.values,
-              setFieldValue: formik.setFieldValue,  
-              handleSubmit: formik.handleSubmit,
-              errors: formik.errors || {},
-            }}
+            formik={formik}
             autoSave={false}
             handleUpdateSchema={(updatedValues) => {
               formik.setValues((prevValues) => ({
