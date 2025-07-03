@@ -92,7 +92,11 @@ from DashAI.back.models import (
     SimpleControlNetModel,
     StableDiffusionV2Model,
     StableDiffusionV3Model,
-    RAGPipeline
+    RAGPipeline,
+    BaseRetriever,
+    TFIDFRetriever,
+    DenseRetriever
+
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.plugins.utils import get_available_plugins
@@ -158,6 +162,9 @@ def get_initial_components():
         LinearSVR,
         LinearRegression,
         RAGPipeline,
+        TFIDFRetriever,
+        DenseRetriever,
+        #BaseRetriever,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,

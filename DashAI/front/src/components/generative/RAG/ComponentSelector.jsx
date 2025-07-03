@@ -1,17 +1,9 @@
-import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Autocomplete,
-  TextField,
-  CircularProgress
-} from "@mui/material";
-import FormSchemaRenderFields from "../../shared/FormSchemaRenderFields";
-import { useFormik } from "formik";
-import { preprocessSchema, buildYupSchema } from "../utils";
-import { getRelatedComponents } from "../../../api/generativeTask";
-function ComponentSelector({
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, TextField, CircularProgress } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
+
+
+export default function ComponentSelector({
   componentType,
   fetchComponents,
   initialValues,
@@ -21,100 +13,64 @@ function ComponentSelector({
   const [components, setComponents] = useState([]);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [validationSchema, setValidationSchema] = useState(null);
+  const [formValues, setFormValues] = useState({});
 
-  try {
-    console.log(getRelatedComponents("TextToTextGenerationTask"));
-  } catch (error) {
-  }
-
-
-
-  // Fetch available components
+  // Cargar componentes disponibles
   useEffect(() => {
-    const getComponents = async () => {
-      setLoading(true);
+    const loadComponents = async () => {
       try {
         const data = await fetchComponents();
         setComponents(data);
         
-        // If we have initialValues with a model_name, select that component
+        // Seleccionar componente inicial si existe
         if (initialValues?.model_name) {
-          const preselectedComponent = data.find(c => c.name === initialValues.model_name);
-          if (preselectedComponent) {
-            setSelectedComponent(preselectedComponent);
+          const component = data.find(c => c.name === initialValues.model_name);
+          if (component) {
+            setSelectedComponent(component);
+            setFormValues(initialValues.parameters || {});
           }
-        } else {
-          console.warn(`No initial model_name provided for ${componentType} selection.`);
         }
       } catch (error) {
-        console.error(`Error fetching ${componentType} components:`, error);
+        console.error(`Error loading ${componentType} components:`, error);
       } finally {
         setLoading(false);
       }
     };
-    
-    getComponents();
-  }, [componentType, fetchComponents]);
 
-  // Set up form validation schema when component changes
+    loadComponents();
+  }, []);
+
+  // Actualizar cuando cambia la selección
   useEffect(() => {
-    if (selectedComponent?.schema?.properties) {
-      const processedProps = preprocessSchema(selectedComponent.schema.properties);
-      setValidationSchema(buildYupSchema(processedProps));
-      console.log("Processed properties for form:", processedProps);
-      // Merge any existing values with defaults from schema
-      const schemaDefaults = Object.keys(processedProps).reduce(
-        (acc, key) => {
-          acc[key] = processedProps[key].placeholder || "";
-          console.log(`Setting default for ${key}:`, acc[key]);
-          return acc;
-        }, 
-        { name: "", description: ""});
+    if (selectedComponent) {
+      // Resetear valores al cambiar de componente
+      setFormValues(initialValues?.parameters || {});
       
-      // Preserve any values that were already set
-      const mergedValues = {
-        ...schemaDefaults,
-        ...(initialValues?.parameters || {})
-      };
-      
-      formik.setValues(mergedValues);
+      // Notificar cambio
+      onConfigurationChange({
+        model_name: selectedComponent.name,
+        parameters: initialValues?.parameters || {}
+      });
     }
   }, [selectedComponent]);
 
-  const formik = useFormik({
-    initialValues: initialValues?.parameters || {},
-    validationSchema,
-    enableReinitialize: true,
-    onSubmit: (values) => {
+  // Validar y habilitar siguiente paso
+  useEffect(() => {
+    setNextEnabled(!!selectedComponent);
+  }, [selectedComponent]);
+
+  const handleParameterChange = (name, value) => {
+    const newValues = {...formValues, [name]: value};
+    setFormValues(newValues);
+    
+    // Notificar cambios en tiempo real
+    if (selectedComponent) {
       onConfigurationChange({
         model_name: selectedComponent.name,
-        parameters: values
+        parameters: newValues
       });
     }
-  });
-
-  // Enable/disable next button based on form validity and selection
-  useEffect(() => {
-    if (selectedComponent && formik.isValid) {
-      setNextEnabled(true);
-      
-      // Auto-submit valid values as they change
-      if (formik.dirty) {
-        onConfigurationChange({
-          model_name: selectedComponent.name,
-          parameters: formik.values
-        });
-      }
-    } else {
-      setNextEnabled(false);
-    }
-  }, [selectedComponent, formik.values, formik.isValid, formik.dirty]);
-
-  // Process schema properties for the form renderer
-  const processedProperties = selectedComponent?.schema?.properties
-    ? preprocessSchema(selectedComponent.schema.properties)
-    : {};
+  };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -123,56 +79,49 @@ function ComponentSelector({
       </Typography>
       
       {loading ? (
-        <Box display="flex" justifyContent="center" my={4}>
-          <CircularProgress />
-        </Box>
+        <CircularProgress />
       ) : (
         <>
           <Autocomplete
-            disablePortal
             options={components.map(c => c.name)}
-            value={selectedComponent?.name || null}
+            value={selectedComponent?.name || ""}
             onChange={(_, newValue) => {
-              const selected = components.find(c => c.name === newValue);
-              setSelectedComponent(selected);
+              const component = components.find(c => c.name === newValue);
+              setSelectedComponent(component);
             }}
             renderInput={(params) => (
-              <TextField {...params} label={`${componentType} Model`} />
+              <TextField 
+                {...params} 
+                label={`${componentType} Model`} 
+                variant="outlined" 
+              />
             )}
-            sx={{ mb: 4 }}
+            fullWidth
+            sx={{ mb: 3 }}
           />
           
           {selectedComponent && (
-            <form onSubmit={formik.handleSubmit}>
+            <Box>
               <Typography variant="subtitle1" gutterBottom>
-                {selectedComponent.name} Configuration
+                Configuration Parameters
               </Typography>
               
-              <FormSchemaRenderFields
-                modelSchema={processedProperties}
-                formik={formik}
-                autoSave={true}
-                handleUpdateSchema={(updatedValues) => {
-                  formik.setValues({...formik.values, ...updatedValues});
-                }}
-                onFormSubmit={formik.handleSubmit}
-                setError={(error) => console.error(error)}
-                errorsMessage={formik.errors}
-              />
-            </form>
+              {selectedComponent.schema && Object.entries(selectedComponent.schema.properties).map(([key, spec]) => (
+                <TextField
+                  key={key}
+                  label={spec.title || key}
+                  value={formValues[key] || ""}
+                  onChange={(e) => handleParameterChange(key, e.target.value)}
+                  fullWidth
+                  margin="normal"
+                  type={spec.type === 'integer' ? 'number' : 'text'}
+                  helperText={spec.description}
+                />
+              ))}
+            </Box>
           )}
         </>
       )}
     </Box>
   );
 }
-
-ComponentSelector.propTypes = {
-  componentType: PropTypes.string.isRequired,
-  fetchComponents: PropTypes.func.isRequired,
-  initialValues: PropTypes.object,
-  onConfigurationChange: PropTypes.func.isRequired,
-  setNextEnabled: PropTypes.func.isRequired
-};
-
-export default ComponentSelector;

@@ -1,19 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Box, Autocomplete, TextField, Typography, Button } from "@mui/material"; // Added Button and Typography for consistency
-import { useFormik } from "formik"; // Import useFormik
-import FormSchemaRenderFields from "../../../components/shared/FormSchemaRenderFields"; // Assuming this component is correctly implemented
-import { getRetrieverComponents } from "../../../api/rag"; // Assuming this API call is correct
+import { Box, Autocomplete, TextField, Typography, Button } from "@mui/material";
+import { useFormik } from "formik";
+import FormSchemaRenderFields from "../../../components/shared/FormSchemaRenderFields";
+import { getGeneratorComponents } from "../../../api/rag";
 import { preprocessSchema, buildYupSchema } from "../../../components/generative/utils"
 
 
-
-export default function RetrieverConfigurationStep({ retrieverModel, setRetrieverModel, setNextEnabled }) {
-  const [retrievers, setRetrievers] = useState([]);
-  const [currentSelectedRetrieverOption, setCurrentSelectedRetrieverOption] = useState(null);
+export default function GeneratorConfigurationStep({ generatorModel, setGeneratorModel, setNextEnabled }) { 
+  const [generators, setGenerators] = useState([]);
+  const [currentSelectedGeneratorOption, setCurrentSelectedGeneratorOption] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
 
-   const getInitialParamsFromSchema = useCallback((schemaProperties) => {
+  const getInitialParamsFromSchema = useCallback((schemaProperties) => { 
     if (!schemaProperties) return {};
     return Object.keys(schemaProperties).reduce((acc, key) => {
       acc[key] = schemaProperties[key].placeholder !== undefined
@@ -21,25 +20,26 @@ export default function RetrieverConfigurationStep({ retrieverModel, setRetrieve
         : "";
       return acc;
     }, {});
-  }, []);
+  }, []); 
+
 
   useEffect(() => {
-    const loadAndSetRetriever = async () => {
-      const data = await getRetrieverComponents();
-      setRetrievers(data);
+    const loadAndSetGenerator = async () => {
+      const data = await getGeneratorComponents();
+      setGenerators(data);
 
-      if (retrieverModel?.name) {
-        const existingRetriever = data.find(r => r.name === retrieverModel.name);
-        if (existingRetriever) {
-          setCurrentSelectedRetrieverOption(existingRetriever);
+      if (generatorModel?.name) { 
+        const existingGenerator = data.find(r => r.name === generatorModel.name);
+        if (existingGenerator) {
+          setCurrentSelectedGeneratorOption(existingGenerator);
         }
       }
     };
-    loadAndSetRetriever();
-  }, [retrieverModel?.name]); 
+    loadAndSetGenerator();
+  }, [generatorModel?.name]);
 
   const formik = useFormik({
-    initialValues: retrieverModel?.parameters || {},
+    initialValues: generatorModel?.parameters || {}, 
     validationSchema: validationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
@@ -48,16 +48,16 @@ export default function RetrieverConfigurationStep({ retrieverModel, setRetrieve
 
   useEffect(() => {
 
-    const retrieverSchemaProperties = currentSelectedRetrieverOption?.schema?.properties;
+    const generatorSchemaProperties = currentSelectedGeneratorOption?.schema?.properties;
 
-    if (retrieverSchemaProperties) {
-      const processedProps = preprocessSchema(retrieverSchemaProperties);
+    if (generatorSchemaProperties) {
+      const processedProps = preprocessSchema(generatorSchemaProperties);
       setValidationSchema(buildYupSchema(processedProps));
 
       const initialFormValues = Object.keys(processedProps).reduce(
         (acc, key) => {
-          acc[key] = retrieverModel?.parameters?.[key] !== undefined
-            ? retrieverModel.parameters[key]
+          acc[key] = generatorModel?.parameters?.[key] !== undefined 
+            ? generatorModel.parameters[key]
             : (processedProps[key].placeholder !== undefined
               ? processedProps[key].placeholder
               : "");
@@ -70,24 +70,24 @@ export default function RetrieverConfigurationStep({ retrieverModel, setRetrieve
       setValidationSchema(null);
       formik.setValues({});
     }
-  }, [currentSelectedRetrieverOption, retrieverModel?.parameters]); 
+  }, [currentSelectedGeneratorOption, generatorModel?.parameters]); 
 
   useEffect(() => {
-    const isValid = !!currentSelectedRetrieverOption && formik.isValid;
+    const isValid = !!currentSelectedGeneratorOption && formik.isValid;
     setNextEnabled(isValid);
-  }, [currentSelectedRetrieverOption, formik.isValid, setNextEnabled]);
+  }, [currentSelectedGeneratorOption, formik.isValid, setNextEnabled]); 
 
-  const handleRetrieverSelectionChange = (event, newValue) => {
-    setCurrentSelectedRetrieverOption(newValue); 
+  const handleGeneratorSelectionChange = (event, newValue) => {
+    setCurrentSelectedGeneratorOption(newValue); 
 
     if (newValue) {
       const initialParameters = getInitialParamsFromSchema(newValue.schema?.properties);
-      setRetrieverModel({
+      setGeneratorModel({
         name: newValue.name,
         parameters: initialParameters,
       });
     } else {
-      setRetrieverModel({ name: "", parameters: {} }); 
+      setGeneratorModel({ name: "", parameters: {} }); 
     }
   };
 
@@ -97,17 +97,17 @@ export default function RetrieverConfigurationStep({ retrieverModel, setRetrieve
       ...updatedValues,
     }));
 
-    setRetrieverModel({
-      name: currentSelectedRetrieverOption.name,
+    setGeneratorModel({
+      name: currentSelectedGeneratorOption.name,
       parameters: {
         ...formik.values,
         ...updatedValues,
       },
     });
-  };  
-  
-  const processedProperties = currentSelectedRetrieverOption?.schema?.properties
-    ? preprocessSchema(currentSelectedRetrieverOption.schema.properties)
+  };
+
+  const processedProperties = currentSelectedGeneratorOption?.schema?.properties
+    ? preprocessSchema(currentSelectedGeneratorOption.schema.properties)
     : {};
 
   return (
@@ -127,21 +127,21 @@ export default function RetrieverConfigurationStep({ retrieverModel, setRetrieve
           mb: 2,
         }}
       >
-        Configure Retriever Model
+        Configure Generator Model (LLM)
       </Typography>
 
       <Autocomplete
         disablePortal
-        options={retrievers} 
+        options={generators}
         getOptionLabel={(option) => option.name} 
-        value={currentSelectedRetrieverOption} 
-        onChange={handleRetrieverSelectionChange} 
+        value={currentSelectedGeneratorOption} 
+        onChange={handleGeneratorSelectionChange}
         isOptionEqualToValue={(option, value) => option.name === value?.name}
-        renderInput={(params) => <TextField {...params} label="Retriever Model" />}
+        renderInput={(params) => <TextField {...params} label="Generator Model" />}
         sx={{ mb: 3 }}
       />
 
-      {currentSelectedRetrieverOption && currentSelectedRetrieverOption.schema && (
+      {currentSelectedGeneratorOption && currentSelectedGeneratorOption.schema && (
         <form onSubmit={formik.handleSubmit}>
           <Box width="100%">
             <Typography

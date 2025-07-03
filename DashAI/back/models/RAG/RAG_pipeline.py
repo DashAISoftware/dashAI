@@ -1,115 +1,68 @@
-from typing import Any, Tuple, List
-
-from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from typing import Any, Tuple, List, Dict
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
-    enum_field,
-    int_field,
-    float_field,
+    component_field,
     schema_field,
+    bool_field,
+    list_field,
     string_field
 )
 
-from DashAI.back.models.hugging_face.deep_seek_model import DeepSeekModel
-from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
-from DashAI.back.models.RAG.dummy_retriever import DummyRetriever
+from DashAI.back.models.RAG.Retrievers import (
+    TFIDFRetriever,
+    DenseRetriever,
+    BaseRetriever)
+
 from DashAI.back.models.RAG.prompts import (
-    BasePrompt,
     ContextMergePrompt,
     AugmentationPrompt
 )
-from typing import Dict
+
+from DashAI.back.models.hugging_face import (
+    DeepSeekModel,
+    QwenModel,
+    GemmaModel)
+
+retriever_models = {
+    "TFIDFRetriever": TFIDFRetriever,
+    "DenseRetriever": DenseRetriever,
+}
+
+generation_models = {
+    "DeepSeekModel": DeepSeekModel,
+    "QwenModel": QwenModel,
+    "GemmaModel": GemmaModel,
+}
 
 class RAGPipelineSchema(BaseSchema):
     """Schema for RAG pipeline."""
-
-    # RAG algorithm parameters
-    RAG_algorithm: schema_field(
-        enum_field(["SINGLE_INTERACTION", "AUGMENTED_INTERACTION"]),
-        placeholder="SINGLE_INTERACTION",
-        description="RAG algorithm to use for document retrieval and text generation.",
-    )  # type: ignore
-
-
-    # Retriever parameters 
-    documments_path: schema_field(
-        string_field(),
-        placeholder="Path to the folder with documents",
-        description="Path to the folder containing documents for retrieval.",
-    )  # type: ignore
-
-    collection_name: schema_field(
-        string_field(),
-        placeholder="My documents collection name",
-        description="Name of the collection to use for document retrieval.",
-    )  # type: ignore
-        
-
-    distance_function: schema_field(
-        enum_field(["cosine", "L2", "inner"]),
-        placeholder="cosine",
-        description="Distance function to use for document retrieval.",
-    )  # type: ignore
-
-    n_docs: schema_field(
-        int_field(ge=1),
-        placeholder=5,
-        description="Maximum number of documents to retrieve.",
-    )  # type: ignore
-
-    max_distance: schema_field(
-        float_field(ge=0.0),
-        placeholder=1.0,
-        description="Maximum distance allowed for retrieved documents.",
-    )  # type: ignore
-
-    chunk_size: schema_field(
-        int_field(ge=1),
-        placeholder=1000,
-        description="Size of the chunks to split the documents into.",
-    )  # type: ignore
-
-    chunk_overlap: schema_field(
-        int_field(ge=0),
-        placeholder=200,
-        description="Overlap size between chunks.",
-    )  # type: ignore
-
-
-    # LLM parameters
-    model_name: schema_field(
-        enum_field(["DeepSeek", "Qwen2"]),
-        placeholder="DeepSeek",
-        description="LLM model to use for text generation.",
-    )  # type: ignore
-
-    max_tokens: schema_field(
-        int_field(ge=1),
-        placeholder=800,
-        description="Maximum number of tokens to generate.",
-    )  # type: ignore   
-
-    temperature: schema_field(
-        float_field(ge=0.0, le=1.0),
-        placeholder=0.7,
-        description="Sampling temperature. Higher values make the output more random, while lower values make it more focused and deterministic.",
-    )  # type: ignore
-
-    frequency_penalty: schema_field(
-        float_field(ge=0.0, le=2.0),
-        placeholder=0.1,
-        description="Penalty for repeated tokens in the output. Higher values reduce the likelihood of repetition, encouraging more diverse text generation.",
-    )  # type: ignore
-
-    n_ctx: schema_field(
-        int_field(ge=1),
-        placeholder=4096,
-        description="Maximum number of tokens the model can process in a single forward pass (context window size).",
+    # Document collection parameters
+    documents: schema_field(
+        list_field(
+            string_field(),
+            min_items=1,
+        ),
+        placeholder=None,
+        description="List of documents to be used in the RAG pipeline."
     ) # type: ignore
 
-class RAGPipeline(TextToTextGenerationTaskModel):
+    # RAG algorithm parameters
+    retriever_model: schema_field(
+        component_field(parent="RetrieverModel"),
+        placeholder={"component": "TFIDFRetriever", "params": {}},
+        description="Retriever component used in the RAG pipeline."
+    ) # type: ignore
+
+    generation_model: schema_field(
+        component_field(parent="TextToTextGenerationTaskModel"),
+        placeholder={"component": "DeepSeek", "params": {}},
+        description="Text generation model used in the RAG pipeline."
+    ) # type: ignore
+
+class RAGPipeline(BaseGenerativeModel):
     """Retrieval-Augmented Generation (RAG) pipeline."""
     
     COMPATIBLE_COMPONENTS = ["RAGTask"]
@@ -126,50 +79,49 @@ class RAGPipeline(TextToTextGenerationTaskModel):
             n_docs (int): The maximum number of documents to retrieve.
             max_distance (float): The maximum distance allowed for retrieved documents.
         """
-        kwargs = self.validate_and_transform(kwargs)
-
         print("Initializing RAG pipeline")
-        # Initialize the LLM model
-        llm_classes = {
-            "DeepSeek": DeepSeekModel,
-            "Qwen2": QwenModel,
-        }
+        try:
+            documents_paths = kwargs['documents']
+            retriever_args = kwargs['retriever_model']
+            generation_model_args = kwargs['generation_model']
+        except KeyError as e:
+            raise ValueError(f"Missing required RAG pipeline parameter: {e}")
+        
+        try:
+            retriever_model_class = retriever_models[retriever_args["component"]]
+            retriever_params = retriever_args['params']
+        except KeyError as e:
+            raise ValueError(f"Invalid retriever model specified: {e}")
+        
+        try:
+            generation_model_class = generation_models[generation_model_args["component"]]
+            generation_params = generation_model_args['params']
 
-        llm_kwargs = {
-            "max_tokens": kwargs.get("max_tokens"),
-            "temperature": kwargs.get("temperature"),
-            "frequency_penalty": kwargs.get("frequency_penalty"),
-            "n_ctx": kwargs.get("n_ctx"),
-        }
+        except KeyError as e:
+            raise ValueError(f"Invalid generation model specified: {e}")
+        
+        assert isinstance(documents_paths, list) and len(documents_paths) > 0, "Documents must be a non-empty list."
+        for path in documents_paths:
+            assert isinstance(path, str), f"Each document path must be a string, got {type(path)}"
 
         print("Initializing LLM model")
-        self.llm_model: TextToTextGenerationTaskModel = llm_classes[kwargs.get("model_name")](**llm_kwargs)
+        self.llm_model: TextToTextGenerationTaskModel = generation_model_class(**generation_params)
 
-        # Initialize the retriever
-        retriever_params = {
-            "documents_path": kwargs.get("documments_path"),
-            "collection_name": kwargs.get("collection_name"),
-            "distance_function": kwargs.get("distance_function"),
-            "n_docs": kwargs.get("n_docs"),
-            "max_distance": kwargs.get("max_distance"),
-            "chunk_size": kwargs.get("chunk_size"),
-            "chunk_overlap": kwargs.get("chunk_overlap"),
+
+        new_retriever_args = {
+            'documents_paths': documents_paths,
         }
+        for key, value in retriever_params.items():
+            new_retriever_args[key] = value
 
-        print("Initializing retriever")
-        self.retriever = DummyRetriever(**retriever_params)
+        print("Initializing retriever model")
+        self.retriever: BaseRetriever = retriever_model_class(**new_retriever_args)
 
-        print("Definining rag algorithm")
-        # Initialize the RAG algorithm
-        if kwargs.get("RAG_algorithm") == "SINGLE_INTERACTION":
-            self.retrieval_algorithm = self.single_interaction
-        elif kwargs.get("RAG_algorithm") == "AUGMENTED_INTERACTION":
-            self.retrieval_algorithm = self.augmented_interaction
-        else:
-            raise ValueError("Invalid RAG algorithm. Choose 'SINGLE_INTERACTION' or 'AUGMENTED_INTERACTION'.")
+        self.retrieval_algorithm = "SINGLE_INTERACTION"
         print("RAG pipeline initialized")
 
-    def single_interaction(self, input: str, history: List[Tuple[str, str]] = None) -> Dict[str, str]:
+
+    def single_interaction(self, input: str, history: List[Tuple[str, str]] = None) -> List[Tuple[str, str, int]]:
         """
         Single interaction retrieval algorithm: input -> retrieve documents.
         Args:
@@ -178,12 +130,12 @@ class RAGPipeline(TextToTextGenerationTaskModel):
             str: The generated response.
         """
 
-        documents = self.retriever.retrieve([input])
+        documents = self.retriever.retrieve(input)
 
         return documents
         
     
-    def augmented_interaction(self, input: str, history: List[Tuple[str, str]] = None) -> Dict[str, str]:
+    def augmented_interaction(self, input: str, history: List[Tuple[str, str]] = None) -> List[Tuple[str, str, int]]:
         """
         Augmented interaction RAG algorithm: input -> generate lookup tokens -> retrieve documents -> generate response.
         Args:
@@ -219,14 +171,17 @@ class RAGPipeline(TextToTextGenerationTaskModel):
         Returns:
             str: The generated response.
         """
-        message, history = input
+        message = input
 
-        documents = self.retrieval_algorithm(message, history)
-        documents_str = "\n\n".join([f"Document {name}:\n {content}" for name, content in documents.items()])
+        documents = self.single_interaction(message)
+        documents_str = "RETRIEVED INFORMATION:\n\n"
+        for doc_content, doc_file, chunk in documents:
+            doc_name = doc_file.split("/")[-1]
+            documents_str += f"Document '{doc_name}' in chunk: {chunk}:\n{doc_content}\n\n"
 
         prompt = ContextMergePrompt.format(
             input=message,
-            history=history,
+            history=None,
             documents=documents_str
         )
 
@@ -234,7 +189,6 @@ class RAGPipeline(TextToTextGenerationTaskModel):
 
         response = self.llm_model.generate(prompt)
 
-        sources_str = ", ".join(doc_name for doc_name in documents.keys())
-        response = f"{response[0]}\n\nSources:{sources_str}"
+        response = f"{response[0]}\n\nSources:{documents_str}"
 
         return [response]

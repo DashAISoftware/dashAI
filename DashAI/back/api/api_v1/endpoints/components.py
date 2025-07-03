@@ -87,19 +87,14 @@ async def get_components(
     HTTPException
         If task_name does not exist in the registry
     """
-
+    flag = " ".join(str(param) for param in [select_types, ignore_types, related_component, component_parent, has_related_of_type])
+    if "etriever" in flag or "RAG" in flag or "rag" in flag:
+        "stop here"
     print("select_types", str(select_types))
     print("ignore_types", str(ignore_types))
     print("related_component", str(related_component))
     print("component_parent", str(component_parent))
     print("has_related_of_type", str(has_related_of_type))
-    print("component_registry", str(component_registry))
-
-
-    print(list(component_registry._registry.keys()))
-    print(related_component in component_registry._registry)
-    print(component_registry)
-    
     print("get_components api ")
     # when select_type is not none, check if it exists in the registry.
     if select_types is not None:
@@ -207,9 +202,11 @@ async def get_components(
         )
 
     print("get_components api 10")
-    return [
+    out = [
         _delete_class(component_dict) for component_dict in selected_components.values()
     ]
+
+    return out
 
 
 @router.get("/{id}/")

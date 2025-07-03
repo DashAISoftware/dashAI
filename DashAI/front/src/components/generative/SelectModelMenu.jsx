@@ -24,7 +24,6 @@ export default function SelectModelMenu({
 
   useEffect(() => {
     if (!selectedTaskName) return;
-    console.log("Fetching related components for task:", selectedTaskName);
     getRelatedComponents(selectedTaskName).then(setRelatedComponents);
   }, [selectedTaskName]);
 

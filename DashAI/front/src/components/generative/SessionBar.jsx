@@ -21,8 +21,6 @@ export default function SessionBar({
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
 
-  console.log(selectedSessionId);
-
   useEffect(() => {
     // Initialize all sections as closed
     const taskNames = [

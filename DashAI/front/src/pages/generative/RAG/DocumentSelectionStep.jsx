@@ -1,94 +1,105 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Box, CircularProgress } from "@mui/material";
-import DocumentSelector from "../../../components/generative/RAG/DocumentSelector";
-import SessionMetadata from "../../../components/generative/RAG/SessionMetadata";
+import { Box, Typography } from "@mui/material";
+import DocumentSelector from "../../../components/generative/RAG/DocumentSelector"; // Adjust the import path as needed
 
-function DocumentSelectionStep({ newSession, setNewSession, setNextEnabled }) {
-  const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch available documents on component mount
+
+
+
+
+// Helper function to convert document paths to UI-friendly objects
+const createDocumentObjectFromPath = (path) => ({
+  id: path,
+  name: path.split('/').pop() || path, // Use filename as name, fallback to full path
+  updatedAt: new Date().toISOString(), // Initial timestamp for new paths
+});
+
+export default function DocumentSelectionStep({ documents, setDocuments, setNextEnabled }) {
+  // Initialize localDocumentObjects and selectedObjectIds once from the 'documents' prop.
+  // This runs only on the initial mount.
+  const [localDocumentObjects, setLocalDocumentObjects] = useState(() => {
+    const initialLocalDocs = documents.map(createDocumentObjectFromPath);
+    const initialSelectedIds = documents; // Paths are directly the IDs
+    return initialLocalDocs;
+  });
+
+  const [selectedObjectIds, setSelectedObjectIds] = useState(() => {
+    return documents; // Paths are directly the IDs
+  });
+
+  // Effect 1: Sync selectedObjectIds (paths) back to the parent component
+  // This effect ensures the parent's 'documents' prop is updated when local selection changes.
   useEffect(() => {
-    const fetchDocuments = async () => {
-      setLoading(true);
-      try {
-        // Replace this with your actual API call to get documents
-        // For now using a mock response with delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const data = [
-          { id: 1, name: "Product Documentation.pdf", type: "PDF", size: "1.2 MB", updatedAt: "2025-05-15" },
-          { id: 2, name: "User Manual.docx", type: "DOCX", size: "3.4 MB", updatedAt: "2025-05-20" },
-          { id: 3, name: "API Reference.pdf", type: "PDF", size: "2.1 MB", updatedAt: "2025-06-01" },
-          { id: 4, name: "Technical Specifications.txt", type: "TXT", size: "4.7 MB", updatedAt: "2025-06-10" },
-          { id: 5, name: "Troubleshooting Guide.pdf", type: "PDF", size: "1.8 MB", updatedAt: "2025-06-15" }
-        ];
-        setDocuments(data);
-      } catch (error) {
-        console.error("Failed to fetch documents:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Only update parent if there's a change to prevent infinite loops and unnecessary re-renders
+    if (JSON.stringify(selectedObjectIds) !== JSON.stringify(documents)) {
+      setDocuments(selectedObjectIds); // selectedObjectIds already contains the paths
+    }
+  }, [selectedObjectIds, setDocuments, documents]); // Dependencies: local selected IDs, and parent's setter/prop for comparison
 
-    fetchDocuments();
+  // Effect 2: Notify parent about step validity
+  // This effect ensures the 'Next' button's enabled state is correct.
+  useEffect(() => {
+    const isValid = selectedObjectIds && selectedObjectIds.length > 0;
+    setNextEnabled(isValid);
+  }, [selectedObjectIds, setNextEnabled]); // Dependencies: local selected IDs, and parent's setter
+
+  // Handler for when DocumentSelector's selection changes (checkboxes)
+  const handleDocumentSelectionChange = useCallback((selectedDocs) => {
+    // Extract 'id' (which is the path) from the selected document objects
+    const newSelectedIds = selectedDocs.map(doc => doc.id);
+    setSelectedObjectIds(newSelectedIds);
   }, []);
 
-  // Update next button state whenever documents or session name changes
-  useEffect(() => {
-    const hasDocuments = newSession.documents && newSession.documents.length > 0;
-    const hasName = Boolean(newSession.name);
-    setNextEnabled(hasDocuments && hasName);
-  }, [newSession.documents, newSession.name, setNextEnabled]);
+  // Handler for when DocumentSelector adds a new document (e.g., from Upload component)
+  const handleAddDocumentObject = useCallback((newDoc) => {
+    setLocalDocumentObjects(prev => {
+      // Ensure no duplicates based on ID (path) before adding
+      if (!prev.some(doc => doc.id === newDoc.id)) {
+        const updatedDocs = [...prev, newDoc];
+        // Also ensure it's selected in the UI
+        setSelectedObjectIds(currentSelected => {
+          if (!currentSelected.includes(newDoc.id)) {
+            return [...currentSelected, newDoc.id];
+          }
+          return currentSelected;
+        });
+        return updatedDocs;
+      }
+      return prev;
+    });
+  }, []);
 
-  const handleSessionMetadataUpdate = (metadata) => {
-    setNewSession(prev => ({
-      ...prev,
-      name: metadata.name,
-      description: metadata.description
-    }));
-  };
+  // Handler for when DocumentSelector removes a document
+  const handleRemoveDocumentObject = useCallback((docId) => {
+    setLocalDocumentObjects(prev => prev.filter(doc => doc.id !== docId));
+    setSelectedObjectIds(prev => prev.filter(id => id !== docId));
+  }, []);
 
-  const handleDocumentsSelect = (selectedDocuments) => {
-    setNewSession(prev => ({
-      ...prev,
-      documents: selectedDocuments
-    }));
-  };
 
   return (
-    <Box 
-      display={"flex"}
-      height={"100%"}
-      width={"100%"}
-      flexDirection={"column"}
-      justifyContent={"flex-start"}
-      overflow={"auto"}
-    >
-      <SessionMetadata 
-        sessionData={newSession}
-        onUpdate={handleSessionMetadataUpdate}
-        setNextEnabled={setNextEnabled}
-      />
-      
-      {loading ? (
-        <Box display="flex" justifyContent="center" my={4}>
-          <CircularProgress />
-        </Box>
-      ) : (
+    <Box display="flex" flexDirection="column" height="100%" width="100%">
+      <Typography variant="h6" sx={{ mb: 2 }}>Select Documents</Typography>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+        Upload new documents or select from existing ones to be used for RAG.
+      </Typography>
+
+      {/* Integrate the DocumentSelector component */}
+      <Box flexGrow={1}> {/* Allow DocumentSelector to take available height */}
         <DocumentSelector
-          selected={newSession.documents || []}  // Match the expected prop name
-          onSelect={handleDocumentsSelect}        // Match the expected prop name
+          documents={localDocumentObjects} // Pass the processed document objects
+          selected={selectedObjectIds}   // Pass the selected IDs (paths)
+          onSelect={handleDocumentSelectionChange} // Callback when selection changes
+          onAddDocument={handleAddDocumentObject}  // Callback for new document added
+          onRemove={handleRemoveDocumentObject}    // Callback for document removal
         />
-      )}
+      </Box>
     </Box>
   );
 }
 
 DocumentSelectionStep.propTypes = {
-  newSession: PropTypes.object.isRequired,
-  setNewSession: PropTypes.func.isRequired,
+  documents: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setDocuments: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
 };
-
-export default DocumentSelectionStep;

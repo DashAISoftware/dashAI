@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Button,
-  ButtonGroup,
   Dialog,
   DialogActions,
   DialogTitle,
@@ -16,147 +15,145 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useSnackbar } from "notistack";
 
 import DocumentSelectionStep from "./DocumentSelectionStep";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
-import AlgorithmConfigurationStep from "./AlgorithmConfigurationStep";
-import { createRAGSession, updateRAGSession } from "../../../api/rag";
+import GeneratorConfigurationStep from "./GeneratorConfigurationStep"; 
 
 const steps = [
   {
     name: "select-documents",
     label: "Select documents",
-    Component: DocumentSelectionStep,
+    component: DocumentSelectionStep,
   },
   {
     name: "configure-retriever",
     label: "Configure retriever",
-    Component: RetrieverConfigurationStep,
+    component: RetrieverConfigurationStep,
   },
   {
-    name: "configure-algorithm",
-    label: "Configure algorithm",
-    Component: AlgorithmConfigurationStep,
+    name: "configure-generator",
+    label: "Configure Language Model",
+    component: GeneratorConfigurationStep,
   },
 ];
 
 const defaultNewSession = {
   name: "",
-  task_name: "RAGTask", // Default task name
+  task_name: "RAGTask",
   description: "",
-  RAGParameters: {},
-  documents: [],
+  displayName: "",
+  parameters: {
+    "documents": [],
+    "retriever_model": {
+      "name": "",
+      "parameters": {},
+    },
+    "generator_model": { 
+      "name": "",
+      "parameters": {},
+    },
+  },
 };
 
 export default function NewSessionModal({
   open,
-  setOpen,
-  setUpdateTableFlag,
-  setSelectedSessionId,
-  handleAddSession,
-  selectedSession,
+  onClose,
+  onSessionSaved,
+  onSessionSelect,
+  session
 }) {
   const theme = useTheme();
-  const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
-  const { enqueueSnackbar } = useSnackbar();
-
   const [activeStep, setActiveStep] = useState(0);
-  const [nextEnabled, setNextEnabled] = useState(false);
-  const [newSession, setNewSession] = useState(
-    selectedSession || defaultNewSession
-  );
+  const [sessionData, setSessionData] = useState(session || defaultNewSession);
+  const [stepValidity, setStepValidity] = useState(new Array(steps.length).fill(false));
 
-  const [stepCompleted, setStepCompleted] = useState([false, false, false]);
-  
-  const handleStepComplete = (stepIndex) => {
-    const newCompleted = [...stepCompleted];
-    newCompleted[stepIndex] = true;
-    setStepCompleted(newCompleted);
-  };
 
-  // Initialize session data when modal opens or selectedSession changes
   useEffect(() => {
     if (open) {
-      if (selectedSession) {
-        // Edit mode - use existing session
-        setNewSession({
-          ...selectedSession,
-          // Ensure documents array exists
-          documents: selectedSession.documents || []
-        });
-      } else {
-        // Create mode - use defaults
-        setNewSession(defaultNewSession);
-      }
       setActiveStep(0);
-      setNextEnabled(false);
+      if(session) {
+        const sessionParameters = session.parameters || {};
+        const sessionRetrieverModel = sessionParameters.retriever_model || {};
+        const sessionGeneratorModel = sessionParameters.generator_model || {};
+        setSessionData({
+          id: session.id,
+          name: session.name || "",
+          task_name: session.task_name || "RAGTask",
+          description: session.description || "",
+          displayName: session.displayName || "",
+          parameters: {
+            documents: sessionParameters.documents || [],
+            retriever_model: {
+              class: sessionRetrieverModel.class || "",
+              name: sessionRetrieverModel.name || "",
+              parameters: sessionRetrieverModel.parameters || {},
+            },
+            generator_model: {
+              class: sessionGeneratorModel.class || "",
+              name: sessionGeneratorModel.name || "",
+              parameters: sessionGeneratorModel.parameters || {},
+            },
+          },
+        })
+      } else {
+        setSessionData(defaultNewSession); 
+      }
+      setStepValidity(new Array(steps.length).fill(false));
     }
-  }, [open, selectedSession]);
+  }, [open, session]);
 
+  const handleStepValidation = useCallback((stepIndex, isValid) => {
+    setStepValidity(prev => {
+      const newValidity = [...prev];
+      newValidity[stepIndex] = isValid;
+      return newValidity;
+    });
+  }, [])
 
-  const uploadNewSession = async () => {
-    try {
-      // For new sessions, exclude ID
-      const sessionData = selectedSession 
-        ? newSession // Keep existing ID for updates
-        : { ...newSession, id: undefined }; // Remove ID for new sessions
-      
-      const response = selectedSession
-        ? await updateRAGSession(sessionData) // Implement update function if needed
-        : await createRAGSession(sessionData);
-
-      const sessionId = response.id;
-      console.log("Session created/updated with ID:", sessionId);
-
-      enqueueSnackbar(
-        `Session ${selectedSession ? "updated" : "created"} successfully!`,
-        { variant: "success" }
-      );
-      setUpdateTableFlag(true); // Trigger table update
-    } catch (error) {
-      console.error("Session creation error:", error);
-      enqueueSnackbar(
-        `Failed to ${selectedSession ? "update" : "create"} session: ${error.message}`,
-        { variant: "error" }
-      );
+  const isNextOrFinishEnabled = () => {
+    if (!stepValidity[activeStep]) {
+      return false;
     }
-  };
-
-  const handleCloseDialog = () => {
-    setActiveStep(0);
-    setOpen(false);
-    setNewSession(defaultNewSession);
-    setNextEnabled(false);
-
-  };
-
-  const handleStepButton = (index) => () => {
-    setActiveStep(index);
-  };
-
-  const handleBackButton = () => {
-    if (activeStep === 0) {
-      handleCloseDialog();
-    } else {
-      setActiveStep(activeStep - 1);
-      setNextEnabled(true);
-    }
-  };
-
-  const handleNextButton = () => {
     if (activeStep === steps.length - 1) {
-      handleFinish();
-    } else {
-      setActiveStep(activeStep + 1);
-      setNextEnabled(false); // Reset next enabled for new step
+      return stepValidity.every(isValid => isValid);
     }
+    return true;
   };
 
   const handleFinish = async () => {
-    await uploadNewSession();
-    handleCloseDialog();
+    if (!stepValidity.every(isValid => isValid)) {
+      return;
+    }
+
+    try {
+      // Ensure generator_model is included in the final session data
+      const finalSessionData = {
+        ...sessionData,
+        parameters: {
+          ...sessionData.parameters,
+          generator_model: sessionData.parameters.generator_model || {
+            name: "",
+            parameters: {},
+          },
+          retriever_model: sessionData.parameters.retriever_model || {
+            name: "",
+            parameters: {},
+          },
+        },
+      };
+
+      const savedSession = await onSessionSaved(finalSessionData);
+
+
+      if (onSessionSelect) {
+        onSessionSelect(savedSession.id);
+      }
+      onClose();
+    } catch (error) {
+      console.error("NewSessionModal: Error saving session:", error);
+    }
   };
 
   return (
@@ -165,7 +162,7 @@ export default function NewSessionModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth="lg"
-      onClose={handleCloseDialog}
+      onClose={onClose}
       aria-labelledby="new-session-dialog-title"
       PaperProps={{ sx: { minHeight: "80vh" } }}
     >
@@ -177,7 +174,7 @@ export default function NewSessionModal({
                 <IconButton
                   edge="start"
                   color="inherit"
-                  onClick={handleCloseDialog}
+                  onClick={onClose}
                   sx={{ display: { xs: "flex", sm: "none" } }}
                 >
                   <CloseIcon />
@@ -185,7 +182,7 @@ export default function NewSessionModal({
               </Grid>
               <Grid item xs>
                 <Typography variant="h6" component="h3" align="left">
-                  {selectedSession ? "Edit" : "Create New"} RAG Session
+                  {session ? "Edit" : "Create New"} RAG Session
                 </Typography>
               </Grid>
             </Grid>
@@ -193,11 +190,11 @@ export default function NewSessionModal({
           <Grid item xs={12} md={9}>
             <Stepper nonLinear activeStep={activeStep} sx={{ maxWidth: "100%" }}>
               {steps.map((step, index) => (
-                <Step 
-                  key={step.name} 
-                  completed={activeStep > index}
+                <Step
+                  key={step.name}
+                  completed={stepValidity[index] && activeStep > index}
                   disabled={activeStep < index}>
-                  <StepButton color="inherit" onClick={handleStepButton(index)}>
+                  <StepButton color="inherit" onClick={() => setActiveStep(index)}>
                     {step.label}
                   </StepButton>
                 </Step>
@@ -206,46 +203,55 @@ export default function NewSessionModal({
           </Grid>
         </Grid>
       </DialogTitle>
-      
+
       <DialogContent dividers>
         {activeStep === 0 && (
           <DocumentSelectionStep
-            newSession={newSession}
-            setNewSession={setNewSession}
-            setNextEnabled={setNextEnabled}
+            documents={sessionData.parameters.documents}
+            setDocuments={
+              (docs) => setSessionData(prev => ({
+                ...prev,
+                parameters: { ...prev.parameters, documents: docs }
+              }))
+            }
+            setNextEnabled={(isValid) => handleStepValidation(0, isValid)}
           />
         )}
         {activeStep === 1 && (
           <RetrieverConfigurationStep
-            newSession={newSession}
-            setNewSession={setNewSession}
-            setNextEnabled={setNextEnabled}
+            retrieverModel={sessionData.parameters.retriever_model}
+            setRetrieverModel={(model) => setSessionData(prev => ({
+              ...prev,
+              parameters: { ...prev.parameters, retriever_model: model }
+            }))}
+            setNextEnabled={(isValid) => handleStepValidation(1, isValid)}
           />
         )}
         {activeStep === 2 && (
-          <AlgorithmConfigurationStep
-            newSession={newSession}
-            setNewSession={setNewSession}
-            setNextEnabled={setNextEnabled}
-            setSelectedSessionId={setSelectedSessionId}
-            handleAddSession={handleAddSession}
+          <GeneratorConfigurationStep
+            generatorModel={sessionData.parameters.generator_model}
+            setGeneratorModel={(model) => setSessionData(prev => ({
+              ...prev,
+              parameters: { ...prev.parameters, generator_model: model }
+            }))}
+            setNextEnabled={(isValid) => handleStepValidation(2, isValid)}
           />
         )}
       </DialogContent>
 
       <DialogActions>
-        <ButtonGroup size="large">
-          <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Cancel" : "Back"}
-          </Button>
-          <Button
-            onClick={handleNextButton}
-            variant="contained"
-            disabled={!nextEnabled}
-          >
-            {activeStep === steps.length - 1 ? "Finish" : "Next"}
-          </Button>
-        </ButtonGroup>
+        <Button onClick={() => {
+          activeStep === 0 ? onClose() : setActiveStep(prev => prev - 1);
+        }}>
+          {activeStep === 0 ? "Cancel" : "Back"}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => activeStep === steps.length - 1 ? handleFinish() : setActiveStep(prev => prev + 1)}
+          disabled={!isNextOrFinishEnabled()}
+        >
+          {activeStep === steps.length - 1 ? "Finish" : "Next"}
+        </Button>
       </DialogActions>
     </Dialog>
   );

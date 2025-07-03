@@ -44,7 +44,7 @@ class RAGTask(BaseGenerativeTask):
             The history of the conversation
         """
         
-        return input  # type: Optional[List[Tuple[str, str]]]
+        return input[0].data  # type: Optional[List[Tuple[str, str]]]
         
         
 
@@ -76,7 +76,7 @@ class RAGTask(BaseGenerativeTask):
     ) -> str:
         """Process the output of a generative model."""
 
-        return output
+        return [(str(output[0]), "str")]
 
     def process_output_from_database(
         self,

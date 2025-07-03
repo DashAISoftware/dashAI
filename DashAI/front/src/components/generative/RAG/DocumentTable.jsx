@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Margin } from "@mui/icons-material";
+import PropTypes from "prop-types";
 
 export default function DocumentTable({
   documents,
@@ -25,12 +25,12 @@ export default function DocumentTable({
 }) {
 
   return (
-    <Box 
-      sx={{ 
-        backgroundColor: "background.paper", 
-        borderRadius: 2, 
-        p: 2, 
-        height: "100%", 
+    <Box
+      sx={{
+        backgroundColor: "background.paper",
+        borderRadius: 2,
+        p: 2,
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         }}>
@@ -43,7 +43,20 @@ export default function DocumentTable({
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell />
+                <TableCell padding="checkbox"> {/* Added padding="checkbox" for standard spacing */}
+                   {/* Checkbox for Select All/Deselect All */}
+                   <Checkbox
+                     indeterminate={selectedIds.length > 0 && selectedIds.length < documents.length}
+                     checked={selectedIds.length === documents.length && documents.length > 0}
+                     onChange={(event) => {
+                       if (event.target.checked) {
+                         onSelectAll();
+                       } else {
+                         onDeselectAll();
+                       }
+                     }}
+                   />
+                </TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Updated</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -59,7 +72,7 @@ export default function DocumentTable({
                     backgroundColor: selectedIds.includes(doc.id) ? "action.hover" : "inherit",
                   }}
                 >
-                  <TableCell>
+                  <TableCell padding="checkbox"> {/* Added padding="checkbox" */}
                     <Checkbox
                       checked={selectedIds.includes(doc.id)}
                       onChange={() => onToggle(doc.id)}
@@ -70,7 +83,10 @@ export default function DocumentTable({
                   <TableCell align="right">
                     <Box display="flex" flexDirection="row" justifyContent="flex-end">
                       <Tooltip title="Preview">
-                        <IconButton size="small">
+                        <IconButton size="small" onClick={() => {
+                          if (doc.preview) window.open(doc.preview, '_blank');
+                          else console.warn("No preview URL available for this document.");
+                        }}>
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -85,12 +101,16 @@ export default function DocumentTable({
               ))}
             </TableBody>
           </Table>
-          <Box 
-            display="flex" 
-            mb={2}
-            alignItems="right"
+          <Box
+            display="flex"
+            mb={0} 
+            mt="auto" /* Pushes buttons to the bottom */
+            alignItems="center"
             justifyContent="flex-end"
-            >
+            gap={1} /* Added gap between buttons */
+            p={1} /* Added padding for buttons within the box */
+            borderTop="1px solid #e0e0e0" /* Separator line */
+          >
             <Button size="small" onClick={onDeselectAll}>Deselect All</Button>
             <Button size="small" onClick={onSelectAll}>Select All</Button>
           </Box>
@@ -99,3 +119,17 @@ export default function DocumentTable({
     </Box>
   );
 }
+
+DocumentTable.propTypes = {
+  documents: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    updatedAt: PropTypes.string.isRequired,
+    preview: PropTypes.string,
+  })).isRequired,
+  selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onSelectAll: PropTypes.func.isRequired,
+  onDeselectAll: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+};
