@@ -1,10 +1,12 @@
 import pyarrow as pa
 import pandas as pd
 import json
-from typing import Dict
+from typing import Dict, Any
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import DashAIValue, Integer, Float, Text, Time, Boolean, Timestamp, Duration, Decimal, Date, Binary
 from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_image import DashAIImage
+import re
 
 
 
@@ -57,6 +59,19 @@ PTYPE_TO_DASHAI = {
     "time": {"type": "Time", "dtype": "time32(s)"},
 }
 
+value_types = [
+    "Integer",
+    "Float",
+    "Text",
+    "Boolean",
+    "Time",
+    "Timestamp",
+    "Duration",
+    "Date",
+    "Decimal",
+    "Binary",
+]
+
 def arrow_to_dashai_types(arrow_type) -> DashAIValue:
     """Convert an Arrow type to a DashAI value."""
     if pa.types.is_integer(arrow_type):
@@ -80,7 +95,6 @@ def arrow_to_dashai_types(arrow_type) -> DashAIValue:
     elif pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type):
         return Binary(arrow_type)
     
-
 def arrow_to_dashai_schema(arrow_tbl):
     """Iterates arrow table and asigns corresponding DashAI value type."""
     schema = {}
@@ -93,7 +107,6 @@ def arrow_to_dashai_schema(arrow_tbl):
 def to_arrow_types(dashai_type) -> pa.DataType:
     """Convert a DashAI type to an Arrow type."""
     return dtype_arrow_map.get(dashai_type, None)    
-
 
 def save_types_in_arrow_metadata(pa_table: pa.Table, datatypes: Dict[str, Dict]) -> pa.Table:
     """
@@ -157,6 +170,11 @@ def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataTyp
             if _type == "Categorical":
                 cats = info.get("categories", [])
                 dashai_types[column] = Categorical(cats)
+            elif _type == "Image":
+                if info.get("base_path"):
+                    dashai_types[column] = DashAIImage(dtype=info.get("dtype"), base_path=info.get("base_path"))
+                else:
+                    dashai_types[column] = DashAIImage(dtype=info.get("dtype"))
             else:
                 dtype = info.get("dtype")
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
@@ -217,5 +235,26 @@ def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Ar
 
     return pa.array(parsed_times, type=pa.time32("s"))
 
+def is_image_path(value: Any) -> bool:
+    """
+    Check if the value is an image path.
 
+    Parameters
+    ----------
+    value : Any
+        The value of the cell to check.
+    Returns
+    -------
+    bool
+        True if the value is an image path, False otherwise.
+    """
+    IMAGE_EXTENSIONS = {
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.heic', '.heif'
+    }
+
+    if not isinstance(value, str):
+        return False
+    
+    match = re.search(r'(\.[a-z0-9]+)$', value.lower())
+    return bool(match) and match.group(1) in IMAGE_EXTENSIONS
     

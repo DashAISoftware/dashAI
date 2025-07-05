@@ -22,7 +22,7 @@ import pandas as pd
 import pyarrow as pa
 import ijson
 import json
-from DashAI.back.types.utils import arrow_to_dashai_schema, PTYPE_TO_DASHAI
+from DashAI.back.types.utils import arrow_to_dashai_schema, PTYPE_TO_DASHAI, value_types
 from DashAI.back.types.inf.type_inference import infer_types
 from itertools import islice
 
@@ -401,26 +401,35 @@ async def infer_datatypes(
         A dictionary containing the inferred datatypes of the dataset columns.
     """
     try:
+        parsed_params = json.loads(params) if params else {}
         if file.filename.endswith(".csv"):
             df = pd.read_csv(file.file, nrows=10000)
         elif file.filename.endswith(".xlsx"):
-            parsed_params = json.loads(params)
             sheet = parsed_params.get("sheet", 0)
             header = parsed_params.get("header", 0)
             usecols = parsed_params.get("usecols", None)
             df = pd.read_excel(file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10000)
         elif file.filename.endswith(".json"):
-            parsed_params = json.loads(params)
-            print("parsed_params:", parsed_params)
             data_key = parsed_params.get("data_key", None)
             items = ijson.items(file.file, f"{data_key}.item")
             limited_items = list(islice(items, 10000)) # We check the first 10000 items without loading the entire file into memory
             df = pd.DataFrame(limited_items)
 
+        methods = parsed_params.get("methods", ["DashAIPtype"])
+        print(methods)
         #returns a dictionary with the inferred datatypes and column name for each
-        inferred_types = infer_types(df, method="DashAIPtype")
-
-        return inferred_types
+        final_types = {}
+        for method in methods:
+            inferred_types = infer_types(df, method)
+            #This part is just to prioritize certain overwrites if using multiple methods
+            for column_name, column_detail in inferred_types.items():
+                current = final_types.get(column_name) or {}
+                current_type = current.get("type", None)
+                if current_type is None or current_type in value_types:
+                    final_types[column_name] = column_detail
+                else:
+                    pass
+        return final_types
 
     except Exception as e:
         logger.exception(e)

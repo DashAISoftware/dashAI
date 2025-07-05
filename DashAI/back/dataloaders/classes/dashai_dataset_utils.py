@@ -163,3 +163,6 @@ def vectorize_text(
 # Time Transformations
 
 # Date Transformations
+
+
+#Image Transformations

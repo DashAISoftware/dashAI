@@ -2,7 +2,8 @@ from DashAI.back.types.inf.ptype.PtypeCat import PtypeCat
 from DashAI.back.types.inf.ptype.Machines import Machines, MACHINES
 import DashAI.back.types.inf.ptype.Machine as Machine
 from DashAI.back.types.inf.Inference import InferenceMethod
-from DashAI.back.types.utils import PTYPE_TO_DASHAI
+from DashAI.back.types.utils import PTYPE_TO_DASHAI, is_image_path
+from DashAI.back.types.dashai_image import DashAIImage
 from pathlib import Path
 import joblib
 import pandas as pd
@@ -69,7 +70,6 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         # Convert the schema to a dashai format
         inferred_types = {}
         for col_name, col_object in schema.cols.items():
-            print("probabilities:", col_object.p_t)
             inferred_types[col_name] = PTYPE_TO_DASHAI[max(col_object.p_t, key=col_object.p_t.get)]
         
         return inferred_types
@@ -83,7 +83,7 @@ class DummyCategoricalInference(InferenceMethod):
     
     def infer_types(self, data):
         """
-        Does nothing and returns an empty dictionary.
+        Dummy Inference method that returns a dummy predicted schema.
         
         Parameters
         ----------
@@ -93,7 +93,7 @@ class DummyCategoricalInference(InferenceMethod):
         Returns
         -------
         dict
-            An empty dictionary.
+            A dummy predicted types schema.
         """
         inferred_types = {}
 
@@ -123,3 +123,41 @@ class DummyCategoricalInference(InferenceMethod):
             else:
                 inferred_types[col] = PTYPE_TO_DASHAI['string']
         return inferred_types
+
+class DashAIImageInference():
+    """
+    Represents a proposed DashAIImage inference method.
+    
+    """
+
+    def __init__(self, threshold: float = 0.8):
+        self.threshold = threshold # Threshold for image detection confidence
+
+    def infer_types(self, data) -> dict:
+        """
+        Infer if types in the provided data are images based on a threshold.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The input data for type inference.
+        Returns
+        -------
+        dict
+            A dictionary mapping detected image columns to DashAIImage type. The other columns are left unchanged.
+        """
+
+        inferred_types = {}
+        for col in data.columns:
+            series = data[col].dropna().astype(str)
+
+            image_like_count = sum(is_image_path(value) for value in series)
+            ratio = image_like_count / len(series)
+
+            if ratio >= self.threshold:
+                inferred_types[col] = DashAIImage()
+            else:
+                pass
+        
+        return inferred_types
+    

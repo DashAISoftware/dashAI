@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 import DashAI.back.types.value_types as vt
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.utils import save_types_in_arrow_metadata, get_types_from_arrow_metadata, to_arrow_types, arrow_to_dashai_schema, arrow_to_dashai_types, dtype_arrow_map, pyarrow_date_conversion, pyarrow_time_conversion 
 
 def get_arrow_table(ds: Dataset) -> pa.Table:
@@ -359,6 +360,14 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
             values = table.column(column_name).to_pylist()
             dai_table[column_name] = pyarrow_time_conversion(table.column(column_name), format="%H:%M:%S")
             dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+        elif _type == "Image":
+            values = table.column(column_name).to_pylist()
+            dai_table[column_name] = table.column(column_name)
+            if info.get("base_path"):
+                base_path = info.get("base_path")
+                dashai_types[column_name] = DashAIImage(dtype=dtype, base_path=base_path)
+            else:
+                dashai_types[column_name] = DashAIImage(dtype=dtype)
             
         else:
             dashai_types[column_name] = arrow_to_dashai_types(pa_type)

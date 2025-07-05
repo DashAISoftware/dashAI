@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Union, List
 import pandas as pd
 import numpy as np
-from DashAI.back.types.inf.inference_methods import DashAIPtype, DummyCategoricalInference
+from DashAI.back.types.inf.inference_methods import DashAIPtype, DummyCategoricalInference, DashAIImageInference
 
         
 
@@ -17,6 +17,7 @@ AcceptedDataInput = Union[
 AcceptedMethods = {
     "DashAIPtype": DashAIPtype,
     "Dummy": DummyCategoricalInference,
+    "Image": DashAIImageInference
 }
 
 

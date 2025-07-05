@@ -32,6 +32,8 @@ const steps = [
   { name: "previewDataset", label: "Preview dataset" },
 ];
 import { inferDataTypes } from "../../api/datasets";
+import InferenceMethodSelector from "../custom/InferenceMethodDialog";
+import { setIn } from "formik";
 
 
 const defaultNewDataset = {
@@ -59,6 +61,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const [previewData, setPreviewData] = useState({});
   const [showSummary, setShowSummary] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inferenceDialogOpen, setInferenceDialogOpen] = useState(false);
+  const [selectedInferenceMethods, setSelectedInferenceMethods] = useState([]);
 
 
   const handleSubmitNewDataset = async () => {
@@ -131,11 +135,15 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     }
   };
 
-  const handleInferDataTypes = async () => {
+  const handleInferDataTypes = async (methods) => {
     setLoading(true);
     const formData = new FormData();
     formData.append("file", newDataset.file);
-    formData.append("params", JSON.stringify(newDataset.params));
+    formData.append("params", JSON.stringify({
+      ...newDataset.params,
+      methods
+    }
+    ));
 
     try {
       const response = await inferDataTypes(formData);   
@@ -291,7 +299,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
                   variant="contained"
                   color="primary"
                   //sx={{ mt: 2 }}
-                  onClick ={() => handleInferDataTypes()}
+                  onClick ={() => setInferenceDialogOpen(true)}
                 >
                 Infer column Data Types
               </Button>
@@ -314,7 +322,17 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           </ButtonGroup>
         </Box>
       </DialogActions>
+      <InferenceMethodSelector
+        open={inferenceDialogOpen}
+        onClose={() => setInferenceDialogOpen(false)}
+        onConfirm={(methods) => {
+          setSelectedInferenceMethods(methods);
+          handleInferDataTypes(methods);
+        }}
+        defaultSelected={selectedInferenceMethods}
+      />
     </Dialog>
+    
   );
 }
 DatasetModal.propTypes = {
