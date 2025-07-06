@@ -31,7 +31,7 @@ export function TextInput({ onSendMessage, isLoading }) {
         color="primary"
         onClick={handleSendMessage}
         endIcon={<SendIcon />}
-        disabled={isLoading}
+        disabled={isLoading || !input.trim()}
       >
         {isLoading ? "Sending..." : "Send"}
       </Button>
