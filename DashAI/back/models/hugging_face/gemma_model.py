@@ -9,11 +9,10 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
-
-from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
 
 if is_gpu_available_for_llama_cpp():
     DEVICE_ENUM = ["gpu", "cpu"]
@@ -91,21 +90,15 @@ class GemmaModel(TextToTextGenerationTaskModel):
 
     def generate(self, prompt: str) -> List[str]:
         """Generate text based on prompts."""
-        full_prompt = f"Q: {prompt} A:"
-        if len(full_prompt) > self.model.n_ctx():
-            full_prompt = full_prompt[-self.model.n_ctx() :]
-
-        output = self.model(
-            full_prompt,
+        output = self.model.create_chat_completion(
+            messages=prompt,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             frequency_penalty=self.frequency_penalty,
-            stop=["Q:"],
-            echo=False,
         )
-        generated_text = output["choices"][0]["text"]
-        clean_text = generated_text.replace(f"Q: {prompt} A:", "").strip()
-        return [clean_text]
+
+        generated_text = output["choices"][0]["message"]["content"]
+        return [generated_text]
 
     def __call__(self, prompt: str) -> List[str]:
         return self.generate(prompt)

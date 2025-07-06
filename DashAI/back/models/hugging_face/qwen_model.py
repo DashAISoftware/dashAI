@@ -9,12 +9,10 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
-
-from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
-
 
 if is_gpu_available_for_llama_cpp():
     DEVICE_ENUM = ["gpu", "cpu"]
@@ -101,20 +99,13 @@ class QwenModel(TextToTextGenerationTaskModel):
             n_gpu_layers=-1 if kwargs.get("device", "gpu") == "gpu" else 0,
         )
 
-    def generate(self, prompt: str) -> List[str]:
-        """Generate text based on prompts."""
-        if len(prompt) > self.model.n_ctx():
-            prompt = prompt[-self.model.n_ctx() :]
-
-        output = self.model(
-            prompt,
+    def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        output = self.model.create_chat_completion(
+            messages=prompt,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
             frequency_penalty=self.frequency_penalty,
-            stop=["Q:"],
-            echo=False,
         )
 
-        generated_text = output["choices"][0]["text"]
-        clean_text = generated_text.replace(prompt, "").strip()
-        return [clean_text]
+        generated_text = output["choices"][0]["message"]["content"]
+        return [generated_text]
