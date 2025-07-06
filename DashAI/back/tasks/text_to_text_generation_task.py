@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -28,30 +28,46 @@ class TextToTextGenerationTask(BaseGenerativeTask):
     def prepare_for_task(
         self,
         input: List[ProcessData],
-        **kwargs: Any,
-    ) -> str:
-        """Prepare the input by including the history in Q: A: format.
+        history: Optional[List[Tuple[str, str]]] = None,
+    ) -> list[dict[str, str]]:
+        """Prepare the input by including the history.
 
         Parameters
         ----------
         input : str
             The current input to be processed.
+            E.g.:
+            ["Tell me a joke."]
+
+        history : Optional[List[Tuple[str, str]]], optional
+            The history of previous inputs and outputs, by default None. E.g.:
+            [("Hello!", "Hello! How can I assist you today?")]
 
         Returns
         -------
         str
-            The input prepared with the history in Q: A: format.
+            The input prepared with the history to be used by the model.
+            E.g.:
+                [{"role": "user", "content": "Hello!"},
+                 {"role": "assistant", "content": "Hello! How can I assist you today?"},
+                 {"role": "user", "content": "Tell me a joke."}]
         """
         input = str(input[0].data)
-        history = kwargs.get("history", None)  # type: Optional[List[Tuple[str, str]]]
+
+        prepared_input = [{"role": "user", "content": input}]
+
         if not history:
-            return f"Q: {input}\nA:"
+            return prepared_input
 
-        context = "\n".join(
-            [f"Q: {h_input}\nA: {h_output}" for (h_input, h_output) in history]
-        )
-
-        prepared_input = f"{context}\nQ: {input}\nA:"
+        context = [
+            (
+                {"role": "user", "content": h_input},
+                {"role": "assistant", "content": h_output},
+            )
+            for (h_input, h_output) in history
+        ]
+        context = [entry for input_output in context for entry in input_output]
+        prepared_input = context + prepared_input
         return prepared_input
 
     def prepare_input_for_database(
