@@ -149,6 +149,14 @@ class GenerativeJob(BaseJob):
             except Exception as e:
                 log.exception(e)
                 generative_process.set_status_as_error()
+                db.add(
+                    ProcessData(
+                        data=f"Error details: {str(e)}",
+                        data_type="str",
+                        process_id=generative_process.id,
+                        is_input=False,
+                    )
+                )
                 db.commit()
                 raise JobError("Error during model generation.") from e
 
