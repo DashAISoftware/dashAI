@@ -1,11 +1,12 @@
+import logging
 import os
 from pathlib import Path
-from packaging.version import Version
 
 import llama_cpp
-import logging
+from packaging.version import Version
 
 logger = logging.getLogger(__name__)
+
 
 def is_gpu_available_for_llama_cpp() -> bool:
     """
@@ -21,7 +22,10 @@ def is_gpu_available_for_llama_cpp() -> bool:
             return __is_gpu_available_for_llama_cpp_v02()
 
     except Exception as e:
-        logger.warning(f"Error checking GPU availability for llama_cpp. Will use CPU only. Details: {e}")
+        logger.warning(
+            "Error checking GPU availability for llama_cpp. Will use CPU only. \n"
+            f"Details: {e}"
+        )
         return False
 
 
@@ -34,5 +38,4 @@ def __is_gpu_available_for_llama_cpp_v03() -> bool:
 
 def __is_gpu_available_for_llama_cpp_v02() -> bool:
     lib = llama_cpp.llama_cpp._load_shared_library("llama")
-    return bool(lib.llama_supports_gpu())
-
+    return hasattr(lib, "ggml_init_cublas")
