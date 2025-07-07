@@ -88,7 +88,7 @@ class GemmaModel(TextToTextGenerationTaskModel):
             n_gpu_layers=-1 if kwargs.get("device", "gpu") == "gpu" else 0,
         )
 
-    def generate(self, prompt: str) -> List[str]:
+    def generate(self, prompt: list[dict[str, str]]) -> List[str]:
         """Generate text based on prompts."""
         output = self.model.create_chat_completion(
             messages=prompt,
