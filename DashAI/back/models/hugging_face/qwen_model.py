@@ -30,6 +30,7 @@ class QwenSchema(BaseSchema):
             enum=[
                 "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
                 "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+                "Qwen/Qwen3-4B-GGUF ",
             ]
         ),
         placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
@@ -89,7 +90,7 @@ class QwenModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        self.filename = "*q8_0.gguf"
+        self.filename = "*8_0.gguf"
 
         self.model = Llama.from_pretrained(
             repo_id=self.model_name,
