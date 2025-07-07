@@ -25,20 +25,22 @@ export type SchemaProperties = {
  * @param properties - The schema properties to preprocess.
  * @returns The preprocessed schema properties.
  */
-export function preprocessSchema(properties: SchemaProperties): SchemaProperties {
+export function preprocessSchema(
+  properties: SchemaProperties,
+): SchemaProperties {
   const newProps = { ...properties };
 
   for (const key in newProps) {
-    if (!('anyOf' in newProps[key])) continue; 
+    if (!("anyOf" in newProps[key])) continue;
 
-    if (newProps[key].anyOf.length !== 2) continue; 
+    if (newProps[key].anyOf.length !== 2) continue;
 
-    if (newProps[key].anyOf[1].type === "null"){
+    if (newProps[key].anyOf[1].type === "null") {
       let replaceProp = newProps[key].anyOf[0];
-      replaceProp.title = newProps[key].title; 
-      replaceProp.nullable = true; 
+      replaceProp.title = newProps[key].title;
+      replaceProp.nullable = true;
       newProps[key] = replaceProp;
-    } 
+    }
   }
   return newProps;
 }
@@ -51,7 +53,9 @@ export function preprocessSchema(properties: SchemaProperties): SchemaProperties
  * @param properties - The schema properties to build the Yup schema from.
  * @returns A Yup object schema.
  */
-export function buildYupSchema(properties: SchemaProperties): Yup.ObjectSchema<any> {
+export function buildYupSchema(
+  properties: SchemaProperties,
+): Yup.ObjectSchema<any> {
   const shape: Record<string, any> = {};
   for (const key in properties) {
     const prop = properties[key];
@@ -66,8 +70,10 @@ export function buildYupSchema(properties: SchemaProperties): Yup.ObjectSchema<a
         break;
       case "string":
         validator = Yup.string();
-        if (prop.minLength !== undefined) validator = validator.min(prop.minLength);
-        if (prop.maxLength !== undefined) validator = validator.max(prop.maxLength);
+        if (prop.minLength !== undefined)
+          validator = validator.min(prop.minLength);
+        if (prop.maxLength !== undefined)
+          validator = validator.max(prop.maxLength);
         break;
       case "boolean":
         validator = Yup.boolean();
