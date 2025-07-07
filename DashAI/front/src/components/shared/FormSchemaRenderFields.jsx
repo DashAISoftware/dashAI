@@ -28,10 +28,14 @@ function FormSchemaRenderFields({
           { [name]: { ...formik?.values[name], [subName]: value } },
           autoSave ? onFormSubmit : null,
         );
-        formik?.setFieldValue(name, {
-          ...formik?.values[name],
-          [subName]: value,
-        }, true);
+        formik?.setFieldValue(
+          name,
+          {
+            ...formik?.values[name],
+            [subName]: value,
+          },
+          true,
+        );
         return;
       }
 

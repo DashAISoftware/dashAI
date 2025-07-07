@@ -53,7 +53,6 @@ export default function ParamsBar({
     });
   }, [selectedSessionId]);
 
-
   useEffect(() => {
     if (selectedModel?.schema?.properties) {
       const processedProps = preprocessSchema(selectedModel.schema.properties);
@@ -84,7 +83,6 @@ export default function ParamsBar({
   const processedProperties = selectedModel?.schema?.properties
     ? preprocessSchema(selectedModel.schema.properties)
     : {};
-
 
   return (
     <Box

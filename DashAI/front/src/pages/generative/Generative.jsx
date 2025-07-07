@@ -20,7 +20,7 @@ export default function Generative() {
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     setSelectedTaskName(taskName);
     setSelectedSessionId(sessionId);
-    setSelectedDisplayName(taskDisplayName)
+    setSelectedDisplayName(taskDisplayName);
   };
 
   const handleNewSessionButton = () => {
