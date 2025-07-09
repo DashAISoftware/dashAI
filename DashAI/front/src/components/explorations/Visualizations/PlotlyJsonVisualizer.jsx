@@ -26,10 +26,9 @@ function PlotlyJsonVisualizer({ data }) {
         name: "fullscreen",
         title: "Fullscreen",
         icon: {
-          width: 1792,
-          path: "M128 320v-192q0-40 28-68t68-28h320q26 0 45 19t19 45-19 45-45 19h-192v128q0 26-19 45t-45 19-45-19-19-45zm0 1152v-192q0-26 19-45t45-19 45 19 19 45v128h192q26 0 45 19t19 45-19 45-45 19h-320q-40 0-68-28t-28-68zm1408-1152v192q0 26-19 45t-45 19-45-19-19-45v-128h-192q-26 0-45-19t-19-45 19-45 45-19h320q40 0 68 28t28 68zm0 1152v-192q0-40-28-68t-68-28h-320q-26 0-45-19t-19-45 19-45 45-19h192v-128q0-26 19-45t45-19 45 19 19 45v192q0 40-28 68t-68 28z",
-          ascent: 1664,
-          descent: -128,
+          width: 1000,
+          path: "M128 32H32C14.31 32 0 46.31 0 64v96c0 17.69 14.31 32 32 32s32-14.31 32-32V96h64c17.69 0 32-14.31 32-32S145.7 32 128 32zM416 32h-96c-17.69 0-32 14.31-32 32s14.31 32 32 32h64v64c0 17.69 14.31 32 32 32s32-14.31 32-32V64C448 46.31 433.7 32 416 32zM128 416H64v-64c0-17.69-14.31-32-32-32s-32 14.31-32 32v96c0 17.69 14.31 32 32 32h96c17.69 0 32-14.31 32-32S145.7 416 128 416zM416 320c-17.69 0-32 14.31-32 32v64h-64c-17.69 0-32 14.31-32 32s14.31 32 32 32h96c17.69 0 32-14.31 32-32v-96C448 334.3 433.7 320 416 320z",
+          transform: "scale(0.03)",
         },
         click: function () {
           toggleFullscreen();
@@ -44,6 +43,28 @@ function PlotlyJsonVisualizer({ data }) {
       width: 1200,
       scale: 1,
     },
+  };
+
+  // Configuración específica para el modo de pantalla completa
+  const fullscreenConfig = {
+    ...plotConfig,
+    scrollZoom: true,
+    modeBarButtonsToAdd: [
+      {
+        name: "exit-fullscreen",
+        title: "Exit fullscreen",
+        icon: {
+          width: 1000,
+          path: "M5.5 0a.5.5 0 0 1 .5.5v4A1.5 1.5 0 0 1 4.5 6h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5m5 0a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 10 4.5v-4a.5.5 0 0 1 .5-.5M0 10.5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 6 11.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5m10 1a1.5 1.5 0 0 1 1.5-1.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0z",
+        },
+        click: function () {
+          setExpanded(false);
+        },
+      },
+      "zoom2d",
+      "pan2d",
+      "resetScale2d",
+    ],
   };
 
   return (
@@ -100,7 +121,7 @@ function PlotlyJsonVisualizer({ data }) {
           </Box>
         )}
 
-        {/* Main Plot (non-expanded) */}
+        {/* Plot principal o Dialog en pantalla completa */}
         {!expanded ? (
           <Plot
             id="plotly-graph"
@@ -122,7 +143,6 @@ function PlotlyJsonVisualizer({ data }) {
             useResizeHandler={true}
           />
         ) : (
-          // Expanded full-screen view
           <Dialog
             open={expanded}
             fullScreen
@@ -157,28 +177,7 @@ function PlotlyJsonVisualizer({ data }) {
               }}
               style={{ width: "100vw", height: "100vh" }}
               useResizeHandler={true}
-              config={{
-                ...plotConfig,
-                scrollZoom: true,
-                modeBarButtonsToAdd: [
-                  {
-                    name: "exit-fullscreen",
-                    title: "Exit fullscreen",
-                    icon: {
-                      width: 1792,
-                      path: "M896 960v192q0 40-28 68t-68 28h-320q-26 0-45-19t-19-45 19-45 45-19h192v-128q0-26 19-45t45-19 45 19 19 45zm0-256v-192q0-26-19-45t-45-19-45 19-19 45v128h-192q-26 0-45-19t-19-45 19-45 45-19h320q40 0 68 28t28 68zm640 256v192q0 26-19 45t-45 19-45-19-19-45v-128h-192q-26 0-45-19t-19-45 19-45 45-19h320q40 0 68-28t28-68zm0-256v-192q0-40-28-68t-68-28h-320q-26 0-45-19t-19-45 19-45 45-19h192v-128q0-26 19-45t45-19 45 19 19 45v192q0 40 28 68t68 28z",
-                      ascent: 1664,
-                      descent: -128,
-                    },
-                    click: function () {
-                      setExpanded(false);
-                    },
-                  },
-                  "zoom2d",
-                  "pan2d",
-                  "resetScale2d",
-                ],
-              }}
+              config={fullscreenConfig}
             />
           </Dialog>
         )}
