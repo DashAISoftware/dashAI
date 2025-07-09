@@ -2,12 +2,15 @@ from typing import List
 
 from llama_cpp import Llama
 
+from huggingface_hub import login
+
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
     float_field,
     int_field,
     schema_field,
+    string_field,
 )
 from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
 from DashAI.back.models.text_to_text_generation_model import (
@@ -24,6 +27,23 @@ else:
 
 class GemmaSchema(BaseSchema):
     """Schema for Gemma model."""
+
+    model_name: schema_field(
+        enum_field(
+            enum=[
+                "google/gemma-3-1b-it-qat-q4_0-gguf",
+                "google/gemma-3-4b-it-qat-q4_0-gguf",
+            ]
+        ),
+        placeholder="google/gemma-3-4b-it-qat-q4_0-gguf",
+        description="The specific Gemma model version to use.",
+    )  # type: ignore
+
+    huggingface_key: schema_field(
+        string_field(),
+        placeholder="",
+        description="Hugging Face API key for private models.",
+    )  # type: ignore
 
     max_tokens: schema_field(
         int_field(ge=1),
@@ -72,16 +92,26 @@ class GemmaModel(TextToTextGenerationTaskModel):
 
     def __init__(self, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
+        self.model_name = kwargs.get("model_name", "google/gemma-3-4b-it-qat-q4_0-gguf")
+        self.huggingface_key = kwargs.get("huggingface_key")
+
+        if self.huggingface_key:
+            try:
+                login(token=self.huggingface_key)
+            except Exception as e:
+                raise ValueError(
+                    "Failed to login to Hugging Face. Please check your API key."
+                ) from e
+
         self.max_tokens = kwargs.pop("max_tokens", 100)
         self.temperature = kwargs.pop("temperature", 0.7)
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        self.model_id = "ggml-org/gemma-1.1-7b-it-Q4_K_M-GGUF"
-        self.filename = "*.gguf"
+        self.filename = "*0.gguf"
 
         self.model = Llama.from_pretrained(
-            repo_id=self.model_id,
+            repo_id=self.model_name,
             filename=self.filename,
             verbose=True,
             n_ctx=self.n_ctx,
