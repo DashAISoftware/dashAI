@@ -7,7 +7,6 @@ import torch
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     select_columns,
     split_dataset,
-    split_indexes,
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
@@ -27,18 +26,11 @@ def splited_dataset_fixture():
 
     datasetdict = to_dashai_dataset(datasetdict)
 
-    train_idx, test_idx, val_idx = split_indexes(
-        total_rows=len(datasetdict),
-        train_size=0.6,
-        test_size=0.2,
-        val_size=0.2,
-    )
-
     splited_dataset = split_dataset(
         datasetdict,
-        train_indexes=train_idx,
-        test_indexes=test_idx,
-        val_indexes=val_idx,
+        train_indexes=[0, 1, 2],
+        test_indexes=[3, 4],
+        val_indexes=[5, 6],
     )
 
     x, y = select_columns(
@@ -65,7 +57,6 @@ def sample_model():
         learning_rate=5e-5,
         device="cpu",
         weight_decay=0.01,
-        num_labels=2,
     )
     return model
 

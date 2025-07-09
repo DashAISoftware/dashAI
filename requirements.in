@@ -18,11 +18,14 @@ plotly
 shap
 typer
 rich
-torch
 transformers
 sacrebleu
 sentencepiece
 optuna
 hyperopt
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch
 openpyxl
 httpx
+wordcloud
+imblearn

@@ -3,6 +3,11 @@ import type { IDataset } from "../types/dataset";
 
 const datasetEndpoint = "/v1/dataset";
 
+export const copyDataset = async (formData: object): Promise<object> => {
+  const response = await api.post<object>(`${datasetEndpoint}/copy`, formData);
+  return response.data;
+};
+
 export const getDatasets = async (): Promise<IDataset[]> => {
   const response = await api.get<IDataset[]>(datasetEndpoint);
   return response.data;
@@ -20,6 +25,13 @@ export const getDatasetTypes = async (id: number): Promise<object> => {
 
 export const getDatasetInfo = async (id: number): Promise<object> => {
   const response = await api.get<object>(`${datasetEndpoint}/${id}/info`);
+  return response.data;
+};
+
+export const getExperimentsExist = async (id: number): Promise<object> => {
+  const response = await api.get<object>(
+    `${datasetEndpoint}/${id}/experiments-exist`,
+  );
   return response.data;
 };
 

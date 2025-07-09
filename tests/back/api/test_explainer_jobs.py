@@ -220,6 +220,11 @@ def create_run_id(client: TestClient, experiment_id: int):
             parameters={},
             goal_metric="Accuracy",
             name="Run",
+            split_indexes="""{
+                "train_indexes": [0, 1, 2, 3, 4],
+                "test_indexes": [5, 6, 7, 8],
+                "val_indexes": [9, 10, 11, 12]
+            }""",
         )
         db.add(run)
         db.commit()

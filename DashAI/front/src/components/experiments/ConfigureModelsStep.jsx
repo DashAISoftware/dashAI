@@ -70,8 +70,8 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
 
   // checks if there is at least 1 model added to enable the "Next" button
   useEffect(() => {
-    const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
-    if (newExp.runs.length && allModelsHaveMetric) {
+    // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
+    if (newExp.runs.length) {
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
@@ -121,11 +121,17 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               }}
               fullWidth
             >
-              {compatibleModels.map((model) => (
-                <MenuItem key={model.name} value={model.name}>
-                  {model.name}
+              {compatibleModels.length === 0 && (
+                <MenuItem value="" disabled>
+                  No models available
                 </MenuItem>
-              ))}
+              )}
+              {compatibleModels.length > 0 &&
+                compatibleModels.map((model) => (
+                  <MenuItem key={model.name} value={model.name}>
+                    {model.name}
+                  </MenuItem>
+                ))}
             </TextField>
           </Grid>
 

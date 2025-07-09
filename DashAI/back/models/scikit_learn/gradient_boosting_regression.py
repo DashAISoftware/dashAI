@@ -11,9 +11,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
-    SklearnLikeRegressor,
-)
+from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
 class GradientBoostingRSchema(BaseSchema):
@@ -165,7 +163,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     warm_start: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="When set to True, reuse the solution of the previous call"
         "to fit and add more estimators to the ensemble.",

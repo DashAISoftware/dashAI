@@ -1,9 +1,16 @@
+import json
 import logging
 import os
 import shutil
+from itertools import islice
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, Response, status, File, UploadFile, Form
+import ijson
+import pandas as pd
+import pyarrow as pa
+import pyarrow.ipc as ipc
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
@@ -11,21 +18,13 @@ from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
     get_columns_spec,
     get_dataset_info,
-    load_dataset,
     update_columns_spec,
 )
-from DashAI.back.dependencies.database.models import Dataset
-import pandas as pd
-import pyarrow as pa
-import ijson
-import json
-from DashAI.back.types.utils import arrow_to_dashai_schema, PTYPE_TO_DASHAI, value_types
+from DashAI.back.dependencies.database.models import Dataset, Experiment
 from DashAI.back.types.inf.type_inference import infer_types
-from itertools import islice
-
+from DashAI.back.types.utils import arrow_to_dashai_schema, value_types
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -97,7 +96,6 @@ async def get_dataset(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -114,7 +112,11 @@ async def get_sample(
     dataset_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Return the dataset with id dataset_id from the database.
+    """Return a sample of 10 rows from the dataset with id dataset_id from the
+    database.
+
+    If a column is not JSON serializable, it will be converted to a list of
+    strings.
 
     Parameters
     ----------
@@ -134,14 +136,31 @@ async def get_sample(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-            dataset: DashAIDataset = load_dataset(f"{file_path}/dataset")
-            sample = dataset.sample(n=10)
+
+            arrow_path = os.path.join(file_path, "dataset", "data.arrow")
+
+            with pa.OSFile(arrow_path, "rb") as source:
+                reader = ipc.open_file(source)
+                batch = reader.get_batch(0)
+                sample_size = min(10, batch.num_rows)
+                sample_batch = batch.slice(0, sample_size)
+                sample = sample_batch.to_pydict()
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+        try:
+            jsonable_encoder(sample)
+        except ValueError:
+            for key, value in sample.items():
+                try:
+                    jsonable_encoder({key: value})
+                except ValueError:
+                    value = list(map(str, value))
+                sample[key] = value
     return sample
 
 
@@ -179,6 +198,48 @@ async def get_info(
                 detail="Internal database error",
             ) from e
     return info
+
+
+@router.get("/{dataset_id}/experiments-exist")
+@inject
+async def get_experiments_exist(
+    dataset_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get a boolean indicating if there are experiments associated with the dataset.
+
+    Parameters
+    ----------
+    dataset_id : int
+        id of the dataset to query.
+
+    Returns
+    -------
+    bool
+        True if there are experiments associated with the dataset, False otherwise.
+    """
+    with session_factory() as db:
+        try:
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found",
+                )
+            # Check if there are any experiments associated with the dataset
+            experiments_exist = (
+                db.query(Experiment).filter(Experiment.dataset_id == dataset_id).first()
+                is not None
+            )
+
+            return experiments_exist
+
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.get("/{dataset_id}/types")
@@ -220,6 +281,75 @@ async def get_types(
                 detail="Internal database error",
             ) from e
     return columns_spec
+
+
+@router.post("/copy", status_code=status.HTTP_201_CREATED)
+@inject
+async def copy_dataset(
+    dataset: Dict[str, int],
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+):
+    """Copy an existing dataset to create a new one.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to copy.
+
+    Returns
+    -------
+    Dataset
+        The newly created dataset.
+    """
+    dataset_id = dataset["dataset_id"]
+    logger.debug(f"Copying dataset with ID {dataset_id}.")
+
+    with session_factory() as db:
+        # Retrieve the existing dataset
+        original_dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+        if not original_dataset:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Original dataset not found.",
+            )
+
+        # Create a new folder for the copied dataset
+        new_name = f"{original_dataset.name}_copy"
+        new_folder_path = config["DATASETS_PATH"] / new_name
+        try:
+            shutil.copytree(original_dataset.file_path, new_folder_path)
+        except FileExistsError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A dataset with the name '{new_name}' already exists.",
+            ) from None
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to copy dataset files.",
+            ) from e
+
+        # Save metadata for the new dataset
+        try:
+            new_dataset = Dataset(
+                name=new_name,
+                file_path=str(new_folder_path),
+            )
+            db.add(new_dataset)
+            db.commit()
+            db.refresh(new_dataset)
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            shutil.rmtree(new_folder_path, ignore_errors=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error.",
+            ) from e
+
+    logger.debug(f"Dataset copied successfully to '{new_name}'.")
+    return new_dataset
 
 
 @router.delete("/{dataset_id}")
@@ -288,10 +418,14 @@ async def update_dataset(
     ----------
     dataset_id : int
         ID of the dataset to update.
-    name : str, optional
-        New name for the dataset.
-    task_name : str, optional
-        New task name for the dataset.
+    params : DatasetUpdateParams
+        A dictionary containing the new values for the dataset.
+        name : str, optional
+            New name for the dataset.
+        task_name : str, optional
+            New task name for the dataset.
+        columns : Dict[str, ColumnSpecItemParams], optional
+            New column specification for the dataset.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -305,7 +439,9 @@ async def update_dataset(
         try:
             dataset = db.get(Dataset, dataset_id)
             if params.columns:
-                update_columns_spec(os.path.join(dataset.file_path, "dataset"), params.columns)
+                update_columns_spec(
+                    os.path.join(dataset.file_path, "dataset"), params.columns
+                )
             if params.name:
                 setattr(dataset, "name", params.name)
                 new_folder_path = config["DATASETS_PATH"] / params.name
@@ -325,11 +461,9 @@ async def update_dataset(
                 detail="Internal database error",
             ) from e
 
+
 @router.post("/load_preview")
-async def load_preview(
-    file: UploadFile = File(...),
-    params: str = Form(None)
-    ):
+async def load_preview(file: UploadFile = File(...), params: str = Form(None)):
     """Load a small preview of the dataset from a file, without saving it to the database.
 
     Parameters
@@ -337,7 +471,7 @@ async def load_preview(
     file : UploadFile
         The file uploaded by the user.
         This file is expected to be a dataset file (e.g., CSV, Excel, json, etc.).
-    
+
     Returns
     -------
     Dict
@@ -351,24 +485,28 @@ async def load_preview(
             sheet = parsed_params.get("sheet", 0)
             header = parsed_params.get("header", 0)
             usecols = parsed_params.get("usecols", None)
-            df = pd.read_excel(file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10)
+            df = pd.read_excel(
+                file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10
+            )
         elif file.filename.endswith(".json"):
             parsed_params = json.loads(params)
             data_key = parsed_params.get("data_key", None)
             items = ijson.items(file.file, f"{data_key}.item")
-            limited_items = list(islice(items, 10)) # We check the first 100 items without loading the entire file into memory
+            limited_items = list(
+                islice(items, 10)
+            )  # We check the first 100 items without loading the entire file into memory
             df = pd.DataFrame(limited_items)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Unsupported file type. Only CSV, Excel, and JSON files are supported.",
             )
-        
+
         table = pa.Table.from_pandas(df)
         schema = arrow_to_dashai_schema(table)
         import numpy as np
-        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
 
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
 
         sample = df.to_dict(orient="records")
         return {
@@ -384,17 +522,14 @@ async def load_preview(
 
 
 @router.post("/infer_datatypes")
-async def infer_datatypes(
-    file: UploadFile = File(...),
-    params: str = Form(None)
-    ):
+async def infer_datatypes(file: UploadFile = File(...), params: str = Form(None)):
     """Infer the datatypes of the dataset.
 
     Parameters
     ----------
     file : UploadFile
         The Dataset from load_preview, as a json.
-    
+
     Returns
     -------
     Dict
@@ -408,20 +543,24 @@ async def infer_datatypes(
             sheet = parsed_params.get("sheet", 0)
             header = parsed_params.get("header", 0)
             usecols = parsed_params.get("usecols", None)
-            df = pd.read_excel(file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10000)
+            df = pd.read_excel(
+                file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10000
+            )
         elif file.filename.endswith(".json"):
             data_key = parsed_params.get("data_key", None)
             items = ijson.items(file.file, f"{data_key}.item")
-            limited_items = list(islice(items, 10000)) # We check the first 10000 items without loading the entire file into memory
+            limited_items = list(
+                islice(items, 10000)
+            )  # We check the first 10000 items without loading the entire file into memory
             df = pd.DataFrame(limited_items)
 
         methods = parsed_params.get("methods", ["DashAIPtype"])
         print(methods)
-        #returns a dictionary with the inferred datatypes and column name for each
+        # returns a dictionary with the inferred datatypes and column name for each
         final_types = {}
         for method in methods:
             inferred_types = infer_types(df, method)
-            #This part is just to prioritize certain overwrites if using multiple methods
+            # This part is just to prioritize certain overwrites if using multiple methods
             for column_name, column_detail in inferred_types.items():
                 current = final_types.get(column_name) or {}
                 current_type = current.get("type", None)

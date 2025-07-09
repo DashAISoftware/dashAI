@@ -1,6 +1,6 @@
 import { React, useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import Plot from "react-plotly.js";
+// import Plot from "react-plotly.js";
 import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";

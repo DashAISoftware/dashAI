@@ -1,0 +1,281 @@
+import json
+import subprocess
+import sys
+from typing import List
+
+import requests
+
+from DashAI.back.core.enums.plugin_tags import PluginTag
+from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
+
+
+def _get_all_plugins() -> List[str]:
+    """
+    Make a request to PyPI server to get all package names.
+
+    Returns
+    ----------
+    List[str]
+        A list with the names of all PyPI packages
+    """
+
+    # Define the URL for PyPI Simple API
+    url = "https://pypi.org/simple/"
+
+    # Set the appropriate headers to request JSON format
+    headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
+
+    # Send a GET request to the API
+    response = requests.get(url, headers=headers)
+
+    # Check for a successful response
+    if response.status_code == 200:
+        data = response.json()
+        projects = data.get("projects", [])
+        packages = [project["name"] for project in projects]
+
+    else:
+        print(f"Failed to retrieve packages. Status code: {response.status_code}")
+
+    return packages
+
+
+def get_plugin_by_name_from_pypi(plugin_name: str) -> dict:
+    """
+    Get a plugin json data from PyPI by its name.
+
+    Parameters
+    ----------
+    plugin_name : str
+        The name of the plugin to get from PyPI
+
+    Returns
+    -------
+    dict
+        A dictionary with the plugin data
+
+    Raises
+    ------
+    ValueError
+        When the plugin is not found or the response is invalid
+    """
+    response: requests.Response = requests.get(
+        f"https://pypi.org/pypi/{plugin_name}/json"
+    )
+
+    response_data = response.json()
+    try:
+        raw_plugin: json = response_data["info"]
+    except KeyError as err:
+        raise ValueError(
+            f"No se pudo obtener la información del plugin '{plugin_name}'."
+            f"Respuesta del servidor: {str(response_data)}."
+        ) from err
+
+    try:
+        keywords: list = raw_plugin.pop("keywords", "").split(",")
+        keywords = [keyword.strip() for keyword in keywords if keyword.strip()]
+    except AttributeError:
+        keywords = []
+
+    # remove keywords that are not tags
+    posible_tags = [tag.value for tag in PluginTag]
+    keywords = [keyword for keyword in keywords if keyword in posible_tags]
+
+    raw_plugin["tags"] = [{"name": keyword} for keyword in keywords]
+
+    if raw_plugin["author"] is None or raw_plugin["author"] == "":
+        raw_plugin["author"] = "Unknown author"
+
+    raw_plugin["installed_version"] = raw_plugin["version"]
+    raw_plugin["lastest_version"] = raw_plugin["version"]
+
+    del raw_plugin["version"]
+
+    return raw_plugin
+
+
+def get_plugins_from_pypi() -> List[dict]:
+    """
+    Get all DashAI plugins from PyPI.
+
+    Returns
+    -------
+    List[dict]
+        A list with the information of all DashAI plugins, extracted from PyPI.
+    """
+    plugins = []
+    plugins_names = [
+        plugin_name.lower()
+        for plugin_name in _get_all_plugins()
+        if plugin_name.lower().startswith("dashai") and plugin_name.lower() != "dashai"
+    ]
+
+    for plugin_name in plugins_names:
+        try:
+            plugin_info = get_plugin_by_name_from_pypi(plugin_name)
+            plugins.append(plugin_info)
+        except ValueError as e:
+            print(f"Error al obtener información del plugin {plugin_name}: {str(e)}")
+            continue
+
+    return plugins
+
+
+def get_available_plugins() -> List[type]:
+    """
+    Get available DashAI plugins entrypoints
+
+    Returns
+    ----------
+    List[type]
+        A list of plugins' classes
+    """
+    # Retrieve plugins groups (DashAI components)
+    plugins = entry_points(group="dashai.plugins")
+
+    # Look for installed plugins
+    plugins_list = []
+    for plugin in plugins:
+        # Retrieve plugin class
+        plugin_class = plugin.load()
+        plugins_list.append(plugin_class)
+
+    return plugins_list
+
+
+def execute_pip_command(pypi_plugin_name: str, pip_action: str) -> int:
+    """
+    Execute a pip command to install or uninstall a plugin
+
+    Parameters
+    ----------
+    pypi_plugin_name : str
+        A string with the name of the plugin in pypi to install or uninstall
+
+    pip_action : str
+        A string with the action to perform. It can be "install" or "uninstall"
+
+    Returns
+    ----------
+    int
+        The return code of the pip command
+
+    Raises
+    ----------
+    ValueError
+        If the pip action is not supported
+    RuntimeError
+        If the pip command returns an error
+    """
+    if pip_action not in ["install", "uninstall"]:
+        raise ValueError(f"Pip action {pip_action} not supported")
+
+    args = ["pip", pip_action]
+    if pip_action == "uninstall":
+        args.append("-y")
+    elif pip_action == "install":
+        args.append("--no-cache-dir")
+    args.append(pypi_plugin_name)
+    res = subprocess.run(
+        args,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    if res.returncode != 0:
+        errors = [line for line in res.stderr.split("\n") if "ERROR" in line]
+        error_string = "\n".join(errors)
+        raise RuntimeError(error_string)
+
+    return res.returncode
+
+
+def install_plugin(plugin_name: str) -> List[type]:
+    """
+    Install and register new plugins in component registry
+
+    Parameters
+    ----------
+    plugin_name : str
+        A string with the name of the plugin in pypi to install
+
+    component_registry : ComponentRegistry
+        The current app component registry
+
+    """
+    pre_installed_plugins: List[type] = get_available_plugins()
+    execute_pip_command(plugin_name, "install")
+    installed_plugins = set(get_available_plugins()) - set(pre_installed_plugins)
+    return installed_plugins
+
+
+def register_plugin_components(
+    plugins: List[type], component_registry: ComponentRegistry
+):
+    """
+    Register the plugins in the component registry
+
+    Parameters
+    ----------
+    plugins : List[type]
+        A list of plugins' classes wanted to be registered in the component
+        registry
+    component_registry : ComponentRegistry
+        The current app component registry
+    """
+    for plugin in plugins:
+        component_registry.register_component(plugin)
+
+
+def uninstall_plugin(
+    plugin_name: str,
+) -> List[type]:
+    """
+    Uninstall an existing plugin and delete it from component registry
+
+    Parameters
+    ----------
+    plugin_name : str
+        A string with the name of the plugin in pypi to install
+
+    component_registry : ComponentRegistry
+        The current app component registry
+
+    """
+    available_plugins: List[type] = get_available_plugins()
+    execute_pip_command(plugin_name, "uninstall")
+    uninstalled_components: List[type] = set(available_plugins) - set(
+        get_available_plugins()
+    )
+    return uninstalled_components
+
+
+def unregister_plugin_components(
+    plugins: List[type],
+    component_registry: ComponentRegistry,
+) -> List[type]:
+    """
+    Remove from component registry uninstalled plugins
+
+    Parameters
+    ----------
+    plugins : List[type]
+        A list of plugins' classes wanted to be removed from the component registry
+
+    component_registry : ComponentRegistry
+        The current app component registry
+
+    Returns
+    ----------
+    List[type]
+        A list of plugins' classes wanted to be removed from the component registry
+    """
+    for plugin in plugins:
+        component_registry.unregister_component(plugin)
+    return list(plugins)

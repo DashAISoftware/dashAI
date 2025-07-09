@@ -43,7 +43,7 @@ class PredictJob(BaseJob):
             ) from e
 
     @inject
-    def run(
+    async def run(
         self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
         session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
