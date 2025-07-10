@@ -1,16 +1,17 @@
 from typing import List, Union
 
-from datasets import ClassLabel, DatasetDict, Value
-from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.dashai_value import DashAIValue
-from DashAI.back.types.value_types import Integer, Float, Text, Time, Boolean, Timestamp, Date, Duration, Decimal, Binary
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
+    categorical_label_encoder,
+)
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
 
 
 class TabularClassificationTask(BaseTask):
@@ -53,4 +54,5 @@ class TabularClassificationTask(BaseTask):
 
         datasetdict = to_dashai_dataset(datasetdict)
 
-        return datasetdict
+        dataset = categorical_label_encoder(datasetdict)
+        return dataset

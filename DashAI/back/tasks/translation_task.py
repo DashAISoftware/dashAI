@@ -2,13 +2,14 @@
 
 from typing import List, Union
 
-from datasets import DatasetDict, Sequence, Value
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.value_types import Text
 
 
 class TranslationTask(BaseTask):
@@ -17,8 +18,8 @@ class TranslationTask(BaseTask):
     COMPATIBLE_COMPONENTS = ["Bleu", "Ter"]
 
     metadata: dict = {
-        "inputs_types": [Value, Sequence],
-        "outputs_types": [Value, Sequence],
+        "inputs_types": [Text],
+        "outputs_types": [Text],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }

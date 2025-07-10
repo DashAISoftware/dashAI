@@ -45,6 +45,13 @@ def create_dataset(client):
             "dataloader": "CSVDataLoader",
             "name": "DummyDataset6",
             "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
         }
 
         kwargs = {
@@ -393,6 +400,7 @@ def test_execute_jobs(
     assert response.status_code == 202, response.text
 
     response = client.get(f"/api/v1/explainer/global/?run_id={run_id}")
+    print("Global Explainer Response:", response.text)
     data = response.json()
     for explainer in data:
         assert explainer["status"] == 3

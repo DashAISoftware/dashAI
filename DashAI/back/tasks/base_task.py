@@ -3,7 +3,6 @@ from typing import Any, Dict, Final, List, Union
 
 from datasets import DatasetDict
 
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -62,11 +61,11 @@ class BaseTask:
         allowed_output_types = tuple(metadata["outputs_types"])
         inputs_cardinality = metadata["inputs_cardinality"]
         outputs_cardinality = metadata["outputs_cardinality"]
-
+        types = dataset._types
         # Check input types
         for input_col in input_columns:
-            input_col_type = dataset._types[input_col]
-            
+            input_col_type = types[input_col]
+
             if not isinstance(input_col_type, allowed_input_types):
                 raise TypeError(
                     f"{input_col_type} is not an allowed type for input columns."
@@ -74,7 +73,8 @@ class BaseTask:
 
         # Check output types
         for output_col in output_columns:
-            output_col_type = dataset._types[output_col]
+            output_col_type = types[output_col]
+
             if not isinstance(output_col_type, allowed_output_types):
                 raise TypeError(
                     f"{output_col_type} is not an allowed type for output columns."

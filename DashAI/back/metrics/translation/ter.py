@@ -4,7 +4,9 @@ import evaluate
 import numpy as np
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.metrics.base_metric import prepare_to_metric
 from DashAI.back.metrics.translation_metric import TranslationMetric
+
 
 class Ter(TranslationMetric):
     """A class for calculating TER scores between source and target sentences.
@@ -34,6 +36,9 @@ class Ter(TranslationMetric):
             The calculated score.
         """
         metric = evaluate.load("ter")
+        source_sentences, target_sentences = prepare_to_metric(
+            source_sentences, target_sentences, "Ter"
+        )
         return metric.compute(
             references=source_sentences, predictions=target_sentences
         )["score"]

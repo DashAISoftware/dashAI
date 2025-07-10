@@ -1,12 +1,18 @@
-from copy import deepcopy
-import numpy as np
-from greenery.lego import parse
-import sys
 import os
+import sys
+from copy import deepcopy
+
+import numpy as np
+from greenery import parse
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 sys.path.insert(0, project_root)
-from back.types.inf.ptype.utils import LOG_EPS, contains_all, log_sum_probs, normalise_safe
-
+from back.types.inf.ptype.utils import (
+    LOG_EPS,
+    contains_all,
+    log_sum_probs,
+    normalise_safe,
+)
 
 PI = [0.98, 0.01, 0.01]
 PRINT = False
@@ -613,10 +619,22 @@ class Booleans(Machine):
         self.set_I(Is)
         self.set_F(
             [
-                np.log(self.STOP_P)
-                if state
-                in ["q_1", "q_3", "q_4", "q_7", "q_9", "q_10", "q_11", "q_15", "q_17"]
-                else LOG_EPS
+                (
+                    np.log(self.STOP_P)
+                    if state
+                    in [
+                        "q_1",
+                        "q_3",
+                        "q_4",
+                        "q_7",
+                        "q_9",
+                        "q_10",
+                        "q_11",
+                        "q_15",
+                        "q_17",
+                    ]
+                    else LOG_EPS
+                )
                 for state in self.states
             ]
         )
@@ -649,8 +667,22 @@ class Booleans(Machine):
         self.add_transitions("q_13", "q_14", ["S", "s"], [0.5, 0.5])
         self.add_transitions("q_14", "q_15", ["E", "e"], [0.5, 0.5])
         self.add_transitions("q_16", "q_17", ["0", "1"], [0.4, 0.4])
-        self.add_transitions("q_16", "q_18", ["-",], [0.2])
-        self.add_transitions("q_18", "q_17", ["1",], [1.0])
+        self.add_transitions(
+            "q_16",
+            "q_18",
+            [
+                "-",
+            ],
+            [0.2],
+        )
+        self.add_transitions(
+            "q_18",
+            "q_17",
+            [
+                "1",
+            ],
+            [1.0],
+        )
         for state in ["q_3", "q_7", "q_10", "q_15", "q_17"]:
             self.F[state] = np.log(1.0)
         self.copy_to_z()
@@ -677,9 +709,11 @@ class Genders(Machine):
         )
         self.set_F(
             [
-                np.log(self.STOP_P)
-                if state in ["q_1", "q_3", "q_6", "q_13"]
-                else LOG_EPS
+                (
+                    np.log(self.STOP_P)
+                    if state in ["q_1", "q_3", "q_6", "q_13"]
+                    else LOG_EPS
+                )
                 for state in self.states
             ]
         )
@@ -712,7 +746,7 @@ class DateISO_8601(Machine):
         self.STOP_P = 1e-2
         self.pfsm_from_fsm(
             "((19|20)[0-9]{2})|([0-9]{4}(-)?(1[0-2]|0[1-9])(-)?(3[01]|0[1-9]|[12][0-9]))(T)?((2[0-3]|[01][0-9])(:)?([0-5][0-9])(:)?([0-5][0-9])(\.[0-9]+)?(Z)?)?"
-            )
+        )
         self.create_T_new()
         self.copy_to_z()
 
@@ -780,6 +814,7 @@ class SubTypeNonstdDate(Machine):
         )
         self.create_T_new()
         self.copy_to_z()
+
 
 class Time(Machine):
     def __init__(self):

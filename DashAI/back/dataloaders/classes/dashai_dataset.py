@@ -1,5 +1,6 @@
 """DashAI Dataset implementation."""
 
+import copy
 import json
 import logging
 import os
@@ -263,7 +264,7 @@ class DashAIDataset(Dataset):
         subset = self.select(indices)
 
         new_splits = {"split_indices": {split_name: indices}}
-        arrow_table = subset.arrow_table
+        arrow_table = subset.with_format("arrow")[:]
         subset = DashAIDataset(arrow_table, splits=new_splits)
         return subset
 
@@ -291,6 +292,7 @@ class DashAIDataset(Dataset):
 
         return DashAIDataset(table=subset_table, splits=self.splits, types=subset_types)
 
+    '''
     @beartype
     def select(self, *args, **kwargs) -> "DashAIDataset":
         """
@@ -304,15 +306,21 @@ class DashAIDataset(Dataset):
             DashAIDataset: A new DashAIDataset instance containing the selected rows.
         """
         selected_dataset = super().select(*args, **kwargs)
+        print(len(selected_dataset), "rows selected from dataset")
         if isinstance(selected_dataset, DashAIDataset):
             return selected_dataset
         else:
             # If the selected dataset is a Dataset, convert it to DashAIDataset
+            print("len de selected_dataset en else", len(selected_dataset))
             arrow_tbl = get_arrow_table(selected_dataset)
+            print("len de arrowtbl", len(arrow_tbl))
             arrow_tblx = save_types_in_arrow_metadata(
                 arrow_tbl, {col: self._types[col].to_string() for col in self._types}
             )
+            print("len de arrowtblx", len(arrow_tblx))
             return DashAIDataset(arrow_tblx, splits=self.splits, types=self._types)
+
+    '''
 
 
 @beartype
@@ -334,8 +342,6 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     split_index = {}
     current_index = 0
 
-    dashai_metadata = dataset_dict["train"].arrow_table.schema.metadata[b"dashai_types"]
-
     if len(dataset_dict.keys()) == 1:
         arrow_tbl = get_arrow_table(dataset_dict["train"])
         return DashAIDataset(arrow_tbl)
@@ -349,10 +355,15 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     merged_dataset = concatenate_datasets(concatenated_datasets)
     arrow_tbl = get_arrow_table(merged_dataset)
 
-    # We overwrite the metadata with the original DashAI types because concatenate_datasets resets it to the huggingface default
-    new_metadata = dict(arrow_tbl.schema.metadata)
-    new_metadata[b"dashai_types"] = dashai_metadata
-    arrow_tbl = arrow_tbl.replace_schema_metadata(new_metadata)
+    dashai_metadata = get_arrow_table(dataset_dict["train"]).schema.metadata.get(
+        b"dashai_types", None
+    )
+    # We overwrite the metadata with the original DashAI types
+    # because concatenate_datasets resets it to the huggingface default
+    if dashai_metadata is not None:
+        new_metadata = dict(arrow_tbl.schema.metadata)
+        new_metadata[b"dashai_types"] = dashai_metadata
+        arrow_tbl = arrow_tbl.replace_schema_metadata(new_metadata)
 
     dashai_dataset = DashAIDataset(arrow_tbl, splits={"split_indices": split_index})
 
@@ -360,21 +371,29 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
 
 
 @beartype
-def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) -> None:
+def transform_dataset_with_schema(
+    dataset: DashAIDataset, schema: Dict[str, Dict]
+) -> DashAIDataset:
     """
-    Saves a DashAIDataset in a custom format using two files in the specified directory:
-      - "data.arrow": contains the dataset's PyArrow table.
-      - "splits.json": contains the dataset's splits indices.
+    Transform dataset columns according to the specified schema.
 
-    Parameters:
-        dataset (DashAIDataset): The dataset to save.
-        path (Union[str, os.PathLike]): The directory path where the files
-        will be saved.
+    This function processes each column in the dataset according to the type information
+    provided in the schema, converting data types as needed and updating the dataset's
+    type metadata.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        The dataset to transform
+    schema : Dict[str, Dict]
+        Dictionary mapping column names to type information
+
+    Returns
+    -------
+    DashAIDataset
+        - The updated dataset with new type information
     """
-
-    os.makedirs(path, exist_ok=True)
     table = get_arrow_table(dataset)
-
     dai_table = {}
     my_schema = pa.schema([])
     dashai_types = {}
@@ -383,9 +402,7 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
         _type = info.get("type")
         dtype = info.get("dtype")
         pa_type = to_arrow_types(dtype)
-        print(
-            f"Processing column: {column_name}, type: {_type}, dtype: {dtype}, pa_type: {pa_type}"
-        )
+
         if _type == "Categorical":
             values = table.column(column_name).unique().to_pylist()
             dashai_types[column_name] = Categorical(values=values)
@@ -413,24 +430,46 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike], schema) 
                 )
             else:
                 dashai_types[column_name] = DashAIImage(dtype=dtype)
-
         else:
             dashai_types[column_name] = arrow_to_dashai_types(pa_type)
             dai_table[column_name] = table.column(column_name)
 
         my_schema = my_schema.append(pa.field(column_name, pa_type))
 
-    table = pa.table(dai_table)
-    table = table.cast(target_schema=my_schema)
+    # Create the transformed table with the new schema
+    transformed_table = pa.table(dai_table)
+    transformed_table = transformed_table.cast(target_schema=my_schema)
 
+    # Update dataset types
     dataset._types = dashai_types
 
-    types = {}
-    for column_name in dashai_types:
-        types[column_name] = dashai_types[column_name].to_string()
+    # Save types in arrow metadata
+    types = {col: dashai_types[col].to_string() for col in dashai_types}
+    transformed_table = save_types_in_arrow_metadata(transformed_table, types)
 
-    table = save_types_in_arrow_metadata(table, types)
+    return DashAIDataset(transformed_table, splits=dataset.splits, types=dashai_types)
 
+
+@beartype
+def save_dataset(
+    dataset: DashAIDataset, path: Union[str, os.PathLike], schema=None
+) -> None:
+    """
+    Saves a DashAIDataset in a custom format using two files in the specified directory:
+      - "data.arrow": contains the dataset's PyArrow table.
+      - "splits.json": contains the dataset's splits indices.
+
+    Parameters:
+        dataset (DashAIDataset): The dataset to save.
+        path (Union[str, os.PathLike]): The directory path where the files
+        will be saved.
+    """
+
+    os.makedirs(path, exist_ok=True)
+    if schema is not None:
+        dataset = transform_dataset_with_schema(dataset, schema)
+
+    table = get_arrow_table(dataset)
     data_filepath = os.path.join(path, "data.arrow")
     with pa.OSFile(data_filepath, "wb") as sink:
         writer = ipc.new_file(sink, table.schema)
@@ -614,13 +653,12 @@ def split_dataset(
         Must provide all indexes or none.
     """
     if all(idx is None for idx in [train_indexes, test_indexes, val_indexes]):
-
         train_dataset = dataset.get_split("train")
-
         test_dataset = dataset.get_split("test")
-
         val_dataset = dataset.get_split("validation")
-
+        print("Splitting dataset using existing splits.")
+        print("Train dataset size:", len(train_dataset))
+        print("Train dataset info", train_dataset._data)
         return DatasetDict(
             {
                 "train": train_dataset,
@@ -806,11 +844,8 @@ def select_columns(
         Tuple with the separated datasets x and y
     """
     dataset = to_dashai_dataset(dataset)
-    # print("select_columns dataset types:", dataset._types)
     input_columns_dataset = dataset.select_columns(input_columns)
     output_columns_dataset = dataset.select_columns(output_columns)
-    # print("input_columns_dataset types:", input_columns_dataset._types)
-    # print("output_columns_dataset types:", output_columns_dataset._types)
     return (input_columns_dataset, output_columns_dataset)
 
 
@@ -837,7 +872,9 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
         schema = reader.schema
 
     column_types = {}
+    print("get_columns_spec schema:", schema.metadata)
     types = get_types_from_arrow_metadata(schema)
+    print("get_columns_spec types:", types)
     for column, type_obj in types.items():
         type_info = type_obj.to_string()
         column_types[column] = {
@@ -872,8 +909,47 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
 
     # load the dataset from where its stored
     dataset = load_dataset(dataset_path)
+    # copy the features with the columns ans types
     new_features = dataset.features
+    for column in columns:
+        if columns[column].type == "ClassLabel":
+            names = list(set(dataset[column]))
+            new_features[column] = ClassLabel(names=names)
+        elif columns[column].type == "Value":
+            new_features[column] = Value(columns[column].dtype)
 
+        # cast the column types with the changes
+        try:
+            dataset = dataset.cast(new_features)
+
+        except ValueError as e:
+            raise ValueError("Error while trying to cast the columns") from e
+    return dataset
+
+
+@beartype
+def export_dataset_schema(dataset_path: str) -> DashAIDataset:
+    """
+    Exports the schema (data types) of a dataset to a JSON file.
+
+    This function loads a dataset from the specified path, extracts its data type
+    information, and saves this schema to a JSON file named 'dashai_schema.json'
+    in the same directory. This is useful for preserving type information that
+    can be later used for data validation or documentation.
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path to the directory where the dataset is stored. The function expects
+        to find the standard DashAI dataset files in this directory.
+
+    Returns
+    -------
+    DashAIDataset
+        The loaded dataset instance, unchanged.
+    """
+
+    dataset = load_dataset(dataset_path)
     types_path = os.path.join(dataset_path, "dashai_schema.json")
     with open(types_path, "w", encoding="utf-8") as f:
         json.dump(dataset.types, f, indent=2)

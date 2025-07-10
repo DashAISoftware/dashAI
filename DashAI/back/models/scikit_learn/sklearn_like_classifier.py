@@ -1,8 +1,9 @@
 import numpy as np
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
+from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
+
 
 class SklearnLikeClassifier(SklearnLikeModel):
     """Class for handling sklearn-like classifier models."""
@@ -20,6 +21,6 @@ class SklearnLikeClassifier(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
-        x_pred = dashai_to_pandas(self.prepare_dataset(x_pred))
-        predictions = super().predict_proba(x_pred)
-        return predictions
+        if isinstance(x_pred, DashAIDataset):
+            x_pred = dashai_to_pandas(x_pred)
+        return super().predict_proba(x_pred)

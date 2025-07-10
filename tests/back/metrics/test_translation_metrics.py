@@ -35,9 +35,14 @@ def test_ter(metric_input: dict):
 
 
 def test_metrics_different_input_sizes(metric_input: dict):
-    err_pattern = "The length of the true and predicted labels must be equal."
-    with pytest.raises(ValueError, match=err_pattern):
+    with pytest.raises(ValueError) as excinfo:
         Bleu.score(metric_input["true_sentences"], metric_input["wrong_size_sentences"])
+    err_msg = str(excinfo.value)
+    assert "length of the true labels" in err_msg
+    assert "must be equal" in err_msg
 
-    with pytest.raises(ValueError, match=err_pattern):
+    with pytest.raises(ValueError) as excinfo:
         Ter.score(metric_input["true_sentences"], metric_input["wrong_size_sentences"])
+    err_msg = str(excinfo.value)
+    assert "length of the true labels" in err_msg
+    assert "must be equal" in err_msg

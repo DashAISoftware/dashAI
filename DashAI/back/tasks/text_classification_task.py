@@ -1,12 +1,14 @@
 from typing import List, Union
 
-from datasets import ClassLabel, DatasetDict, Value
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Text
 
 
 class TextClassificationTask(BaseTask):
@@ -15,8 +17,8 @@ class TextClassificationTask(BaseTask):
     COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
 
     metadata: dict = {
-        "inputs_types": [Value],
-        "outputs_types": [ClassLabel],
+        "inputs_types": [Text],
+        "outputs_types": [Categorical],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
@@ -45,7 +47,7 @@ class TextClassificationTask(BaseTask):
         DatasetDict
             Dataset with the new types
         """
-        #types = {column: "Categorical" for column in outputs_columns}
+        # types = {column: "Categorical" for column in outputs_columns}
         datasetdict = to_dashai_dataset(datasetdict)
-        #dataset = datasetdict.change_columns_type(types)
+        # dataset = datasetdict.change_columns_type(types)
         return datasetdict

@@ -15,6 +15,13 @@ def create_dataset_1(client):
             "dataloader": "CSVDataLoader",
             "name": "test_csv",
             "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Text", "dtype": "string"},
+            },
         }
 
         kwargs = {
@@ -50,6 +57,13 @@ def create_dataset_2(client):
             "dataloader": "CSVDataLoader",
             "name": "test_csv2",
             "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Text", "dtype": "string"},
+            },
         }
 
         kwargs = {
@@ -106,11 +120,11 @@ def test_get_types(client: TestClient):
     response = client.get("/api/v1/dataset/2/types")
     data = response.json()
     assert data == {
-        "SepalLengthCm": {"type": "Value", "dtype": "float64"},
-        "SepalWidthCm": {"type": "Value", "dtype": "float64"},
-        "PetalLengthCm": {"type": "Value", "dtype": "float64"},
-        "PetalWidthCm": {"type": "Value", "dtype": "float64"},
-        "Species": {"type": "Value", "dtype": "string"},
+        "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+        "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+        "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+        "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+        "Species": {"type": "Text", "dtype": "string"},
     }
 
 

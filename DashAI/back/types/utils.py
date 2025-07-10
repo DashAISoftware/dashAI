@@ -1,14 +1,27 @@
-import pyarrow as pa
-import pandas as pd
 import json
-from typing import Dict, Any
-from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import DashAIValue, Integer, Float, Text, Time, Boolean, Timestamp, Duration, Decimal, Date, Binary
-from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.dashai_image import DashAIImage
 import re
+from typing import Any, Dict, Union
 
+import pandas as pd
+import pyarrow as pa
+from pyarrow.lib import Schema
 
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.dashai_image import DashAIImage
+from DashAI.back.types.value_types import (
+    Binary,
+    Boolean,
+    DashAIValue,
+    Date,
+    Decimal,
+    Duration,
+    Float,
+    Integer,
+    Text,
+    Time,
+    Timestamp,
+)
 
 dtype_arrow_map = {
     "int8": pa.int8(),
@@ -72,6 +85,7 @@ value_types = [
     "Binary",
 ]
 
+
 def arrow_to_dashai_types(arrow_type) -> DashAIValue:
     """Convert an Arrow type to a DashAI value."""
     if pa.types.is_integer(arrow_type):
@@ -94,7 +108,8 @@ def arrow_to_dashai_types(arrow_type) -> DashAIValue:
         return Decimal(arrow_type)
     elif pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type):
         return Binary(arrow_type)
-    
+
+
 def arrow_to_dashai_schema(arrow_tbl):
     """Iterates arrow table and asigns corresponding DashAI value type."""
     schema = {}
@@ -104,15 +119,19 @@ def arrow_to_dashai_schema(arrow_tbl):
         schema[column_name] = arrow_to_dashai_types(column_type).to_string()
     return schema
 
+
 def to_arrow_types(dashai_type) -> pa.DataType:
     """Convert a DashAI type to an Arrow type."""
-    return dtype_arrow_map.get(dashai_type, None)    
+    return dtype_arrow_map.get(dashai_type, None)
 
-def save_types_in_arrow_metadata(pa_table: pa.Table, datatypes: Dict[str, Dict]) -> pa.Table:
+
+def save_types_in_arrow_metadata(
+    pa_table: pa.Table, datatypes: Dict[str, Dict]
+) -> pa.Table:
     """
     Save DashAI types in Arrow metadata.
     This doesn't modify the Arrow schema, but adds metadata to the table.
-    
+
     Parameters:
     ----------
     pa_table : pa.Table
@@ -123,45 +142,51 @@ def save_types_in_arrow_metadata(pa_table: pa.Table, datatypes: Dict[str, Dict])
     -------
     pa.Table
         The Arrow table with updated metadata containing DashAI types.
-    
+
     """
 
-    #We serialize the data
-    metadata_serialized = json.dumps(datatypes).encode('utf-8')
+    # We serialize the data
+    metadata_serialized = json.dumps(datatypes).encode("utf-8")
 
-    #We obtain the current metadata
+    # We obtain the current metadata
     metadata = pa_table.schema.metadata or {}
 
-    #We add the serialized metadata to the Arrow table
+    # We add the serialized metadata to the Arrow table
     new_metadata = dict(metadata)
     new_metadata[b"dashai_types"] = metadata_serialized
     return pa_table.replace_schema_metadata(new_metadata)
 
-def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataType]:
+
+def get_types_from_arrow_metadata(
+    pa_table: Union[pa.Table, Schema],
+) -> Dict[str, DashAIDataType]:
     """
     Get DashAI types from Arrow metadata.
-    
+
     Parameters:
     ----------
     pa_table : pa.Table
         The Arrow table from which the metadata will be extracted.
-    
+
     Returns:
     -------
     dict[str, DashAIDataType]
         A dictionary mapping column names to DashAIDataType types.
-    
+
     Raises:
     ------
     ValueError
         If the metadata does not contain DashAI types.
     """
-    
-    metadata = pa_table.schema.metadata or {}
-    
+
+    if isinstance(pa_table, Schema):
+        metadata = pa_table.metadata or {}
+    else:
+        metadata = pa_table.schema.metadata or {}
+
     # Deserialize the metadata
     try:
-        types_serialized = metadata[b"dashai_types"].decode('utf-8')
+        types_serialized = metadata[b"dashai_types"].decode("utf-8")
         types = json.loads(types_serialized)
 
         dashai_types = {}
@@ -172,7 +197,9 @@ def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataTyp
                 dashai_types[column] = Categorical(cats)
             elif _type == "Image":
                 if info.get("base_path"):
-                    dashai_types[column] = DashAIImage(dtype=info.get("dtype"), base_path=info.get("base_path"))
+                    dashai_types[column] = DashAIImage(
+                        dtype=info.get("dtype"), base_path=info.get("base_path")
+                    )
                 else:
                     dashai_types[column] = DashAIImage(dtype=info.get("dtype"))
             else:
@@ -180,8 +207,9 @@ def get_types_from_arrow_metadata(pa_table: pa.Table) -> Dict[str, DashAIDataTyp
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
     except:
         dashai_types = {}
-    
+
     return dashai_types
+
 
 def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Array:
     """
@@ -202,12 +230,14 @@ def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Ar
     str_dates = column.to_pylist()
 
     try:
-        parsed_dates = pd.to_datetime(str_dates, format=format, errors='coerce')
+        parsed_dates = pd.to_datetime(str_dates, format=format, errors="coerce")
     except ValueError as e:
-        raise ValueError(f"Invalid date format: {e} - expected format is {format} check, clean your data and try again.") 
-
+        raise ValueError(
+            f"Invalid date format: {e} - expected format is {format} check, clean your data and try again."
+        )
 
     return pa.array(parsed_dates, type=pa.date32())
+
 
 def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Array:
     """
@@ -219,7 +249,7 @@ def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Ar
         The PyArrow array containing time strings.
     format : str, optional
         The format of the time strings. Default is "%H:%M:%S".
-    
+
     Returns
     -------
     pa.Array
@@ -229,11 +259,14 @@ def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Ar
     str_times = column.to_pylist()
 
     try:
-        parsed_times = pd.to_datetime(str_times, format=format, errors='coerce')
+        parsed_times = pd.to_datetime(str_times, format=format, errors="coerce")
     except ValueError as e:
-        raise ValueError(f"Invalid time format: {e} - expected format is {format} check, clean your data and try again.") 
+        raise ValueError(
+            f"Invalid time format: {e} - expected format is {format} check, clean your data and try again."
+        )
 
     return pa.array(parsed_times, type=pa.time32("s"))
+
 
 def is_image_path(value: Any) -> bool:
     """
@@ -249,12 +282,21 @@ def is_image_path(value: Any) -> bool:
         True if the value is an image path, False otherwise.
     """
     IMAGE_EXTENSIONS = {
-        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp', '.svg', '.ico', '.heic', '.heif'
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".tiff",
+        ".webp",
+        ".svg",
+        ".ico",
+        ".heic",
+        ".heif",
     }
 
     if not isinstance(value, str):
         return False
-    
-    match = re.search(r'(\.[a-z0-9]+)$', value.lower())
+
+    match = re.search(r"(\.[a-z0-9]+)$", value.lower())
     return bool(match) and match.group(1) in IMAGE_EXTENSIONS
-    

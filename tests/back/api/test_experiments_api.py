@@ -29,6 +29,13 @@ def create_dataset(client):
             "dataloader": "CSVDataLoader",
             "name": "DummyDataset",
             "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
         }
         kwargs = {
             "name": "DummyDataset",

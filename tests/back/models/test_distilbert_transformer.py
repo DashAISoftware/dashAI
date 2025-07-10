@@ -21,7 +21,13 @@ def splited_dataset_fixture():
     datasetdict = dataloader_test.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/models",
-        params={"data_key": "data"},
+        params={
+            "data_key": "data",
+            "schema": {
+                "text": {"type": "Text", "dtype": "string"},
+                "class": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     datasetdict = to_dashai_dataset(datasetdict)

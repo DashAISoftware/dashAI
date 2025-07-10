@@ -27,23 +27,22 @@ def splited_dataset_fixture():
     datasetdict = dataloader_test.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/models",
-        params={"data_key": "data"},
+        params={
+            "data_key": "data",
+            "schema": {
+                "text": {"type": "Text", "dtype": "string"},
+                "class": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     datasetdict = to_dashai_dataset(datasetdict)
 
-    train_idx, test_idx, val_idx = split_indexes(
-        total_rows=datasetdict.num_rows,
-        train_size=0.6,
-        test_size=0.2,
-        val_size=0.2,
-    )
-
     splited_dataset = split_dataset(
         datasetdict,
-        train_indexes=train_idx,
-        test_indexes=test_idx,
-        val_indexes=val_idx,
+        train_indexes=[0, 1, 2],
+        test_indexes=[3, 4],
+        val_indexes=[5, 6],
     )
 
     x, y = select_columns(

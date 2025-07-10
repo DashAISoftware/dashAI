@@ -15,6 +15,7 @@ from DashAI.back.api.api_v1.schemas.datasets_params import ColumnSpecItemParams
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
+    get_arrow_table,
     get_column_names_from_indexes,
     load_dataset,
     save_dataset,
@@ -65,7 +66,16 @@ def load_test_datasetdict(test_datasets_path: pathlib.Path) -> DatasetDict:
     test_datasetdict = CSVDataLoader().load_data(
         filepath_or_buffer=file,
         temp_path=str(test_datasets_path),
-        params={"separator": ";"},
+        params={
+            "separator": ";",
+            "schema": {
+                "sepal length (cm)": {"type": "Float", "dtype": "float64"},
+                "sepal width (cm)": {"type": "Float", "dtype": "float64"},
+                "petal length (cm)": {"type": "Float", "dtype": "float64"},
+                "petal width (cm)": {"type": "Float", "dtype": "float64"},
+                "target": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     return test_datasetdict
@@ -494,10 +504,20 @@ def test_save_to_disk_and_load(
         "petal width (cm)",
         "target",
     ]
+
     split_dashai_datasetdict = to_dashai_dataset(split_dashai_datasetdict)
+    schema = {
+        "sepal length (cm)": {"type": "Float", "dtype": "float64"},
+        "sepal width (cm)": {"type": "Float", "dtype": "float64"},
+        "petal length (cm)": {"type": "Float", "dtype": "float64"},
+        "petal width (cm)": {"type": "Float", "dtype": "float64"},
+        "target": {"type": "Categorical", "dtype": "string"},
+    }
+
     save_dataset(
         split_dashai_datasetdict,
         path=str(test_path / "dataloaders/dashaidataset/load_and_save_test"),
+        schema=schema,
     )
 
     loaded_datasetdict = load_dataset(
@@ -604,8 +624,7 @@ def test_update_columns_spec_on_disk(
 
     dashai_datasetdict = to_dashai_dataset(dashai_datasetdict)
     save_dataset(
-        dashai_datasetdict,
-        test_path / "dataloaders/dashaidataset/update_col_specs",
+        dashai_datasetdict, test_path / "dataloaders/dashaidataset/update_col_specs"
     )
     updated_dataset = update_columns_spec(
         str(test_path / "dataloaders/dashaidataset/update_col_specs"),

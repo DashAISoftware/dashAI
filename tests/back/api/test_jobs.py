@@ -97,6 +97,13 @@ def fixture_dataset_id(client: TestClient):
             "dataloader": "CSVDataLoader",
             "name": "test_csv3",
             "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
         }
 
         kwargs = {

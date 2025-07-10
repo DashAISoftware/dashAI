@@ -1,11 +1,10 @@
 """Base Metric abstract class."""
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from typing import Tuple, Union
+from typing import Final, Tuple, Union
+
 import numpy as np
 
-
-from typing import Final
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseMetric:
@@ -14,15 +13,16 @@ class BaseMetric:
     TYPE: Final[str] = "Metric"
 
 
-
-
 METRICS_MAP = {
     "classification": ["Accuracy", "F1", "Precision", "Recall"],
     "regression": ["RMSE", "MAE"],
     "translation": ["Bleu", "Ter"],
 }
 
-def validate_inputs(true: Union[np.ndarray, list], pred: Union[np.ndarray, list], metric_category: str) -> None:
+
+def validate_inputs(
+    true: Union[np.ndarray, list], pred: Union[np.ndarray, list], metric_category: str
+) -> None:
     """Validate inputs.
 
     Parameters
@@ -33,7 +33,7 @@ def validate_inputs(true: Union[np.ndarray, list], pred: Union[np.ndarray, list]
         Predicted labels by the model.
     metric_category: str
         The name of the category of metric to be used as base to validate the labels.
-    
+
     """
 
     if len(true) != len(pred):
@@ -49,7 +49,6 @@ def validate_inputs(true: Union[np.ndarray, list], pred: Union[np.ndarray, list]
                 f"given: len(true_values) = {len(true)} and "
                 f"len(pred_values) = {len(pred)}."
             )
-
 
 
 def prepare_to_metric(
@@ -77,26 +76,34 @@ def prepare_to_metric(
     """
 
     column_name = y.column_names[0]
+    _pred = None
+    _true = None
 
     for metric_category, metrics in METRICS_MAP.items():
         if metric_type in metrics:
             if metric_category == "classification":
                 if not isinstance(pre_pred, np.ndarray):
-                    raise TypeError(f"Expected np.ndarray for regression, got {type(pre_pred)}")
+                    raise TypeError(
+                        f"Expected np.ndarray for regression, got {type(pre_pred)}"
+                    )
                 _true = np.array(y[column_name])
                 validate_inputs(_true, pre_pred, metric_category)
                 _pred = np.argmax(pre_pred, axis=1)
 
             elif metric_category == "regression":
                 if not isinstance(pre_pred, np.ndarray):
-                    raise TypeError(f"Expected np.ndarray for regression, got {type(pre_pred)}")
+                    raise TypeError(
+                        f"Expected np.ndarray for regression, got {type(pre_pred)}"
+                    )
                 _true = np.array(y[column_name])
                 validate_inputs(_true, pre_pred, metric_category)
                 _pred = pre_pred
-                
+
             elif metric_category == "translation":
                 if not isinstance(pre_pred, list):
-                    raise TypeError(f"Expected list for translation, got {type(pre_pred)}")
+                    raise TypeError(
+                        f"Expected list for translation, got {type(pre_pred)}"
+                    )
                 _true = np.array(y[column_name])
                 validate_inputs(_true, pre_pred, metric_category)
                 _pred = pre_pred

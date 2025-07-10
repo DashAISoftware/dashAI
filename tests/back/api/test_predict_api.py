@@ -83,6 +83,13 @@ def create_dataset(client: TestClient):
             "dataloader": "JSONDataLoader",
             "name": "test_json",
             "data_key": "data",
+            "schema": {
+                "feature_0": {"type": "Float", "dtype": "float64"},
+                "feature_1": {"type": "Float", "dtype": "float64"},
+                "feature_2": {"type": "Float", "dtype": "float64"},
+                "feature_3": {"type": "Float", "dtype": "float64"},
+                "class": {"type": "Categorical", "dtype": "string"},
+            },
         }
 
         kwargs = {
@@ -126,6 +133,13 @@ def create_dataset_2(client: TestClient):
             "dataloader": "CSVDataLoader",
             "name": "test_csv",
             "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Text", "dtype": "string"},
+            },
         }
 
         kwargs = {

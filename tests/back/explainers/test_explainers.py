@@ -39,7 +39,16 @@ def tabular_model_fixture():
     datasetdict = dataloader.load_data(
         filepath_or_buffer=dataset_path,
         temp_path="tests/back/explainers",
-        params={"separator": ","},
+        params={
+            "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
+        },
     )
 
     total_rows = datasetdict.num_rows
