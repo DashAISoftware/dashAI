@@ -35,7 +35,6 @@ import { inferDataTypes } from "../../api/datasets";
 import InferenceMethodSelector from "../custom/InferenceMethodDialog";
 import { setIn } from "formik";
 
-
 const defaultNewDataset = {
   dataloader: "",
   file: null,
@@ -64,7 +63,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const [inferenceDialogOpen, setInferenceDialogOpen] = useState(false);
   const [selectedInferenceMethods, setSelectedInferenceMethods] = useState([]);
 
-
   const handleSubmitNewDataset = async () => {
     try {
       const name =
@@ -72,19 +70,11 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           ? newDataset.file.name
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
-      
-      
-      await enqueueDatasetRequest(
-        newDataset.file,
-        name,
-        newDataset.url,
-       {
-        ...newDataset.params,
-        schema: columnsSpec
-      }
-        
-      );
 
+      await enqueueDatasetRequest(newDataset.file, name, newDataset.url, {
+        ...newDataset.params,
+        schema: columnsSpec,
+      });
 
       await startJobQueue();
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
@@ -99,17 +89,12 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     }
   };
 
-
   const handlePreviewDataset = async (file, url) => {
-    setNewDataset({ ...newDataset, file, url });
-
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", newDataset.file);
     formData.append("params", JSON.stringify(newDataset.params));
-    
-    try {
-      
 
+    try {
       const preview = await loadPreview(formData);
 
       setPreviewData(preview);
@@ -125,9 +110,10 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       });
 
       setColumnsSpec(initialColumnsSpec);
-      
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain preview of the uploaded file",);
+      enqueueSnackbar(
+        "Error while trying to obtain preview of the uploaded file",
+      );
       setRequestError(true);
       setPreviewData(null);
       setShowSummary(false);
@@ -139,27 +125,31 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     setLoading(true);
     const formData = new FormData();
     formData.append("file", newDataset.file);
-    formData.append("params", JSON.stringify({
-      ...newDataset.params,
-      methods
-    }
-    ));
+    formData.append(
+      "params",
+      JSON.stringify({
+        ...newDataset.params,
+        methods,
+      }),
+    );
 
     try {
-      const response = await inferDataTypes(formData);   
-      const updatedTypes =  Object.fromEntries(
+      const response = await inferDataTypes(formData);
+      const updatedTypes = Object.fromEntries(
         Object.entries(response).map(([key, value]) => [
           key,
           {
             type: value.type,
             dtype: value.dtype,
-          }
-        ])
+          },
+        ]),
       );
 
-      setColumnsSpec(updatedTypes); 
+      setColumnsSpec(updatedTypes);
       console.log("columnsSpec", columnsSpec);
-      enqueueSnackbar("Inferred datatypes successfully", { variant: "success" });
+      enqueueSnackbar("Inferred datatypes successfully", {
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to infer datatypes", error);
       enqueueSnackbar("Failed to infer datatypes", { variant: "error" });
@@ -167,7 +157,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       setLoading(false);
     }
   };
-
 
   const handleCloseDialog = () => {
     setActiveStep(0);
@@ -186,10 +175,9 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       setActiveStep(activeStep + 1);
       setNextEnabled(false);
     } else if (activeStep === 1) {
-      handlePreviewDataset(newDataset.file, newDataset.url);
+      handlePreviewDataset();
       setActiveStep(2);
-    }
-    else if (activeStep === 2) {
+    } else if (activeStep === 2) {
       handleSubmitNewDataset();
     }
   };
@@ -273,8 +261,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             formSubmitRef={formSubmitRef}
           />
         )}
-          
-          {/* Step 3: Preview dataset */}
+
+        {/* Step 3: Preview dataset */}
         {activeStep === 2 && (
           <DatasetPreviewStep
             previewData={previewData}
@@ -290,21 +278,28 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
 
       {/* Actions - Back and Next */}
       <DialogActions>
-        <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            alignItems: "center",
+          }}
+        >
           <Box sx={{ minWidth: "180px" }}>
-          {activeStep === 2 && (
-            <Tooltip title = "The methods used to infer columns datatypes are not perfect and can commit mistakes, please check yourself the types before pressing the Upload button." >  
-              <Button
-                  size = "large"
+            {activeStep === 2 && (
+              <Tooltip title="The methods used to infer columns datatypes are not perfect and can commit mistakes, please check yourself the types before pressing the Upload button.">
+                <Button
+                  size="large"
                   variant="contained"
                   color="primary"
                   //sx={{ mt: 2 }}
-                  onClick ={() => setInferenceDialogOpen(true)}
+                  onClick={() => setInferenceDialogOpen(true)}
                 >
-                Infer column Data Types
-              </Button>
-            </Tooltip>
-          )}
+                  Infer column Data Types
+                </Button>
+              </Tooltip>
+            )}
           </Box>
           <ButtonGroup size="large">
             <Button onClick={handleBackButton}>
@@ -317,7 +312,11 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               color="primary"
               disabled={!nextEnabled}
             >
-              {activeStep === 0 ? "Next" : activeStep === 1 ? "Preview" : "Upload"}
+              {activeStep === 0
+                ? "Next"
+                : activeStep === 1
+                ? "Preview"
+                : "Upload"}
             </Button>
           </ButtonGroup>
         </Box>
@@ -332,7 +331,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
         defaultSelected={selectedInferenceMethods}
       />
     </Dialog>
-    
   );
 }
 DatasetModal.propTypes = {
