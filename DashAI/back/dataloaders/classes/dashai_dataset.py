@@ -99,7 +99,6 @@ class DashAIDataset(Dataset):
         """
         ds = super().cast(*args, **kwargs)
         arrow_tbl = get_arrow_table(ds)
-        # print("cast metadata:", arrow_tbl.schema.metadata)
         return DashAIDataset(arrow_tbl, splits=self.splits, types=self._types)
 
     @property
@@ -656,9 +655,6 @@ def split_dataset(
         train_dataset = dataset.get_split("train")
         test_dataset = dataset.get_split("test")
         val_dataset = dataset.get_split("validation")
-        print("Splitting dataset using existing splits.")
-        print("Train dataset size:", len(train_dataset))
-        print("Train dataset info", train_dataset._data)
         return DatasetDict(
             {
                 "train": train_dataset,
@@ -872,9 +868,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
         schema = reader.schema
 
     column_types = {}
-    print("get_columns_spec schema:", schema.metadata)
     types = get_types_from_arrow_metadata(schema)
-    print("get_columns_spec types:", types)
     for column, type_obj in types.items():
         type_info = type_obj.to_string()
         column_types[column] = {

@@ -555,7 +555,6 @@ async def infer_datatypes(file: UploadFile = File(...), params: str = Form(None)
             df = pd.DataFrame(limited_items)
 
         methods = parsed_params.get("methods", ["DashAIPtype"])
-        print(methods)
         # returns a dictionary with the inferred datatypes and column name for each
         final_types = {}
         for method in methods:

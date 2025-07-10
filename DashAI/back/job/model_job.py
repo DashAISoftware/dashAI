@@ -120,8 +120,6 @@ class ModelJob(BaseJob):
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )
-                print("Prepared dataset features:", prepared_dataset.features)
-                print("Prepared dataset data:", prepared_dataset._data)
                 n_labels = None
                 if experiment.task_name in [
                     "TextClassificationTask",

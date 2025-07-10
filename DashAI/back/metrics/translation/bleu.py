@@ -36,14 +36,9 @@ class Bleu(TranslationMetric):
             The calculated BLEU score ranging between 0 and 1.
         """
         metric = evaluate.load("bleu")
-        print("Source sentences:", source_sentences)
-        print("Target sentences:", target_sentences)
-        print("Preparing to metric...")
         source_sentences, target_sentences = prepare_to_metric(
             source_sentences, target_sentences, "Bleu"
         )
-        print("Source sentences:", source_sentences)
-        print("Target sentences:", target_sentences)
         return metric.compute(
             references=source_sentences, predictions=target_sentences
         )["bleu"]
