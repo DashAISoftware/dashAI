@@ -56,7 +56,7 @@ export default function Generative() {
     }
 
     setSessions((prevSessions) =>
-      prevSessions.filter((session) => session.id !== id)
+      prevSessions.filter((session) => session.id !== id),
     );
 
     removeSession(id);
@@ -90,44 +90,41 @@ export default function Generative() {
                 setSelectedTaskName(taskName);
                 setStepIndex(1);
               }}
-              />
-            ) : isRAGTask() ? (
-                  <RAGHomePage
-                    onSessionCreated={handleAddSession}
-                    onSessionSelect={setSelectedSessionId}
-                    />
-                  ) : (
-                  <SelectModelMenu
-                    goToBackStep={() => setStepIndex(0)}
-                    handleAddSession={handleAddSession}
-                    selectedTaskName={selectedTaskName}
-                    selectedDisplayName={selectedDisplayName}
-                    setSelectedSessionId={setSelectedSessionId}
-                  />
-                  )}
-          </MainGenerativeBox>
-        </Box>
+            />
+          ) : isRAGTask() ? (
+            <RAGHomePage
+              onSessionCreated={handleAddSession}
+              onSessionSelect={setSelectedSessionId}
+            />
+          ) : (
+            <SelectModelMenu
+              goToBackStep={() => setStepIndex(0)}
+              handleAddSession={handleAddSession}
+              selectedTaskName={selectedTaskName}
+              selectedDisplayName={selectedDisplayName}
+              setSelectedSessionId={setSelectedSessionId}
+            />
+          )}
+        </MainGenerativeBox>
+      </Box>
 
-        {!isRAGTask() && (
-      <Box width="22%">
-        <Box
-          width="100%"
-          height="100%"
-          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
-        >
-          {!selectedSessionId ?
-            (
+      {!isRAGTask() && (
+        <Box width="22%">
+          <Box
+            width="100%"
+            height="100%"
+            sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+          >
+            {!selectedSessionId ? (
               <ParamsBar
                 selectedSessionId={selectedSessionId}
                 onParamsUpdate={onParamsUpdate}
                 taskName={selectedTaskName}
               />
-            ): null}
+            ) : null}
+          </Box>
         </Box>
-      </Box>
-        )
-        }
+      )}
     </Box>
   );
 }
-          

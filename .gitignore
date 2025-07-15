@@ -179,6 +179,4 @@ __pycache__
 # MacOS
 *.DS_Store
 
-# RAG database
-/chroma
-/saved_encoders
+.prettierrc

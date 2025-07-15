@@ -4,83 +4,83 @@ import PropTypes from "prop-types";
 import {
   AddCircleOutline as AddIcon,
   Update as UpdateIcon,
+  Edit as EditIcon,
   DeleteOutline as DeleteIcon,
-  Visibility as ViewDocsIcon
+  Visibility as ViewDocsIcon,
 } from "@mui/icons-material";
+
 import { DataGrid } from "@mui/x-data-grid";
-import {
-  Button,
-  Grid,
-  Paper,
-  Typography,
-  LinearProgress,
-} from "@mui/material";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 
 import { deleteRAGSession } from "../../../api/rag";
-
 
 export default function RAGSessionsTable({
   sessions,
   onSelect,
   onEdit,
-  onOpenNewSessionModal
+  onOpenNewSessionModal,
+  showTableTitle = false,
 }) {
-
   const columns = [
     {
       field: "name",
       headerName: "Session Name",
-      flex: 1,
+      flex: 0.8,
       renderCell: (params) => (
         <Button
           size="small"
           onClick={() => onSelect(params.row.id, params.row.task_name)}
-          sx={{ 
-            textTransform: 'none', 
-            justifyContent: 'flex-start', 
+          sx={{
+            textTransform: "none",
+            justifyContent: "flex-start",
             padding: 0,
-            color: 'white',
+            color: "white",
           }}
         >
           {params.value}
         </Button>
-      )
+      ),
     },
     {
       field: "created",
       headerName: "Created At",
-      flex: 0.8,
-      valueFormatter: (params) => new Date(params.value).toLocaleString()
+      flex: 0.4,
+      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
     },
     {
       field: "",
       headerName: "Documents",
-      flex: 0.6,
-      valueGetter: (params) => params.row.parameters.documents.length
+      flex: 0.4,
+      valueGetter: (params) => params.row.parameters.documents.length,
     },
     {
       field: "actions",
       headerName: "Actions",
-      flex: 1.1,
+      flex: 0.9,
       renderCell: (params) => (
-        <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "100%",
+            gap: "auto",
+          }}
+        >
           <Button
             size="small"
             variant="outlined"
             onClick={() => onSelect(params.row.id, params.row.task_name)}
-            sx={{ mr: 1 }}
           >
             Open
           </Button>
           <Button
             size="small"
             variant="outlined"
-            color="secondary"
+            color="warning"
             onClick={() => onEdit(params.row)}
-            sx={{ mr: 1 }}
-            startIcon={<UpdateIcon />}
           >
-            Edit
+            <EditIcon />
           </Button>
           <Button
             size="small"
@@ -93,31 +93,36 @@ export default function RAGSessionsTable({
                 console.error("Error deleting session:", error);
               }
             }}
-            startIcon={<DeleteIcon />}
           >
-            Delete
+            <DeleteIcon />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
-    <Paper sx={{ py: 4, px: 6 }}>
-      <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-        <Typography variant="h5" component="h2">
-          RAG Sessions
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={onOpenNewSessionModal}
-          startIcon={<AddIcon />}
+    <Paper sx={{ py: 4, px: 4}}>
+      {showTableTitle && (
+        <Grid
+          container
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
         >
-          New RAG Session
-        </Button>
-      </Grid>
-
+          <Typography variant="h5" component="h2">
+            RAG Sessions
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onOpenNewSessionModal}
+            startIcon={<AddIcon />}
+          >
+            New RAG Session
+          </Button>
+        </Grid>
+      )}
       <DataGrid
         rows={sessions}
         columns={columns}
@@ -133,11 +138,20 @@ export default function RAGSessionsTable({
         }}
         getRowId={(row) => row.id}
         sx={{
-          '& .MuiDataGrid-cell:focus': { outline: 'none' },
-          minHeight: 400
+          "& .MuiDataGrid-cell:focus": { outline: "none" },
+          minHeight: 300,
         }}
       />
-
+      {!showTableTitle && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onOpenNewSessionModal}
+          startIcon={<AddIcon />}
+        >
+          New RAG Session
+        </Button>
+      )}
     </Paper>
   );
 }
@@ -150,7 +164,7 @@ RAGSessionsTable.propTypes = {
       created_at: PropTypes.string.isRequired,
       documents: PropTypes.array,
       task_name: PropTypes.string,
-    })
+    }),
   ).isRequired,
   onSelect: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,

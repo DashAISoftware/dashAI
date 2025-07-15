@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
 import PropTypes from "prop-types";
-import DocumentTable from "./DocumentTable";
+import DocumentSelectionTable from "./DocumentSelectionTable";
 import Upload from "../../shared/Upload";
 import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
 
@@ -107,7 +107,7 @@ export default function DocumentSelector({
   return (
     <Box display="flex" gap={2} height="100%">
       <Box width="65%">
-        <DocumentTable
+        <DocumentSelectionTable
           documents={documents}
           selectedIds={selectedIds}
           onToggle={handleToggleSelection}

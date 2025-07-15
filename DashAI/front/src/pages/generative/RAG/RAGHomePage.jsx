@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
-import CustomLayout from '../../../components/custom/CustomLayout';
-import NewSessionModal from './NewSessionModal';
-import RAGSessionsTable from './RAGSessionsTable';
-import { getRAGSessions, createRAGSession } from '../../../api/rag';
+import React, { useState, useEffect, useCallback } from "react";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import NewSessionModal from "./NewSessionModal";
+import RAGSessionsTable from "./RAGSessionsTable";
+import { getRAGSessions, createRAGSession, loadDocuments, deleteDocument } from "../../../api/rag";
+import DocumentTable from "../../../components/generative/RAG/DocumentTable";
+
 
 function RAGHomePage({ onSessionCreated, onSessionSelect }) {
   const [showModal, setShowModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingSession, setEditingSession] = useState(null);
+  const [allDocuments, setAllDocuments] = useState([]);
+  const [documentsLoading, setDocumentsLoading] = useState(true);
 
   const loadSessions = async () => {
     setLoading(true);
@@ -19,17 +22,30 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
     } catch (error) {
       console.error("RAGHomePage: Error loading RAG sessions:", error);
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
+  const fetchAllDocuments = useCallback(async () => {
+    setDocumentsLoading(true);
+    try {
+      const docs = await loadDocuments();
+      setAllDocuments(docs);
+    } catch (error) {
+      console.error("RAGHomePage: Error loading all documents:", error);
+    } finally {
+      setDocumentsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadSessions();
-  }, []); 
+    fetchAllDocuments();
+  }, [fetchAllDocuments]);
 
   const handleOpenNewSessionModal = (session = null) => {
     setEditingSession(session);
-    setShowModal(true); 
+    setShowModal(true);
   };
 
   const handleCreateOrUpdateSession = async (sessionData) => {
@@ -39,30 +55,41 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
 
       await loadSessions();
       onSessionCreated(savedSession);
-      setShowModal(false); 
-      
-      return savedSession;
+      setShowModal(false);
 
+      return savedSession;
     } catch (error) {
       throw error;
     }
   };
 
+  const handleRemoveDocumentFromTable = useCallback(async (id) => {
+    try {
+      await deleteDocument(id);
+      await fetchAllDocuments();
+    } catch (error) {
+      console.error("RAGHomePage: Failed to delete document:", error);
+    }
+  }, [fetchAllDocuments]);
+
   return (
-    <CustomLayout
-      title="RAG Sessions"
-      subtitle="Manage your RAG sessions"
-      actionButton={
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleOpenNewSessionModal()}
-          sx={{ textTransform: 'none' }}
-        >
-          New Session
-        </Button>
-      }
+    <Box
+      display={"flex"}
+      width={"100%"}
+      height={"100%"}
+      flexDirection={"column"}
+      justifyContent={"flex-start"}
+      overflow={"scroll"}
+      paddingLeft={5}
+      paddingRight={5}
+      gap={1}
     >
+      <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
+        RAG Sessions
+      </Typography>
+      <Typography variant="subtitle1" component="p" sx={{ mb: 1 }}>
+        Manage your RAG sessions
+      </Typography>
       <NewSessionModal
         open={showModal}
         onClose={() => {
@@ -83,11 +110,23 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
           sessions={sessions}
           onEdit={(session) => handleOpenNewSessionModal(session)}
           onSelect={onSessionSelect}
-          onRefreshSessions={loadSessions} 
+          onRefreshSessions={loadSessions}
           onOpenNewSessionModal={() => handleOpenNewSessionModal()}
         />
       )}
-    </CustomLayout>
+
+      <Typography variant="h5" component="h2" sx={{ mt: 2 }}>
+        Documents
+      </Typography>
+      <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
+        Manage documents for your RAG sessions
+      </Typography>
+      <DocumentTable
+        documents={allDocuments}
+        onRemove={handleRemoveDocumentFromTable}
+        isLoading={documentsLoading}
+      />
+    </Box>
   );
 }
 
