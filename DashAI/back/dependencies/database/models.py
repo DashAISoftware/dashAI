@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 
 from beartype.typing import List
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -339,6 +339,22 @@ class ProcessData(Base):
         "GenerativeProcess", foreign_keys=[process_id], overlaps="input,output"
     )
 
+
+class Document(Base):
+    __tablename__ = "RAG_document"
+    """
+    Table to store all the information about a document in the RAG system.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    file_name: Mapped[str] = mapped_column(String, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    file_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    optional_metadata: Mapped[JSON] = mapped_column(JSON, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<Document(id={self.id}, file_name={self.filename}, created={self.created})>"
+    
 
 class GenerativeSession(Base):
     __tablename__ = "generative_session"

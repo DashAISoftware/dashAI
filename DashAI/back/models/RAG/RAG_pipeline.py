@@ -4,9 +4,8 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
     schema_field,
-    bool_field,
     list_field,
-    string_field
+    int_field
 )
 
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
@@ -42,7 +41,7 @@ class RAGPipelineSchema(BaseSchema):
     # Document collection parameters
     documents: schema_field(
         list_field(
-            string_field(),
+            int_field(),
             min_items=1,
         ),
         placeholder=None,

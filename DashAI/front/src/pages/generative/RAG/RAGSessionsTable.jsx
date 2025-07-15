@@ -7,7 +7,7 @@ import {
   DeleteOutline as DeleteIcon,
   Visibility as ViewDocsIcon
 } from "@mui/icons-material";
-import { DataGrid } from "@mui/x-data-grid"; // Removed GridToolbar as it's not strictly essential for basic rendering
+import { DataGrid } from "@mui/x-data-grid";
 import {
   Button,
   Grid,
@@ -16,25 +16,15 @@ import {
   LinearProgress,
 } from "@mui/material";
 
-import { deleteRAGSession } from "../../../api/rag"; // Assuming this API call is correct
+import { deleteRAGSession } from "../../../api/rag";
 
-// Removed ConfirmDialog component as requested.
-// Removed useSnackbar import and usage.
 
 export default function RAGSessionsTable({
   sessions,
   onSelect,
   onEdit,
-  // Removed onRefreshSessions prop as it's not needed in this simplified version
   onOpenNewSessionModal
 }) {
-  // Removed local 'loading' state for operations within the table,
-  // as the parent RAGHomePage handles the main loading.
-  // Removed showConfirmDelete and sessionToDelete states.
-
-
-  // Removed handleDeleteSession function as its logic involved removed features.
-  // The delete button will now just call the API directly (or a simplified parent handler).
 
   const columns = [
     {
@@ -45,28 +35,33 @@ export default function RAGSessionsTable({
         <Button
           size="small"
           onClick={() => onSelect(params.row.id, params.row.task_name)}
-          sx={{ textTransform: 'none', justifyContent: 'flex-start', padding: 0 }}
+          sx={{ 
+            textTransform: 'none', 
+            justifyContent: 'flex-start', 
+            padding: 0,
+            color: 'white',
+          }}
         >
           {params.value}
         </Button>
       )
     },
     {
-      field: "created_at",
+      field: "created",
       headerName: "Created At",
-      flex: 1,
+      flex: 0.8,
       valueFormatter: (params) => new Date(params.value).toLocaleString()
     },
     {
-      field: "documents",
+      field: "",
       headerName: "Documents",
-      flex: 0.7,
-      valueGetter: (params) => params.row.documents?.length || 0
+      flex: 0.6,
+      valueGetter: (params) => params.row.parameters.documents.length
     },
     {
       field: "actions",
       headerName: "Actions",
-      flex: 1.5,
+      flex: 1.1,
       renderCell: (params) => (
         <div>
           <Button
@@ -87,18 +82,13 @@ export default function RAGSessionsTable({
           >
             Edit
           </Button>
-          {/* Simplified Delete button: It will now rely on a parent handler or direct API call */}
           <Button
             size="small"
             variant="outlined"
             color="error"
             onClick={async () => {
-              // Directly call the delete API. No confirmation dialog.
               try {
-                // Assuming deleteRAGSession is imported and handles the actual deletion
                 await deleteRAGSession(params.row.id);
-                // If the parent component (RAGHomePage) needs to refresh, it will do so
-                // based on its own state updates or a prop passed down for that purpose.
               } catch (error) {
                 console.error("Error deleting session:", error);
               }
@@ -137,10 +127,7 @@ export default function RAGSessionsTable({
         pageSizeOptions={[5, 10]}
         disableRowSelectionOnClick
         autoHeight
-        // 'loading' prop here should ideally come from the parent (RAGHomePage)
-        // For this simplified version, we'll assume the parent manages it.
-        // If the table appears empty or stuck, check RAGHomePage's 'loading' state.
-        loading={false} // Set to false to ensure it's not stuck in loading from this component
+        loading={false}
         slots={{
           loadingOverlay: LinearProgress,
         }}
@@ -151,7 +138,6 @@ export default function RAGSessionsTable({
         }}
       />
 
-      {/* Removed ConfirmDialog component */}
     </Paper>
   );
 }
@@ -168,6 +154,5 @@ RAGSessionsTable.propTypes = {
   ).isRequired,
   onSelect: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
-  // Removed onRefreshSessions from propTypes
   onOpenNewSessionModal: PropTypes.func.isRequired,
 };

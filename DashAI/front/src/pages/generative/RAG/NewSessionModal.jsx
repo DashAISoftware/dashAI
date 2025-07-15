@@ -75,6 +75,7 @@ export default function NewSessionModal({
       setActiveStep(0);
       if(session) {
         const sessionParameters = session.parameters || {};
+        const sessionDocuments = sessionParameters.documents || [];
         const sessionRetrieverModel = sessionParameters.retriever_model || {};
         const sessionGeneratorModel = sessionParameters.generator_model || {};
         setSessionData({
@@ -84,16 +85,12 @@ export default function NewSessionModal({
           description: session.description || "",
           displayName: session.displayName || "",
           parameters: {
-            documents: sessionParameters.documents || [],
+            documents: [...sessionDocuments],
             retriever_model: {
-              class: sessionRetrieverModel.class || "",
-              name: sessionRetrieverModel.name || "",
-              parameters: sessionRetrieverModel.parameters || {},
+              ...sessionRetrieverModel, 
             },
             generator_model: {
-              class: sessionGeneratorModel.class || "",
-              name: sessionGeneratorModel.name || "",
-              parameters: sessionGeneratorModel.parameters || {},
+              ...sessionGeneratorModel,
             },
           },
         })
@@ -128,21 +125,26 @@ export default function NewSessionModal({
     }
 
     try {
-      // Ensure generator_model is included in the final session data
       const finalSessionData = {
-        ...sessionData,
-        parameters: {
-          ...sessionData.parameters,
-          generator_model: sessionData.parameters.generator_model || {
-            name: "",
-            parameters: {},
-          },
-          retriever_model: sessionData.parameters.retriever_model || {
-            name: "",
-            parameters: {},
-          },
+      ...sessionData,
+      name: sessionData.name.trim(),
+      description: sessionData.description.trim() || "",
+      task_name: "RAGTask",
+      parameters: {
+        ...sessionData.parameters,
+        documents: sessionData.parameters.documents || [],
+        retriever_model: sessionData.parameters.retriever_model || {
+          name: "",
+          parameters: {},
         },
-      };
+        generator_model: sessionData.parameters.generator_model || {
+          name: "",
+          parameters: {},
+        },
+      },
+    };
+
+      console.log("NewSessionModal: Final session data to save:", finalSessionData);
 
       const savedSession = await onSessionSaved(finalSessionData);
 
@@ -207,6 +209,7 @@ export default function NewSessionModal({
       <DialogContent dividers>
         {activeStep === 0 && (
           <DocumentSelectionStep
+            
             documents={sessionData.parameters.documents}
             setDocuments={
               (docs) => setSessionData(prev => ({
@@ -215,6 +218,16 @@ export default function NewSessionModal({
               }))
             }
             setNextEnabled={(isValid) => handleStepValidation(0, isValid)}
+            sessionName={sessionData.name}
+            setSesssionName={(name) => setSessionData(prev => ({
+              ...prev,
+              name: name
+            }))}
+            sessionDescription={sessionData.description}
+            setSessionDescription={(description) => setSessionData(prev => ({
+              ...prev,
+              description: description
+            }))}
           />
         )}
         {activeStep === 1 && (

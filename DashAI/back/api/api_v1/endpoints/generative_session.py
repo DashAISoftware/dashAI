@@ -19,6 +19,7 @@ from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models import BaseGenerativeModel
 from DashAI.back.tasks import BaseGenerativeTask
 
+
 router = APIRouter()
 log = logging.getLogger(__name__)
 

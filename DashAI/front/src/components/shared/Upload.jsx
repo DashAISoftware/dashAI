@@ -20,20 +20,22 @@ import ClearIcon from "@mui/icons-material/Clear";
  * newDataset state in the modal
  * @param {function} onFileUpload function to handle when the user "uploads" a dataset
  */
-function Upload({ onFileUpload, emptyUploadText }) {
+function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(EMPTY);
   const [dragActive, setDragActive] = useState(false);
-  const [fileOriginalName, setFileOriginalName] = useState("");
+  const [fileNames, setFileNames] = useState([]);
   const inputRef = useRef(null);
 
-  const uploadDataset = async (file) => {
+  const uploadDataset = async (files) => {
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
     setDatasetState(LOADING);
     const url = "";
-    onFileUpload(file, url);
+    await onFileUpload(fileArray, url);
     setDatasetState(LOADED);
-    setFileOriginalName(file.name);
-  };
+    setFileNames(fileArray.map(f => f.name));
+    };
+
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -49,7 +51,8 @@ function Upload({ onFileUpload, emptyUploadText }) {
 
   const handleSelect = (e) => {
     if (datasetState === EMPTY) {
-      uploadDataset(e.target.files[0]);
+      const files = multiple ? e.target.files : [e.target.files[0]];
+      uploadDataset(files);
     }
   };
 
@@ -58,8 +61,9 @@ function Upload({ onFileUpload, emptyUploadText }) {
     e.stopPropagation();
     if (datasetState === EMPTY) {
       setDragActive(false);
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        uploadDataset(e.dataTransfer.files[0]);
+      const files = multiple ? e.dataTransfer.files : [e.dataTransfer.files[0]];
+      if (files && files.length > 0) {
+        uploadDataset(files);
       }
     }
   };
@@ -71,41 +75,42 @@ function Upload({ onFileUpload, emptyUploadText }) {
   const handleDeleteDataset = () => {
     onFileUpload(null, "");
     setDatasetState(EMPTY);
+    setFileNames([]);
   };
 
-  // renders content inside the drag and drop component depending on the state of the dataset
   const stateContent = (state) => {
     switch (state) {
       case EMPTY:
         return (
-          <React.Fragment>
+          <>
             <Grid item>
               <input
                 type="file"
                 ref={inputRef}
                 style={{ display: "none" }}
                 onChange={handleSelect}
+                multiple={multiple}
               />
             </Grid>
             {dragActive ? (
               <Grid item>
                 <Typography variant="subtitle1">
-                  Drop the files here ...
+                  Drop the file{multiple ? "s" : ""} here.
                 </Typography>
               </Grid>
             ) : (
-              <React.Fragment>
+              <>
                 <Grid item>
                   <Typography variant="subtitle1">
-                    Drag and drop a file here, or
+                    Drag and drop {multiple ? "your files" : "a file"} here, or
                   </Typography>
                 </Grid>
                 <Grid item>
                   <Button variant="contained">Upload a file</Button>
                 </Grid>
-              </React.Fragment>
+              </>
             )}
-          </React.Fragment>
+          </>
         );
 
       case LOADING:
@@ -113,12 +118,24 @@ function Upload({ onFileUpload, emptyUploadText }) {
 
       case LOADED:
         return (
-          <React.Fragment>
+          <>
             <TextSnippetIcon sx={{ fontSize: "58px" }} />
-            <Typography variant="subtitle1" sx={{ color: "gray" }}>
-              {fileOriginalName}
-            </Typography>
-          </React.Fragment>
+            <Grid item>
+              {fileNames.map((name, index) => (
+                <Typography 
+                  key={index} 
+                  variant="subtitle1"
+                  sx={
+                    { 
+                      color: "gray", 
+                      textAlign: "center" 
+                    }
+                  }>
+                  {name}
+                </Typography>
+              ))}
+            </Grid>
+          </>
         );
     }
   };

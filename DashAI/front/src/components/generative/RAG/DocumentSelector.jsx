@@ -1,98 +1,108 @@
 import { Box } from "@mui/material";
-import { useEffect, useState } from "react";
-import PropTypes from "prop-types"; // Import PropTypes
+import { useEffect, useState, useCallback, useRef } from "react"; // Added useRef
+import PropTypes from "prop-types";
 import DocumentTable from "./DocumentTable";
-import Upload from "../../shared/Upload"; // Assuming path is correct
+import Upload from "../../shared/Upload";
+import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
 
 export default function DocumentSelector({
-  documents: initialDocuments = [], // Renamed prop for clarity, uses initial state
-  selected: initialSelectedIds = [], // Renamed prop for clarity
-  onSelect, // Callback for when selection changes (receives selected document objects)
-  onAddDocument, // Callback for when a new document object is added (receives new doc object)
-  onRemove, // Callback for when a document is removed (receives docId/path)
+  selectedIds: initialSelectedIds = [],
+  onSelect,
 }) {
-  const [documents, setDocuments] = useState(initialDocuments);
+  const [documents, setDocuments] = useState([]);
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
-  // Add a key state to force Upload component re-render
+  const [isLoading, setIsLoading] = useState(true);
   const [uploadKey, setUploadKey] = useState(0);
 
-  // Sync internal 'documents' state with 'initialDocuments' prop
+  const previousSelectedIdsRef = useRef(initialSelectedIds);
+
   useEffect(() => {
-    setDocuments(initialDocuments);
-  }, [initialDocuments]);
-
-  // Sync internal 'selectedIds' state with 'initialSelectedIds' prop
-  useEffect(() => {
-    setSelectedIds(initialSelectedIds);
-  }, [initialSelectedIds]);
-
-  // Sync selected documents with parent's onSelect callback
-  useEffect(() => {
-    const selectedDocs = documents.filter(doc => selectedIds.includes(doc.id));
-    if (onSelect) {
-      onSelect(selectedDocs);
-    }
-  }, [selectedIds, documents, onSelect]);
-
-  const handleToggleSelection = (id) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    setSelectedIds(documents.map(doc => doc.id));
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedIds([]);
-  };
-
-  // Internal handler for adding a document object (before notifying parent)
-  const addDocumentObject = (newDoc) => {
-    setDocuments(prev => {
-      // Ensure no duplicates based on ID (path)
-      if (!prev.some(doc => doc.id === newDoc.id)) {
-        return [newDoc, ...prev]; // Add to the beginning
+    const fetchDocuments = async () => {
+      setIsLoading(true);
+      try {
+        const docs = await loadDocuments();
+        setDocuments(docs);
+      } catch (error) {
+        console.error("Failed to load documents:", error);
+      } finally {
+        setIsLoading(false);
       }
-      return prev;
-    });
-    // Call the parent's onAddDocument callback
-    if (onAddDocument) {
-      onAddDocument(newDoc);
-    }
-  };
-
-  // Internal handler for removing a document object (before notifying parent)
-  const removeDocumentObject = (id) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== id));
-    setSelectedIds(prev => prev.filter(x => x !== id));
-    // Call the parent's onRemove callback
-    if (onRemove) {
-      onRemove(id);
-    }
-  };
-
-  const handleFileUpload = (file, url) => {
-    if (!file) return;
-
-    // The 'id' of the document will be the URL (or file.name if no URL is available)
-    // This allows the 'id' to directly represent the path/reference
-    const docId = url || file.name;
-
-    const newDoc = {
-      id: docId,
-      name: file.name,
-      updatedAt: new Date().toISOString(),
-      preview: url, // Store URL for preview if available
     };
 
-    addDocumentObject(newDoc); // Use the internal handler
-    setSelectedIds(prev => [...prev, newDoc.id]); // Also select it upon upload
+    fetchDocuments();
+  }, []);
 
-    // Reset the upload component by incrementing its key
-    setUploadKey(prev => prev + 1);
-  };
+  useEffect(() => {
+    if (JSON.stringify(selectedIds.sort()) !== JSON.stringify(initialSelectedIds.sort())) {
+        setSelectedIds(initialSelectedIds);
+    }
+  }, [initialSelectedIds]);
+
+
+  useEffect(() => {
+    if (JSON.stringify(selectedIds.sort()) !== JSON.stringify(previousSelectedIdsRef.current.sort())) {
+        const selectedDocs = documents.filter(doc => selectedIds.includes(doc.id));
+        onSelect(selectedDocs);
+        previousSelectedIdsRef.current = selectedIds; 
+    }
+  }, [selectedIds, documents, onSelect]); 
+
+  const handleToggleSelection = useCallback((id) => {
+    setSelectedIds(prev => {
+      const newSelected = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+      return newSelected;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(documents.map(doc => doc.id));
+  }, [documents]);
+
+  const handleDeselectAll = useCallback(() => {
+    setSelectedIds([]);
+  }, []);
+
+  const handleAddDocument = useCallback(async (newDoc) => {
+    try {
+      const savedDoc = await addDocument(newDoc);
+      setDocuments(prev => [savedDoc, ...prev]);
+      setSelectedIds(prev => [...prev, savedDoc.id]);
+      setUploadKey(prev => prev + 1);
+      return savedDoc;
+    } catch (error) {
+      console.error("Failed to add document:", error);
+      return null;
+    }
+  }, []);
+
+  const handleRemoveDocument = useCallback(async (id) => {
+    try {
+      await deleteDocument(id);
+      setDocuments(prev => prev.filter(doc => doc.id !== id));
+      setSelectedIds(prev => prev.filter(x => x !== id));
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+    }
+  }, []);
+
+  const handleFileUpload = useCallback(async (files, url) => {
+    if (!files) return;
+
+    console.log("Files to upload at handleFileUpload:", files);
+
+    const fileList = Array.isArray(files) ? files : [files];
+
+    for (const file of fileList) {
+      const docToAdd = {
+        file,
+        optional_metadata: {
+          name: file.name,
+          source: url || 'local_upload',
+        }
+      };
+      await handleAddDocument(docToAdd);
+    }
+  }, [handleAddDocument]);
 
   return (
     <Box display="flex" gap={2} height="100%">
@@ -103,7 +113,8 @@ export default function DocumentSelector({
           onToggle={handleToggleSelection}
           onSelectAll={handleSelectAll}
           onDeselectAll={handleDeselectAll}
-          onRemove={removeDocumentObject} // Use the internal removal handler
+          onRemove={handleRemoveDocument}
+          isLoading={isLoading}
         />
       </Box>
 
@@ -111,6 +122,7 @@ export default function DocumentSelector({
         <Upload
           key={uploadKey}
           onFileUpload={handleFileUpload}
+          multiple={true}
         />
       </Box>
     </Box>
@@ -118,14 +130,6 @@ export default function DocumentSelector({
 }
 
 DocumentSelector.propTypes = {
-  documents: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    updatedAt: PropTypes.string.isRequired,
-    preview: PropTypes.string, // Optional
-  })),
-  selected: PropTypes.arrayOf(PropTypes.string), // Array of document IDs (paths)
-  onSelect: PropTypes.func, // (selectedDocs: array of objects) => void
-  onAddDocument: PropTypes.func, // (newDoc: object) => void
-  onRemove: PropTypes.func, // (docId: string) => void
+  selectedIds: PropTypes.arrayOf(PropTypes.string),
+  onSelect: PropTypes.func,
 };

@@ -20,3 +20,4 @@ class DefaultSettings(BaseSettings):
     RUNS_PATH: str = "runs"
     EXPLANATIONS_PATH: str = "explanations"
     EXPLORATIONS_PATH: str = "explorations"
+    DOCUMENTS_PATH: str = "documents"

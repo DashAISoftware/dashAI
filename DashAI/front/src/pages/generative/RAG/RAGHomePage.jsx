@@ -12,52 +12,41 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
   const [editingSession, setEditingSession] = useState(null);
 
   const loadSessions = async () => {
-    setLoading(true); // Set loading to true when fetching
+    setLoading(true);
     try {
       const data = await getRAGSessions();
       setSessions(data);
-      console.log("RAGHomePage: Sessions loaded:", data);
     } catch (error) {
       console.error("RAGHomePage: Error loading RAG sessions:", error);
     } finally {
-      setLoading(false); // Set loading to false after fetch
-      console.log("RAGHomePage: Loading finished.");
+      setLoading(false); 
     }
   };
 
-  // Cargar sesiones al iniciar
   useEffect(() => {
-    console.log("RAGHomePage: useEffect - Initial session load...");
     loadSessions();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []); 
 
   const handleOpenNewSessionModal = (session = null) => {
-    console.log("RAGHomePage: handleOpenNewSessionModal called.");
-    setEditingSession(session); // Set the session to edit
-    setShowModal(true); // Open the modal
-    console.log("RAGHomePage: showModal set to true.");
+    setEditingSession(session);
+    setShowModal(true); 
   };
 
   const handleCreateOrUpdateSession = async (sessionData) => {
-    console.log("RAGHomePage: handleCreateOrUpdateSession called with data:", sessionData);
     try {
       const savedSession = await createRAGSession(sessionData);
       console.log("RAGHomePage: New/Updated RAG session saved:", savedSession);
 
-      // Refresh the sessions list after creation/update
-      await loadSessions(); // Call loadSessions to get the latest data
-
-      onSessionCreated(savedSession); // Notify parent component (Generative.jsx)
-      setShowModal(false); // Close the modal
-      console.log("RAGHomePage: Modal closed after session save.");
+      await loadSessions();
+      onSessionCreated(savedSession);
+      setShowModal(false); 
+      
       return savedSession;
+
     } catch (error) {
-      console.error("RAGHomePage: Error creating/updating session:", error);
-      throw error; // Re-throw to handle in the modal if needed
+      throw error;
     }
   };
-
-  console.log("RAGHomePage: Render. Current showModal state:", showModal);
 
   return (
     <CustomLayout
@@ -74,20 +63,17 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
         </Button>
       }
     >
-      {/* Modal para nueva sesión */}
       <NewSessionModal
         open={showModal}
         onClose={() => {
           setShowModal(false);
-          setEditingSession(null); // Clear editing session when closing
-          console.log("RAGHomePage: Modal onClose called. showModal set to false.");
+          setEditingSession(null);
         }}
         onSessionSaved={handleCreateOrUpdateSession}
         onSessionSelect={onSessionSelect}
         session={editingSession}
       />
 
-      {/* Contenido principal */}
       {loading ? (
         <Box display="flex" justifyContent="center" mt={4}>
           <CircularProgress />
@@ -97,8 +83,8 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
           sessions={sessions}
           onEdit={(session) => handleOpenNewSessionModal(session)}
           onSelect={onSessionSelect}
-          onRefreshSessions={loadSessions} // Pass the refresh function
-          onOpenNewSessionModal={() => handleOpenNewSessionModal()} // Pass function to open modal
+          onRefreshSessions={loadSessions} 
+          onOpenNewSessionModal={() => handleOpenNewSessionModal()}
         />
       )}
     </CustomLayout>

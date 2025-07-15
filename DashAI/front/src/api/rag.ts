@@ -1,6 +1,7 @@
 import api from "./api";
 import { ISession } from "../types/session";
 import { IGenerativeTask } from "../types/generativeTask";
+import { IDocumentResponse } from "../types/documentResponse";
 
 
 // Fetch all RAG sessions
@@ -135,3 +136,50 @@ export const getGeneratorComponents = async (): Promise<IGenerativeTask[]> => {
   return response.data;
 
 }
+
+export const loadDocuments = async (): Promise<IDocumentResponse[]> => {
+  const response = await api.get<IDocumentResponse[]>("/v1/document/");
+  if (response.status !== 200) {
+    throw new Error(`Failed to load documents: ${response.statusText}`);
+  }
+  console.log("Loaded documents:", response.data);
+  return response.data;
+};
+
+export const deleteDocument = async (documentId: number): Promise<void> => {
+  const response = await api.delete(`/v1/document/${documentId}`);
+  if (response.status !== 204) {
+    throw new Error(`Failed to delete document: ${response.statusText}`);
+  }
+};
+
+export const addDocument = async ({ file, optional_metadata }: {
+  file: File,
+  optional_metadata?: Record<string, any>,
+}): Promise<IDocumentResponse> => {
+
+  console.log("Adding document:", file, optional_metadata);
+  
+  if (optional_metadata) {
+    optional_metadata.last_modified = file.lastModified 
+  }
+  const metadata = {
+    file_name: file.name,
+    last_modified: file.lastModified,
+    optional_metadata,
+  };
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("metadata", JSON.stringify(metadata));
+
+  const response = await api.post<IDocumentResponse>("/v1/document/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  if (response.status !== 201) {
+    throw new Error(`Failed to upload document: ${response.statusText}`);
+  }
+
+  return response.data;
+};
