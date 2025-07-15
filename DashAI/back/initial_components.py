@@ -73,7 +73,6 @@ from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
     DecisionTreeClassifier,
-    DeepSeekModel,
     DistilBertTransformer,
     DummyClassifier,
     GemmaModel,
@@ -89,14 +88,14 @@ from DashAI.back.models import (
     RandomForestClassifier,
     RandomForestRegression,
     RidgeRegression,
-    SimpleControlNetModel,
     StableDiffusionV2Model,
     StableDiffusionV3Model,
     RAGPipeline,
     BaseRetriever,
     TFIDFRetriever,
-    DenseRetriever
+    DenseRetriever,
 
+    StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.plugins.utils import get_available_plugins
@@ -145,12 +144,11 @@ def get_initial_components():
         GradientBoostingR,
         HistGradientBoostingClassifier,
         KNeighborsClassifier,
-        DeepSeekModel,
         GemmaModel,
         QwenModel,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
-        SimpleControlNetModel,
+        StableDiffusionXLV1ControlNet,
         LogisticRegression,
         MLPRegression,
         RandomForestClassifier,

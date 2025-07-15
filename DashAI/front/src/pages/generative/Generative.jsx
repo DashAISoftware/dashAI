@@ -14,15 +14,18 @@ import { getSessions, removeSession } from "../../api/session";
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  // TODO: Combine selectedTaskName and selectedDisplayName into a single selectedTask State
   const [selectedTaskName, setSelectedTaskName] = useState("");
+  const [selectedDisplayName, setSelectedDisplayName] = useState("");
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
 
   const isRAGTask = () => selectedTaskName === "RAGTask";
 
-  const handleSessionClick = (sessionId, taskName) => {
+  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     setSelectedTaskName(taskName);
     setSelectedSessionId(sessionId);
+    setSelectedDisplayName(taskDisplayName);
   };
 
   const handleNewSessionButton = () => {
@@ -75,34 +78,37 @@ export default function Generative() {
       <Box width="56%" mr={1}>
         <MainGenerativeBox>
           {selectedSessionId ? (
-              <GenerativeChat
-                sessionId={selectedSessionId}
-                taskName={selectedTaskName}
-                paramsVersion={paramsVersion}
+            <GenerativeChat
+              sessionId={selectedSessionId}
+              taskName={selectedTaskName}
+              paramsVersion={paramsVersion}
+            />
+          ) : stepIndex === 0 ? (
+            <SelectTaskMenu
+              goToNextStep={(taskName, displayName) => {
+                setSelectedDisplayName(displayName);
+                setSelectedTaskName(taskName);
+                setStepIndex(1);
+              }}
               />
-              ) : stepIndex === 0 ? (
-              <SelectTaskMenu
-                goToNextStep={(taskName) => {
-                  setSelectedTaskName(taskName);
-                  setStepIndex(1);
-                }}
-              />
-              ) : isRAGTask() ? (
-                <RAGHomePage
-                  onSessionCreated={handleAddSession}
-                  onSessionSelect={setSelectedSessionId}
-                />
-              ) : (
-                <SelectModelMenu
-                  handleAddSession={handleAddSession}
-                  selectedTaskName={selectedTaskName}
-                  setSelectedSessionId={setSelectedSessionId}
-                />
-              )}
-        </MainGenerativeBox>
-      </Box>
-      
-      {!isRAGTask() && (
+            ) : isRAGTask() ? (
+                  <RAGHomePage
+                    onSessionCreated={handleAddSession}
+                    onSessionSelect={setSelectedSessionId}
+                    />
+                  ) : (
+                  <SelectModelMenu
+                    goToBackStep={() => setStepIndex(0)}
+                    handleAddSession={handleAddSession}
+                    selectedTaskName={selectedTaskName}
+                    selectedDisplayName={selectedDisplayName}
+                    setSelectedSessionId={setSelectedSessionId}
+                  />
+                  )}
+          </MainGenerativeBox>
+        </Box>
+
+        {!isRAGTask() && (
       <Box width="22%">
         <Box
           width="100%"
@@ -124,3 +130,4 @@ export default function Generative() {
     </Box>
   );
 }
+          

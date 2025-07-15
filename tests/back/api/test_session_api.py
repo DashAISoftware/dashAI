@@ -10,6 +10,7 @@ def create_session_1(client: TestClient):
         "task_name": "TextToImageGenerationTask",
         "parameters": {
             "num_inference_steps": 1,
+            "model_name": "stabilityai/stable-diffusion-2",
             "guidance_scale": 6.0,
             "device": "cpu",
             "negative_prompt": "",
@@ -63,6 +64,7 @@ def create_session_3(client: TestClient):
             "temperature": 0.9,
             "frequency_penalty": 0.1,
             "n_ctx": 512,
+            "device": "cpu",
         },
         "name": "session_3",
         "description": None,
@@ -88,6 +90,7 @@ def create_session_4(client: TestClient):
             "temperature": 0.9,
             "frequency_penalty": 0.1,
             "n_ctx": 512,
+            "device": "cpu",
         },
         "name": "session_4",
         "description": None,

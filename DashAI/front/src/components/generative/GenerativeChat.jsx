@@ -76,7 +76,18 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                 // Check if the process is finished
                 if (response.status === 4) {
                   setIsLoadingMessage(false);
-                  enqueueSnackbar("The process has failed. Deleting it...");
+
+                  enqueueSnackbar(
+                    `The process has failed. Deleting it...${
+                      response.output?.[0]?.data
+                        ? `\n${response.output[0].data}`
+                        : ""
+                    }`,
+                    {
+                      autoHideDuration: 8000,
+                      style: { whiteSpace: "pre-line" },
+                    },
+                  );
 
                   deleteProcessById(response.id).then(() => {
                     setMessages((prevMessages) =>

@@ -27,7 +27,7 @@ else:
     DEVICE_PLACEHOLDER = "cpu"
 
 
-class SimpleSchema(BaseSchema):
+class StableDiffusionXLV1ControlNetSchema(BaseSchema):
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,
@@ -82,11 +82,11 @@ def get_depth_map(image, device):
     return image
 
 
-class SimpleControlNetModel(BaseControlNetModel):
-    """A simple implementation of ControlNet with depth preprocessing and stable
+class StableDiffusionXLV1ControlNet(BaseControlNetModel):
+    """A wrapper implementation of ControlNet with depth preprocessing and stable
     diffusion xl 1.0 as pipeline."""
 
-    SCHEMA = SimpleSchema
+    SCHEMA = StableDiffusionXLV1ControlNetSchema
 
     def __init__(self, **kwargs: Any):
         """Initialize the generative model."""
@@ -97,12 +97,12 @@ class SimpleControlNetModel(BaseControlNetModel):
             "diffusers/controlnet-depth-sdxl-1.0-small",
             variant="fp16",
             use_safetensors=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.vae = AutoencoderKL.from_pretrained(
             "madebyollin/sdxl-vae-fp16-fix",
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
@@ -111,7 +111,7 @@ class SimpleControlNetModel(BaseControlNetModel):
             vae=self.vae,
             variant="fp16",
             use_safetensors=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")

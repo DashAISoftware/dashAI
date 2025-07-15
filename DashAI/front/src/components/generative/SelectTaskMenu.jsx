@@ -43,7 +43,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
           container
           direction="row"
           justifyContent="flex-start"
-          alignItems="center"
+          alignItems="stretch"
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
@@ -52,7 +52,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
               <TaskBox
                 taskName={task.display_name}
                 description={task.description}
-                onClick={() => goToNextStep(task.name)}
+                onClick={() => goToNextStep(task.name, task.display_name)}
               />
             </Grid>
           ))}
