@@ -35,7 +35,7 @@ class DistilBertTransformerSchema(BaseSchema):
 
     num_train_epochs: schema_field(
         int_field(ge=1),
-        placeholder=2,
+        placeholder=1,
         description="Total number of training epochs to perform.",
     )  # type: ignore
     batch_size: schema_field(
@@ -45,7 +45,7 @@ class DistilBertTransformerSchema(BaseSchema):
     )  # type: ignore
     learning_rate: schema_field(
         float_field(ge=0.0),
-        placeholder=5e-5,
+        placeholder=3e-5,
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
@@ -135,9 +135,12 @@ class DistilBertTransformer(TextClassificationModel):
         Dataset
             Dataset with the tokenized input data.
         """
+        text_columns = [col for col in dataset.column_names if col != "label"]
+        if len(text_columns) != 1:
+            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
         return dataset.map(
             lambda examples: self.tokenizer(
-                examples["text"], truncation=True, padding=True, max_length=512
+                examples[text_columns[0]], truncation=True, padding=True, max_length=512
             ),
             batched=True,
         )
@@ -157,7 +160,6 @@ class DistilBertTransformer(TextClassificationModel):
 
         if self.num_labels is None:
             self.num_labels = len(y_train.unique(output_column_name))
-            # num_labels in __init__) needs to be re-instantiated/re-configured.
             config = AutoConfig.from_pretrained(
                 self.model_name, num_labels=self.num_labels
             )
@@ -220,8 +222,12 @@ class DistilBertTransformer(TextClassificationModel):
         pred_dataset = self.tokenize_data(x_pred)
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        text_columns = [col for col in x_pred.column_names if col != "label"]
+        if len(text_columns) != 1:
+            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
+
         pred_loader = DataLoader(
-            pred_dataset.remove_columns(["text"]),
+            pred_dataset.remove_columns(text_columns[0]),
             batch_size=self.batch_size,
             collate_fn=data_collator,
         )
