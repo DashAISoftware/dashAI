@@ -14,11 +14,13 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     GenerativeSessionParameterHistory,
     ProcessData,
+    Document
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models import BaseGenerativeModel
 from DashAI.back.tasks import BaseGenerativeTask
 
+from DashAI.back.tasks.RAG_task import RAGTask
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -50,15 +52,6 @@ async def upload_generative_session(
                     f"generative model.",
                 )
 
-            # Validate the model parameters
-            try:
-                model_class.SCHEMA.model_validate(params.parameters)
-            except ValueError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid parameters for model {params.model_name}: {e}",
-                ) from e
-
             # Check if the task is registered
             try:
                 task_class = component_registry[params.task_name]["class"]
@@ -66,6 +59,43 @@ async def upload_generative_session(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Task {params.task_name} is not registered.",
+                ) from e
+            
+            # RAG Task specific handling
+            # Frontend will send the ids of the documents to be used in the RAG session
+            # but RAG pipeline expects the documents paths of the backend-stored documents
+            if task_class == RAGTask:
+                try:
+                    assert params.parameters["documents"]
+                    assert isinstance(params.parameters["documents"], list)
+                    assert len(params.parameters["documents"]) > 0 
+
+                except (AssertionError, KeyError):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="RAG Task requires a non-empty list of document IDs.",
+                    )
+                
+                documents_paths = []
+                for doc_id in params.parameters["documents"]:
+                    doc = db.get(Document, doc_id)
+                    if not doc:
+                        raise HTTPException(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Document with ID {doc_id} not found.",
+                        )
+                    documents_paths.append(doc.file_path)
+
+                params.parameters["documents"] = documents_paths
+            # Continue with the session creation
+
+            # Validate the model parameters
+            try:
+                model_class.SCHEMA.model_validate(params.parameters)
+            except ValueError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid parameters for model {params.model_name}: {e}",
                 ) from e
 
             # Check if the task is a subclass of BaseGenerativeTask
