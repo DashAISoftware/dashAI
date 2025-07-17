@@ -1,6 +1,6 @@
 import { React, useEffect, useState } from "react";
 import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
-// import Plot from "react-plotly.js";
+import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
