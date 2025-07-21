@@ -647,7 +647,7 @@ async def validate_dataset(
     output_columns = experiment.output_columns
     columns = input_columns + output_columns
 
-    instances_columns = list(instances["train"].features)
+    instances_columns = list(instances.features)
     is_valid = set(columns).issubset(instances_columns)
 
     if not is_valid:

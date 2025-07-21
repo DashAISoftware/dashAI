@@ -9,24 +9,22 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_regressor import (
-    SklearnLikeRegressor,
-)
+from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
 class LinearRegressionSchema(BaseSchema):
     """Linear regression model with optional intercept."""
 
     fit_intercept: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Whether to calculate the intercept for this model. "
         "If set to False, no intercept will be used in calculations "
         "(e.g., data is expected to be centered).",
     )  # type: ignore
 
-    copy_x: schema_field(
-        bool_field,
+    copy_X: schema_field(  # noqa: N815
+        bool_field(),
         placeholder=True,
         description="If True, X will be copied; else, it may be overwritten.",
     )  # type: ignore
@@ -39,7 +37,7 @@ class LinearRegressionSchema(BaseSchema):
     )  # type: ignore
 
     positive: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="When set to True, forces the coefficients to be positive.",
     )  # type: ignore

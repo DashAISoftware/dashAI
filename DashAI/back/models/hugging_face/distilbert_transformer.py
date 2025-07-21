@@ -35,7 +35,7 @@ class DistilBertTransformerSchema(BaseSchema):
 
     num_train_epochs: schema_field(
         int_field(ge=1),
-        placeholder=2,
+        placeholder=1,
         description="Total number of training epochs to perform.",
     )  # type: ignore
     batch_size: schema_field(
@@ -45,7 +45,7 @@ class DistilBertTransformerSchema(BaseSchema):
     )  # type: ignore
     learning_rate: schema_field(
         float_field(ge=0.0),
-        placeholder=5e-5,
+        placeholder=3e-5,
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
@@ -86,22 +86,39 @@ class DistilBertTransformer(TextClassificationModel):
         The process includes the instantiation of the pre-trained model and the
         associated tokenizer.
         """
-        self.num_labels = kwargs.get("num_labels")
+
+        self.num_labels = kwargs.pop("num_labels_from_factory", None)
+
         kwargs = self.validate_and_transform(kwargs)
+
         self.model_name = "distilbert-base-uncased"
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.training_args = {
+
+        self.training_args_params = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
             "learning_rate": kwargs.get("learning_rate", 5e-5),
             "weight_decay": kwargs.get("weight_decay", 0.01),
         }
         self.batch_size = kwargs.get("batch_size", 16)
         self.device = kwargs.get("device", "gpu")
-        self.model = (
-            model
-            if model is not None
-            else AutoModelForSequenceClassification.from_pretrained(self.model_name)
-        )
+
+        if model is not None:
+            self.model = model
+            if self.num_labels is not None and hasattr(self.model, "config"):
+                self.model.config.num_labels = self.num_labels
+                if self.num_labels > 1:
+                    self.model.config.problem_type = "single_label_classification"
+        else:
+            model_config = AutoConfig.from_pretrained(self.model_name)
+            if self.num_labels is not None:
+                model_config.num_labels = self.num_labels
+                if self.num_labels > 1:
+                    model_config.problem_type = "single_label_classification"
+            # Fallback: num_labels will be determined in fit().
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_name, config=model_config
+            )
 
         self.fitted = False
 
@@ -118,9 +135,12 @@ class DistilBertTransformer(TextClassificationModel):
         Dataset
             Dataset with the tokenized input data.
         """
+        text_columns = [col for col in dataset.column_names if col != "label"]
+        if len(text_columns) != 1:
+            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
         return dataset.map(
             lambda examples: self.tokenizer(
-                examples["text"], truncation=True, padding=True, max_length=512
+                examples[text_columns[0]], truncation=True, padding=True, max_length=512
             ),
             batched=True,
         )
@@ -137,31 +157,39 @@ class DistilBertTransformer(TextClassificationModel):
 
         """
         output_column_name = y_train.column_names[0]
+
         if self.num_labels is None:
-            self.num_labels = len(set(y_train[output_column_name]))
-        self.model.config.num_labels = self.num_labels
+            self.num_labels = len(y_train.unique(output_column_name))
+            config = AutoConfig.from_pretrained(
+                self.model_name, num_labels=self.num_labels
+            )
+            if self.num_labels > 1:
+                config.problem_type = "single_label_classification"
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_name, config=config
+            )
+
         train_dataset = self.tokenize_data(x_train)
         train_dataset = train_dataset.add_column("label", y_train[output_column_name])
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
-        training_args = TrainingArguments(
+        training_args_obj = TrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
             logging_strategy="steps",
-            logging_steps=50,
-            save_strategy="epoch",  # Guarda checkpoints al final de cada época
+            logging_steps=20,
+            save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
-            no_cuda=self.device != "gpu",
+            use_cpu=self.device != "gpu",
             fp16=can_use_fp16,
-            **self.training_args,
+            **self.training_args_params,
         )
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
         trainer = Trainer(
             model=self.model,
-            args=training_args,
+            args=training_args_obj,
             train_dataset=train_dataset,
             data_collator=data_collator,
-            tokenizer=self.tokenizer,
         )
 
         trainer.train()
@@ -194,8 +222,12 @@ class DistilBertTransformer(TextClassificationModel):
         pred_dataset = self.tokenize_data(x_pred)
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        text_columns = [col for col in x_pred.column_names if col != "label"]
+        if len(text_columns) != 1:
+            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
+
         pred_loader = DataLoader(
-            pred_dataset.remove_columns(["text"]),
+            pred_dataset.remove_columns(text_columns[0]),
             batch_size=self.batch_size,
             collate_fn=data_collator,
         )
@@ -217,11 +249,11 @@ class DistilBertTransformer(TextClassificationModel):
         self.model.save_pretrained(filename)
         config = AutoConfig.from_pretrained(filename)
         config.custom_params = {
-            "num_train_epochs": self.training_args.get("num_train_epochs"),
+            "num_train_epochs": self.training_args_params.get("num_train_epochs"),
             "batch_size": self.batch_size,
-            "learning_rate": self.training_args.get("learning_rate"),
+            "learning_rate": self.training_args_params.get("learning_rate"),
             "device": self.device,
-            "weight_decay": self.training_args.get("weight_decay"),
+            "weight_decay": self.training_args_params.get("weight_decay"),
             "num_labels": self.num_labels,
             "fitted": self.fitted,
         }

@@ -82,6 +82,7 @@ class Run(Base):
     # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
+    split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)

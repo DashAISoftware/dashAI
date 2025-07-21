@@ -81,13 +81,15 @@ def _rebuild_dataset_with_transformed_columns(
     transformed_table = transformed.arrow_table
 
     new_arrays = []
+    final_names = new_columns_order.copy()
     for col in new_columns_order:
         if col in original_table.column_names:
             new_arrays.append(original_table[col])
         elif col in transformed_table.column_names:
             new_arrays.append(transformed_table[col])
         else:
-            raise ValueError(f"Column '{col}' not found in any dataset")
+            final_names.remove(col)
+    new_columns_order = final_names
 
     new_table = pa.Table.from_arrays(new_arrays, names=new_columns_order)
     new_dataset = DashAIDataset(new_table, splits=base.splits)
@@ -364,16 +366,16 @@ class ConverterListJob(BaseJob):
                 ]
 
                 # Select data for fitting using DashAIDataset operations
-                X_dataset = loaded_dataset.select_columns(scope_column_names)
-                y_dataset = loaded_dataset.select_columns([target_column_name])
+                X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
+                y_dataset_fit = loaded_dataset.select_columns([target_column_name])
 
                 # Select specified rows if provided
                 if scope_rows_indexes:
-                    X_dataset = X_dataset.select(scope_rows_indexes)
-                    y_dataset = y_dataset.select(scope_rows_indexes)
+                    X_dataset_fit = X_dataset_fit.select(scope_rows_indexes)
+                    y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
 
                 try:
-                    converter = converter.fit(X_dataset, y_dataset)
+                    converter = converter.fit(X_dataset_fit, y_dataset_fit)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -381,24 +383,38 @@ class ConverterListJob(BaseJob):
                     ) from e
 
                 # Transform data using full dataset for selected columns
-                X_full = loaded_dataset.select_columns(scope_column_names)
-                y_full = loaded_dataset.select_columns([target_column_name])
+                # Samplers will ignore x_full and y_full, and use internally stored
+                # resampled data.
+                X_full_transform = loaded_dataset.select_columns(scope_column_names)
+                y_full_transform = loaded_dataset.select_columns([target_column_name])
 
                 try:
-                    transformed_dataset = converter.transform(X_full, y_full)
+                    transformed_dataset = converter.transform(
+                        X_full_transform, y_full_transform
+                    )
                 except Exception as e:
                     log.exception(e)
-                    raise JobError(f"Error transforming data: {e}") from e
+                    raise JobError(
+                        f"Error transforming data with {converter_name}: {e}"
+                    ) from e
 
-                # Now we need to merge the transformed data back into the original
-                # dataset, preserving their original positions
-                loaded_dataset = _rebuild_dataset_with_transformed_columns(
-                    loaded_dataset,
-                    transformed_dataset,
-                    scope_column_names,
-                    scope_column_indexes,
-                )
+                if converter.changes_row_count():
+                    loaded_dataset = transformed_dataset
+                else:
+                    # Now we need to merge the transformed data back into the original
+                    # dataset, preserving their original positions
+                    loaded_dataset = _rebuild_dataset_with_transformed_columns(
+                        loaded_dataset,
+                        transformed_dataset,
+                        scope_column_names,
+                        scope_column_indexes,
+                    )
 
+            dataset_original_columns = loaded_dataset.column_names
+            log.info(
+                f"Dataset after {converter_name}: Shape {loaded_dataset.shape}, "
+                f"Columns: {loaded_dataset.column_names}"
+            )
             # Save the final dataset
             save_dataset(loaded_dataset, f"{dataset_path}")
             converter_list.set_status_as_finished()

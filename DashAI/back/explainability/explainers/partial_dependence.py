@@ -224,7 +224,7 @@ class PartialDependence(BaseGlobalExplainer):
 
             # Binary-classification case
             if len(target_names) == 2:
-                target_names = target_names[1]
+                target_names = [target_names[1]]
 
             for target, values in zip(target_names, average):  # noqa B905
                 column_name = f"Feature: {feature} - Class: {target}"

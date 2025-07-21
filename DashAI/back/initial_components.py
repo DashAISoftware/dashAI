@@ -4,6 +4,8 @@ from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
     Binarizer,
+    CharacterReplacer,
+    ColumnRemover,
     ConverterChain,
     Embedding,
     FastICA,
@@ -20,6 +22,7 @@ from DashAI.back.converters import (
     OneHotEncoder,
     OrdinalEncoder,
     PolynomialFeatures,
+    RandomUnderSamplerConverter,
     RBFSampler,
     SelectFdr,
     SelectFpr,
@@ -28,6 +31,8 @@ from DashAI.back.converters import (
     SelectPercentile,
     SimpleImputer,
     SkewedChi2Sampler,
+    SMOTEConverter,
+    SMOTEENNConverter,
     StandardScaler,
     TruncatedSVD,
     VarianceThreshold,
@@ -55,6 +60,14 @@ from DashAI.back.exploration import (
     WordcloudExplorer,
 )
 from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob, PipelineJob
+from DashAI.back.job import (
+    ConverterListJob,
+    DatasetJob,
+    ExplainerJob,
+    ExplorerJob,
+    ModelJob,
+    PredictJob,
+)
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
@@ -145,6 +158,7 @@ def get_initial_components():
         ModelJob,
         ExplorerJob,
         PredictJob,
+        ConverterListJob,
         DatasetJob,
         PipelineJob,
         # Explainers
@@ -167,6 +181,8 @@ def get_initial_components():
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         # Converters
+        ColumnRemover,
+        CharacterReplacer,
         FastICA,
         IncrementalPCA,
         PCA,
@@ -205,11 +221,17 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+<<<<<<< HEAD
         DataSelectorNode.DataSelector,
         ExplorationNode.DataExploration,
         TrainNode.Train,
         PredictionNode.Prediction,
         RetrieveModelNode.RetrieveModel
+=======
+        SMOTEConverter,
+        SMOTEENNConverter,
+        RandomUnderSamplerConverter,
+>>>>>>> 2684393caf365ae83945ce4de24a8f2a2caea4c3
     ]
 
     # Obtener plugins instalados
