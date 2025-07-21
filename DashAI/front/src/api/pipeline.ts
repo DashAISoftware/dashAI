@@ -74,9 +74,11 @@ export const getExplorationResults = async (id: number) => {
 
 export const filterModels = async (
   dataset_id: string,
+  pipeline_id: number | null = null
 ): Promise<IPipeline[]> => {
   const response = await api.post(`${pipelineEndpoint}/filter_models`, {
     dataset_id: dataset_id,
+    pipeline_id: pipeline_id,
   });
   return response.data;
 };

@@ -10,6 +10,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { filterModels } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
 import { validateNode } from "../../../api/pipeline";
+import { useParams } from "react-router-dom";
 
 function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
@@ -18,6 +19,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
   const [selectedModelId, setSelectedModelId] = useState(null);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const { pipelineId } = useParams();
 
   useEffect(() => {
     if (savedConfig?.model_path && pipelines.length > 0) {
@@ -38,7 +40,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
 
         setLoading(true);
         try {
-        const result = await filterModels(datasetId);
+        const result = await filterModels(datasetId, pipelineId);
         setPipelines(result);
         } catch (error) {
         enqueueSnackbar("Error retrieving models", { variant: "error" });
@@ -104,7 +106,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
               columns={columns}
               loading={loading}
               onRowClick={(params) => setSelectedModelId(params.id)}
-              rowSelectionModel={[selectedModelId]}
+              selectionModel={selectedModelId ? [selectedModelId] : []}
               pageSizeOptions={[5]}
               checkboxSelection={false}
               disableRowSelectionOnClick={false}

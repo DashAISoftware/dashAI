@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 from kink import di, inject
@@ -361,6 +362,9 @@ async def filter_models_endpoint(
             compatible_pipelines = []
 
             for pipeline in pipelines:
+                if params.pipeline_id and pipeline.id == params.pipeline_id:
+                    continue
+
                 if not pipeline.train:
                     continue
 

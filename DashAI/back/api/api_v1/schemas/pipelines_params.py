@@ -21,3 +21,4 @@ class PipelineUpdateParams(BaseModel):
 
 class DatasetFilterParams(BaseModel):
     dataset_id: int
+    pipeline_id: Optional[int] = None
