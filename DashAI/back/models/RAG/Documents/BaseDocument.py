@@ -7,12 +7,32 @@ class BaseDocument(ABC):
     Base class for documents.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self, 
+            id: int,
+            file_name: str,
+            file_path: str,
+            file_hash: str,
+            created: Optional[str] = None,
+            optional_metadata: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize the document.
+        Args (from database):
+            id (int): The unique identifier of the document.
+            file_name (str): The name of the file.
+            file_path (str): The path to the file.
+            file_hash (str): A hash of the file content.
+            created (Optional[str]): The creation date of the document.
+            optional_metadata (Optional[Dict[str, Any]]): Additional metadata for the document.
         """
-        pass
-
+        self.id = id
+        self.file_name = file_name
+        self.file_path = file_path
+        self.file_hash = file_hash
+        self.created = created if created else None
+        self.optional_metadata = optional_metadata if optional_metadata else None
+        
     def get_text(self) -> str:  
         """
         Get the text content of the document.
@@ -29,7 +49,7 @@ class BaseDocument(ABC):
         Returns:
             int: The length of the text content of the document.
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        return len(self.get_text())
     
     def get_metadata(self) -> Dict[str, Any]:
         """
@@ -40,63 +60,51 @@ class BaseDocument(ABC):
         """
         raise NotImplementedError("This method should be implemented by subclasses.")
     
-    def get_filename(self) -> Optional[str]:
+    def get_id(self) -> int:
+        """
+        Get the unique identifier of the document.
+        
+        Returns:
+            int: The unique identifier of the document.
+        """
+        return self.id
+
+    def get_file_name(self) -> Optional[str]:
         """
         Get the filename of the document.
         
         Returns:
             Optional[str]: The filename of the document, or None if not applicable.
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        return self.file_name
     
-    def get_filetype(self) -> Optional[str]:
+    def get_file_path(self) -> Optional[str]:
+        """
+        Get the file path of the document.
+        
+        Returns:
+            Optional[str]: The file path of the document, or None if not applicable.
+        """
+        return self.file_path
+    
+    def get_file_hash(self) -> str:
+        """
+        Get the hash of the document content.
+        
+        Returns:
+            str: A hash string representing the document content.
+        """
+        return self.file_hash
+    
+    def get_file_type(self) -> Optional[str]:
         """
         Get the filetype of the document.
         
         Returns:
             Optional[str]: The filetype of the document, or None if not applicable.
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
-    
-    def get_file_location(self) -> Optional[str]:
-        """
-        Get the file location of the document.
-        
-        Returns:
-            Optional[str]: The file location of the document, or None if not applicable.
-        """
-        raise NotImplementedError("This method should be implemented by subclasses.")
-    
-    def get_chunks(self, chunk_size: int, chunk_overlap: int) -> List[str]:
-        """
-        Get the document text split into chunks.
-        
-        Args:
-            chunk_size (int): The size of each chunk.
-            chunk_overlap (int): The overlap between chunks.
-        
-        Returns:
-            List[str]: A list of text chunks.
-        """
-        text = self.get_text()
-        chunks = []
-        start = 0
-        while start < len(text):
-            end = min(start + chunk_size, len(text))
-            chunks.append(text[start:end])
-            start += chunk_size - chunk_overlap
-        return chunks
-    
-    def get_hash(self) -> str:
-        """
-        Get a hash of the document content.
-        
-        Returns:
-            str: A hash string representing the document content.
-        """
-        text = self.get_text()
-        return hashlib.sha256(text.encode('utf-8')).hexdigest() if text else ''
+        return self.file_path.split('.')[-1] 
     
     def __repr__(self):
-        return f"BaseDocument(filename='{self.get_filename()}', content='{self.get_text()[:50]}...', metadata={self.get_metadata()})"
+        return f"BaseDocument(filename='{self.get_file_name()}', content='{self.get_text()[:50]}...', metadata={self.get_metadata()})"
 

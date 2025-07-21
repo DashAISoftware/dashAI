@@ -1,6 +1,6 @@
 import os
 from .BaseRetriever import BaseRetriever
-from DashAI.back.models.RAG.Documents import BaseDocument, PDFDocument, TxtDocument
+from DashAI.back.models.RAG.documents import BaseDocument, PDFDocument, TxtDocument
 from typing import List, Dict, Any, Optional, Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances

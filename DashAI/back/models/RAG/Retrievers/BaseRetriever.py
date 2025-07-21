@@ -1,7 +1,7 @@
 from abc import ABC
 import os
 from typing import Any, Dict, List, Final
-from DashAI.back.models.RAG.Documents import BaseDocument, PDFDocument, TxtDocument
+from DashAI.back.models.RAG.documents import BaseDocument, PDFDocument, TxtDocument
 from DashAI.back.config_object import ConfigObject
 import hashlib
 
