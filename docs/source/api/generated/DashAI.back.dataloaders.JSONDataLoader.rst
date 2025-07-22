@@ -29,6 +29,7 @@
    .. autosummary::
    
       ~JSONDataLoader.COMPATIBLE_COMPONENTS
+      ~JSONDataLoader.DESCRIPTION
       ~JSONDataLoader.TYPE
    
    

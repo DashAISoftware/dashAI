@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~BaseConverter.__init__
+      ~BaseConverter.changes_row_count
       ~BaseConverter.fit
       ~BaseConverter.get_schema
       ~BaseConverter.transform

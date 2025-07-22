@@ -29,6 +29,7 @@
    .. autosummary::
    
       ~CSVDataLoader.COMPATIBLE_COMPONENTS
+      ~CSVDataLoader.DESCRIPTION
       ~CSVDataLoader.TYPE
    
    

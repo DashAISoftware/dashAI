@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~SklearnWrapper.__init__
+      ~SklearnWrapper.changes_row_count
       ~SklearnWrapper.fit
       ~SklearnWrapper.get_schema
       ~SklearnWrapper.transform

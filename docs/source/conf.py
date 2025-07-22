@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx_rtd_theme",
+    "sphinx_design",
 ]
 autosummary_generate = True
 add_module_names = False

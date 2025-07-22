@@ -29,6 +29,7 @@
    .. autosummary::
    
       ~ExcelDataLoader.COMPATIBLE_COMPONENTS
+      ~ExcelDataLoader.DESCRIPTION
       ~ExcelDataLoader.TYPE
    
    
