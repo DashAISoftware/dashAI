@@ -412,3 +412,4 @@ xxhash==3.5.0
     #   evaluate
 yarl==1.15.2
     # via aiohttp
+xlrd==2.0.2

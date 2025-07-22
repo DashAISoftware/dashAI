@@ -29,3 +29,4 @@ openpyxl
 httpx
 wordcloud
 imblearn
+xlrd
