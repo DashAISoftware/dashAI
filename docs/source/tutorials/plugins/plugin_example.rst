@@ -30,17 +30,17 @@ Tree folder of the package:
     .. code-block:: text
 
         Copyright (c) 2018 The Python Packaging Authority
-        
+
         Permission is hereby granted, free of charge, to any person obtaining a copy
         of this software and associated documentation files (the "Software"), to deal
         in the Software without restriction, including without limitation the rights
         to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
         copies of the Software, and to permit persons to whom the Software is
         furnished to do so, subject to the following conditions:
-        
+
         The above copyright notice and this permission notice shall be included in all
         copies or substantial portions of the Software.
-        
+
         THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
         IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
         FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -57,7 +57,7 @@ Tree folder of the package:
         [build-system]
         requires = ["hatchling"]
         build-backend = "hatchling.build"
-        
+
         [project]
         name = "image_classification_package"
         version = "0.0.2"
@@ -73,13 +73,13 @@ Tree folder of the package:
         description = "This package includes all the necessary components to classify images using a pre-trained models."
         readme = "README.md"
         requires-python = ">=3.8"
-        
+
         classifiers = [
             "Programming Language :: Python :: 3",
             "License :: OSI Approved :: MIT License",
             "Operating System :: OS Independent",
         ]
-        
+
         keywords = [
             "image classification",
             "pytorch",
@@ -87,13 +87,13 @@ Tree folder of the package:
             "dashai",
             "package"
         ]
-        
+
         [project.entry-points.'dashai.plugins']
         image_task = 'image_classification_package.image_classification_task:ImageClassificationTask'
         image_dataloader = 'image_classification_package.image_dataloader:ImageDataLoader'
         image_model = 'image_classification_package.image_classification_model:ImageClassificationModel'
         basic_finetunned_models = 'image_classification_package.basic_finetunned_models:BasicFinetunnedModels'
-        
+
         [project.urls]
         Homepage = "https://github.com/DashAISoftware/DashAI"
         Issues = "https://github.com/DashAISoftware/DashAI/issues"
@@ -104,29 +104,29 @@ Tree folder of the package:
     .. code-block:: markdown
 
         # **Image Classification Package**
-        
+
         This package include all the necessary components (Task, Models, Dataloader) to perform image classification task.
-        
+
         ## **Task**
-        
+
         **ImageClassificationTask**
-        
+
         The task of this package is to perform image classification. The task is defined in the `image_classification_task.py` file. The task is to classify the images into different classes. The task is defined as a class `ImageClassificationTask` which is inherited from the `BaseTask`.
-        
+
         ## **Dataloader**
-        
+
         **ImageDataLoader**
-        
+
         This module is a dataloader for the images. The module is defined in the `image_dataloader.py` file. The module is defined as a class `ImageDataLoader` which is inherited from the `BaseDataLoader`. The module uses the `load_dataset` method from the library `datasets` to load the dataset.
-        
+
         ## **Models**
-        
+
         **BasicFinetunnedModels**
-        
+
         This module is a image classification model which uses the pre-trained models from the `torchvision.models` and finetunes them on the given dataset. The module is defined in the `basic_finetunned_models.py` file. The module is defined as a class `BasicFinetunnedModels` which is inherited from the `ImageClassificationModel`.
-        
+
         The pretrained models available are:
-        
+
         - resnet18
         - resnet34
         - resnext50_32x4d
@@ -277,20 +277,20 @@ Tree folder of the package:
         .. code-block:: python
 
             """DashAI implementation of DistilBERT model for image classification."""
-            
+
             import json
             import os
             from typing import Any, Dict
-            
+
             import datasets
             import torch
             import torch.nn as nn
             import torch.optim as optim
             from torch.utils.data import DataLoader
             from torchvision import models, transforms
-            
+
             from .image_classification_model import ImageClassificationModel
-            
+
             def fit(
                 model: torch.nn.Module,
                 train_loader: DataLoader,
@@ -304,35 +304,35 @@ Tree folder of the package:
                 for epoch in range(num_epochs):
                     print("Epoch {}/{}".format(epoch, num_epochs - 1))
                     print("-" * 10)
-            
+
                     # Train model
                     scheduler.step()
                     model.train()
-            
+
                     running_loss = 0.0
                     running_corrects = 0.0
-            
+
                     for inputs, labels in train_loader:
                         inputs, labels = inputs.to(device), labels.to(device)
-            
+
                         optimizer.zero_grad()
-            
+
                         outputs = model(inputs)
                         _, preds = torch.max(outputs, 1)
                         loss: torch.Tensor = criterion(outputs, labels)
-            
+
                         loss.backward()
                         optimizer.step()
-            
+
                         running_loss += loss.item() * inputs.size(0)
                         running_corrects += torch.sum(preds == labels.data)
-            
+
                     epoch_loss = running_loss / dataset_len
                     epoch_acc = running_corrects.double() / dataset_len
-            
+
                     print("Train Loss: {:.4f} Acc: {:.4f}".format(epoch_loss, epoch_acc))
                 return model
-            
+
             def predict(
                 model: torch.nn.Module,
                 test_dataloader: DataLoader,
@@ -344,26 +344,26 @@ Tree folder of the package:
                 running_loss = 0.0
                 running_corrects = 0.0
                 preds_without_processing = []
-            
+
                 for inputs, labels in test_dataloader:
                     inputs = inputs.to(device)
                     labels = labels.to(device)
-            
+
                     with torch.set_grad_enabled(False):
                         outputs: torch.Tensor = model(inputs)
                         preds_without_processing += outputs.tolist()
                         _, preds = torch.max(outputs, 1)
                         loss = criterion(outputs, labels)
-            
+
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
-            
+
                 epoch_loss = running_loss / test_dataset_len
                 epoch_acc = running_corrects.double() / test_dataset_len
-            
+
                 print("Val Loss: {:.4f} Acc: {:.4f}".format(epoch_loss, epoch_acc))
                 return preds_without_processing
-            
+
             class BasicFinetunnedModels(ImageClassificationModel):
                 class ImagePytorchDataset(torch.utils.data.Dataset):
                     def __init__(self, dataset: datasets.Dataset):
@@ -378,20 +378,20 @@ Tree folder of the package:
                                 ),
                             ]
                         )
-            
+
                         column_names = list(self.dataset.features.keys())
                         self.image_col_name = column_names[0]
                         self.label_col_name = column_names[1]
-            
+
                     def __len__(self):
                         return len(self.dataset)
-            
+
                     def __getitem__(self, idx):
                         image = self.dataset[idx][self.image_col_name]
                         image = self.transform(image)
                         label = self.dataset[idx][self.label_col_name]
                         return image, label
-            
+
                 def __init__(
                     self,
                     pretrained_model: str,
@@ -413,25 +413,25 @@ Tree folder of the package:
                     self.batch_size = batch_size
                     self.shuffle = shuffle
                     self.epochs = epochs
-            
+
                     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            
+
                     self.model = models.get_model(self.model_name, weights="DEFAULT")
-            
+
                     print(self.model._modules.keys())
                     self.last_key = list(self.model._modules.keys())[-1]
-            
+
                     self.criterion: nn.CrossEntropyLoss = nn.CrossEntropyLoss()
-            
+
                 def determine_num_classes(self, dataset: datasets.Dataset):
                     label_col_name = list(dataset.features.keys())[-1]
                     label_values = dataset[label_col_name]
                     return len(list(set(label_values)))
-            
+
                 def fit(self, dataset: datasets.Dataset):
                     # 1. Determine the num of classes
                     num_classes = self.determine_num_classes(dataset)
-            
+
                     # 2. Change the last layer of the model to have the correct number of classes
                     try:
                         in_features = self.model._modules[self.last_key][-1].in_features
@@ -444,7 +444,7 @@ Tree folder of the package:
                             in_features, num_classes, bias=True
                         )
                     self.model = self.model.to(self.device)
-            
+
                     # 3. Create the optimizer and scheduler
                     optimizer: optim.SGD = optim.SGD(
                         self.model.parameters(),
@@ -455,13 +455,13 @@ Tree folder of the package:
                     scheduler: optim.lr_scheduler.StepLR = optim.lr_scheduler.StepLR(
                         optimizer, step_size=self.step_size, gamma=self.gamma
                     )
-            
+
                     # 4. Create the dataloader
                     img_dataset = self.ImagePytorchDataset(dataset)
                     self.train_dataloader = DataLoader(
                         img_dataset, batch_size=self.batch_size, shuffle=self.shuffle
                     )
-            
+
                     # 5. Train the model
                     self.model = fit(
                         self.model,
@@ -473,31 +473,31 @@ Tree folder of the package:
                         self.epochs,
                         len(dataset),
                     )
-            
+
                 def predict(self, dataset: datasets.Dataset):
                     """
                     Realiza predicciones sobre un conjunto de datos.
-            
+
                     Args:
                         dataset: Dataset con las imágenes a predecir.
-            
+
                     Returns:
                         Lista con las predicciones de la clase para cada imagen.
                     """
-            
+
                     img_dataset = self.ImagePytorchDataset(dataset)
                     dataloader = DataLoader(img_dataset, batch_size=self.batch_size, shuffle=False)
                     preds = predict(
                         self.model, dataloader, self.device, self.criterion, len(dataset)
                     )
                     return preds
-            
+
                 def save(self, filename: str):
                     torch.save(self.model.state_dict(), filename)
-            
+
                 def load(self, filename: str):
                     self.model.load_state_dict(torch.load(filename))
-            
+
                 @classmethod
                 def get_schema(cls) -> Dict[str, Any]:
                     # path es la carpeta donde está este archivo
@@ -528,10 +528,10 @@ Tree folder of the package:
         .. code-block:: python
 
             from DashAI.back.models.base_model import BaseModel
-            
+
             class ImageClassificationModel(BaseModel):
                 """Class for models associated to ImageClassificationTask."""
-            
+
                 COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
 
 
@@ -541,32 +541,32 @@ Tree folder of the package:
         .. code-block:: python
 
             from datasets import ClassLabel, DatasetDict, Image
-            
+
             from DashAI.back.tasks.base_task import BaseTask
-            
+
             class ImageClassificationTask(BaseTask):
                 """Base class for image classification tasks.
-            
+
                 Here you can change the methods provided by class Task.
                 """
-            
+
                 schema: dict = {
                     "inputs_types": [Image],
                     "outputs_types": [ClassLabel],
                     "inputs_cardinality": 1,
                     "outputs_cardinality": 1,
                 }
-            
+
                 def prepare_for_task(self, datasetdict: DatasetDict):
                     """Change the column types to suit the tabular classification task.
-            
+
                     A copy of the dataset is created.
-            
+
                     Parameters
                     ----------
                     datasetdict : DatasetDict
                         Dataset to be changed
-            
+
                     Returns
                     -------
                     DatasetDict
@@ -689,25 +689,25 @@ Tree folder of the package:
         .. code-block:: python
 
             """DashAI Image Dataloader."""
-            
+
             import json
             import logging
             import os
             from typing import Any, Dict, Union
-            
+
             from beartype import beartype
             from datasets import DatasetDict, load_dataset
             from starlette.datastructures import UploadFile
-            
+
             from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
-            
+
             logger = logging.getLogger(__name__)
-            
+
             class ImageDataLoader(BaseDataLoader):
                 """Data loader for data from image files."""
-            
+
                 COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
-            
+
                 @beartype
                 def load_data(
                     self,
@@ -716,7 +716,7 @@ Tree folder of the package:
                     params: Dict[str, Any],
                 ) -> DatasetDict:
                     """Load an image dataset.
-            
+
                     Parameters
                     ----------
                     filepath_or_buffer : Union[UploadFile, str], optional
@@ -727,7 +727,7 @@ Tree folder of the package:
                     params : Dict[str, Any]
                         Dict with the dataloader parameters. The options are:
                         - `separator` (str): The character that delimits the CSV data.
-            
+
                     Returns
                     -------
                     DatasetDict
@@ -748,9 +748,9 @@ Tree folder of the package:
                                 f"The following content type was delivered: "
                                 f"{filepath_or_buffer.content_type}"
                             )
-            
+
                     return dataset
-            
+
                 @classmethod
                 def get_schema(cls) -> Dict[str, Any]:
                     """Load the JSON schema asocciated to the dataloader."""
@@ -762,14 +762,14 @@ Tree folder of the package:
                         ) as f:
                             schema = json.load(f)
                         return schema
-            
+
                     except FileNotFoundError:
                         logger.exception(
                             f"Could not load the schema for {cls.__name__} : File DashAI/back"
                             f"/dataloaders/description_schemas/{cls.__name__}.json not found.",
                         )
                         return {}
-            
+
                 @staticmethod
                 def get_squema(type, name):
                     try:
@@ -779,7 +779,7 @@ Tree folder of the package:
                             os.path.join(path, "image_dataloader.json"),
                         ) as f:
                             return json.load(f)
-            
+
                     except FileNotFoundError:
                         with open(os.path.join(path, "image_dataloader.json")) as f:
                             return json.load(f)

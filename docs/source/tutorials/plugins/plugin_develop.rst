@@ -17,7 +17,7 @@ To create a plugin you need to have the python classes of the software available
 1. DashAI is installed as a library in the python virtual environment (not recommended option, doesn't allow test the plugin).
 
 2. Have the repository cloned on the computer. In this case, to develop a plugin, the best option is to create a folder called "plugins," in the main DashAI folder.
-    
+
    .. code-block:: text
 
       DashAI
@@ -27,7 +27,7 @@ To create a plugin you need to have the python classes of the software available
       |— plugins <--- Create this folder
       |— tests
       | …
-    
+
    In this folder, the files associated with the plugin you want to create must be created.
 
 Creating new components
@@ -50,48 +50,48 @@ Recommendations when creating plugins
 -------------------------------------
 
 1. **Review other plugin examples**
-    
+
    Look at examples of other plugins in the software. Both in the python files and the configuration file.
-    
+
    :doc:`plugin_example`
-    
+
 2. **Test the plugin**
-    
+
    The best way to test the plugin during its development is to **clone the repository**, and start by creating only the **python and json files**. Then move these files to where they belong within the repository so that they are available when starting the software. With this, you can start the software and test if your implementations really work.
-    
+
 3. **Review requirements for a plugin**
 
 4. **Review conflicts between libraries**
-    
+
    When installing new libraries with pip, make sure that installing it does not give a conflict message indicating that some library was uninstalled.
-    
+
    .. code-block:: text
 
       ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
       fastapi 0.106.0 requires starlette<0.28.0,>=0.27.0, but you have starlette 0.20.0 which is incompatible.
-    
+
    To ensure this, after installing a new package, you can run the command
-    
+
    .. code-block:: bash
 
       pip check
-    
+
    If there are conflicts, it will display a message like this
-    
+
    .. code-block:: text
 
       fastapi 0.106.0 has requirement starlette<0.28.0,>=0.27.0, but you have starlette 0.20.0.
-    
+
    Otherwise, the message will be
-    
+
    .. code-block:: python
 
       No broken requirements found.
-    
+
    and everything is fine.
-    
+
    **It is important that when installing a new library for a plugin or package, it must be included among the dependencies of the plugin or package.**
-    
+
 5. **Use prints in the flow of the added components**
-    
+
    Including prints in the flow of the component you created can be very useful to verify the proper functioning of the component you have created in the software.

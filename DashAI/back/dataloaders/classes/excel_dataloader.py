@@ -67,7 +67,10 @@ class ExcelDataloaderSchema(BaseSchema):
     skiprows: schema_field(
         none_type(int_field(ge=0)),
         None,
-        "Number of rows to skip at the start of the file. Leave empty to not skip any rows.",
+        (
+            "Number of rows to skip at the start of the file. "
+            "Leave empty to not skip any rows."
+        ),
     )  # type: ignore
 
     nrows: schema_field(
@@ -79,13 +82,19 @@ class ExcelDataloaderSchema(BaseSchema):
     names: schema_field(
         none_type(string_field()),
         None,
-        "Comma-separated list of column names to use. Example: 'col1,col2,col3'. Leave empty to use header row.",
+        (
+            "Comma-separated list of column names to use. Example: 'col1,col2,col3'. "
+            "Leave empty to use header row."
+        ),
     )  # type: ignore
 
     na_values: schema_field(
         none_type(string_field()),
         None,
-        "Comma-separated additional strings to recognize as NA/NaN. Example: 'NA,N/A,null'.",
+        (
+            "Comma-separated additional strings to recognize as NA/NaN. "
+            "Example: 'NA,N/A,null'."
+        ),
     )  # type: ignore
 
     keep_default_na: schema_field(

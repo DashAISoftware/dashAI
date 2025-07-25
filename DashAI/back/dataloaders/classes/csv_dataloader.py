@@ -1,7 +1,7 @@
 """DashAI CSV Dataloader."""
 
 import shutil
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from beartype import beartype
 from datasets import load_dataset
@@ -40,13 +40,25 @@ class CSVDataloaderSchema(BaseSchema):
     header: schema_field(
         string_field(),
         "infer",
-        "Row number(s) containing column labels and marking the start of the data (zero-indexed). Default behavior is to infer the column names. If column names are passed explicitly, this should be set to '0'. Header can also be a list of integers that specify row locations for MultiIndex on the columns.",
+        (
+            "Row number(s) containing column labels and marking the start of the data "
+            "(zero-indexed). Default behavior is to infer the column names. If column "(
+                "names are passed explicitly, this should be set to '0'. "
+                "Header can also be a list of integers that specify row locations "
+                "for MultiIndex on the columns."
+            )
+        ),
     )  # type: ignore
 
     names: schema_field(
         none_type(string_field()),
         None,
-        "Comma-separated list of column names to use. If the file contains a header row, then you should explicitly pass header=0 to override the column names. Example: 'col1,col2,col3'. Leave empty to use file headers.",
+        (
+            "Comma-separated list of column names to use. If the file contains a "
+            "header row, "
+            "then you should explicitly pass header=0 to override the column names. "
+            "Example: 'col1,col2,col3'. Leave empty to use file headers."
+        ),
     )  # type: ignore
 
     encoding: schema_field(
@@ -58,13 +70,19 @@ class CSVDataloaderSchema(BaseSchema):
     na_values: schema_field(
         none_type(string_field()),
         None,
-        "Comma-separated additional strings to recognize as NA/NaN. Example: 'NULL,missing,n/a'",
+        (
+            "Comma-separated additional strings to recognize as NA/NaN. "
+            "Example: 'NULL,missing,n/a'"
+        ),
     )  # type: ignore
 
     keep_default_na: schema_field(
         bool_field(),
         True,
-        "Whether to include the default NaN values when parsing the data (True recommended).",
+        (
+            "Whether to include the default NaN values when parsing the data "
+            "(True recommended)."
+        ),
     )  # type: ignore
 
     true_values: schema_field(
@@ -88,7 +106,8 @@ class CSVDataloaderSchema(BaseSchema):
     skiprows: schema_field(
         none_type(int_field()),
         None,
-        "Number of lines to skip at the beginning of the file. Leave empty to skip none.",
+        "Number of lines to skip at the beginning of the file. "
+        "Leave empty to skip none.",
     )  # type: ignore
 
     nrows: schema_field(
@@ -114,7 +133,6 @@ class CSVDataLoader(BaseDataLoader):
         self,
         params: Dict[str, Any],
     ) -> None:
-
         if "separator" not in params:
             raise ValueError(
                 "Error trying to load the CSV dataset: "
@@ -134,7 +152,7 @@ class CSVDataLoader(BaseDataLoader):
             )
         clean_params["delimiter"] = separator
 
-        if params["header"] != None:
+        if params["header"] is not None:
             clean_params["header"] = params["header"]
 
         list_params = ["names", "na_values", "true_values", "false_values"]
