@@ -134,8 +134,7 @@ class ExcelDataLoader(BaseDataLoader):
         if "sheet" in params and params["sheet"] is not None:
             pandas_params["sheet_name"] = params["sheet"]
 
-        if "header" in params and params["header"] is not None:
-            pandas_params["header"] = params["header"]
+        pandas_params["header"] = params.get("header", 0)
 
         if "usecols" in params and params["usecols"] is not None:
             pandas_params["usecols"] = params["usecols"]

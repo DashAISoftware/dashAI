@@ -128,11 +128,4 @@ def create_app(
     app.container = container
     logger.debug("Application successfully created.")
 
-    @app.on_event("startup")
-    async def maybe_start_job_loop():
-        if not hasattr(app.state, "job_loop") or app.state.job_loop.done():
-            app.state.job_loop = asyncio.create_task(
-                job_queue_loop(stop_when_queue_empties=False)
-            )
-
     return app

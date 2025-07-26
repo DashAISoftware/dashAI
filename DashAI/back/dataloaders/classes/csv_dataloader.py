@@ -42,11 +42,10 @@ class CSVDataloaderSchema(BaseSchema):
         "infer",
         (
             "Row number(s) containing column labels and marking the start of the data "
-            "(zero-indexed). Default behavior is to infer the column names. If column "(
-                "names are passed explicitly, this should be set to '0'. "
-                "Header can also be a list of integers that specify row locations "
-                "for MultiIndex on the columns."
-            )
+            "(zero-indexed). Default behavior is to infer the column names. If column "
+            "names are passed explicitly, this should be set to '0'. "
+            "Header can also be a list of integers that specify row locations "
+            "for MultiIndex on the columns."
         ),
     )  # type: ignore
 
@@ -143,7 +142,7 @@ class CSVDataLoader(BaseDataLoader):
 
         separator = params["separator"]
         if separator == "blank space":
-            separator = "\u0020"  # Convert to actual space character
+            separator = " "
         elif separator == "tab":
             separator = "\t"
         if not isinstance(separator, str):
@@ -152,7 +151,7 @@ class CSVDataLoader(BaseDataLoader):
             )
         clean_params["delimiter"] = separator
 
-        if params["header"] is not None:
+        if params.get("header") is not None:
             clean_params["header"] = params["header"]
 
         list_params = ["names", "na_values", "true_values", "false_values"]
