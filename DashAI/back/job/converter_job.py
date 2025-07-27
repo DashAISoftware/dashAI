@@ -9,6 +9,7 @@ from datasets.arrow_dataset import update_metadata_with_features
 from datasets.features import Features
 from kink import inject
 from sqlalchemy import exc
+from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
@@ -117,28 +118,34 @@ class ConverterListJob(BaseJob):
     """ConverterListJob class to modify a dataset by applying a
     sequence of converters."""
 
-    def set_status_as_delivered(self) -> None:
+    @inject
+    def set_status_as_delivered(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+    ) -> None:
         """Set the status of the list as delivered."""
         converter_list_id = self.kwargs["converter_list_id"]
-        db = self.kwargs["db"]
 
-        converter_list = db.get(ConverterList, converter_list_id)
-        if converter_list is None:
-            raise JobError(
-                f"Converter list with id {converter_list_id} does not exist in DB."
-            )
+        with session_factory() as db:
+            converter_list = db.get(ConverterList, converter_list_id)
+            if converter_list is None:
+                raise JobError(
+                    f"Converter list with id {converter_list_id} does not exist in DB."
+                )
 
-        try:
-            converter_list.set_status_as_delivered()
-            db.commit()
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise JobError("Error setting converter list status as delivered") from e
+            try:
+                converter_list.set_status_as_delivered()
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+                raise JobError(
+                    "Error setting converter list status as delivered"
+                ) from e
 
     @inject
     async def run(
         self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
+        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
         def instantiate_converters(
             converter_name: str,
@@ -187,111 +194,148 @@ class ConverterListJob(BaseJob):
         # Extract job parameters
         converter_list_id = self.kwargs["converter_list_id"]
         target_column_index = self.kwargs["target_column_index"]
-        db = self.kwargs["db"]
 
-        # Validate input parameters
-        try:
-            if converter_list_id is None or target_column_index is None:
-                raise JobError("Converter list ID and target column index are required")
+        with session_factory() as db:
+            # Validate input parameters
+            try:
+                if converter_list_id is None or target_column_index is None:
+                    raise JobError(
+                        "Converter list ID and target column index are required"
+                    )
 
-            converter_list = db.get(ConverterList, converter_list_id)
-            if not converter_list:
-                raise JobError(f"Converter list with id {converter_list_id} not found")
+                converter_list = db.get(ConverterList, converter_list_id)
+                if not converter_list:
+                    raise JobError(
+                        f"Converter list with id {converter_list_id} not found"
+                    )
 
-            converter_list.set_status_as_started()
-            db.commit()
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise JobError("Error loading converter list info") from e
+                converter_list.set_status_as_started()
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+                raise JobError("Error loading converter list info") from e
 
-        # Get dataset
-        try:
-            dataset_id = converter_list.dataset_id
-            dataset = db.get(DatasetModel, dataset_id)
+            # Get dataset
+            try:
+                dataset_id = converter_list.dataset_id
+                dataset = db.get(DatasetModel, dataset_id)
 
-            if not dataset:
-                raise JobError(f"Dataset with id {dataset_id} not found")
+                if not dataset:
+                    raise JobError(f"Dataset with id {dataset_id} not found")
 
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            converter_list.set_status_as_error()
-            db.commit()
-            raise JobError("Error loading dataset info") from e
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+                converter_list.set_status_as_error()
+                db.commit()
+                raise JobError("Error loading dataset info") from e
 
-        # Load dataset
-        try:
-            dataset_path = f"{dataset.file_path}/dataset"
-            loaded_dataset = load_dataset(dataset_path)
+            # Load dataset
+            try:
+                dataset_path = f"{dataset.file_path}/dataset"
+                loaded_dataset = load_dataset(dataset_path)
 
-            # Validate target column index
-            if int(target_column_index) < 1 or int(target_column_index) > len(
-                loaded_dataset.features
-            ):
-                raise JobError(
-                    f"Target column index {target_column_index} is out of bounds"
+                # Validate target column index
+                if int(target_column_index) < 1 or int(target_column_index) > len(
+                    loaded_dataset.features
+                ):
+                    raise JobError(
+                        f"Target column index {target_column_index} is out of bounds"
+                    )
+
+            except Exception as e:
+                log.exception(e)
+                converter_list.set_status_as_error()
+                db.commit()
+                raise JobError(f"Cannot load dataset from {dataset_path}") from e
+
+            try:
+                # Regex to convert camel case to snake case
+                camel_to_snake = re.compile(
+                    r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])"
                 )
 
-        except Exception as e:
-            log.exception(e)
-            converter_list.set_status_as_error()
-            db.commit()
-            raise JobError(f"Cannot load dataset from {dataset_path}") from e
+                # Get the absolute path to the converters directory
+                current_file = Path(__file__)
+                project_root = (
+                    current_file.parent.parent.parent
+                )  # Go up three levels to reach project root
+                converters_base_path = project_root / "back" / "converters"
 
-        try:
-            # Regex to convert camel case to snake case
-            camel_to_snake = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+                if not converters_base_path.exists():
+                    raise JobError(
+                        f"Converters directory not found at {converters_base_path}"
+                    )
 
-            # Get the absolute path to the converters directory
-            current_file = Path(__file__)
-            project_root = (
-                current_file.parent.parent.parent
-            )  # Go up three levels to reach project root
-            converters_base_path = project_root / "back" / "converters"
+                # Build converter name to submodule mapping using a more functional approach
+                converter_submodule_inverse_index = {
+                    file.stem: submodule.name
+                    for submodule in converters_base_path.iterdir()
+                    if submodule.is_dir()
+                    for file in submodule.glob("*.py")
+                    if not file.name.startswith(
+                        "_"
+                    )  # Skip __init__.py and other special files
+                }
 
-            if not converters_base_path.exists():
-                raise JobError(
-                    f"Converters directory not found at {converters_base_path}"
+                # Get stored converter configurations
+                converters_stored_info = converter_list.converters
+                dataset_original_columns = loaded_dataset.column_names
+
+                # Sort converters by order
+                converters_sorted_list = sorted(
+                    converters_stored_info.items(), key=lambda x: x[1]["order"]
                 )
 
-            # Build converter name to submodule mapping using a more functional approach
-            converter_submodule_inverse_index = {
-                file.stem: submodule.name
-                for submodule in converters_base_path.iterdir()
-                if submodule.is_dir()
-                for file in submodule.glob("*.py")
-                if not file.name.startswith(
-                    "_"
-                )  # Skip __init__.py and other special files
-            }
+                # Process converters
+                i = 0
+                converter_instances = []
 
-            # Get stored converter configurations
-            converters_stored_info = converter_list.converters
-            dataset_original_columns = loaded_dataset.column_names
+                while i < len(converters_sorted_list):
+                    converter_name = converters_sorted_list[i][0]
+                    converter_params = converters_sorted_list[i][1]
 
-            # Sort converters by order
-            converters_sorted_list = sorted(
-                converters_stored_info.items(), key=lambda x: x[1]["order"]
-            )
+                    # Check if it's a chain of converters
+                    if converter_name == "ConverterChain":
+                        try:
+                            n_steps = int(converter_params["params"]["steps"])
 
-            # Process converters
-            i = 0
-            converter_instances = []
+                            # Get the steps
+                            chain_steps = converters_sorted_list[
+                                i + 1 : i + n_steps + 1
+                            ]
 
-            while i < len(converters_sorted_list):
-                converter_name = converters_sorted_list[i][0]
-                converter_params = converters_sorted_list[i][1]
+                            # Instantiate chain of converters
+                            chain_instance = instantiate_chain(
+                                chain_steps,
+                                camel_to_snake,
+                                converter_submodule_inverse_index,
+                            )
 
-                # Check if it's a chain of converters
-                if converter_name == "ConverterChain":
-                    try:
-                        n_steps = int(converter_params["params"]["steps"])
+                            # Get scope or use default
+                            scope = converter_params.get(
+                                "scope", {"columns": [], "rows": []}
+                            )
 
-                        # Get the steps
-                        chain_steps = converters_sorted_list[i + 1 : i + n_steps + 1]
+                            # Add converter chain to instances
+                            converter_instances.append(
+                                {
+                                    "name": "ConverterChain",
+                                    "instance": chain_instance,
+                                    "scope": scope,
+                                }
+                            )
+                            i += n_steps + 1
+                        except Exception as e:
+                            log.exception(e)
+                            raise JobError(
+                                f"Error instantiating converter chain: {e}"
+                            ) from e
 
-                        # Instantiate chain of converters
-                        chain_instance = instantiate_chain(
-                            chain_steps,
+                    else:
+                        # Regular converter
+                        converter_instance = instantiate_converters(
+                            converter_name,
+                            converter_params,
                             camel_to_snake,
                             converter_submodule_inverse_index,
                         )
@@ -301,130 +345,108 @@ class ConverterListJob(BaseJob):
                             "scope", {"columns": [], "rows": []}
                         )
 
-                        # Add converter chain to instances
+                        # Add to instances
                         converter_instances.append(
                             {
-                                "name": "ConverterChain",
-                                "instance": chain_instance,
+                                "name": converter_name,
+                                "instance": converter_instance,
                                 "scope": scope,
                             }
                         )
-                        i += n_steps + 1
+                        i += 1
+
+                # Apply each converter in sequence
+                for converter_info in converter_instances:
+                    converter = converter_info["instance"]
+                    converter_scope = converter_info["scope"]
+
+                    # Process columns scope
+                    columns_scope = [
+                        column - 1 for column in converter_scope["columns"]
+                    ]
+                    scope_column_indexes = sorted(set(columns_scope))
+
+                    # If no columns specified, use all columns
+                    if not scope_column_indexes:
+                        scope_column_indexes = list(range(len(loaded_dataset.features)))
+
+                    scope_column_names = [
+                        dataset_original_columns[index]
+                        for index in scope_column_indexes
+                    ]
+
+                    # Process rows scope
+                    rows_scope = [row - 1 for row in converter_scope["rows"]]
+                    scope_rows_indexes = sorted(set(rows_scope))
+
+                    # Adjust target column index (0-based internally)
+                    target_column_index_0based = int(target_column_index) - 1
+                    target_column_name = dataset_original_columns[
+                        target_column_index_0based
+                    ]
+
+                    # Select data for fitting using DashAIDataset operations
+                    X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
+                    y_dataset_fit = loaded_dataset.select_columns([target_column_name])
+
+                    # Select specified rows if provided
+                    if scope_rows_indexes:
+                        X_dataset_fit = X_dataset_fit.select(scope_rows_indexes)
+                        y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
+
+                    try:
+                        converter = converter.fit(X_dataset_fit, y_dataset_fit)
                     except Exception as e:
                         log.exception(e)
                         raise JobError(
-                            f"Error instantiating converter chain: {e}"
+                            f"Error fitting converter {converter_name}: {e}"
                         ) from e
 
-                else:
-                    # Regular converter
-                    converter_instance = instantiate_converters(
-                        converter_name,
-                        converter_params,
-                        camel_to_snake,
-                        converter_submodule_inverse_index,
+                    # Transform data using full dataset for selected columns
+                    # Samplers will ignore x_full and y_full, and use internally stored
+                    # resampled data.
+                    X_full_transform = loaded_dataset.select_columns(scope_column_names)
+                    y_full_transform = loaded_dataset.select_columns(
+                        [target_column_name]
                     )
 
-                    # Get scope or use default
-                    scope = converter_params.get("scope", {"columns": [], "rows": []})
+                    try:
+                        transformed_dataset = converter.transform(
+                            X_full_transform, y_full_transform
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            f"Error transforming data with {converter_name}: {e}"
+                        ) from e
 
-                    # Add to instances
-                    converter_instances.append(
-                        {
-                            "name": converter_name,
-                            "instance": converter_instance,
-                            "scope": scope,
-                        }
-                    )
-                    i += 1
+                    if converter.changes_row_count():
+                        loaded_dataset = transformed_dataset
+                    else:
+                        # Now we need to merge the transformed data back into the original
+                        # dataset, preserving their original positions
+                        loaded_dataset = _rebuild_dataset_with_transformed_columns(
+                            loaded_dataset,
+                            transformed_dataset,
+                            scope_column_names,
+                            scope_column_indexes,
+                        )
 
-            # Apply each converter in sequence
-            for converter_info in converter_instances:
-                converter = converter_info["instance"]
-                converter_scope = converter_info["scope"]
+                dataset_original_columns = loaded_dataset.column_names
+                log.info(
+                    f"Dataset after {converter_name}: Shape {loaded_dataset.shape}, "
+                    f"Columns: {loaded_dataset.column_names}"
+                )
+                # Save the final dataset
+                save_dataset(loaded_dataset, f"{dataset_path}")
+                converter_list.set_status_as_finished()
+                db.commit()
+                db.refresh(dataset)
 
-                # Process columns scope
-                columns_scope = [column - 1 for column in converter_scope["columns"]]
-                scope_column_indexes = sorted(set(columns_scope))
-
-                # If no columns specified, use all columns
-                if not scope_column_indexes:
-                    scope_column_indexes = list(range(len(loaded_dataset.features)))
-
-                scope_column_names = [
-                    dataset_original_columns[index] for index in scope_column_indexes
-                ]
-
-                # Process rows scope
-                rows_scope = [row - 1 for row in converter_scope["rows"]]
-                scope_rows_indexes = sorted(set(rows_scope))
-
-                # Adjust target column index (0-based internally)
-                target_column_index_0based = int(target_column_index) - 1
-                target_column_name = dataset_original_columns[
-                    target_column_index_0based
-                ]
-
-                # Select data for fitting using DashAIDataset operations
-                X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
-                y_dataset_fit = loaded_dataset.select_columns([target_column_name])
-
-                # Select specified rows if provided
-                if scope_rows_indexes:
-                    X_dataset_fit = X_dataset_fit.select(scope_rows_indexes)
-                    y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
-
-                try:
-                    converter = converter.fit(X_dataset_fit, y_dataset_fit)
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Error fitting converter {converter_name}: {e}"
-                    ) from e
-
-                # Transform data using full dataset for selected columns
-                # Samplers will ignore x_full and y_full, and use internally stored
-                # resampled data.
-                X_full_transform = loaded_dataset.select_columns(scope_column_names)
-                y_full_transform = loaded_dataset.select_columns([target_column_name])
-
-                try:
-                    transformed_dataset = converter.transform(
-                        X_full_transform, y_full_transform
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Error transforming data with {converter_name}: {e}"
-                    ) from e
-
-                if converter.changes_row_count():
-                    loaded_dataset = transformed_dataset
-                else:
-                    # Now we need to merge the transformed data back into the original
-                    # dataset, preserving their original positions
-                    loaded_dataset = _rebuild_dataset_with_transformed_columns(
-                        loaded_dataset,
-                        transformed_dataset,
-                        scope_column_names,
-                        scope_column_indexes,
-                    )
-
-            dataset_original_columns = loaded_dataset.column_names
-            log.info(
-                f"Dataset after {converter_name}: Shape {loaded_dataset.shape}, "
-                f"Columns: {loaded_dataset.column_names}"
-            )
-            # Save the final dataset
-            save_dataset(loaded_dataset, f"{dataset_path}")
-            converter_list.set_status_as_finished()
-            db.commit()
-            db.refresh(dataset)
-
-        except Exception as e:
-            log.exception(e)
-            converter_list.set_status_as_error()
-            db.commit()
-            raise JobError(
-                f"Error applying converters to dataset {dataset_id}: {e}"
-            ) from e
+            except Exception as e:
+                log.exception(e)
+                converter_list.set_status_as_error()
+                db.commit()
+                raise JobError(
+                    f"Error applying converters to dataset {dataset_id}: {e}"
+                ) from e
