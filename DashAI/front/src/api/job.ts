@@ -133,15 +133,20 @@ export const enqueueConverterJob = async (
   return response.data;
 };
 
+// export const startJobQueue = async (
+//   stopWhenQueueEmpties: boolean | undefined,
+// ): Promise<object> => {
+//   let params = {};
+
+//   if (stopWhenQueueEmpties !== undefined) {
+//     params = { ...params, stop_when_queue_empties: stopWhenQueueEmpties };
+//   }
+
+//   const response = await api.post<object>("/v1/job/start/", null, { params });
+//   return response.data;
+// };
 export const startJobQueue = async (
-  stopWhenQueueEmpties: boolean | undefined,
-): Promise<object> => {
-  let params = {};
-
-  if (stopWhenQueueEmpties !== undefined) {
-    params = { ...params, stop_when_queue_empties: stopWhenQueueEmpties };
-  }
-
-  const response = await api.post<object>("/v1/job/start/", null, { params });
-  return response.data;
+  stopWhenQueueEmpties?: boolean,
+): Promise<void> => {
+  return;
 };

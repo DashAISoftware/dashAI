@@ -4,7 +4,7 @@ from typing import Dict
 from kink import Container, di
 
 from DashAI.back.dependencies.database import setup_sqlite_db
-from DashAI.back.dependencies.job_queues import SimpleJobQueue
+from DashAI.back.dependencies.job_queues.huey_job_queue import _job_queue
 from DashAI.back.dependencies.registry import ComponentRegistry
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,6 @@ def build_container(config: Dict[str, str]) -> Container:
     di["component_registry"] = ComponentRegistry(
         initial_components=config["INITIAL_COMPONENTS"]
     )
-    di["job_queue"] = SimpleJobQueue()
+    di["job_queue"] = _job_queue
 
     return di
