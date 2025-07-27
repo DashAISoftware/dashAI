@@ -2,6 +2,7 @@
 
 
 import asyncio
+import inspect
 import sqlite3
 
 import dill
@@ -13,6 +14,7 @@ from huey.signals import (
     SIGNAL_ERROR,
     SIGNAL_EXECUTING,
 )
+from kink import provide
 
 from DashAI.back.dependencies.job_queues.base_job_queue import (
     BaseJobQueue,
@@ -22,10 +24,10 @@ from DashAI.back.job.base_job import BaseJob
 
 
 class DillSerializer(BaseSerializer):
-    def dumps(self, data):
+    def _serialize(self, data):
         return dill.dumps(data)
 
-    def loads(self, blob):
+    def _deserialize(self, blob):
         return dill.loads(blob)
 
 
@@ -47,7 +49,11 @@ class HueyJobQueue(BaseJobQueue):
 
         @self.huey.task()
         def _execute_base_job(job: BaseJob):
-            job.run()
+            fn = provide(job.run)
+            result = fn()
+            if inspect.iscoroutine(result):
+                asyncio.run(result)
+            return result
 
         self._execute = _execute_base_job
 
