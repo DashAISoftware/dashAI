@@ -14,7 +14,6 @@ from huey.signals import (
     SIGNAL_ERROR,
     SIGNAL_EXECUTING,
 )
-from kink import provide
 
 from DashAI.back.dependencies.job_queues.base_job_queue import (
     BaseJobQueue,
@@ -49,8 +48,7 @@ class HueyJobQueue(BaseJobQueue):
 
         @self.huey.task()
         def _execute_base_job(job: BaseJob):
-            fn = provide(job.run)
-            result = fn()
+            result = job.run()
             if inspect.iscoroutine(result):
                 asyncio.run(result)
             return result
