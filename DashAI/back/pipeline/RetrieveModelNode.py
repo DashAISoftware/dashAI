@@ -19,7 +19,7 @@ class RetrieveModel(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.info("RetrieveModel executed successfully.")
 
-    def run(
+    async def run(
         self,
         context: Dict[str, Any],
         component_registry: ComponentRegistry = lambda di: di["component_registry"],

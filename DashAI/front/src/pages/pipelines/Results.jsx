@@ -73,7 +73,7 @@ function PipelineResults({ pipelineId, onClose }) {
     <Box sx={{ p: 2 }}>
 
       {hasExploration && (
-        <Accordion>
+        <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography variant="h6">Exploration</Typography>
           </AccordionSummary>
@@ -86,7 +86,7 @@ function PipelineResults({ pipelineId, onClose }) {
       )}
 
       {hasTrain && (
-        <Accordion>
+        <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography variant="h6">Train</Typography>
           </AccordionSummary>
@@ -131,7 +131,7 @@ function PipelineResults({ pipelineId, onClose }) {
       )}
 
       {hasPrediction && (
-        <Accordion>
+        <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography variant="h6">Prediction</Typography>
           </AccordionSummary>

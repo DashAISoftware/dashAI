@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Box, Typography, Dialog, TextField, Button, Tooltip } from "@mui/material";
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ReactFlow, { addEdge, Background, Controls, useEdgesState, useNodesState, useReactFlow } from "reactflow";
 import 'reactflow/dist/style.css';
 import CustomLayout from "../../components/custom/CustomLayout";
@@ -13,7 +14,7 @@ import { useSnackbar } from "notistack";
 import { validatePipeline, sortNodes } from "./ValidatePipeline"
 import { getNodeHelp, buildNodeHelp } from "./nodeHelp";
 import { getNodeTypesMap, getNodeTypes } from "./nodeTypes";
-import nodeComponentRegistry from "./nodeComponentRegistry";
+import nodeRegistry from "./nodeRegistry";
 
 function NewPipeline() {
   const location = useLocation();
@@ -254,7 +255,7 @@ function NewPipeline() {
   const renderNodeDialogContent = () => {
     if (!selectedNode) return null;
     const { type, id } = selectedNode;
-    const NodeComponent = nodeComponentRegistry[type];
+    const NodeComponent = nodeRegistry[type];
     if (!NodeComponent) return null;
 
     return (
@@ -337,8 +338,9 @@ function NewPipeline() {
                 const help = getNodeHelp(nodeHelp?.type || "Pipeline");
                 return (
                   <>
-                    <Typography variant="h6" sx={{ color: "#fff" }}>
-                      {help.name || nodeHelp?.type || "Pipeline"} Help
+                    <Typography variant="h6" sx={{ color: "#fff", display: "flex", gap: 1 }}>
+                      <HelpOutlineIcon fontSize="inherit" sx={{ mt: 0.8 }} />
+                      {help.name || nodeHelp?.type || "Pipeline Help"}
                     </Typography>
                     {help.description && (
                       <>
@@ -370,7 +372,7 @@ function NewPipeline() {
             </Box>
           </Box>
 
-        <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#fff" }}>
+        <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#f5f5f5" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <TextField
               label="Pipeline Name"
@@ -414,7 +416,7 @@ function NewPipeline() {
               width: '100%', 
               height: '100%',
               borderRadius: 12,
-              background: "#f5f5f5",
+              background: "#f9f9f9",
               border: "1px solid #ccc",
               boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
             }}

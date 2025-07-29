@@ -17,7 +17,7 @@ class PipelineJob(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.info("Pipeline execution finished successfully.")
 
-    def run(
+    async def run(
         self, 
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
     ) -> None:
@@ -55,7 +55,7 @@ class PipelineJob(BaseJob):
                 raise JobError(f"Error instantiating node {node_id} of type {node_type}") from e
 
             try:
-                output = node_instance.run(context=context)
+                output = await node_instance.run(context=context)
                 if node_type == "DataSelector":
                     context["dataset"] = output["dataset"]
                 elif node_type == "DataExploration":

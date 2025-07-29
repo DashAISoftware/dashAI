@@ -19,7 +19,7 @@ class Prediction(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.info("Prediction executed successfully.")
 
-    def run(self, context: Dict[str, Any]) -> Any:
+    async def run(self, context: Dict[str, Any]) -> Any:
         loaded_dataset = context["dataset"]
         model = context["model_class"]
         model_path = context["model_path"]

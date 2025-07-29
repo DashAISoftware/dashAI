@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import Any, Dict, List
@@ -52,7 +53,7 @@ class Train(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.info("Train executed successfully.")
 
-    def run(
+    async def run(
         self, 
         context: Dict[str, Any],
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
@@ -80,7 +81,7 @@ class Train(BaseJob):
             if metric_class:
                 metrics.append(metric_class)
             else:
-                log.warning(f"Métrica '{metric_name}' no encontrada en el registry.")
+                log.warning(f"Metric '{metric_name}' not found in registry.")
         
         # split
         try:
@@ -96,9 +97,10 @@ class Train(BaseJob):
                     all_classes = prepared_dataset.unique(output_columns_names[0])
                     n_labels = len(all_classes)
 
-            prepared_dataset = prepare_for_experiment(
+            splits = self.splits
+            prepared_dataset, splits = prepare_for_experiment(
                 dataset=prepared_dataset,
-                splits=self.splits,
+                splits=splits,
                 output_columns=output_columns_names,
             )
 

@@ -3,11 +3,11 @@ import DataExplorationNode from "./nodes/DataExplorationNode";
 import TrainNode from "./nodes/TrainNode";
 import RetrieveModelNode from "./nodes/RetrieveModelNode"
 
-const nodeComponentRegistry = {
+const nodeRegistry = {
   DataSelector: DataSelectorNode,
   DataExploration: DataExplorationNode,
   Train: TrainNode,
   RetrieveModel: RetrieveModelNode,
 };
 
-export default nodeComponentRegistry;
+export default nodeRegistry;

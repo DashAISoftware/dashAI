@@ -16,7 +16,7 @@ class DataSelector(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.info("DataSelector executed successfully.")
 
-    def run(self, context: Dict[str, Any]) -> Any:
+    async def run(self, context: Dict[str, Any]) -> Any:
         context["dataset_name"] = self.kwargs["name"]
         dataset_dir = pathlib.Path(self.kwargs["file_path"])
         data_path = dataset_dir / "dataset/data.arrow"

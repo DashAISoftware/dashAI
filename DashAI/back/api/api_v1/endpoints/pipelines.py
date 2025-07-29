@@ -149,6 +149,12 @@ async def create_pipeline(
 ):
     """Create a new pipeline."""
     logger.debug("Creating a new pipeline with params: %s", params)
+    if not params.steps:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty pipeline",
+        )
+    
     with session_factory() as db:
         try:
             steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
@@ -181,6 +187,12 @@ async def update_pipeline(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Update a specific pipeline."""
+    if not params.steps:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty pipeline",
+        )
+    
     with session_factory() as db:
         try:
             pipeline = db.get(Pipeline, pipeline_id)
