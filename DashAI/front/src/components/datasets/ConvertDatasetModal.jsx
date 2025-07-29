@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { getDatasetSample, getDatasetTypes } from "../../api/datasets";
 import PropTypes from "prop-types";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Settings, Help } from "@mui/icons-material";
@@ -47,6 +49,8 @@ function ConvertDatasetModal({ datasetId }) {
   const [converterListId, setConverterListId] = useState(null);
   const [converterListStatus, setConverterListStatus] = useState(null);
   const [running, setRunning] = useState(false);
+  const [datasetColumns, setDatasetColumns] = useState([]);
+  const [datasetRows, setDatasetRows] = useState([]);
 
   const handleCloseContent = () => {
     setOpen(false);
@@ -196,6 +200,66 @@ function ConvertDatasetModal({ datasetId }) {
     }
   }, [running]);
 
+  const getDatasetTable = async () => {
+    try {
+      const numRows = 20;
+      const [dataset, types] = await Promise.all([
+        getDatasetSample(datasetId, numRows),
+        getDatasetTypes(datasetId),
+      ]);
+      const columns = Object.keys(dataset).map((columnName) => ({
+        field: columnName,
+        headerName: columnName,
+        width: 150,
+        renderHeader: () => (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Typography variant="subtitle2">{columnName}</Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              style={{ fontSize: "0.7rem" }}
+            >
+              {types[columnName]?.dtype || "unknown"}
+            </Typography>
+          </div>
+        ),
+      }));
+
+      const rows = [];
+      const columnNames = Object.keys(dataset);
+
+      for (let i = 0; i < numRows; i++) {
+        const row = { id: i };
+        columnNames.forEach((col) => {
+          row[col] = dataset[col][i];
+        });
+        rows.push(row);
+      }
+
+      setDatasetColumns(columns);
+      setDatasetRows(rows);
+    } catch (error) {
+      enqueueSnackbar("Error while trying to obtain the dataset info.");
+      if (error.response) {
+        console.error("Response error:", error.message);
+      } else if (error.request) {
+        console.error("Request error", error.request);
+      } else {
+        console.error("Unknown Error", error.message);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getDatasetTable();
+  }, []);
+
   return (
     <React.Fragment>
       <TooltipedCellItem
@@ -231,7 +295,15 @@ function ConvertDatasetModal({ datasetId }) {
                   Dataset summary
                 </Typography>
               </Grid>
-              <DatasetSummaryTable datasetId={datasetIdToModify} />
+
+              <div style={{ height: 400, width: "100%" }}>
+                <DataGrid
+                  columns={datasetColumns}
+                  rows={datasetRows}
+                  pageSize={20}
+                  hideFooterPagination
+                />
+              </div>
 
               {/* Converter selector */}
               <Grid item xs={12} display={"flex"} alignItems={"center"} gap={2}>

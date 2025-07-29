@@ -104,10 +104,11 @@ async def get_dataset(
 @inject
 async def get_sample(
     dataset_id: int,
+    n_rows: int = 10,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Return a sample of 10 rows from the dataset with id dataset_id from the
-    database.
+    """Return a sample of n_rows (default 10) rows from the dataset with
+    id dataset_id from the database.
 
     If a column is not JSON serializable, it will be converted to a list of
     strings.
@@ -120,7 +121,7 @@ async def get_sample(
     Returns
     -------
     Dict
-        A Dict with a sample of 10 rows
+        A Dict with a sample of n_rows rows
     """
     with session_factory() as db:
         try:
@@ -136,7 +137,7 @@ async def get_sample(
             with pa.OSFile(arrow_path, "rb") as source:
                 reader = ipc.open_file(source)
                 batch = reader.get_batch(0)
-                sample_size = min(10, batch.num_rows)
+                sample_size = min(n_rows, batch.num_rows)
                 sample_batch = batch.slice(0, sample_size)
                 sample = sample_batch.to_pydict()
 
