@@ -188,7 +188,7 @@ function Results({ pipelineId }) {
     >
       {Object.entries(explorationResults).map(
         ([explorationName, result], i) => (
-          <Box key={explorationName} sx={{ width: "100%" }}>
+          <Box key={explorationName} sx={{ width: "100%", minWidth: "800px" }}>
             <Typography gutterBottom variant="h6" color={"GrayText"}>
               {i}: {result.exploration_type}
               {result.name ? ` | ${result.name}` : ""}
