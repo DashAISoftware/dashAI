@@ -14,12 +14,20 @@
       "class": "1"
     },
     {
+      "text": "bien",
+      "class": "0"
+    },
+    {
       "text": "tu",
       "class": "1"
     },
     {
       "text": "hola",
       "class": "1"
+    },
+    {
+      "text": "como",
+      "class": "0"
     }
   ]
 }

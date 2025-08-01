@@ -26,3 +26,5 @@ optuna
 hyperopt
 openpyxl
 httpx
+wordcloud
+imblearn

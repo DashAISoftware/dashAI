@@ -149,7 +149,8 @@ function SplitDatasetRows({
   };
 
   const handleSeedChange = (event) => {
-    setSeed(event.target.value);
+    const value = event.target.value === "" ? "" : Number(event.target.value);
+    setSeed(value);
   };
 
   useEffect(() => {
@@ -324,7 +325,7 @@ function SplitDatasetRows({
                   autoComplete="off"
                   type="number"
                   size="small"
-                  helperText="Enter a seed value for reproducibility (optional)"
+                  helperText="Enter a seed value (default: 42)."
                 />
               </Grid>
             </Grid>

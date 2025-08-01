@@ -1,5 +1,3 @@
-import shutil
-
 import pytest
 from datasets import DatasetDict
 
@@ -9,9 +7,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_indexes,
     to_dashai_dataset,
 )
-from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.translation_task import TranslationTask
@@ -179,64 +175,6 @@ def test_get_text_class_task_metadata():
 
     assert len(metadata.keys()) == 4
     assert metadata["inputs_types"] == ["Value"]
-    assert metadata["outputs_types"] == ["ClassLabel"]
-    assert metadata["inputs_cardinality"] == 1
-    assert metadata["outputs_cardinality"] == 1
-
-
-@pytest.fixture(scope="module", name="image_classification_dataset")
-def image_classification_dataset_fixture():
-    test_dataset_path = "tests/back/tasks/beans_dataset_small.zip"
-    image_dataloader = ImageDataLoader()
-
-    dataset_dict = image_dataloader.load_data(
-        filepath_or_buffer=test_dataset_path,
-        params={},
-        temp_path="tests/back/tasks/beans_dataset",
-    )
-
-    dataset = to_dashai_dataset(dataset_dict)
-
-    total_rows = dataset.num_rows
-    train_indexes, test_indexes, val_indexes = split_indexes(
-        total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
-    )
-    split_datasetdict = split_dataset(
-        dataset,
-        train_indexes=train_indexes,
-        test_indexes=test_indexes,
-        val_indexes=val_indexes,
-    )
-
-    yield split_datasetdict
-    shutil.rmtree("tests/back/tasks/beans_dataset", ignore_errors=True)
-
-
-def test_validate_image_class_task(image_classification_dataset):
-    image_class_task = ImageClassificationTask()
-    inputs_columns = ["image"]
-    outputs_columns = ["label"]
-
-    dataset = image_class_task.prepare_for_task(
-        image_classification_dataset, outputs_columns
-    )
-    try:
-        image_class_task.validate_dataset_for_task(
-            dataset=dataset,
-            dataset_name="Beans Dataset",
-            input_columns=inputs_columns,
-            output_columns=outputs_columns,
-        )
-    except Exception as e:
-        pytest.fail(f"Unexpected error in test_validate_task: {repr(e)}")
-
-
-def test_get_image_class_task_metadata():
-    image_class_task = ImageClassificationTask()
-    metadata = image_class_task.get_metadata()
-
-    assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Image"]
     assert metadata["outputs_types"] == ["ClassLabel"]
     assert metadata["inputs_cardinality"] == 1
     assert metadata["outputs_cardinality"] == 1

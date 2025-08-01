@@ -11,6 +11,7 @@ import pyarrow.ipc as ipc
 from beartype import beartype
 from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
 from datasets.features import Features
+from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 
 log = logging.getLogger(__name__)
@@ -410,7 +411,7 @@ def split_indexes(
 
     # Generate shuffled indexes
     if seed is None:
-        np.random.seed(seed)
+        seed = 42
     indexes = np.arange(total_rows)
 
     test_val = test_size + val_size
@@ -435,7 +436,7 @@ def split_indexes(
         shuffle=shuffle,
         stratify=stratify_labels_test_val,
     )
-    return list(train_indexes), list(test_indexes), list(val_indexes)
+    return train_indexes.tolist(), test_indexes.tolist(), val_indexes.tolist()
 
 
 @beartype
@@ -519,34 +520,39 @@ def split_dataset(
 
 
 def to_dashai_dataset(
-    dataset: Union[DatasetDict, Dataset, DashAIDataset],
+    dataset: Union[DatasetDict, Dataset, DashAIDataset, DataFrame],
 ) -> DashAIDataset:
     """
-    Converts a DatasetDict into a unified DashAIDataset.
-
-    If the DatasetDict has only one split, it simply wraps it in a DashAIDataset
-    and records its indices. If there are multiple splits, it merges them using
-    merge_splits_with_metadata.
+    Converts various data formats into a unified DashAIDataset.
 
     Parameters:
-        dataset_dict (DatasetDict): The original dataset with one or more splits.
+        dataset: The original dataset which can be one of:
+            - DatasetDict: A Hugging Face DatasetDict
+            - Dataset: A Hugging Face Dataset
+            - DashAIDataset: Already a DashAIDataset (will be returned as is)
+            - pd.DataFrame: A pandas DataFrame
 
     Returns:
-        DashAIDataset: A unified dataset containing all data and metadata
-        about the original splits.
+        DashAIDataset: A unified dataset containing all data.
     """
     if isinstance(dataset, DashAIDataset):
         return dataset
     if isinstance(dataset, Dataset):
         arrow_tbl = get_arrow_table(dataset)
         return DashAIDataset(arrow_tbl)
-    elif len(dataset) == 1:
+    if isinstance(dataset, DataFrame):
+        hf_dataset = Dataset.from_pandas(dataset)
+        arrow_tbl = get_arrow_table(hf_dataset)
+        return DashAIDataset(arrow_tbl)
+    if isinstance(dataset, DatasetDict) and len(dataset) == 1:
         key = list(dataset.keys())[0]
         ds = dataset[key]
         arrow_tbl = get_arrow_table(ds)
         return DashAIDataset(arrow_tbl)
-    else:
+    if isinstance(dataset, DatasetDict):
         return merge_splits_with_metadata(dataset)
+    else:
+        raise TypeError(f"Unsupported dataset type: {type(dataset)}")
 
 
 @beartype
@@ -655,7 +661,10 @@ def select_columns(
 
 @beartype
 def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
-    """Return the column with their respective types
+    """Return the column with their respective types.
+
+    If the column isn't a Value or ClassLabel, the function will return
+    the type as "Other".
 
     Parameters
     ----------
@@ -687,12 +696,20 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
                 "type": "Classlabel",
                 "dtype": "",
             }
+        else:
+            column_types[column] = {
+                "type": "Other",
+                "dtype": "",
+            }
     return column_types
 
 
 @beartype
 def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
+
+    If the column type isn't a Value or ClassLabel, the function will
+    not change the type of the column.
 
     Parameters
     ----------
@@ -754,6 +771,7 @@ def get_dataset_info(dataset_path: str) -> object:
     with pa.OSFile(data_filepath, "rb") as source:
         reader = ipc.open_file(source)
         schema = reader.schema
+        column_names = schema.names
 
         total_rows = 0
         for i in range(reader.num_record_batches):
@@ -767,6 +785,7 @@ def get_dataset_info(dataset_path: str) -> object:
     return {
         "total_rows": total_rows,
         "total_columns": len(schema),
+        "column_names": column_names,
         "train_size": len(train_indices),
         "test_size": len(test_indices),
         "val_size": len(val_indices),
@@ -833,13 +852,14 @@ def prepare_for_experiment(
             output_column = output_columns[0]
             try:
                 column_values = dataset[output_column]
-
                 # Check column type and convert to numerical indices if needed
                 if isinstance(column_values[0], str):
-                    import pandas as pd
-
-                    labels_array, unique_values = pd.factorize(column_values)
-                    labels = labels_array.tolist()
+                    unique_values = {}
+                    labels = []
+                    for val in column_values:
+                        if val not in unique_values:
+                            unique_values[val] = len(unique_values)
+                        labels.append(unique_values[val])
                 else:
                     labels = [
                         int(x) if not isinstance(x, (list, tuple)) else int(x[0])
@@ -866,4 +886,8 @@ def prepare_for_experiment(
             test_indexes=test_indexes,
             val_indexes=val_indexes,
         )
-    return prepared_dataset
+    return prepared_dataset, {
+        "train_indexes": train_indexes,
+        "test_indexes": test_indexes,
+        "val_indexes": val_indexes,
+    }
