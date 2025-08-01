@@ -29,7 +29,7 @@
   },
   "scripts": {
     "start": "set \"DISABLE_ESLINT_PLUGIN=true\" && node --max-old-space-size=4096 node_modules/react-scripts/scripts/start.js",
-    "build": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts build",
+    "build": "set \"NODE_OPTIONS=--max_old_space_size=4096\" && set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts build",
     "test": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts test",
     "eject": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts eject",
     "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001"
