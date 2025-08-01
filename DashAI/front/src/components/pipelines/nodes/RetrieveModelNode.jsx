@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Button,
@@ -21,33 +21,36 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const { pipelineId } = useParams();
+  const hasWarnedRef = useRef(false);
 
   useEffect(() => {
     if (savedConfig?.model_path && pipelines.length > 0) {
-        const matching = pipelines.find(p => p.train?.model_path === savedConfig.model_path);
-        if (matching) {
+      const matching = pipelines.find(p => p.train?.model_path === savedConfig.model_path);
+      if (matching) {
         setSelectedModelId(matching.id);
-        }
+      }
     }
   }, [savedConfig, pipelines]);
 
   useEffect(() => {
     const fetchCompatibleModels = async () => {
-        if (!datasetId) {
-        enqueueSnackbar("Missing dataset", { variant: "warning" });
+      if (!datasetId) {
+        if (!hasWarnedRef.current) {
+          enqueueSnackbar("Missing dataset", { variant: "warning" });
+          hasWarnedRef.current = true;
+        }
         setLoading(false);
         return;
-        }
-
-        setLoading(true);
-        try {
+      }
+      setLoading(true);
+      try {
         const result = await filterModels(datasetId, pipelineId);
         setPipelines(result);
-        } catch (error) {
+      } catch (error) {
         enqueueSnackbar("Error retrieving models", { variant: "error" });
-        } finally {
+      } finally {
         setLoading(false);
-        }
+      }
     };
 
     fetchCompatibleModels();
@@ -59,23 +62,23 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
 
     const train = selected.train || {};
     const nodeData = {
-        model: train.info || "",
-        model_path: train.model_path || "",
-        input_columns: train.input_columns || [],
-        task: train.task || "",
+      model: train.info || "",
+      model_path: train.model_path || "",
+      input_columns: train.input_columns || [],
+      task: train.task || "",
     };
 
     try {
-        const response = await validateNode("RetrieveModel", nodeData);
-        if (response.status === "ok") {
-          onSave(nodeData);
-          onClose();
-        } else {
-          enqueueSnackbar("Validation failed", { variant: "error" });
-        }
+      const response = await validateNode("RetrieveModel", nodeData);
+      if (response.status === "ok") {
+        onSave(nodeData);
+        onClose();
+      } else {
+        enqueueSnackbar("Validation failed", { variant: "error" });
+      }
     } catch (e) {
-        enqueueSnackbar("Error validating node", { variant: "error" });
-        console.error(e);
+      enqueueSnackbar("Error validating node", { variant: "error" });
+      console.error(e);
     }
   };
 
@@ -83,10 +86,10 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
     { field: "id", headerName: "ID", width: 80 },
     { field: "name", headerName: "Name", flex: 1 },
     {
-        field: "model",
-        headerName: "Model",
-        flex: 1,
-        valueGetter: (params) => params.row.train?.info || "Unknown"
+      field: "model",
+      headerName: "Model",
+      flex: 1,
+      valueGetter: (params) => params.row.train?.info || "Unknown"
     },
   ];
 
