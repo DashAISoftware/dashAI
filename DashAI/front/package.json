@@ -29,7 +29,7 @@
   },
   "scripts": {
     "start": "set \"DISABLE_ESLINT_PLUGIN=true\" && node --max-old-space-size=4096 node_modules/react-scripts/scripts/start.js",
-    "build": "set \"NODE_OPTIONS=--max_old_space_size=4096\" && set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts build",
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts test",
     "eject": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts eject",
     "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001"
@@ -58,6 +58,7 @@
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
+    "cross-env": "^10.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-config-standard-with-typescript": "latest",
