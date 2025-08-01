@@ -40,9 +40,7 @@ class DataSelector(BaseJob):
             raise JobError(f"Dataset not found at {data_path}")
 
         try:
-            loaded_dataset: DashAIDataset = load_dataset(
-                    f"{dataset_dir}/dataset"
-                )
+            loaded_dataset: DashAIDataset = load_dataset(f"{dataset_dir}/dataset")
         except Exception as e:
             log.exception(e)
             raise JobError(

@@ -34,7 +34,7 @@ function ExperimentsTable({
     try {
       const experiments = await getExperimentsRequest();
       setExperiments(experiments);
-      console.log(experiments)
+      console.log(experiments);
       // initially set all experiments running state to false
       const initialRunningState = experiments.reduce((accumulator, current) => {
         return { ...accumulator, [current.id]: false };

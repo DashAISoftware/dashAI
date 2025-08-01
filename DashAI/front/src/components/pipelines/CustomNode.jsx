@@ -1,20 +1,20 @@
-import { Box, Typography, Tooltip, IconButton } from '@mui/material';
-import { Handle, Position } from 'reactflow';
-import FolderIcon from '@mui/icons-material/Folder';
-import InsertChartIcon from '@mui/icons-material/InsertChart';
-import SettingsIcon from '@mui/icons-material/Settings';
-import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
-import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
-import CloseIcon from '@mui/icons-material/Close';
-import { useTheme } from '@mui/material/styles';
-import { useState } from 'react';
+import { Box, Typography, Tooltip, IconButton } from "@mui/material";
+import { Handle, Position } from "reactflow";
+import FolderIcon from "@mui/icons-material/Folder";
+import InsertChartIcon from "@mui/icons-material/InsertChart";
+import SettingsIcon from "@mui/icons-material/Settings";
+import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
+import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
+import CloseIcon from "@mui/icons-material/Close";
+import { useTheme } from "@mui/material/styles";
+import { useState } from "react";
 
 const iconMap = {
   FolderIcon: FolderIcon,
   InsertChartIcon: InsertChartIcon,
   SettingsIcon: SettingsIcon,
   EmojiObjectsIcon: EmojiObjectsIcon,
-  ManageHistoryIcon: ManageHistoryIcon
+  ManageHistoryIcon: ManageHistoryIcon,
 };
 
 const CustomNode = ({ data, isConnectable }) => {
@@ -22,12 +22,14 @@ const CustomNode = ({ data, isConnectable }) => {
   const [hovered, setHovered] = useState(false);
 
   const IconComponent = iconMap[data.icon] || SettingsIcon;
-  const isDisabled = data.errors?.some(err => err.includes("already exists")) ?? false;
-  const borderColor = data.notConfigured && !isDisabled
-    ? `2px solid ${theme.palette.warning.main}`
-    : '1px solid #ccc';
-  const iconColor = isDisabled ? '#aaa' : '#555';
-  const bgColor = isDisabled ? '#f0f0f0' : '#fff';
+  const isDisabled =
+    data.errors?.some((err) => err.includes("already exists")) ?? false;
+  const borderColor =
+    data.notConfigured && !isDisabled
+      ? `2px solid ${theme.palette.warning.main}`
+      : "1px solid #ccc";
+  const iconColor = isDisabled ? "#aaa" : "#555";
+  const bgColor = isDisabled ? "#f0f0f0" : "#fff";
 
   const nodeContent = (
     <Box
@@ -36,14 +38,14 @@ const CustomNode = ({ data, isConnectable }) => {
       sx={{
         width: 60,
         height: 60,
-        alignItems: 'center',
-        justifyContent: 'center',
-        display: 'flex',
+        alignItems: "center",
+        justifyContent: "center",
+        display: "flex",
         borderRadius: 2,
         backgroundColor: bgColor,
         border: borderColor,
-        textAlign: 'center',
-        position: 'relative',
+        textAlign: "center",
+        position: "relative",
       }}
     >
       {data.onDelete && hovered && (
@@ -53,18 +55,18 @@ const CustomNode = ({ data, isConnectable }) => {
             data.onDelete();
           }}
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 2,
             right: 2,
-            padding: '2px',
+            padding: "2px",
             zIndex: 2,
-            backgroundColor: 'transparent',
-            '&:hover': {
-              backgroundColor: 'rgba(0,0,0,0.05)',
+            backgroundColor: "transparent",
+            "&:hover": {
+              backgroundColor: "rgba(0,0,0,0.05)",
             },
           }}
         >
-          <CloseIcon sx={{ fontSize: 10, color: '#888' }} />
+          <CloseIcon sx={{ fontSize: 10, color: "#888" }} />
         </IconButton>
       )}
 
@@ -73,10 +75,14 @@ const CustomNode = ({ data, isConnectable }) => {
           type="target"
           position={Position.Left}
           style={{
-            background: isDisabled ? '#ccc' : data.hasError ? theme.palette.error.main : '#555',
+            background: isDisabled
+              ? "#ccc"
+              : data.hasError
+              ? theme.palette.error.main
+              : "#555",
             width: 8,
             height: 8,
-            borderRadius: '50%',
+            borderRadius: "50%",
           }}
           isConnectable={!isDisabled && isConnectable}
         />
@@ -89,10 +95,10 @@ const CustomNode = ({ data, isConnectable }) => {
           type="source"
           position={Position.Right}
           style={{
-            background: isDisabled ? '#ccc' : '#555',
+            background: isDisabled ? "#ccc" : "#555",
             width: 8,
             height: 8,
-            borderRadius: '50%',
+            borderRadius: "50%",
           }}
           isConnectable={!isDisabled && isConnectable}
         />
@@ -103,12 +109,12 @@ const CustomNode = ({ data, isConnectable }) => {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
       }}
     >
-      <Typography sx={{ fontSize: 11, mb: 0.5, color: '#000' }}>
+      <Typography sx={{ fontSize: 11, mb: 0.5, color: "#000" }}>
         {data.name || data.label}
       </Typography>
 

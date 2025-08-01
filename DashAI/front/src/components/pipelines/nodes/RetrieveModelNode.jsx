@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
-import {
-  Button,
-  Grid,
-  Paper,
-  Typography,
-  LinearProgress,
-} from "@mui/material";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { filterModels } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
@@ -25,7 +19,9 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
 
   useEffect(() => {
     if (savedConfig?.model_path && pipelines.length > 0) {
-      const matching = pipelines.find(p => p.train?.model_path === savedConfig.model_path);
+      const matching = pipelines.find(
+        (p) => p.train?.model_path === savedConfig.model_path,
+      );
       if (matching) {
         setSelectedModelId(matching.id);
       }
@@ -54,7 +50,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
     };
 
     fetchCompatibleModels();
-    }, [datasetId, enqueueSnackbar]);
+  }, [datasetId, enqueueSnackbar]);
 
   const handleSave = async () => {
     const selected = pipelines.find((m) => m.id === selectedModelId);
@@ -89,7 +85,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
       field: "model",
       headerName: "Model",
       flex: 1,
-      valueGetter: (params) => params.row.train?.info || "Unknown"
+      valueGetter: (params) => params.row.train?.info || "Unknown",
     },
   ];
 
@@ -99,7 +95,8 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
         <Grid item xs={12}>
           <Typography variant="h6">Select a trained model</Typography>
           <Typography variant="body2" color="textSecondary">
-            Choose a trained model from one of the saved pipelines to use in this node.
+            Choose a trained model from one of the saved pipelines to use in
+            this node.
           </Typography>
         </Grid>
 
@@ -122,7 +119,11 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
         </Grid>
 
         <Grid item xs={12} container justifyContent="flex-end">
-          <Button onClick={handleSave} disabled={!selectedModelId} variant="contained">
+          <Button
+            onClick={handleSave}
+            disabled={!selectedModelId}
+            variant="contained"
+          >
             Save
           </Button>
         </Grid>

@@ -3,7 +3,7 @@ import {
   TabularVisualizer,
   PlotlyJsonVisualizer,
   ImageVisualizer,
-} from "../../../components/explorations/Visualizations";
+} from "../../explorations/Visualizations";
 import { Box, Typography, Tooltip } from "@mui/material";
 import { getExplorationResults } from "../../../api/pipeline";
 
@@ -146,20 +146,13 @@ function Results({ pipelineId }) {
     if (type === visualizersKeys.tabular) {
       const data = getDataFromOrientation(dataObj.data, dataObj.config.orient);
       return (
-        <TabularVisualizer
-          key={type}
-          columns={data.columns}
-          rows={data.rows}
-        />
+        <TabularVisualizer key={type} columns={data.columns} rows={data.rows} />
       );
     }
 
     if (type === visualizersKeys.plotly_json) {
       return (
-        <PlotlyJsonVisualizer
-          key={type}
-          data={JSON.parse(dataObj.data)}
-        />
+        <PlotlyJsonVisualizer key={type} data={JSON.parse(dataObj.data)} />
       );
     }
 
@@ -190,23 +183,22 @@ function Results({ pipelineId }) {
         display: "flex",
         flexDirection: "column",
         gap: 4,
-        alignItems: "center",
-        justifyContent: "center",
         padding: 2,
       }}
     >
-      {Object.entries(explorationResults).map(([explorationName, result], i) => (
-        <Box key={explorationName} sx={{ width: "100%" }}>
-          <Typography gutterBottom variant="h6" color={"GrayText"}>
-            {i}: {result.exploration_type}
-            {result.name ? ` | ${result.name}` : ""}
-          </Typography>
-          {renderVisualizer(result.results.type, result.results)}
-        </Box>
-      ))}
+      {Object.entries(explorationResults).map(
+        ([explorationName, result], i) => (
+          <Box key={explorationName} sx={{ width: "100%" }}>
+            <Typography gutterBottom variant="h6" color={"GrayText"}>
+              {i}: {result.exploration_type}
+              {result.name ? ` | ${result.name}` : ""}
+            </Typography>
+            {renderVisualizer(result.results.type, result.results)}
+          </Box>
+        ),
+      )}
     </Box>
   );
 }
-
 
 export default Results;

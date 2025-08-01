@@ -53,7 +53,9 @@ function PipelineResults({ pipelineId, onClose }) {
 
   const paramData = {
     parameters:
-      results.train && results.train.parameters ? results.train.parameters : null,
+      results.train && results.train.parameters
+        ? results.train.parameters
+        : null,
   };
 
   if (!hasExploration && !hasTrain && !hasPrediction) {
@@ -71,13 +73,18 @@ function PipelineResults({ pipelineId, onClose }) {
 
   return (
     <Box sx={{ p: 2 }}>
-
       {hasExploration && (
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
             <Typography variant="h6">Exploration</Typography>
           </AccordionSummary>
-          <AccordionDetails sx={{ borderTop: "1px solid #383838", display: "flex", justifyContent: "center" }}>
+          <AccordionDetails
+            sx={{
+              borderTop: "1px solid #383838",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
             <Box mx={10} my={2}>
               <ResultsExploration pipelineId={pipelineId} />
             </Box>
@@ -93,7 +100,11 @@ function PipelineResults({ pipelineId, onClose }) {
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
             <Box mx={10} my={2}>
               <Paper sx={{ width: "100%" }}>
-                <Tabs value={trainTab} onChange={handleTabChange} variant="scrollable">
+                <Tabs
+                  value={trainTab}
+                  onChange={handleTabChange}
+                  variant="scrollable"
+                >
                   <Tab label="Info" />
                   <Tab label="Parameters" />
                   <Tab label="Metrics" />
@@ -115,7 +126,9 @@ function PipelineResults({ pipelineId, onClose }) {
                   )}
                   {trainTab === 2 && (
                     <Box>
-                      <PipelineResultsMetrics metricsData={results.train.metrics} />
+                      <PipelineResultsMetrics
+                        metricsData={results.train.metrics}
+                      />
                     </Box>
                   )}
                   {trainTab === 3 && (

@@ -1,13 +1,12 @@
 import logging
 from typing import Any, Dict, List
 
-from kink import di, inject
-from sqlalchemy import exc
+from kink import di
 from sqlalchemy.orm import Session
 
-from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.dependencies.database.models import Pipeline
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class PipelineJob(BaseJob):
         pass
 
     async def run(
-        self, 
+        self,
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
     ) -> None:
         db: Session = self.kwargs["db"]
@@ -40,16 +39,20 @@ class PipelineJob(BaseJob):
         for idx, step in enumerate(steps):
             node_id = step.get("id")
             node_type = step.get("type")
-            node_label = step.get("label")
             node_config = step.get("config", {})
 
-            log.debug(f"Pipeline {id}: Executing step {idx + 1}/{len(steps)} - {node_type} ({node_id})")
+            log.debug(
+                f"Pipeline {id}: Executing step {idx + 1}/{len(steps)} - "
+                f"{node_type} ({node_id})"
+            )
 
             try:
                 node_class = component_registry(di)[node_type]["class"]
-            except KeyError:
+            except KeyError as e:
                 error_msg = f"Component type {node_type} not found in registry"
-                raise JobError(f"Error in node {node_id} ({node_type}): {error_msg}")
+                raise JobError(
+                    f"Error in node {node_id} ({node_type}): {error_msg}"
+                ) from e
 
             try:
                 node_instance = node_class(**node_config)
@@ -74,16 +77,16 @@ class PipelineJob(BaseJob):
         self.set_status_as_delivered()
 
     def _update_context(
-        self, 
-        context: Dict[str, Any], 
-        pipeline: Pipeline, 
-        node_type: str, 
-        node_id: str, 
-        output: Dict[str, Any]
+        self,
+        context: Dict[str, Any],
+        pipeline: Pipeline,
+        node_type: str,
+        node_id: str,
+        output: Dict[str, Any],
     ) -> None:
         """
         Update the pipeline context and database object based on node type.
-        
+
         Args:
             context: The pipeline context dictionary
             pipeline: The pipeline database object

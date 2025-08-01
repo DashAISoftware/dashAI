@@ -4,7 +4,13 @@ import { useSnackbar } from "notistack";
 import { ExplorationsProvider } from "../../../components/explorations/context";
 import ConfigureExplorersModal from "./ExplorationModal";
 
-const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
+const DataExplorationNode = ({
+  open,
+  onClose,
+  onSave,
+  savedConfig,
+  prevNodes,
+}) => {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
   const datasetId = datasetNode?.id ?? null;
   const { enqueueSnackbar } = useSnackbar();
@@ -19,7 +25,7 @@ const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) 
       return;
     }
   }, [open, datasetId]);
-  
+
   const handleClose = () => {
     onClose();
   };
@@ -28,15 +34,20 @@ const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) 
     onSave(explorers);
     onClose();
   };
-  
+
   return (
-   <>
-    {open && datasetId && (
-      <ExplorationsProvider datasetId={datasetId}>
-        <ConfigureExplorersModal open={open} onClose={handleClose} onSave={handleSave} savedConfig={savedConfig} />
-      </ExplorationsProvider>
-    )}
-  </>
+    <>
+      {open && datasetId && (
+        <ExplorationsProvider datasetId={datasetId}>
+          <ConfigureExplorersModal
+            open={open}
+            onClose={handleClose}
+            onSave={handleSave}
+            savedConfig={savedConfig}
+          />
+        </ExplorationsProvider>
+      )}
+    </>
   );
 };
 

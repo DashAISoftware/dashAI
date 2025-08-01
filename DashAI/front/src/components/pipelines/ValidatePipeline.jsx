@@ -4,12 +4,12 @@ function buildGraph(nodes, edges) {
   const graph = {};
   const inDegree = {};
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     graph[node.id] = [];
     inDegree[node.id] = 0;
   });
 
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     graph[edge.source].push(edge.target);
     inDegree[edge.target]++;
   });
@@ -45,8 +45,8 @@ function sortNodes(nodes, edges) {
   const { graph, inDegree } = buildGraph(nodes, edges);
   const order = getExecutionOrder(graph, { ...inDegree });
 
-  const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
-  const orderedNodes = order.map(id => nodeMap[id]).filter(Boolean);
+  const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+  const orderedNodes = order.map((id) => nodeMap[id]).filter(Boolean);
 
   return orderedNodes;
 }
@@ -55,7 +55,9 @@ async function validatePipeline(nodes, edges) {
   const { graph, inDegree } = buildGraph(nodes, edges);
   const executionOrder = getExecutionOrder(graph, { ...inDegree });
 
-  const orderedNodes = executionOrder.map(id => nodes.find(n => n.id === id));
+  const orderedNodes = executionOrder.map((id) =>
+    nodes.find((n) => n.id === id),
+  );
 
   try {
     const response = await pipelineValidator(orderedNodes, edges);

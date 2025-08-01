@@ -1,6 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Dialog, DialogContent, DialogTitle, DialogActions, Button, Stack, IconButton } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Button,
+  Stack,
+  IconButton,
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FormSchemaField from "../../components/shared/FormSchemaField";
 import FormSchemaFieldWithOptions from "../../components/shared/FormSchemaFieldWithOptions";
@@ -19,17 +27,17 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
   }, [values]);
 
   const handleFieldChange = (fieldName, fieldValue) => {
-    setLocalValues(prev => {
+    setLocalValues((prev) => {
       const newValues = { ...prev };
-      const parts = fieldName.split('.');
+      const parts = fieldName.split(".");
       let current = newValues;
-      
+
       for (let i = 0; i < parts.length - 1; i++) {
         const part = parts[i];
         if (!current[part]) current[part] = {};
         current = current[part];
       }
-      
+
       current[parts[parts.length - 1]] = fieldValue;
       return newValues;
     });
@@ -66,7 +74,7 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
               value: value,
               onChange: fieldOnChange,
             }}
-          />
+          />,
         );
       } else if (fieldSchema.type === "object") {
         if (fieldSchema.placeholder?.optimize !== undefined) {
@@ -79,7 +87,7 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
                 value: value,
                 onChange: fieldOnChange,
               }}
-            />
+            />,
           );
         } else if (Boolean(fieldSchema?.parent)) {
           fields.push(
@@ -93,7 +101,7 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
                 value: value,
                 onChange: fieldOnChange,
               }}
-            />
+            />,
           );
         } else {
           fields.push(
@@ -121,7 +129,7 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
                     />
                   );
                 })}
-            </FormSchemaFieldWithCollapse>
+            </FormSchemaFieldWithCollapse>,
           );
         }
       } else {
@@ -134,7 +142,7 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
               value: value,
               onChange: fieldOnChange,
             }}
-          />
+          />,
         );
       }
     }
@@ -149,7 +157,15 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          m: 0,
+          p: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         Model Settings
         <IconButton
           aria-label="close"

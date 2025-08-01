@@ -6,12 +6,12 @@ import { Results as PipelineResults } from "../../components/pipelines";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { usePipelineState } from "../../hooks/usePipelineState";
 import { useConnectedNodeData } from "../../hooks/useConnectedNodeData";
-import { 
-  PipelineHeader, 
-  PipelineToolbar, 
-  PipelineDesigner, 
-  NodeSidebar, 
-  nodeRegistry 
+import {
+  PipelineHeader,
+  PipelineToolbar,
+  PipelineDesigner,
+  NodeSidebar,
+  nodeRegistry,
 } from "../../components/pipelines";
 
 function NewPipeline() {
@@ -19,7 +19,7 @@ function NewPipeline() {
   const { pipelineId } = useParams();
   const navigate = useNavigate();
   const flowWrapperRef = useRef(null);
-  
+
   const {
     // State
     nodes,
@@ -36,7 +36,7 @@ function NewPipeline() {
     availableNodes,
     nodeTypes,
     nodeIdCounter,
-    
+
     // Setters
     setNodes,
     setEdges,
@@ -50,7 +50,7 @@ function NewPipeline() {
     setHoveredNode,
     setNodeHelp,
     setNodeIdCounter,
-    
+
     // Event handlers
     onNodesChange,
     onEdgesChange,
@@ -79,31 +79,34 @@ function NewPipeline() {
         onClose={handleCloseDialog}
         onSave={(data) => handleSaveNodeData(id, data)}
         savedConfig={nodeData[id]}
-        prevNodes={getConnectedNodeData(selectedNode)} 
+        prevNodes={getConnectedNodeData(selectedNode)}
       />
     );
   };
 
   return (
-    <CustomLayout title="Pipelines Module" subtitle="Create and manage your pipelines.">
+    <CustomLayout
+      title="Pipelines Module"
+      subtitle="Create and manage your pipelines."
+    >
       <ReactFlowProvider>
-        <PipelineHeader 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          navigate={navigate} 
+        <PipelineHeader
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          navigate={navigate}
         />
 
         {activeTab === "flow" ? (
           <>
             <Box display="flex" height="85vh">
-              <NodeSidebar 
+              <NodeSidebar
                 availableNodes={availableNodes}
                 onDragStart={onDragStart}
                 nodeHelp={nodeHelp}
               />
 
               <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#f5f5f5" }}>
-                <PipelineToolbar 
+                <PipelineToolbar
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}
                   onRun={handleRun}
@@ -133,7 +136,7 @@ function NewPipeline() {
                   availableNodes={availableNodes}
                 />
               </Box>
-              
+
               {renderNodeDialogContent() && (
                 <Dialog open={true} onClose={handleCloseDialog}>
                   {renderNodeDialogContent()}

@@ -9,10 +9,10 @@ from DashAI.back.api.api_v1.endpoints import (
     explorations,
     explorers,
     jobs,
+    pipelines,
     plugins,
     predict,
     runs,
-    pipelines
 )
 
 api_router_v1 = APIRouter()

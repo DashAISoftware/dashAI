@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import {
-  Button,
-  Grid,
-  Paper,
-  Typography,
-  LinearProgress,
-} from "@mui/material";
-import { AddCircleOutline as AddIcon, Update as UpdateIcon } from "@mui/icons-material";
+  AddCircleOutline as AddIcon,
+  Update as UpdateIcon,
+} from "@mui/icons-material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 
@@ -63,47 +60,55 @@ function PipelinesTable({
     }
   };
 
-  const columns = useMemo(() => [
-    {
-      field: "name",
-      headerName: "Name",
-      minWidth: 250,
-      editable: false,
-    },
-    {
-      field: "created",
-      headerName: "Created",
-      minWidth: 150,
-      valueFormatter: (params) => formatDate(params.value),
-    },
-    {
-      field: "last_modified",
-      headerName: "Edited",
-      minWidth: 150,
-      valueFormatter: (params) => formatDate(params.value),
-    },
-    {
-      field: "actions",
-      type: "actions",
-      minWidth: 160,
-      getActions: (params) => [
-        <GridActionsCellItem
-        key="view"
-        icon={<ViewIcon />}
-        label="View"
-        onClick={() => navigate(`/app/pipelines/${params.id}`)}
-        />,
-        <DeleteItemModal
-          key="delete-button"
-          deleteFromTable={() => handleDelete(params.id)}
-        />,
-      ],
-    },
-  ], []);
+  const columns = useMemo(
+    () => [
+      {
+        field: "name",
+        headerName: "Name",
+        minWidth: 250,
+        editable: false,
+      },
+      {
+        field: "created",
+        headerName: "Created",
+        minWidth: 150,
+        valueFormatter: (params) => formatDate(params.value),
+      },
+      {
+        field: "last_modified",
+        headerName: "Edited",
+        minWidth: 150,
+        valueFormatter: (params) => formatDate(params.value),
+      },
+      {
+        field: "actions",
+        type: "actions",
+        minWidth: 160,
+        getActions: (params) => [
+          <GridActionsCellItem
+            key="view"
+            icon={<ViewIcon />}
+            label="View"
+            onClick={() => navigate(`/app/pipelines/${params.id}`)}
+          />,
+          <DeleteItemModal
+            key="delete-button"
+            deleteFromTable={() => handleDelete(params.id)}
+          />,
+        ],
+      },
+    ],
+    [],
+  );
 
   return (
     <Paper sx={{ py: 4, px: 6 }}>
-      <Grid container justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+      <Grid
+        container
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 4 }}
+      >
         <Typography variant="h5">Current Pipelines</Typography>
         <Grid item>
           <Grid container spacing={2}>
@@ -117,7 +122,11 @@ function PipelinesTable({
               </Button>
             </Grid>
             <Grid item>
-              <Button variant="contained" onClick={fetchPipelines} endIcon={<UpdateIcon />}>
+              <Button
+                variant="contained"
+                onClick={fetchPipelines}
+                endIcon={<UpdateIcon />}
+              >
                 Update
               </Button>
             </Grid>

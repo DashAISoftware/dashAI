@@ -1,7 +1,14 @@
 import { createPipeline, updatePipeline } from "../../api/pipeline";
 import { enqueuePipelineJob, startJobQueue } from "../../api/job";
 
-async function RunPipeline(nodes, nodeData, name, edges, enqueueSnackbar, pipelineId = null) {
+async function RunPipeline(
+  nodes,
+  nodeData,
+  name,
+  edges,
+  enqueueSnackbar,
+  pipelineId = null,
+) {
   const steps = nodes.map((node) => {
     const config = nodeData[node.id] || {};
 

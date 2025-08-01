@@ -1,33 +1,37 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Button } from "@mui/material";
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
-function PipelineHeader({ 
-  activeTab, 
-  setActiveTab, 
-  navigate 
-}) {
+function PipelineHeader({ activeTab, setActiveTab, navigate }) {
   return (
-    <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", mb: 2 }}>
-      <Button 
-        onClick={() => navigate('/app/pipelines')}
+    <Box
+      sx={{
+        position: "relative",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        mb: 2,
+      }}
+    >
+      <Button
+        onClick={() => navigate("/app/pipelines")}
         sx={{ position: "absolute", left: 0, fontSize: "1rem" }}
       >
         <ArrowBackIosIcon />
       </Button>
 
       <Box>
-        <Button 
-          onClick={() => setActiveTab("flow")} 
-          variant={activeTab === "flow" ? "contained" : "text"} 
+        <Button
+          onClick={() => setActiveTab("flow")}
+          variant={activeTab === "flow" ? "contained" : "text"}
           sx={{ mr: 1, fontSize: "1.1rem" }}
         >
           Design
         </Button>
-        <Button 
-          onClick={() => setActiveTab("results")} 
-          variant={activeTab === "results" ? "contained" : "text"} 
+        <Button
+          onClick={() => setActiveTab("results")}
+          variant={activeTab === "results" ? "contained" : "text"}
           sx={{ fontSize: "1.1rem" }}
         >
           Results
@@ -43,4 +47,4 @@ PipelineHeader.propTypes = {
   navigate: PropTypes.func.isRequired,
 };
 
-export default PipelineHeader; 
+export default PipelineHeader;

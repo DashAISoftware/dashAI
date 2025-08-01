@@ -13,6 +13,6 @@ class JobParams(BaseModel):
         "DatasetJob",
         "ExplorerJob",
         "ConverterListJob",
-        "PipelineJob"
+        "PipelineJob",
     ]
     kwargs: dict

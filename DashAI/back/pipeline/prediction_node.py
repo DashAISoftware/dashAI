@@ -3,8 +3,8 @@ import logging
 import os
 from typing import Any, Dict
 
-from fastapi import HTTPException
 import numpy as np
+from fastapi import HTTPException
 
 from DashAI.back.config import DefaultSettings
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -56,7 +56,7 @@ class Prediction(BaseJob):
             raise JobError(
                 "Model prediction failed",
             ) from e
-        
+
         try:
             settings = DefaultSettings()
             sqlite_local = os.path.expanduser(settings.LOCAL_PATH)

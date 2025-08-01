@@ -66,7 +66,7 @@ function Home() {
           <HomeButton
             title="Pipelines"
             description="Create and manage pipelines."
-            to="/app/pipelines" 
+            to="/app/pipelines"
             Icon={MergeIcon}
           />
         </Grid>

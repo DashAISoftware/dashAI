@@ -23,10 +23,21 @@ import { parseRangeToIndex } from "../../../utils/parseRange";
 import { validateNode } from "../../../api/pipeline";
 
 const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
-  const [inputColumns, setInputColumns] = useState(savedConfig?.input_columns || "");
-  const [outputColumns, setOutputColumns] = useState(savedConfig?.output_columns || "");
+  const [inputColumns, setInputColumns] = useState(
+    savedConfig?.input_columns || "",
+  );
+  const [outputColumns, setOutputColumns] = useState(
+    savedConfig?.output_columns || "",
+  );
   const [splits, setSplits] = useState(
-    savedConfig?.splits || { train: 60, validation: 20, test: 20, shuffle: true, stratify: false, splitType: "random" }
+    savedConfig?.splits || {
+      train: 60,
+      validation: 20,
+      test: 20,
+      shuffle: true,
+      stratify: false,
+      splitType: "random",
+    },
   );
   const [task, setTask] = useState(savedConfig?.task || "");
   const [model, setModel] = useState(savedConfig?.model || "");
@@ -53,8 +64,14 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
     const fetchComponents = async () => {
       try {
         const tasks = await getComponentsRequest({ selectTypes: ["Task"] });
-        const models = await getComponentsRequest({ selectTypes: ["Model"], relatedComponent: task });
-        const metrics = await getComponentsRequest({ selectTypes: ["Metric"], relatedComponent: task });
+        const models = await getComponentsRequest({
+          selectTypes: ["Model"],
+          relatedComponent: task,
+        });
+        const metrics = await getComponentsRequest({
+          selectTypes: ["Metric"],
+          relatedComponent: task,
+        });
 
         setAvailableTasks(tasks);
         setAvailableModels(models);
@@ -67,18 +84,28 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
     fetchComponents();
   }, [task]);
 
-  const {
-    defaultValues,
-    modelSchema,
-    yupSchema,
-    loading,
-  } = useSchema({ modelName: model });
+  const { defaultValues, modelSchema, yupSchema, loading } = useSchema({
+    modelName: model,
+  });
 
-useEffect(() => {
+  useEffect(() => {
     const total = datasetInfo?.total_columns;
-    setInputColumns(savedConfig?.input_columns?.join(",") || (total ? `1-${total - 1}` : ""));
-    setOutputColumns(savedConfig?.output_columns?.join(",") || (total ? `${total}` : ""));
-    setSplits(savedConfig?.splits || { train: 0.6, validation: 0.2, test: 0.2, shuffle: true, stratify: false, splitType: "random" });
+    setInputColumns(
+      savedConfig?.input_columns?.join(",") || (total ? `1-${total - 1}` : ""),
+    );
+    setOutputColumns(
+      savedConfig?.output_columns?.join(",") || (total ? `${total}` : ""),
+    );
+    setSplits(
+      savedConfig?.splits || {
+        train: 0.6,
+        validation: 0.2,
+        test: 0.2,
+        shuffle: true,
+        stratify: false,
+        splitType: "random",
+      },
+    );
     setTask(savedConfig?.task || "");
     setModel(savedConfig?.model || "");
     setMetrics(savedConfig?.metrics || []);
@@ -113,9 +140,13 @@ useEffect(() => {
 
   const handleSave = async () => {
     const maxValue = datasetInfo?.total_columns;
-    const parsedInput = inputColumns ? parseRangeToIndex(inputColumns, maxValue) : [];
-    const parsedOutput = outputColumns ? parseRangeToIndex(outputColumns, maxValue) : [];
-    const payload ={
+    const parsedInput = inputColumns
+      ? parseRangeToIndex(inputColumns, maxValue)
+      : [];
+    const parsedOutput = outputColumns
+      ? parseRangeToIndex(outputColumns, maxValue)
+      : [];
+    const payload = {
       input_columns: parsedInput,
       output_columns: parsedOutput,
       splits: {
@@ -150,20 +181,20 @@ useEffect(() => {
   };
 
   const getDatasetInfo = async () => {
-      setInfoLoading(true);
-      try {
-        const datasetInfo = await getDatasetInfoRequest(datasetId);
-        setDatasetInfo(datasetInfo);
-      } catch (error) {
-        enqueueSnackbar("Error while trying to obtain the dataset info.");
-        if (error.response) {
-          console.error("Response error:", error.message);
-        } else if (error.request) {
-          console.error("Request error", error.request);
-        } else {
-          console.error("Unknown Error", error.message);
-        }
-      } finally {
+    setInfoLoading(true);
+    try {
+      const datasetInfo = await getDatasetInfoRequest(datasetId);
+      setDatasetInfo(datasetInfo);
+    } catch (error) {
+      enqueueSnackbar("Error while trying to obtain the dataset info.");
+      if (error.response) {
+        console.error("Response error:", error.message);
+      } else if (error.request) {
+        console.error("Request error", error.request);
+      } else {
+        console.error("Unknown Error", error.message);
+      }
+    } finally {
       setInfoLoading(false);
     }
   };
@@ -205,7 +236,9 @@ useEffect(() => {
       }
 
       try {
-        output = outputColumns ? parseRangeToIndex(outputColumns, maxValue) : [];
+        output = outputColumns
+          ? parseRangeToIndex(outputColumns, maxValue)
+          : [];
         setOutputError(false);
         setOutputErrorMessage("");
       } catch (err) {
@@ -226,14 +259,14 @@ useEffect(() => {
               taskObj.name,
               datasetId,
               input,
-              output
+              output,
             );
             return validation.dataset_status === "valid" ? taskObj.name : null;
           } catch (error) {
             console.warn(`Error validating task ${taskObj.name}`, error);
             return null;
           }
-        })
+        }),
       );
 
       const valid = results.filter(Boolean);
@@ -308,7 +341,9 @@ useEffect(() => {
               type="number"
               fullWidth
               value={splits.train}
-              onChange={(e) => setSplits({ ...splits, train: parseFloat(e.target.value, 10) })}
+              onChange={(e) =>
+                setSplits({ ...splits, train: parseFloat(e.target.value, 10) })
+              }
               margin="normal"
             />
             <TextField
@@ -316,7 +351,12 @@ useEffect(() => {
               type="number"
               fullWidth
               value={splits.validation}
-              onChange={(e) => setSplits({ ...splits, validation: parseFloat(e.target.value, 10) })}
+              onChange={(e) =>
+                setSplits({
+                  ...splits,
+                  validation: parseFloat(e.target.value, 10),
+                })
+              }
               margin="normal"
             />
             <TextField
@@ -324,7 +364,9 @@ useEffect(() => {
               type="number"
               fullWidth
               value={splits.test}
-              onChange={(e) => setSplits({ ...splits, test: parseFloat(e.target.value, 10) })}
+              onChange={(e) =>
+                setSplits({ ...splits, test: parseFloat(e.target.value, 10) })
+              }
               margin="normal"
             />
           </Grid>
@@ -348,7 +390,11 @@ useEffect(() => {
               margin="normal"
             >
               {availableTasks.map((taskObj) => (
-                <MenuItem key={taskObj.name} value={taskObj.name} disabled={!validTasks.includes(taskObj.name)}>
+                <MenuItem
+                  key={taskObj.name}
+                  value={taskObj.name}
+                  disabled={!validTasks.includes(taskObj.name)}
+                >
                   {taskObj.name}
                 </MenuItem>
               ))}
@@ -364,7 +410,7 @@ useEffect(() => {
                   fullWidth
                   value={model}
                   onChange={(e) => {
-                    setModel(e.target.value)
+                    setModel(e.target.value);
                   }}
                   margin="normal"
                   disabled={!task}
@@ -381,7 +427,7 @@ useEffect(() => {
                   onClick={() => setOpenSettings(true)}
                   disabled={!model}
                   aria-label="model settings"
-                  sx={{ mt: '8px' }}
+                  sx={{ mt: "8px" }}
                 >
                   <SettingsIcon />
                 </IconButton>
@@ -441,7 +487,6 @@ useEffect(() => {
         onChange={handleChange}
         onClose={() => setOpenSettings(false)}
       />
-
     </>
   );
 };

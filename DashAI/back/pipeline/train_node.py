@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import Any, Dict, List
+
 from kink import di
 
 from DashAI.back.config import DefaultSettings
@@ -75,7 +76,7 @@ class Train(BaseJob):
         log.debug("Train executed successfully.")
 
     async def run(
-        self, 
+        self,
         context: Dict[str, Any],
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
     ) -> Dict[str, Any]:
@@ -88,8 +89,10 @@ class Train(BaseJob):
 
         input_columns_names = get_column_names_from_indexes(dataset, self.input_columns)
         context["input_columns"] = input_columns_names
-        output_columns_names = get_column_names_from_indexes(dataset, self.output_columns)
-        
+        output_columns_names = get_column_names_from_indexes(
+            dataset, self.output_columns
+        )
+
         all_metrics = {
             component_dict["name"]: component_dict
             for component_dict in component_registry(di).get_components_by_types(
@@ -103,19 +106,19 @@ class Train(BaseJob):
                 metrics.append(metric_class)
             else:
                 log.warning(f"Metric '{metric_name}' not found in registry.")
-        
+
         try:
             prepared_dataset = task_instance.prepare_for_task(
                 dataset, output_columns_names
             )
             n_labels = None
             if self.task in [
-                    "TextClassificationTask",
-                    "TabularClassificationTask",
-                    "ImageClassificationTask",
-                ]:
-                    all_classes = prepared_dataset.unique(output_columns_names[0])
-                    n_labels = len(all_classes)
+                "TextClassificationTask",
+                "TabularClassificationTask",
+                "ImageClassificationTask",
+            ]:
+                all_classes = prepared_dataset.unique(output_columns_names[0])
+                n_labels = len(all_classes)
 
             splits = self.splits
             prepared_dataset, splits = prepare_for_experiment(
@@ -124,18 +127,18 @@ class Train(BaseJob):
                 output_columns=output_columns_names,
             )
 
-            x, y = select_columns(prepared_dataset,
-                                  input_columns_names,
-                                  output_columns_names)
+            x, y = select_columns(
+                prepared_dataset, input_columns_names, output_columns_names
+            )
             x = split_dataset(x)
             y = split_dataset(y)
-            
+
         except Exception as e:
             log.exception(e)
             raise JobError(
                 f"Can not prepare dataset for task {self.task}",
             ) from e
-        
+
         try:
             model_class = component_registry(di)[self.model]["class"]
             context["model_class"] = model_class
@@ -147,11 +150,7 @@ class Train(BaseJob):
 
         try:
             parameters = self.parameters
-            factory = ModelFactory(
-                model_class,
-                parameters,
-                n_labels=n_labels
-            )
+            factory = ModelFactory(model_class, parameters, n_labels=n_labels)
             model: BaseModel = factory.model
         except Exception as e:
             log.exception(e)
@@ -166,7 +165,7 @@ class Train(BaseJob):
             raise JobError(
                 "Model training failed",
             ) from e
-        
+
         try:
             model_metrics = factory.evaluate(x, y, metrics)
         except Exception as e:
@@ -190,13 +189,12 @@ class Train(BaseJob):
             ) from e
 
         return {
-            "train": 
-                {
-                    "info": self.model,
-                    "parameters": self.parameters,
-                    "metrics": model_metrics,
-                    "model_path": model_path,
-                    "input_columns": self.input_columns,
-                    "task": self.task,
-                }
+            "train": {
+                "info": self.model,
+                "parameters": self.parameters,
+                "metrics": model_metrics,
+                "model_path": model_path,
+                "input_columns": self.input_columns,
+                "task": self.task,
+            }
         }

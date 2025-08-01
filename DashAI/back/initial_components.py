@@ -59,13 +59,13 @@ from DashAI.back.exploration import (
     ScatterPlotExplorer,
     WordcloudExplorer,
 )
-from DashAI.back.job import DatasetJob, ExplainerJob, ExplorerJob, ModelJob, PredictJob, PipelineJob
 from DashAI.back.job import (
     ConverterListJob,
     DatasetJob,
     ExplainerJob,
     ExplorerJob,
     ModelJob,
+    PipelineJob,
     PredictJob,
 )
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
@@ -88,6 +88,13 @@ from DashAI.back.models import (
     RidgeRegression,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
+from DashAI.back.pipeline import (
+    DataExploration,
+    DataSelector,
+    Prediction,
+    RetrieveModel,
+    Train,
+)
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ImageClassificationTask,
@@ -96,7 +103,6 @@ from DashAI.back.tasks import (
     TextClassificationTask,
     TranslationTask,
 )
-from DashAI.back.pipeline import DataSelector, DataExploration, Train, RetrieveModel, Prediction
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)

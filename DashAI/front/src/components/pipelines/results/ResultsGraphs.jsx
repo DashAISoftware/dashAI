@@ -47,7 +47,9 @@ function PipelineResultsGraphs({ metrics }) {
           });
         });
 
-        const concatenatedMetrics = Array.from(new Set(phases.concat(metricNames)));
+        const concatenatedMetrics = Array.from(
+          new Set(phases.concat(metricNames)),
+        );
         setConcatenatedMetrics(concatenatedMetrics);
         setTabularMetrics(tabularMetrics);
 
@@ -56,7 +58,7 @@ function PipelineResultsGraphs({ metrics }) {
 
         if (showCustomMetrics) {
           parameterIndex = selectedParameters.map((param) =>
-            tabularMetrics.indexOf(param)
+            tabularMetrics.indexOf(param),
           );
         } else {
           const criteria = {};
@@ -98,7 +100,7 @@ function PipelineResultsGraphs({ metrics }) {
         });
 
         const relevantNumericValues = parameterIndex.map(
-          (index) => numericValues[index]
+          (index) => numericValues[index],
         );
 
         graphsMaking(
@@ -108,12 +110,12 @@ function PipelineResultsGraphs({ metrics }) {
           showCustomMetrics,
           selectedParameters,
           generalParameters,
-          pieCounter
+          pieCounter,
         );
 
         const { generalLayout, pieLayout } = layoutMaking(
           selectedChart,
-          graphsToView
+          graphsToView,
         );
 
         const graphsToViewKeys = Object.keys(graphsToView);

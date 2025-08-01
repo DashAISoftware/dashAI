@@ -1,12 +1,13 @@
-from typing import List, Dict
 import json
-from pathlib import Path
 import re
+from pathlib import Path
+from typing import Dict, List
 
 try:
     NODE_TYPES = json.loads((Path(__file__).parent.parent / "nodes.json").read_text())
 except (FileNotFoundError, json.JSONDecodeError) as e:
-    raise RuntimeError(f"Error loading node types: {e}")
+    raise RuntimeError(f"Error loading node types: {e}") from e
+
 
 class PipelineValidator:
     def __init__(self, nodes: List[Dict], edges: List[Dict]):
@@ -39,8 +40,8 @@ class PipelineValidator:
 
     def _validate_duplicates(self):
         def extract_number(id_str):
-            match = re.search(r'-(\d+)$', id_str)
-            return int(match.group(1)) if match else float('inf')
+            match = re.search(r"-(\d+)$", id_str)
+            return int(match.group(1)) if match else float("inf")
 
         type_to_ids = {}
         for node in self.nodes:
@@ -48,7 +49,7 @@ class PipelineValidator:
             node_name = self._get_node_display_name(node)
             type_to_ids.setdefault(node_type, []).append((node["id"], node_name))
 
-        for t, ids in type_to_ids.items():
+        for _, ids in type_to_ids.items():
             sorted_ids = sorted(ids, key=lambda x: extract_number(x[0]))
             for id, name in sorted_ids[1:]:
                 self.duplicated_ids.add(id)
@@ -73,23 +74,23 @@ class PipelineValidator:
                 self.errors.setdefault(node_id, []).append(
                     f"{node_name} cannot have more than one input."
                 )
-            
+
             predecessor_types = [
                 self.node_map[e["source"]]["type"]
                 for e in predecessors
                 if e["source"] in self.node_map
             ]
 
-            if expected_predecessors:
-                if not expected_predecessors.intersection(predecessor_types):
-                    expected_names = [
-                        self._get_type_display_name(t)
-                        for t in expected_predecessors
-                    ]
-                    expected_str = " or ".join(expected_names)
-                    self.errors.setdefault(node_id, []).append(
-                        f"{node_name} must be connected to {expected_str} node."
-                    )
+            if expected_predecessors and not expected_predecessors.intersection(
+                predecessor_types
+            ):
+                expected_names = [
+                    self._get_type_display_name(t) for t in expected_predecessors
+                ]
+                expected_str = " or ".join(expected_names)
+                self.errors.setdefault(node_id, []).append(
+                    f"{node_name} must be connected to {expected_str} node."
+                )
 
             if not expected_predecessors and predecessors:
                 self.errors.setdefault(node_id, []).append(

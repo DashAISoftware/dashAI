@@ -25,9 +25,12 @@ export const getNodes = async () => {
 
 export const updatePipeline = async (
   id: number,
-  formData: object
+  formData: object,
 ): Promise<IPipeline> => {
-  const response = await api.put<IPipeline>(`${pipelineEndpoint}/${id}`, formData);
+  const response = await api.put<IPipeline>(
+    `${pipelineEndpoint}/${id}`,
+    formData,
+  );
   return response.data;
 };
 
@@ -38,7 +41,7 @@ export const deletePipeline = async (id: number): Promise<object> => {
 
 export const validateNode = async (
   nodeType: string,
-  config: object
+  config: object,
 ): Promise<{ status: string; message?: string }> => {
   const response = await api.post(`${pipelineEndpoint}/validate_node`, {
     type: nodeType,
@@ -49,7 +52,7 @@ export const validateNode = async (
 
 export const validatePipeline = async (
   nodes: Array<object>,
-  edges: Array<object>
+  edges: Array<object>,
 ): Promise<{ errors?: Record<string, string[]> }> => {
   const response = await api.post(`${pipelineEndpoint}/validate_pipeline`, {
     nodes: nodes,
@@ -59,22 +62,24 @@ export const validatePipeline = async (
 };
 
 export const getPipelinePredictionSummary = async (predictionId: string) => {
-    const response = await api.get(`${pipelineEndpoint}/predict_summary`, {
-      params: {
-        pred_name: predictionId,
-      },
-    });
-    return response.data;
-  };
+  const response = await api.get(`${pipelineEndpoint}/predict_summary`, {
+    params: {
+      pred_name: predictionId,
+    },
+  });
+  return response.data;
+};
 
 export const getExplorationResults = async (id: number) => {
-  const response = await api.get(`${pipelineEndpoint}/${id}/dataexploration/results`);
+  const response = await api.get(
+    `${pipelineEndpoint}/${id}/dataexploration/results`,
+  );
   return response.data;
 };
 
 export const filterModels = async (
   dataset_id: string,
-  pipeline_id: number | null = null
+  pipeline_id: number | null = null,
 ): Promise<IPipeline[]> => {
   const response = await api.post(`${pipelineEndpoint}/filter_models`, {
     dataset_id: dataset_id,

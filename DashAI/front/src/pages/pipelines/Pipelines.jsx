@@ -12,7 +12,6 @@ function PipelinesPage() {
       title="Pipelines Module"
       subtitle="Manage and visualize pipelines"
     >
-
       <PipelinesTable
         handleOpenNewPipeline={() => setShowNewPipeline(true)}
         updateTableFlag={updateTableFlag}

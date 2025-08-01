@@ -3,7 +3,6 @@ import pathlib
 from datetime import datetime
 from typing import Any, Dict, List
 
-from beartype.typing import List
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -252,6 +251,7 @@ class LocalExplainer(Base):
         """Update the status of the local explainer to error."""
         self.status = ExplainerStatus.ERROR
 
+
 class Pipeline(Base):
     __tablename__ = "pipeline"
     """
@@ -270,6 +270,7 @@ class Pipeline(Base):
     exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+
 
 class ConverterList(Base):
     __tablename__ = "converter_list"

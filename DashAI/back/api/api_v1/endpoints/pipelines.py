@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from kink import di, inject
@@ -27,6 +27,7 @@ from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
 
 @router.get("/")
 @inject
@@ -115,7 +116,7 @@ async def pipeline_predict_summary(
     sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
     path = os.path.join(sqlite_local, "pipelines", "predictions", pred_name)
     summary = {}
-    
+
     try:
         with open(path, "r") as f:
             try:
@@ -273,11 +274,11 @@ async def get_pipeline_dataexploration_results(
 
         try:
             explorer_component_class = component_registry[exploration_type]["class"]
-        except KeyError:
+        except KeyError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Exploration type '{exploration_type}' not found in registry",
-            )
+                detail=(f"Exploration type '{exploration_type}' not found in registry"),
+            ) from e
 
         try:
             explorer_instance: BaseExplorer = explorer_component_class(**parameters)
@@ -294,10 +295,11 @@ async def get_pipeline_dataexploration_results(
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error while getting results for '{exploration_type}'",
+                detail=(f"Error while getting results for '{exploration_type}'"),
             ) from e
 
     return results
+
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
@@ -331,11 +333,14 @@ async def create_pipeline(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Empty pipeline",
         )
-    
+
     with session_factory() as db:
         try:
-            steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
-                          
+            steps_dict = [
+                step.model_dump() if hasattr(step, "model_dump") else step
+                for step in params.steps or []
+            ]
+
             new_pipeline = Pipeline(
                 name=params.name,
                 steps=steps_dict,
@@ -355,6 +360,7 @@ async def create_pipeline(
                 detail="Internal database error",
             ) from e
     return new_pipeline
+
 
 @router.put("/{pipeline_id}")
 @inject
@@ -391,7 +397,7 @@ async def update_pipeline(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Empty pipeline",
         )
-    
+
     with session_factory() as db:
         try:
             pipeline = db.get(Pipeline, pipeline_id)
@@ -400,12 +406,15 @@ async def update_pipeline(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Pipeline not found",
                 )
-            
+
             pipeline.exploration = None
             pipeline.train = None
             pipeline.prediction = None
 
-            steps_dict = [step.model_dump() if hasattr(step, "model_dump") else step for step in params.steps or []]
+            steps_dict = [
+                step.model_dump() if hasattr(step, "model_dump") else step
+                for step in params.steps or []
+            ]
 
             pipeline.name = params.name or pipeline.name
             pipeline.steps = steps_dict or pipeline.steps
@@ -421,6 +430,7 @@ async def update_pipeline(
                 detail="Internal database error",
             ) from e
     return pipeline
+
 
 @router.delete("/{pipeline_id}")
 @inject
@@ -467,6 +477,7 @@ async def delete_pipeline(
                 detail="Internal database error",
             ) from e
     return {"message": "Pipeline deleted successfully"}
+
 
 @router.post("/validate_node")
 @inject
@@ -526,7 +537,6 @@ async def validate_pipeline(
     return validator.validate()
 
 
-
 @router.post("/filter_models")
 async def filter_models_endpoint(
     params: DatasetFilterParams,
@@ -581,7 +591,9 @@ async def filter_models_endpoint(
                 for step in steps:
                     if step["type"] == "DataSelector":
                         dataset_path = step["config"]["file_path"]
-                        dataset_spec = get_columns_spec(str(Path(dataset_path, "dataset")))
+                        dataset_spec = get_columns_spec(
+                            str(Path(dataset_path, "dataset"))
+                        )
 
                 if dataset_spec == base_spec:
                     compatible_pipelines.append(pipeline)
@@ -592,5 +604,5 @@ async def filter_models_endpoint(
         logger.exception("Error filtering pipelines: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while filtering pipelines",
+            detail=("An error occurred while filtering pipelines"),
         ) from e

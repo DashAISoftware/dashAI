@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+
 class BaseNodeValidator(ABC):
     TYPE: str = "BaseNode"
 
@@ -33,13 +34,14 @@ class DataSelectorValidator(BaseNodeValidator):
             return {"status": "error", "message": "Dataset not found"}
 
         return {"status": "ok"}
-    
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         return {
             "type": cls.TYPE,
             "required_fields": ["datasetName", "datasetPath"],
         }
+
 
 class DataExplorationValidator(BaseNodeValidator):
     def validate(self) -> Dict[str, str]:
@@ -52,7 +54,7 @@ class DataExplorationValidator(BaseNodeValidator):
 
 
 class TrainValidator(BaseNodeValidator):
-    def validate(self) -> Dict[str, str]:        
+    def validate(self) -> Dict[str, str]:
         input_cols = self.data.get("input_columns")
         output_cols = self.data.get("output_columns")
         task = self.data.get("task")
@@ -61,23 +63,37 @@ class TrainValidator(BaseNodeValidator):
         model = self.data.get("model")
 
         if not input_cols or not output_cols:
-            return {"status": "error", "message": "Input and output columns are required"}
-        
+            return {
+                "status": "error",
+                "message": "Input and output columns are required",
+            }
+
         if task is None:
             return {"status": "error", "message": "Task is required"}
-        
+
         if model is None:
             return {"status": "error", "message": "Model is required"}
-        
+
         if not metrics:
-            return {"status": "error", "message": "At least one metric must be selected"}
-        
-        train, val, test = splits.get("train", 0), splits.get("validation", 0), splits.get("test", 0)
+            return {
+                "status": "error",
+                "message": "At least one metric must be selected",
+            }
+
+        train, val, test = (
+            splits.get("train", 0),
+            splits.get("validation", 0),
+            splits.get("test", 0),
+        )
         if round(train + val + test, 5) != 1.0:
-            return {"status": "error", "message": "Train, validation, and test splits must sum to 1"}
+            return {
+                "status": "error",
+                "message": "Train, validation, and test splits must sum to 1",
+            }
 
         return {"status": "ok"}
-    
+
+
 class RetrieveModelValidator(BaseNodeValidator):
     def validate(self) -> Dict[str, str]:
         model = self.data.get("model")
@@ -86,9 +102,13 @@ class RetrieveModelValidator(BaseNodeValidator):
         task = self.data.get("task")
 
         if not model or not model_path or not input_columns or not task:
-            return {"status": "error", "message": "Error in trained model selected"}
-        
+            return {
+                "status": "error",
+                "message": "Error in trained model selected",
+            }
+
         return {"status": "ok"}
+
 
 VALIDATOR_MAP = {
     "DataSelector": DataSelectorValidator,

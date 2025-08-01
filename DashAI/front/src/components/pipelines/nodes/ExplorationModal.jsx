@@ -23,27 +23,33 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
 
-  const { explorationData, setExplorerData, datasetColumns, setExplorationData } = useExplorationsContext();
+  const {
+    explorationData,
+    setExplorerData,
+    datasetColumns,
+    setExplorationData,
+  } = useExplorationsContext();
 
   useEffect(() => {
     if (datasetColumns && datasetColumns.length > 0) {
       if (savedConfig?.explorations?.length > 0) {
-        const transformedExplorers = savedConfig.explorations.map((explorer) => {
-          return {
-            exploration_type: explorer.exploration_type,
-            parameters: explorer.parameters,
-            columns: explorer.columns,
-            id: explorer.id,
-            name: explorer.name,
-          };
-        });
-        setExplorationData(prev => ({
+        const transformedExplorers = savedConfig.explorations.map(
+          (explorer) => {
+            return {
+              exploration_type: explorer.exploration_type,
+              parameters: explorer.parameters,
+              columns: explorer.columns,
+              id: explorer.id,
+              name: explorer.name,
+            };
+          },
+        );
+        setExplorationData((prev) => ({
           ...prev,
           explorers: transformedExplorers,
         }));
-
       } else {
-        setExplorerData(prev => ({ ...prev }));
+        setExplorerData((prev) => ({ ...prev }));
       }
       setLoading(false);
     } else {
@@ -59,7 +65,7 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
         columns: explorer.columns,
         id: index,
         name: explorer.name,
-      }))
+      })),
     };
 
     try {

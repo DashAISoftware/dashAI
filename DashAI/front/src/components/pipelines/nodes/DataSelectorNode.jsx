@@ -2,13 +2,7 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import DatasetModal from "../../../components/datasets/DatasetModal";
 import { validateNode } from "../../../api/pipeline";
-import {
-  Button,
-  Grid,
-  Paper,
-  Typography,
-  LinearProgress,
-} from "@mui/material";
+import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import { getDatasets } from "../../../api/datasets";
@@ -80,7 +74,13 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
   return (
     <Paper sx={{ p: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12} container justifyContent="space-between" alignItems="center">
+        <Grid
+          item
+          xs={12}
+          container
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Typography variant="h6">Select a Dataset</Typography>
           <Button
             variant="contained"
@@ -118,7 +118,11 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
         </Grid>
 
         <Grid item xs={12} container justifyContent="flex-end">
-          <Button onClick={handleSave} disabled={!datasetId} variant="contained">
+          <Button
+            onClick={handleSave}
+            disabled={!datasetId}
+            variant="contained"
+          >
             Save
           </Button>
         </Grid>

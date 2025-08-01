@@ -1,10 +1,11 @@
 import logging
 from typing import Any, Dict, List
+
 from kink import di
 
-from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.dataloaders.classes.dashai_dataset import get_column_names_from_indexes
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ class RetrieveModel(BaseJob):
         Name of the task the model was trained for
     """
 
-    def __init__(self, model: str, model_path: str, input_columns: List[int], task: str) -> None:
+    def __init__(
+        self, model: str, model_path: str, input_columns: List[int], task: str
+    ) -> None:
         super().__init__(kwargs={"model": model, "model_path": model_path})
         self.model = model
         self.model_path = model_path
@@ -46,7 +49,9 @@ class RetrieveModel(BaseJob):
             context["task_name"] = self.task
 
             dataset = context["dataset"]
-            input_columns_names = get_column_names_from_indexes(dataset, self.input_columns)
+            input_columns_names = get_column_names_from_indexes(
+                dataset, self.input_columns
+            )
             context["input_columns"] = input_columns_names
 
             model_class = component_registry(di)[self.model]["class"]

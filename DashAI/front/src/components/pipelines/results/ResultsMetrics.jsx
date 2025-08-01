@@ -43,7 +43,7 @@ function PipelineResultsMetrics({ metricsData = {} }) {
               </Grid>
               <Grid item xs={1}>
                 <Typography variant="body1" align="right">
-                  {typeof value === 'number' ? value.toFixed(4) : value}
+                  {typeof value === "number" ? value.toFixed(4) : value}
                 </Typography>
               </Grid>
             </Grid>
@@ -53,6 +53,5 @@ function PipelineResultsMetrics({ metricsData = {} }) {
     </Grid>
   );
 }
-
 
 export default PipelineResultsMetrics;
