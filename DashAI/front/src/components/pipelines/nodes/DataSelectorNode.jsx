@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import DatasetModal from "../../../components/datasets/DatasetModal";
 import { validateNode } from "../../../api/pipeline";
 import {
@@ -125,5 +126,15 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
     </Paper>
   );
 }
+
+DataSelectorNode.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  savedConfig: PropTypes.object,
+};
+
+DataSelectorNode.defaultProps = {
+  savedConfig: null,
+};
 
 export default DataSelectorNode;

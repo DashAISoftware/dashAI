@@ -96,7 +96,7 @@ from DashAI.back.tasks import (
     TextClassificationTask,
     TranslationTask,
 )
-from DashAI.back.pipeline import DataSelectorNode, ExplorationNode, RetrieveModelNode, TrainNode, PredictionNode
+from DashAI.back.pipeline import DataSelector, DataExploration, Train, RetrieveModel, Prediction
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -221,11 +221,11 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
-        DataSelectorNode.DataSelector,
-        ExplorationNode.DataExploration,
-        TrainNode.Train,
-        PredictionNode.Prediction,
-        RetrieveModelNode.RetrieveModel,
+        DataSelector,
+        DataExploration,
+        Train,
+        RetrieveModel,
+        Prediction,
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,

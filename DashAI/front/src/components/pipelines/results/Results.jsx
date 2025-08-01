@@ -11,11 +11,11 @@ import {
   Button,
 } from "@mui/material";
 import { ExpandMore, ArrowBackIosNew } from "@mui/icons-material";
-import { getPipelineById } from "../../api/pipeline";
+import { getPipelineById } from "../../../api/pipeline";
 import PipelineResultsMetrics from "./ResultsMetrics";
 import PipelineResultsGraphs from "./ResultsGraphs";
 import PipelineResultsPrediction from "./ResultsPrediction";
-import ResultsTabParameters from "../results/components/ResultsTabParameters";
+import ResultsTabParameters from "../../../pages/results/components/ResultsTabParameters";
 import ResultsExploration from "./ResultsExploration";
 
 function PipelineResults({ pipelineId, onClose }) {

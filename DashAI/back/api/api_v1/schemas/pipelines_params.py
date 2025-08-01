@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
+
 class Step(BaseModel):
     id: str
     type: str
@@ -19,6 +20,17 @@ class PipelineUpdateParams(BaseModel):
     steps: Optional[List[Step]]
     edges: Optional[List[Dict[str, Any]]]
 
+
 class DatasetFilterParams(BaseModel):
     dataset_id: int
     pipeline_id: Optional[int] = None
+
+
+class ValidateNodeParams(BaseModel):
+    type: str
+    config: Dict[str, Any]
+
+
+class ValidatePipelineParams(BaseModel):
+    nodes: List[Dict[str, Any]]
+    edges: List[Dict[str, Any]]

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Grid, Typography } from "@mui/material";
 
-import ResultsTabMetricsToggle from "../results/components/ResultsTabMetricsToggle";
+import ResultsTabMetricsToggle from "../../../pages/results/components/ResultsTabMetricsToggle";
 
 function PipelineResultsMetrics({ metricsData = {} }) {
   const [displaySet, setDisplaySet] = useState("test_metrics");

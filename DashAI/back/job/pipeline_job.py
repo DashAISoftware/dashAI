@@ -9,13 +9,12 @@ from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.dependencies.database.models import Pipeline
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
 class PipelineJob(BaseJob):
     def set_status_as_delivered(self) -> None:
-        log.info("Pipeline execution finished successfully.")
+        pass
 
     async def run(
         self, 
@@ -31,7 +30,10 @@ class PipelineJob(BaseJob):
         if not steps:
             raise JobError("No steps provided to execute the pipeline.")
 
-        log.info("Starting pipeline execution...")
+        if not steps:
+            raise JobError("Pipeline has no steps to execute")
+
+        log.info(f"Starting pipeline execution for pipeline {id}...")
 
         context: Dict[str, Any] = {"pipeline_id": id}
 
@@ -41,44 +43,66 @@ class PipelineJob(BaseJob):
             node_label = step.get("label")
             node_config = step.get("config", {})
 
-            log.info(f"Executing node {idx + 1}/{len(steps)}: {node_label} ({node_type})")
+            log.debug(f"Pipeline {id}: Executing step {idx + 1}/{len(steps)} - {node_type} ({node_id})")
 
             try:
                 node_class = component_registry(di)[node_type]["class"]
             except KeyError:
-                raise JobError(f"Component type {node_type} not found in registry.")
+                error_msg = f"Component type {node_type} not found in registry"
+                raise JobError(f"Error in node {node_id} ({node_type}): {error_msg}")
 
             try:
                 node_instance = node_class(**node_config)
             except Exception as e:
-                log.exception(e)
-                raise JobError(f"Error instantiating node {node_id} of type {node_type}") from e
+                error_msg = f"Error in node {node_id} ({node_type}): {str(e)}"
+                log.exception(error_msg)
+                raise JobError(error_msg) from e
 
             try:
                 output = await node_instance.run(context=context)
-                if node_type == "DataSelector":
-                    context["dataset"] = output["dataset"]
-                elif node_type == "DataExploration":
-                    context["exploration"] = output["exploration"]
-                    pipeline.exploration = context["exploration"]
-                elif node_type == "Train":
-                    context["train"] = output["train"]
-                    pipeline.train = context["train"]
-                elif node_type == "RetrieveModel":
-                    context["retrieve"] = output["retrieve"]
-                elif node_type == "Prediction":
-                    context["prediction"] = output["prediction"]
-                    pipeline.prediction = context["prediction"]
-                else:
-                    context[node_id] = output
-
-                log.info(f"Node {node_id} executed successfully.")
+                self._update_context(context, pipeline, node_type, node_id, output)
+                log.debug(f"Node {node_id} executed successfully.")
 
             except Exception as e:
-                log.exception(e)
-                raise JobError(f"Execution failed on node {node_id} of type {node_type}") from e
+                error_msg = f"Error in node {node_id} ({node_type}): {str(e)}"
+                log.exception(error_msg)
+                raise JobError(error_msg) from e
 
-        log.info("Pipeline execution completed.")
+        log.info(f"Pipeline {id} execution completed successfully.")
         db.add(pipeline)
         db.commit()
         self.set_status_as_delivered()
+
+    def _update_context(
+        self, 
+        context: Dict[str, Any], 
+        pipeline: Pipeline, 
+        node_type: str, 
+        node_id: str, 
+        output: Dict[str, Any]
+    ) -> None:
+        """
+        Update the pipeline context and database object based on node type.
+        
+        Args:
+            context: The pipeline context dictionary
+            pipeline: The pipeline database object
+            node_type: The type of node that was executed
+            node_id: The ID of the node that was executed
+            output: The output from the node execution
+        """
+        if node_type == "DataSelector":
+            context["dataset"] = output.get("dataset")
+        elif node_type == "DataExploration":
+            context["exploration"] = output.get("exploration")
+            pipeline.exploration = context["exploration"]
+        elif node_type == "Train":
+            context["train"] = output.get("train")
+            pipeline.train = context["train"]
+        elif node_type == "RetrieveModel":
+            context["retrieve"] = output.get("retrieve")
+        elif node_type == "Prediction":
+            context["prediction"] = output.get("prediction")
+            pipeline.prediction = context["prediction"]
+        else:
+            context[node_id] = output

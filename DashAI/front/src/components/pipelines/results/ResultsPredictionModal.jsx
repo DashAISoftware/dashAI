@@ -8,9 +8,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import PredictionSummaryTab from "../../components/predictions/PredictionSummaryTab";
-import PredictionSampleTab from "../../components/predictions/PredictionSampleTab";
-import { getPipelinePredictionSummary } from "../../api/pipeline";
+import PredictionSummaryTab from "../../../components/predictions/PredictionSummaryTab";
+import PredictionSampleTab from "../../../components/predictions/PredictionSampleTab";
+import { getPipelinePredictionSummary } from "../../../api/pipeline";
 
 function PredictionSummary({ predictName }) {
   const [loading, setLoading] = useState(true);

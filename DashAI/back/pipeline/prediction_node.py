@@ -12,14 +12,26 @@ from DashAI.back.models.base_model import BaseModel
 
 log = logging.getLogger(__name__)
 
+
 class Prediction(BaseJob):
+    """
+    Prediction node for making predictions using trained models in pipelines.
+
+    Predictions are saved to JSON files.
+
+    Parameters
+    ----------
+    kwargs : Dict[str, Any]
+        A dictionary containing the parameters for the node
+    """
+
     def __init__(self, **kwargs) -> None:
         super().__init__(kwargs=kwargs)
 
     def set_status_as_delivered(self) -> None:
-        log.info("Prediction executed successfully.")
+        log.debug("Prediction executed successfully.")
 
-    async def run(self, context: Dict[str, Any]) -> Any:
+    async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         loaded_dataset = context["dataset"]
         model = context["model_class"]
         model_path = context["model_path"]

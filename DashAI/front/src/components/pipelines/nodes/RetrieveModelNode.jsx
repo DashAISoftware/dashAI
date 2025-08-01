@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import {
   Button,
   Grid,
@@ -126,5 +127,17 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
     </Paper>
   );
 }
+
+RetrieveModelNode.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  savedConfig: PropTypes.object,
+  prevNodes: PropTypes.arrayOf(PropTypes.object),
+};
+
+RetrieveModelNode.defaultProps = {
+  savedConfig: null,
+  prevNodes: [],
+};
 
 export default RetrieveModelNode;

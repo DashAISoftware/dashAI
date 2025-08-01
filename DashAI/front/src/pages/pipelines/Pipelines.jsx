@@ -1,8 +1,7 @@
 import React from "react";
 
 import CustomLayout from "../../components/custom/CustomLayout";
-import PipelinesTable from "./PipelinesTable";
-import NewPipeline from "./NewPipeline";
+import { PipelinesTable } from "../../components/pipelines";
 
 function PipelinesPage() {
   const [showNewPipeline, setShowNewPipeline] = React.useState(false);

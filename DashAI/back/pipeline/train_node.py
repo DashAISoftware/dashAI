@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from typing import Any, Dict, List
@@ -20,7 +19,29 @@ from DashAI.back.tasks.base_task import BaseTask
 
 log = logging.getLogger(__name__)
 
+
 class Train(BaseJob):
+    """
+    Train node for training machine learning models in pipelines.
+
+    Parameters
+    ----------
+    input_columns : List[int]
+        List of column indices to use as input features
+    output_columns : List[int]
+        List of column indices to use as output targets
+    splits : Dict[str, float]
+        Dictionary with train/validation/test split ratios
+    task : str
+        Name of the task to perform (e.g., "TabularClassificationTask")
+    model : str
+        Name of the model to train
+    metrics : List[str]
+        List of metric names to evaluate
+    parameters : Dict[str, Any], optional
+        Model-specific parameters for training
+    """
+
     def __init__(
         self,
         input_columns: List[int],
@@ -51,13 +72,13 @@ class Train(BaseJob):
         self.parameters = parameters
 
     def set_status_as_delivered(self) -> None:
-        log.info("Train executed successfully.")
+        log.debug("Train executed successfully.")
 
     async def run(
         self, 
         context: Dict[str, Any],
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
-    ) -> Any:
+    ) -> Dict[str, Any]:
         context["task_name"] = self.task
         context["model_name"] = self.model
         pipeline_id = context["pipeline_id"]
@@ -83,7 +104,6 @@ class Train(BaseJob):
             else:
                 log.warning(f"Metric '{metric_name}' not found in registry.")
         
-        # split
         try:
             prepared_dataset = task_instance.prepare_for_task(
                 dataset, output_columns_names
@@ -111,16 +131,19 @@ class Train(BaseJob):
             y = split_dataset(y)
             
         except Exception as e:
-            raise JobError(f"Error en preparación de datos: {e}")
+            log.exception(e)
+            raise JobError(
+                f"Can not prepare dataset for task {self.task}",
+            ) from e
         
         try:
-                model_class = component_registry(di)[self.model]["class"]
-                context["model_class"] = model_class
+            model_class = component_registry(di)[self.model]["class"]
+            context["model_class"] = model_class
         except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    f"Unable to find Model with name {self.model} in registry.",
-                ) from e
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Model with name {self.model} in registry.",
+            ) from e
 
         try:
             parameters = self.parameters
@@ -131,24 +154,27 @@ class Train(BaseJob):
             )
             model: BaseModel = factory.model
         except Exception as e:
-            raise JobError(f"Error durante el entrenamiento: {e}")
+            log.exception(e)
+            raise JobError(
+                f"Unable to instantiate model {self.model}",
+            ) from e
 
         try:
             model.fit(x["train"], y["train"])
         except Exception as e:
             log.exception(e)
-            raise JobError(f"Error during model training: {e}")
+            raise JobError(
+                "Model training failed",
+            ) from e
         
-        # metrics
         try:
             model_metrics = factory.evaluate(x, y, metrics)
         except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    "Metrics calculation failed",
-                ) from e
-        
-        # save model
+            log.exception(e)
+            raise JobError(
+                "Metrics calculation failed",
+            ) from e
+
         try:
             settings = DefaultSettings()
             sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
@@ -159,7 +185,9 @@ class Train(BaseJob):
             context["model_path"] = model_path
         except Exception as e:
             log.exception(e)
-            raise JobError(f"Error saving model: {e}")
+            raise JobError(
+                "Model saving failed",
+            ) from e
 
         return {
             "train": 

@@ -1,12 +1,13 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Dialog, DialogContent, DialogTitle, DialogActions, Button, Stack, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import FormSchemaField from "../../../components/shared/FormSchemaField";
-import FormSchemaFieldWithOptions from "../../../components/shared/FormSchemaFieldWithOptions";
-import FormSchemaFieldWithCollapse from "../../../components/shared/FormSchemaFieldWithCollapse";
-import FormSchemaFieldWithOptimizers from "../../../components/shared/FormSchemaFieldWithOptimizers";
-import FormSchemaFieldWithParent from "../../../components/shared/FormSchemaFieldWithParent";
-import { getModelFromSubform } from "../../../utils/schema";
+import FormSchemaField from "../../components/shared/FormSchemaField";
+import FormSchemaFieldWithOptions from "../../components/shared/FormSchemaFieldWithOptions";
+import FormSchemaFieldWithCollapse from "../../components/shared/FormSchemaFieldWithCollapse";
+import FormSchemaFieldWithOptimizers from "../../components/shared/FormSchemaFieldWithOptimizers";
+import FormSchemaFieldWithParent from "../../components/shared/FormSchemaFieldWithParent";
+import { getModelFromSubform } from "../../utils/schema";
 
 function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
   if (!modelSchema) return null;
@@ -171,5 +172,18 @@ function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
     </Dialog>
   );
 }
+
+ParamsSettings.propTypes = {
+  open: PropTypes.bool.isRequired,
+  modelSchema: PropTypes.object,
+  values: PropTypes.object,
+  onChange: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
+
+ParamsSettings.defaultProps = {
+  modelSchema: null,
+  values: {},
+};
 
 export default ParamsSettings;

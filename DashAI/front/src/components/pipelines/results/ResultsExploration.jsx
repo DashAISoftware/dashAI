@@ -1,11 +1,11 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TabularVisualizer,
   PlotlyJsonVisualizer,
   ImageVisualizer,
-} from "../../components/explorations/Visualizations";
+} from "../../../components/explorations/Visualizations";
 import { Box, Typography, Tooltip } from "@mui/material";
-import { getExplorationResults } from "../../api/pipeline";
+import { getExplorationResults } from "../../../api/pipeline";
 
 function NullCell() {
   const [hover, setHover] = useState(false);

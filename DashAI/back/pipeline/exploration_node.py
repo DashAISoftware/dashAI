@@ -14,7 +14,23 @@ from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
 
-class DataExploration(BaseJob): 
+
+class DataExploration(BaseJob):
+    """
+    DataExploration node for performing data exploration in pipelines.
+
+    It supports multiple exploration types and saves results to files.
+
+    Parameters
+    ----------
+    explorations : Dict[str, Any]
+        - exploration_type: Type of exploration to perform
+        - parameters: Parameters for the exploration
+        - columns: Columns to explore
+        - id: Unique identifier for the exploration
+        - name: Name of the exploration
+    """
+
     def __init__(
         self, 
         explorations: Dict[str, Any],
@@ -27,13 +43,13 @@ class DataExploration(BaseJob):
         self.explorations = explorations
 
     def set_status_as_delivered(self) -> None:
-        log.info("DataExploration executed successfully.")
+        log.debug("DataExploration executed successfully.")
 
     async def run(
         self, 
         context: Dict[str, Any],
         component_registry: ComponentRegistry = lambda di: di["component_registry"],
-    ) -> Any:
+    ) -> Dict[str, Any]:
         
         try:
             pipeline_id = context.get("pipeline_id")

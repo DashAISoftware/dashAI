@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Button,
@@ -13,7 +14,7 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import useSchema from "../../../hooks/useSchema";
-import ParamsSettings from "./ParamsSettings";
+import ParamsSettings from "../ParamsSettings";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../../api/experiment";
 import { useSnackbar } from "notistack";
@@ -443,6 +444,19 @@ useEffect(() => {
 
     </>
   );
+};
+
+Train.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  savedConfig: PropTypes.object,
+  prevNodes: PropTypes.arrayOf(PropTypes.object),
+};
+
+Train.defaultProps = {
+  savedConfig: null,
+  prevNodes: [],
 };
 
 export default Train;

@@ -21,7 +21,7 @@ const CustomNode = ({ data, isConnectable }) => {
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
 
-  const IconComponent = iconMap[data.icon] || FolderIcon;
+  const IconComponent = iconMap[data.icon] || SettingsIcon;
   const isDisabled = data.errors?.some(err => err.includes("already exists")) ?? false;
   const borderColor = data.notConfigured && !isDisabled
     ? `2px solid ${theme.palette.warning.main}`
@@ -34,8 +34,8 @@ const CustomNode = ({ data, isConnectable }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{
-        width: 70,
-        height: 70,
+        width: 60,
+        height: 60,
         alignItems: 'center',
         justifyContent: 'center',
         display: 'flex',
@@ -82,7 +82,7 @@ const CustomNode = ({ data, isConnectable }) => {
         />
       )}
 
-      <IconComponent sx={{ fontSize: 30, color: iconColor }} />
+      <IconComponent sx={{ fontSize: 25, color: iconColor }} />
 
       {data.source && (
         <Handle
@@ -108,8 +108,8 @@ const CustomNode = ({ data, isConnectable }) => {
         alignItems: 'center',
       }}
     >
-      <Typography variant="subtitle2" sx={{ mb: 0.5, color: '#000' }}>
-        {data.name}
+      <Typography sx={{ fontSize: 11, mb: 0.5, color: '#000' }}>
+        {data.name || data.label}
       </Typography>
 
       {data.notConfigured && !isDisabled ? (

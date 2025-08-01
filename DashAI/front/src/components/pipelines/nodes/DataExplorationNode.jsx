@@ -1,7 +1,8 @@
-import ConfigureExplorersModal from "./ExplorationModal";
-import { ExplorationsProvider } from "../../../components/explorations/context";
+import React, { useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
-import { useEffect, useRef } from "react";
+import { ExplorationsProvider } from "../../../components/explorations/context";
+import ConfigureExplorersModal from "./ExplorationModal";
 
 const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
@@ -12,8 +13,8 @@ const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) 
   useEffect(() => {
     if (open && !datasetId) {
       if (!hasWarnedRef.current) {
-          enqueueSnackbar("Missing dataset", { variant: "warning" });
-          hasWarnedRef.current = true;
+        enqueueSnackbar("Missing dataset", { variant: "warning" });
+        hasWarnedRef.current = true;
       }
       return;
     }
@@ -37,6 +38,19 @@ const DataExplorationNode = ({ open, onClose, onSave, savedConfig, prevNodes }) 
     )}
   </>
   );
+};
+
+DataExplorationNode.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSave: PropTypes.func.isRequired,
+  savedConfig: PropTypes.object,
+  prevNodes: PropTypes.arrayOf(PropTypes.object),
+};
+
+DataExplorationNode.defaultProps = {
+  savedConfig: null,
+  prevNodes: [],
 };
 
 export default DataExplorationNode;

@@ -8,7 +8,23 @@ from DashAI.back.dataloaders.classes.dashai_dataset import get_column_names_from
 
 log = logging.getLogger(__name__)
 
+
 class RetrieveModel(BaseJob):
+    """
+    RetrieveModel node for loading pre-trained models in pipelines.
+
+    Parameters
+    ----------
+    model : str
+        Name of the model to retrieve
+    model_path : str
+        Path to the saved model file
+    input_columns : List[int]
+        List of column indices to use as input features
+    task : str
+        Name of the task the model was trained for
+    """
+
     def __init__(self, model: str, model_path: str, input_columns: List[int], task: str) -> None:
         super().__init__(kwargs={"model": model, "model_path": model_path})
         self.model = model
@@ -17,7 +33,7 @@ class RetrieveModel(BaseJob):
         self.task = task
 
     def set_status_as_delivered(self) -> None:
-        log.info("RetrieveModel executed successfully.")
+        log.debug("RetrieveModel executed successfully.")
 
     async def run(
         self,
@@ -35,8 +51,6 @@ class RetrieveModel(BaseJob):
 
             model_class = component_registry(di)[self.model]["class"]
             context["model_class"] = model_class
-
-            log.info(f"Model '{self.model}' retrieved from path '{self.model_path}'.")
 
             return {
                 "retrieve": {

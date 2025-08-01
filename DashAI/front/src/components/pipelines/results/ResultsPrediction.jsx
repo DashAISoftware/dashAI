@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { Box, Typography, Paper, Tooltip, IconButton } from "@mui/material";
-import { Search } from "@mui/icons-material";
+import React from "react";
+import { Paper } from "@mui/material";
 import PredictionSummary from "./ResultsPredictionModal";
 
 function PipelineResultsPrediction({ prediction }) {

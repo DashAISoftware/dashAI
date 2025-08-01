@@ -2,10 +2,10 @@ import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { Alert, AlertTitle } from "@mui/material";
 import { useSnackbar } from "notistack";
-import graphsMaking from "../results/constants/graphsMaking";
-import layoutMaking from "../results/constants/layoutMaking";
+import graphsMaking from "../../../pages/results/constants/graphsMaking";
+import layoutMaking from "../../../pages/results/constants/layoutMaking";
 
-import ResultsGraphsLayout from "../results/components/ResultsGraphsLayout";
+import ResultsGraphsLayout from "../../../pages/results/components/ResultsGraphsLayout";
 
 function PipelineResultsGraphs({ metrics }) {
   const { enqueueSnackbar } = useSnackbar();
