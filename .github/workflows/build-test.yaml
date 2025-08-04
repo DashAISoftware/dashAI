@@ -10,6 +10,8 @@ jobs:
         working-directory: DashAI/front
     steps:
       - uses: actions/checkout@v3
+      - name: Enable Corepack and use Yarn 3
+        run: corepack enable
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:

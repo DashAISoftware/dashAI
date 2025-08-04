@@ -69,5 +69,6 @@
     "jest-watch-typeahead": "^0.6.5",
     "prettier": "^2.8.7",
     "typescript": "*"
-  }
+  },
+  "packageManager": "yarn@3.5.0"
 }
