@@ -13,7 +13,7 @@ export function buildNodeHelp(nodeInfo) {
       description: node.description || "No description available.",
       input: node.input,
       output: node.output,
-      next: node.successors?.join(", ") || "",
+      next: node.next?.join(", ") || "",
     };
   });
 }

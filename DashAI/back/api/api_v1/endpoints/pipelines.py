@@ -77,6 +77,12 @@ async def get_nodes() -> List[Dict[str, Any]]:
         json_path = Path(__file__).resolve().parents[3] / "pipeline" / "nodes.json"
         with open(json_path, "r") as f:
             nodes = json.load(f)
+
+        type_to_name = {node["type"]: node["name"] for node in nodes}
+        for node in nodes:
+            successors = node.get("successors", [])
+            node["next"] = [type_to_name.get(s, s) for s in successors]
+
     except Exception as e:
         logger.exception(e)
         raise HTTPException(
