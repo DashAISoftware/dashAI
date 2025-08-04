@@ -13,7 +13,7 @@
     "formik": "^2.2.9",
     "json-server": "^0.17.3",
     "notistack": "^3.0.1",
-    "plotly.js": "^2.29.1",
+    "plotly.js": "^3.0.3",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -28,10 +28,10 @@
     "yup": "^0.32.11"
   },
   "scripts": {
-    "start": "set \"DISABLE_ESLINT_PLUGIN=true\" && node --max-old-space-size=4096 node_modules/react-scripts/scripts/start.js",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 DISABLE_ESLINT_PLUGIN=true react-scripts build",
-    "test": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts test",
-    "eject": "set \"DISABLE_ESLINT_PLUGIN=true\" && react-scripts eject",
+    "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
+    "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "test": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts test",
+    "eject": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts eject",
     "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001"
   },
   "eslintConfig": {
