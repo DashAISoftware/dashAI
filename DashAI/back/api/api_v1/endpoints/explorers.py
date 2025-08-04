@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from DashAI.back.api.api_v1.schemas import explorers_params as schemas
 from DashAI.back.core.enums.status import ExplorerStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
-from DashAI.back.dependencies.database.models import Dataset, Exploration, Explorer
+from DashAI.back.dependencies.database.models import Dataset, Explorer, Notebook
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 
@@ -63,7 +63,7 @@ def validate_explorer_params(
         )
 
     # validate dataset_id and columns against dataset
-    exploration = session.query(Exploration).get(explorer.exploration_id)
+    exploration = session.query(Notebook).get(explorer.notebook_id)
     if exploration is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

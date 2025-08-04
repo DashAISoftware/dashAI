@@ -8,7 +8,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-from DashAI.back.dependencies.database.models import Dataset, Exploration, Explorer
+from DashAI.back.dependencies.database.models import Dataset, Explorer
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -60,19 +60,20 @@ class ExplorerJob(BaseJob):
             raise JobError("Error while loading the explorer info.") from e
 
         # Load the exploration information
-        try:
-            exploration_info: Exploration = db.query(Exploration).get(
-                explorer_info.exploration_id
-            )
-            if exploration_info is None:
-                raise JobError(
-                    f"Exploration with id {explorer_info.exploration_id} not found."
-                )
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            explorer_info.set_status_as_error()
-            db.commit()
-            raise JobError("Error while loading the exploration info.") from e
+        ##### TODO: Change to notebook instance
+        # try:
+        #     exploration_info: Exploration = db.query(Exploration).get(
+        #         explorer_info.exploration_id
+        #     )
+        #     if exploration_info is None:
+        #         raise JobError(
+        #             f"Exploration with id {explorer_info.exploration_id} not found."
+        #         )
+        # except exc.SQLAlchemyError as e:
+        #     log.exception(e)
+        #     explorer_info.set_status_as_error()
+        #     db.commit()
+        #     raise JobError("Error while loading the exploration info.") from e
 
         # Load the dataset information
         try:

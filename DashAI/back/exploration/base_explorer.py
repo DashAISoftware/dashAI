@@ -5,11 +5,8 @@ from beartype.typing import Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    select_columns,
-)
-from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, select_columns
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 
 
 class BaseExplorerSchema(BaseSchema):
@@ -202,7 +199,7 @@ class BaseExplorer(ConfigObject, ABC):
     @abstractmethod
     def save_exploration(
         self,
-        exploration_info: Exploration,
+        exploration_info: Notebook,
         explorer_info: Explorer,
         save_path: Path,
         result: Any,
