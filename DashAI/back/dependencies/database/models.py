@@ -33,7 +33,7 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
-    explorations: Mapped[List["Exploration"]] = relationship(back_populates="dataset")
+    notebooks: Mapped[List["Notebook"]] = relationship(back_populates="dataset")
     experiments: Mapped[List["Experiment"]] = relationship(
         "Experiment", cascade="all, delete-orphan", back_populates="dataset"
     )
@@ -278,7 +278,7 @@ class ConverterList(Base):
     Table to store a list of converters applied to a dataset.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    dataset_id: Mapped[int] = mapped_column(nullable=False)
+    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebook.id"))
     converters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
@@ -286,6 +286,9 @@ class ConverterList(Base):
         nullable=False,
         default=ConverterListStatus.NOT_STARTED,
     )
+
+    # Relationships
+    notebook: Mapped["Notebook"] = relationship(back_populates="converters")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the list to delivered and set delivery_time
@@ -313,10 +316,10 @@ class ConverterList(Base):
         self.status = ConverterListStatus.ERROR
 
 
-class Exploration(Base):
-    __tablename__ = "exploration"
+class Notebook(Base):
+    __tablename__ = "notebook"
     """
-    Table to store all the information about a exploration session.
+    Table to store all the information about a notebook.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
@@ -326,12 +329,12 @@ class Exploration(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
-
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
     # Relationships
-    dataset: Mapped["Dataset"] = relationship(back_populates="explorations")
-    explorers: Mapped[List["Explorer"]] = relationship(back_populates="exploration")
+    dataset: Mapped["Dataset"] = relationship(back_populates="notebooks")
+    explorers: Mapped[List["Explorer"]] = relationship(back_populates="notebook")
+    converters: Mapped[List["ConverterList"]] = relationship(back_populates="notebook")
 
 
 class Explorer(Base):
@@ -340,7 +343,7 @@ class Explorer(Base):
     Table to store all the information about a explorer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    exploration_id: Mapped[int] = mapped_column(ForeignKey("exploration.id"))
+    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebook.id"))
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -362,7 +365,7 @@ class Explorer(Base):
         Enum(ExplorerStatus), nullable=False, default=ExplorerStatus.NOT_STARTED
     )
     # Relationships
-    exploration: Mapped["Exploration"] = relationship(back_populates="explorers")
+    notebook: Mapped["Notebook"] = relationship(back_populates="explorers")
 
     def set_status_as_delivered(self) -> None:
         """Update the status to delivered and set delivery_time to now."""
