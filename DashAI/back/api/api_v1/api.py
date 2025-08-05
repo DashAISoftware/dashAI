@@ -8,6 +8,7 @@ from DashAI.back.api.api_v1.endpoints import (
     explainers,
     explorers,
     jobs,
+    notebook,
     pipelines,
     plugins,
     predict,
@@ -26,3 +27,4 @@ api_router_v1.include_router(runs.router, prefix="/run")
 api_router_v1.include_router(predict.router, prefix="/predict")
 api_router_v1.include_router(pipelines.router, prefix="/pipelines")
 api_router_v1.include_router(plugins.router, prefix="/plugin")
+api_router_v1.include_router(notebook.router, prefix="/notebook")
