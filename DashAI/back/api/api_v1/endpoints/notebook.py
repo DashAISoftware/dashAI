@@ -139,7 +139,7 @@ def get_notebook_explorer(
 
 @router.get("/{notebook_id}/converter")
 @inject
-async def post_notebook_converter_list(
+async def get_notebook_converter_list(
     notebook_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
