@@ -1,4 +1,7 @@
 import logging
+import os
+import shutil
+import uuid
 
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
@@ -6,7 +9,12 @@ from kink import di, inject
 from sqlalchemy.orm import Session, sessionmaker
 
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
-from DashAI.back.dependencies.database.models import ConverterList, Explorer, Notebook
+from DashAI.back.dependencies.database.models import (
+    ConverterList,
+    Dataset,
+    Explorer,
+    Notebook,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -19,6 +27,7 @@ router = APIRouter()
 def create_notebook(
     params: schemas.NotebookCreate,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    config: dict = Depends(lambda: di["config"]),
 ):
     """Create a new notebook entry in the database.
 
@@ -43,7 +52,23 @@ def create_notebook(
     db: Session
     with session_factory() as db:
         try:
-            notebook_model = Notebook(**params.model_dump())
+            dataset_id = params.dataset_id
+            # Get the dataset
+            dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+
+            # Copy the dataset
+            dataset_folder = dataset.file_path
+            random_name = uuid.uuid4().hex[:8]
+            new_folder_path = os.path.join(
+                config["DATASETS_PATH"],
+                random_name,
+            )
+            os.makedirs(new_folder_path, exist_ok=True)
+            shutil.copytree(dataset_folder, new_folder_path, dirs_exist_ok=True)
+
+            notebook_data = params.model_dump()
+            notebook_data["file_path"] = new_folder_path
+            notebook_model = Notebook(**notebook_data)
             db.add(notebook_model)
             db.commit()
             db.refresh(notebook_model)

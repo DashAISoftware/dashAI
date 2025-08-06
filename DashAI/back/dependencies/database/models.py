@@ -329,6 +329,7 @@ class Notebook(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
     # Relationships
