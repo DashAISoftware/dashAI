@@ -1,6 +1,5 @@
 """DashAI Dataset implementation."""
 
-import copy
 import json
 import logging
 import os
@@ -43,9 +42,7 @@ def get_arrow_table(ds: Dataset) -> pa.Table:
     Raises:
         ValueError: If the arrow table cannot be retrieved.
     """
-    if hasattr(ds, "types"):
-        return ds.arrow_table
-    elif hasattr(ds, "arrow_table"):
+    if hasattr(ds, "types") or hasattr(ds, "arrow_table"):
         return ds.arrow_table
     elif hasattr(ds, "data") and hasattr(ds.data, "table"):
         return ds.data.table

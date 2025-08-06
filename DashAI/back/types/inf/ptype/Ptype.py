@@ -1,6 +1,8 @@
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 sys.path.insert(0, project_root)
 from back.types.inf.ptype.Column import (
@@ -12,9 +14,9 @@ from back.types.inf.ptype.Column import (
 )
 from back.types.inf.ptype.Machine import PI
 from back.types.inf.ptype.Machines import Machines
-from back.types.inf.ptype.Trainer import likelihoods_normalize, sum_weighted_likelihoods
 from back.types.inf.ptype.Schema import Schema
-from back.types.inf.ptype.utils import normalize_log_probs, LOG_EPS
+from back.types.inf.ptype.Trainer import likelihoods_normalize, sum_weighted_likelihoods
+from back.types.inf.ptype.utils import normalize_log_probs
 
 
 class Ptype:
@@ -30,13 +32,12 @@ class Ptype:
             "date-eu",
             "date-non-std-subtype",
             "date-non-std",
-            
         ]
         self.machines = Machines(self.types)
         self.verbose = False
 
     def schema_fit(self, df):
-        """ Run inference for each column in a dataframe.
+        """Run inference for each column in a dataframe.
 
         :param df: dataframe loaded by reading values as strings.
         :return: Schema object with information about each column.

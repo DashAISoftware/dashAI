@@ -1,9 +1,9 @@
-import pyarrow as pa
 from abc import ABC, abstractmethod
+
 
 class DashAIDataType(ABC):
     """Abstract base class for DashAI data types."""
-    
+
     # @classmethod
     # @abstractmethod
     # def from_arrow(self, arrow_table: pa.Table) -> 'DashAIDataType':
@@ -13,4 +13,3 @@ class DashAIDataType(ABC):
     @abstractmethod
     def to_string(self) -> str:
         """Convert to string representation."""
-        pass

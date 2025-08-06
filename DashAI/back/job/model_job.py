@@ -116,7 +116,6 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )

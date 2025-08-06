@@ -101,7 +101,7 @@ function Upload({ onFileUpload }) {
                   </Typography>
                 </Grid>
                 <Grid item>
-                  <Button variant="contained" onClick= {handleButtonClick}>
+                  <Button variant="contained" onClick={handleButtonClick}>
                     Upload a file
                   </Button>
                 </Grid>

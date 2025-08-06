@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
-
+from typing import Any, Dict
 
 
 class InferenceMethod(ABC):
@@ -13,6 +12,3 @@ class InferenceMethod(ABC):
         """
         Abstract method to infer types from the provided data.
         """
-        pass
-
-

@@ -122,7 +122,7 @@ def arrow_to_dashai_schema(arrow_tbl):
 
 def to_arrow_types(dashai_type) -> pa.DataType:
     """Convert a DashAI type to an Arrow type."""
-    return dtype_arrow_map.get(dashai_type, None)
+    return dtype_arrow_map.get(dashai_type)
 
 
 def save_types_in_arrow_metadata(

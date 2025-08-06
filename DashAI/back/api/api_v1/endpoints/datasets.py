@@ -3,7 +3,7 @@ import logging
 import os
 import shutil
 from itertools import islice
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import ijson
 import pandas as pd

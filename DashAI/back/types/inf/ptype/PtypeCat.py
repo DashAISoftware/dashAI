@@ -1,17 +1,14 @@
-import joblib
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import RobustScaler
-
+import os
+import sys
 from pathlib import Path
 
-import sys
-import os
+import joblib
+import numpy as np
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 sys.path.insert(0, project_root)
 
 from back.types.inf.ptype import Ptype
-from back.types.inf.ptype.Column import Column
 from back.types.inf.ptype.Machines import Machines
 
 CAT_TRAINED_TYPES = [
@@ -24,6 +21,7 @@ CAT_TRAINED_TYPES = [
     "date-non-std-subtype",
     "date-non-std",
 ]
+
 
 class PtypeCat(Ptype.Ptype):
     """The PtypeCat cat object. It uses the following data types: categorical, date, integer, float and string."""
@@ -53,19 +51,17 @@ class PtypeCat(Ptype.Ptype):
         t_hat = col.inferred_type()
         if t_hat in ["integer", "string"]:
             feats = col._get_features(counts)
-            feats= feats[:len(CAT_TRAINED_TYPES)]
+            feats = feats[: len(CAT_TRAINED_TYPES)]
             # magic numbers
             feats[-2:] = self.scaler.transform(feats[-2:].reshape(1, -1))
             ind = np.where(self.lr_clf.classes_ == "categorical")[0][0]
             p_cat = self.lr_clf.predict_proba(feats.reshape(1, -1))[0][ind]
         else:
             p_cat = 0.0
-        
         if p_cat > self.cat_threshold and t_hat == "string":
             col.p_t = {k: 0.0 for k in col.p_t}
             col.p_t["categorical"] = 1.0
         else:
-           col.set_p_t_cat(t_hat, p_cat)
+            col.set_p_t_cat(t_hat, p_cat)
 
         return col
-

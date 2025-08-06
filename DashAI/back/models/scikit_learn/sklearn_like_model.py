@@ -4,7 +4,6 @@ import joblib
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    categorical_label_encoder,
     dashai_to_pandas,
 )
 from DashAI.back.models.base_model import BaseModel

@@ -15,7 +15,6 @@ from DashAI.back.api.api_v1.schemas.datasets_params import ColumnSpecItemParams
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
-    get_arrow_table,
     get_column_names_from_indexes,
     load_dataset,
     save_dataset,

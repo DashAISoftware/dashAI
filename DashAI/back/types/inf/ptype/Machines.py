@@ -1,10 +1,9 @@
-import numpy as np
-import sys
 import os
+import sys
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 sys.path.insert(0, project_root)
 import back.types.inf.ptype.Machine as Machine
-from back.types.inf.ptype.Machine import PI
 
 MACHINES = {
     "integer": Machine.Integers(),
@@ -18,12 +17,11 @@ MACHINES = {
     "date-non-std": Machine.Nonstd_Date(),
     "IPAddress": Machine.IPAddress(),
     "EmailAddress": Machine.EmailAddress(),
-    
 }
 
 
 class Machines:
-    def __init__(self, types, all_machines = None):
+    def __init__(self, types, all_machines=None):
         self.types = types
         if all_machines is None:
             all_machines = MACHINES
@@ -43,7 +41,9 @@ class Machines:
         for machine in self.machines:
             machine.set_unique_values(unique_values)
 
-    def remove_unique_values(self,):
+    def remove_unique_values(
+        self,
+    ):
         for machine in self.machines:
             machine.supported_words = {}
 
@@ -65,4 +65,6 @@ class Machines:
             counter = machine.set_probabilities_z(counter, w_j_z)
 
     def get_all_parameters_z(self):
-        return [p for machine in self.forType.values() for p in machine.get_parameters_z()]
+        return [
+            p for machine in self.forType.values() for p in machine.get_parameters_z()
+        ]

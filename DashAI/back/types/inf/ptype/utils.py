@@ -1,12 +1,12 @@
+import functools
+import os
+import pathlib
 from datetime import timedelta
 
-import functools
-import numpy.ma as ma
-import numpy as np
 import matplotlib.pyplot as plt
-import os
+import numpy as np
+import numpy.ma as ma
 import pandas as pd
-import pathlib
 
 LOG_EPS = -1e150
 
@@ -25,6 +25,7 @@ report_being_str2 = (
 def project_root():
     return os.path.dirname(os.path.abspath(__file__))
     return Path(__file__).parent.parent
+
 
 # TEXT MANIPULATION METHODS #######################
 def chop_microseconds(delta):
@@ -142,7 +143,7 @@ def print_to_file(txt, filename="output.txt"):
 
 
 def create_folders(model, _start_over_report):
-    """ Creates folders for a column in a dataset
+    """Creates folders for a column in a dataset
     :param _start_over_report: True/False. True allows creating a new report and False allows appending to the existing report
     :return:
     """
@@ -177,8 +178,8 @@ def create_folders(model, _start_over_report):
             print("The number of columns is " + str(model.data.shape[1]) + ".", file=f)
             print("The number of rows is " + str(model.data.shape[0]) + ".", file=f)
             print(
-                "\section{Column Name: "
-                + model.config.current_column_name.replace("_", "\_")
+                r"\section{Column Name: "
+                + model.config.current_column_name.replace("_", r"\_")
                 + "}",
                 file=f,
             )
@@ -191,8 +192,8 @@ def create_folders(model, _start_over_report):
             "a",
         ) as f:
             print(
-                "\section{Column Name: "
-                + model.config.current_column_name.replace("_", "\_")
+                r"\section{Column Name: "
+                + model.config.current_column_name.replace("_", r"\_")
                 + "}",
                 file=f,
             )
@@ -442,7 +443,9 @@ def print_table_latex(x, current_experiment_folder):
 
 
 def evaluate_types(
-    _dataset_name, _ptype, _header=None,
+    _dataset_name,
+    _ptype,
+    _header=None,
 ):
     dataset_path = "../data/" + _dataset_name + ".csv"
     annotation_path = "../annotations/" + _dataset_name + ".csv"
