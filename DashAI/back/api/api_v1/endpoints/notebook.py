@@ -58,6 +58,41 @@ def create_notebook(
             ) from e
 
 
+@router.get("/", response_model=list[schemas.Notebook])
+@inject
+def get_notebooks(
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get all notebooks from the database.
+
+    Parameters
+    ----------
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    list[schemas.Notebook]
+        A list of all notebooks in the database.
+
+    Raises
+    ------
+    HTTPException
+        If there is an error retrieving notebooks, returns a 500 Internal Server Error.
+    """
+    db: Session
+    with session_factory() as db:
+        try:
+            notebooks = db.query(Notebook).all()
+            return notebooks
+        except Exception as e:
+            log.error(f"Error retrieving notebooks: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to retrieve notebooks",
+            ) from e
+
+
 @router.get("/{notebook_id}", response_model=schemas.Notebook)
 @inject
 def get_notebook(
@@ -99,6 +134,8 @@ def get_notebook(
 @inject
 def get_notebook_explorer(
     notebook_id: int,
+    skip: int = 0,
+    limit: int = 0,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Get all explorers associated with a notebook.
@@ -123,17 +160,14 @@ def get_notebook_explorer(
     """
     db: Session
     with session_factory() as db:
-        try:
-            explorers = (
-                db.query(Explorer).filter(Explorer.notebook_id == notebook_id).all()
-            )
-            return explorers
-        except Exception as e:
-            log.error(f"Error retrieving explorers for notebook {notebook_id}: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to retrieve explorers",
-            ) from e
+        explorers = db.query(Explorer).filter(Explorer.notebook_id == notebook_id)
+
+        if skip > 0:
+            explorers = explorers.offset(skip)
+        if limit > 0:
+            explorers = explorers.limit(limit)
+
+        return explorers.all()
 
 
 @router.get("/{notebook_id}/converter")
