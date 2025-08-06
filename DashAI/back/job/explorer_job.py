@@ -8,7 +8,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-from DashAI.back.dependencies.database.models import Dataset, Explorer
+from DashAI.back.dependencies.database.models import Dataset, Explorer, Notebook
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -59,29 +59,24 @@ class ExplorerJob(BaseJob):
             log.exception(e)
             raise JobError("Error while loading the explorer info.") from e
 
-        # Load the exploration information
-        ##### TODO: Change to notebook instance
-        # try:
-        #     exploration_info: Exploration = db.query(Exploration).get(
-        #         explorer_info.exploration_id
-        #     )
-        #     if exploration_info is None:
-        #         raise JobError(
-        #             f"Exploration with id {explorer_info.exploration_id} not found."
-        #         )
-        # except exc.SQLAlchemyError as e:
-        #     log.exception(e)
-        #     explorer_info.set_status_as_error()
-        #     db.commit()
-        #     raise JobError("Error while loading the exploration info.") from e
+        # Load the notebook information
+        try:
+            notebook_info: Notebook = db.query(Notebook).get(explorer_info.notebook_id)
+            if notebook_info is None:
+                raise JobError(
+                    f"Notebook with id {explorer_info.notebook_id} not found."
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            explorer_info.set_status_as_error()
+            db.commit()
+            raise JobError("Error while loading the notebook info.") from e
 
         # Load the dataset information
         try:
-            dataset_info: Dataset = db.query(Dataset).get(exploration_info.dataset_id)
+            dataset_info: Dataset = db.query(Dataset).get(notebook_info.dataset_id)
             if dataset_info is None:
-                raise JobError(
-                    f"Dataset with id {exploration_info.dataset_id} not found."
-                )
+                raise JobError(f"Dataset with id {notebook_info.dataset_id} not found.")
         except exc.SQLAlchemyError as e:
             log.exception(e)
             explorer_info.set_status_as_error()
@@ -155,18 +150,18 @@ class ExplorerJob(BaseJob):
 
         # Save the result
         try:
-            # save in the exploration folder
+            # save in the notebook folder
             save_path = pathlib.Path(
                 os.path.join(
-                    config["EXPLORATIONS_PATH"],
-                    (f"{exploration_info.id}"),
+                    config["NOTEBOOK_PATH"],
+                    (f"{notebook_info.id}"),
                 )
             )
             if not save_path.exists():
                 save_path.mkdir(parents=True)
 
             save_path = explorer_instance.save_exploration(
-                exploration_info, explorer_info, save_path, result
+                notebook_info, explorer_info, save_path, result
             )
             if isinstance(save_path, str):
                 save_path = pathlib.Path(save_path)
