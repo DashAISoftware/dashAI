@@ -63,14 +63,14 @@ def validate_explorer_params(
         )
 
     # validate dataset_id and columns against dataset
-    exploration = session.query(Notebook).get(explorer.notebook_id)
-    if exploration is None:
+    notebook = session.query(Notebook).get(explorer.notebook_id)
+    if notebook is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Exploration not found",
+            detail="Notebook not found",
         )
 
-    dataset = session.query(Dataset).get(exploration.dataset_id)
+    dataset = session.query(Dataset).get(notebook.dataset_id)
     if dataset is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
