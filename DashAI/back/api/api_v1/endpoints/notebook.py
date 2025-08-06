@@ -5,7 +5,6 @@ from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import Session, sessionmaker
 
-from DashAI.back.api.api_v1.schemas import explorers_params as explorer_schemas
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
 from DashAI.back.dependencies.database.models import ConverterList, Explorer, Notebook
 
@@ -56,7 +55,7 @@ def create_notebook(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create notebook",
-            )
+            ) from e
 
 
 @router.get("/{notebook_id}", response_model=schemas.Notebook)
@@ -92,7 +91,7 @@ def get_notebook(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Notebook not found",
-            )
+            ) from None
         return notebook
 
 
@@ -134,7 +133,7 @@ def get_notebook_explorer(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to retrieve explorers",
-            )
+            ) from e
 
 
 @router.get("/{notebook_id}/converter")
@@ -159,7 +158,8 @@ async def get_notebook_converter_list(
 
     Raises
     ------
-        HTTPException: If there is an error retrieving the converter list, returns a 500 Internal Server Error.
+        HTTPException: If there is an error retrieving the converter list,
+        returns a 500 Internal Server Error.
     """
     with session_factory() as db:
         try:
@@ -177,4 +177,4 @@ async def get_notebook_converter_list(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to retrieve converter from notebook {notebook_id}",
-            )
+            ) from e
