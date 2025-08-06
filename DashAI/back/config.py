@@ -18,4 +18,4 @@ class DefaultSettings(BaseSettings):
     DATASETS_PATH: str = "datasets"
     RUNS_PATH: str = "runs"
     EXPLANATIONS_PATH: str = "explanations"
-    EXPLORATIONS_PATH: str = "explorations"
+    NOTEBOOK_PATH: str = "notebook"
