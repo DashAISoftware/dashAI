@@ -28,7 +28,7 @@ class BaseExplorer(ConfigObject, ABC):
     - Create a new class that extends `BaseExplorer` and assign the
         previous schema to the `SCHEMA` attribute.
     - Implement the `launch_exploration` method.
-    - Implement the `save_exploration` method.
+    - Implement the `save_notebook` method.
     - Implement the `get_results` method.
 
     You can also optionally:
