@@ -100,6 +100,7 @@ function PredictionModal({ open, onClose, updatePredictions }) {
       );
 
       console.log("Prediction job response:", response);
+      console.log("Prediction job id:", response.id);
       if (response?.id) {
         enqueueSnackbar("Prediction job enqueued successfully", {
           autoHideDuration: 2000,

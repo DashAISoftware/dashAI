@@ -3,17 +3,14 @@ import json
 import logging
 import os
 import shutil
-from typing import Any, Dict
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
 from DashAI.back.dataloaders.classes.dashai_dataset import save_dataset
 from DashAI.back.dependencies.database.models import Dataset
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
@@ -41,13 +38,14 @@ class DatasetJob(BaseJob):
         log.debug("DatasetJob marked as delivered")
 
     @inject
-    async def run(
+    def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
-        config: Dict[str, Any] = lambda di: di["config"],
     ) -> None:
-        log.debug("Starting dataset creation process.")
+        from kink import di
+
+        component_registry = di["component_registry"]
+        session_factory = di["session_factory"]
+        config = di["config"]
 
         try:
             params = self.kwargs.get("params", {})

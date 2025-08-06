@@ -2,14 +2,13 @@ import logging
 import os
 import pathlib
 
-from beartype.typing import Any, Dict, Type
+from beartype.typing import Type
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Dataset, Exploration, Explorer
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -43,12 +42,14 @@ class ExplorerJob(BaseJob):
                 ) from e
 
     @inject
-    async def run(
+    def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        config: Dict[str, Any] = lambda di: di["config"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
+        from kink import di
+
+        component_registry = di["component_registry"]
+        session_factory = di["session_factory"]
+        config = di["config"]
         explorer_id: int = self.kwargs["explorer_id"]
 
         with session_factory() as db:
@@ -114,7 +115,10 @@ class ExplorerJob(BaseJob):
                 explorer_info.set_status_as_error()
                 db.commit()
                 raise JobError(
-                    f"Explorer {explorer_info.exploration_type} not found in the registry."
+                    (
+                        f"Explorer {explorer_info.exploration_type} not found in the "
+                        "registry."
+                    )
                 ) from e
 
             # Instance the explorer (the explorer handles its validation)
@@ -193,5 +197,8 @@ class ExplorerJob(BaseJob):
                 explorer_info.set_status_as_error()
                 db.commit()
                 raise JobError(
-                    f"Error while saving the exploration {explorer_info.exploration_type}."
+                    (
+                        f"Error while saving the exploration "
+                        f"{explorer_info.exploration_type}."
+                    )
                 ) from e

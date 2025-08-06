@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import os
@@ -15,7 +14,7 @@ from streaming_form_data.validators import MaxSizeValidator
 from DashAI.back.dependencies.job_queues import BaseJobQueue
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.job.base_job import JobError
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -46,6 +45,27 @@ async def get_job(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         ) from e
+
+
+@router.get("/status/{task_id}")
+@inject
+async def get_job_status(
+    task_id: str,
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """Return the status of the job with task_id from Huey result.
+
+    Parameters
+    ----------
+    task_id : str
+
+    Returns
+    -------
+    dict
+        A dictionary with the status, last update time, and error message of the job.
+    """
+    status_dict = job_queue.status(task_id)
+    return status_dict
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

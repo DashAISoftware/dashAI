@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import pickle
-from typing import Any, Dict, Tuple
+from typing import Tuple
 
 from datasets import DatasetDict
 from kink import inject
@@ -21,7 +21,6 @@ from DashAI.back.dependencies.database.models import (
     LocalExplainer,
     Run,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -69,9 +68,11 @@ class ExplainerJob(BaseJob):
         self,
         explainer: BaseGlobalExplainer,
         dataset=Tuple[DatasetDict, DatasetDict],
-        config: Dict[str, Any] = lambda di: di["config"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
+        from kink import di
+
+        session_factory = di["session_factory"]
+        config = di["config"]
         explainer_id: int = self.kwargs["explainer_id"]
 
         with session_factory() as db:
@@ -117,9 +118,12 @@ class ExplainerJob(BaseJob):
         explainer: BaseLocalExplainer,
         dataset: Tuple[DatasetDict, DatasetDict],
         task: BaseTask,
-        config: Dict[str, Any] = lambda di: di["config"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
+        from kink import di
+
+        session_factory = di["session_factory"]
+        config = di["config"]
+
         explainer_id: int = self.kwargs["explainer_id"]
 
         explainer.fit(dataset, **self.explainer_db.fit_parameters)
@@ -191,11 +195,14 @@ class ExplainerJob(BaseJob):
                 ) from e
 
     @inject
-    async def run(
+    def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
+        from kink import di
+
+        component_registry = di["component_registry"]
+        session_factory = di["session_factory"]
+
         explainer_id: int = self.kwargs["explainer_id"]
         explainer_scope: str = self.kwargs["explainer_scope"]
 
@@ -282,7 +289,10 @@ class ExplainerJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        f"Unable to find Task with name {experiment.task_name} in registry",
+                        (
+                            f"Unable to find Task with name "
+                            f"{experiment.task_name} in registry"
+                        ),
                     ) from e
                 try:
                     splits = json.loads(run.split_indexes)

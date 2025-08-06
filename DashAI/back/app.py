@@ -1,9 +1,7 @@
 """FastAPI Application module."""
 
-import asyncio
 import logging
 import pathlib
-from contextlib import asynccontextmanager, suppress
 from typing import Literal, Union
 
 import datasets

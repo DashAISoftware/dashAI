@@ -5,15 +5,14 @@ from pathlib import Path
 from typing import Any, List
 
 import numpy as np
-from fastapi import Depends, status
+from fastapi import status
 from fastapi.exceptions import HTTPException
-from kink import di, inject
+from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, load_dataset
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 
@@ -45,12 +44,15 @@ class PredictJob(BaseJob):
                 ) from e
 
     @inject
-    async def run(
+    def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-        config=lambda di: di["config"],
     ) -> List[Any]:
+        from kink import di
+
+        component_registry = di["component_registry"]
+        session_factory = di["session_factory"]
+        config = di["config"]
+
         run_id: int = self.kwargs["run_id"]
         id: int = self.kwargs["id"]
         json_filename: str = self.kwargs["json_filename"]
@@ -80,6 +82,7 @@ class PredictJob(BaseJob):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
                 ) from e
+
             try:
                 loaded_dataset: DashAIDataset = load_dataset(
                     str(Path(f"{dataset.file_path}/dataset/"))

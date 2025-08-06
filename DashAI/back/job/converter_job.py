@@ -20,7 +20,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 )
 from DashAI.back.dependencies.database.models import ConverterList
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 
 logging.basicConfig(level=logging.DEBUG)
@@ -142,11 +141,13 @@ class ConverterListJob(BaseJob):
                 ) from e
 
     @inject
-    async def run(
+    def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
+        from kink import di
+
+        session_factory = di["session_factory"]
+
         def instantiate_converters(
             converter_name: str,
             converter_params: ConverterParams,
@@ -266,7 +267,8 @@ class ConverterListJob(BaseJob):
                         f"Converters directory not found at {converters_base_path}"
                     )
 
-                # Build converter name to submodule mapping using a more functional approach
+                # Build converter name to submodule mapping using a
+                # more functional approach
                 converter_submodule_inverse_index = {
                     file.stem: submodule.name
                     for submodule in converters_base_path.iterdir()
@@ -423,7 +425,8 @@ class ConverterListJob(BaseJob):
                     if converter.changes_row_count():
                         loaded_dataset = transformed_dataset
                     else:
-                        # Now we need to merge the transformed data back into the original
+                        # Now we need to merge the transformed data back
+                        # into the original
                         # dataset, preserving their original positions
                         loaded_dataset = _rebuild_dataset_with_transformed_columns(
                             loaded_dataset,

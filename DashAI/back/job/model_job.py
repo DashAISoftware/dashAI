@@ -17,7 +17,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_dataset,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
@@ -53,15 +52,18 @@ class ModelJob(BaseJob):
                 ) from e
 
     @inject
-    async def run(
+    def run(
         self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        config=lambda di: di["config"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
     ) -> None:
+        from kink import di
+
         from DashAI.back.api.api_v1.endpoints.components import (
             _intersect_component_lists,
         )
+
+        component_registry = di["component_registry"]
+        session_factory = di["session_factory"]
+        config = di["config"]
 
         # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
@@ -96,16 +98,20 @@ class ModelJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        f"Unable to find Task with name {experiment.task_name} in registry",
+                        (
+                            f"Unable to find Task with name {experiment.task_name} "
+                            "in registry"
+                        ),
                     ) from e
 
                 try:
                     # Get all the metrics
+                    components_by_type = component_registry.get_components_by_types(
+                        select="Metric"
+                    )
                     all_metrics = {
                         component_dict["name"]: component_dict
-                        for component_dict in component_registry.get_components_by_types(
-                            select="Metric"
-                        )
+                        for component_dict in components_by_type
                     }
                     # Get the intersection between the metrics and the task
                     # related components
@@ -219,7 +225,10 @@ class ModelJob(BaseJob):
                         except Exception as e:
                             log.exception(e)
                             raise JobError(
-                                "Optimizer parameters not compatible with the optimizer",
+                                (
+                                    "Optimizer parameters not compatible "
+                                    "with the optimizer"
+                                ),
                             ) from e
                 try:
                     run.set_status_as_started()

@@ -171,6 +171,7 @@ user_datasets
 user_runs
 user_models
 user_explainers
+job_queue.db
 __pycache__
 
 # ruff cache

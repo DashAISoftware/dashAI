@@ -2,7 +2,6 @@
 
 
 import asyncio
-import inspect
 import sqlite3
 
 import dill
@@ -49,8 +48,6 @@ class HueyJobQueue(BaseJobQueue):
         @self.huey.task()
         def _execute_base_job(job: BaseJob):
             result = job.run()
-            if inspect.iscoroutine(result):
-                asyncio.run(result)
             return result
 
         self._execute = _execute_base_job
@@ -71,28 +68,44 @@ class HueyJobQueue(BaseJobQueue):
         @self.huey.signal(SIGNAL_ENQUEUED)
         def on_enqueue(signal, task):
             exec_sql(
-                "INSERT OR REPLACE INTO task_copy (id, task_type, status) VALUES (?, ?, ?)",
-                (task.id, task.name, "not_started"),
+                (
+                    "INSERT OR REPLACE INTO task_copy "
+                    "(id, task_type, status) VALUES (?, ?, ?)"
+                ),
+                (
+                    task.id,
+                    task.name,
+                    "not_started",
+                ),
             )
 
         @self.huey.signal(SIGNAL_EXECUTING)
         def on_start(signal, task):
             exec_sql(
-                "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP WHERE id=?",
+                (
+                    "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP "
+                    "WHERE id=?"
+                ),
                 ("started", task.id),
             )
 
         @self.huey.signal(SIGNAL_COMPLETE)
         def on_success(signal, task, *args):
             exec_sql(
-                "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP WHERE id=?",
+                (
+                    "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP "
+                    "WHERE id=?"
+                ),
                 ("finished", task.id),
             )
 
         @self.huey.signal(SIGNAL_ERROR)
         def on_error(signal, task, exc):
             exec_sql(
-                "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP, error_msg=? WHERE id=?",
+                (
+                    "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP, "
+                    "error_msg=? WHERE id=?"
+                ),
                 ("error", str(exc), task.id),
             )
 
@@ -102,10 +115,12 @@ class HueyJobQueue(BaseJobQueue):
         Columns:
         - id (TEXT PRIMARY KEY): unique identifier for the job (UUID as text)
         - task_type (TEXT NOT NULL): the name of the Huey task
-        - enqueued_at (DATETIME NOT NULL): timestamp when the job was enqueued (defaults to CURRENT_TIMESTAMP)
+        - enqueued_at (DATETIME NOT NULL): timestamp when the job was enqueued
+          (defaults to CURRENT_TIMESTAMP)
         - status (TEXT NOT NULL): current job status, one of:
             'not_started', 'started', 'finished', 'deleted', 'error'
-        - last_update (DATETIME NOT NULL): timestamp of the last status change (defaults to CURRENT_TIMESTAMP)
+        - last_update (DATETIME NOT NULL): timestamp of the last status change
+          (defaults to CURRENT_TIMESTAMP)
         - error_msg (TEXT): optional error message when a task fails
         """
         with sqlite3.connect(self.db_path) as conn:
@@ -140,18 +155,19 @@ class HueyJobQueue(BaseJobQueue):
 
     def put(self, job: BaseJob) -> int:
         result = self._execute(job)
-        return result.id
+        return result
 
     def to_list(self) -> list[BaseJob]:
         with sqlite3.connect(self.db_path) as conn:
             cur = conn.cursor()
             cur.execute(
-                "SELECT id, data FROM task WHERE queue = ? ORDER BY priority DESC, id ASC",
+                "SELECT id, data FROM task WHERE queue = ? "
+                "ORDER BY priority DESC, id ASC",
                 (self.huey.storage.name,),
             )
             rows = cur.fetchall()
         jobs = []
-        for jid, blob in rows:
+        for _, blob in rows:
             payload = self.serializer.loads(blob)
             job = payload[6][0]
             jobs.append(job)
@@ -167,7 +183,10 @@ class HueyJobQueue(BaseJobQueue):
                 )
             else:
                 cur.execute(
-                    "SELECT data FROM task WHERE queue = ? ORDER BY priority DESC, id ASC LIMIT 1",
+                    (
+                        "SELECT data FROM task WHERE queue = ? "
+                        "ORDER BY priority DESC, id ASC LIMIT 1"
+                    ),
                     (self.huey.storage.name,),
                 )
             row = cur.fetchone()
@@ -188,7 +207,10 @@ class HueyJobQueue(BaseJobQueue):
                 )
             else:
                 cur.execute(
-                    "SELECT id, data FROM task WHERE queue = ? ORDER BY priority DESC, id ASC LIMIT 1",
+                    (
+                        "SELECT id, data FROM task WHERE queue = ? "
+                        "ORDER BY priority DESC, id ASC LIMIT 1"
+                    ),
                     (self.huey.storage.name,),
                 )
             row = cur.fetchone()
@@ -200,7 +222,10 @@ class HueyJobQueue(BaseJobQueue):
             conn.execute("COMMIT")
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
-                "UPDATE task_copy SET status = ?, last_update = CURRENT_TIMESTAMP WHERE id = ?",
+                (
+                    "UPDATE task_copy SET status = ?, last_update = CURRENT_TIMESTAMP "
+                    "WHERE id = ?"
+                ),
                 ("deleted", jid),
             )
         return self.serializer.loads(blob)[6][0]
@@ -224,3 +249,26 @@ class HueyJobQueue(BaseJobQueue):
 
 _job_queue = HueyJobQueue("job_queue")
 huey = _job_queue.huey
+
+
+@huey.on_startup()
+def create_container_huey():
+    import os
+    from pathlib import Path
+
+    from DashAI.back.container import build_container
+    from DashAI.back.dependencies.config_builder import build_config_dict
+
+    local_path_str = os.environ.get("DASHAI_LOCAL_PATH")
+    if local_path_str:
+        # Convertir el string a Path y expandir ~ al directorio home
+        print("paso por aki pathstr")
+        local_path = Path(os.path.expanduser(local_path_str))
+    else:
+        # Ruta por defecto
+        local_path = Path.home() / ".DashAI"
+
+    logging_level = os.environ.get("DASHAI_LOGGING_LEVEL", "INFO")
+
+    config = build_config_dict(local_path=local_path, logging_level=logging_level)
+    build_container(config)
