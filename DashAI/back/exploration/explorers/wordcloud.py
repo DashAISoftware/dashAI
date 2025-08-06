@@ -81,7 +81,7 @@ class WordcloudExplorer(BaseExplorer):
 
         return wordcloud.to_image()
 
-    def save_exploration(
+    def save_notebook(
         self,
         __exploration_info__: Notebook,
         explorer_info: Explorer,

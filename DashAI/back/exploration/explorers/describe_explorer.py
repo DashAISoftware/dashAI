@@ -116,7 +116,7 @@ class DescribeExplorer(BaseExplorer):
             percentiles=self.percentiles, include=self.include, exclude=self.exclude
         )
 
-    def save_exploration(
+    def save_notebook(
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,

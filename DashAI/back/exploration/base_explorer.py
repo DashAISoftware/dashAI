@@ -197,9 +197,9 @@ class BaseExplorer(ConfigObject, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def save_exploration(
+    def save_notebook(
         self,
-        exploration_info: Notebook,
+        notebook_info: Notebook,
         explorer_info: Explorer,
         save_path: Path,
         result: Any,

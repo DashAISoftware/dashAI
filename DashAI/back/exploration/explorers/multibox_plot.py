@@ -125,7 +125,7 @@ class MultiColumnBoxPlotExplorer(BaseExplorer):
 
         return fig
 
-    def save_exploration(
+    def save_notebook(
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
