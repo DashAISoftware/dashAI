@@ -19,14 +19,14 @@ class ConverterParams(PydanticBaseModel):
     order: int = 0
     params: Dict[str, Union[str, int, float, bool, None]] = None
     scope: Dict[str, List[int]] = None
-    target: str = None
+    target_index: int = None
 
     def serialize(self) -> Dict[str, Any]:
         return {
             "order": self.order,
             "params": self.params,
             "scope": self.scope,
-            "target": self.target,
+            "target_index": self.target_index,
         }
 
 

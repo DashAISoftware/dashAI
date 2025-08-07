@@ -122,7 +122,7 @@ class ConverterListJob(BaseJob):
         converter_list_id = self.kwargs["converter_list_id"]
         db = self.kwargs["db"]
 
-        converter_list = db.get(ConverterList, converter_list_id)
+        converter_list: ConverterList = db.get(ConverterList, converter_list_id)
         if converter_list is None:
             raise JobError(
                 f"Converter list with id {converter_list_id} does not exist in DB."
@@ -186,15 +186,14 @@ class ConverterListJob(BaseJob):
 
         # Extract job parameters
         converter_list_id = self.kwargs["converter_list_id"]
-        target_column_index = self.kwargs["target_column_index"]
         db = self.kwargs["db"]
 
         # Validate input parameters
         try:
-            if converter_list_id is None or target_column_index is None:
-                raise JobError("Converter list ID and target column index are required")
+            if converter_list_id is None:
+                raise JobError("Converter list ID is required")
 
-            converter_list = db.get(ConverterList, converter_list_id)
+            converter_list: ConverterList = db.get(ConverterList, converter_list_id)
             if not converter_list:
                 raise JobError(f"Converter list with id {converter_list_id} not found")
 
@@ -206,12 +205,13 @@ class ConverterListJob(BaseJob):
 
         # Get dataset
         try:
-            dataset_id = converter_list.notebook_id.dataset_id
+            dataset_id = converter_list.notebook.dataset_id
             dataset = db.get(DatasetModel, dataset_id)
 
             # dataset to edit
-            dataset_path = converter_list.notebook_id.file_path
+            dataset_path = converter_list.notebook.file_path
             loaded_dataset = load_dataset(dataset_path)
+            target_column_index = converter_list.parameters.pop("target_index")
 
             if not loaded_dataset:
                 raise JobError(f"Dataset with path {dataset_path} not found")
@@ -225,8 +225,9 @@ class ConverterListJob(BaseJob):
         # Load dataset
         try:
             # Validate target column index
-            if int(target_column_index) < 1 or int(target_column_index) > len(
-                loaded_dataset.features
+            if target_column_index is not None and (
+                int(target_column_index) < 1
+                or int(target_column_index) > len(loaded_dataset.features)
             ):
                 raise JobError(
                     f"Target column index {target_column_index} is out of bounds"
@@ -264,10 +265,9 @@ class ConverterListJob(BaseJob):
                     "_"
                 )  # Skip __init__.py and other special files
             }
-
             # Get stored converter configurations
             converters_stored_info = {
-                converter_list.converter: converter_list.parameters.pop("target")
+                converter_list.converter: converter_list.parameters
             }
             dataset_original_columns = loaded_dataset.column_names
 
@@ -363,19 +363,28 @@ class ConverterListJob(BaseJob):
                 scope_rows_indexes = sorted(set(rows_scope))
 
                 # Adjust target column index (0-based internally)
-                target_column_index_0based = int(target_column_index) - 1
-                target_column_name = dataset_original_columns[
-                    target_column_index_0based
-                ]
+                y_dataset_fit = None
+                target_column_name = None
+                y_full_transform = None
+                if target_column_index is not None:
+                    target_column_index_0based = int(target_column_index) - 1
+                    target_column_name = dataset_original_columns[
+                        target_column_index_0based
+                    ]
+                    y_dataset_fit = loaded_dataset.select_columns([target_column_name])
+                    if scope_rows_indexes:
+                        y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
+
+                    y_full_transform = loaded_dataset.select_columns(
+                        [target_column_name]
+                    )
 
                 # Select data for fitting using DashAIDataset operations
                 X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
-                y_dataset_fit = loaded_dataset.select_columns([target_column_name])
 
                 # Select specified rows if provided
                 if scope_rows_indexes:
                     X_dataset_fit = X_dataset_fit.select(scope_rows_indexes)
-                    y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
 
                 try:
                     converter = converter.fit(X_dataset_fit, y_dataset_fit)
@@ -389,7 +398,6 @@ class ConverterListJob(BaseJob):
                 # Samplers will ignore x_full and y_full, and use internally stored
                 # resampled data.
                 X_full_transform = loaded_dataset.select_columns(scope_column_names)
-                y_full_transform = loaded_dataset.select_columns([target_column_name])
 
                 try:
                     transformed_dataset = converter.transform(
