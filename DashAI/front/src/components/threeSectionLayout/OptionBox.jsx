@@ -27,9 +27,6 @@ export default function OptionBox({
         textAlign: "left",
         textTransform: "none",
         borderRadius: 2,
-        "&:hover .task-paper": {
-          backgroundColor: "red",
-        },
       }}
     >
       <Paper
@@ -43,6 +40,9 @@ export default function OptionBox({
           alignItems: "center",
           justifyContent: matches ? "space-between" : "center",
           textAlign: matches ? "left" : "center",
+          "&:hover": {
+            backgroundColor: "#1e1e1e",
+          },
         }}
       >
         {Icon && (
