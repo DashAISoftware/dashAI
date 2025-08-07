@@ -22,6 +22,7 @@ const pages = [
   { name: "Pipelines", to: "/app/pipelines", disabled: false },
   // { name: "Play", to: "/app/play", disabled: true },
   { name: "Plugins", to: "/app/plugins/browse", disabled: false },
+  { name: "Notebooks", to: "/app/notebooks", disabled: false },
 ];
 
 function ResponsiveAppBar() {
