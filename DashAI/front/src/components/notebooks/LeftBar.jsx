@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import Footer from "./Footer";
+import BackToModuleHomeButton from "./BackToModuleHomeButton";
 
 export default function LeftBar({ children }) {
   return (
