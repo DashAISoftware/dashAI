@@ -7,10 +7,10 @@ export default function MainBox({ children }) {
       height={"100%"}
       sx={{
         border: "0.2px solid",
-        borderColor: "grey.600", // o el color que prefieras
+        borderColor: "grey.600",
       }}
       borderRadius={2}
-      //bgcolor={"background.box"}
+      overflow={"auto"}
       p={2}
     >
       {children}
