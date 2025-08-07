@@ -24,3 +24,12 @@ export const getDatasetConverterList = async (
   );
   return response.data;
 };
+
+export const getConvertersByNotebook = async (
+  notebookId: number,
+): Promise<IConverter[]> => {
+  const response = await api.get<IConverter[]>(
+    `${converterEndpoint}/notebook/${notebookId}`,
+  );
+  return response.data;
+};

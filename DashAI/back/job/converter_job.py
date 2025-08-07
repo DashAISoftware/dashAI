@@ -206,11 +206,15 @@ class ConverterListJob(BaseJob):
 
         # Get dataset
         try:
-            dataset_id = converter_list.dataset_id
+            dataset_id = converter_list.notebook_id.dataset_id
             dataset = db.get(DatasetModel, dataset_id)
 
-            if not dataset:
-                raise JobError(f"Dataset with id {dataset_id} not found")
+            # dataset to edit
+            dataset_path = converter_list.notebook_id.file_path
+            loaded_dataset = load_dataset(dataset_path)
+
+            if not loaded_dataset:
+                raise JobError(f"Dataset with path {dataset_path} not found")
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -220,9 +224,6 @@ class ConverterListJob(BaseJob):
 
         # Load dataset
         try:
-            dataset_path = f"{dataset.file_path}/dataset"
-            loaded_dataset = load_dataset(dataset_path)
-
             # Validate target column index
             if int(target_column_index) < 1 or int(target_column_index) > len(
                 loaded_dataset.features
@@ -265,7 +266,9 @@ class ConverterListJob(BaseJob):
             }
 
             # Get stored converter configurations
-            converters_stored_info = converter_list.converters
+            converters_stored_info = {
+                converter_list.converter: converter_list.parameters.pop("target")
+            }
             dataset_original_columns = loaded_dataset.column_names
 
             # Sort converters by order

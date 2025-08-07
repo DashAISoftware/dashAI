@@ -279,13 +279,22 @@ class ConverterList(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     notebook_id: Mapped[int] = mapped_column(ForeignKey("notebook.id"))
-    converters: Mapped[JSON] = mapped_column(JSON)
+    converter: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
     status: Mapped[Enum] = mapped_column(
         Enum(ConverterListStatus),
         nullable=False,
         default=ConverterListStatus.NOT_STARTED,
     )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
 
     # Relationships
     notebook: Mapped["Notebook"] = relationship(back_populates="converters")

@@ -8,6 +8,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
+from DashAI.back.core.enums.status import ConverterListStatus
 from DashAI.back.dependencies.database.models import ConverterList, Notebook
 
 logger = logging.getLogger(__name__)
@@ -18,12 +19,14 @@ class ConverterParams(PydanticBaseModel):
     order: int = 0
     params: Dict[str, Union[str, int, float, bool, None]] = None
     scope: Dict[str, List[int]] = None
+    target: str = None
 
     def serialize(self) -> Dict[str, Any]:
         return {
             "order": self.order,
             "params": self.params,
             "scope": self.scope,
+            "target": self.target,
         }
 
 
@@ -68,13 +71,16 @@ async def post_notebook_converter_list(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Notebook not found",
                 )
-            serialized_converters = {
+
+            converter_name = list(params.converters.keys())[0]
+            converter_parameters = {
                 key: value.serialize() for key, value in params.converters.items()
             }
 
             converter_list = ConverterList(
                 notebook_id=params.notebook_id,
-                converters=serialized_converters,
+                converter=converter_name,
+                parameters=converter_parameters,
             )
 
             db.add(converter_list)
@@ -127,6 +133,50 @@ async def get_converter_list(
                 )
 
             return converter_list
+
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get("/notebook/{notebook_id}")
+@inject
+async def get_converters_by_notebook(
+    notebook_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get a list of finished converters from the database by notebook ID.
+
+    Parameters
+    ----------
+    notebook_id : int
+        ID of the notebook.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    List[ConverterList]
+        A list of converter lists.
+
+    Raises
+    ------
+    HTTPException
+        If there is an internal database error.
+    """
+    with session_factory() as db:
+        try:
+            converter_lists = (
+                db.query(ConverterList)
+                .filter(ConverterList.notebook_id == notebook_id)
+                .filter(ConverterList.status == ConverterListStatus.FINISHED)
+                .all()
+            )
+            return converter_lists
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
