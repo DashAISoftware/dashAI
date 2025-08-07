@@ -10,6 +10,8 @@ jobs:
         working-directory: DashAI/front
     steps:
       - uses: actions/checkout@v3
+      - name: Enable Corepack and use Yarn 3
+        run: corepack enable
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
@@ -30,7 +32,7 @@ jobs:
     needs: react-build-test
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ['3.10']
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:

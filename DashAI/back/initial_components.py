@@ -4,6 +4,8 @@ from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
     Binarizer,
+    CharacterReplacer,
+    ColumnRemover,
     ConverterChain,
     Embedding,
     FastICA,
@@ -20,6 +22,7 @@ from DashAI.back.converters import (
     OneHotEncoder,
     OrdinalEncoder,
     PolynomialFeatures,
+    RandomUnderSamplerConverter,
     RBFSampler,
     SelectFdr,
     SelectFpr,
@@ -28,6 +31,8 @@ from DashAI.back.converters import (
     SelectPercentile,
     SimpleImputer,
     SkewedChi2Sampler,
+    SMOTEConverter,
+    SMOTEENNConverter,
     StandardScaler,
     TruncatedSVD,
     VarianceThreshold,
@@ -55,11 +60,13 @@ from DashAI.back.exploration import (
     WordcloudExplorer,
 )
 from DashAI.back.job import (
+    ConverterListJob,
     DatasetJob,
     ExplainerJob,
     ExplorerJob,
     GenerativeJob,
     ModelJob,
+    PipelineJob,
     PredictJob,
 )
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
@@ -87,6 +94,13 @@ from DashAI.back.models import (
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
+from DashAI.back.pipeline import (
+    DataExploration,
+    DataSelector,
+    Prediction,
+    RetrieveModel,
+    Train,
+)
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
@@ -167,8 +181,10 @@ def get_initial_components():
         ModelJob,
         ExplorerJob,
         PredictJob,
+        ConverterListJob,
         DatasetJob,
         GenerativeJob,
+        PipelineJob,
         # Explainers
         KernelShap,
         PartialDependence,
@@ -189,6 +205,8 @@ def get_initial_components():
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         # Converters
+        ColumnRemover,
+        CharacterReplacer,
         FastICA,
         IncrementalPCA,
         PCA,
@@ -227,6 +245,14 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        DataSelector,
+        DataExploration,
+        Train,
+        RetrieveModel,
+        Prediction,
+        SMOTEConverter,
+        SMOTEENNConverter,
+        RandomUnderSamplerConverter,
     ]
 
     # Obtener plugins instalados

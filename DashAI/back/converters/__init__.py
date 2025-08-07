@@ -5,6 +5,14 @@ from DashAI.back.converters.base_converter import BaseConverter
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
 
+# Imbalanced_learn
+from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter import (
+    RandomUnderSamplerConverter,
+)
+from DashAI.back.converters.imbalanced_learn.smote_converter import SMOTEConverter
+from DashAI.back.converters.imbalanced_learn.smoteenn_converter import SMOTEENNConverter
+from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapper
+
 # Kernel approximation module
 from DashAI.back.converters.scikit_learn.additive_chi_2_sampler import (
     AdditiveChi2Sampler,
@@ -49,3 +57,9 @@ from DashAI.back.converters.scikit_learn.skewed_chi_2_sampler import SkewedChi2S
 from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
 from DashAI.back.converters.scikit_learn.truncated_svd import TruncatedSVD
 from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThreshold
+
+# Simple converters
+from DashAI.back.converters.simple_converters.character_replacer import (
+    CharacterReplacer,
+)
+from DashAI.back.converters.simple_converters.column_remover import ColumnRemover

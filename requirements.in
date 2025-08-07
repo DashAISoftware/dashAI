@@ -33,3 +33,4 @@ httpx
 wordcloud
 opencv-python
 protobuf
+imblearn
