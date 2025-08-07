@@ -124,7 +124,7 @@ function Upload({ onFileUpload }) {
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 4, height: "100%" }} square>
+    <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
       <Grid container direction="column" rowSpacing={3}>
         {/* state text */}
         <Grid item sx={{ textAlign: "center" }}>
