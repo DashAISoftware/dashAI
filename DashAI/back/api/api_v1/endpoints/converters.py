@@ -32,7 +32,8 @@ class ConverterParams(PydanticBaseModel):
 
 class ConverterListParams(PydanticBaseModel):
     notebook_id: int
-    converters: Dict[str, ConverterParams]
+    converter: str
+    parameters: ConverterParams
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -72,10 +73,8 @@ async def post_notebook_converter_list(
                     detail="Notebook not found",
                 )
 
-            converter_name = list(params.converters.keys())[0]
-            converter_parameters = {
-                key: value.serialize() for key, value in params.converters.items()
-            }
+            converter_name = params.converter
+            converter_parameters = params.parameters.serialize()
 
             converter_list = ConverterList(
                 notebook_id=params.notebook_id,

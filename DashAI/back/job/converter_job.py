@@ -209,7 +209,7 @@ class ConverterListJob(BaseJob):
             dataset = db.get(DatasetModel, dataset_id)
 
             # dataset to edit
-            dataset_path = converter_list.notebook.file_path
+            dataset_path = f"{converter_list.notebook.file_path}/dataset"
             loaded_dataset = load_dataset(dataset_path)
             target_column_index = converter_list.parameters.pop("target_index")
 
