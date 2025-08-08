@@ -1,5 +1,6 @@
 import api from "./api";
-import type { INotebook } from "../types/notebook";
+import { INotebook } from "../types/notebook";
+import { IExplorer } from "../types/explorer";
 
 const notebookEndpoint = "/v1/notebook";
 
@@ -10,5 +11,19 @@ export const createNotebook = async (data: INotebook) => {
 
 export const getNotebooks = async (): Promise<INotebook[]> => {
   const response = await api.get<INotebook[]>(notebookEndpoint);
+  return response.data;
+};
+
+export const getNotebook = async (id: string): Promise<INotebook> => {
+  const response = await api.get<INotebook>(`${notebookEndpoint}/${id}`);
+  return response.data;
+};
+
+export const getExplorersByNotebookId = async (
+  notebookId: string,
+): Promise<IExplorer[]> => {
+  const response = await api.get<IExplorer[]>(
+    `${notebookEndpoint}/${notebookId}/explorer`,
+  );
   return response.data;
 };
