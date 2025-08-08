@@ -18,12 +18,12 @@ export default function Generative() {
     setSelectedOption(option);
   };
 
-  useEffect(() => {
-    const fetchDatasets = async () => {
-      const data = await getDatasets();
-      setDatasets(data);
-    };
+  const fetchDatasets = async () => {
+    const data = await getDatasets();
+    setDatasets(data);
+  };
 
+  useEffect(() => {
     fetchDatasets();
   }, []);
 
@@ -63,6 +63,7 @@ export default function Generative() {
               backHome={() => {
                 setStep(0);
                 setSelectedOption(null);
+                fetchDatasets();
               }}
             />
           )}
