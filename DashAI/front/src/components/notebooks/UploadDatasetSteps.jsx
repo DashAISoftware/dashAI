@@ -26,7 +26,11 @@ export default function UploadDatasetSteps({ backHome }) {
   return (
     <CustomLayout
       title={"Upload Dataset"}
-      subtitle={"Select a way to upload your data"}
+      subtitle={
+        step === 0
+          ? "Select a way to upload your data"
+          : "Configure your dataset"
+      }
       padding={0}
     >
       {step === 0 && (
