@@ -1,19 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
 import MainBox from "../../components/notebooks/MainBox";
 import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
+import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps";
+import { getDatasets } from "../../api/datasets";
 
 export default function Generative() {
   const [step, setStep] = useState(0);
+  const [datasets, setDatasets] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
 
   const goToNextStep = (option = selectedOption) => {
     setStep((prevStep) => prevStep + 1);
     setSelectedOption(option);
   };
+
+  useEffect(() => {
+    const fetchDatasets = async () => {
+      const data = await getDatasets();
+      setDatasets(data);
+    };
+
+    fetchDatasets();
+  }, []);
 
   return (
     <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
@@ -52,6 +64,15 @@ export default function Generative() {
                 setStep(0);
                 setSelectedOption(null);
               }}
+            />
+          )}
+          {step === 1 && selectedOption === "notebook" && (
+            <UploadNotebookSteps
+              backHome={() => {
+                setStep(0);
+                setSelectedOption(null);
+              }}
+              datasets={datasets}
             />
           )}
         </MainBox>
