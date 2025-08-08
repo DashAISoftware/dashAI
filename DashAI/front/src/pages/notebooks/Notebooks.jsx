@@ -6,13 +6,6 @@ import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
 
-const defaultNewDataset = {
-  dataloader: "",
-  file: null,
-  url: "",
-  params: {},
-};
-
 export default function Generative() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -54,7 +47,12 @@ export default function Generative() {
             />
           )}
           {step === 1 && selectedOption === "dataset" && (
-            <UploadDatasetSteps backHome={() => setStep(0)} />
+            <UploadDatasetSteps
+              backHome={() => {
+                setStep(0);
+                setSelectedOption(null);
+              }}
+            />
           )}
         </MainBox>
       </Box>
