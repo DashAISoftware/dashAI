@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import SelectDataloaderStep from "../../components/notebooks/SelectDataloaderStep";
 import ConfigureAndUploadDataset from "../../components/notebooks/ConfigureAndUploadDataset";
+import CustomLayout from "../custom/CustomLayout";
 
 const defaultNewDataset = {
   dataloader: "",
@@ -23,7 +24,11 @@ export default function UploadDatasetSteps({ backHome }) {
   };
 
   return (
-    <>
+    <CustomLayout
+      title={"Upload Dataset"}
+      subtitle={"Select a way to upload your data"}
+      padding={0}
+    >
       {step === 0 && (
         <SelectDataloaderStep
           newDataset={newDataset}
@@ -56,6 +61,6 @@ export default function UploadDatasetSteps({ backHome }) {
           backHome={backHome}
         />
       )}
-    </>
+    </CustomLayout>
   );
 }

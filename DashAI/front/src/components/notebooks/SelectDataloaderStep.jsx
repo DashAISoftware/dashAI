@@ -73,12 +73,6 @@ export default function SelectDataloaderStep({
       alignItems="stretch"
       spacing={2}
     >
-      {/* Title */}
-      <Grid item>
-        <DialogContentText
-          sx={{ mb: 3 }}
-        >{`Select a way to upload your data`}</DialogContentText>
-      </Grid>
       {/* List of dataloaders */}
       <Grid item>
         {!loading && (
