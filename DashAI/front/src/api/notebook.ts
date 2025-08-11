@@ -27,3 +27,7 @@ export const getExplorersByNotebookId = async (
   );
   return response.data;
 };
+
+export const deleteNotebook = async (id: number): Promise<void> => {
+  await api.delete(`${notebookEndpoint}/${id}`);
+};

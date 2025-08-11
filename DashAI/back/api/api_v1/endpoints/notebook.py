@@ -3,10 +3,11 @@ import os
 import shutil
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
 from DashAI.back.dependencies.database.models import (
@@ -237,3 +238,60 @@ async def get_notebook_converter_list(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to retrieve converter from notebook {notebook_id}",
             ) from e
+
+
+@router.delete("/{notebook_id}")
+@inject
+async def delete_notebook(
+    notebook_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Delete the notebook associated with the provided ID from the database.
+
+    Parameters
+    ----------
+    notebook_id : int
+        ID of the notebook to be deleted.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Response with code 204 NO_CONTENT
+
+    Raises
+    ------
+    HTTPException
+        If the notebook is not registered in the DB.
+    """
+    log.debug("Deleting notebook with id %s", notebook_id)
+    with session_factory() as db:
+        try:
+            notebook = db.get(Notebook, notebook_id)
+            if not notebook:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Notebook not found",
+                )
+
+            db.delete(notebook)
+            db.commit()
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    try:
+        shutil.rmtree(notebook.file_path, ignore_errors=True)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    except OSError as e:
+        log.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete directory",
+        ) from e
