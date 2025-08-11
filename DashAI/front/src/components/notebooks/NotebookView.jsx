@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import { Box, CircularProgress, Typography } from "@mui/material";
 import {
@@ -7,6 +7,22 @@ import {
 } from "../../api/notebook";
 import ExplorerBox from "./ExplorerBox";
 import ConverterBox from "./ConverterBox";
+
+const RowItem = React.memo(
+  function RowItem({ item }) {
+    return (
+      <Box>
+        {item.type === "explorer" ? (
+          <ExplorerBox explorer={item} handleExplorerDetailsClick={() => {}} />
+        ) : item.type === "converter" ? (
+          <ConverterBox converter={item} />
+        ) : null}
+      </Box>
+    );
+  },
+  // only renders if the item changes
+  (prevProps, nextProps) => prevProps.item === nextProps.item,
+);
 
 export default function NotebookView({ notebook }) {
   if (!notebook) {
@@ -55,6 +71,14 @@ export default function NotebookView({ notebook }) {
     fetchExplorersAndConverters();
   }, []);
 
+  const Row = useCallback(
+    ({ index }) => {
+      const item = explorerAndConverters[index];
+      return <RowItem item={item} />;
+    },
+    [explorerAndConverters],
+  );
+
   return (
     <Box
       sx={{
@@ -64,17 +88,7 @@ export default function NotebookView({ notebook }) {
         pb: 3,
       }}
     >
-      {explorerAndConverters.map((item) =>
-        item.type === "explorer" ? (
-          <ExplorerBox
-            key={item.id}
-            explorer={item}
-            handleExplorerDetailsClick={() => {}}
-          />
-        ) : item.type === "converter" ? (
-          <ConverterBox key={item.id} converter={item} />
-        ) : null,
-      )}
+      {explorerAndConverters.map((item, idx) => Row({ index: idx }))}
     </Box>
   );
 }
