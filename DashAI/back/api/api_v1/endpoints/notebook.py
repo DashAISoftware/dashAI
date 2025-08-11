@@ -173,9 +173,9 @@ def get_notebook(
         return notebook
 
 
-@router.get("/{notebook_id}/explorer")
+@router.get("/{notebook_id}/explorers")
 @inject
-def get_notebook_explorer(
+def get_notebook_explorer_list(
     notebook_id: int,
     skip: int = 0,
     limit: int = 0,
@@ -213,7 +213,7 @@ def get_notebook_explorer(
         return explorers.all()
 
 
-@router.get("/{notebook_id}/converter")
+@router.get("/{notebook_id}/converters")
 @inject
 async def get_notebook_converter_list(
     notebook_id: int,
