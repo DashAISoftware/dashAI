@@ -7,7 +7,7 @@ import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMe
 import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps";
 import DatasetView from "../../components/notebooks/DatasetView";
-import NotebookView from "../../components/notebooks/NotebookView";
+import NotebookVisualization from "../../components/notebooks/NotebookVisualization";
 import { getDatasets, deleteDataset } from "../../api/datasets";
 import { getNotebooks, deleteNotebook } from "../../api/notebook";
 
@@ -15,7 +15,7 @@ export default function Notebooks() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
-  const [selectedNotebookId, setSelectedNotebookId] = useState(null);
+  const [selectedNotebookId, setSelectedNotebookId] = useState(1);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
 
@@ -82,7 +82,6 @@ export default function Notebooks() {
   };
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
-
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
@@ -104,12 +103,12 @@ export default function Notebooks() {
           {selectedDatasetId ? (
             <DatasetView dataset={selectedDataset} />
           ) : selectedNotebookId ? (
-            <NotebookView notebook={selectedNotebook} />
+            <NotebookVisualization notebook={selectedNotebook} />
           ) : step === 0 ? (
             <SelectOptionMenu
               title="Dataset Module"
               subtitle="Upload your datasets: Explore, analyze, and transform your
-               data with advanced exploratory analysis tools. Create interactive notebooks, 
+               data with advanced exploratory analysis tools. Create interactive notebooks,
                generate visualizations, and apply data transformations intuitively."
               options={[
                 {
