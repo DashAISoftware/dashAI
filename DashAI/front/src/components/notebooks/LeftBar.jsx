@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Box, Divider } from "@mui/material";
+import { Box, Divider, Typography } from "@mui/material";
 import Footer from "./Footer";
 import BarHeader from "./BarHeader";
 import CollapsibleList from "./CollapsibleList";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
 import SearchBar from "../threeSectionLayout/SearchBar";
+import NewItemButton from "./NewItemButton";
 
 export default function LeftBar({
   datasets = [],
@@ -16,6 +17,7 @@ export default function LeftBar({
   onDatasetDelete,
   onNotebookClick,
   onNotebookDelete,
+  handleNewSessionButton,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
@@ -56,6 +58,20 @@ export default function LeftBar({
       <BarHeader />
       <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
+      {/* Create new item button */}
+      {selectedDatasetId || selectedNotebookId ? (
+        <NewItemButton
+          onClick={handleNewSessionButton}
+          title="New Dataset/Notebook"
+        />
+      ) : (
+        <Box px={2} py={1}>
+          <Typography variant="body1" color="textSecondary">
+            Dataset Module
+          </Typography>
+        </Box>
+      )}
+
       {/* Search bar global */}
       <Box px={2} py={1} flex="0 0 auto">
         <SearchBar
@@ -65,7 +81,9 @@ export default function LeftBar({
         />
       </Box>
 
-      {/* Contenido scrollable */}
+      <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+
+      {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
         <CollapsibleList
           items={filteredDatasets}

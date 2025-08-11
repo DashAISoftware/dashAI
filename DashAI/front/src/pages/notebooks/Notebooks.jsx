@@ -57,6 +57,13 @@ export default function Notebooks() {
     fetchNotebooks();
   }, []);
 
+  const handleNewSessionButton = () => {
+    setSelectedDatasetId(null);
+    setSelectedNotebookId(null);
+    setStep(0);
+    setSelectedOption(null);
+  };
+
   const handleDatasetClick = (datasetId) => {
     setSelectedDatasetId(datasetId);
     setSelectedNotebookId(null);
@@ -112,6 +119,7 @@ export default function Notebooks() {
           onDatasetDelete={handleDatasetDelete}
           onNotebookClick={handleNotebookClick}
           onNotebookDelete={handleNotebookDelete}
+          handleNewSessionButton={handleNewSessionButton}
         />
       </Box>
       <Box width="56%" mr={1}>
