@@ -111,17 +111,6 @@ def get_notebooks(
         try:
             notebooks = db.query(Notebook).all()
 
-            # Modify file_path to only return the file/folder name
-            notebooks = [notebook.__dict__ for notebook in notebooks]
-
-            notebooks = [
-                {
-                    **notebook,
-                    "file_path": os.path.basename(notebook["file_path"]),
-                }
-                for notebook in notebooks
-            ]
-
         except Exception as e:
             log.error(f"Error retrieving notebooks: {e}")
             raise HTTPException(
@@ -166,9 +155,6 @@ def get_notebook(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Notebook not found",
             ) from None
-
-        # Modify column file_path to only return the file/folder name
-        notebook.file_path = os.path.basename(notebook.file_path)
 
         return notebook
 

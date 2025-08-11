@@ -51,17 +51,6 @@ async def get_datasets(
         try:
             datasets = db.query(Dataset).all()
 
-            # Modify file_path to only return the file/folder name
-            datasets = [dataset.__dict__ for dataset in datasets]
-
-            datasets = [
-                {
-                    **dataset,
-                    "file_path": os.path.basename(dataset["file_path"]),
-                }
-                for dataset in datasets
-            ]
-
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -103,9 +92,6 @@ async def get_dataset(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-
-            # Modify column file_path to only return the file/folder name
-            dataset.file_path = os.path.basename(dataset.file_path)
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -471,12 +457,11 @@ async def update_dataset(
             ) from e
 
 
-@router.get("/file/{path}")
+@router.get("/file/")
 async def get_dataset_file(
     path: str,
     page: int = 0,
     page_size: int = 10,
-    config: dict = Depends(lambda: di["config"]),
 ):
     """Fetch the dataset file associated with the provided file path.
 
@@ -495,7 +480,7 @@ async def get_dataset_file(
         A JSON response containing the dataset rows and total row count.
     """
 
-    arrow_file_path = f"{config['DATASETS_PATH']}/{path}/dataset/data.arrow"
+    arrow_file_path = f"{path}/dataset/data.arrow"
 
     with pa.memory_map(arrow_file_path, "r") as source:
         reader = ipc.RecordBatchFileReader(source)
