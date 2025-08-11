@@ -3,11 +3,11 @@ import os
 import shutil
 import uuid
 
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import exc
+from sqlalchemy.orm import Session, sessionmaker
 
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
 from DashAI.back.dependencies.database.models import (
@@ -110,13 +110,26 @@ def get_notebooks(
     with session_factory() as db:
         try:
             notebooks = db.query(Notebook).all()
-            return notebooks
+
+            # Modify file_path to only return the file/folder name
+            notebooks = [notebook.__dict__ for notebook in notebooks]
+
+            notebooks = [
+                {
+                    **notebook,
+                    "file_path": os.path.basename(notebook["file_path"]),
+                }
+                for notebook in notebooks
+            ]
+
         except Exception as e:
             log.error(f"Error retrieving notebooks: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to retrieve notebooks",
             ) from e
+
+    return notebooks
 
 
 @router.get("/{notebook_id}", response_model=schemas.Notebook)
@@ -153,6 +166,10 @@ def get_notebook(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Notebook not found",
             ) from None
+
+        # Modify column file_path to only return the file/folder name
+        notebook.file_path = os.path.basename(notebook.file_path)
+
         return notebook
 
 

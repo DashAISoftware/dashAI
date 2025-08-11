@@ -18,3 +18,4 @@ class Notebook(NotebookBase):
     dataset_id: int
     created: datetime
     last_modified: datetime
+    file_path: str
