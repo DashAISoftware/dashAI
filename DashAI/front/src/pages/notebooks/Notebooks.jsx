@@ -11,13 +11,6 @@ import NotebookView from "../../components/notebooks/NotebookView";
 import { getDatasets, deleteDataset } from "../../api/datasets";
 import { getNotebooks, deleteNotebook } from "../../api/notebook";
 
-const defaultNewDataset = {
-  dataloader: "",
-  file: null,
-  url: "",
-  params: {},
-};
-
 export default function Notebooks() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
