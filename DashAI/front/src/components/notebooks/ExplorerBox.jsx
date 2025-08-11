@@ -8,15 +8,11 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
-import { Analytics, Info, BarChart } from "@mui/icons-material";
+import { Analytics, Info } from "@mui/icons-material";
 import Results from "./Results";
 import { getExplorerStatus } from "../../utils/explorerStatus";
 
-export default function ExplorerBox({ explorer }) {
-  const handleExplorerDetailsClick = (explorer) => {
-    // Handle the click event for explorer details
-  };
-
+export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
   return (
     <Card key={explorer.id} sx={{ bgcolor: "#212121", borderRadius: 2 }}>
       <CardContent>
@@ -71,7 +67,7 @@ export default function ExplorerBox({ explorer }) {
           >
             <Results id={explorer.id} />
           </Box>
-        ) : getExplorerStatus(explorer.status) === "In Progress" ? (
+        ) : (
           <Box
             sx={{
               height: 120,
@@ -85,7 +81,7 @@ export default function ExplorerBox({ explorer }) {
             <CircularProgress size={24} sx={{ mr: 1 }} />
             <Typography>Processing...</Typography>
           </Box>
-        ) : null}
+        )}
       </CardContent>
     </Card>
   );
