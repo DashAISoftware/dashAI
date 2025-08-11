@@ -23,7 +23,7 @@ export const getExplorersByNotebookId = async (
   notebookId: string,
 ): Promise<IExplorer[]> => {
   const response = await api.get<IExplorer[]>(
-    `${notebookEndpoint}/${notebookId}/explorer`,
+    `${notebookEndpoint}/${notebookId}/explorers`,
   );
   return response.data;
 };
