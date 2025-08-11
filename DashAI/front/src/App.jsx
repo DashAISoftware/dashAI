@@ -15,6 +15,7 @@ import NewPipeline from "./pages/pipelines/NewPipeline";
 import PluginsPage from "./pages/plugins/Plugins";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import PredictionPage from "./pages/predictions/PredictionPage";
+import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
             element={<ExplainerData />}
           />
         </Route>
+        <Route path="/app/generative" element={<Generative />} />
         <Route path="/app/pipelines" element={<PipelinesPage />} />
         <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
         <Route

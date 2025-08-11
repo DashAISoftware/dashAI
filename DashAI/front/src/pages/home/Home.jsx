@@ -8,6 +8,7 @@ import {
   Insights as InsightsIcon,
   Merge as MergeIcon, // Add icon for pipelines
   Timeline as TimelineIcon,
+  AutoAwesome as AutoAwesomeIcon,
 } from "@mui/icons-material";
 import HomeButton from "../../components/HomeButton";
 import CustomLayout from "../../components/custom/CustomLayout";
@@ -81,6 +82,14 @@ function Home() {
         alignItems="center"
         sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
       >
+        <Grid item md={4} sm={6} xs={12}>
+          <HomeButton
+            title="Generative"
+            description={"Interact with AI models to infere."}
+            to="/app/generative"
+            Icon={AutoAwesomeIcon}
+          />
+        </Grid>
         <Grid item md={4} sm={6} xs={12}>
           <HomeButton
             title="Plugins"

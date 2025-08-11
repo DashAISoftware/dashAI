@@ -64,6 +64,7 @@ from DashAI.back.job import (
     DatasetJob,
     ExplainerJob,
     ExplorerJob,
+    GenerativeJob,
     ModelJob,
     PipelineJob,
     PredictJob,
@@ -75,6 +76,7 @@ from DashAI.back.models import (
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
+    GemmaModel,
     GradientBoostingR,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
@@ -83,9 +85,13 @@ from DashAI.back.models import (
     LogisticRegression,
     MLPRegression,
     OpusMtEnESTransformer,
+    QwenModel,
     RandomForestClassifier,
     RandomForestRegression,
     RidgeRegression,
+    StableDiffusionV2Model,
+    StableDiffusionV3Model,
+    StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.pipeline import (
@@ -97,10 +103,13 @@ from DashAI.back.pipeline import (
 )
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
+    ControlNetTask,
     ImageClassificationTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
+    TextToImageGenerationTask,
+    TextToTextGenerationTask,
     TranslationTask,
 )
 
@@ -126,6 +135,9 @@ def get_initial_components():
         TranslationTask,
         ImageClassificationTask,
         RegressionTask,
+        TextToImageGenerationTask,
+        TextToTextGenerationTask,
+        ControlNetTask,
         # Models
         SVC,
         DecisionTreeClassifier,
@@ -133,6 +145,11 @@ def get_initial_components():
         GradientBoostingR,
         HistGradientBoostingClassifier,
         KNeighborsClassifier,
+        GemmaModel,
+        QwenModel,
+        StableDiffusionV2Model,
+        StableDiffusionV3Model,
+        StableDiffusionXLV1ControlNet,
         LogisticRegression,
         MLPRegression,
         RandomForestClassifier,
@@ -166,6 +183,7 @@ def get_initial_components():
         PredictJob,
         ConverterListJob,
         DatasetJob,
+        GenerativeJob,
         PipelineJob,
         # Explainers
         KernelShap,

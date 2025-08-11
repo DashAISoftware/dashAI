@@ -1,8 +1,20 @@
 # flake8: noqa
+from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
+from DashAI.back.models.hugging_face.gemma_model import GemmaModel
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
+)
+from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
+    StableDiffusionXLV1ControlNet,
+)
+from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
+    StableDiffusionV2Model,
+)
+from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
+    StableDiffusionV3Model,
 )
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
