@@ -3,4 +3,5 @@ export interface IDataset {
   name: string;
   created: Date;
   last_modified: Date;
+  file_path: string;
 }
