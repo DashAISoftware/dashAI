@@ -1,6 +1,7 @@
 import api from "./api";
 import { INotebook } from "../types/notebook";
 import { IExplorer } from "../types/explorer";
+import { IConverter } from "../types/converter";
 
 const notebookEndpoint = "/v1/notebook";
 
@@ -24,6 +25,15 @@ export const getExplorersByNotebookId = async (
 ): Promise<IExplorer[]> => {
   const response = await api.get<IExplorer[]>(
     `${notebookEndpoint}/${notebookId}/explorers`,
+  );
+  return response.data;
+};
+
+export const getConvertersByNotebookId = async (
+  notebookId: string,
+): Promise<IConverter[]> => {
+  const response = await api.get<IConverter[]>(
+    `${notebookEndpoint}/${notebookId}/converters`,
   );
   return response.data;
 };
