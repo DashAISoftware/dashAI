@@ -8,6 +8,7 @@ import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
 from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
@@ -50,6 +51,17 @@ async def get_datasets(
         try:
             datasets = db.query(Dataset).all()
 
+            # Modify file_path to only return the file/folder name
+            datasets = [dataset.__dict__ for dataset in datasets]
+
+            datasets = [
+                {
+                    **dataset,
+                    "file_path": os.path.basename(dataset["file_path"]),
+                }
+                for dataset in datasets
+            ]
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -85,11 +97,16 @@ async def get_dataset(
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
+
             if not dataset:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+
+            # Modify column file_path to only return the file/folder name
+            dataset.file_path = os.path.basename(dataset.file_path)
+
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -452,3 +469,48 @@ async def update_dataset(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.get("/file/{path}")
+async def get_dataset_file(
+    path: str,
+    page: int = 0,
+    page_size: int = 10,
+    config: dict = Depends(lambda: di["config"]),
+):
+    """Fetch the dataset file associated with the provided file path.
+
+    Parameters
+    ----------
+    path : str
+        The folder path of the dataset to retrieve.
+    page: int
+        The page number to retrieve.
+    page_size: int
+        The number of items per page.
+
+    Returns
+    -------
+    JSONResponse
+        A JSON response containing the dataset rows and total row count.
+    """
+
+    arrow_file_path = f"{config['DATASETS_PATH']}/{path}/dataset/data.arrow"
+
+    with pa.memory_map(arrow_file_path, "r") as source:
+        reader = ipc.RecordBatchFileReader(source)
+        arrow_table = reader.read_all()
+
+    start = page * page_size
+    total_rows = len(arrow_table)
+
+    if start >= total_rows:
+        return JSONResponse(content={"rows": [], "total": total_rows})
+
+    slice_table = arrow_table.slice(start, min(page_size, total_rows - start))
+    rows = [
+        {col: slice_table[col][i].as_py() for col in slice_table.schema.names}
+        for i in range(slice_table.num_rows)
+    ]
+
+    return JSONResponse(content={"rows": rows, "total": total_rows})

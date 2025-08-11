@@ -47,3 +47,8 @@ export const deleteDataset = async (id: string): Promise<object> => {
   const response = await api.delete(`${datasetEndpoint}/${id}`);
   return response.data;
 };
+
+export const getDatasetFile = async (file: string): Promise<object> => {
+  const response = await api.get<object>(`${datasetEndpoint}/file/${file}`);
+  return response.data;
+};
