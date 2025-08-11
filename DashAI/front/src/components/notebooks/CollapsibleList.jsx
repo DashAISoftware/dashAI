@@ -21,18 +21,15 @@ export default function CollapsibleList({
     <Box
       display="flex"
       flexDirection="column"
-      height="100%"
-      width="100%"
+      // height="100%"
+      // width="100%"
       pb={1}
       sx={{
-        "&::-webkit-scrollbar": { width: "6px" },
-        "&::-webkit-scrollbar-thumb": {
-          backgroundColor: "#374151",
-          borderRadius: "3px",
-        },
-        "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#4B5563" },
-        overflowY: "auto",
+        overflowY: "hidden",
         flex: 1,
+        pl: 2,
+        pr: 2,
+        pt: 2,
       }}
     >
       {/* Header de la carpeta */}
@@ -89,7 +86,19 @@ export default function CollapsibleList({
       </Box>
 
       {/* Lista colapsable de datasets */}
-      <Collapse in={open} timeout="auto">
+      <Collapse
+        in={open}
+        timeout="auto"
+        sx={{
+          "&::-webkit-scrollbar": { width: "6px" },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#374151",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#4B5563" },
+          overflowY: "auto",
+        }}
+      >
         <Box pl={2}>
           {items?.length ? (
             items.map((ds) => (
