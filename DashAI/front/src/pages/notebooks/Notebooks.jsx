@@ -10,6 +10,7 @@ import DatasetView from "../../components/notebooks/DatasetView";
 import NotebookVisualization from "../../components/notebooks/NotebookVisualization";
 import { getDatasets, deleteDataset } from "../../api/datasets";
 import { getNotebooks, deleteNotebook } from "../../api/notebook";
+import { useSnackbar } from "notistack";
 
 export default function Notebooks() {
   const [step, setStep] = useState(0);
@@ -18,6 +19,7 @@ export default function Notebooks() {
   const [selectedNotebookId, setSelectedNotebookId] = useState(0);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
 
   const goToNextStep = (option = selectedOption) => {
     setStep((prevStep) => prevStep + 1);
@@ -27,13 +29,27 @@ export default function Notebooks() {
   };
 
   const fetchDatasets = async () => {
-    const data = await getDatasets();
-    setDatasets(data);
+    try {
+      const data = await getDatasets();
+      setDatasets(data);
+    } catch (error) {
+      enqueueSnackbar("Failed to fetch datasets", {
+        variant: "error",
+      });
+      console.error("Failed to fetch datasets:", error);
+    }
   };
 
   const fetchNotebooks = async () => {
-    const data = await getNotebooks();
-    setNotebooks(data);
+    try {
+      const data = await getNotebooks();
+      setNotebooks(data);
+    } catch (error) {
+      enqueueSnackbar("Failed to fetch notebooks", {
+        variant: "error",
+      });
+      console.error("Failed to fetch notebooks:", error);
+    }
   };
 
   useEffect(() => {
