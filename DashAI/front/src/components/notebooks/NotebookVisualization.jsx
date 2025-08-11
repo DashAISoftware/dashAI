@@ -12,7 +12,7 @@ import NotebookView from "./NotebookView";
 
 export default function NotebookVisualization({ notebook }) {
   return (
-    <Box sx={{ height: "100%" }}>
+    <Box>
       {/* Dataset view */}
       <Box
         sx={{
@@ -42,7 +42,7 @@ export default function NotebookVisualization({ notebook }) {
       <Divider sx={{ my: 2 }} />
 
       {/* Notebook view */}
-      <Box mt={2} sx={{ height: "100%" }}>
+      <Box mt={2}>
         <Typography variant="h5" my={2}>
           Analysis Results
         </Typography>
