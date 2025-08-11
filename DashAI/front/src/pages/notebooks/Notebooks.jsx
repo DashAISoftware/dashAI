@@ -9,7 +9,11 @@ import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps"
 import DatasetView from "../../components/notebooks/DatasetView";
 import NotebookVisualization from "../../components/notebooks/NotebookVisualization";
 import { getDatasets, deleteDataset } from "../../api/datasets";
-import { getNotebooks, deleteNotebook } from "../../api/notebook";
+import {
+  getNotebooks,
+  deleteNotebook,
+  createDatasetFromNotebook,
+} from "../../api/notebook";
 import { useSnackbar } from "notistack";
 
 export default function Notebooks() {
@@ -104,6 +108,26 @@ export default function Notebooks() {
     deleteNotebook(id);
   };
 
+  const handleAddDatasetFromNotebook = async (name) => {
+    if (selectedNotebook) {
+      try {
+        const data = await createDatasetFromNotebook(selectedNotebook.id, name);
+
+        if (data) {
+          enqueueSnackbar("Dataset created successfully", {
+            variant: "success",
+          });
+          setDatasets((prevDatasets) => [...prevDatasets, data]);
+        }
+      } catch (error) {
+        enqueueSnackbar("Failed to create dataset from notebook:", {
+          variant: "error",
+        });
+        console.error("Failed to create dataset from notebook:", error);
+      }
+    }
+  };
+
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -127,7 +151,10 @@ export default function Notebooks() {
           {selectedDatasetId ? (
             <DatasetView dataset={selectedDataset} />
           ) : selectedNotebookId ? (
-            <NotebookVisualization notebook={selectedNotebook} />
+            <NotebookVisualization
+              notebook={selectedNotebook}
+              handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+            />
           ) : step === 0 ? (
             <SelectOptionMenu
               title="Dataset Module"

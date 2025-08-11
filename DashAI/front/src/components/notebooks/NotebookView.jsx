@@ -74,7 +74,7 @@ export default function NotebookView({ notebook }) {
   const Row = useCallback(
     ({ index }) => {
       const item = explorerAndConverters[index];
-      return <RowItem item={item} />;
+      return <RowItem item={item} key={`${item.type}-${index}`} />;
     },
     [explorerAndConverters],
   );

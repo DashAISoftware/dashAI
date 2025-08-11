@@ -1,42 +1,20 @@
 import React from "react";
-import {
-  Box,
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Typography,
-  Divider,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import NotebookView from "./NotebookView";
+import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
 
-export default function NotebookVisualization({ notebook }) {
+export default function NotebookVisualization({
+  notebook,
+  handleAddDatasetFromNotebook,
+}) {
   return (
     <Box>
-      {/* Dataset view */}
-      <Box
-        sx={{
-          mb: 2,
-        }}
-      >
-        <Typography variant="h5" my={2}>
-          Dataset Preview
-        </Typography>
-        <Accordion
-          width="100%"
-          sx={{ bgcolor: "#212121", borderRadius: 2, boxShadow: "none" }}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1-content"
-            id="panel1-header"
-          >
-            <Typography component="span">Iris</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box>Dataset Component </Box>
-          </AccordionDetails>
-        </Accordion>
+      <Box>
+        {/* Dataset View */}
+        <DatasetPreviewNotebook
+          notebook={notebook}
+          handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+        />
       </Box>
 
       <Divider sx={{ my: 2 }} />
