@@ -1,17 +1,28 @@
 import { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
-import MainBox from "../../components/notebooks/MainBox";
+import CenterBox from "../../components/notebooks/CenterBox";
 import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps";
-import { getDatasets } from "../../api/datasets";
+import { getDatasets, deleteDataset } from "../../api/datasets";
+import { getNotebooks, deleteNotebook } from "../../api/notebook";
 
-export default function Generative() {
+const defaultNewDataset = {
+  dataloader: "",
+  file: null,
+  url: "",
+  params: {},
+};
+
+export default function Notebooks() {
   const [step, setStep] = useState(0);
-  const [datasets, setDatasets] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [selectedDatasetId, setSelectedDatasetId] = useState(null);
+  const [selectedNotebookId, setSelectedNotebookId] = useState(null);
+  const [datasets, setDatasets] = useState([]);
+  const [notebooks, setNotebooks] = useState([]);
 
   const goToNextStep = (option = selectedOption) => {
     setStep((prevStep) => prevStep + 1);
@@ -23,17 +34,66 @@ export default function Generative() {
     setDatasets(data);
   };
 
+  const fetchNotebooks = async () => {
+    const data = await getNotebooks();
+    setNotebooks(data);
+  };
+
   useEffect(() => {
     fetchDatasets();
+    fetchNotebooks();
   }, []);
+
+  const handleDatasetClick = (datasetId) => {
+    setSelectedDatasetId(datasetId);
+  };
+
+  const handleNotebookClick = (notebookId) => {
+    setSelectedNotebookId(notebookId);
+  };
+
+  const handleDatasetDelete = (id) => {
+    if (id === selectedDatasetId) {
+      setSelectedDatasetId(null);
+      setStep(0);
+    }
+
+    setDatasets((prevDatasets) =>
+      prevDatasets.filter((dataset) => dataset.id !== id),
+    );
+
+    deleteDataset(id);
+  };
+
+  const handleNotebookDelete = (id) => {
+    if (id === selectedNotebookId) {
+      setSelectedNotebookId(null);
+      setStep(0);
+    }
+
+    setNotebooks((prevNotebooks) =>
+      prevNotebooks.filter((notebook) => notebook.id !== id),
+    );
+
+    deleteNotebook(id);
+  };
 
   return (
     <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
       <Box width="22%" mr={1}>
-        <LeftBar></LeftBar>
+        <LeftBar
+          datasets={datasets}
+          notebooks={notebooks}
+          selectedDatasetId={selectedDatasetId}
+          selectedNotebookId={selectedNotebookId}
+          onDatasetClick={handleDatasetClick}
+          onDatasetDelete={handleDatasetDelete}
+          onNotebookClick={handleNotebookClick}
+          onNotebookDelete={handleNotebookDelete}
+        />
       </Box>
       <Box width="56%" mr={1}>
-        <MainBox>
+        <CenterBox>
           {step === 0 && (
             <SelectOptionMenu
               title="Dataset Module"
@@ -72,11 +132,12 @@ export default function Generative() {
               backHome={() => {
                 setStep(0);
                 setSelectedOption(null);
+                fetchNotebooks();
               }}
               datasets={datasets}
             />
           )}
-        </MainBox>
+        </CenterBox>
       </Box>
       <Box width="22%">
         <RightBar></RightBar>
