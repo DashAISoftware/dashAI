@@ -15,7 +15,7 @@ export default function Notebooks() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
-  const [selectedNotebookId, setSelectedNotebookId] = useState(1);
+  const [selectedNotebookId, setSelectedNotebookId] = useState(0);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
 
