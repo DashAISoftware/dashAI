@@ -69,7 +69,7 @@ export default function NotebookView({ notebook }) {
     };
 
     fetchExplorersAndConverters();
-  }, []);
+  }, [notebook]);
 
   const Row = useCallback(
     ({ index }) => {
@@ -80,15 +80,30 @@ export default function NotebookView({ notebook }) {
   );
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-        pb: 3,
-      }}
-    >
-      {explorerAndConverters.map((item, idx) => Row({ index: idx }))}
-    </Box>
+    <>
+      {explorerAndConverters.length === 0 ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography>
+            Start exploring by adding your first explorer or converter!
+          </Typography>
+        </Box>
+      ) : null}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+          pb: 3,
+        }}
+      >
+        {explorerAndConverters.map((item, idx) => Row({ index: idx }))}
+      </Box>
+    </>
   );
 }
