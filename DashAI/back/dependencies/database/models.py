@@ -33,7 +33,9 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
-    notebooks: Mapped[List["Notebook"]] = relationship(back_populates="dataset")
+    notebooks: Mapped[List["Notebook"]] = relationship(
+        cascade="all, delete-orphan", back_populates="dataset"
+    )
     experiments: Mapped[List["Experiment"]] = relationship(
         "Experiment", cascade="all, delete-orphan", back_populates="dataset"
     )
@@ -322,7 +324,9 @@ class Notebook(Base):
     Table to store all the information about a notebook.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
+    dataset_id: Mapped[int] = mapped_column(
+        ForeignKey("dataset.id", ondelete="CASCADE")
+    )
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -333,9 +337,13 @@ class Notebook(Base):
     name: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(String, nullable=True)
     # Relationships
+    explorers: Mapped[List["Explorer"]] = relationship(
+        back_populates="notebook", cascade="all, delete-orphan", passive_deletes=True
+    )
+    converters: Mapped[List["ConverterList"]] = relationship(
+        back_populates="notebook", cascade="all, delete-orphan", passive_deletes=True
+    )
     dataset: Mapped["Dataset"] = relationship(back_populates="notebooks")
-    explorers: Mapped[List["Explorer"]] = relationship(back_populates="notebook")
-    converters: Mapped[List["ConverterList"]] = relationship(back_populates="notebook")
 
 
 class Explorer(Base):
