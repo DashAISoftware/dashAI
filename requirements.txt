@@ -6,12 +6,13 @@ SQLAlchemy
 streaming_form_data
 alembic
 kink
-numpy
+numpy==1.24.4
+pandas==2.0.3
 joblib
 pydantic
 pydantic-settings
 starlette
-scikit-learn
+scikit-learn==1.3.2
 datasets
 diffusers
 evaluate

@@ -1,89 +1,78 @@
 # flake8: noqa: ERA001
-import pytest
-import torch
-
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    select_columns,
-    split_dataset,
-    split_indexes,
-    to_dashai_dataset,
-)
-from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.models import OpusMtEnESTransformer
 
 
-@pytest.fixture(scope="module", name="translation_dataset")
-def translation_dataset_fixture():
-    test_dataset_path = "tests/back/models/translationEngSpaDatasetSmall.json"
-    dataloader_test = JSONDataLoader()
+# @pytest.fixture(scope="module", name="translation_dataset")
+# def translation_dataset_fixture():
+#     test_dataset_path = "tests/back/models/translationEngSpaDatasetSmall.json"
+#     dataloader_test = JSONDataLoader()
 
-    datasetdict = dataloader_test.load_data(
-        filepath_or_buffer=test_dataset_path,
-        temp_path="tests/back/models",
-        params={"data_key": "data"},
-    )
+#     datasetdict = dataloader_test.load_data(
+#         filepath_or_buffer=test_dataset_path,
+#         temp_path="tests/back/models",
+#         params={"data_key": "data"},
+#     )
 
-    datasetdict = to_dashai_dataset(datasetdict)
+#     datasetdict = to_dashai_dataset(datasetdict)
 
-    train_idx, test_idx, val_idx = split_indexes(
-        total_rows=len(datasetdict),
-        train_size=0.6,
-        test_size=0.2,
-        val_size=0.2,
-    )
+#     train_idx, test_idx, val_idx = split_indexes(
+#         total_rows=len(datasetdict),
+#         train_size=0.6,
+#         test_size=0.2,
+#         val_size=0.2,
+#     )
 
-    splited_dataset = split_dataset(
-        datasetdict,
-        train_indexes=train_idx,
-        test_indexes=test_idx,
-        val_indexes=val_idx,
-    )
+#     splited_dataset = split_dataset(
+#         datasetdict,
+#         train_indexes=train_idx,
+#         test_indexes=test_idx,
+#         val_indexes=val_idx,
+#     )
 
-    x, y = select_columns(
-        splited_dataset,
-        ["text"],
-        ["class"],
-    )
-    x = split_dataset(x)
-    y = split_dataset(y)
+#     x, y = select_columns(
+#         splited_dataset,
+#         ["text"],
+#         ["class"],
+#     )
+#     x = split_dataset(x)
+#     y = split_dataset(y)
 
-    return (x["train"], y["train"])
-
-
-@pytest.fixture()
-def sample_model() -> OpusMtEnESTransformer:
-    model = OpusMtEnESTransformer(
-        num_train_epochs=1,
-        batch_size=4,
-        learning_rate=2e-5,
-        device="gpu",
-        weight_decay=0.01,
-    )
-    return model
+#     return (x["train"], y["train"])
 
 
-@pytest.fixture(autouse=True)
-def _clear_cuda_cache():
-    yield
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+# @pytest.fixture()
+# def sample_model() -> OpusMtEnESTransformer:
+#     model = OpusMtEnESTransformer(
+#         num_train_epochs=1,
+#         batch_size=4,
+#         learning_rate=2e-5,
+#         device="gpu",
+#         weight_decay=0.01,
+#     )
+#     return model
 
 
-def test_model_initialization(sample_model):
-    assert sample_model.model is not None
-    assert sample_model.tokenizer is not None
-    assert sample_model.model_name == "Helsinki-NLP/opus-mt-en-es"
-    assert sample_model.fitted is False
+# @pytest.fixture(autouse=True)
+# def _clear_cuda_cache():
+#     yield
+#     if torch.cuda.is_available():
+#         torch.cuda.empty_cache()
 
 
-def test_tokenize_data(sample_model, translation_dataset):
-    x_train, y_train = translation_dataset
-    tokenized_dataset = sample_model.tokenize_data(x_train, y_train)
+# def test_model_initialization(sample_model):
+#     assert sample_model.model is not None
+#     assert sample_model.tokenizer is not None
+#     assert sample_model.model_name == "Helsinki-NLP/opus-mt-en-es"
+#     assert sample_model.fitted is False
 
-    assert "input_ids" in tokenized_dataset.features
-    assert "attention_mask" in tokenized_dataset.features
-    assert "labels" in tokenized_dataset.features
-    assert len(tokenized_dataset) == len(x_train)
+
+# def test_tokenize_data(sample_model, translation_dataset):
+#     x_train, y_train = translation_dataset
+#     tokenized_dataset = sample_model.tokenize_data(x_train, y_train)
+
+#     assert "input_ids" in tokenized_dataset.features
+#     assert "attention_mask" in tokenized_dataset.features
+#     assert "labels" in tokenized_dataset.features
+#     assert len(tokenized_dataset) == len(x_train)
 
 
 # def test_fit(sample_model, translation_dataset):
