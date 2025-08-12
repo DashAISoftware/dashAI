@@ -53,7 +53,7 @@ Click on the task you want to perform, in this case TextToText
 You can configure the model by setting parameters such as temperature, max tokens, and more. Also there is an info button for each parameter that will show you a description of the parameter.
 
 1. Configure session parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: ../tutorials/images/generative/step5.png
     :alt: Configure session parameters
