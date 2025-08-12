@@ -1,6 +1,5 @@
 # DashAI/back/dependencies/job_queues/huey_job_queue.py
 
-
 import asyncio
 import sqlite3
 
@@ -42,6 +41,7 @@ class HueyJobQueue(BaseJobQueue):
             immediate=False,
             immediate_use_memory=False,
         )
+        self._enable_wal()
         self._ensure_task_copy_table()
         self._register_signals()
 
@@ -57,34 +57,35 @@ class HueyJobQueue(BaseJobQueue):
         - SIGNAL_ENQUEUED: insert or replace a row with status `not_started`
         - SIGNAL_EXECUTING: update the row to status `started`
         - SIGNAL_COMPLETE: update the row to status `finished`
-        - SIGNAL_ERROR: update the row to status `error` and store the
-          exception message
+        - SIGNAL_ERROR: update the row to status `error` and store the exception
+        All writes stamp last_update with microsecond precision to avoid same-second races.
         """
 
         def exec_sql(sql, params=()):
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(sql, params)
 
+        # Use SQLite's STRFTIME with %f for microsecond precision
+        NOW_MICRO = "STRFTIME('%Y-%m-%d %H:%M:%f','now')"
+
         @self.huey.signal(SIGNAL_ENQUEUED)
         def on_enqueue(signal, task):
             exec_sql(
                 (
                     "INSERT OR REPLACE INTO task_copy "
-                    "(id, task_type, status) VALUES (?, ?, ?)"
+                    "(id, task_type, status, last_update) "
+                    f"VALUES (?, ?, ?, {NOW_MICRO})"
                 ),
-                (
-                    task.id,
-                    task.name,
-                    "not_started",
-                ),
+                (task.id, task.name, "not_started"),
             )
 
         @self.huey.signal(SIGNAL_EXECUTING)
         def on_start(signal, task):
             exec_sql(
                 (
-                    "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP "
-                    "WHERE id=?"
+                    "UPDATE task_copy SET status = ?, "
+                    f"last_update = {NOW_MICRO} "
+                    "WHERE id = ?"
                 ),
                 ("started", task.id),
             )
@@ -93,8 +94,9 @@ class HueyJobQueue(BaseJobQueue):
         def on_success(signal, task, *args):
             exec_sql(
                 (
-                    "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP "
-                    "WHERE id=?"
+                    "UPDATE task_copy SET status = ?, "
+                    f"last_update = {NOW_MICRO} "
+                    "WHERE id = ?"
                 ),
                 ("finished", task.id),
             )
@@ -103,11 +105,19 @@ class HueyJobQueue(BaseJobQueue):
         def on_error(signal, task, exc):
             exec_sql(
                 (
-                    "UPDATE task_copy SET status=?, last_update=CURRENT_TIMESTAMP, "
-                    "error_msg=? WHERE id=?"
+                    "UPDATE task_copy SET status = ?, "
+                    f"last_update = {NOW_MICRO}, "
+                    "error_msg = ? "
+                    "WHERE id = ?"
                 ),
                 ("error", str(exc), task.id),
             )
+
+    def _enable_wal(self):
+        """Enable Write-Ahead Logging mode in SQLite to improve concurrent reads/writes."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute("PRAGMA synchronous=NORMAL;")
 
     def _ensure_task_copy_table(self):
         """Ensure the 'task_copy' table exists.
@@ -115,12 +125,9 @@ class HueyJobQueue(BaseJobQueue):
         Columns:
         - id (TEXT PRIMARY KEY): unique identifier for the job (UUID as text)
         - task_type (TEXT NOT NULL): the name of the Huey task
-        - enqueued_at (DATETIME NOT NULL): timestamp when the job was enqueued
-          (defaults to CURRENT_TIMESTAMP)
-        - status (TEXT NOT NULL): current job status, one of:
-            'not_started', 'started', 'finished', 'deleted', 'error'
-        - last_update (DATETIME NOT NULL): timestamp of the last status change
-          (defaults to CURRENT_TIMESTAMP)
+        - enqueued_at (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP
+        - status (TEXT NOT NULL): one of: 'not_started', 'started', 'finished', 'deleted', 'error'
+        - last_update (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP
         - error_msg (TEXT): optional error message when a task fails
         """
         with sqlite3.connect(self.db_path) as conn:
@@ -136,8 +143,12 @@ class HueyJobQueue(BaseJobQueue):
                 )
                 """
             )
+            # Helpful for WHERE last_update > ? queries
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_task_copy_last_update ON task_copy(last_update, id)"
+            )
 
-    def status(self, job_id: int) -> dict:
+    def status(self, job_id: str) -> dict:
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute(
@@ -145,7 +156,7 @@ class HueyJobQueue(BaseJobQueue):
             SELECT status, last_update, error_msg
             FROM task_copy WHERE id = ?
             """,
-            (job_id,),
+            (str(job_id),),
         )
         row = cur.fetchone()
         conn.close()
@@ -157,21 +168,18 @@ class HueyJobQueue(BaseJobQueue):
         result = self._execute(job)
         return result
 
-    def to_list(self) -> list[BaseJob]:
+    def to_list(self) -> list[dict]:
         with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute(
-                "SELECT id, data FROM task WHERE queue = ? "
-                "ORDER BY priority DESC, id ASC",
-                (self.huey.storage.name,),
+                """
+                SELECT id, task_type, enqueued_at, status, last_update, error_msg
+                FROM task_copy
+                ORDER BY last_update DESC
+                """
             )
-            rows = cur.fetchall()
-        jobs = []
-        for _, blob in rows:
-            payload = self.serializer.loads(blob)
-            job = payload[6][0]
-            jobs.append(job)
-        return jobs
+            return [dict(row) for row in cur.fetchall()]
 
     def peek(self, job_id: int | None = None) -> BaseJob:
         with sqlite3.connect(self.db_path) as conn:
@@ -223,7 +231,8 @@ class HueyJobQueue(BaseJobQueue):
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 (
-                    "UPDATE task_copy SET status = ?, last_update = CURRENT_TIMESTAMP "
+                    "UPDATE task_copy SET status = ?, "
+                    "last_update = STRFTIME('%Y-%m-%d %H:%M:%f','now') "
                     "WHERE id = ?"
                 ),
                 ("deleted", jid),
