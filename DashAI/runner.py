@@ -21,6 +21,9 @@ HUEY_CMD = [
     "-m",
     "huey.bin.huey_consumer",
     "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
+    "--delay",
+    "1",
+    "--quiet",
 ]
 
 
