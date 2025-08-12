@@ -48,13 +48,10 @@ export const deleteDataset = async (id: string): Promise<object> => {
   return response.data;
 };
 
-export const getDatasetFile = async (
-  path: string,
-  page = 0,
-  pageSize = 5
-): Promise<DatasetPage> => {
-  const response = await api.get<DatasetPage>(`${datasetEndpoint}/file`, {
+export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
+  const response = await api.get(`${datasetEndpoint}/file/`, {
     params: { path, page, page_size: pageSize },
   });
   return response.data;
 };
+
