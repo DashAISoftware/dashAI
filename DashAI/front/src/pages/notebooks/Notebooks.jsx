@@ -6,7 +6,7 @@ import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps";
-import DatasetView from "../../components/notebooks/DatasetView";
+import DatasetVisualization from "../../components/notebooks/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/NotebookVisualization";
 import { getDatasets, deleteDataset } from "../../api/datasets";
 import {
@@ -149,7 +149,7 @@ export default function Notebooks() {
       <Box width="56%" mr={1}>
         <CenterBox>
           {selectedDatasetId ? (
-            <DatasetView dataset={selectedDataset} />
+            <DatasetVisualization dataset={selectedDataset} />
           ) : selectedNotebookId ? (
             <NotebookVisualization
               notebook={selectedNotebook}
