@@ -9,12 +9,7 @@ import {
   useTheme,
 } from "@mui/material";
 
-export default function DeleteDatasetConfirmationModal({
-  open,
-  datasetId,
-  onClose,
-  onConfirm,
-}) {
+export default function DeleteConfirmationModal({ open, onClose, onConfirm }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 

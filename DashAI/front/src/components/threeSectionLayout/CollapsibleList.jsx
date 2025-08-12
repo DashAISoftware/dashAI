@@ -3,7 +3,7 @@ import { Box, Typography, Collapse } from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import DatasetBox from "./DatasetBox";
+import ItemBox from "./ItemBox";
 
 export default function CollapsibleList({
   items = [],
@@ -102,7 +102,7 @@ export default function CollapsibleList({
         <Box pl={2}>
           {items?.length ? (
             items.map((ds) => (
-              <DatasetBox
+              <ItemBox
                 key={ds.id ?? ds.name}
                 isSelected={ds.id === selectedItemId}
                 name={ds.name}

@@ -11,7 +11,7 @@ import {
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
-import DeleteDatasetConfirmationModal from "./DeleteDatasetConfirmationModal";
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   color: theme.palette.error.main,
@@ -20,7 +20,7 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-export default function DatasetMenu({ datasetId, onInfo, onDelete }) {
+export default function ItemMenu({ itemId, onInfo, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const open = Boolean(anchorEl);
@@ -108,16 +108,15 @@ export default function DatasetMenu({ datasetId, onInfo, onDelete }) {
       </Menu>
 
       {/* Confirmation Modal */}
-      <DeleteDatasetConfirmationModal
+      <DeleteConfirmationModal
         open={deleteModalOpen}
-        datasetId={datasetId}
         onClose={(e) => {
           e.stopPropagation();
           setDeleteModalOpen(false);
         }}
         onConfirm={(e) => {
           e.stopPropagation();
-          handleDeleteConfirm(datasetId);
+          handleDeleteConfirm(itemId);
           setDeleteModalOpen(false);
         }}
       />

@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Box, Divider, Typography } from "@mui/material";
-import Footer from "./Footer";
-import BarHeader from "./BarHeader";
-import CollapsibleList from "./CollapsibleList";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
+import Footer from "./Footer";
+import BarHeader from "./BarHeader";
+import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
-import NewItemButton from "./NewItemButton";
+import NewItemButton from "../threeSectionLayout/NewItemButton";
+import LeftBar from "../threeSectionLayout/LeftBar";
 
-export default function LeftBar({
+export default function DatasetsNotebooksBar({
   datasets = [],
   selectedDatasetId,
   notebooks = [],
@@ -41,19 +42,7 @@ export default function LeftBar({
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
   return (
-    <Box
-      width="100%"
-      height="100%"
-      borderRadius={2}
-      display="flex"
-      flexDirection="column"
-      justifyContent="space-between"
-      sx={{
-        bgcolor: "background.box",
-        color: "white",
-        borderRight: "1px solid #252836",
-      }}
-    >
+    <LeftBar>
       {/* Header */}
       <BarHeader />
       <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
@@ -110,6 +99,6 @@ export default function LeftBar({
 
       {/* Footer */}
       <Footer />
-    </Box>
+    </LeftBar>
   );
 }

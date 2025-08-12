@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
-import DatasetMenu from "./DatasetMenu";
+import ItemMenu from "./ItemMenu";
 
-export default function DatasetBox({
+export default function ItemBox({
   isSelected,
   name,
   description,
@@ -55,7 +55,7 @@ export default function DatasetBox({
           </Typography>
         </Box>
       </Box>
-      <DatasetMenu datasetId={id} onInfo={onInfo} onDelete={onDelete} />
+      <ItemMenu itemId={id} onInfo={onInfo} onDelete={onDelete} />
     </Box>
   );
 }
