@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Accordion,
@@ -13,11 +13,22 @@ import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import { SaveDatasetModal } from "./SaveDatasetModal";
 import { getConvertersByNotebookId } from "../../api/notebook";
+import { getDatasetFile } from "../../api/datasets";
+import DatasetTable from "./DatasetTable";
 
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
 }) {
+  console.log("Path notebook:", notebook.file_path);
+  const fetchDatasetPage = useCallback(
+    async (page, pageSize) => {
+      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+      return { rows: data.rows ?? [], total: data.total ?? 0 };
+    },
+    [notebook.file_path],
+  );
+
   if (!notebook) {
     return (
       <Box
@@ -117,7 +128,15 @@ export default function DatasetPreviewNotebook({
           </Box>
         </AccordionSummary>
         <AccordionDetails>
-          <Box>Dataset Component </Box>
+          <Box>
+            {" "}
+            {/* Table */}
+            <DatasetTable
+              fetchPage={fetchDatasetPage}
+              deps={[notebook.file_path]}
+              initialPageSize={5}
+            />{" "}
+          </Box>
         </AccordionDetails>
       </Accordion>
       <SaveDatasetModal
