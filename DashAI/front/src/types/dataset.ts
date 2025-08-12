@@ -5,3 +5,8 @@ export interface IDataset {
   last_modified: Date;
   file_path: string;
 }
+
+export interface DatasetPage {
+  rows: Record<string, any>[];
+  total: number;
+}
