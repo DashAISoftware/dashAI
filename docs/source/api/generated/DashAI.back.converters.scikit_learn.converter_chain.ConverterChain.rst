@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~ConverterChain.__init__
+      ~ConverterChain.changes_row_count
       ~ConverterChain.fit
       ~ConverterChain.fit_transform
       ~ConverterChain.get_metadata_routing

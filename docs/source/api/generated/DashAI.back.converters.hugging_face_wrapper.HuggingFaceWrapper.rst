@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~HuggingFaceWrapper.__init__
+      ~HuggingFaceWrapper.changes_row_count
       ~HuggingFaceWrapper.fit
       ~HuggingFaceWrapper.get_schema
       ~HuggingFaceWrapper.transform
