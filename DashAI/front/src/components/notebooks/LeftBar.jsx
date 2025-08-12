@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Box, Divider, Typography } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
-import Footer from "./Footer";
-import BarHeader from "./BarHeader";
+import Footer from "../threeSectionLayout/Footer";
+import BarHeader from "../threeSectionLayout/BarHeader";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import LeftBar from "../threeSectionLayout/LeftBar";
+import SideBar from "../threeSectionLayout/SideBar";
 
 export default function DatasetsNotebooksBar({
   datasets = [],
@@ -42,7 +42,7 @@ export default function DatasetsNotebooksBar({
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
   return (
-    <LeftBar>
+    <SideBar>
       {/* Header */}
       <BarHeader />
       <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
@@ -99,6 +99,6 @@ export default function DatasetsNotebooksBar({
 
       {/* Footer */}
       <Footer />
-    </LeftBar>
+    </SideBar>
   );
 }

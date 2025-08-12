@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box } from "@mui/material";
-import DatasetsNotebooksBar from "../../components/notebooks/DatasetsNotebooksBar";
-import CenterBox from "../../components/notebooks/CenterBox";
+import LeftBar from "../../components/notebooks/LeftBar";
+import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
@@ -134,7 +134,7 @@ export default function Notebooks() {
   return (
     <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
       <Box width="22%" mr={1}>
-        <DatasetsNotebooksBar
+        <LeftBar
           datasets={datasets}
           notebooks={notebooks}
           selectedDatasetId={selectedDatasetId}
