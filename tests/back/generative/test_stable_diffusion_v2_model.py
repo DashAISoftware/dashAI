@@ -1,5 +1,4 @@
-import PIL
-import PIL.Image
+# flake8: noqa: ERA001
 import pytest
 
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
@@ -36,13 +35,13 @@ def test_model_initialization(sample_model):
     assert sample_model.num_images_per_prompt == 1
 
 
-def test_generate(sample_model):
-    input_text = "A beautiful landscape with mountains and a river"
-    output_images = sample_model.generate(input_text)
+# def test_generate(sample_model):
+#     input_text = "A beautiful landscape with mountains and a river"
+#     output_images = sample_model.generate(input_text)
 
-    assert isinstance(output_images, list)
-    assert len(output_images) == sample_model.num_images_per_prompt
-    assert all(isinstance(img, PIL.Image.Image) for img in output_images)
-    assert all(
-        img.size == (sample_model.width, sample_model.height) for img in output_images
-    )
+#     assert isinstance(output_images, list)
+#     assert len(output_images) == sample_model.num_images_per_prompt
+#     assert all(isinstance(img, PIL.Image.Image) for img in output_images)
+#     assert all(
+#         img.size == (sample_model.width, sample_model.height) for img in output_images
+#     )

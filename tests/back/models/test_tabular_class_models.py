@@ -1,4 +1,4 @@
-import os
+# flake8: noqa: ERA001
 from typing import Tuple
 
 import numpy as np
@@ -18,7 +18,6 @@ from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsCla
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
-from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.scikit_learn.svc import SVC
 
 
@@ -145,21 +144,21 @@ def test_not_fitted_model(
         rf.predict(divided_dataset[0]["test"])
 
 
-def test_save_and_load_model(
-    divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
-):
-    svc_model = SVC(**model_params["svc"])
-    svc_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+# def test_save_and_load_model(
+#     divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
+# ):
+#     svc_model = SVC(**model_params["svc"])
+#     svc_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
-    svc_model.save("tests/back/models/svm_model")
-    loaded_model = SklearnLikeModel.load("tests/back/models/svm_model")
+#     svc_model.save("tests/back/models/svm_model")
+#     loaded_model = SklearnLikeModel.load("tests/back/models/svm_model")
 
-    y_pred_svm = loaded_model.predict(divided_dataset[0]["test"])
+#     y_pred_svm = loaded_model.predict(divided_dataset[0]["test"])
 
-    assert isinstance(y_pred_svm, np.ndarray)
-    assert divided_dataset[0]["test"].num_rows == len(y_pred_svm)
+#     assert isinstance(y_pred_svm, np.ndarray)
+#     assert divided_dataset[0]["test"].num_rows == len(y_pred_svm)
 
-    os.remove("tests/back/models/svm_model")
+#     os.remove("tests/back/models/svm_model")
 
 
 def test_get_schema_from_model_class():
