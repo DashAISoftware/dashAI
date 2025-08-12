@@ -20,8 +20,8 @@ plotly
 shap
 typer
 rich
-torch==2.4.1+cpu
-torchvision==0.19.1+cpu
+torch==2.4.1
+torchvision==0.19.1
 transformers
 sacrebleu
 sentencepiece
