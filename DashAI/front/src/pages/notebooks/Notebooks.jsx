@@ -128,6 +128,14 @@ export default function Notebooks() {
     }
   };
 
+  const handleNotebookCreated = async (created) => {
+    await fetchNotebooks();
+    setStep(0);
+    setSelectedOption(null);
+    setSelectedNotebookId(created.id);
+    setSelectedDatasetId(null);
+  };
+
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -196,6 +204,7 @@ export default function Notebooks() {
                 fetchNotebooks();
               }}
               datasets={datasets}
+              handleNotebookCreated={handleNotebookCreated}
             />
           ) : null}
         </CenterBox>

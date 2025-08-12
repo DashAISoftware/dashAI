@@ -6,7 +6,11 @@ import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../api/notebook";
 import { useSnackbar } from "notistack";
 
-export default function UploadNotebookSteps({ backHome, datasets }) {
+export default function UploadNotebookSteps({
+  backHome,
+  datasets,
+  handleNotebookCreated,
+}) {
   const [selectedDataset, setSelectedDataset] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -27,8 +31,7 @@ export default function UploadNotebookSteps({ backHome, datasets }) {
 
         const createdNotebook = await createNotebook(notebookData);
 
-        setSelectedNotebookId(createdNotebook.id);
-        handleAddNotebook(createdNotebook);
+        handleNotebookCreated(createdNotebook);
       } catch (error) {
         console.error("Error creating notebook:", error);
       }
