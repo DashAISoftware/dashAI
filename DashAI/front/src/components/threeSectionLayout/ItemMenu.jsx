@@ -85,7 +85,7 @@ export default function ItemMenu({ itemId, onInfo, onDelete }) {
         <MenuItem
           onClick={(e) => {
             e.stopPropagation();
-            handleAction(onInfo, datasetId);
+            handleAction(onInfo, itemId);
           }}
         >
           <ListItemIcon>
@@ -97,7 +97,7 @@ export default function ItemMenu({ itemId, onInfo, onDelete }) {
         <DeleteMenuItem
           onClick={(e) => {
             e.stopPropagation();
-            handleAction(onDelete, datasetId);
+            handleAction(onDelete, itemId);
           }}
         >
           <ListItemIcon>
