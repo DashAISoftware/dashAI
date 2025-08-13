@@ -31,9 +31,13 @@ export default function UploadNotebookSteps({
 
         const createdNotebook = await createNotebook(notebookData);
 
+        enqueueSnackbar("Notebook created successfully", {
+          variant: "success",
+        });
         handleNotebookCreated(createdNotebook);
       } catch (error) {
         console.error("Error creating notebook:", error);
+        enqueueSnackbar("Error creating notebook", { variant: "error" });
       }
     },
   });
@@ -92,13 +96,9 @@ export default function UploadNotebookSteps({
       <Button
         variant="contained"
         disabled={!selectedDataset}
-        onClick={() => {
-          formik.handleSubmit();
-          enqueueSnackbar("Notebook created", { variant: "success" });
-          backHome();
-        }}
+        onClick={formik.handleSubmit}
       >
-        Upload
+        Create Notebook
       </Button>
     </CustomLayout>
   );
