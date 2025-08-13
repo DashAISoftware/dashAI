@@ -15,6 +15,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { Close, Transform } from "@mui/icons-material";
+import { formatDate } from "../../pages/results/constants/formatDate";
 
 export function SaveDatasetModal({
   open,
@@ -23,9 +24,6 @@ export function SaveDatasetModal({
   appliedConverters,
 }) {
   const [name, setName] = useState("");
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
 
   const handleSubmit = () => {
     if (name.trim()) {
