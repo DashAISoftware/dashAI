@@ -11,25 +11,8 @@ import {
 import { Analytics, Info } from "@mui/icons-material";
 import Results from "./ExplorerDetailTabs/Results";
 import { getExplorerStatus } from "../../utils/explorerStatus";
-import { getComponentById } from "../../api/component";
 
 export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
-  const [explorerComponent, setexplorerComponent] = useState({});
-
-  useEffect(() => {
-    const fetchExplorerComponent = async () => {
-      const data = await getComponentById(explorer.exploration_type);
-      setexplorerComponent(data);
-    };
-    try {
-      fetchExplorerComponent();
-    } catch (error) {
-      console.error("Error fetching explorer component:", error);
-    }
-  }, []);
-
-  console.log(explorerComponent);
-
   return (
     <Card key={explorer.id} sx={{ bgcolor: "#212121", borderRadius: 2 }}>
       <CardContent>
@@ -43,7 +26,7 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{explorerComponent.name}</Typography>
+            <Typography variant="h6">{explorer.exploration_type}</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
