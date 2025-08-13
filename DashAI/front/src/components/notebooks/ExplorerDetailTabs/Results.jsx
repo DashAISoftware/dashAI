@@ -144,10 +144,10 @@ const getDataFromOrientation = (data, orientation) => {
  * Results component to render the results of the exploration
  * @param {Object} props
  * @param {Number} props.id The id of the exploration
- * @param {Boolean} props.updateFlag Flag to update the results
- * @param {Function} props.setUpdateFlag Function to set the update flag
  */
-function Results({ id, updateFlag = false, setUpdateFlag = () => {} }) {
+function Results({ id }) {
+  if (!id) return null;
+
   const [loading, setLoading] = useState(false);
   const [dataType, setDataType] = useState(null);
   const [data, setData] = useState(null);
@@ -205,19 +205,8 @@ function Results({ id, updateFlag = false, setUpdateFlag = () => {} }) {
 
   // Fetch the results data on mount
   useEffect(() => {
-    // Fetch the results data
-    if (id) {
-      fetchExplorerResults();
-    }
+    fetchExplorerResults();
   }, [id]);
-
-  // Fetch the results data on update flag
-  useEffect(() => {
-    if (updateFlag && id) {
-      fetchExplorerResults();
-      setUpdateFlag(false);
-    }
-  }, [updateFlag]);
 
   return (
     <Box
