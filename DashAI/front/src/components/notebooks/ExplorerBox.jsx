@@ -65,7 +65,7 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
               justifyContent: "center",
             }}
           >
-            <Results id={explorer.id} />
+            <Results id={explorer.id} minimalist height={300} />
           </Box>
         ) : (
           <Box

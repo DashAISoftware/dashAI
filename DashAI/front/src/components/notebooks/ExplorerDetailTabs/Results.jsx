@@ -144,15 +144,16 @@ const getDataFromOrientation = (data, orientation) => {
  * Results component to render the results of the exploration
  * @param {Object} props
  * @param {Number} props.id The id of the exploration
+ * @param {Boolean} props.minimalist Whether to render in minimalist mode with fixed dimensions
+ * @param {Number} props.height The fixed height for minimalist mode (default: 300)
  */
-function Results({ id }) {
-  if (!id) return null;
-
+function Results({ id, minimalist = false }) {
   const [loading, setLoading] = useState(false);
   const [dataType, setDataType] = useState(null);
   const [data, setData] = useState(null);
 
   const fetchExplorerResults = async () => {
+    if (!id) return;
     setLoading(true);
     getExplorerResults(id)
       .then((results) => {
@@ -208,36 +209,52 @@ function Results({ id }) {
     fetchExplorerResults();
   }, [id]);
 
-  return (
-    <Box
-      sx={{
+  if (!id) return null;
+
+  const containerStyles = minimalist
+    ? {
+        height: "fit-content",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 1,
+        overflow: "hidden",
+      }
+    : {
         height: "100%",
         width: "100%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-      }}
-    >
-      {loading && <CircularProgress />}
+      };
+
+  return (
+    <Box sx={containerStyles}>
+      {loading && <CircularProgress size={minimalist ? 24 : undefined} />}
 
       {!loading && dataType === visualizersKeys.tabular && (
         <TabularVisualizer
           loading={loading}
           columns={data.columns}
           rows={data.rows}
+          minimalist={minimalist}
         />
       )}
 
       {!loading && dataType === visualizersKeys.plotly_json && (
-        <PlotlyJsonVisualizer data={data} />
+        <PlotlyJsonVisualizer data={data} minimalist={minimalist} />
       )}
 
       {!loading && dataType === visualizersKeys.image_base64 && (
-        <ImageVisualizer data={`data:image/png;base64,${data}`} />
+        <ImageVisualizer
+          data={`data:image/png;base64,${data}`}
+          minimalist={minimalist}
+        />
       )}
 
       {!loading && dataType === visualizersKeys.image_url && (
-        <ImageVisualizer data={data} />
+        <ImageVisualizer data={data} minimalist={minimalist} />
       )}
     </Box>
   );

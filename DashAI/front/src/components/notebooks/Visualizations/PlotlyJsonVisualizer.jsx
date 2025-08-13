@@ -4,9 +4,9 @@ import Plot from "react-plotly.js";
 import { Box, Slider, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 
-function PlotlyJsonVisualizer({ data }) {
+function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const [expanded, setExpanded] = useState(false);
-  const [height, setHeight] = useState(500);
+  const [height, setHeight] = useState(minimalist ? 280 : 500);
 
   // Parse JSON if data is a string
   const plotData = typeof data === "string" ? JSON.parse(data) : data;
@@ -16,26 +16,36 @@ function PlotlyJsonVisualizer({ data }) {
     setExpanded(!expanded);
   };
 
-  // Configuración para añadir botón personalizado a la barra de herramientas de Plotly
   const plotConfig = {
     responsive: true,
     displaylogo: false,
-    modeBarButtonsToRemove: ["sendDataToCloud", "lasso2d", "select2d"],
-    modeBarButtonsToAdd: [
-      {
-        name: "fullscreen",
-        title: "Fullscreen",
-        icon: {
-          width: 1000,
-          path: "M128 32H32C14.31 32 0 46.31 0 64v96c0 17.69 14.31 32 32 32s32-14.31 32-32V96h64c17.69 0 32-14.31 32-32S145.7 32 128 32zM416 32h-96c-17.69 0-32 14.31-32 32s14.31 32 32 32h64v64c0 17.69 14.31 32 32 32s32-14.31 32-32V64C448 46.31 433.7 32 416 32zM128 416H64v-64c0-17.69-14.31-32-32-32s-32 14.31-32 32v96c0 17.69 14.31 32 32 32h96c17.69 0 32-14.31 32-32S145.7 416 128 416zM416 320c-17.69 0-32 14.31-32 32v64h-64c-17.69 0-32 14.31-32 32s14.31 32 32 32h96c17.69 0 32-14.31 32-32v-96C448 334.3 433.7 320 416 320z",
-          transform: "scale(0.03)",
-        },
-        click: function () {
-          toggleFullscreen();
-        },
-      },
-      "resetScale2d",
-    ],
+    modeBarButtonsToRemove: minimalist
+      ? [
+          "sendDataToCloud",
+          "lasso2d",
+          "select2d",
+          "zoom2d",
+          "pan2d",
+          "autoScale2d",
+        ]
+      : ["sendDataToCloud", "lasso2d", "select2d"],
+    modeBarButtonsToAdd: minimalist
+      ? []
+      : [
+          {
+            name: "fullscreen",
+            title: "Fullscreen",
+            icon: {
+              width: 1000,
+              path: "M128 32H32C14.31 32 0 46.31 0 64v96c0 17.69 14.31 32 32 32s32-14.31 32-32V96h64c17.69 0 32-14.31 32-32S145.7 32 128 32zM416 32h-96c-17.69 0-32 14.31-32 32s14.31 32 32 32h64v64c0 17.69 14.31 32 32 32s32-14.31 32-32V64C448 46.31 433.7 32 416 32zM128 416H64v-64c0-17.69-14.31-32-32-32s-32 14.31-32 32v96c0 17.69 14.31 32 32 32h96c17.69 0 32-14.31 32-32S145.7 416 128 416zM416 320c-17.69 0-32 14.31-32 32v64h-64c-17.69 0-32 14.31-32 32s14.31 32 32 32h96c17.69 0 32-14.31 32-32v-96C448 334.3 433.7 320 416 320z",
+              transform: "scale(0.03)",
+            },
+            click: () => {
+              toggleFullscreen();
+            },
+          },
+          "resetScale2d",
+        ],
     toImageButtonOptions: {
       format: "png",
       filename: "dashai-plot",
@@ -69,9 +79,15 @@ function PlotlyJsonVisualizer({ data }) {
 
   return (
     <React.Fragment>
-      <Box sx={{ position: "relative", width: "100%" }}>
-        {/* Height control - solo para vista normal */}
-        {!expanded && (
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: minimalist ? "100%" : "auto",
+        }}
+      >
+        {/* Height control - solo para vista normal y no minimalist */}
+        {!expanded && !minimalist && (
           <Box
             sx={{
               position: "absolute",
@@ -129,14 +145,33 @@ function PlotlyJsonVisualizer({ data }) {
             layout={{
               ...plotData.layout,
               height: height,
-              margin: {
-                l: 60,
-                r: 30,
-                t: 50,
-                b: 60,
-                ...plotData.layout?.margin,
-              },
+              margin: minimalist
+                ? {
+                    l: 40,
+                    r: 20,
+                    t: 30,
+                    b: 40,
+                    ...plotData.layout?.margin,
+                  }
+                : {
+                    l: 60,
+                    r: 30,
+                    t: 50,
+                    b: 60,
+                    ...plotData.layout?.margin,
+                  },
               autosize: true,
+              font: {
+                size: minimalist ? 10 : 12,
+                ...plotData.layout?.font,
+              },
+              title: {
+                ...plotData.layout?.title,
+                font: {
+                  size: minimalist ? 12 : 16,
+                  ...plotData.layout?.title?.font,
+                },
+              },
             }}
             style={{ width: "100%", height: `${height}px` }}
             config={plotConfig}
@@ -188,6 +223,7 @@ function PlotlyJsonVisualizer({ data }) {
 
 PlotlyJsonVisualizer.propTypes = {
   data: PropTypes.oneOfType([PropTypes.object, PropTypes.string]).isRequired,
+  minimalist: PropTypes.bool,
 };
 
 export default PlotlyJsonVisualizer;
