@@ -36,7 +36,6 @@ export default function NotebookView({ notebook }) {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          height: "100vh",
         }}
       >
         <CircularProgress sx={{ color: "#00BEBB" }} />
@@ -48,9 +47,6 @@ export default function NotebookView({ notebook }) {
   const [explorerAndConverters, setExplorerAndConverters] = useState([]);
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
-
-  console.log(selectedExplorer);
-  console.log(openExplorerDetails);
 
   useEffect(() => {
     const fetchExplorersAndConverters = async () => {
@@ -99,7 +95,7 @@ export default function NotebookView({ notebook }) {
   );
 
   return (
-    <>
+    <Box>
       {explorerAndConverters.length === 0 ? (
         <Box
           sx={{
@@ -133,6 +129,6 @@ export default function NotebookView({ notebook }) {
         }}
         explorer={selectedExplorer}
       />
-    </>
+    </Box>
   );
 }

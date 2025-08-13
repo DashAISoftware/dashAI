@@ -8,7 +8,7 @@ export default function NotebookVisualization({
   handleAddDatasetFromNotebook,
 }) {
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Box>
         {/* Dataset View */}
         <DatasetPreviewNotebook
@@ -17,11 +17,11 @@ export default function NotebookVisualization({
         />
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 1, mt: 1 }} />
 
       {/* Notebook view */}
-      <Box mt={2}>
-        <Typography variant="h5" my={2}>
+      <Box mt={2} sx={{ flexGrow: 1, overflow: "auto" }}>
+        <Typography variant="h5" mb={2}>
           Analysis Results
         </Typography>
         <NotebookView notebook={notebook} />
