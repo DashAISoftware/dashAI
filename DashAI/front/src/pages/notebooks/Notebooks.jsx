@@ -128,11 +128,11 @@ export default function Notebooks() {
     }
   };
 
-  const handleNotebookCreated = async (created) => {
+  const handleNotebookCreated = async (createdNotebook) => {
     await fetchNotebooks();
     setStep(0);
-    setSelectedOption(null);
-    setSelectedNotebookId(created.id);
+    setSelectedOption("notebook");
+    setSelectedNotebookId(createdNotebook.id);
     setSelectedDatasetId(null);
   };
 
