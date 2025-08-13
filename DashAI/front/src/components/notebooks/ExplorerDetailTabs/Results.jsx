@@ -206,6 +206,7 @@ function Results({ id, minimalist = false }) {
 
   // Fetch the results data on mount
   useEffect(() => {
+    if (!id) return;
     fetchExplorerResults();
   }, [id]);
 
