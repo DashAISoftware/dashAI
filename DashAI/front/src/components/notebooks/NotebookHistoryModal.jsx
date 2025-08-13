@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Close, Transform } from "@mui/icons-material";
 import { getConvertersByNotebookId } from "../../api/notebook";
-import { getConverterStatus } from "../../utils/converterStatus";
+import { formatDate } from "../../pages/results/constants/formatDate";
 
 export function NotebookHistoryModal({ open, onClose, notebook }) {
   if (!notebook) return null;
@@ -88,12 +88,7 @@ export function NotebookHistoryModal({ open, onClose, notebook }) {
                         secondary={scopeText}
                       />
                       <Chip
-                        label={getConverterStatus(converter.status)}
-                        color={
-                          getConverterStatus(converter.status) === "Finished"
-                            ? "primary"
-                            : "default"
-                        }
+                        label={formatDate(converter.created)}
                         size="small"
                       />
                     </Box>
