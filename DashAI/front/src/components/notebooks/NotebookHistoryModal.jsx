@@ -16,10 +16,12 @@ import {
 import { Close, Transform } from "@mui/icons-material";
 import { getConvertersByNotebookId } from "../../api/notebook";
 import { formatDate } from "../../pages/results/constants/formatDate";
+import { useSnackbar } from "notistack";
 
 export function NotebookHistoryModal({ open, onClose, notebook }) {
   if (!notebook) return null;
 
+  const { enqueueSnackbar } = useSnackbar();
   const [converters, setConverters] = useState([]);
 
   useEffect(() => {
@@ -31,6 +33,9 @@ export function NotebookHistoryModal({ open, onClose, notebook }) {
     try {
       fetchConverters();
     } catch (error) {
+      enqueueSnackbar("Error fetching notebook history", {
+        variant: "error",
+      });
       console.error("Error fetching converters:", error);
     }
   }, [notebook]);
