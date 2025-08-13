@@ -9,7 +9,18 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const [height, setHeight] = useState(minimalist ? 280 : 500);
 
   // Parse JSON if data is a string
-  const plotData = typeof data === "string" ? JSON.parse(data) : data;
+  const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+
+  // Remove the name if minimalist
+  const plotData = minimalist
+    ? {
+        ...parsedData,
+        layout: {
+          ...parsedData.layout,
+          title: "",
+        },
+      }
+    : parsedData;
 
   // Función para manejar el botón de pantalla completa personalizado
   const toggleFullscreen = () => {
