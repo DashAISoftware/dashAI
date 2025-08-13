@@ -1,15 +1,12 @@
 import React from "react";
 import { Box, Typography, Autocomplete, TextField, Chip } from "@mui/material";
+import { formatDate } from "../../pages/results/constants/formatDate";
 
 export default function DatasetAutocomplete({
   datasets,
   selectedDataset,
   setSelectedDataset,
 }) {
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
-  };
-
   return (
     <Box width="100%">
       <Box sx={{ width: "100%", mx: "auto" }}>
