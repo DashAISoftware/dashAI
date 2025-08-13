@@ -10,7 +10,7 @@ const defaultNewDataset = {
   params: {},
 };
 
-export default function UploadDatasetSteps({ backHome }) {
+export default function UploadDatasetSteps({ backHome, handleDatasetCreated }) {
   const [step, setStep] = React.useState(0);
   const [selectedDataloader, setSelectedDataloader] = useState({});
   const [newDataset, setNewDataset] = useState(defaultNewDataset);
@@ -63,6 +63,7 @@ export default function UploadDatasetSteps({ backHome }) {
           selectedDataloader={selectedDataloader}
           setSelectedDataloader={setSelectedDataloader}
           backHome={backHome}
+          handleDatasetCreated={handleDatasetCreated}
         />
       )}
     </CustomLayout>

@@ -136,6 +136,46 @@ export default function Notebooks() {
     setSelectedDatasetId(null);
   };
 
+  const handleDatasetCreated = async (tempDataset) => {
+    // Temporary dataset
+    setDatasets((prevDatasets) => [...prevDatasets, tempDataset]);
+    setStep(0);
+    setSelectedOption("dataset");
+    setSelectedDatasetId(tempDataset.id);
+    setSelectedNotebookId(null);
+
+    // Real dataset
+    const pollForRealDataset = async (attempt = 1, maxAttempts = 10) => {
+      try {
+        const realDatasets = await getDatasets();
+        const realDataset = realDatasets.find(
+          (d) =>
+            d.name === tempDataset.name && !d.id.toString().startsWith("temp_"),
+        );
+
+        if (realDataset) {
+          setDatasets(realDatasets);
+          setSelectedDatasetId(realDataset.id);
+        } else if (attempt < maxAttempts) {
+          const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
+          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), delay);
+        } else {
+          console.log(
+            "Max polling attempts reached, keeping temporary dataset",
+          );
+          await fetchDatasets();
+        }
+      } catch (error) {
+        console.error("Error polling for real dataset:", error);
+        if (attempt < maxAttempts) {
+          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), 5000);
+        }
+      }
+    };
+
+    setTimeout(() => pollForRealDataset(), 3000);
+  };
+
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -195,6 +235,7 @@ export default function Notebooks() {
                 setSelectedOption(null);
                 fetchDatasets();
               }}
+              handleDatasetCreated={handleDatasetCreated}
             />
           ) : step === 1 && selectedOption === "notebook" ? (
             <UploadNotebookSteps

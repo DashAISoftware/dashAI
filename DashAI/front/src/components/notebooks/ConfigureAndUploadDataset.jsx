@@ -23,6 +23,7 @@ export default function ConfigureAndUploadDataset({
   goToPrevStep,
   updateDatasets,
   backHome,
+  handleDatasetCreated,
 }) {
   const [schema, setSchema] = useState({});
   const [loading, setLoading] = useState(true);
@@ -38,6 +39,7 @@ export default function ConfigureAndUploadDataset({
           ? newDataset.file.name
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
+
       await enqueueDatasetRequest(
         newDataset.file,
         name,
@@ -47,15 +49,29 @@ export default function ConfigureAndUploadDataset({
       await startJobQueue();
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
-      // Update datasets list in the parent component
-      // updateDatasets();
-      // handleCloseDialog();
+
+      // Create a temporary dataset object for immediate visualization
+      const tempDataset = {
+        id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique temporary ID
+        name: name,
+        file_path: newDataset.file ? newDataset.file.name : newDataset.url,
+        created: new Date().toISOString(),
+        last_modified: new Date().toISOString(),
+        status: "processing", // Indicate it's still being processed
+      };
+
+      // Call the callback if provided
+      if (handleDatasetCreated) {
+        handleDatasetCreated(tempDataset);
+      } else {
+        backHome();
+      }
     } catch (error) {
       console.error(error);
       setRequestError(true);
-      enqueueSnackbar("Error when trying to upload the dataset.");
-    } finally {
-      // TODO: redirect to the dataset page to show the newly created dataset
+      enqueueSnackbar("Error when trying to upload the dataset.", {
+        variant: "error",
+      });
       backHome();
     }
   };
