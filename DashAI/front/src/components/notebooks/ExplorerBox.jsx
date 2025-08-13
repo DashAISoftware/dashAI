@@ -9,7 +9,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Analytics, Info } from "@mui/icons-material";
-import Results from "./Results";
+import Results from "./ExplorerDetailTabs/Results";
 import { getExplorerStatus } from "../../utils/explorerStatus";
 
 export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
