@@ -7,13 +7,17 @@ import {
 } from "../../api/notebook";
 import ExplorerBox from "./ExplorerBox";
 import ConverterBox from "./ConverterBox";
+import ExplorerDetailsModal from "./ExplorerDetailsModal";
 
 const RowItem = React.memo(
-  function RowItem({ item }) {
+  function RowItem({ item, handleExplorerDetailsClick }) {
     return (
       <Box>
         {item.type === "explorer" ? (
-          <ExplorerBox explorer={item} handleExplorerDetailsClick={() => {}} />
+          <ExplorerBox
+            explorer={item}
+            handleExplorerDetailsClick={handleExplorerDetailsClick}
+          />
         ) : item.type === "converter" ? (
           <ConverterBox converter={item} />
         ) : null}
@@ -42,7 +46,11 @@ export default function NotebookView({ notebook }) {
   }
 
   const [explorerAndConverters, setExplorerAndConverters] = useState([]);
-  console.log(explorerAndConverters);
+  const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
+  const [selectedExplorer, setSelectedExplorer] = useState(null);
+
+  console.log(selectedExplorer);
+  console.log(openExplorerDetails);
 
   useEffect(() => {
     const fetchExplorersAndConverters = async () => {
@@ -71,10 +79,21 @@ export default function NotebookView({ notebook }) {
     fetchExplorersAndConverters();
   }, [notebook]);
 
+  const handleExplorerDetailsClick = useCallback((explorer) => {
+    setSelectedExplorer(explorer);
+    setOpenExplorerDetails(true);
+  }, []);
+
   const Row = useCallback(
     ({ index }) => {
       const item = explorerAndConverters[index];
-      return <RowItem item={item} key={`${item.type}-${index}`} />;
+      return (
+        <RowItem
+          item={item}
+          key={`${item.type}-${index}`}
+          handleExplorerDetailsClick={handleExplorerDetailsClick}
+        />
+      );
     },
     [explorerAndConverters],
   );
@@ -102,8 +121,18 @@ export default function NotebookView({ notebook }) {
           pb: 3,
         }}
       >
-        {explorerAndConverters.map((item, idx) => Row({ index: idx }))}
+        {explorerAndConverters.map((_, idx) =>
+          Row({ index: idx }, handleExplorerDetailsClick),
+        )}
       </Box>
+      <ExplorerDetailsModal
+        open={openExplorerDetails}
+        onClose={() => {
+          setOpenExplorerDetails(false);
+          setSelectedExplorer(null);
+        }}
+        explorer={selectedExplorer}
+      />
     </>
   );
 }
