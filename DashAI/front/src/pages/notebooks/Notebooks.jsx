@@ -198,7 +198,10 @@ export default function Notebooks() {
       <Box width="56%" mr={1}>
         <CenterBox>
           {selectedDatasetId ? (
-            <DatasetVisualization dataset={selectedDataset} />
+            <DatasetVisualization
+              dataset={selectedDataset}
+              onNotebookCreated={handleNotebookCreated}
+            />
           ) : selectedNotebookId ? (
             <NotebookVisualization
               notebook={selectedNotebook}
