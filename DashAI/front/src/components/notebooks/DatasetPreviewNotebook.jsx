@@ -15,12 +15,12 @@ import { SaveDatasetModal } from "./SaveDatasetModal";
 import { getConvertersByNotebookId } from "../../api/notebook";
 import { getDatasetFile } from "../../api/datasets";
 import DatasetTable from "./DatasetTable";
+import { NotebookHistoryModal } from "./NotebookHistoryModal";
 
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
 }) {
-  console.log("Path notebook:", notebook.file_path);
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       const data = await getDatasetFile(notebook.file_path, page, pageSize);
@@ -46,6 +46,8 @@ export default function DatasetPreviewNotebook({
   }
 
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
+  const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
+    useState(false);
   const [converters, setConverters] = useState([]);
 
   useEffect(() => {
@@ -122,6 +124,7 @@ export default function DatasetPreviewNotebook({
               sx={{ color: "#00BEBB", ml: 1 }}
               onClick={(e) => {
                 e.stopPropagation();
+                setShowNotebookHistoryModal(true);
               }}
             >
               <HistoryIcon />
@@ -145,6 +148,11 @@ export default function DatasetPreviewNotebook({
         onClose={() => setShowSaveDatasetModal(false)}
         onSaveDataset={handleAddDatasetFromNotebook}
         appliedConverters={converters}
+      />
+      <NotebookHistoryModal
+        open={showNotebookHistoryModal}
+        onClose={() => setShowNotebookHistoryModal(false)}
+        notebook={notebook}
       />
     </Box>
   );
