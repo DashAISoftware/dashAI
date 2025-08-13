@@ -28,7 +28,7 @@ export default function DatasetVisualization({ dataset }) {
         </Typography>
         <Grid item>
           <Button variant="contained" endIcon={<AddIcon />}>
-            New Dataset
+            New Notebook
           </Button>
         </Grid>
       </Grid>
