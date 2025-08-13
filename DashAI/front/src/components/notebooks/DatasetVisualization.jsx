@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   Button,
   Grid,
@@ -9,9 +9,15 @@ import {
 } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { getDatasetFile } from "../../api/datasets";
+import { createNotebook } from "../../api/notebook";
 import DatasetTable from "./DatasetTable";
+import { CreateNotebookModal } from "./CreateNotebookModal";
+import { useSnackbar } from "notistack";
 
-export default function DatasetVisualization({ dataset }) {
+export default function DatasetVisualization({ dataset, onNotebookCreated }) {
+  const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       // Don't try to fetch data if it's a temporary/processing dataset
@@ -33,7 +39,33 @@ export default function DatasetVisualization({ dataset }) {
     [dataset.file_path, dataset.status, dataset.id],
   );
 
-  // Check if dataset is still processing
+  const handleCreateNotebook = async (notebookData) => {
+    try {
+      const notebookPayload = {
+        name: notebookData.name,
+        description: notebookData.description,
+        dataset_id: dataset.id,
+      };
+
+      const createdNotebook = await createNotebook(notebookPayload);
+
+      enqueueSnackbar("Notebook created successfully", {
+        variant: "success",
+      });
+
+      setShowCreateNotebookModal(false);
+
+      if (onNotebookCreated) {
+        onNotebookCreated(createdNotebook);
+      }
+    } catch (error) {
+      console.error("Error creating notebook:", error);
+      enqueueSnackbar("Error creating notebook", {
+        variant: "error",
+      });
+    }
+  };
+
   const isProcessing =
     dataset.status === "processing" ||
     dataset.id.toString().startsWith("temp_");
@@ -64,6 +96,10 @@ export default function DatasetVisualization({ dataset }) {
             variant="contained"
             endIcon={<AddIcon />}
             disabled={isProcessing}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCreateNotebookModal(true);
+            }}
           >
             New Notebook
           </Button>
@@ -100,6 +136,12 @@ export default function DatasetVisualization({ dataset }) {
           </Typography>
         </Box>
       )}
+
+      <CreateNotebookModal
+        open={showCreateNotebookModal}
+        onClose={() => setShowCreateNotebookModal(false)}
+        onCreateNotebook={handleCreateNotebook}
+      />
     </Paper>
   );
 }
