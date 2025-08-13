@@ -65,13 +65,47 @@ export function SaveDatasetModal({
               </Typography>
             ) : (
               <List dense>
-                {appliedConverters.map((converter) => (
-                  <ListItem key={converter.id} sx={{ px: 0 }}>
-                    <Transform sx={{ mr: 1, color: "#00BEBB", fontSize: 20 }} />
-                    <ListItemText primary={converter.converter} />
-                    <Chip label={formatDate(converter.created)} size="small" />
-                  </ListItem>
-                ))}
+                {appliedConverters.map((converter) => {
+                  const scope = converter.parameters?.scope;
+                  const scopeText = scope
+                    ? `Columns: ${
+                        scope.columns?.length ? scope.columns.join(", ") : "All"
+                      } | Rows: ${
+                        scope.rows?.length ? scope.rows.join(", ") : "All"
+                      }`
+                    : "";
+
+                  return (
+                    <ListItem
+                      key={converter.id}
+                      sx={{
+                        px: 0,
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          width: "100%",
+                        }}
+                      >
+                        <Transform
+                          sx={{ mr: 1, color: "#00BEBB", fontSize: 20 }}
+                        />
+                        <ListItemText
+                          primary={converter.converter}
+                          secondary={scopeText}
+                        />
+                        <Chip
+                          label={formatDate(converter.created)}
+                          size="small"
+                        />
+                      </Box>
+                    </ListItem>
+                  );
+                })}
               </List>
             )}
           </Box>
