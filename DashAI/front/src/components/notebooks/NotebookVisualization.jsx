@@ -9,7 +9,7 @@ export default function NotebookVisualization({
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box>
+      <Box sx={{ flexGrow: 0, position: "sticky" }}>
         {/* Dataset View */}
         <DatasetPreviewNotebook
           notebook={notebook}
