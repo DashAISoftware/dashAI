@@ -173,7 +173,8 @@ export default function Notebooks() {
       }
     };
 
-    setTimeout(() => pollForRealDataset(), 3000);
+    //setTimeout(() => pollForRealDataset(), 1000);
+    pollForRealDataset();
   };
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
