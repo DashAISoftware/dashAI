@@ -69,9 +69,6 @@ export default function DatasetPreviewNotebook({
         mb: 2,
       }}
     >
-      <Typography variant="h5" mb={1.5} mt={1}>
-        Dataset Preview
-      </Typography>
       <Accordion
         width="100%"
         sx={{ bgcolor: "#212121", borderRadius: 2, boxShadow: "none" }}

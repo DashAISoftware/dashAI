@@ -20,10 +20,7 @@ export default function NotebookVisualization({
       <Divider sx={{ my: 1, mt: 1 }} />
 
       {/* Notebook view */}
-      <Box mt={2} sx={{ flexGrow: 1, overflow: "auto" }}>
-        <Typography variant="h5" mb={1.5}>
-          Analysis Results
-        </Typography>
+      <Box mt={2} sx={{ flexGrow: 1, overflow: "auto", minHeight: 200 }}>
         <NotebookView notebook={notebook} />
       </Box>
     </Box>
