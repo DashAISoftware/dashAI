@@ -18,6 +18,7 @@ export default function DatasetTable({
   columns: columnsProp,
   deps = [],
   autoHeight = true,
+  density = "standard",
   pageSizeOptions = [5, 10, 25],
 }) {
   const [rows, setRows] = useState([]);
@@ -89,6 +90,7 @@ export default function DatasetTable({
       paginationModel={paginationModel}
       onPaginationModelChange={setPaginationModel}
       pageSizeOptions={pageSizeOptions}
+      density={density}
       slots={{
         toolbar: GridToolbar,
         loadingOverlay: LinearProgress,

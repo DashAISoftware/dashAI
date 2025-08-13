@@ -21,7 +21,7 @@ export default function NotebookVisualization({
 
       {/* Notebook view */}
       <Box mt={2} sx={{ flexGrow: 1, overflow: "auto" }}>
-        <Typography variant="h5" mb={2}>
+        <Typography variant="h5" mb={1.5}>
           Analysis Results
         </Typography>
         <NotebookView notebook={notebook} />

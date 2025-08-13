@@ -69,7 +69,7 @@ export default function DatasetPreviewNotebook({
         mb: 2,
       }}
     >
-      <Typography variant="h5" my={2}>
+      <Typography variant="h5" mb={1.5} mt={1}>
         Dataset Preview
       </Typography>
       <Accordion
@@ -88,7 +88,7 @@ export default function DatasetPreviewNotebook({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              margin: "12px 0 !important",
+              margin: "0px 0 !important",
             },
           }}
         >
@@ -139,6 +139,7 @@ export default function DatasetPreviewNotebook({
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path]}
               initialPageSize={5}
+              density="compact"
             />{" "}
           </Box>
         </AccordionDetails>
