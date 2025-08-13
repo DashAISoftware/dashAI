@@ -8,8 +8,6 @@ const nameInfo = [
   { key: "name", label: "Name" },
   { key: "exploration_type", label: "Explorer Type" },
   { key: "status", label: "Status" },
-  { key: "id", label: "Explorer ID" },
-  { key: "exploration_id", label: "Exploration ID" },
   { key: "exploration_path", label: "Results Path" },
 ];
 
