@@ -39,7 +39,15 @@ export default function DatasetVisualization({ dataset }) {
     dataset.id.toString().startsWith("temp_");
 
   return (
-    <Paper sx={{ py: 4, px: 6 }}>
+    <Paper
+      sx={{
+        bgcolor: "#212121",
+        borderRadius: 2,
+        boxShadow: "none",
+        py: 4,
+        px: 6,
+      }}
+    >
       {/* Title and button */}
       <Grid
         container
