@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Tabs,
   Tab,
@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 
 import {
-  ArrowBackIosNew as BackIcon,
   InfoOutlined,
   ViewColumnOutlined,
   TuneOutlined,
@@ -36,30 +35,43 @@ const tabs = [
 
 const defaultTab = tabs.find((tab) => tab.label === "Results").value;
 
-const MemoizedResultTab = React.memo(TabResults, (prevProps, nextProps) => {
-  return (
-    prevProps.id === nextProps.id &&
-    prevProps.updateFlag === nextProps.updateFlag
-  );
-});
+const MemoizedResultTab = React.memo(
+  TabResults,
+  (prev, next) => prev.id == next.id,
+);
 
 export default function ExplorerDetailsModal({
   open = false,
   onClose = () => {},
   explorer,
-  updateFlag = false,
-  setUpdateFlag = () => {},
 }) {
+  if (!explorer) return null;
   const [currentTab, setCurrentTab] = useState(defaultTab);
 
   const handleTabChange = (_, newValue) => {
     setCurrentTab(newValue);
   };
 
-  if (!explorer) return null;
-
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: 1400,
+          height: 700,
+          maxWidth: "none",
+          m: "auto",
+        },
+      }}
+      sx={{
+        "& .MuiDialog-container": {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        },
+      }}
+    >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Typography variant="h6">
           Details for Explorer: {explorer.name}
@@ -95,9 +107,14 @@ export default function ExplorerDetailsModal({
             {currentTab === 0 && <TabInfo data={explorer} />}
             {currentTab === 1 && <TabColumns data={explorer.columns} />}
             {currentTab === 2 && <TabParameters data={explorer.parameters} />}
-            {currentTab === 3 && (
-              <MemoizedResultTab id={explorer.id} updateFlag={updateFlag} />
-            )}
+            <Box
+              sx={{
+                display: currentTab === 3 ? "block" : "none",
+                height: "100%",
+              }}
+            >
+              <MemoizedResultTab id={explorer.id} />
+            </Box>
           </Box>
         </Box>
       </DialogContent>
