@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 
 import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
 
-import { getExplorerResults } from "../../api/explorer";
+import { getExplorerResults } from "../../../api/explorer";
 import {
   TabularVisualizer,
   PlotlyJsonVisualizer,
   ImageVisualizer,
-} from "../explorations/Visualizations";
+} from "../../explorations/Visualizations";
 /**
  * NullCell component to render null values in the tabular visualizer
  * @param {Object} props
@@ -223,7 +223,6 @@ function Results({ id, updateFlag = false, setUpdateFlag = () => {} }) {
     <Box
       sx={{
         height: "100%",
-        minHeight: "300px",
         width: "100%",
         display: "flex",
         alignItems: "center",
