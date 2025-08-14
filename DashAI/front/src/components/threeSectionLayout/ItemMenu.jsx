@@ -82,18 +82,23 @@ export default function ItemMenu({ itemId, onInfo, onDelete }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <MenuItem
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAction(onInfo, itemId);
-          }}
-        >
-          <ListItemIcon>
-            <InfoIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Info</ListItemText>
-        </MenuItem>
-        <Divider />
+        {/* Only show Info button if onInfo is provided */}
+        {onInfo && (
+          <>
+            <MenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAction(onInfo, itemId);
+              }}
+            >
+              <ListItemIcon>
+                <InfoIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Info</ListItemText>
+            </MenuItem>
+            <Divider />
+          </>
+        )}
         <DeleteMenuItem
           onClick={(e) => {
             e.stopPropagation();

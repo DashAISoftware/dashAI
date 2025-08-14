@@ -18,7 +18,7 @@ export default function DatasetTable({
   columns: columnsProp,
   deps = [],
   autoHeight = true,
-  density = "standard",
+  density = "compact",
   pageSizeOptions = [5, 10, 25],
 }) {
   const [rows, setRows] = useState([]);
