@@ -8,6 +8,7 @@ import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
+import InfoNotebookModal from "./InfoNotebookModal";
 
 export default function DatasetsNotebooksBar({
   datasets = [],
@@ -23,6 +24,7 @@ export default function DatasetsNotebooksBar({
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
+  const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
 
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -40,6 +42,13 @@ export default function DatasetsNotebooksBar({
   }, [searchQuery, datasets, notebooks]);
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const handleNotebookInfo = (notebookId) => {
+    const notebook = notebooks.find((n) => n.id === notebookId);
+    if (notebook) {
+      setSelectedInfoNotebook(notebook);
+    }
+  };
 
   return (
     <SideBar>
@@ -91,6 +100,7 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedNotebookId}
           onItemClick={onNotebookClick}
           onItemDelete={onNotebookDelete}
+          onItemInfo={handleNotebookInfo}
           defaultOpen={true}
           title="Notebooks"
           Icon={DescriptionIcon}
@@ -99,6 +109,16 @@ export default function DatasetsNotebooksBar({
 
       {/* Footer */}
       <Footer />
+
+      {/* Notebook Info Modal */}
+      {selectedInfoNotebook && (
+        <InfoNotebookModal
+          notebookData={selectedInfoNotebook}
+          datasets={datasets}
+          open={!!selectedInfoNotebook}
+          onClose={() => setSelectedInfoNotebook(null)}
+        />
+      )}
     </SideBar>
   );
 }
