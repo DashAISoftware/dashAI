@@ -8,6 +8,7 @@ import {
 import ExplorerBox from "./ExplorerBox";
 import ConverterBox from "./ConverterBox";
 import ExplorerDetailsModal from "./ExplorerDetailsModal";
+import { useExplorerAndConverters } from "./context/ExplorerAndConvertersContext";
 
 const RowItem = React.memo(
   function RowItem({ item, handleExplorerDetailsClick }) {
@@ -44,7 +45,8 @@ export default function NotebookView({ notebook }) {
     );
   }
 
-  const [explorerAndConverters, setExplorerAndConverters] = useState([]);
+  const { explorersAndConverters, setExplorersAndConverters } =
+    useExplorerAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
 
@@ -66,7 +68,7 @@ export default function NotebookView({ notebook }) {
         const merged = [...explorersWithType, ...convertersWithType].sort(
           (a, b) => new Date(a.created) - new Date(b.created),
         );
-        setExplorerAndConverters(merged);
+        setExplorersAndConverters(merged);
       } catch (error) {
         console.error("Failed to fetch explorers and converters:", error);
       }
@@ -82,7 +84,7 @@ export default function NotebookView({ notebook }) {
 
   const Row = useCallback(
     ({ index }) => {
-      const item = explorerAndConverters[index];
+      const item = explorersAndConverters[index];
       return (
         <RowItem
           item={item}
@@ -91,12 +93,12 @@ export default function NotebookView({ notebook }) {
         />
       );
     },
-    [explorerAndConverters],
+    [explorersAndConverters],
   );
 
   return (
     <Box>
-      {explorerAndConverters.length === 0 ? (
+      {explorersAndConverters.length === 0 ? (
         <Box
           sx={{
             display: "flex",
@@ -117,7 +119,7 @@ export default function NotebookView({ notebook }) {
           pb: 3,
         }}
       >
-        {explorerAndConverters.map((_, idx) =>
+        {explorersAndConverters.map((_, idx) =>
           Row({ index: idx }, handleExplorerDetailsClick),
         )}
       </Box>
