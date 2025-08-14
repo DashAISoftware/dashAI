@@ -260,21 +260,21 @@ async def get_explorer_results(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ):
-    db: Session = session_factory()
-
-    try:
-        explorer_info = db.query(Explorer).get(explorer_id)
-        if explorer_info is None:
+    db: Session
+    with session_factory() as db:
+        try:
+            explorer_info = db.query(Explorer).get(explorer_id)
+            if explorer_info is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Explorer with id {explorer_id} not found",
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Explorer with id {explorer_id} not found",
-            )
-    except exc.SQLAlchemyError as e:
-        log.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error while loading the explorer info",
-        ) from e
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Error while loading the explorer info",
+            ) from e
 
     # validate explorer status and result path
     validate_explorer_finished(explorer=explorer_info)
