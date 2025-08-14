@@ -16,6 +16,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
+    dashai_to_pandas,
+)
 
 
 class PermutationFeatureImportanceSchema(BaseSchema):
@@ -119,17 +122,14 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         x, y = dataset
 
         # Select split
-        x_test = x["test"]
-        y_test = y["test"]
+        x_test = self.model.prepare_dataset(x["test"])
+        y_test = self.model.prepare_dataset(y["test"])
 
-        input_columns = list(x_test.features)
-        output_columns = list(y_test.features)
+        input_columns = x_test.column_names
+        output_columns = y_test.column_names[0]
 
-        input_columns = list(x_test.features)
-        output_columns = list(y_test.features)
 
-        types = {column: "Categorical" for column in output_columns}
-        y_test = y_test.change_columns_type(types)
+
 
         def patched_metric(y_true, y_pred_probas):
             return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))
@@ -137,8 +137,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         # TODO: binary and multi-label scorer
         pfi = permutation_importance(
             estimator=self.model,
-            X=x_test.to_pandas(),
-            y=y_test.to_pandas(),
+            X=dashai_to_pandas(x_test),
+            y=dashai_to_pandas(y_test),
             scoring=make_scorer(patched_metric),
             n_repeats=self.n_repeats,
             random_state=self.random_state,

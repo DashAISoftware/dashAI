@@ -793,8 +793,6 @@ def select_columns(
 def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     """Return the column with their respective types.
 
-    If the column isn't a Value or ClassLabel, the function will return
-    the type as "Other".
 
     Parameters
     ----------

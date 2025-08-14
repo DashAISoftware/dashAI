@@ -105,7 +105,7 @@ def arrow_to_dashai_types(arrow_type, format: str = None) -> DashAIValue:
         elif pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
             return Text(arrow_type)
         elif pa.types.is_boolean(arrow_type):
-            return Boolean(arrow_type)
+            return Categorical(values = ["True", "False"])
         elif pa.types.is_duration(arrow_type):
             return Duration(arrow_type)
         elif pa.types.is_decimal(arrow_type):
