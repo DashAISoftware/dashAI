@@ -17,7 +17,7 @@ export default function DescriptionPanel({ hoveredTool }) {
     >
       {hoveredTool ? (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {hoveredTool}
+          {hoveredTool.description}
         </Typography>
       ) : (
         <Typography

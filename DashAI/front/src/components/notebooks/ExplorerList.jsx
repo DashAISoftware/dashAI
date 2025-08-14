@@ -34,7 +34,7 @@ export default function ExplorerList({
               py: 1.5,
               "&:hover": { bgcolor: "#444" },
             }}
-            onMouseEnter={() => setHoveredTool(exploration.type)}
+            onMouseEnter={() => setHoveredTool(exploration)}
             onMouseLeave={() => setHoveredTool(null)}
             onClick={() =>
               handleExplorerClick(exploration.type, exploration.name)

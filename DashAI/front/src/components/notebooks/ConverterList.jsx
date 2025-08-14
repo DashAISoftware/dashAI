@@ -34,7 +34,7 @@ export default function ConverterList({
               py: 1.5,
               "&:hover": { bgcolor: "#444" },
             }}
-            onMouseEnter={() => setHoveredTool(converter.type)}
+            onMouseEnter={() => setHoveredTool(converter)}
             onMouseLeave={() => setHoveredTool(null)}
             onClick={() => handleConverterClick(converter.type, converter.name)}
           >

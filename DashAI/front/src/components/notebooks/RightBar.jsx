@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SideBar from "../threeSectionLayout/SideBar";
 import { Box, Paper, Typography, Tabs, Tab } from "@mui/material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
@@ -7,13 +7,50 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import DescriptionPanel from "./DescriptionPanel";
 import ExplorerList from "./ExplorerList";
 import ConverterList from "./ConverterList";
+import { ExplorersAndConvertersProvider } from "./context/ExplorersAndConvertersContext";
+import { getComponents } from "../../api/component";
+import { useSnackbar } from "notistack";
 
 export default function RightBar({ notebook }) {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredTool, setHoveredTool] = useState(null);
+  const [converters, setConverters] = useState([]);
+  const [explorers, setExplorers] = useState([]);
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await getComponents({
+        selectTypes: ["Converter", "Explorer"],
+      });
+      setConverters(data.filter((item) => item.type === "Converter"));
+      setExplorers(data.filter((item) => item.type === "Explorer"));
+    };
+    try {
+      fetchData();
+    } catch (error) {
+      enqueueSnackbar("Failed to fetch explorers/converters", {
+        variant: "error",
+      });
+      console.error("Failed to fetch explorers/converters:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    setFilteredExplorers(
+      explorers.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    );
+    setFilteredConverters(
+      converters.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    );
+  }, [searchQuery]);
 
   return (
     <SideBar>
@@ -85,22 +122,24 @@ export default function RightBar({ notebook }) {
               >
                 {/* Tool list */}
                 <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                  {activeTab === 0 && (
-                    <ExplorerList
-                      explorers={filteredExplorers}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                      handleExplorerClick={() => {}}
-                    />
-                  )}
-                  {activeTab === 1 && (
-                    <ConverterList
-                      converters={filteredConverters}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                      handleConverterClick={() => {}}
-                    />
-                  )}
+                  <ExplorersAndConvertersProvider>
+                    {activeTab === 0 && (
+                      <ExplorerList
+                        explorers={filteredExplorers}
+                        hoveredTool={hoveredTool}
+                        setHoveredTool={setHoveredTool}
+                        handleExplorerClick={() => {}}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ConverterList
+                        converters={filteredConverters}
+                        hoveredTool={hoveredTool}
+                        setHoveredTool={setHoveredTool}
+                        handleConverterClick={() => {}}
+                      />
+                    )}
+                  </ExplorersAndConvertersProvider>
                 </Box>
 
                 {/* Description panel - Fixed height */}
