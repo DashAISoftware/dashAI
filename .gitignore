@@ -179,3 +179,5 @@ __pycache__
 
 # MacOS
 *.DS_Store
+job_queue.db-shm
+job_queue.db-wal
