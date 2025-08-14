@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
-import { ExplorerAndConvertersProvider } from "./context/ExplorerAndConvertersContext";
+import { ExplorerAndConvertersProvider } from "./context/ExplorersAndConvertersContext";
 
 export default function NotebookVisualization({
   notebook,

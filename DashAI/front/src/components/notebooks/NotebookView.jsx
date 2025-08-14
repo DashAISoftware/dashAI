@@ -8,7 +8,7 @@ import {
 import ExplorerBox from "./ExplorerBox";
 import ConverterBox from "./ConverterBox";
 import ExplorerDetailsModal from "./ExplorerDetailsModal";
-import { useExplorerAndConverters } from "./context/ExplorerAndConvertersContext";
+import { useExplorerAndConverters } from "./context/ExplorersAndConvertersContext";
 
 const RowItem = React.memo(
   function RowItem({ item, handleExplorerDetailsClick }) {
