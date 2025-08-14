@@ -10,6 +10,7 @@ export default function CollapsibleList({
   selectedItemId,
   onItemClick,
   onItemDelete,
+  onItemInfo,
   defaultOpen = true,
   title = "Available Items",
   Icon = FolderIcon,
@@ -110,6 +111,7 @@ export default function CollapsibleList({
                 id={ds.id}
                 onClick={() => onItemClick(ds.id)}
                 onDelete={() => onItemDelete(ds.id)}
+                onInfo={onItemInfo ? () => onItemInfo(ds.id) : undefined}
               />
             ))
           ) : (
