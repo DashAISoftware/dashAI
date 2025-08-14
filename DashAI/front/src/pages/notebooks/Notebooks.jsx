@@ -255,7 +255,7 @@ export default function Notebooks() {
         </CenterBox>
       </Box>
       <Box width="22%">
-        <RightBar></RightBar>
+        <RightBar notebook={selectedNotebook} />
       </Box>
     </Box>
   );
