@@ -17,7 +17,7 @@ export default function RightBar({ notebook }) {
 
   return (
     <SideBar>
-      <Paper
+      <Box
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -126,7 +126,7 @@ export default function RightBar({ notebook }) {
             </Typography>
           </Box>
         )}
-      </Paper>
+      </Box>
     </SideBar>
   );
 }
