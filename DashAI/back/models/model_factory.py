@@ -123,6 +123,7 @@ class ModelFactory:
         for split in ["train", "validation", "test"]:
             split_results = {}
             predictions = self.model.predict(x[split])
+            transformed_y = self.model.prepare_dataset(y[split])
             for metric in metrics:
                 if (
                     isinstance(metric, type)
@@ -130,10 +131,10 @@ class ModelFactory:
                     and "multiclass" in metric.score.__code__.co_varnames
                     and multiclass is not None
                 ):
-                    score = metric.score(y[split], predictions, multiclass=multiclass)
+                    score = metric.score(transformed_y, predictions, multiclass=multiclass)
                 else:
                     # For metrics that don't accept the multiclass parameter
-                    score = metric.score(y[split], predictions)
+                    score = metric.score(transformed_y, predictions)
 
                 split_results[metric.__name__] = score
 

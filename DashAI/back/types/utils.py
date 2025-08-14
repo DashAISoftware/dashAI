@@ -11,7 +11,7 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import (
     Binary,
-    Boolean,
+    #Boolean,
     DashAIValue,
     Date,
     Decimal,
@@ -64,11 +64,13 @@ PTYPE_TO_DASHAI = {
     "integer": {"type": "Integer", "dtype": "int64"},
     "float": {"type": "Float", "dtype": "float64"},
     "string": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
-    "boolean": {"type": "Boolean", "dtype": "bool"},
+    #For simplicity, we use categorical for booleans.
+    "boolean": {"type": "Categorical", "dtype": "string"},
     "categorical": {"type": "Categorical", "dtype": "string"},
     "date-iso-8601": {"type": "Date", "dtype": "date32"},
     "date-eu": {"type": "Date", "dtype": "date32"},
     "date-non-std": {"type": "Date", "dtype": "date32"},
+    "date-non-std-subtype": {"type": "Date", "dtype": "date32"},
     "time": {"type": "Time", "dtype": "time32(s)"},
 }
 
@@ -86,28 +88,30 @@ value_types = [
 ]
 
 
-def arrow_to_dashai_types(arrow_type) -> DashAIValue:
+def arrow_to_dashai_types(arrow_type, format: str = None) -> DashAIValue:
     """Convert an Arrow type to a DashAI value."""
-    if pa.types.is_integer(arrow_type):
-        return Integer(arrow_type)
-    elif pa.types.is_floating(arrow_type):
-        return Float(arrow_type)
-    elif pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
-        return Text(arrow_type)
-    elif pa.types.is_boolean(arrow_type):
-        return Boolean(arrow_type)
-    elif pa.types.is_time(arrow_type):
-        return Time(arrow_type)
-    elif pa.types.is_timestamp(arrow_type):
-        return Timestamp(arrow_type)
-    elif pa.types.is_duration(arrow_type):
-        return Duration(arrow_type)
-    elif pa.types.is_date(arrow_type):
-        return Date(arrow_type)
-    elif pa.types.is_decimal(arrow_type):
-        return Decimal(arrow_type)
-    elif pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type):
-        return Binary(arrow_type)
+    if format is not None:
+        if arrow_type == "Date":
+            return Date(arrow_type=pa.string(), format=format)
+        elif arrow_type == "Time":
+            return Time(arrow_type=pa.string(), format=format)
+        elif arrow_type == "Timestamp":
+            return Timestamp(arrow_type=pa.string(), format=format)
+    else:
+        if pa.types.is_integer(arrow_type):
+            return Integer(arrow_type)
+        elif pa.types.is_floating(arrow_type):
+            return Float(arrow_type)
+        elif pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
+            return Text(arrow_type)
+        elif pa.types.is_boolean(arrow_type):
+            return Boolean(arrow_type)
+        elif pa.types.is_duration(arrow_type):
+            return Duration(arrow_type)
+        elif pa.types.is_decimal(arrow_type):
+            return Decimal(arrow_type)
+        elif pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type):
+            return Binary(arrow_type)
 
 
 def arrow_to_dashai_schema(arrow_tbl):
@@ -210,7 +214,8 @@ def get_types_from_arrow_metadata(
 
     return dashai_types
 
-
+#Both Date and Time conversion functions are in the case if DashAI decides to use pyarrow dates and times instead of strings. 
+#Both should be modified accordingly to function properly.
 def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Array:
     """
     Convert a PyArrow array of date strings to a PyArrow date32 array.
@@ -253,7 +258,7 @@ def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Ar
     Returns
     -------
     pa.Array
-        A PyArrow array of time64 values.
+        A PyArrow array of time32 values.
     """
 
     str_times = column.to_pylist()

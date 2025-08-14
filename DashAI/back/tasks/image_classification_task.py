@@ -19,7 +19,7 @@ class ImageClassificationTask(BaseTask):
 
     metadata: dict = {
         "inputs_types": [Image],
-        "outputs_types": [ClassLabel],
+        "outputs_types": [ClassLabel], #Categorical
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }

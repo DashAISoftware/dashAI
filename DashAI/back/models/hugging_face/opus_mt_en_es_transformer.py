@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
@@ -88,14 +89,14 @@ class OpusMtEnESTransformer(TranslationModel):
         )
         self.fitted = model is not None
 
-    def tokenize_data(self, x: Dataset, y: Optional[Dataset] = None) -> Dataset:
+    def tokenize_data(self, x: DashAIDataset, y: Optional[DashAIDataset] = None) -> DashAIDataset:
         """Tokenize input and output.
 
         Parameters
         ----------
-        x: Dataset
+        x: DashAIDataset
             Dataset with the input data to preprocess.
-        y: Optional Dataset
+        y: Optional DashAIDataset
             Dataset with the output data to preprocess.
 
         Returns
@@ -105,7 +106,7 @@ class OpusMtEnESTransformer(TranslationModel):
         """
         is_y = bool(y)
         if not y:
-            y = Dataset.from_list([{"foo": 0}] * len(x))
+            y = DashAIDataset.from_list([{"foo": 0}] * len(x))
         dataset = []
         input_column_name = x.column_names[0]
         output_column_name = y.column_names[0]
@@ -135,9 +136,9 @@ class OpusMtEnESTransformer(TranslationModel):
                 ),
             }
             dataset.append(sample)
-        return Dataset.from_list(dataset)
+        return DashAIDataset.from_list(dataset)
 
-    def fit(self, x_train: Dataset, y_train: Dataset):
+    def fit(self, x_train: DashAIDataset, y_train: DashAIDataset):
         """Fine-tune the pre-trained model.
 
         Parameters
@@ -158,7 +159,7 @@ class OpusMtEnESTransformer(TranslationModel):
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
-            use_cpu=self.device != "gpu",
+            no_cuda=self.device != "gpu",
             **self.training_args,
         )
 
@@ -175,7 +176,7 @@ class OpusMtEnESTransformer(TranslationModel):
         )
         return self
 
-    def predict(self, x_pred: Dataset) -> List:
+    def predict(self, x_pred: DashAIDataset) -> List:
         """Predict with the fine-tuned model.
 
         Parameters
@@ -211,6 +212,27 @@ class OpusMtEnESTransformer(TranslationModel):
             translations.append(translated_text)
 
         return translations
+
+    def prepare_dataset(
+        self, dataset: DashAIDataset
+    ) -> DashAIDataset:
+        """Apply the model transformations to the dataset.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be transformed.
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared dataset ready to be converted to an accepted format in the model.
+        """
+        try:
+            #Useless in this case, but we keep it for consistency with other models.
+            return dataset
+        except Exception as e:
+            print(f"Couldn't apply transformations to the dataset for the model: {e}")
 
     def save(self, filename: Union[str, Path]) -> None:
         self.model.save_pretrained(filename)

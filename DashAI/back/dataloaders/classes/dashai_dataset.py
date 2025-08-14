@@ -4,7 +4,7 @@ import copy
 import json
 import logging
 import os
-from typing import Dict, List, Literal, Tuple, Union
+from typing import Dict, List, Literal, Tuple, Union, Optional
 
 import numpy as np
 import pyarrow as pa
@@ -128,44 +128,6 @@ class DashAIDataset(Dataset):
         return []
 
     @beartype
-    def change_columns_type(self, column_types: Dict[str, str]) -> "DashAIDataset":
-        """Change the type of some columns.
-
-        Note: this is a temporal method, and it will probably will delete in the future.
-
-        Parameters
-        ----------
-        column_types : Dict[str, str]
-            dictionary whose keys are the names of the columns to be changed and the
-            values the new types.
-
-        Returns
-        -------
-        DashAIDataset
-            The dataset after columns type changes.
-        """
-        if not isinstance(column_types, dict):
-            raise TypeError(f"types should be a dict, got {type(column_types)}")
-
-        for column in column_types:
-            if column in self.column_names:
-                pass
-            else:
-                raise ValueError(
-                    f"Error while changing column types: column '{column}' does not "
-                    "exist in dataset."
-                )
-        new_features = self.features.copy()
-        for column in column_types:
-            if column_types[column] == "Categorical":
-                names = list(set(self[column]))
-                new_features[column] = ClassLabel(names=names)
-            elif column_types[column] == "Numerical":
-                new_features[column] = Value("float32")
-        dataset = self.cast(new_features)
-        return dataset
-
-    @beartype
     def remove_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
         """Remove one or several column(s) in the dataset and the features
         associated to them.
@@ -263,7 +225,7 @@ class DashAIDataset(Dataset):
         subset = self.select(indices)
 
         new_splits = {"split_indices": {split_name: indices}}
-        arrow_table = subset.with_format("arrow")[:]
+        arrow_table = subset.arrow_table#with_format("arrow")[:] ####Check
         subset = DashAIDataset(arrow_table, splits=new_splits)
         return subset
 
@@ -290,8 +252,7 @@ class DashAIDataset(Dataset):
         }
 
         return DashAIDataset(table=subset_table, splits=self.splits, types=subset_types)
-
-    '''
+    
     @beartype
     def select(self, *args, **kwargs) -> "DashAIDataset":
         """
@@ -305,21 +266,16 @@ class DashAIDataset(Dataset):
             DashAIDataset: A new DashAIDataset instance containing the selected rows.
         """
         selected_dataset = super().select(*args, **kwargs)
-        print(len(selected_dataset), "rows selected from dataset")
         if isinstance(selected_dataset, DashAIDataset):
             return selected_dataset
         else:
             # If the selected dataset is a Dataset, convert it to DashAIDataset
-            print("len de selected_dataset en else", len(selected_dataset))
             arrow_tbl = get_arrow_table(selected_dataset)
-            print("len de arrowtbl", len(arrow_tbl))
             arrow_tblx = save_types_in_arrow_metadata(
-                arrow_tbl, {col: self._types[col].to_string() for col in self._types}
-            )
-            print("len de arrowtblx", len(arrow_tblx))
+                arrow_tbl, {col: self._types[col].to_string() for col in self._types})
             return DashAIDataset(arrow_tblx, splits=self.splits, types=self._types)
+    
 
-    '''
 
 
 @beartype
@@ -368,7 +324,6 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
 
     return dashai_dataset
 
-
 @beartype
 def transform_dataset_with_schema(
     dataset: DashAIDataset, schema: Dict[str, Dict]
@@ -401,36 +356,25 @@ def transform_dataset_with_schema(
         _type = info.get("type")
         dtype = info.get("dtype")
         pa_type = to_arrow_types(dtype)
-
         if _type == "Categorical":
-            values = table.column(column_name).unique().to_pylist()
+            base_col = table.column(column_name)
+            str_col = pa.array([str(x) for x in base_col.to_pylist()], type=pa.string())
+            values = sorted(set(str_col.to_pylist()))
             dashai_types[column_name] = Categorical(values=values)
-            dai_table[column_name] = table.column(column_name)
-        elif _type == "Date":
-            values = table.column(column_name).to_pylist()
-            pa_type = pa.date32()
-            dai_table[column_name] = pyarrow_date_conversion(
-                table.column(column_name), format="%m/%d/%Y"
-            )
-            dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-        elif _type == "Time":
-            values = table.column(column_name).to_pylist()
-            dai_table[column_name] = pyarrow_time_conversion(
-                table.column(column_name), format="%H:%M:%S"
-            )
-            dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-        elif _type == "Image":
-            values = table.column(column_name).to_pylist()
-            dai_table[column_name] = table.column(column_name)
-            if info.get("base_path"):
-                base_path = info.get("base_path")
-                dashai_types[column_name] = DashAIImage(
-                    dtype=dtype, base_path=base_path
-                )
-            else:
-                dashai_types[column_name] = DashAIImage(dtype=dtype)
+            dai_table[column_name] = str_col
+            pa_type = to_arrow_types("string")
+        # DashAIImage is currently not fully implemented since its capabilities are dependant on the possible dataloaders and now it's only one but open for more. 
+        # This step should be formalized after solving that.
+        # elif _type == "Image":
+        #    pass
         else:
-            dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+            if _type in ["Date", "Time", "Timestamp"]:
+                # Since DashAI are not using date, time or timestamp types for its models, we are saving them as strings to preserve the original format. 
+                # Can modify classes in value_type.py if want to use PyArrow date, time or timestamp types.
+                dashai_types[column_name] = arrow_to_dashai_types(pa_type=_type, format=dtype)
+                pa_type = to_arrow_types("string")
+            else:
+                dashai_types[column_name] = arrow_to_dashai_types(pa_type)
             dai_table[column_name] = table.column(column_name)
 
         my_schema = my_schema.append(pa.field(column_name, pa_type))
@@ -740,45 +684,45 @@ def to_dashai_dataset(
     dashai_dataset = DashAIDataset(arrow_tbl)
     return dashai_dataset
 
+#NO SE USA TAMPOCO
+# @beartype
+# def validate_inputs_outputs(
+#     datasetdict: Union[DatasetDict, DashAIDataset],
+#     inputs: List[str],
+#     outputs: List[str],
+# ) -> None:
+#     """Validate the columns to be chosen as input and output.
+#     The algorithm considers those that already exist in the dataset.
 
-@beartype
-def validate_inputs_outputs(
-    datasetdict: Union[DatasetDict, DashAIDataset],
-    inputs: List[str],
-    outputs: List[str],
-) -> None:
-    """Validate the columns to be chosen as input and output.
-    The algorithm considers those that already exist in the dataset.
-
-    Parameters
-    ----------
-    names : List[str]
-        Dataset column names.
-    inputs : List[str]
-        List of input column names.
-    outputs : List[str]
-        List of output column names.
-    """
-    datasetdict = to_dashai_dataset(datasetdict)
-    dataset_features = list((datasetdict.features).keys())
-    if len(inputs) == 0 or len(outputs) == 0:
-        raise ValueError(
-            "Inputs and outputs columns lists to validate must not be empty"
-        )
-    if len(inputs) + len(outputs) > len(dataset_features):
-        raise ValueError(
-            "Inputs and outputs cannot have more elements than names. "
-            f"Number of inputs: {len(inputs)}, "
-            f"number of outputs: {len(outputs)}, "
-            f"number of names: {len(dataset_features)}. "
-        )
-        # Validate that inputs and outputs only contain elements that exist in names
-    if not set(dataset_features).issuperset(set(inputs + outputs)):
-        raise ValueError(
-            f"Inputs and outputs can only contain elements that exist in names. "
-            f"Extra elements: "
-            f"{', '.join(set(inputs + outputs).difference(set(dataset_features)))}"
-        )
+#     Parameters
+#     ----------
+#     names : List[str]
+#         Dataset column names.
+#     inputs : List[str]
+#         List of input column names.
+#     outputs : List[str]
+#         List of output column names.
+#     """
+#     datasetdict = to_dashai_dataset(datasetdict)
+#     dataset_features = list((datasetdict.features).keys())
+#     if len(inputs) == 0 or len(outputs) == 0:
+#         raise ValueError(
+#             "Inputs and outputs columns lists to validate must not be empty"
+#         )
+#     if len(inputs) + len(outputs) > len(dataset_features):
+#         raise ValueError(
+#             "Inputs and outputs cannot have more elements than names. "
+#             f"Number of inputs: {len(inputs)}, "
+#             f"number of outputs: {len(outputs)}, "
+#             f"number of names: {len(dataset_features)}. "
+#         )
+#         # Validate that inputs and outputs only contain elements that exist in names
+#     if not set(dataset_features).issuperset(set(inputs + outputs)):
+#         raise ValueError(
+#             f"Inputs and outputs can only contain elements that exist in names. "
+#             f"Extra elements: "
+#             f"{', '.join(set(inputs + outputs).difference(set(dataset_features)))}"
+#         )
 
 
 @beartype
@@ -862,23 +806,20 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     Dict
         Dict with the columns and types
     """
-    data_filepath = os.path.join(dataset_path, "data.arrow")
-    with pa.OSFile(data_filepath, "rb") as source:
-        reader = ipc.open_file(source)
-        schema = reader.schema
-
+    dataset = load_dataset(dataset_path)
+    #Revisar format
     column_types = {}
-    types = get_types_from_arrow_metadata(schema)
-    for column, type_obj in types.items():
-        type_info = type_obj.to_string()
+    for column in dataset.types:
+        column_spec = dataset.types[column]
+        dtype = column_spec.to_string().get("dtype", None)
+        _format = column_spec.to_string().get("format", None)
         column_types[column] = {
-            "type": type_info.get("type", None),
-            "dtype": type_info.get("dtype", None),
+            "type": column_spec.to_string().get("type", None),
+            "dtype": _format if _format else dtype,
         }
-
     return column_types
 
-
+#NAO NAO NO SE USA, PERO SE AÑADE CUANDO PERMITA CAMBIAR LA COSA EN EL FRONT
 @beartype
 def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
@@ -920,7 +861,7 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
             raise ValueError("Error while trying to cast the columns") from e
     return dataset
 
-
+#Esto se borra pq el schema quedó descartado
 @beartype
 def export_dataset_schema(dataset_path: str) -> DashAIDataset:
     """
@@ -1055,16 +996,12 @@ def prepare_for_experiment(
         labels = None
         if splits.get("stratify", False) and output_columns:
             output_column = output_columns[0]
+            column_type = dataset.types[output_column]
             try:
                 column_values = dataset[output_column]
                 # Check column type and convert to numerical indices if needed
-                if isinstance(column_values[0], str):
-                    unique_values = {}
-                    labels = []
-                    for val in column_values:
-                        if val not in unique_values:
-                            unique_values[val] = len(unique_values)
-                        labels.append(unique_values[val])
+                if isinstance(column_type, Categorical):
+                    labels = [column_type.str2int(v) for v in column_values]
                 else:
                     labels = [
                         int(x) if not isinstance(x, (list, tuple)) else int(x[0])
@@ -1098,7 +1035,7 @@ def prepare_for_experiment(
     }
 
 
-def modify_table(dataset: DashAIDataset, columns: Dict[str, pa.Array]) -> DashAIDataset:
+def modify_table(dataset: DashAIDataset, columns: Dict[str, pa.Array], types: Optional[Dict[str, DashAIDataType]] = None) -> DashAIDataset:
     """
     Modifies the pa.table and its pa.type of a column in a DashAIDataset.
     This function serves as a tool for models to modify the data in order to process it.
@@ -1126,4 +1063,6 @@ def modify_table(dataset: DashAIDataset, columns: Dict[str, pa.Array]) -> DashAI
     new_table = pa.table(updated_columns)
     new_table = new_table.replace_schema_metadata(original_table.schema.metadata)
 
-    return DashAIDataset(new_table, splits=dataset.splits, types=dataset.types)
+    new_types = types if types else dataset.types
+
+    return DashAIDataset(new_table, splits=dataset.splits, types=new_types)

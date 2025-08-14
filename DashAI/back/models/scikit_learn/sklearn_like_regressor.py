@@ -21,5 +21,5 @@ class SklearnLikeRegressor(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
-        x_pred = dashai_to_pandas(x_pred)
+        x_pred = dashai_to_pandas(self.prepare_dataset(x_pred))
         return super().predict(x_pred)

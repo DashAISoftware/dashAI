@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 from sklearn.preprocessing import OneHotEncoder
-
+from typing import Dict, Union, Tuple
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, modify_table
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata, to_arrow_types
 from DashAI.back.types.value_types import (
     Binary,
-    Boolean,
+    #Boolean,
     Date,
     Decimal,
     Duration,
@@ -57,7 +57,7 @@ def dashai_to_dict(
 
 def categorical_label_encoder(
     dataset: DashAIDataset,
-) -> DashAIDataset:
+) -> Tuple[DashAIDataset, Dict[str, Dict[str, int]]]:
     """Convert categorical columns from the DashAIDataset to label encoded integers.
 
     Parameters
@@ -69,25 +69,70 @@ def categorical_label_encoder(
     -------
     DashAIDataset
         A new DashAIDataset with categorical columns converted to label encoded integers.
+    encodings : dict
+        A dictionary containing the encodings for each categorical column, where keys are column names and values.
     """
     new_columns = {}
     table = dataset.arrow_table
+    encodings = {}
+
     for col, _type in dataset.types.items():
+
         array = table[col]
         # Check every column dashai_type to find the categorical ones
         if isinstance(_type, Categorical):
-            if all(isinstance(c, str) for c in _type.categories) or all(
-                isinstance(c, bool) for c in _type.categories
-            ):
-                values = [_type.str2int(x.as_py()) for x in array]
-                new_columns[col] = pa.array(values, type=pa.int64())
-            else:
-                new_columns[col] = pa.array(array, type=pa.int64())
+            values = [_type.str2int(x.as_py()) for x in array]
+            new_columns[col] = pa.array(values, type=pa.int64())
+            encodings[col] = dict(_type._str2int)  # Store the encoding for later use
         else:
-            new_columns[col] = pa.array(array, type=to_arrow_types(_type.dtype))
-    transformed_dataset = modify_table(dataset, columns=new_columns)
-    return transformed_dataset
+            new_columns[col] = array
 
+    return modify_table(dataset, columns=new_columns), encodings
+
+#This function is used to apply the encodings stored in the model to the categorical columns in the dataset.
+def apply_categorical_label_encoder(
+    dataset: DashAIDataset,  encodings: Dict[str, Dict[str, int]]
+) -> DashAIDataset:
+    """Apply Model stored encodings to the categorical columns in the dataset.
+    
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        The dataset containing both non categorical and categorical columns to be label encoded.
+    encodings : dict
+        A dictionary containing the encodings for each categorical column, where keys are column names and values are dictionaries mapping original values to encoded integers.
+    
+    Returns
+    -------
+    DashAIDataset
+        A new DashAIDataset with categorical columns converted to label encoded integers using the provided encodings.
+    
+    """
+
+    table = dataset.arrow_table
+    new_columns = {}
+    types = dataset.types
+
+    for col in table.column_names:
+        array = table[col]
+        _type = types[col]
+
+        if col in encodings and isinstance(_type, Categorical):
+            # Apply the stored encodings to the categorical columns
+
+            encoding = encodings[col]
+            try:
+                encoded_values = [encoding[x.as_py()] for x in array]
+                new_columns[col] = pa.array(encoded_values, type=pa.int64())
+
+                categories = list(encoding.keys())
+                types[col] = Categorical(categories, encoding=encoding)
+            except KeyError as e:
+                raise ValueError(f"Value {e} not found in encoding for column '{col}'") from e
+        else:
+            # If no encoding is provided, keep the original column
+            new_columns[col] = array
+    return modify_table(dataset, columns=new_columns, types=types)
 
 def sklearn_one_hot_encoder(
     dataset: DashAIDataset,

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from datasets import Value
 import pyarrow as pa
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_value import DashAIValue
@@ -115,39 +114,33 @@ class Time(DashAIValue):
     unit : str
         Unit of time used. It should be 's' or 'ms'.
     """
-    size: int = 32
-    dtype: str = "time32(s)"
+    format: str = "HH:mm:ss"
+    dtype: str = "string"
 
-    def __init__(self, arrow_type: pa.DataType):
-        if not pa.types.is_time(arrow_type):
-            raise ValueError(
-                f"Arrow type {arrow_type} is not a time type.") 
-        self.size = arrow_type.bit_width
-        if pa.types.is_time32(arrow_type):
-            self.dtype = "time32(s)" if arrow_type.unit == "s" else "time32(ms)"
-        elif pa.types.is_time64(arrow_type):
-            self.dtype = "time64(us)" if arrow_type.unit == "us" else "time64(ns)"
-
-    def to_string(self):
-        return {"type": "Time", "dtype": self.dtype}
-    
-
-@dataclass
-class Boolean(DashAIValue):
-    """
-    Represents a boolean value.
-    """
-
-    dtype: str = "bool"
-
-    def __init__(self, arrow_type: pa.DataType):
-        if not pa.types.is_boolean(arrow_type):
-            raise ValueError(
-                f"Arrow type {arrow_type} is not a boolean type.")
+    def __init__(self, arrow_type: pa.DataType, format: Optional[str]):
+        self.format = format if format else "HH:mm:ss"
         self.dtype = str(arrow_type)
-    
+
     def to_string(self):
-        return {"type": "Boolean", "dtype": self.dtype}
+        return {"type": "Time", "dtype": self.dtype, "format": self.format}
+    
+
+# @dataclass
+# class Boolean(DashAIValue):
+#     """
+#     Represents a boolean value.
+#     """
+
+#     dtype: str = "bool"
+
+#     def __init__(self, arrow_type: pa.DataType):
+#         if not pa.types.is_boolean(arrow_type):
+#             raise ValueError(
+#                 f"Arrow type {arrow_type} is not a boolean type.")
+#         self.dtype = str(arrow_type)
+    
+#     def to_string(self):
+#         return {"type": "Boolean", "dtype": self.dtype}
 
 
 @dataclass
@@ -162,20 +155,15 @@ class Timestamp(DashAIValue):
         Timezone used for the timestamp. If None, the timestamp is timezone-naive.
     """
 
-    unit: str = "s"
-    timezone: Optional[str] = None
-    dtype: str = "timestamp(s)"
+    format: str = "YYYY-MM-DD HH:mm:ss"
+    dtype: str = "string"
 
-    def __init__(self, arrow_type: pa.DataType):
-        if not pa.types.is_timestamp(arrow_type):
-            raise ValueError(
-                f"Arrow type {arrow_type} is not a timestamp type.")
+    def __init__(self, arrow_type: pa.DataType, format: Optional[str] = None):
+        self.format = format if format else "YYYY-MM-DD HH:mm:ss"
         self.dtype = str(arrow_type)
-        self.unit = arrow_type.unit
-        self.timezone = arrow_type.tz
     
     def to_string(self):
-        return {"type": "Timestamp", "dtype": self.dtype}
+        return {"type": "Timestamp", "dtype": self.dtype, "format": self.format}
 
 
 @dataclass
@@ -255,21 +243,15 @@ class Date(DashAIValue):
 
     """
 
-    size: int = 32
-    dtype: str = "date32"
-    def __init__ (self, arrow_type: pa.DataType):
-        if not pa.types.is_date(arrow_type):
-            raise ValueError(
-                f"Arrow type {arrow_type} is not a date type.")
-        self.dtype = str(arrow_type)
-        if arrow_type.equals(pa.date32()):
-            self.size = 32
-        elif arrow_type.equals(pa.date64()):
-            self.size = 64
+    format: str = "YYYY-MM-DD"
+    dtype: str = "string"
 
-            
+    def __init__(self, arrow_type: pa.DataType, format: Optional[str]):
+        self.format = format if format else "YYYY-MM-DD"
+        self.dtype = str(arrow_type)
+    
     def to_string(self):
-        return {"type": "Date", "dtype": self.dtype}
+        return {"type": "Date", "dtype": self.dtype, "format": self.format}
 
 
 @dataclass
@@ -282,8 +264,6 @@ class Binary(DashAIValue):
         Type of binary. It should be 'binary' or 'large_binary'.
 
     """
-
-    binary_type: str = "binary"
     dtype: str = "binary"
 
     def __init__(self, arrow_type: pa.DataType):
@@ -291,10 +271,6 @@ class Binary(DashAIValue):
             raise ValueError(
                 f"Arrow type {arrow_type} is not a binary type.")
         self.dtype = str(arrow_type)
-        if arrow_type.equals(pa.binary()):
-            self.binary_type = "binary"
-        elif arrow_type.equals(pa.large_binary()):
-            self.binary_type = "large_binary"
     
     def to_string(self):
         return {"type": "Binary", "dtype": self.dtype}

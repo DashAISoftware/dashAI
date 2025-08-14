@@ -1,8 +1,5 @@
 from dataclasses import dataclass
 import pyarrow as pa
-from datasets import ClassLabel
-
-# from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
 @dataclass
@@ -17,27 +14,15 @@ class Categorical(DashAIDataType):
 
     categories: pa.Array  # List of unique category values
     
-    def __init__(self, values: pa.Array):
-        """Initialize a Categorical type.
-
-        Parameters
-        ----------
-        arrow_type : pa.DataType
-            The PyArrow data type of the column.
-        values : pa.Array
-            The values in the column to extract categories.
-        """
-        
-        # if not pa.types.is_dictionary(arrow_type):
-        #     raise ValueError(f"Expected a dictionary (categorical) type, got {arrow_type}")
-
-        # Extraer categorías en su tipo original
+    def __init__(self, values: pa.Array, encoding: dict = None):
         self.categories = values
 
-        self._str2int = {cat: idx for idx, cat in enumerate(self.categories)}
-        self._int2str = {idx: cat for idx, cat in enumerate(self.categories)}
-
-        #print(f"Categorical initialized with categories: {self.categories}")
+        if encoding is not None:
+            self._str2int = encoding
+            self._int2str = {v: k for k, v in encoding.items()}
+        else:
+            self._str2int = {cat: idx for idx, cat in enumerate(self.categories)}
+            self._int2str = {idx: cat for idx, cat in enumerate(self.categories)}
 
     def str2int(self, value):
         return self._str2int[value]

@@ -86,6 +86,11 @@ class Ptype:
         p_t = normalize_log_probs(p_t)
         p_t = {t: p for t, p in zip(self.types, p_t)}
 
+        uniform = np.ones(len(p_t)) / len(p_t)
+        if np.allclose(list(p_t.values()), uniform, rtol=1e-2):
+            p_t = {t: 1.0 if t == "string" else 0.0 for t in self.types}
+            p_z = {}
+
         return Column(series=df[col_name], p_t=p_t, p_z=p_z)
 
     def get_na_values(self):

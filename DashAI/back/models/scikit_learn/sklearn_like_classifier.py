@@ -22,5 +22,5 @@ class SklearnLikeClassifier(SklearnLikeModel):
             Array with the predicted target values for x_pred
         """
         if isinstance(x_pred, DashAIDataset):
-            x_pred = dashai_to_pandas(x_pred)
+            x_pred = dashai_to_pandas(self.prepare_dataset(x_pred))
         return super().predict_proba(x_pred)

@@ -3,7 +3,7 @@ import sys
 from copy import deepcopy
 
 import numpy as np
-from greenery import parse
+from greenery.lego import parse
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 sys.path.insert(0, project_root)
@@ -825,3 +825,6 @@ class Time(Machine):
         )
         self.create_T_new()
         self.copy_to_z()
+
+class ComplexText(Machine):
+    pass

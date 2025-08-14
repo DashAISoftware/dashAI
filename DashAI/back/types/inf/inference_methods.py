@@ -74,7 +74,7 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         
         return inferred_types
     
-# Dummy inference method to not let DashAIPtype be alone :)
+# Dummy inference method to avoid letting DashAIPtype alone :)
 class DummyCategoricalInference(InferenceMethod):
     """
     A dummy inference method that does nothing.

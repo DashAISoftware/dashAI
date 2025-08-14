@@ -95,6 +95,8 @@ class BaseTask:
                 f"match task cardinality ({outputs_cardinality})"
             )
 
+    # This method should be eliminated since we are using DashAITypes now, so correct types are already set and further transformations should be handled by the model as needed. 
+    # Could still be used on Image since it DashAIImageType and its handlers haven't been implemented yet.
     @abstractmethod
     def prepare_for_task(
         self, dataset: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]

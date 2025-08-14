@@ -52,7 +52,5 @@ class TabularClassificationTask(BaseTask):
             Dataset with the new types
         """
 
-        datasetdict = to_dashai_dataset(datasetdict)
+        return to_dashai_dataset(datasetdict)
 
-        dataset = categorical_label_encoder(datasetdict)
-        return dataset
