@@ -2,6 +2,7 @@
 
 import asyncio
 import sqlite3
+from datetime import datetime, timezone
 
 import dill
 from huey import SqliteHuey
@@ -52,6 +53,50 @@ class HueyJobQueue(BaseJobQueue):
 
         self._execute = _execute_base_job
 
+
+    @staticmethod
+    def _normalize_to_utc_str(ts: str) -> str:
+        """
+        Accepts ISO8601 or 'YYYY-MM-DD HH:MM:SS[.ffffff]' with optional 'Z' or offset.
+        Returns UTC as 'YYYY-MM-DD HH:MM:SS.ffffff'
+        """
+        if not ts:
+            return "1970-01-01 00:00:00.000000"
+
+        s = ts.strip()
+
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+
+        dt = None
+        try:
+            dt = datetime.fromisoformat(s)
+        except ValueError:
+            try:
+                if " " in s and "T" not in s:
+                    dt = datetime.fromisoformat(s.replace(" ", "T"))
+            except ValueError:
+                dt = None
+
+        if dt is None:
+            for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S"):
+                try:
+                    dt = datetime.strptime(s, fmt)
+                    break
+                except ValueError:
+                    continue
+
+        if dt is None:
+            return "1970-01-01 00:00:00.000000"
+
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+
+        return dt.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+
     def _register_signals(self):
         """Attach Huey lifecycle signal handlers to keep 'task_copy' in sync:
         - SIGNAL_ENQUEUED: insert or replace a row with status `not_started`
@@ -65,7 +110,6 @@ class HueyJobQueue(BaseJobQueue):
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute(sql, params)
 
-        # Use SQLite's STRFTIME with %f for microsecond precision
         NOW_MICRO = "STRFTIME('%Y-%m-%d %H:%M:%f','now')"
 
         @self.huey.signal(SIGNAL_ENQUEUED)
@@ -113,6 +157,7 @@ class HueyJobQueue(BaseJobQueue):
                 ("error", str(exc), task.id),
             )
 
+
     def _enable_wal(self):
         """Enable Write-Ahead Logging mode in SQLite to improve concurrent reads/writes."""
         with sqlite3.connect(self.db_path) as conn:
@@ -125,9 +170,9 @@ class HueyJobQueue(BaseJobQueue):
         Columns:
         - id (TEXT PRIMARY KEY): unique identifier for the job (UUID as text)
         - task_type (TEXT NOT NULL): the name of the Huey task
-        - enqueued_at (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP
+        - enqueued_at (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP (UTC)
         - status (TEXT NOT NULL): one of: 'not_started', 'started', 'finished', 'deleted', 'error'
-        - last_update (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP
+        - last_update (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP (UTC)
         - error_msg (TEXT): optional error message when a task fails
         """
         with sqlite3.connect(self.db_path) as conn:
@@ -143,10 +188,10 @@ class HueyJobQueue(BaseJobQueue):
                 )
                 """
             )
-            # Helpful for WHERE last_update > ? queries
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_task_copy_last_update ON task_copy(last_update, id)"
             )
+
 
     def status(self, job_id: str) -> dict:
         conn = sqlite3.connect(self.db_path)
@@ -178,6 +223,27 @@ class HueyJobQueue(BaseJobQueue):
                 FROM task_copy
                 ORDER BY last_update DESC
                 """
+            )
+            return [dict(row) for row in cur.fetchall()]
+
+    def changes_since(self, since: str) -> list[dict]:
+        """
+        Return jobs whose last_update is strictly greater than the given timestamp.
+        The 'since' timestamp is normalized to UTC with microseconds to avoid
+        same-second race conditions.
+        """
+        cutoff = self._normalize_to_utc_str(since)
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, task_type, enqueued_at, status, last_update, error_msg
+                FROM task_copy
+                WHERE last_update > ?
+                ORDER BY last_update DESC
+                """,
+                (cutoff,),
             )
             return [dict(row) for row in cur.fetchall()]
 
@@ -243,7 +309,8 @@ class HueyJobQueue(BaseJobQueue):
         with sqlite3.connect(self.db_path) as conn:
             cur = conn.cursor()
             cur.execute(
-                "SELECT 1 FROM task WHERE queue = ? LIMIT 1", (self.huey.storage.name,)
+                "SELECT 1 FROM task WHERE queue = ? LIMIT 1",
+                (self.huey.storage.name,),
             )
             empty = cur.fetchone() is None
         return empty
@@ -270,11 +337,9 @@ def create_container_huey():
 
     local_path_str = os.environ.get("DASHAI_LOCAL_PATH")
     if local_path_str:
-        # Convertir el string a Path y expandir ~ al directorio home
         print("paso por aki pathstr")
         local_path = Path(os.path.expanduser(local_path_str))
     else:
-        # Ruta por defecto
         local_path = Path.home() / ".DashAI"
 
     logging_level = os.environ.get("DASHAI_LOGGING_LEVEL", "INFO")
