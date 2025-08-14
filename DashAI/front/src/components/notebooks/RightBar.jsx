@@ -28,6 +28,8 @@ export default function RightBar({ notebook }) {
       });
       setConverters(data.filter((item) => item.type === "Converter"));
       setExplorers(data.filter((item) => item.type === "Explorer"));
+      setFilteredConverters(data.filter((item) => item.type === "Converter"));
+      setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
     };
     try {
       fetchData();
