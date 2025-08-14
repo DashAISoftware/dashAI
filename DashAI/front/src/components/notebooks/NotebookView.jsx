@@ -8,7 +8,7 @@ import {
 import ExplorerBox from "./ExplorerBox";
 import ConverterBox from "./ConverterBox";
 import ExplorerDetailsModal from "./ExplorerDetailsModal";
-import { useExplorerAndConverters } from "./context/ExplorersAndConvertersContext";
+import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
 const RowItem = React.memo(
   function RowItem({ item, handleExplorerDetailsClick }) {
@@ -46,7 +46,7 @@ export default function NotebookView({ notebook }) {
   }
 
   const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorerAndConverters();
+    useExplorersAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
 
