@@ -8,7 +8,7 @@ import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps";
 import DatasetVisualization from "../../components/notebooks/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/NotebookVisualization";
-import { getDatasets, deleteDataset } from "../../api/datasets";
+import { getDatasets, deleteDataset, getDatasetInfo } from "../../api/datasets";
 import {
   getNotebooks,
   deleteNotebook,
@@ -32,10 +32,52 @@ export default function Notebooks() {
     setSelectedDatasetId(null);
   };
 
+  const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
+    const enrichedDatasets = await Promise.all(
+      newDatasets.map(async (dataset) => {
+        // Check if we already have enriched info for this dataset
+        const existingDataset = existingDatasets.find(
+          (d) => d.id === dataset.id,
+        );
+        if (
+          existingDataset &&
+          existingDataset.description &&
+          existingDataset.description.includes("rows,")
+        ) {
+          // Preserve existing enriched description
+          return {
+            ...dataset,
+            description: existingDataset.description,
+          };
+        }
+
+        // Fetch new info for this dataset
+        try {
+          const info = await getDatasetInfo(dataset.id);
+          return {
+            ...dataset,
+            description: `${info.total_rows} rows, ${info.total_columns} columns`,
+          };
+        } catch (error) {
+          console.warn(
+            `Failed to fetch info for dataset ${dataset.id}:`,
+            error,
+          );
+          return {
+            ...dataset,
+            description: dataset.description || "",
+          };
+        }
+      }),
+    );
+    return enrichedDatasets;
+  };
+
   const fetchDatasets = async () => {
     try {
       const data = await getDatasets();
-      setDatasets(data);
+      const enrichedDatasets = await enrichDatasetsWithInfo(data, datasets);
+      setDatasets(enrichedDatasets);
     } catch (error) {
       enqueueSnackbar("Failed to fetch datasets", {
         variant: "error",
@@ -154,7 +196,11 @@ export default function Notebooks() {
         );
 
         if (realDataset) {
-          setDatasets(realDatasets);
+          const enrichedDatasets = await enrichDatasetsWithInfo(
+            realDatasets,
+            datasets,
+          );
+          setDatasets(enrichedDatasets);
           setSelectedDatasetId(realDataset.id);
         } else if (attempt < maxAttempts) {
           const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
