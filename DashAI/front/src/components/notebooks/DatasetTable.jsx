@@ -20,6 +20,7 @@ export default function DatasetTable({
   autoHeight = true,
   density = "compact",
   pageSizeOptions = [5, 10, 25],
+  ...props
 }) {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
@@ -95,6 +96,7 @@ export default function DatasetTable({
         toolbar: GridToolbar,
         loadingOverlay: LinearProgress,
       }}
+      {...props}
     />
   );
 }

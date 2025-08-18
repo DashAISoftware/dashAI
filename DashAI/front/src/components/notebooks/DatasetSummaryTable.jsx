@@ -6,9 +6,9 @@ import {
   getDatasetSampleByFilePath as getDatasetSampleRequest,
   getDatasetTypesByFilePath as getDatasetTypesRequest,
 } from "../../api/datasets";
-import { Box, Typography, CircularProgress, Paper } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
 
-function DatasetSummaryTable({ file }) {
+function DatasetSummaryTable({ file, ...props }) {
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
@@ -62,11 +62,7 @@ function DatasetSummaryTable({ file }) {
   }, []);
 
   return (
-    <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Dataset Summary
-      </Typography>
-
+    <Box>
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
           <CircularProgress />
@@ -89,9 +85,10 @@ function DatasetSummaryTable({ file }) {
               textOverflow: "ellipsis",
             },
           }}
+          {...props}
         />
       )}
-    </Paper>
+    </Box>
   );
 }
 
