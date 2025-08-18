@@ -1,27 +1,55 @@
-import React, { useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { useSnackbar } from "notistack";
+import { ViewColumn } from "@mui/icons-material";
+import HelpIcon from "@mui/icons-material/Help";
+import ConverterClassColumnModal from "./ConverterClassColumnModal";
 
 export default function FormSection({ converter, notebook, handleSubmit }) {
   const [formStep, setFormStep] = useState(0); // 0 = scope, 1 = parameters
+  const [initialParams, setInitialParams] = useState({});
+  const [open, setOpen] = useState(false);
+  const [classColumnInitialValue, setClassColumnInitialValue] = useState(null);
+  const [formValues, setFormValues] = useState({
+    notebook_id: notebook.id,
+    converter: converter.name,
+    parameters: {
+      params: {},
+      scope: {
+        columns: [],
+        rows: [],
+      },
+      order: 1,
+      target_index: null,
+    },
+  });
 
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
-
   const { enqueueSnackbar } = useSnackbar();
 
   const handleSaveConverter = async (params) => {
     enqueueSnackbar(`Converter ${converter.name} created successfully `, {
       variant: "success",
     });
-    console.log("Saving converter with params:", params);
+
+    const copyValues = structuredClone(formValues);
+    copyValues.parameters.params = params;
+
+    console.log("Saving converter with params:", copyValues);
     handleSubmit();
   };
+
+  useEffect(() => {
+    const copyValues = structuredClone(formValues);
+    copyValues.parameters.target_index = classColumnInitialValue;
+    setFormValues(copyValues);
+  }, [classColumnInitialValue]);
 
   return (
     <Box
@@ -67,7 +95,7 @@ export default function FormSection({ converter, notebook, handleSubmit }) {
             <FormSchemaWithSelectedModel
               onFormSubmit={handleSaveConverter}
               modelToConfigure={converter.name}
-              initialValues={{}}
+              initialValues={initialParams}
               onCancel={() => setFormStep(0)}
             />
           </FormSchemaContainer>
@@ -84,9 +112,35 @@ export default function FormSection({ converter, notebook, handleSubmit }) {
         }}
       >
         {formStep < 1 ? (
-          <Button variant="contained" onClick={() => setFormStep((s) => s + 1)}>
-            Next
-          </Button>
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Tooltip
+              title={`Supervised converters will include this column in their learning process.`}
+              placement="top"
+            >
+              <IconButton>
+                <HelpIcon />
+              </IconButton>
+            </Tooltip>
+            <ConverterClassColumnModal
+              updateClassColumn={setClassColumnInitialValue}
+              classColumnInitialValue={classColumnInitialValue}
+              notebook={notebook}
+            />
+            <Button
+              variant="contained"
+              disabled={classColumnInitialValue === null}
+              onClick={() => setFormStep((s) => s + 1)}
+            >
+              Next
+            </Button>
+          </Box>
         ) : null}
       </Box>
     </Box>
