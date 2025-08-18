@@ -129,9 +129,32 @@ export default function Notebooks() {
       setSelectedOption(null);
     }
 
+    // Remove the dataset from the state
     setDatasets((prevDatasets) =>
       prevDatasets.filter((dataset) => dataset.id !== id),
     );
+
+    // Remove all notebooks associated with this dataset
+    setNotebooks((prevNotebooks) => {
+      const filteredNotebooks = prevNotebooks.filter(
+        (notebook) => notebook.dataset_id !== id,
+      );
+
+      // If the currently selected notebook is being removed, clear the selection
+      if (
+        selectedNotebookId &&
+        prevNotebooks.find(
+          (notebook) =>
+            notebook.id === selectedNotebookId && notebook.dataset_id === id,
+        )
+      ) {
+        setSelectedNotebookId(null);
+        setStep(0);
+        setSelectedOption(null);
+      }
+
+      return filteredNotebooks;
+    });
 
     deleteDataset(id);
   };
