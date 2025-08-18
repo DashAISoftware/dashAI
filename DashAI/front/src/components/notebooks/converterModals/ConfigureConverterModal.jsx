@@ -56,7 +56,7 @@ export default function ConfigureConverterModal({
         <Typography variant="h6" fontWeight="600">
           Configure Converter: {converter.name}
         </Typography>
-        <IconButton onClick={() => setOpen(false)}>
+        <IconButton onClick={handleClose}>
           <Close />
         </IconButton>
       </Box>
