@@ -18,8 +18,26 @@ export const getDatasetSample = async (id: number): Promise<object> => {
   return response.data;
 };
 
+export const getDatasetSampleByFilePath = async (
+  path: string,
+): Promise<object> => {
+  const response = await api.get<object>(`${datasetEndpoint}/sample/file`, {
+    params: { path },
+  });
+  return response.data;
+};
+
 export const getDatasetTypes = async (id: number): Promise<object> => {
   const response = await api.get<object>(`${datasetEndpoint}/${id}/types`);
+  return response.data;
+};
+
+export const getDatasetTypesByFilePath = async (
+  path: string,
+): Promise<object> => {
+  const response = await api.get<object>(`${datasetEndpoint}/types/file`, {
+    params: { path },
+  });
   return response.data;
 };
 

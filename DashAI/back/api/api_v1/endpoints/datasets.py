@@ -161,6 +161,60 @@ async def get_sample(
     return sample
 
 
+@router.get("/sample/file")
+@inject
+async def get_sample_by_file(
+    path: str,
+):
+    """Return a sample of 10 rows from the dataset file
+
+    If a column is not JSON serializable, it will be converted to a list of
+    strings.
+
+    Parameters
+    ----------
+    params : dict
+        A dictionary containing the parameters for the request.
+
+    Returns
+    -------
+    Dict
+        A Dict with a sample of 10 rows
+    """
+    try:
+        if not path:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Dataset not found",
+            )
+
+        arrow_path = os.path.join(path, "dataset", "data.arrow")
+
+        with pa.OSFile(arrow_path, "rb") as source:
+            reader = ipc.open_file(source)
+            batch = reader.get_batch(0)
+            sample_size = min(10, batch.num_rows)
+            sample_batch = batch.slice(0, sample_size)
+            sample = sample_batch.to_pydict()
+
+    except exc.SQLAlchemyError as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal database error",
+        ) from e
+    try:
+        jsonable_encoder(sample)
+    except ValueError:
+        for key, value in sample.items():
+            try:
+                jsonable_encoder({key: value})
+            except ValueError:
+                value = list(map(str, value))
+            sample[key] = value
+    return sample
+
+
 @router.get("/{dataset_id}/info")
 @inject
 async def get_info(
@@ -277,6 +331,44 @@ async def get_types(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+    return columns_spec
+
+
+@router.get("/types/file")
+@inject
+async def get_types_by_file_path(
+    path: str,
+):
+    """Return the dataset with the specified file path.
+
+    Parameters
+    ----------
+    path : str
+        Path to the dataset file.
+
+    Returns
+    -------
+    Dict
+        Dict containing column names and types.
+    """
+    try:
+        if not path:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Dataset not found",
+            )
+        columns_spec = get_columns_spec(f"{path}/dataset")
+        if not columns_spec:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Error while loading column types.",
+            )
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal error",
+        ) from e
     return columns_spec
 
 
