@@ -138,7 +138,7 @@ export default function RightBar({ notebook }) {
                         converters={filteredConverters}
                         hoveredTool={hoveredTool}
                         setHoveredTool={setHoveredTool}
-                        handleConverterClick={() => {}}
+                        notebook={notebook}
                       />
                     )}
                   </ExplorersAndConvertersProvider>

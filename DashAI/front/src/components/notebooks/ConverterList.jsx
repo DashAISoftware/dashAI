@@ -1,12 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
+import ConfigureConverterModal from "./converterModals/ConfigureConverterModal";
 
 export default function ConverterList({
   converters,
   hoveredTool,
   setHoveredTool,
-  handleConverterClick,
+  notebook,
 }) {
+  const handleConverterClick = (converter) => {
+    setSelectedConverter(converter);
+    setOpen(true);
+  };
+
+  const [open, setOpen] = useState(false);
+  const [selectedConverter, setSelectedConverter] = useState(null);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {converters.length === 0 ? (
@@ -23,7 +32,7 @@ export default function ConverterList({
       ) : (
         converters.map((converter) => (
           <Button
-            key={converter.type}
+            key={converter.name}
             variant="contained"
             sx={{
               bgcolor: hoveredTool === converter.type ? "#444" : "#333",
@@ -36,11 +45,19 @@ export default function ConverterList({
             }}
             onMouseEnter={() => setHoveredTool(converter)}
             onMouseLeave={() => setHoveredTool(null)}
-            onClick={() => handleConverterClick(converter.type, converter.name)}
+            onClick={() => handleConverterClick(converter)}
           >
             {converter.name}
           </Button>
         ))
+      )}
+      {selectedConverter && (
+        <ConfigureConverterModal
+          open={open}
+          setOpen={setOpen}
+          converter={selectedConverter}
+          notebook={notebook}
+        />
       )}
     </Box>
   );
