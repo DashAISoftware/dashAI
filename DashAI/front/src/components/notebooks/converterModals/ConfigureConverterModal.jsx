@@ -1,15 +1,25 @@
 import React, { useState, useCallback } from "react";
-import { Box, Typography, Dialog, IconButton, Tab, Tabs } from "@mui/material";
-import DatasetSummaryTable from "../DatasetSummaryTable";
+import {
+  Box,
+  Typography,
+  Dialog,
+  IconButton,
+  Tab,
+  Tabs,
+  Divider,
+  Paper,
+} from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { getDatasetFile } from "../../../api/datasets";
-import DatasetTable from "../DatasetTable";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import DatasetIcon from "@mui/icons-material/Dataset";
+import { useFormik } from "formik";
+
+import DatasetSummaryTable from "../DatasetSummaryTable";
+import DatasetTable from "../DatasetTable";
+import FormSchemaRenderFields from "../../shared/FormSchemaRenderFields";
+import { getDatasetFile } from "../../../api/datasets";
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
-import { useFormik } from "formik";
-import FormSchemaRenderFields from "../../shared/FormSchemaRenderFields";
 
 export default function ConfigureConverterModal({
   open,
@@ -26,14 +36,10 @@ export default function ConfigureConverterModal({
   const formik = useFormik({
     initialValues: {
       params: { ...converter.schema.properties },
-      scope: {
-        columns: [],
-        rows: [],
-      },
+      scope: { columns: [], rows: [] },
       order: 1,
       target_index: null,
     },
-    // validationSchema,
     enableReinitialize: true,
     onSubmit: async (values) => {
       try {
@@ -66,115 +72,132 @@ export default function ConfigureConverterModal({
       onClose={() => setOpen(false)}
       PaperProps={{
         sx: {
-          width: { xs: "90%", sm: "900px" },
+          width: { xs: "95%", sm: "1200px" },
           maxWidth: "100%",
+          borderRadius: 3,
+          height: "85vh", // fixed modal height
+          display: "flex",
+          flexDirection: "column",
         },
       }}
     >
+      {/* HEADER */}
       <Box
         sx={{
+          p: 2,
+          borderBottom: "1px solid",
+          borderColor: "divider",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center", // centers vertically
-          height: "100%",
-          width: "100%",
+          justifyContent: "space-between",
         }}
       >
-        <Box
-          sx={{
-            p: 2,
-            borderBottom: "1px solid #222",
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography variant="h6">
-            Configure your converter: {converter.name}
-          </Typography>
-          <IconButton onClick={() => setOpen(false)}>
-            <Close />
-          </IconButton>
-        </Box>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          centered
-        >
-          <Tab
-            label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <SummarizeIcon sx={{ fontSize: 18 }} />
-                Summary
-              </Box>
-            }
-          />
-          <Tab
-            label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <DatasetIcon sx={{ fontSize: 18 }} />
-                Dataset
-              </Box>
-            }
-          />
-        </Tabs>
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        <Typography variant="h6" fontWeight="600">
+          Configure Converter: {converter.name}
+        </Typography>
+        <IconButton onClick={() => setOpen(false)}>
+          <Close />
+        </IconButton>
+      </Box>
+
+      {/* TABS */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => setActiveTab(newValue)}
+        centered
+        sx={{
+          minHeight: "36px", // reduce overall tab height
+          "& .MuiTab-root": {
+            minHeight: "36px",
+            fontSize: "0.85rem",
+          },
+          "& .MuiTabs-indicator": {
+            height: "2px", // thinner indicator
+          },
+        }}
+      >
+        <Tab
+          icon={<SummarizeIcon fontSize="small" />}
+          iconPosition="start"
+          label="Summary"
+        />
+        <Tab
+          icon={<DatasetIcon fontSize="small" />}
+          iconPosition="start"
+          label="Dataset"
+        />
+      </Tabs>
+
+      {/* CONTENT AREA with fixed height + scroll */}
+      <Box
+        sx={{
+          flex: 1,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Tab Panels */}
+        <Box sx={{ flex: 1, overflow: "auto", p: 2, height: "35%" }}>
           {activeTab === 0 && (
             <DatasetSummaryTable
               file={notebook.file_path}
               density="compact"
-              hideFooter={true}
-              disableColumnMenu={true}
-              disableColumnFilter={true}
-              disableColumnSelector={true}
-              disableDensitySelector={true}
-              sx={{ width: "100%" }}
+              hideFooter
+              disableColumnMenu
+              disableColumnFilter
+              disableColumnSelector
+              disableDensitySelector
+              sx={{ minHeight: "100%" }}
             />
           )}
-          <Box sx={{ display: activeTab === 1 ? "block" : "none" }}>
+          {activeTab === 1 && (
             <DatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path]}
               initialPageSize={5}
               density="compact"
-              disableColumnMenu={true}
-              disableColumnFilter={true}
-              disableColumnSelector={true}
-              disableDensitySelector={true}
+              disableColumnMenu
+              disableColumnFilter
+              disableColumnSelector
+              disableDensitySelector
+              sx={{ minHeight: "100%" }}
             />
-          </Box>
+          )}
         </Box>
-        <Box sx={{ p: 2, flexShrink: 0 }}>
-          <Typography variant="body2" color="text.secondary">
-            Configure the settings for your dataset conversion.
+
+        {/* FORM at the bottom */}
+        <Box
+          sx={{
+            p: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            height: "65%",
+          }}
+        >
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            gutterBottom
+            textAlign="center"
+          >
+            Configure the settings for your dataset conversion
           </Typography>
-          <Box>
-            <FormSchemaRenderFields
-              modelSchema={converter.schema.properties}
-              formik={formik}
-              autoSave={false}
-              handleUpdateSchema={(updatedValues) => {
-                formik.setValues((prevValues) => ({
-                  ...prevValues,
-                  ...updatedValues,
-                }));
-              }}
-              onFormSubmit={formik.handleSubmit}
-              setError={(error) => {
-                console.error("Form error:", error);
-              }}
-              errorsMessage={formik.errors}
-            />
-          </Box>
+
+          <FormSchemaRenderFields
+            modelSchema={converter.schema.properties}
+            formik={formik}
+            autoSave={false}
+            handleUpdateSchema={(updatedValues) => {
+              formik.setValues((prevValues) => ({
+                ...prevValues,
+                ...updatedValues,
+              }));
+            }}
+            onFormSubmit={formik.handleSubmit}
+            setError={(error) => console.error("Form error:", error)}
+            errorsMessage={formik.errors}
+          />
         </Box>
       </Box>
     </Dialog>
