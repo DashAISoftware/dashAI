@@ -21,7 +21,11 @@ import {
 } from "@mui/icons-material";
 
 import { useSnackbar } from "notistack";
-import { getDatasetInfo, getDatasetTypes } from "../../api/datasets";
+import {
+  getDatasetInfo,
+  getDatasetTypes,
+  getDatasetFile,
+} from "../../api/datasets";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
 
@@ -94,32 +98,45 @@ function NotebookEditColumnsModal({
   // Fetch dataset columns and calculate valid columns
   useEffect(() => {
     const fetchDatasetData = async () => {
-      if (open && notebook?.dataset_id) {
+      if (open && notebook?.file_path) {
         try {
-          const [datasetInfo, datasetTypes] = await Promise.all([
-            getDatasetInfo(notebook.dataset_id),
-            getDatasetTypes(notebook.dataset_id),
-          ]);
+          // Get a small sample from the notebook's data file to extract column info
+          const datasetFile = await getDatasetFile(notebook.file_path, 0, 1);
 
-          if (
-            datasetInfo.column_names &&
-            Array.isArray(datasetInfo.column_names)
-          ) {
-            const cols = datasetInfo.column_names.map((columnName, index) => {
-              const typeInfo = datasetTypes?.[columnName];
+          if (datasetFile.rows && datasetFile.rows.length > 0) {
+            const firstRow = datasetFile.rows[0];
+            const columnNames = Object.keys(firstRow);
+
+            const cols = columnNames.map((columnName, index) => {
+              const value = firstRow[columnName];
+              let dataType = "unknown";
+              let valueType = "unknown";
+
+              // Infer types from the sample data
+              if (typeof value === "number") {
+                dataType = Number.isInteger(value) ? "int64" : "float64";
+                valueType = "Value";
+              } else if (typeof value === "string") {
+                dataType = "object";
+                valueType = "Category";
+              } else if (typeof value === "boolean") {
+                dataType = "bool";
+                valueType = "Category";
+              }
+
               return {
                 id: index,
                 columnName: columnName,
-                valueType: typeInfo?.type || "unknown",
-                dataType: typeInfo?.dtype || "unknown",
+                valueType: valueType,
+                dataType: dataType,
                 order: 0,
               };
             });
             setDatasetColumns(cols);
           }
         } catch (error) {
-          console.error("Error fetching dataset data:", error);
-          enqueueSnackbar("Error fetching dataset columns", {
+          console.error("Error fetching notebook dataset data:", error);
+          enqueueSnackbar("Error fetching notebook dataset columns", {
             variant: "error",
           });
         }
@@ -127,7 +144,7 @@ function NotebookEditColumnsModal({
     };
 
     fetchDatasetData();
-  }, [open, notebook?.dataset_id, enqueueSnackbar]);
+  }, [open, notebook?.file_path, enqueueSnackbar]);
 
   useEffect(() => {
     if (datasetColumns.length > 0) {
@@ -294,6 +311,7 @@ function NotebookEditColumnsModal({
       console.log("Explorer type:", explorer?.type);
       console.log("Explorer name:", explorer?.name);
       console.log("Model to configure:", explorer?.name);
+      console.log("Notebook file_path:", notebook?.file_path);
       console.log("====================================");
       setCurrentStep(1);
     } else {
