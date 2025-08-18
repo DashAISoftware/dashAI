@@ -9,7 +9,12 @@ import {
   useTheme,
 } from "@mui/material";
 
-export default function DeleteConfirmationModal({ open, onClose, onConfirm }) {
+export default function DeleteConfirmationModal({
+  open,
+  onClose,
+  onConfirm,
+  content,
+}) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -25,8 +30,8 @@ export default function DeleteConfirmationModal({ open, onClose, onConfirm }) {
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Are you sure you want to delete this dataset? This action cannot be
-          undone.
+          {content ||
+            "Are you sure you want to delete this item? This action cannot be undone."}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
