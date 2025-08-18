@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import {
   Button,
   Grid,
@@ -6,9 +6,11 @@ import {
   Typography,
   CircularProgress,
   Box,
+  Chip,
+  Divider,
 } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { getDatasetFile } from "../../api/datasets";
+import { getDatasetFile, getDatasetInfo } from "../../api/datasets";
 import { createNotebook } from "../../api/notebook";
 import DatasetTable from "./DatasetTable";
 import { CreateNotebookModal } from "./CreateNotebookModal";
@@ -16,7 +18,47 @@ import { useSnackbar } from "notistack";
 
 export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
+  const [datasetInfo, setDatasetInfo] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Fetch dataset info when component mounts or dataset changes
+  useEffect(() => {
+    const fetchDatasetInfo = async () => {
+      if (
+        dataset.status === "processing" ||
+        dataset.id.toString().startsWith("temp_")
+      ) {
+        return;
+      }
+
+      try {
+        const info = await getDatasetInfo(dataset.id);
+        setDatasetInfo(info);
+      } catch (error) {
+        console.error("Error fetching dataset info:", error);
+        setDatasetInfo(null);
+      }
+    };
+
+    fetchDatasetInfo();
+  }, [dataset.id, dataset.status]);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -71,77 +113,131 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
     dataset.id.toString().startsWith("temp_");
 
   return (
-    <Paper
-      sx={{
-        bgcolor: "#212121",
-        borderRadius: 2,
-        boxShadow: "none",
-        py: 4,
-        px: 6,
-      }}
-    >
-      {/* Title and button */}
-      <Grid
-        container
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 4 }}
-      >
-        <Typography variant="h5" component="h2">
-          {dataset.name}
-        </Typography>
-        <Grid item>
-          <Button
-            variant="contained"
-            endIcon={<AddIcon />}
-            disabled={isProcessing}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCreateNotebookModal(true);
-            }}
-          >
-            New Notebook
-          </Button>
-        </Grid>
-      </Grid>
-
-      {/* Table - only show if not processing */}
-      {!isProcessing && (
-        <DatasetTable
-          fetchPage={fetchDatasetPage}
-          deps={[dataset.file_path]}
-          initialPageSize={5}
-        />
-      )}
-
-      {/* Processing placeholder */}
-      {isProcessing && (
-        <Box
+    <>
+      {/* Dataset Info Section */}
+      {!isProcessing && datasetInfo && (
+        <Paper
           sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 200,
-            flexDirection: "column",
-            gap: 2,
+            bgcolor: "#212121",
+            borderRadius: 2,
+            boxShadow: "none",
+            py: 2,
+            px: 3,
+            mb: 2,
           }}
         >
-          <CircularProgress size={60} />
-          <Typography variant="h6" color="text.secondary">
-            Processing your dataset...
-          </Typography>
-          <Typography variant="body2" color="text.secondary" textAlign="center">
-            This may take a few moments depending on the size of your data.
-          </Typography>
-        </Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Dataset Info:
+            </Typography>
+            <Chip
+              label={`${datasetInfo.total_rows || 0} rows`}
+              size="small"
+              variant="outlined"
+              sx={{ color: "text.primary", borderColor: "divider" }}
+            />
+            <Chip
+              label={`${datasetInfo.total_columns || 0} columns`}
+              size="small"
+              variant="outlined"
+              sx={{ color: "text.primary", borderColor: "divider" }}
+            />
+            {dataset.created && (
+              <Chip
+                label={`Created: ${formatDate(dataset.created)}`}
+                size="small"
+                variant="outlined"
+                sx={{ color: "text.primary", borderColor: "divider" }}
+              />
+            )}
+          </Box>
+        </Paper>
       )}
 
-      <CreateNotebookModal
-        open={showCreateNotebookModal}
-        onClose={() => setShowCreateNotebookModal(false)}
-        onCreateNotebook={handleCreateNotebook}
-      />
-    </Paper>
+      {/* Main Dataset Visualization */}
+      <Paper
+        sx={{
+          bgcolor: "#212121",
+          borderRadius: 2,
+          boxShadow: "none",
+          py: 4,
+          px: 6,
+        }}
+      >
+        {/* Title and button */}
+        <Grid
+          container
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Typography variant="h5" component="h2">
+            {dataset.name}
+          </Typography>
+          <Grid item>
+            <Button
+              variant="contained"
+              endIcon={<AddIcon />}
+              disabled={isProcessing}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCreateNotebookModal(true);
+              }}
+            >
+              New Notebook
+            </Button>
+          </Grid>
+        </Grid>
+
+        {/* Table - only show if not processing */}
+        {!isProcessing && (
+          <DatasetTable
+            fetchPage={fetchDatasetPage}
+            deps={[dataset.file_path]}
+            initialPageSize={5}
+          />
+        )}
+
+        {/* Processing placeholder */}
+        {isProcessing && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: 200,
+              flexDirection: "column",
+              gap: 2,
+            }}
+          >
+            <CircularProgress size={60} />
+            <Typography variant="h6" color="text.secondary">
+              Processing your dataset...
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              textAlign="center"
+            >
+              This may take a few moments depending on the size of your data.
+            </Typography>
+          </Box>
+        )}
+
+        <CreateNotebookModal
+          open={showCreateNotebookModal}
+          onClose={() => setShowCreateNotebookModal(false)}
+          onCreateNotebook={handleCreateNotebook}
+        />
+      </Paper>
+    </>
   );
 }
