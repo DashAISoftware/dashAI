@@ -111,13 +111,11 @@ export const enqueuePredictionJob = async (
 
 export const enqueueConverterJob = async (
   converterListId: number,
-  targetColumnIndex: number,
 ): Promise<object> => {
   const data = {
     job_type: "ConverterListJob",
     kwargs: {
       converter_list_id: converterListId,
-      target_column_index: targetColumnIndex,
     },
   };
 
