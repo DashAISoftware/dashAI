@@ -36,9 +36,7 @@ export default function ExplorerList({
             }}
             onMouseEnter={() => setHoveredTool(exploration)}
             onMouseLeave={() => setHoveredTool(null)}
-            onClick={() =>
-              handleExplorerClick(exploration.type, exploration.name)
-            }
+            onClick={() => handleExplorerClick(exploration)}
           >
             {exploration.name}
           </Button>
