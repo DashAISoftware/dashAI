@@ -10,6 +10,7 @@ import ConverterList from "./ConverterList";
 import NotebookEditColumnsModal from "./NotebookEditColumnsModal";
 import { ExplorersAndConvertersProvider } from "./context/ExplorersAndConvertersContext";
 import { getComponents } from "../../api/component";
+import { getDatasetFile } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 
 export default function RightBar({ notebook }) {
@@ -20,6 +21,7 @@ export default function RightBar({ notebook }) {
   const [explorers, setExplorers] = useState([]);
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
+  const [datasetColumns, setDatasetColumns] = useState([]);
   const [editColumnsModalOpen, setEditColumnsModalOpen] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
@@ -44,18 +46,141 @@ export default function RightBar({ notebook }) {
     }
   }, []);
 
+  // Fetch dataset columns from notebook file
   useEffect(() => {
-    setFilteredExplorers(
-      explorers.filter((item) =>
+    const fetchDatasetColumns = async () => {
+      if (notebook?.file_path) {
+        try {
+          // Get a small sample to extract column info
+          const datasetFile = await getDatasetFile(notebook.file_path, 0, 1);
+
+          if (datasetFile.rows && datasetFile.rows.length > 0) {
+            const firstRow = datasetFile.rows[0];
+            const columnNames = Object.keys(firstRow);
+
+            const cols = columnNames.map((columnName, index) => {
+              const value = firstRow[columnName];
+              let dataType = "unknown";
+
+              // Infer types from the sample data
+              if (typeof value === "number") {
+                dataType = Number.isInteger(value) ? "int64" : "float64";
+              } else if (typeof value === "string") {
+                dataType = "object";
+              } else if (typeof value === "boolean") {
+                dataType = "bool";
+              }
+
+              return {
+                id: index,
+                columnName: columnName,
+                dataType: dataType,
+              };
+            });
+            setDatasetColumns(cols);
+          }
+        } catch (error) {
+          console.error("Error fetching dataset columns:", error);
+        }
+      }
+    };
+
+    fetchDatasetColumns();
+  }, [notebook?.file_path]);
+
+  // Validate explorers based on dataset columns
+  const validateExplorer = (explorer) => {
+    if (!datasetColumns.length) return { disabled: false, tooltip: "" };
+
+    const allowedDtypes = explorer?.metadata?.allowed_dtypes || ["*"];
+    const restrictedDtypes = explorer?.metadata?.restricted_dtypes || [];
+    const inputCardinality = explorer?.metadata?.input_cardinality || {};
+
+    let validColumns = datasetColumns;
+    let disabled = false;
+    let tooltip = explorer.description || "";
+
+    // Filter by allowed dtypes
+    if (!allowedDtypes.includes("*")) {
+      validColumns = datasetColumns.filter((col) =>
+        allowedDtypes.includes(col.dataType),
+      );
+    }
+
+    // Filter out restricted dtypes
+    if (
+      restrictedDtypes.some((dtype) =>
+        datasetColumns.some((col) => col.dataType === dtype),
+      )
+    ) {
+      validColumns = validColumns.filter(
+        (col) => !restrictedDtypes.includes(col.dataType),
+      );
+    }
+
+    // Check cardinality requirements
+    if (inputCardinality.exact != undefined && inputCardinality.exact != null) {
+      if (validColumns.length < inputCardinality.exact) {
+        disabled = true;
+        if (validColumns.length === 0) {
+          tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
+        }
+        tooltip += `\n\nRequires exactly ${
+          inputCardinality.exact
+        } valid column${inputCardinality.exact === 1 ? "" : "s"}, but only ${
+          validColumns.length
+        } available.`;
+      }
+    } else {
+      if (inputCardinality.min != undefined && inputCardinality.min != null) {
+        if (validColumns.length < inputCardinality.min) {
+          disabled = true;
+          if (validColumns.length === 0) {
+            tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
+          }
+          tooltip += `\n\nRequires at least ${
+            inputCardinality.min
+          } valid column${inputCardinality.min === 1 ? "" : "s"}, but only ${
+            validColumns.length
+          } available.`;
+        }
+      }
+    }
+
+    if (!allowedDtypes.includes("*")) {
+      tooltip += `\n\nAccepts: ${allowedDtypes.join(", ")}`;
+    }
+
+    if (restrictedDtypes.length > 0) {
+      tooltip += `\n\nRestricted: ${restrictedDtypes.join(", ")}`;
+    }
+
+    return { disabled, tooltip, validColumns };
+  };
+
+  useEffect(() => {
+    const filteredAndValidatedExplorers = explorers
+      .filter((item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
-    );
+      )
+      .map((explorer) => {
+        const validation = validateExplorer(explorer);
+        return {
+          ...explorer,
+          disabled: validation.disabled,
+          tooltip: validation.tooltip,
+          validColumns: validation.validColumns,
+        };
+      });
+
+    setFilteredExplorers(filteredAndValidatedExplorers);
+
     setFilteredConverters(
       converters.filter((item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
     );
-  }, [searchQuery]);
+  }, [searchQuery, explorers, converters, datasetColumns]);
 
   const handleExplorerClick = (explorerData) => {
     console.log("=== Explorer Click Debug ===");

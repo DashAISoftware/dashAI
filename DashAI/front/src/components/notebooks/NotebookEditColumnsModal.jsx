@@ -487,6 +487,7 @@ function NotebookEditColumnsModal({
                 modelToConfigure={explorer?.name}
                 initialValues={{}}
                 onCancel={handleBack}
+                saveButtonText="SAVE AND RUN"
               />
             </FormSchemaContainer>
           )}

@@ -7,6 +7,7 @@ function FormSchemaButtonGroup({
   autoSave,
   formik,
   error,
+  saveButtonText = "Save", // New prop with default value
 }) {
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
@@ -21,7 +22,7 @@ function FormSchemaButtonGroup({
           onClick={onFormSubmit}
           disabled={Object.keys(formik?.errors).length > 0 || error}
         >
-          Save
+          {saveButtonText}
         </Button>
       )}
     </ButtonGroup>

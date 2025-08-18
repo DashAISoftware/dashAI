@@ -19,6 +19,7 @@ function FormSchemaWithSelectedModel({
   initialValues,
   onFormSubmit,
   onCancel,
+  saveButtonText, // New prop
 }) {
   const {
     formValues,
@@ -73,6 +74,7 @@ function FormSchemaWithSelectedModel({
         initialValues={defaultValues}
         onFormSubmit={() => onFormSubmit(formValues)}
         setError={setErrorForm}
+        saveButtonText={saveButtonText}
         onCancel={() => {
           if (properties.length > 0) {
             removeLastProperty();
@@ -90,6 +92,7 @@ FormSchemaWithSelectedModel.propTypes = {
   initialValues: PropTypes.object,
   onFormSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
+  saveButtonText: PropTypes.string,
 };
 
 export default FormSchemaWithSelectedModel;
