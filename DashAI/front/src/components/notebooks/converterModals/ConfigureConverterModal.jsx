@@ -173,6 +173,7 @@ export default function ConfigureConverterModal({
             borderTop: "1px solid",
             borderColor: "divider",
             height: "65%",
+            overflow: "auto",
           }}
         >
           <Typography
