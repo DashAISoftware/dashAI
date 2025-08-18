@@ -24,7 +24,7 @@ export default function ExplorerList({
         explorers.map((exploration) => {
           const ButtonComponent = (
             <Button
-              key={exploration.type}
+              key={exploration.name}
               variant="contained"
               disabled={exploration.disabled}
               sx={{
@@ -67,7 +67,7 @@ export default function ExplorerList({
           if (exploration.disabled && exploration.tooltip) {
             return (
               <Tooltip
-                key={exploration.type}
+                key={exploration.name}
                 title={exploration.tooltip}
                 placement="left"
                 arrow
