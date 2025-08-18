@@ -1,62 +1,23 @@
 import React, { useState, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Dialog,
-  IconButton,
-  Tab,
-  Tabs,
-  Divider,
-  Paper,
-} from "@mui/material";
+import { Box, Typography, Dialog, IconButton, Tab, Tabs } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import DatasetIcon from "@mui/icons-material/Dataset";
-import { useFormik } from "formik";
 
 import DatasetSummaryTable from "../DatasetSummaryTable";
 import DatasetTable from "../DatasetTable";
-import FormSchemaRenderFields from "../../shared/FormSchemaRenderFields";
 import { getDatasetFile } from "../../../api/datasets";
-import { saveConverterList } from "../../../api/converter";
-import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import FormSection from "./FormSection";
 
 export default function ConfigureConverterModal({
   open,
-  setOpen,
+  handleClose,
   converter,
   notebook,
 }) {
   if (!converter) return null;
 
   const [activeTab, setActiveTab] = useState(0);
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
-
-  const formik = useFormik({
-    initialValues: {
-      params: { ...converter.schema.properties },
-      scope: { columns: [], rows: [] },
-      order: 1,
-      target_index: null,
-    },
-    enableReinitialize: true,
-    onSubmit: async (values) => {
-      try {
-        saveConverterList(values).then((converter) => {
-          enqueueConverterJob(converter.id).then(() => {
-            const converterToAdd = { ...converter, type: "converter" };
-            setExplorersAndConverters([
-              ...explorersAndConverters,
-              converterToAdd,
-            ]);
-          });
-        });
-      } catch (error) {
-        console.error("Error creating Converter:", error);
-      }
-    },
-  });
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -69,13 +30,13 @@ export default function ConfigureConverterModal({
   return (
     <Dialog
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={handleClose}
       PaperProps={{
         sx: {
           width: { xs: "95%", sm: "1200px" },
           maxWidth: "100%",
           borderRadius: 3,
-          height: "85vh", // fixed modal height
+          height: "90vh", // fixed modal height
           display: "flex",
           flexDirection: "column",
         },
@@ -106,13 +67,13 @@ export default function ConfigureConverterModal({
         onChange={(_, newValue) => setActiveTab(newValue)}
         centered
         sx={{
-          minHeight: "36px", // reduce overall tab height
+          minHeight: "36px",
           "& .MuiTab-root": {
             minHeight: "36px",
             fontSize: "0.85rem",
           },
           "& .MuiTabs-indicator": {
-            height: "2px", // thinner indicator
+            height: "2px",
           },
         }}
       >
@@ -128,7 +89,7 @@ export default function ConfigureConverterModal({
         />
       </Tabs>
 
-      {/* CONTENT AREA with fixed height + scroll */}
+      {/* CONTENT AREA */}
       <Box
         sx={{
           flex: 1,
@@ -148,7 +109,6 @@ export default function ConfigureConverterModal({
               disableColumnFilter
               disableColumnSelector
               disableDensitySelector
-              sx={{ minHeight: "100%" }}
             />
           )}
           {activeTab === 1 && (
@@ -161,45 +121,18 @@ export default function ConfigureConverterModal({
               disableColumnFilter
               disableColumnSelector
               disableDensitySelector
-              sx={{ minHeight: "100%" }}
             />
           )}
         </Box>
 
         {/* FORM at the bottom */}
-        <Box
-          sx={{
-            p: 2,
-            borderTop: "1px solid",
-            borderColor: "divider",
-            height: "65%",
-            overflow: "auto",
+        <FormSection
+          converter={converter}
+          notebook={notebook}
+          handleSubmit={() => {
+            handleClose();
           }}
-        >
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            gutterBottom
-            textAlign="center"
-          >
-            Configure the settings for your dataset conversion
-          </Typography>
-
-          <FormSchemaRenderFields
-            modelSchema={converter.schema.properties}
-            formik={formik}
-            autoSave={false}
-            handleUpdateSchema={(updatedValues) => {
-              formik.setValues((prevValues) => ({
-                ...prevValues,
-                ...updatedValues,
-              }));
-            }}
-            onFormSubmit={formik.handleSubmit}
-            setError={(error) => console.error("Form error:", error)}
-            errorsMessage={formik.errors}
-          />
-        </Box>
+        />
       </Box>
     </Dialog>
   );

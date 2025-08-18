@@ -54,7 +54,10 @@ export default function ConverterList({
       {selectedConverter && (
         <ConfigureConverterModal
           open={open}
-          setOpen={setOpen}
+          handleClose={() => {
+            setOpen(false);
+            setSelectedConverter(null);
+          }}
           converter={selectedConverter}
           notebook={notebook}
         />
