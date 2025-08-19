@@ -25,13 +25,16 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
     if (initialRows) {
       if (initialRows.length === 0) {
         setSelectedRows([]); // all
+        setRangeStart("1");
+        setRangeEnd(String(totalRows));
+        setIndicesInput("all");
       } else {
         const valid = initialRows.filter(
           (i) => !isNaN(i) && i >= 0 && i < totalRows,
         );
         setSelectedRows(valid);
         setIndicesInput(valid.join(","));
-        if (valid.length > 1) {
+        if (valid.length > 0) {
           setRangeStart(String(valid[0]));
           setRangeEnd(String(valid[valid.length - 1]));
         }
@@ -46,6 +49,9 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
 
   const handleSelectAllRows = () => {
     setSelectedRows([]); // all
+    setRangeStart("1");
+    setRangeEnd(String(totalRows));
+    setIndicesInput("all");
   };
 
   const handleRangeChange = (start, end) => {
@@ -59,11 +65,14 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
       const rows = Array.from({ length: e - s + 1 }, (_, i) => s + i);
       if (rows.length === totalRows) {
         setSelectedRows([]); // all
+        setIndicesInput("all");
       } else {
         setSelectedRows(rows);
+        setIndicesInput(rows.join(","));
       }
     } else {
       setSelectedRows([]);
+      setIndicesInput("");
     }
   };
 
@@ -72,6 +81,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
 
     if (value.trim().toLowerCase() === "all") {
       setSelectedRows([]); // all
+      setRangeStart("1");
+      setRangeEnd(String(totalRows));
       return;
     }
 
@@ -82,43 +93,56 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
 
     if (indices.length === totalRows) {
       setSelectedRows([]); // all
+      setRangeStart("1");
+      setRangeEnd(String(totalRows));
     } else {
       setSelectedRows(indices);
+      if (indices.length > 0) {
+        setRangeStart(String(indices[0]));
+        setRangeEnd(String(indices[indices.length - 1]));
+      } else {
+        setRangeStart("");
+        setRangeEnd("");
+      }
     }
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Stack direction="row" spacing={1} mb={2}>
-        <Button variant="outlined" size="small" onClick={handleSelectAllRows}>
-          Select All
-        </Button>
-      </Stack>
-
-      <Divider sx={{ my: 2 }} />
-
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
+      <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
         <FormLabel component="legend">Selection Mode</FormLabel>
-        <RadioGroup
-          row
-          value={selectionMode}
-          onChange={(e) => setSelectionMode(e.target.value)}
+
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mt: 1 }}
         >
-          <FormControlLabel
-            value="range"
-            control={<Radio />}
-            label="By Range"
-          />
-          <FormControlLabel
-            value="indices"
-            control={<Radio />}
-            label="By Indices"
-          />
-        </RadioGroup>
+          <RadioGroup
+            row
+            value={selectionMode}
+            onChange={(e) => setSelectionMode(e.target.value)}
+          >
+            <FormControlLabel
+              value="range"
+              control={<Radio />}
+              label="By Range"
+            />
+            <FormControlLabel
+              value="indices"
+              control={<Radio />}
+              label="By Indices"
+            />
+          </RadioGroup>
+
+          <Button variant="outlined" size="small" onClick={handleSelectAllRows}>
+            Select All
+          </Button>
+        </Stack>
       </FormControl>
 
       {selectionMode === "range" ? (
-        <Stack spacing={2}>
+        <Stack spacing={2} mb={2}>
           <Stack direction="row" spacing={2}>
             <TextField
               label="Start Index"
@@ -141,7 +165,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           </Stack>
         </Stack>
       ) : (
-        <Stack spacing={2}>
+        <Stack spacing={2} mb={2}>
           <TextField
             label="Indices (comma separated, or type 'all')"
             placeholder="0,1,2,5,10 or all"
@@ -153,14 +177,17 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
         </Stack>
       )}
 
-      <Box mt={2}>
+      <Divider sx={{ my: 1 }} />
+
+      <Box mt={1}>
         <Typography variant="caption" color="text.secondary">
           Selected rows:{" "}
           {selectedRows.length === 0
             ? "all"
             : selectedRows.length > 0
             ? selectedRows.join(", ")
-            : "None"}
+            : "None"}{" "}
+          | Total rows: {totalRows}
         </Typography>
       </Box>
     </Box>
