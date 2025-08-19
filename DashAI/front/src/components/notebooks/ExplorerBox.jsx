@@ -11,8 +11,39 @@ import {
 import { Analytics, Info } from "@mui/icons-material";
 import Results from "./ExplorerDetailTabs/Results";
 import { getExplorerStatus } from "../../utils/explorerStatus";
+import { getExplorerById } from "../../api/explorer";
 
 export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
+  const [explorerState, setExplorerState] = useState(explorer);
+
+  useEffect(() => {
+    let intervalId;
+
+    const fetchExplorerStatus = async () => {
+      try {
+        const updatedExplorer = await getExplorerById(explorer.id);
+        setExplorerState(updatedExplorer);
+
+        const status = getExplorerStatus(updatedExplorer.status);
+        if (status === "Finished" || status === "Error") {
+          clearInterval(intervalId); // stop polling
+        }
+      } catch (error) {
+        console.error("Failed to fetch explorer status:", error);
+        clearInterval(intervalId); // stop polling on error
+      }
+    };
+
+    const currentStatus = getExplorerStatus(explorerState.status);
+    if (currentStatus !== "Finished" && currentStatus !== "Error") {
+      intervalId = setInterval(fetchExplorerStatus, 2000); // polling every 2s
+    }
+
+    return () => clearInterval(intervalId);
+  }, [explorer.id, explorerState.status]);
+
+  const statusLabel = getExplorerStatus(explorerState.status);
+
   return (
     <Card key={explorer.id} sx={{ bgcolor: "#212121", borderRadius: 2 }}>
       <CardContent>
@@ -26,22 +57,20 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{explorer.exploration_type}</Typography>
+            <Typography variant="h6">
+              {explorerState.exploration_type}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
-              label={getExplorerStatus(explorer.status)}
-              color={
-                getExplorerStatus(explorer.status) === "Finished"
-                  ? "primary"
-                  : "default"
-              }
+              label={statusLabel}
+              color={statusLabel === "Finished" ? "primary" : "default"}
               size="small"
             />
-            {getExplorerStatus(explorer.status) === "Finished" && (
+            {statusLabel === "Finished" && (
               <IconButton
                 size="small"
-                onClick={() => handleExplorerDetailsClick(explorer)}
+                onClick={() => handleExplorerDetailsClick(explorerState)}
                 sx={{
                   bgcolor: "#00BEBB",
                   color: "white",
@@ -55,7 +84,8 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
             )}
           </Box>
         </Box>
-        {getExplorerStatus(explorer.status) === "Finished" ? (
+
+        {statusLabel === "Finished" ? (
           <Box
             sx={{
               bgcolor: "#2e3037",
@@ -65,7 +95,26 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
               justifyContent: "center",
             }}
           >
-            <Results id={explorer.id} minimalist height={300} />
+            <Results id={explorerState.id} minimalist height={300} />
+          </Box>
+        ) : statusLabel === "Error" ? (
+          <Box
+            sx={{
+              height: 120,
+              bgcolor: "#2e3037",
+              borderRadius: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 2,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ color: "error.main", textAlign: "center" }}
+            >
+              An error occurred during processing.
+            </Typography>
           </Box>
         ) : (
           <Box
