@@ -15,6 +15,7 @@ import {
   createDatasetFromNotebook,
 } from "../../api/notebook";
 import { useSnackbar } from "notistack";
+import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 
 export default function Notebooks() {
   const [step, setStep] = useState(0);
@@ -264,68 +265,70 @@ export default function Notebooks() {
           handleNewSessionButton={handleNewSessionButton}
         />
       </Box>
-      <Box width="56%" mr={1}>
-        <CenterBox>
-          {selectedDatasetId ? (
-            <DatasetVisualization
-              dataset={selectedDataset}
-              onNotebookCreated={handleNotebookCreated}
-            />
-          ) : selectedNotebookId ? (
-            <NotebookVisualization
-              notebook={selectedNotebook}
-              handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
-            />
-          ) : step === 0 ? (
-            <SelectOptionMenu
-              title="Dataset Module"
-              subtitle="Upload your datasets: Explore, analyze, and transform your
+      <ExplorersAndConvertersProvider>
+        <Box width="56%" mr={1}>
+          <CenterBox>
+            {selectedDatasetId ? (
+              <DatasetVisualization
+                dataset={selectedDataset}
+                onNotebookCreated={handleNotebookCreated}
+              />
+            ) : selectedNotebookId ? (
+              <NotebookVisualization
+                notebook={selectedNotebook}
+                handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+              />
+            ) : step === 0 ? (
+              <SelectOptionMenu
+                title="Dataset Module"
+                subtitle="Upload your datasets: Explore, analyze, and transform your
                data with advanced exploratory analysis tools. Create interactive notebooks,
                generate visualizations, and apply data transformations intuitively."
-              options={[
-                {
-                  name: "dataset",
-                  display_name: "Upload Dataset",
-                  description:
-                    "Import your data from various sources and formats.",
-                  Icon: null,
-                },
-                {
-                  name: "notebook",
-                  display_name: "Create a New Notebook",
-                  description:
-                    "Start a new analysis session with an existing dataset.",
-                  Icon: null,
-                },
-              ]}
-              searchBar={false}
-              goToNextStep={goToNextStep}
-            />
-          ) : step === 1 && selectedOption === "dataset" ? (
-            <UploadDatasetSteps
-              backHome={() => {
-                setStep(0);
-                setSelectedOption(null);
-                fetchDatasets();
-              }}
-              handleDatasetCreated={handleDatasetCreated}
-            />
-          ) : step === 1 && selectedOption === "notebook" ? (
-            <UploadNotebookSteps
-              backHome={() => {
-                setStep(0);
-                setSelectedOption(null);
-                fetchNotebooks();
-              }}
-              datasets={datasets}
-              handleNotebookCreated={handleNotebookCreated}
-            />
-          ) : null}
-        </CenterBox>
-      </Box>
-      <Box width="22%">
-        <RightBar notebook={selectedNotebook} />
-      </Box>
+                options={[
+                  {
+                    name: "dataset",
+                    display_name: "Upload Dataset",
+                    description:
+                      "Import your data from various sources and formats.",
+                    Icon: null,
+                  },
+                  {
+                    name: "notebook",
+                    display_name: "Create a New Notebook",
+                    description:
+                      "Start a new analysis session with an existing dataset.",
+                    Icon: null,
+                  },
+                ]}
+                searchBar={false}
+                goToNextStep={goToNextStep}
+              />
+            ) : step === 1 && selectedOption === "dataset" ? (
+              <UploadDatasetSteps
+                backHome={() => {
+                  setStep(0);
+                  setSelectedOption(null);
+                  fetchDatasets();
+                }}
+                handleDatasetCreated={handleDatasetCreated}
+              />
+            ) : step === 1 && selectedOption === "notebook" ? (
+              <UploadNotebookSteps
+                backHome={() => {
+                  setStep(0);
+                  setSelectedOption(null);
+                  fetchNotebooks();
+                }}
+                datasets={datasets}
+                handleNotebookCreated={handleNotebookCreated}
+              />
+            ) : null}
+          </CenterBox>
+        </Box>
+        <Box width="22%">
+          <RightBar notebook={selectedNotebook} />
+        </Box>
+      </ExplorersAndConvertersProvider>
     </Box>
   );
 }

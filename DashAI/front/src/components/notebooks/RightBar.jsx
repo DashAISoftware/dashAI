@@ -7,7 +7,6 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import DescriptionPanel from "./DescriptionPanel";
 import ExplorerList from "./ExplorerList";
 import ConverterList from "./ConverterList";
-import { ExplorersAndConvertersProvider } from "./context/ExplorersAndConvertersContext";
 import { getComponents } from "../../api/component";
 import { getDatasetFile } from "../../api/datasets";
 import { useSnackbar } from "notistack";
@@ -250,23 +249,21 @@ export default function RightBar({ notebook }) {
               >
                 {/* Tool list */}
                 <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                  <ExplorersAndConvertersProvider>
-                    {activeTab === 0 && (
-                      <ExplorerList
-                        explorers={filteredExplorers}
-                        hoveredTool={hoveredTool}
-                        setHoveredTool={setHoveredTool}
-                      />
-                    )}
-                    {activeTab === 1 && (
-                      <ConverterList
-                        converters={filteredConverters}
-                        hoveredTool={hoveredTool}
-                        setHoveredTool={setHoveredTool}
-                        notebook={notebook}
-                      />
-                    )}
-                  </ExplorersAndConvertersProvider>
+                  {activeTab === 0 && (
+                    <ExplorerList
+                      explorers={filteredExplorers}
+                      hoveredTool={hoveredTool}
+                      setHoveredTool={setHoveredTool}
+                    />
+                  )}
+                  {activeTab === 1 && (
+                    <ConverterList
+                      converters={filteredConverters}
+                      hoveredTool={hoveredTool}
+                      setHoveredTool={setHoveredTool}
+                      notebook={notebook}
+                    />
+                  )}
                 </Box>
 
                 {/* Description panel - Fixed height */}

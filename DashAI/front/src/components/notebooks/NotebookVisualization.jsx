@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
-import { ExplorersAndConvertersProvider } from "./context/ExplorersAndConvertersContext";
 
 export default function NotebookVisualization({
   notebook,
@@ -22,9 +21,7 @@ export default function NotebookVisualization({
 
       {/* Notebook view */}
       <Box mt={2} sx={{ flexGrow: 1, overflow: "auto", minHeight: 200 }}>
-        <ExplorersAndConvertersProvider>
-          <NotebookView notebook={notebook} />
-        </ExplorersAndConvertersProvider>
+        <NotebookView notebook={notebook} />
       </Box>
     </Box>
   );
