@@ -30,7 +30,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
         setIndicesInput("all");
       } else {
         const valid = initialRows.filter(
-          (i) => !isNaN(i) && i >= 0 && i < totalRows,
+          (i) => !isNaN(i) && i >= 0 && i <= totalRows,
         );
         setSelectedRows(valid);
         setIndicesInput(valid.join(","));
