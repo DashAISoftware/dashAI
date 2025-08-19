@@ -20,7 +20,7 @@ function FormSchemaButtonGroup({
         <Button
           variant="contained"
           onClick={onFormSubmit}
-          disabled={Object.keys(formik?.errors).length > 0 || error}
+          disabled={Object.keys(formik?.errors ?? {}).length > 0 || error}
         >
           {saveButtonText}
         </Button>
