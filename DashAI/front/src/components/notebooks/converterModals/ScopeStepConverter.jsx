@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, Tooltip, IconButton, Button } from "@mui/material";
 import ConverterClassColumnModal from "./ConverterClassColumnModal";
 import HelpIcon from "@mui/icons-material/Help";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import ColumnSelectionTable from "../../threeSectionLayout/ColumnSelectionTable";
 import { RowSelector } from "../RowSelector";
+import {
+  getDatasetInfoByFilePath,
+  getDatasetTypesByFilePath,
+} from "../../../api/datasets";
 
 export default function ScopeStepConverter({
   targetColumn,
@@ -16,6 +20,47 @@ export default function ScopeStepConverter({
   notebook,
   setStep,
 }) {
+  const [datasetInfo, setDatasetInfo] = useState(0);
+  const [datasetColumns, setDatasetColumns] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchAllData = async () => {
+      try {
+        const [data, types] = await Promise.all([
+          getDatasetInfoByFilePath(notebook.file_path),
+          getDatasetTypesByFilePath(notebook.file_path),
+        ]);
+
+        if (!isMounted) return;
+
+        setDatasetInfo(data);
+
+        const datasetColumns = Object.entries(types).map(
+          ([columnName, typeInfo], idx) => ({
+            id: idx,
+            columnName: columnName,
+            valueType: typeInfo.type || "Unknown",
+            dataType: typeInfo.dtype || "Unknown",
+            order: idx,
+          }),
+        );
+
+        setDatasetColumns(datasetColumns);
+        console.log("Dataset columns:", datasetColumns);
+      } catch (error) {
+        console.error("Error fetching dataset info/types:", error);
+      }
+    };
+
+    fetchAllData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [notebook.file_path]);
+
   return (
     <Box
       sx={{
@@ -44,8 +89,11 @@ export default function ScopeStepConverter({
         </Typography>
         {/* Scope selection UI */}
         <ColumnSelectionTable
-          datasetColumns={[]}
-          onSelectionChange={() => {}}
+          datasetColumns={datasetColumns}
+          onSelectionChange={(columnsInfo) => {
+            const selectedOrders = columnsInfo.map((col) => col.order);
+            setColumns(selectedOrders);
+          }}
           onValidationChange={() => {}}
           description=""
         />
@@ -53,7 +101,7 @@ export default function ScopeStepConverter({
           Here you will configure which rows to apply the converter to.
         </Typography>
         <RowSelector
-          totalRows={100}
+          totalRows={datasetInfo?.total_rows || 0}
           initialRows={rows}
           onSelectionChange={(selectedRows) => {
             console.log("Selected rows:", selectedRows);
