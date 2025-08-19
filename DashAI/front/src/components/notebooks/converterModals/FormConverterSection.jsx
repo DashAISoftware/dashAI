@@ -11,6 +11,7 @@ import HelpIcon from "@mui/icons-material/Help";
 import ConverterClassColumnModal from "./ConverterClassColumnModal";
 import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
+import { enqueueConverterJob } from "../../../api/job";
 
 export default function FormConverterSection({
   step,
@@ -22,7 +23,6 @@ export default function FormConverterSection({
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [parameters, setParameters] = useState({});
 
   const [formValues, setFormValues] = useState({
     notebook_id: notebook.id,
@@ -43,15 +43,11 @@ export default function FormConverterSection({
   const { enqueueSnackbar } = useSnackbar();
 
   const handleSaveConverter = async (params) => {
-    enqueueSnackbar(`Converter ${tool.name} created successfully `, {
-      variant: "success",
-    });
-
     const data = {
       notebook_id: notebook.id,
       converter: tool.name,
       parameters: {
-        params: parameters,
+        params: params,
         scope: {
           columns: columns,
           rows: rows,
@@ -60,9 +56,28 @@ export default function FormConverterSection({
         target_index: targetColumn,
       },
     };
-    handleClose();
 
+    saveConverterList(data).then(
+      (response) => {
+        const data = { ...response, type: "converter" };
+        setExplorersAndConverters((prev) => [...prev, data]);
+        enqueueSnackbar(`Converter ${tool.name} created successfully `, {
+          variant: "success",
+        });
+        enqueueConverterJob(data.id)
+          .then((jobResponse) => {
+            console.log("Converter job enqueued successfully:", jobResponse);
+          })
+          .catch((error) => {
+            console.error("Error enqueuing converter job:", error);
+          });
+      },
+      (error) => {
+        console.error("Error saving converter:", error);
+      },
+    );
     console.log("Saving converter with params:", data);
+    handleClose();
   };
 
   useEffect(() => {
