@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
-import ConfigureToolModal from "./converterModals/ConfigureToolModal";
+import ConfigureToolModal from "./toolModal/ConfigureToolModal";
 import FormConverterSection from "./converterModals/FormConverterSection";
 
 export default function ConverterList({
