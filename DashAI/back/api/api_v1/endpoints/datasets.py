@@ -215,6 +215,34 @@ async def get_sample_by_file(
     return sample
 
 
+@router.get("/file/info")
+@inject
+async def get_info_by_file(
+    path: str,
+):
+    """Return the dataset with id dataset_id from the database.
+
+    Parameters
+    ----------
+    path : str
+        The file path of the dataset.
+
+    Returns
+    -------
+    JSON
+        JSON with the specified dataset id.
+    """
+    try:
+        info = get_dataset_info(f"{path}/dataset")
+    except exc.SQLAlchemyError as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal error",
+        ) from e
+    return info
+
+
 @router.get("/{dataset_id}/info")
 @inject
 async def get_info(

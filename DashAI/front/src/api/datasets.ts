@@ -46,6 +46,15 @@ export const getDatasetInfo = async (id: number): Promise<object> => {
   return response.data;
 };
 
+export const getDatasetInfoByFilePath = async (
+  path: string,
+): Promise<object> => {
+  const response = await api.get<object>(`${datasetEndpoint}/file/info`, {
+    params: { path },
+  });
+  return response.data;
+};
+
 export const getExperimentsExist = async (id: number): Promise<object> => {
   const response = await api.get<object>(
     `${datasetEndpoint}/${id}/experiments-exist`,
