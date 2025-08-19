@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Chip, Stack } from "@mui/material";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 
 const defaultColumns = [
   {
@@ -68,7 +68,7 @@ function ColumnSelectionTable({
   initialSelection = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
-  title = "Select columns",
+  title = "",
   description = "",
   gridColumns = defaultColumns,
   gridProps = {},
@@ -334,6 +334,10 @@ function ColumnSelectionTable({
             },
           },
         }}
+        disableColumnMenu
+        disableColumnFilter
+        disableColumnSelector
+        disableDensitySelector
         pageSizeOptions={[5, 10, 20]}
         checkboxSelection
         disableRowSelectionOnClick
@@ -354,12 +358,11 @@ function ColumnSelectionTable({
           },
         }}
         slots={{
-          toolbar: GridToolbar,
-        }}
-        slotProps={{
-          toolbar: {
-            showQuickFilter: true,
-          },
+          toolbar: () => (
+            <Box sx={{ p: 1 }}>
+              <GridToolbarQuickFilter />
+            </Box>
+          ),
         }}
         {...gridProps}
       />
