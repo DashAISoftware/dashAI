@@ -18,6 +18,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class ScatterMatrixSchema(BaseExplorerSchema):
@@ -48,8 +49,8 @@ class ScatterMatrixExplorer(BaseExplorer):
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Integer", "Float", "Decimal"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 2},
     }
 
@@ -91,7 +92,7 @@ class ScatterMatrixExplorer(BaseExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dataset.to_pandas()
+        _df = dashai_to_pandas(dataset)
         dimensions = [col["columnName"] for col in explorer_info.columns]
 
         colorColumn = self.color_column if self.color_column in _df.columns else None

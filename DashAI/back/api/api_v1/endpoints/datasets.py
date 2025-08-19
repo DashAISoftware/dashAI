@@ -25,6 +25,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset, Experiment
 from DashAI.back.types.inf.type_inference import infer_types
 from DashAI.back.types.utils import arrow_to_dashai_schema, value_types
+import numpy as np
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -504,7 +505,7 @@ async def load_preview(file: UploadFile = File(...), params: str = Form(None)):
 
         table = pa.Table.from_pandas(df)
         schema = arrow_to_dashai_schema(table)
-        import numpy as np
+        
 
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
 

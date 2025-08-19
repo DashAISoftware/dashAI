@@ -17,6 +17,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class WordcloudSchema(BaseExplorerSchema):
@@ -52,8 +53,8 @@ class WordcloudExplorer(BaseExplorer):
 
     SCHEMA = WordcloudSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Text"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 
@@ -63,7 +64,7 @@ class WordcloudExplorer(BaseExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dataset.to_pandas()
+        _df = dashai_to_pandas(dataset)
         cols = [col["columnName"] for col in explorer_info.columns]
 
         # concatenate all columns into one string

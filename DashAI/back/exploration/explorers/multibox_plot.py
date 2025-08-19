@@ -20,6 +20,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class MultiColumnBoxPlotSchema(BaseExplorerSchema):
@@ -57,8 +58,8 @@ class MultiColumnBoxPlotExplorer(BaseExplorer):
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["*"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 
@@ -95,7 +96,7 @@ class MultiColumnBoxPlotExplorer(BaseExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dataset.to_pandas()
+        _df = dashai_to_pandas(dataset)
         cols = [col["columnName"] for col in explorer_info.columns]
 
         opposite_axis = (

@@ -14,6 +14,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
@@ -66,8 +67,8 @@ class CovarianceMatrixExplorer(BaseExplorer):
 
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["*"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 2},
     }
 
@@ -81,7 +82,7 @@ class CovarianceMatrixExplorer(BaseExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, explorer_info: Explorer
     ) -> Union[pd.DataFrame, go.Figure]:
-        result = dataset.to_pandas().cov(
+        result = dashai_to_pandas(dataset).cov(
             min_periods=self.min_periods,
             ddof=self.ddof,
             numeric_only=self.numeric_only,

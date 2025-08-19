@@ -20,6 +20,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class ECDFNorm(enum.Enum):
@@ -67,8 +68,8 @@ class ECDFPlotExplorer(BaseExplorer):
 
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Float", "Integer", "Decimal"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 
@@ -124,7 +125,7 @@ class ECDFPlotExplorer(BaseExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dataset.to_pandas()
+        _df = dashai_to_pandas(dataset)
         columns = [col["columnName"] for col in explorer_info.columns]
 
         fig = px.ecdf(

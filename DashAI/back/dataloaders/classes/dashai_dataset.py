@@ -761,7 +761,7 @@ def get_column_names_from_indexes(
 
 
 @beartype
-def select_columns(
+def divide_columns(
     dataset: Union[DatasetDict, DashAIDataset],
     input_columns: List[str],
     output_columns: List[str],

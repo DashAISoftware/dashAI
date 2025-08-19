@@ -13,7 +13,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
     prepare_for_experiment,
-    select_columns,
+    divide_columns,
     split_dataset,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
@@ -144,7 +144,7 @@ class ModelJob(BaseJob):
                     }
                 )
 
-                x, y = select_columns(
+                x, y = divide_columns(
                     prepared_dataset,
                     experiment.input_columns,
                     experiment.output_columns,

@@ -18,6 +18,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class ScatterPlotSchema(BaseExplorerSchema):
@@ -52,8 +53,8 @@ class ScatterPlotExplorer(BaseExplorer):
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Integer", "Float", "Decimal"],
+        "restricted_value_types": [],
         "input_cardinality": {"exact": 2},
     }
 
@@ -108,7 +109,7 @@ class ScatterPlotExplorer(BaseExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dataset.to_pandas()
+        _df = dashai_to_pandas(dataset)
         cols = [col["columnName"] for col in explorer_info.columns]
 
         colorColumn = self.color_column if self.color_column in _df.columns else None
@@ -137,7 +138,7 @@ class ScatterPlotExplorer(BaseExplorer):
         save_path: pathlib.Path,
         result: Figure,
     ) -> str:
-        filename = f"{explorer_info.id}.pickle"
+        filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())

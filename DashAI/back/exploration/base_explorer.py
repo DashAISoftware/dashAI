@@ -7,7 +7,6 @@ from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
-    select_columns,
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 
@@ -75,10 +74,6 @@ class BaseExplorer(ConfigObject, ABC):
             metadata["allowed_value_types"] = ["*"]
         if metadata.get("restricted_value_types", None) is None:
             metadata["restricted_value_types"] = []
-        if metadata.get("allowed_dtypes", None) is None:
-            metadata["allowed_dtypes"] = ["*"]
-        if metadata.get("restricted_dtypes", None) is None:
-            metadata["restricted_dtypes"] = []
         if metadata.get("input_cardinality", None) is None:
             metadata["input_cardinality"] = {"min": 1}
         return metadata
@@ -145,11 +140,11 @@ class BaseExplorer(ConfigObject, ABC):
         # Check if the columns are of valid types
         for column in selected_columns:
             column_name = column["columnName"]
-            column_type = column_spec[column_name]["dtype"]
+            column_type = column_spec[column_name]["type"]
 
             # Check if the column's type is allowed
             if (
-                "*" not in metadata["allowed_dtypes"]
+                "*" not in metadata["allowed_value_types"]
                 and column_type not in metadata["allowed_value_types"]
             ):
                 return False
@@ -190,7 +185,7 @@ class BaseExplorer(ConfigObject, ABC):
         """
         # Select the columns
         columnNames = list({col["columnName"] for col in columns})
-        loaded_dataset = select_columns(loaded_dataset, columnNames, [])[0]
+        loaded_dataset = loaded_dataset.select_columns(columnNames)
         return loaded_dataset
 
     @abstractmethod

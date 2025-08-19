@@ -16,6 +16,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class DescribeExplorerSchema(BaseExplorerSchema):
@@ -64,8 +65,8 @@ class DescribeExplorer(BaseExplorer):
 
     SCHEMA = DescribeExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["*"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 
@@ -112,7 +113,7 @@ class DescribeExplorer(BaseExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, __explorer_info__: Explorer
     ) -> pd.DataFrame:
-        return dataset.to_pandas().describe(
+        return dashai_to_pandas(dataset).describe(
             percentiles=self.percentiles, include=self.include, exclude=self.exclude
         )
 

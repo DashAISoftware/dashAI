@@ -20,6 +20,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class HistFunc(enum.Enum):
@@ -80,8 +81,8 @@ class HistogramPlotExplorer(BaseExplorer):
 
     SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["*"],
+        "restricted_value_types": [],
         "input_cardinality": {"exact": 1},
     }
 
@@ -126,7 +127,7 @@ class HistogramPlotExplorer(BaseExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dataset.to_pandas()
+        _df = dashai_to_pandas(dataset)
         columns = [col["columnName"] for col in explorer_info.columns]
 
         fig = px.histogram(
