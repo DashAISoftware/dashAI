@@ -33,3 +33,4 @@ wordcloud
 opencv-python
 protobuf
 imblearn
+xlrd
