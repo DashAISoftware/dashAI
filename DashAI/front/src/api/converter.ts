@@ -29,3 +29,8 @@ export const getConvertersByNotebook = async (
   );
   return response.data;
 };
+
+export const getConverterById = async (id: number): Promise<IConverter> => {
+  const response = await api.get<IConverter>(`${converterEndpoint}/${id}`);
+  return response.data;
+};
