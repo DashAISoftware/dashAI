@@ -6,7 +6,9 @@ import {
   Assignment as AssignmentIcon,
   Extension as ExtensionIcon,
   Insights as InsightsIcon,
+  Merge as MergeIcon, // Add icon for pipelines
   Timeline as TimelineIcon,
+  AutoAwesome as AutoAwesomeIcon,
 } from "@mui/icons-material";
 import HomeButton from "../../components/HomeButton";
 import CustomLayout from "../../components/custom/CustomLayout";
@@ -60,6 +62,15 @@ function Home() {
             Icon={InsightsIcon}
           />
         </Grid>
+        {/* Pipelines button */}
+        <Grid item md={4} sm={6} xs={12}>
+          <HomeButton
+            title="Pipelines"
+            description="Create and manage pipelines."
+            to="/app/pipelines"
+            Icon={MergeIcon}
+          />
+        </Grid>
       </Grid>
       <Typography variant="h5" component="h2" sx={{ mt: 6 }}>
         Advanced
@@ -71,6 +82,14 @@ function Home() {
         alignItems="center"
         sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
       >
+        <Grid item md={4} sm={6} xs={12}>
+          <HomeButton
+            title="Generative"
+            description={"Interact with AI models to infere."}
+            to="/app/generative"
+            Icon={AutoAwesomeIcon}
+          />
+        </Grid>
         <Grid item md={4} sm={6} xs={12}>
           <HomeButton
             title="Plugins"

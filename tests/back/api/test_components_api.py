@@ -34,7 +34,7 @@ TEST_SCHEMA_2 = {
 
 class TestTask1(BaseTask):
     DESCRIPTION = "Task 1."
-
+    DISPLAY_NAME = "Test Task 1"
     metadata = {
         "inputs_types": [ClassLabel, Value],
         "outputs_types": [ClassLabel],
@@ -161,6 +161,7 @@ def test_get_component_by_id(client: TestClient):
             "outputs_cardinality": 1,
         },
         "description": "Task 1.",
+        "display_name": "Test Task 1",
     }
 
     response = client.get("/api/v1/component/TestTask2/")
@@ -177,6 +178,7 @@ def test_get_component_by_id(client: TestClient):
             "outputs_cardinality": 1,
         },
         "description": "Task 2.",
+        "display_name": None,
     }
 
     response = client.get("/api/v1/component/TestDataloader1/")
@@ -188,6 +190,7 @@ def test_get_component_by_id(client: TestClient):
         "schema": {},
         "metadata": None,
         "description": None,
+        "display_name": None,
     }
 
 
@@ -235,6 +238,7 @@ def test_get_all_components(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 1.",
+            "display_name": "Test Task 1",
         },
         {
             "name": "TestTask2",
@@ -248,6 +252,7 @@ def test_get_all_components(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 2.",
+            "display_name": None,
         },
         {
             "name": "TestDataloader1",
@@ -256,6 +261,7 @@ def test_get_all_components(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -264,6 +270,7 @@ def test_get_all_components(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader3",
@@ -272,6 +279,7 @@ def test_get_all_components(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestModel1",
@@ -280,6 +288,7 @@ def test_get_all_components(client: TestClient):
             "schema": {"properties": {"parameter_1": {"type": "number"}}},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestModel2",
@@ -290,6 +299,7 @@ def test_get_all_components(client: TestClient):
             },
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -317,6 +327,7 @@ def test_get_components_select_only_tasks(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 1.",
+            "display_name": "Test Task 1",
         },
         {
             "name": "TestTask2",
@@ -330,6 +341,7 @@ def test_get_components_select_only_tasks(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 2.",
+            "display_name": None,
         },
     ]
 
@@ -347,6 +359,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -355,6 +368,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader3",
@@ -363,6 +377,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -380,6 +395,7 @@ def test_get_components_select_tasks_and_models(client: TestClient):
             "schema": {"properties": {"parameter_1": {"type": "number"}}},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestModel2",
@@ -390,6 +406,7 @@ def test_get_components_select_tasks_and_models(client: TestClient):
             },
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestTask1",
@@ -403,6 +420,7 @@ def test_get_components_select_tasks_and_models(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 1.",
+            "display_name": "Test Task 1",
         },
         {
             "name": "TestTask2",
@@ -416,6 +434,7 @@ def test_get_components_select_tasks_and_models(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 2.",
+            "display_name": None,
         },
     ]
 
@@ -463,6 +482,7 @@ def test_get_components_ignore_models(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 1.",
+            "display_name": "Test Task 1",
         },
         {
             "name": "TestTask2",
@@ -476,6 +496,7 @@ def test_get_components_ignore_models(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 2.",
+            "display_name": None,
         },
         {
             "name": "TestDataloader1",
@@ -484,6 +505,7 @@ def test_get_components_ignore_models(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -492,6 +514,7 @@ def test_get_components_ignore_models(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader3",
@@ -500,6 +523,7 @@ def test_get_components_ignore_models(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -516,6 +540,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -524,6 +549,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader3",
@@ -532,6 +558,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -573,6 +600,7 @@ def test_get_components_related_with_some_task(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -581,6 +609,7 @@ def test_get_components_related_with_some_task(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestModel1",
@@ -589,6 +618,7 @@ def test_get_components_related_with_some_task(client: TestClient):
             "schema": {"properties": {"parameter_1": {"type": "number"}}},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -609,6 +639,7 @@ def test_get_components_related_inverse_relation(client: TestClient):
                 "outputs_cardinality": 1,
             },
             "description": "Task 1.",
+            "display_name": "Test Task 1",
         }
     ]
 
@@ -648,6 +679,7 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -656,6 +688,7 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -689,6 +722,7 @@ def test_get_components_by_type_and_task(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -697,6 +731,7 @@ def test_get_components_by_type_and_task(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -715,6 +750,7 @@ def test_get_components_by_type_and_task_2(client: TestClient):
             "schema": {"properties": {"parameter_1": {"type": "number"}}},
             "metadata": None,
             "description": None,
+            "display_name": None,
         }
     ]
 
@@ -733,6 +769,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -741,6 +778,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader3",
@@ -749,6 +787,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]
 
@@ -768,6 +807,7 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
         {
             "name": "TestDataloader2",
@@ -776,5 +816,6 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "schema": {},
             "metadata": None,
             "description": None,
+            "display_name": None,
         },
     ]

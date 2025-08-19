@@ -27,6 +27,7 @@ class ComponentRegistry:
         "schema": {...},  # Configurable object schema if applies.
         "metadata": {...},  # Component metadata if applies.
         "description": "...",  # An object description.
+        "display_name": "...",  # A readable label.
     }
     ```
 
@@ -200,6 +201,7 @@ class ComponentRegistry:
                 else None
             ),
             "description": getattr(new_component, "DESCRIPTION", None),
+            "display_name": getattr(new_component, "DISPLAY_NAME", None),
         }
 
         if base_type not in self._registry:

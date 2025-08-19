@@ -35,6 +35,7 @@ the detailed API documentation and extensive examples. Check out :doc:`getting_s
    tutorials/converter.rst
    tutorials/converter_chain.rst
    tutorials/explorer.rst
+   tutorials/generative.rst
 
 .. toctree::
    :maxdepth: 4
