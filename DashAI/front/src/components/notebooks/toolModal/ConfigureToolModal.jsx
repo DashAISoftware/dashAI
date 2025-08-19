@@ -1,5 +1,15 @@
 import React, { useState, useCallback } from "react";
-import { Box, Typography, Dialog, IconButton, Tab, Tabs } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Dialog,
+  IconButton,
+  Tab,
+  Tabs,
+  Stepper,
+  Step,
+  StepLabel,
+} from "@mui/material";
 import { Close } from "@mui/icons-material";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import DatasetIcon from "@mui/icons-material/Dataset";
@@ -7,17 +17,18 @@ import DatasetIcon from "@mui/icons-material/Dataset";
 import DatasetSummaryTable from "../DatasetSummaryTable";
 import DatasetTable from "../DatasetTable";
 import { getDatasetFile } from "../../../api/datasets";
-import FormSection from "./FormSection";
 
-export default function ConfigureConverterModal({
+export default function ConfigureToolModal({
+  tool,
   open,
   handleClose,
-  converter,
   notebook,
+  FormSection,
 }) {
-  if (!converter) return null;
+  if (!tool) return null;
 
   const [activeTab, setActiveTab] = useState(0);
+  const [step, setStep] = useState(0);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -27,6 +38,8 @@ export default function ConfigureConverterModal({
     [notebook.file_path],
   );
 
+  const steps = ["Configure Scope", "Configure Parameters"];
+
   return (
     <Dialog
       open={open}
@@ -35,7 +48,7 @@ export default function ConfigureConverterModal({
         sx: {
           width: { xs: "95%", sm: "1200px" },
           maxWidth: "100%",
-          borderRadius: 3,
+          borderRadius: 2,
           height: "90vh", // fixed modal height
           display: "flex",
           flexDirection: "column",
@@ -51,11 +64,24 @@ export default function ConfigureConverterModal({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 2,
         }}
       >
-        <Typography variant="h6" fontWeight="600">
-          Configure Converter: {converter.name}
+        <Typography variant="h6" fontWeight="600" sx={{ whiteSpace: "nowrap" }}>
+          Configure {tool.type}: {tool.name}
         </Typography>
+
+        {/* Stepper */}
+        <Box sx={{ flex: 1 }}>
+          <Stepper activeStep={step}>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+
         <IconButton onClick={handleClose}>
           <Close />
         </IconButton>
@@ -126,13 +152,33 @@ export default function ConfigureConverterModal({
         </Box>
 
         {/* FORM at the bottom */}
-        <FormSection
-          converter={converter}
-          notebook={notebook}
-          handleSubmit={() => {
-            handleClose();
+        <Box
+          sx={{
+            p: 2,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            height: "65%",
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
           }}
-        />
+        >
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            gutterBottom
+            textAlign="center"
+          >
+            Configure the settings
+          </Typography>
+          <FormSection
+            step={step}
+            setStep={setStep}
+            handleClose={handleClose}
+            tool={tool}
+            notebook={notebook}
+          />
+        </Box>
       </Box>
     </Dialog>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
-import ConfigureConverterModal from "./converterModals/ConfigureConverterModal";
+import ConfigureToolModal from "./converterModals/ConfigureToolModal";
+import FormConverterSection from "./converterModals/FormConverterSection";
 
 export default function ConverterList({
   converters,
@@ -52,14 +53,15 @@ export default function ConverterList({
         ))
       )}
       {selectedConverter && (
-        <ConfigureConverterModal
+        <ConfigureToolModal
           open={open}
           handleClose={() => {
             setOpen(false);
             setSelectedConverter(null);
           }}
-          converter={selectedConverter}
+          tool={selectedConverter}
           notebook={notebook}
+          FormSection={FormConverterSection}
         />
       )}
     </Box>
