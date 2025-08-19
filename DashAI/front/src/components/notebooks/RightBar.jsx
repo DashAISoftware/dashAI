@@ -7,7 +7,6 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import DescriptionPanel from "./DescriptionPanel";
 import ExplorerList from "./ExplorerList";
 import ConverterList from "./ConverterList";
-import NotebookEditColumnsModal from "./NotebookEditColumnsModal";
 import { ExplorersAndConvertersProvider } from "./context/ExplorersAndConvertersContext";
 import { getComponents } from "../../api/component";
 import { getDatasetFile } from "../../api/datasets";
@@ -22,8 +21,6 @@ export default function RightBar({ notebook }) {
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
-  const [editColumnsModalOpen, setEditColumnsModalOpen] = useState(false);
-  const [selectedExplorer, setSelectedExplorer] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -170,6 +167,7 @@ export default function RightBar({ notebook }) {
           disabled: validation.disabled,
           tooltip: validation.tooltip,
           validColumns: validation.validColumns,
+          notebook,
         };
       });
 
@@ -180,32 +178,7 @@ export default function RightBar({ notebook }) {
         item.name.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
     );
-  }, [searchQuery, explorers, converters, datasetColumns]);
-
-  const handleExplorerClick = (explorerData) => {
-    console.log("=== Explorer Click Debug ===");
-    console.log("Clicked explorer object:", explorerData);
-    console.log("Explorer name:", explorerData?.name);
-    console.log("Explorer metadata:", explorerData?.metadata);
-    console.log("========================");
-
-    setSelectedExplorer(explorerData);
-    setEditColumnsModalOpen(true);
-  };
-
-  const handleCloseEditColumnsModal = () => {
-    setEditColumnsModalOpen(false);
-    setSelectedExplorer(null);
-  };
-
-  const handleSelectionChange = (selectedColumns) => {
-    console.log("=== Selection Change Debug ===");
-    console.log("Selected columns:", selectedColumns);
-    console.log("Explorer:", selectedExplorer?.name);
-    console.log("========================");
-    // Here you can add logic to handle the column selection
-    // For example, storing it in the notebook state or sending it to the backend
-  };
+  }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
   return (
     <SideBar>
@@ -283,7 +256,6 @@ export default function RightBar({ notebook }) {
                         explorers={filteredExplorers}
                         hoveredTool={hoveredTool}
                         setHoveredTool={setHoveredTool}
-                        handleExplorerClick={handleExplorerClick}
                       />
                     )}
                     {activeTab === 1 && (
@@ -321,15 +293,6 @@ export default function RightBar({ notebook }) {
           </Box>
         )}
       </Box>
-
-      {/* Edit Columns Modal */}
-      <NotebookEditColumnsModal
-        open={editColumnsModalOpen}
-        onClose={handleCloseEditColumnsModal}
-        explorerData={selectedExplorer}
-        notebook={notebook}
-        onSelectionChange={handleSelectionChange}
-      />
     </SideBar>
   );
 }

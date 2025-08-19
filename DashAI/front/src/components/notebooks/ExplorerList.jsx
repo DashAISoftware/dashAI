@@ -1,12 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Button, Typography, Tooltip } from "@mui/material";
+import ConfigureToolModal from "./toolModal/ConfigureToolModal";
+import FormExplorerSection from "./explorerModals/FormExplorerSection";
 
 export default function ExplorerList({
   explorers,
   hoveredTool,
   setHoveredTool,
-  handleExplorerClick,
 }) {
+  const [open, setOpen] = useState(false);
+  const [selectedExplorer, setSelectedExplorer] = useState(null);
+
+  const handleExplorerClick = (explorer) => {
+    setSelectedExplorer(explorer);
+    setOpen(true);
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {explorers.length === 0 ? (
@@ -79,6 +88,19 @@ export default function ExplorerList({
 
           return ButtonComponent;
         })
+      )}
+
+      {selectedExplorer && (
+        <ConfigureToolModal
+          open={open}
+          handleClose={() => {
+            setOpen(false);
+            setSelectedExplorer(null);
+          }}
+          tool={selectedExplorer}
+          notebook={selectedExplorer.notebook}
+          FormSection={FormExplorerSection}
+        />
       )}
     </Box>
   );
