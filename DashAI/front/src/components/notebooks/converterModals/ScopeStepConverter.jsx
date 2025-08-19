@@ -3,10 +3,16 @@ import { Box, Typography, Tooltip, IconButton, Button } from "@mui/material";
 import ConverterClassColumnModal from "./ConverterClassColumnModal";
 import HelpIcon from "@mui/icons-material/Help";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import ColumnSelectionTable from "../../threeSectionLayout/ColumnSelectionTable";
+import { RowSelector } from "../RowSelector";
 
 export default function ScopeStepConverter({
-  classColumnInitialValue,
-  setClassColumnInitialValue,
+  targetColumn,
+  setTargetColumn,
+  rows,
+  setRows,
+  columns,
+  setColumns,
   notebook,
   setStep,
 }) {
@@ -21,14 +27,39 @@ export default function ScopeStepConverter({
       }}
     >
       {/* Content */}
-      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
         <Typography variant="subtitle2" gutterBottom>
           Step 1: Select Scope
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Here you will configure which columns/rows to apply the converter to.
+          Here you will configure which columns to apply the converter to.
         </Typography>
-        {/* placeholder: scope selection UI */}
+        {/* Scope selection UI */}
+        <ColumnSelectionTable
+          datasetColumns={[]}
+          onSelectionChange={() => {}}
+          onValidationChange={() => {}}
+          description=""
+        />
+        <Typography variant="body2" color="text.secondary">
+          Here you will configure which rows to apply the converter to.
+        </Typography>
+        <RowSelector
+          totalRows={100}
+          initialRows={rows}
+          onSelectionChange={(selectedRows) => {
+            console.log("Selected rows:", selectedRows);
+            setRows(selectedRows);
+          }}
+        />
       </Box>
 
       {/* Buttons */}
@@ -50,13 +81,13 @@ export default function ScopeStepConverter({
           </IconButton>
         </Tooltip>
         <ConverterClassColumnModal
-          updateClassColumn={setClassColumnInitialValue}
-          classColumnInitialValue={classColumnInitialValue}
+          updateClassColumn={setTargetColumn}
+          classColumnInitialValue={targetColumn}
           notebook={notebook}
         />
         <FormSchemaButtonGroup
           onFormSubmit={() => setStep((s) => s + 1)}
-          error={!classColumnInitialValue}
+          error={!targetColumn}
           saveButtonText="Next"
         />
       </Box>

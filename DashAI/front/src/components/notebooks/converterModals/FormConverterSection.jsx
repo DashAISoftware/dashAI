@@ -19,8 +19,11 @@ export default function FormConverterSection({
   tool,
   notebook,
 }) {
-  const [initialParams, setInitialParams] = useState({});
-  const [classColumnInitialValue, setClassColumnInitialValue] = useState(null);
+  const [targetColumn, setTargetColumn] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [parameters, setParameters] = useState({});
+
   const [formValues, setFormValues] = useState({
     notebook_id: notebook.id,
     converter: tool.name,
@@ -44,18 +47,29 @@ export default function FormConverterSection({
       variant: "success",
     });
 
-    const copyValues = structuredClone(formValues);
-    copyValues.parameters.params = params;
+    const data = {
+      notebook_id: notebook.id,
+      converter: tool.name,
+      parameters: {
+        params: parameters,
+        scope: {
+          columns: columns,
+          rows: rows,
+        },
+        order: 1,
+        target_index: targetColumn,
+      },
+    };
     handleClose();
 
-    console.log("Saving converter with params:", copyValues);
+    console.log("Saving converter with params:", data);
   };
 
   useEffect(() => {
     const copyValues = structuredClone(formValues);
-    copyValues.parameters.target_index = classColumnInitialValue;
+    copyValues.parameters.target_index = targetColumn;
     setFormValues(copyValues);
-  }, [classColumnInitialValue]);
+  }, [targetColumn]);
 
   return (
     <Box
@@ -69,8 +83,12 @@ export default function FormConverterSection({
       {/* Step content */}
       {step === 0 && (
         <ScopeStepConverter
-          classColumnInitialValue={classColumnInitialValue}
-          setClassColumnInitialValue={setClassColumnInitialValue}
+          targetColumn={targetColumn}
+          setTargetColumn={setTargetColumn}
+          rows={rows}
+          setRows={setRows}
+          columns={columns}
+          setColumns={setColumns}
           notebook={notebook}
           setStep={setStep}
         />
@@ -79,7 +97,7 @@ export default function FormConverterSection({
       {step === 1 && (
         <ParameterStepConverter
           converter={tool.name}
-          initialParams={initialParams}
+          initialParams={{}}
           handleSaveConverter={handleSaveConverter}
           setStep={setStep}
         />
