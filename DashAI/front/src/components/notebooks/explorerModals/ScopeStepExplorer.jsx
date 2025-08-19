@@ -82,7 +82,7 @@ export default function ScopeStepExplorer({
           restrictedDtypes={restrictedDtypes}
           onSelectionChange={(selected) => setScopeColumns(selected)}
           onValidationChange={setIsSelectionValid}
-          title={`Select the columns you want to use for ${tool?.name}`}
+          title=""
           description=""
         />
       </Box>
