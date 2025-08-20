@@ -18,27 +18,10 @@ import { getConvertersByNotebookId } from "../../api/notebook";
 import { formatDate } from "../../pages/results/constants/formatDate";
 import { useSnackbar } from "notistack";
 
-export function NotebookHistoryModal({ open, onClose, notebook }) {
+export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
   if (!notebook) return null;
 
   const { enqueueSnackbar } = useSnackbar();
-  const [converters, setConverters] = useState([]);
-
-  useEffect(() => {
-    const fetchConverters = async () => {
-      const response = await getConvertersByNotebookId(notebook.id);
-      setConverters(response);
-    };
-
-    try {
-      fetchConverters();
-    } catch (error) {
-      enqueueSnackbar("Error fetching notebook history", {
-        variant: "error",
-      });
-      console.error("Error fetching converters:", error);
-    }
-  }, [notebook]);
 
   const formatScope = (scope) => {
     const cols = scope.columns?.length ? scope.columns.join(", ") : "All";

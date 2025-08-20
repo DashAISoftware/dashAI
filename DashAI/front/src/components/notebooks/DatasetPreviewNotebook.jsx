@@ -16,19 +16,12 @@ import { getConvertersByNotebookId } from "../../api/notebook";
 import { getDatasetFile } from "../../api/datasets";
 import DatasetTable from "./DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
+import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
 }) {
-  const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
-      return { rows: data.rows ?? [], total: data.total ?? 0 };
-    },
-    [notebook.file_path],
-  );
-
   if (!notebook) {
     return (
       <Box
@@ -44,24 +37,60 @@ export default function DatasetPreviewNotebook({
       </Box>
     );
   }
-
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
   const [converters, setConverters] = useState([]);
+  const { explorersAndConverters } = useExplorersAndConverters();
+
+  const fetchDatasetPage = useCallback(
+    async (page, pageSize) => {
+      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+      return { rows: data.rows ?? [], total: data.total ?? 0 };
+    },
+    [notebook, converters],
+  );
 
   useEffect(() => {
+    console.log("Converters:", converters);
+  }, [converters]);
+
+  useEffect(() => {
+    let intervalId;
+
     const fetchConverters = async () => {
-      const response = await getConvertersByNotebookId(notebook.id);
-      setConverters(response);
+      try {
+        const response = await getConvertersByNotebookId(notebook.id);
+        setConverters(response);
+
+        // Check if any converters are in a pending state (status < 3)
+        const isPollingNeeded = response.some(
+          (converter) => converter.status < 3,
+        );
+
+        if (isPollingNeeded) {
+          // If polling is needed, start the interval
+          if (!intervalId) {
+            intervalId = setInterval(fetchConverters, 2000); // Poll every 2 seconds
+          }
+        } else {
+          // If all converters are in a final state, clear the interval
+          clearInterval(intervalId);
+        }
+      } catch (error) {
+        console.error("Error fetching converters:", error);
+        clearInterval(intervalId); // Clear interval on error
+      }
     };
 
-    try {
-      fetchConverters();
-    } catch (error) {
-      console.error("Error fetching converters:", error);
-    }
-  }, [notebook]);
+    fetchConverters();
+
+    // Cleanup function to clear the interval when the component unmounts
+    // or when the dependencies change
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [notebook, explorersAndConverters]);
 
   return (
     <Box
@@ -145,12 +174,15 @@ export default function DatasetPreviewNotebook({
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
         onSaveDataset={handleAddDatasetFromNotebook}
-        appliedConverters={converters}
+        appliedConverters={converters.filter(
+          (converter) => converter.status === 3,
+        )} // Only show finished converters
       />
       <NotebookHistoryModal
         open={showNotebookHistoryModal}
         onClose={() => setShowNotebookHistoryModal(false)}
         notebook={notebook}
+        converters={converters.filter((converter) => converter.status === 3)} // Only show finished converters
       />
     </Box>
   );
