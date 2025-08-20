@@ -5,6 +5,8 @@ import { useExplorersAndConverters } from "../context/ExplorersAndConvertersCont
 import { useSnackbar } from "notistack";
 import ParameterStepExplorer from "./ParameterStepExplorer";
 import ScopeStepExplorer from "./ScopeStepExplorer";
+import { createNotebookExplorer } from "../../../api/explorer";
+import { enqueueExplorerJob } from "../../../api/job";
 
 export default function FormExplorerSection({
   step,
@@ -35,16 +37,43 @@ export default function FormExplorerSection({
   const { enqueueSnackbar } = useSnackbar();
 
   const handleSaveExplorer = async (params) => {
-    enqueueSnackbar(`Explorer ${tool.name} configured successfully`, {
-      variant: "success",
-    });
+    // Build columns as expected by backend (list of objects with at least columnName)
+    const selectedColumns = scopeColumns.map((c) => ({
+      columnName: c.columnName,
+      // keep any available metadata if present
+      ...(c.valueType ? { valueType: c.valueType } : {}),
+      ...(c.dataType ? { dataType: c.dataType } : {}),
+      ...(c.id !== undefined ? { id: c.id } : {}),
+      ...(c.order !== undefined ? { order: c.order } : {}),
+    }));
 
-    const copyValues = structuredClone(formValues);
-    copyValues.parameters.params = params;
-    copyValues.parameters.scope.columns = scopeColumns.map((c) => c.columnName);
-    handleClose();
+    try {
+      const created = await createNotebookExplorer(
+        notebook.id,
+        selectedColumns,
+        tool.name,
+        params,
+      );
 
-    console.log("Saving explorer with params:", copyValues);
+      // Update UI list immediately
+      const withType = { ...created, type: "explorer" };
+      setExplorersAndConverters((prev) => [...prev, withType]);
+
+      // Enqueue backend job
+      try {
+        await enqueueExplorerJob(created.id);
+      } catch (e) {
+        console.error("Error enqueuing explorer job:", e);
+      }
+
+      enqueueSnackbar(`Explorer ${tool.name} created successfully`, {
+        variant: "success",
+      });
+      handleClose();
+    } catch (error) {
+      console.error("Error creating explorer:", error);
+      enqueueSnackbar("Failed to create explorer", { variant: "error" });
+    }
   };
 
   useEffect(() => {
