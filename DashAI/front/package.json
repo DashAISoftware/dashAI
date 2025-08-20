@@ -23,6 +23,8 @@
     "react-router-dom": "^6.4.1",
     "react-scripts": "5.0.1",
     "react-uuid": "^1.0.3",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
