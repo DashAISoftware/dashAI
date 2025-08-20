@@ -24,22 +24,22 @@ export default function RightBar({ notebook }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getComponents({
-        selectTypes: ["Converter", "Explorer"],
-      });
-      setConverters(data.filter((item) => item.type === "Converter"));
-      setExplorers(data.filter((item) => item.type === "Explorer"));
-      setFilteredConverters(data.filter((item) => item.type === "Converter"));
-      setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
+      try {
+        const data = await getComponents({
+          selectTypes: ["Converter", "Explorer"],
+        });
+        setConverters(data.filter((item) => item.type === "Converter"));
+        setExplorers(data.filter((item) => item.type === "Explorer"));
+        setFilteredConverters(data.filter((item) => item.type === "Converter"));
+        setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
+      } catch (error) {
+        enqueueSnackbar("Failed to fetch explorers/converters", {
+          variant: "error",
+        });
+        console.error("Failed to fetch explorers/converters:", error);
+      }
     };
-    try {
-      fetchData();
-    } catch (error) {
-      enqueueSnackbar("Failed to fetch explorers/converters", {
-        variant: "error",
-      });
-      console.error("Failed to fetch explorers/converters:", error);
-    }
+    fetchData();
   }, []);
 
   // Fetch dataset columns from notebook file
