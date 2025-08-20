@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import {
   getExplorersByNotebookId,
@@ -52,6 +52,13 @@ export default function NotebookView({ notebook }) {
     useExplorersAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollToItem(explorersAndConverters.length - 1);
+    }
+  }, [explorersAndConverters]);
 
   useEffect(() => {
     const fetchExplorersAndConverters = async () => {
@@ -103,9 +110,10 @@ export default function NotebookView({ notebook }) {
         <AutoSizer>
           {({ height, width }) => (
             <List
-              height={height} // ocupa exactamente el alto disponible
+              ref={listRef}
+              height={height}
               itemCount={explorersAndConverters.length}
-              itemSize={340} // alto fijo por item
+              itemSize={340}
               width={width}
             >
               {({ index, style }) => (
