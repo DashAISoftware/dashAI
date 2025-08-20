@@ -23,21 +23,6 @@ export default function FormConverterSection({
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-
-  const [formValues, setFormValues] = useState({
-    notebook_id: notebook.id,
-    converter: tool.name,
-    parameters: {
-      params: {},
-      scope: {
-        columns: [],
-        rows: [],
-      },
-      order: 1,
-      target_index: null,
-    },
-  });
-
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
@@ -79,12 +64,6 @@ export default function FormConverterSection({
     console.log("Saving converter with params:", data);
     handleClose();
   };
-
-  useEffect(() => {
-    const copyValues = structuredClone(formValues);
-    copyValues.parameters.target_index = targetColumn;
-    setFormValues(copyValues);
-  }, [targetColumn]);
 
   return (
     <Box
