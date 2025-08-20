@@ -10,24 +10,23 @@ import ConverterBox from "./ConverterBox";
 import ExplorerDetailsModal from "./ExplorerDetailsModal";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
-const RowItem = React.memo(
-  function RowItem({ item, handleExplorerDetailsClick }) {
-    return (
-      <Box>
-        {item.type === "explorer" ? (
-          <ExplorerBox
-            explorer={item}
-            handleExplorerDetailsClick={handleExplorerDetailsClick}
-          />
-        ) : item.type === "converter" ? (
-          <ConverterBox converter={item} />
-        ) : null}
-      </Box>
-    );
-  },
-  // only renders if the item changes
-  (prevProps, nextProps) => prevProps.item === nextProps.item,
-);
+const RowItem = React.memo(function RowItem({
+  item,
+  handleExplorerDetailsClick,
+}) {
+  return (
+    <Box>
+      {item.type === "explorer" ? (
+        <ExplorerBox
+          explorer={item}
+          handleExplorerDetailsClick={handleExplorerDetailsClick}
+        />
+      ) : item.type === "converter" ? (
+        <ConverterBox converter={item} />
+      ) : null}
+    </Box>
+  );
+});
 
 export default function NotebookView({ notebook }) {
   if (!notebook) {
@@ -82,20 +81,6 @@ export default function NotebookView({ notebook }) {
     setOpenExplorerDetails(true);
   }, []);
 
-  const Row = useCallback(
-    ({ index }) => {
-      const item = explorersAndConverters[index];
-      return (
-        <RowItem
-          item={item}
-          key={`${item.type}-${index}`}
-          handleExplorerDetailsClick={handleExplorerDetailsClick}
-        />
-      );
-    },
-    [explorersAndConverters],
-  );
-
   return (
     <Box>
       {explorersAndConverters.length === 0 ? (
@@ -119,9 +104,13 @@ export default function NotebookView({ notebook }) {
           pb: 3,
         }}
       >
-        {explorersAndConverters.map((_, idx) =>
-          Row({ index: idx }, handleExplorerDetailsClick),
-        )}
+        {explorersAndConverters.map((item, idx) => (
+          <RowItem
+            item={item}
+            key={`${item.type}-${item.id ?? idx}`}
+            handleExplorerDetailsClick={handleExplorerDetailsClick}
+          />
+        ))}
       </Box>
       <ExplorerDetailsModal
         open={openExplorerDetails}
