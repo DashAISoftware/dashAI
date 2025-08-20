@@ -121,8 +121,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
             bgcolor: "#212121",
             borderRadius: 2,
             boxShadow: "none",
-            py: 2,
-            px: 3,
+            p: 2,
             mb: 2,
           }}
         >
@@ -167,8 +166,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           bgcolor: "#212121",
           borderRadius: 2,
           boxShadow: "none",
-          py: 4,
-          px: 6,
+          p: 2,
         }}
       >
         {/* Title and button */}
