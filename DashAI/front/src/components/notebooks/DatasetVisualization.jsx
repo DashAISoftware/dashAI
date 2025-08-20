@@ -234,6 +234,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           open={showCreateNotebookModal}
           onClose={() => setShowCreateNotebookModal(false)}
           onCreateNotebook={handleCreateNotebook}
+          dataset={dataset}
         />
       </Paper>
     </>
