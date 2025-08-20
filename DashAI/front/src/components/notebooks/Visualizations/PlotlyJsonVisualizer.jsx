@@ -6,7 +6,7 @@ import Dialog from "@mui/material/Dialog";
 
 function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const [expanded, setExpanded] = useState(false);
-  const [height, setHeight] = useState(minimalist ? 280 : 500);
+  const [height, setHeight] = useState(minimalist ? 220 : 500);
 
   // Parse JSON if data is a string
   const parsedData = typeof data === "string" ? JSON.parse(data) : data;
@@ -20,7 +20,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           title: "",
         },
       }
-    : parsedData;
+    : { ...parsedData, layout: { ...parsedData.layout, height: height } };
 
   // Función para manejar el botón de pantalla completa personalizado
   const toggleFullscreen = () => {
@@ -155,7 +155,6 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
             data={plotData.data}
             layout={{
               ...plotData.layout,
-              height: height,
               margin: minimalist
                 ? {
                     l: 40,
@@ -184,7 +183,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
                 },
               },
             }}
-            style={{ width: "100%", height: `${height}px` }}
+            style={{ width: "100%", height: "100%" }}
             config={plotConfig}
             useResizeHandler={true}
           />

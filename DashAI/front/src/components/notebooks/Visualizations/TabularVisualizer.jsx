@@ -12,7 +12,6 @@ function TabularVisualizer({
 }) {
   const minimalistProps = minimalist
     ? {
-        hideFooter: true,
         disableColumnMenu: true,
         disableColumnFilter: true,
         disableColumnSelector: true,
@@ -23,6 +22,19 @@ function TabularVisualizer({
         sx: {
           height: "100%",
           width: "100%",
+          "& .MuiDataGrid-virtualScroller": {
+            "&::-webkit-scrollbar": {
+              width: "0px",
+              height: "0px",
+            },
+          },
+        },
+        initialState: {
+          pagination: {
+            paginationModel: {
+              pageSize: 4,
+            },
+          },
         },
       }
     : {

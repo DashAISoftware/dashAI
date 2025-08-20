@@ -214,7 +214,7 @@ function Results({ id, minimalist = false }) {
 
   const containerStyles = minimalist
     ? {
-        height: "fit-content",
+        height: "100%",
         width: "100%",
         display: "flex",
         alignItems: "center",
