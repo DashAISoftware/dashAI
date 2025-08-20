@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-
 import { Box, CircularProgress, Typography } from "@mui/material";
 import {
   getExplorersByNotebookId,
@@ -10,19 +9,24 @@ import ConverterBox from "./ConverterBox";
 import ExplorerDetailsModal from "./ExplorerDetailsModal";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
+import { FixedSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+
 const RowItem = React.memo(function RowItem({
   item,
   handleExplorerDetailsClick,
+  style,
 }) {
   return (
-    <Box>
+    <Box style={style}>
       {item.type === "explorer" ? (
         <ExplorerBox
           explorer={item}
           handleExplorerDetailsClick={handleExplorerDetailsClick}
+          height={320}
         />
       ) : item.type === "converter" ? (
-        <ConverterBox converter={item} />
+        <ConverterBox converter={item} height={320} />
       ) : null}
     </Box>
   );
@@ -82,7 +86,7 @@ export default function NotebookView({ notebook }) {
   }, []);
 
   return (
-    <Box>
+    <Box sx={{ height: "100%" }}>
       {explorersAndConverters.length === 0 ? (
         <Box
           sx={{
@@ -95,23 +99,27 @@ export default function NotebookView({ notebook }) {
             Start exploring by adding your first explorer or converter!
           </Typography>
         </Box>
-      ) : null}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 3,
-          pb: 3,
-        }}
-      >
-        {explorersAndConverters.map((item, idx) => (
-          <RowItem
-            item={item}
-            key={`${item.type}-${item.id ?? idx}`}
-            handleExplorerDetailsClick={handleExplorerDetailsClick}
-          />
-        ))}
-      </Box>
+      ) : (
+        <AutoSizer>
+          {({ height, width }) => (
+            <List
+              height={height} // ocupa exactamente el alto disponible
+              itemCount={explorersAndConverters.length}
+              itemSize={340} // alto fijo por item
+              width={width}
+            >
+              {({ index, style }) => (
+                <RowItem
+                  item={explorersAndConverters[index]}
+                  handleExplorerDetailsClick={handleExplorerDetailsClick}
+                  style={style}
+                />
+              )}
+            </List>
+          )}
+        </AutoSizer>
+      )}
+
       <ExplorerDetailsModal
         open={openExplorerDetails}
         onClose={() => {
