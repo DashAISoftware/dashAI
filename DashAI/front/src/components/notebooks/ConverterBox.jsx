@@ -7,6 +7,7 @@ import {
   Chip,
   CircularProgress,
 } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../utils/converterStatus";
 import { getComponentById } from "../../api/component";
@@ -97,16 +98,63 @@ export default function ConverterBox({ converter, height = "320px" }) {
               bgcolor: "#2e3037",
               borderRadius: 1,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              flexDirection: "column",
+              p: 2,
+              overflow: "hidden",
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center" }}
-            >
+            {/* Descripción */}
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               {converterComponent.description}
             </Typography>
+
+            {/* Parámetros en tabla */}
+            {converterState.parameters && (
+              <DataGrid
+                rows={[
+                  {
+                    id: 2,
+                    key: "Target Index",
+                    value: converterState.parameters.target_index,
+                  },
+                  {
+                    id: 3,
+                    key: "Scope - Columns",
+                    value:
+                      converterState.parameters.scope?.columns?.length === 0
+                        ? "All"
+                        : converterState.parameters.scope.columns.join(", "),
+                  },
+                  {
+                    id: 4,
+                    key: "Scope - Rows",
+                    value:
+                      converterState.parameters.scope.rows.length === 0
+                        ? "All"
+                        : converterState.parameters.scope.rows.join(", "),
+                  },
+                ]}
+                columns={[
+                  { field: "key", headerName: "Parameter", flex: 1 },
+                  { field: "value", headerName: "Value", flex: 2 },
+                ]}
+                hideFooter
+                disableColumnMenu
+                disableColumnFilter
+                disableColumnSelector
+                density="compact"
+                sx={{
+                  height: "100%",
+                  width: "100%",
+                  "& .MuiDataGrid-virtualScroller": {
+                    "&::-webkit-scrollbar": {
+                      width: "0px",
+                      height: "0px",
+                    },
+                  },
+                }}
+              />
+            )}
           </Box>
         ) : statusLabel === "Error" ? (
           <Box
