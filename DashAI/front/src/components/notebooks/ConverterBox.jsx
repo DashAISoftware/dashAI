@@ -12,7 +12,7 @@ import { getConverterStatus } from "../../utils/converterStatus";
 import { getComponentById } from "../../api/component";
 import { getConverterById } from "../../api/converter";
 
-export default function ConverterBox({ converter }) {
+export default function ConverterBox({ converter, height = "320px" }) {
   const [converterComponent, setConverterComponent] = useState({});
   const [converterState, setConverterState] = useState(converter);
 
@@ -59,8 +59,18 @@ export default function ConverterBox({ converter }) {
   const statusLabel = getConverterStatus(converterState.status);
 
   return (
-    <Card key={converter.id} sx={{ bgcolor: "#212121", borderRadius: 2 }}>
-      <CardContent>
+    <Card
+      key={converter.id}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height: height }}
+    >
+      <CardContent
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -83,13 +93,12 @@ export default function ConverterBox({ converter }) {
         {statusLabel === "Finished" ? (
           <Box
             sx={{
-              height: 80,
+              flexGrow: 1,
               bgcolor: "#2e3037",
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              p: 2,
             }}
           >
             <Typography
@@ -102,7 +111,7 @@ export default function ConverterBox({ converter }) {
         ) : statusLabel === "Error" ? (
           <Box
             sx={{
-              height: 80,
+              flexGrow: 1,
               bgcolor: "#2e3037",
               borderRadius: 1,
               display: "flex",
@@ -121,7 +130,7 @@ export default function ConverterBox({ converter }) {
         ) : (
           <Box
             sx={{
-              height: 80,
+              flexGrow: 1,
               bgcolor: "rgba(255, 255, 255, 0.05)",
               borderRadius: 1,
               display: "flex",

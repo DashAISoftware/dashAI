@@ -13,7 +13,11 @@ import Results from "./ExplorerDetailTabs/Results";
 import { getExplorerStatus } from "../../utils/explorerStatus";
 import { getExplorerById } from "../../api/explorer";
 
-export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
+export default function ExplorerBox({
+  explorer,
+  handleExplorerDetailsClick,
+  height = "320px",
+}) {
   const [explorerState, setExplorerState] = useState(explorer);
 
   useEffect(() => {
@@ -45,8 +49,18 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
   const statusLabel = getExplorerStatus(explorerState.status);
 
   return (
-    <Card key={explorer.id} sx={{ bgcolor: "#212121", borderRadius: 2 }}>
-      <CardContent>
+    <Card
+      key={explorer.id}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height: height }}
+    >
+      <CardContent
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -88,6 +102,7 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
         {statusLabel === "Finished" ? (
           <Box
             sx={{
+              flexGrow: 1,
               bgcolor: "#2e3037",
               borderRadius: 1,
               display: "flex",
@@ -100,7 +115,7 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
         ) : statusLabel === "Error" ? (
           <Box
             sx={{
-              height: 120,
+              flexGrow: 1,
               bgcolor: "#2e3037",
               borderRadius: 1,
               display: "flex",
@@ -119,7 +134,7 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
         ) : (
           <Box
             sx={{
-              height: 120,
+              flexGrow: 1,
               bgcolor: "rgba(255, 255, 255, 0.05)",
               borderRadius: 1,
               display: "flex",
