@@ -601,21 +601,47 @@ async def get_dataset_file(
     """
 
     arrow_file_path = f"{path}/dataset/data.arrow"
+    rows = []
+
+    start = page * page_size
+    end = start + page_size
+    total_rows = 0
+    rows_collected = 0
 
     with pa.memory_map(arrow_file_path, "r") as source:
         reader = ipc.RecordBatchFileReader(source)
-        arrow_table = reader.read_all()
 
-    start = page * page_size
-    total_rows = len(arrow_table)
+        current_index = 0
+        for i in range(reader.num_record_batches):
+            batch = reader.get_batch(i)
+            batch_start = current_index
+            batch_end = current_index + batch.num_rows
+            current_index = batch_end
 
-    if start >= total_rows:
-        return JSONResponse(content={"rows": [], "total": total_rows})
+            # Count total rows on the fly
+            total_rows += batch.num_rows
 
-    slice_table = arrow_table.slice(start, min(page_size, total_rows - start))
-    rows = [
-        {col: slice_table[col][i].as_py() for col in slice_table.schema.names}
-        for i in range(slice_table.num_rows)
-    ]
+            # Skip batches before the page start
+            if batch_end <= start:
+                continue
+            if batch_start >= end:
+                break  # already got all needed rows
+
+            slice_start = max(0, start - batch_start)
+            slice_end = min(batch.num_rows, end - batch_start)
+            sliced_batch = batch.slice(slice_start, slice_end - slice_start)
+
+            for j in range(sliced_batch.num_rows):
+                row = {
+                    col: sliced_batch[col][j].as_py()
+                    for col in sliced_batch.schema.names
+                }
+                rows.append(row)
+                rows_collected += 1
+                if rows_collected >= page_size:
+                    break
+
+            if rows_collected >= page_size:
+                break
 
     return JSONResponse(content={"rows": rows, "total": total_rows})
