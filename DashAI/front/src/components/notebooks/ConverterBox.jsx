@@ -50,7 +50,7 @@ export default function ConverterBox({ converter }) {
     // only start polling if the status is not Finished or Error
     const currentStatus = getConverterStatus(converterState.status);
     if (currentStatus !== "Finished" && currentStatus !== "Error") {
-      intervalId = setInterval(fetchConverterStatus, 2000); // polling every 2s
+      intervalId = setInterval(fetchConverterStatus, 1500); // polling every 1.5s
     }
 
     return () => clearInterval(intervalId);

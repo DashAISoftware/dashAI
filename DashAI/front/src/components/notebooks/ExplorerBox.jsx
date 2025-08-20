@@ -36,7 +36,7 @@ export default function ExplorerBox({ explorer, handleExplorerDetailsClick }) {
 
     const currentStatus = getExplorerStatus(explorerState.status);
     if (currentStatus !== "Finished" && currentStatus !== "Error") {
-      intervalId = setInterval(fetchExplorerStatus, 2000); // polling every 2s
+      intervalId = setInterval(fetchExplorerStatus, 1500); // polling every 1.5s
     }
 
     return () => clearInterval(intervalId);
