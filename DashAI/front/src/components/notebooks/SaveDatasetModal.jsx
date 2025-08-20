@@ -8,14 +8,10 @@ import {
   TextField,
   Box,
   Typography,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
   IconButton,
 } from "@mui/material";
-import { Close, Transform } from "@mui/icons-material";
-import { formatDate } from "../../pages/results/constants/formatDate";
+import { Close } from "@mui/icons-material";
+import ConverterHistoryList from "./ConverterHistoryList";
 
 export function SaveDatasetModal({
   open,
@@ -62,49 +58,7 @@ export function SaveDatasetModal({
                 No transformations applied.
               </Typography>
             ) : (
-              <List dense>
-                {appliedConverters.map((converter) => {
-                  const scope = converter.parameters?.scope;
-                  const scopeText = scope
-                    ? `Columns: ${
-                        scope.columns?.length ? scope.columns.join(", ") : "All"
-                      } | Rows: ${
-                        scope.rows?.length ? scope.rows.join(", ") : "All"
-                      }`
-                    : "";
-
-                  return (
-                    <ListItem
-                      key={converter.id}
-                      sx={{
-                        px: 0,
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          width: "100%",
-                        }}
-                      >
-                        <Transform
-                          sx={{ mr: 1, color: "#00BEBB", fontSize: 20 }}
-                        />
-                        <ListItemText
-                          primary={converter.converter}
-                          secondary={scopeText}
-                        />
-                        <Chip
-                          label={formatDate(converter.created)}
-                          size="small"
-                        />
-                      </Box>
-                    </ListItem>
-                  );
-                })}
-              </List>
+              <ConverterHistoryList converters={appliedConverters} />
             )}
           </Box>
         </Box>

@@ -1,34 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
   Box,
   Typography,
   IconButton,
 } from "@mui/material";
-import { Close, Transform } from "@mui/icons-material";
-import { getConvertersByNotebookId } from "../../api/notebook";
-import { formatDate } from "../../pages/results/constants/formatDate";
-import { useSnackbar } from "notistack";
+import { Close } from "@mui/icons-material";
+import ConverterHistoryList from "./ConverterHistoryList";
 
 export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
   if (!notebook) return null;
-
-  const { enqueueSnackbar } = useSnackbar();
-
-  const formatScope = (scope) => {
-    const cols = scope.columns?.length ? scope.columns.join(", ") : "All";
-    const rows = scope.rows?.length ? scope.rows.join(", ") : "All";
-    return `Columns: ${cols} | Rows: ${rows}`;
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
@@ -52,38 +37,7 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
               No transformations applied yet.
             </Typography>
           ) : (
-            <List>
-              {converters.map((converter, index) => {
-                const scopeText = converter.parameters?.scope
-                  ? formatScope(converter.parameters.scope)
-                  : "";
-                return (
-                  <ListItem
-                    key={converter.id}
-                    divider={index < converters.length - 1}
-                    sx={{ flexDirection: "column", alignItems: "flex-start" }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
-                      }}
-                    >
-                      <Transform sx={{ mr: 2, color: "#00BEBB" }} />
-                      <ListItemText
-                        primary={converter.converter}
-                        secondary={scopeText}
-                      />
-                      <Chip
-                        label={formatDate(converter.created)}
-                        size="small"
-                      />
-                    </Box>
-                  </ListItem>
-                );
-              })}
-            </List>
+            <ConverterHistoryList converters={converters} />
           )}
         </Box>
       </DialogContent>
