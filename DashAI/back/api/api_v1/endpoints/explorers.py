@@ -79,7 +79,7 @@ def validate_explorer_params(
 
     if validate_columns:
         # validate columns against dataset columns
-        dataset_path = f"{dataset.file_path}/dataset"
+        dataset_path = f"{notebook.file_path}/dataset"
         columns_spec = get_columns_spec(dataset_path)
 
         try:
