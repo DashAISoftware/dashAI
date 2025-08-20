@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Typography, TextField, Button } from "@mui/material";
+import { Typography, TextField, Button, Box } from "@mui/material";
 import { useFormik } from "formik";
 import CustomLayout from "../custom/CustomLayout";
 import DatasetAutocomplete from "./DatasetAutocomplete";
@@ -90,16 +90,18 @@ export default function UploadNotebookSteps({
         helperText={formik.errors.description}
         sx={{ mb: 2 }}
       />
-      <Button variant="outlined" onClick={backHome} sx={{ mr: 1 }}>
-        Back
-      </Button>
-      <Button
-        variant="contained"
-        disabled={!selectedDataset}
-        onClick={formik.handleSubmit}
-      >
-        Create Notebook
-      </Button>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+        <Button variant="outlined" onClick={backHome} sx={{ mr: 1 }}>
+          Back
+        </Button>
+        <Button
+          variant="contained"
+          disabled={!selectedDataset}
+          onClick={formik.handleSubmit}
+        >
+          Create Notebook
+        </Button>
+      </Box>
     </CustomLayout>
   );
 }
