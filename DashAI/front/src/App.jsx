@@ -15,7 +15,6 @@ import PipelinesPage from "./pages/pipelines/Pipelines";
 import NewPipeline from "./pages/pipelines/NewPipeline";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import PredictionPage from "./pages/predictions/PredictionPage";
-import Notebooks from "./pages/notebooks/Notebooks";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 
 function App() {
@@ -49,7 +48,6 @@ function App() {
             <Route path="details/:id" element={<PluginsDetails />} />
           </Route>
         </Route>
-        <Route path="/app/notebooks" element={<Notebooks />} />
       </Routes>
     </BrowserRouter>
   );
