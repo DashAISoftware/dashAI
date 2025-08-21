@@ -158,7 +158,7 @@ export default function DatasetPreviewNotebook({
           </Box>
         </AccordionSummary>
         <AccordionDetails>
-          <Box>
+          <Box sx={{ height: 320, width: "100%" }}>
             {" "}
             {/* Table */}
             <DatasetTable
@@ -166,6 +166,14 @@ export default function DatasetPreviewNotebook({
               deps={[notebook.file_path]}
               initialPageSize={5}
               density="compact"
+              initialState={{
+                pagination: {
+                  paginationModel: {
+                    pageSize: 5,
+                  },
+                },
+              }}
+              pageSizeOptions={[5]}
             />{" "}
           </Box>
         </AccordionDetails>

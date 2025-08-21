@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import {
   getExplorersByNotebookId,
@@ -57,6 +57,8 @@ export default function NotebookView({ notebook }) {
     useExplorersAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
+  const [listSize, setListSize] = useState(explorersAndConverters.length);
+  const listBoxRef = useRef(null);
 
   useEffect(() => {
     const fetchExplorersAndConverters = async () => {
@@ -100,6 +102,24 @@ export default function NotebookView({ notebook }) {
     );
   });
 
+  const scrollToBottom = () => {
+    if (!listBoxRef.current || explorersAndConverters.length === 0) return;
+
+    console.log("Scrolling to bottom", listSize);
+    listBoxRef.current.scrollToIndex({
+      index: listSize - 1,
+      align: "start",
+    });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [listSize]);
+
+  useEffect(() => {
+    setListSize(explorersAndConverters.length);
+  }, [explorersAndConverters]);
+
   return (
     <Box
       sx={{
@@ -122,7 +142,9 @@ export default function NotebookView({ notebook }) {
         </Box>
       ) : (
         <Virtuoso
+          ref={listBoxRef}
           style={{ height: "100%" }}
+          initialTopMostItemIndex={listSize - 1}
           data={explorersAndConverters}
           itemContent={(index, item) => (
             <RowItem
