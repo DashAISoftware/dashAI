@@ -4,7 +4,7 @@ import { Box, Typography, Chip, Stack } from "@mui/material";
 import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 
-const defaultColumns = [
+const columns = [
   {
     field: "id",
     headerName: "Index",
@@ -51,37 +51,24 @@ const defaultColumns = [
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
  * @param {Array} props.allowedDtypes - Array of allowed data types (optional)
  * @param {Array} props.restrictedDtypes - Array of restricted data types (optional)
- * @param {Array} props.validColumnIds - Optional explicit allowlist of selectable column ids
- * @param {Array} props.initialSelection - Initial selected column IDs (optional)
  * @param {Function} props.onSelectionChange - Callback when selection changes (selectedColumns) (optional)
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
- * @param {String} props.title - Title for the selection section (optional)
- * @param {String} props.description - Description text (optional)
- * @param {Array} props.gridColumns - Custom grid columns (optional)
- * @param {Object} props.gridProps - Additional DataGrid props (optional)
+
  */
 function ColumnSelectionTable({
   file_path,
   inputCardinality = {},
   allowedDtypes = [],
   restrictedDtypes = [],
-  validColumnIds = [],
-  initialSelection = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
-  title = "",
-  description = "",
-  gridColumns = defaultColumns,
-  gridProps = {},
 }) {
   const [rows, setRows] = useState([]);
-  const [rowSelectionModel, setRowSelectionModel] = useState(initialSelection);
-  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
-    console.log("Fetching dataset columns for file:", file_path);
     const fetchAllData = async () => {
       try {
         const types = await getDatasetTypesByFilePath(file_path);
@@ -100,9 +87,6 @@ function ColumnSelectionTable({
 
         setDatasetColumns(datasetColumns);
         setRows(datasetColumns);
-
-        console.log("Dataset columns:", datasetColumns);
-        console.log("Dataset types:", types);
       } catch (error) {
         console.error("Error fetching dataset info/types:", error);
       }
@@ -118,11 +102,7 @@ function ColumnSelectionTable({
   // Handle automatic column selection based on cardinality
   useEffect(() => {
     // Auto-select only once at start if no initial selection provided
-    if (
-      rows.length > 0 &&
-      rowSelectionModel.length === 0 &&
-      initialSelection.length === 0
-    ) {
+    if (rows.length > 0 && rowSelectionModel.length === 0) {
       const validIds = getValidColumnIds();
       let autoSelection = [];
 
@@ -150,29 +130,6 @@ function ColumnSelectionTable({
     }
   }, [rows.length]);
 
-  // Effect to update selection data and validation whenever rowSelectionModel changes
-  useEffect(() => {
-    if (rows.length > 0) {
-      const selectedColumnsData = rowSelectionModel
-        .map((selectedId, index) => {
-          const row = rows.find((r) => r.id === selectedId);
-          return row
-            ? {
-                ...row,
-                order: index + 1,
-              }
-            : null;
-        })
-        .filter(Boolean);
-
-      setSelectedColumns(selectedColumnsData);
-      onSelectionChange(selectedColumnsData);
-
-      const isValid = isValidSelection(rowSelectionModel);
-      onValidationChange(isValid);
-    }
-  }, [rowSelectionModel, rows.length]);
-
   // Validate current selection
   const isValidSelection = useCallback(
     (selection) => {
@@ -195,18 +152,9 @@ function ColumnSelectionTable({
     },
     [inputCardinality],
   );
-
-  // Get valid column IDs based on data type restrictions and explicit valid ids
   const getValidColumnIds = useCallback(() => {
-    const validIdSet =
-      validColumnIds && validColumnIds.length > 0
-        ? new Set(validColumnIds)
-        : null;
     return rows
       .filter((row) => {
-        if (validIdSet && !validIdSet.has(row.id)) {
-          return false;
-        }
         if (allowedDtypes.length > 0 && !allowedDtypes.includes("*")) {
           if (!allowedDtypes.includes(row.dataType)) {
             return false;
@@ -220,24 +168,7 @@ function ColumnSelectionTable({
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, restrictedDtypes, validColumnIds]);
-
-  // Handle selection changes
-  const handleSelection = (newSelection) => {
-    let selection = newSelection;
-
-    // Enforce exact selection limit
-    if (inputCardinality.exact && selection.length > inputCardinality.exact) {
-      selection = selection.slice(0, inputCardinality.exact);
-    }
-
-    // Enforce max selection limit
-    if (inputCardinality.max && selection.length > inputCardinality.max) {
-      selection = selection.slice(0, inputCardinality.max);
-    }
-
-    setRowSelectionModel(selection);
-  };
+  }, [rows, allowedDtypes, restrictedDtypes]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -272,20 +203,45 @@ function ColumnSelectionTable({
     [getValidColumnIds, rowSelectionModel, inputCardinality],
   );
 
+  // Effect to update selection data and validation whenever rowSelectionModel changes
+  useEffect(() => {
+    if (rows.length > 0) {
+      const selectedColumnsData = rowSelectionModel
+        .map((selectedId, index) => {
+          const row = rows.find((r) => r.id === selectedId);
+          return row
+            ? {
+                ...row,
+                order: index + 1,
+              }
+            : null;
+        })
+        .filter(Boolean);
+
+      onSelectionChange(selectedColumnsData);
+
+      const isValid = isValidSelection(rowSelectionModel);
+      onValidationChange(isValid);
+    }
+  }, [rowSelectionModel, rows.length]);
+
+  const handleSelection = (selection) => {
+    if (selection.length > inputCardinality.max) {
+      selection = selection.slice(0, inputCardinality.max);
+    }
+
+    // update order for the rows
+    let newRows = rows.map((row) => {
+      const order = selection.indexOf(row.id) + 1;
+      return { ...row, order };
+    });
+
+    setRows(newRows);
+    setRowSelectionModel(selection);
+  };
+
   return (
     <Box>
-      {title && (
-        <Typography variant="body1" sx={{ mb: 2, whiteSpace: "pre-line" }}>
-          {title}
-        </Typography>
-      )}
-
-      {description && (
-        <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
-          {description}
-        </Typography>
-      )}
-
       {/* Cardinality information */}
       <Stack
         direction="row"
@@ -350,7 +306,7 @@ function ColumnSelectionTable({
         key={`${datasetColumns.length}-${inputCardinality.exact}-${inputCardinality.max}`}
         autoHeight
         rows={rows}
-        columns={gridColumns}
+        columns={columns}
         initialState={{
           pagination: {
             paginationModel: {
@@ -388,7 +344,6 @@ function ColumnSelectionTable({
             </Box>
           ),
         }}
-        {...gridProps}
       />
     </Box>
   );
@@ -403,14 +358,8 @@ ColumnSelectionTable.propTypes = {
   }),
   allowedDtypes: PropTypes.array,
   restrictedDtypes: PropTypes.array,
-  validColumnIds: PropTypes.array,
-  initialSelection: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
-  title: PropTypes.string,
-  description: PropTypes.string,
-  gridColumns: PropTypes.array,
-  gridProps: PropTypes.object,
 };
 
 export default ColumnSelectionTable;

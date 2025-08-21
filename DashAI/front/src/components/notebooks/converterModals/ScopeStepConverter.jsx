@@ -48,7 +48,6 @@ export default function ScopeStepConverter({
         );
 
         setDatasetColumns(datasetColumns);
-        console.log("Dataset columns:", datasetColumns);
       } catch (error) {
         console.error("Error fetching dataset info/types:", error);
       }
@@ -95,7 +94,6 @@ export default function ScopeStepConverter({
             setColumns(selectedOrders);
           }}
           onValidationChange={() => {}}
-          description=""
         />
         <Typography variant="body2" color="text.secondary">
           Here you will configure which rows to apply the converter to.

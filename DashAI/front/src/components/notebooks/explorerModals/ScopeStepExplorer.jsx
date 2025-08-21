@@ -39,9 +39,7 @@ export default function ScopeStepExplorer({
           allowedDtypes={allowedDtypes}
           restrictedDtypes={restrictedDtypes}
           onSelectionChange={(selected) => setScopeColumns(selected)}
-          onValidationChange={setIsSelectionValid}
-          title=""
-          description=""
+          onValidationChange={(isValid) => setIsSelectionValid(isValid)}
         />
       </Box>
 
