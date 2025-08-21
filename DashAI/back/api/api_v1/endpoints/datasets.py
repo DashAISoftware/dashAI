@@ -1,14 +1,16 @@
+import io
 import logging
 import os
 import shutil
 from typing import Any, Dict
 
 import pyarrow as pa
+import pyarrow.csv as csv
 import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
@@ -645,3 +647,161 @@ async def get_dataset_file(
                 break
 
     return JSONResponse(content={"rows": rows, "total": total_rows})
+
+
+@router.get("/export/csv")
+async def export_dataset_as_csv(
+    path: str,
+):
+    """Export the complete dataset as CSV file.
+
+    Parameters
+    ----------
+    path : str
+        The folder path of the dataset to export.
+
+    Returns
+    -------
+    StreamingResponse
+        A streaming response with the complete dataset in CSV format.
+    """
+    try:
+        arrow_file_path = f"{path}/dataset/data.arrow"
+
+        if not os.path.exists(arrow_file_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Dataset file not found",
+            )
+
+        # Read the complete Arrow file
+        with pa.memory_map(arrow_file_path, "r") as source:
+            reader = ipc.RecordBatchFileReader(source)
+
+            # Read all batches and combine them into a single table
+            batches = []
+            for i in range(reader.num_record_batches):
+                batch = reader.get_batch(i)
+                batches.append(batch)
+
+            if not batches:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No data found in dataset",
+                )
+
+            table = pa.Table.from_batches(batches)
+
+            # Convert to CSV
+            output = io.BytesIO()
+            csv.write_csv(table, output)
+            output.seek(0)
+
+            # Get dataset name from path for filename
+            dataset_name = os.path.basename(path.rstrip("/"))
+            filename = f"{dataset_name}.csv"
+
+            return StreamingResponse(
+                io.BytesIO(output.getvalue()),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
+            )
+
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Dataset file not found",
+        ) from e
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error exporting dataset to CSV",
+        ) from e
+
+
+@router.get("/{dataset_id}/export/csv")
+@inject
+async def export_dataset_csv_by_id(
+    dataset_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Export the entire dataset as a CSV file by dataset ID.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to export.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    StreamingResponse
+        A streaming response that provides the CSV file content.
+    """
+    logger.debug("Exporting dataset with id %s to CSV", dataset_id)
+    with session_factory() as db:
+        try:
+            dataset = db.get(Dataset, dataset_id)
+
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found",
+                )
+
+            file_path = dataset.file_path
+            arrow_file_path = f"{file_path}/dataset/data.arrow"
+
+            if not os.path.exists(arrow_file_path):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset file not found",
+                )
+
+            # Read the complete Arrow file
+            with pa.memory_map(arrow_file_path, "r") as source:
+                reader = ipc.RecordBatchFileReader(source)
+
+                # Read all batches and combine them into a single table
+                batches = []
+                for i in range(reader.num_record_batches):
+                    batch = reader.get_batch(i)
+                    batches.append(batch)
+
+                if not batches:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="No data found in dataset",
+                    )
+
+                table = pa.Table.from_batches(batches)
+
+                # Convert to CSV
+                output = io.BytesIO()
+                csv.write_csv(table, output)
+                output.seek(0)
+
+                # Use dataset name for filename
+                filename = f"{dataset.name}.csv"
+
+                return StreamingResponse(
+                    io.BytesIO(output.getvalue()),
+                    media_type="text/csv",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"},
+                )
+
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error exporting dataset as CSV",
+            ) from e
