@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import SideBar from "../threeSectionLayout/SideBar";
-import { Box, Paper, Typography, Tabs, Tab } from "@mui/material";
+import { Box, Typography, Tabs, Tab } from "@mui/material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -8,7 +8,7 @@ import DescriptionPanel from "./DescriptionPanel";
 import ExplorerList from "./ExplorerList";
 import ConverterList from "./ConverterList";
 import { getComponents } from "../../api/component";
-import { getDatasetFile } from "../../api/datasets";
+import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 
 export default function RightBar({ notebook }) {
@@ -44,44 +44,38 @@ export default function RightBar({ notebook }) {
 
   // Fetch dataset columns from notebook file
   useEffect(() => {
-    const fetchDatasetColumns = async () => {
-      if (notebook?.file_path) {
-        try {
-          // Get a small sample to extract column info
-          const datasetFile = await getDatasetFile(notebook.file_path, 0, 1);
+    let isMounted = true;
+    const fetchAllData = async () => {
+      try {
+        const types = await getDatasetTypesByFilePath(notebook.file_path);
 
-          if (datasetFile.rows && datasetFile.rows.length > 0) {
-            const firstRow = datasetFile.rows[0];
-            const columnNames = Object.keys(firstRow);
+        if (!isMounted) return;
 
-            const cols = columnNames.map((columnName, index) => {
-              const value = firstRow[columnName];
-              let dataType = "unknown";
+        const datasetColumns = Object.entries(types).map(
+          ([columnName, typeInfo], idx) => ({
+            id: idx,
+            columnName: columnName,
+            valueType: typeInfo.type || "Unknown",
+            dataType: typeInfo.dtype || "Unknown",
+            order: idx,
+          }),
+        );
 
-              // Infer types from the sample data
-              if (typeof value === "number") {
-                dataType = Number.isInteger(value) ? "int64" : "float64";
-              } else if (typeof value === "string") {
-                dataType = "object";
-              } else if (typeof value === "boolean") {
-                dataType = "bool";
-              }
-
-              return {
-                id: index,
-                columnName: columnName,
-                dataType: dataType,
-              };
-            });
-            setDatasetColumns(cols);
-          }
-        } catch (error) {
-          console.error("Error fetching dataset columns:", error);
-        }
+        setDatasetColumns(datasetColumns);
+      } catch (error) {
+        console.error("Error fetching dataset info/types:", error);
       }
     };
 
-    fetchDatasetColumns();
+    if (notebook?.file_path) {
+      fetchAllData();
+    } else {
+      setDatasetColumns([]);
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [notebook?.file_path]);
 
   // Validate explorers based on dataset columns
@@ -123,7 +117,7 @@ export default function RightBar({ notebook }) {
         }
         tooltip += `\n\nRequires exactly ${
           inputCardinality.exact
-        } valid column${inputCardinality.exact === 1 ? "" : "s"}, but only ${
+        } valid column${inputCardinality.exact === 1 ? "" : "s"}, but ${
           validColumns.length
         } available.`;
       }
@@ -143,7 +137,17 @@ export default function RightBar({ notebook }) {
       }
     }
 
-    if (!allowedDtypes.includes("*")) {
+    // Check if there are no valid columns at all
+    if (
+      validColumns.length === 0 &&
+      allowedDtypes.length > 0 &&
+      !allowedDtypes.includes("*")
+    ) {
+      disabled = true;
+      tooltip += `\n\nThis dataset does not have any columns with the required data types.`;
+    }
+
+    if (!allowedDtypes.includes("*") && allowedDtypes.length > 0) {
       tooltip += `\n\nAccepts: ${allowedDtypes.join(", ")}`;
     }
 
