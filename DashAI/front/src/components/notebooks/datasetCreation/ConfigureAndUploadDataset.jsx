@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Grid, Paper, Box, Button } from "@mui/material";
-import Upload from "./Upload"
+import Upload from "./Upload";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
