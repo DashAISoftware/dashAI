@@ -13,9 +13,12 @@ import { getConverterStatus } from "../../utils/converterStatus";
 import { getComponentById } from "../../api/component";
 import { getConverterById } from "../../api/converter";
 
-export default function ConverterBox({ converter, height = "320px" }) {
+export default function ConverterBox({
+  converter,
+  height = "320px",
+  onStatusChange,
+}) {
   const [converterComponent, setConverterComponent] = useState({});
-  const [converterState, setConverterState] = useState(converter);
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -28,7 +31,7 @@ export default function ConverterBox({ converter, height = "320px" }) {
     };
 
     fetchConverterComponent();
-  }, []);
+  }, [converter.converter]);
 
   useEffect(() => {
     let intervalId;
@@ -36,33 +39,36 @@ export default function ConverterBox({ converter, height = "320px" }) {
     const fetchConverterStatus = async () => {
       try {
         const updatedConverter = await getConverterById(converter.id);
-        setConverterState(updatedConverter);
+
+        // 🔑 notificar al padre si cambia el estado
+        if (updatedConverter.status !== converter.status) {
+          onStatusChange(updatedConverter.id, updatedConverter.status);
+        }
 
         const status = getConverterStatus(updatedConverter.status);
         if (status === "Finished" || status === "Error") {
-          clearInterval(intervalId); // stop polling
+          clearInterval(intervalId);
         }
       } catch (error) {
         console.error("Failed to fetch converter status:", error);
-        clearInterval(intervalId); // stop polling on error
+        clearInterval(intervalId);
       }
     };
 
-    // only start polling if the status is not Finished or Error
-    const currentStatus = getConverterStatus(converterState.status);
+    const currentStatus = getConverterStatus(converter.status);
     if (currentStatus !== "Finished" && currentStatus !== "Error") {
-      intervalId = setInterval(fetchConverterStatus, 1500); // polling every 1.5s
+      intervalId = setInterval(fetchConverterStatus, 1500);
     }
 
     return () => clearInterval(intervalId);
-  }, [converter.id, converterState.status]);
+  }, [converter.id, converter.status, onStatusChange]);
 
-  const statusLabel = getConverterStatus(converterState.status);
+  const statusLabel = getConverterStatus(converter.status);
 
   return (
     <Card
       key={converter.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height: height }}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height }}
     >
       <CardContent
         sx={{
@@ -82,7 +88,7 @@ export default function ConverterBox({ converter, height = "320px" }) {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{converterState.converter}</Typography>
+            <Typography variant="h6">{converter.converter}</Typography>
           </Box>
           <Chip
             label={statusLabel}
@@ -109,29 +115,29 @@ export default function ConverterBox({ converter, height = "320px" }) {
             </Typography>
 
             {/* Parámetros en tabla */}
-            {converterState.parameters && (
+            {converter.parameters && (
               <DataGrid
                 rows={[
                   {
                     id: 2,
                     key: "Target Index",
-                    value: converterState.parameters.target_index,
+                    value: converter.parameters.target_index,
                   },
                   {
                     id: 3,
                     key: "Scope - Columns",
                     value:
-                      converterState.parameters.scope?.columns?.length === 0
+                      converter.parameters.scope?.columns?.length === 0
                         ? "All"
-                        : converterState.parameters.scope.columns.join(", "),
+                        : converter.parameters.scope.columns.join(", "),
                   },
                   {
                     id: 4,
                     key: "Scope - Rows",
                     value:
-                      converterState.parameters.scope.rows.length === 0
+                      converter.parameters.scope.rows.length === 0
                         ? "All"
-                        : converterState.parameters.scope.rows.join(", "),
+                        : converter.parameters.scope.rows.join(", "),
                   },
                 ]}
                 columns={[

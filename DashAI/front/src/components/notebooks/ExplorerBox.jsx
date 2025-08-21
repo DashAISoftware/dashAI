@@ -16,42 +16,45 @@ import { getExplorerById } from "../../api/explorer";
 export default function ExplorerBox({
   explorer,
   handleExplorerDetailsClick,
+  onStatusChange,
   height = "320px",
 }) {
-  const [explorerState, setExplorerState] = useState(explorer);
-
   useEffect(() => {
     let intervalId;
 
     const fetchExplorerStatus = async () => {
       try {
         const updatedExplorer = await getExplorerById(explorer.id);
-        setExplorerState(updatedExplorer);
+
+        // 🔑 Notificar al padre si cambia el estado
+        if (updatedExplorer.status !== explorer.status) {
+          onStatusChange(updatedExplorer.id, updatedExplorer.status);
+        }
 
         const status = getExplorerStatus(updatedExplorer.status);
         if (status === "Finished" || status === "Error") {
-          clearInterval(intervalId); // stop polling
+          clearInterval(intervalId);
         }
       } catch (error) {
         console.error("Failed to fetch explorer status:", error);
-        clearInterval(intervalId); // stop polling on error
+        clearInterval(intervalId);
       }
     };
 
-    const currentStatus = getExplorerStatus(explorerState.status);
+    const currentStatus = getExplorerStatus(explorer.status);
     if (currentStatus !== "Finished" && currentStatus !== "Error") {
-      intervalId = setInterval(fetchExplorerStatus, 1500); // polling every 1.5s
+      intervalId = setInterval(fetchExplorerStatus, 1500);
     }
 
     return () => clearInterval(intervalId);
-  }, [explorer.id, explorerState.status]);
+  }, [explorer.id, explorer.status, onStatusChange]);
 
-  const statusLabel = getExplorerStatus(explorerState.status);
+  const statusLabel = getExplorerStatus(explorer.status);
 
   return (
     <Card
       key={explorer.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height: height }}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height }}
     >
       <CardContent
         sx={{
@@ -71,9 +74,7 @@ export default function ExplorerBox({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">
-              {explorerState.exploration_type}
-            </Typography>
+            <Typography variant="h6">{explorer.exploration_type}</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
@@ -84,7 +85,7 @@ export default function ExplorerBox({
             {statusLabel === "Finished" && (
               <IconButton
                 size="small"
-                onClick={() => handleExplorerDetailsClick(explorerState)}
+                onClick={() => handleExplorerDetailsClick(explorer)}
                 sx={{
                   bgcolor: "#00BEBB",
                   color: "white",
@@ -110,7 +111,7 @@ export default function ExplorerBox({
               justifyContent: "center",
             }}
           >
-            <Results id={explorerState.id} minimalist height={300} />
+            <Results id={explorer.id} minimalist height={300} />
           </Box>
         ) : statusLabel === "Error" ? (
           <Box

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import React, { useState, useEffect, useCallback } from "react";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import {
   getExplorersByNotebookId,
   getConvertersByNotebookId,
@@ -8,25 +8,34 @@ import ExplorerBox from "./ExplorerBox";
 import ConverterBox from "./ConverterBox";
 import ExplorerDetailsModal from "./ExplorerDetailsModal";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
-
-import { FixedSizeList as List } from "react-window";
-import AutoSizer from "react-virtualized-auto-sizer";
+import { Virtuoso } from "react-virtuoso";
 
 const RowItem = React.memo(function RowItem({
   item,
   handleExplorerDetailsClick,
-  style,
+  handleStatusChange,
 }) {
   return (
-    <Box style={style}>
+    <Box
+      sx={{
+        my: 2,
+      }}
+    >
       {item.type === "explorer" ? (
         <ExplorerBox
           explorer={item}
           handleExplorerDetailsClick={handleExplorerDetailsClick}
-          height={320}
+          onStatusChange={(id, newStatus) =>
+            handleStatusChange(id, newStatus, "explorer")
+          }
         />
       ) : item.type === "converter" ? (
-        <ConverterBox converter={item} height={320} />
+        <ConverterBox
+          converter={item}
+          onStatusChange={(id, newStatus) =>
+            handleStatusChange(id, newStatus, "converter")
+          }
+        />
       ) : null}
     </Box>
   );
@@ -36,11 +45,7 @@ export default function NotebookView({ notebook }) {
   if (!notebook) {
     return (
       <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
         <CircularProgress sx={{ color: "#00BEBB" }} />
         <Typography>Loading...</Typography>
@@ -52,13 +57,6 @@ export default function NotebookView({ notebook }) {
     useExplorersAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
-  const listRef = useRef(null);
-
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollToItem(explorersAndConverters.length - 1);
-    }
-  }, [explorersAndConverters]);
 
   useEffect(() => {
     const fetchExplorersAndConverters = async () => {
@@ -92,8 +90,24 @@ export default function NotebookView({ notebook }) {
     setOpenExplorerDetails(true);
   }, []);
 
+  const handleStatusChange = useCallback((id, newStatus, type) => {
+    setExplorersAndConverters((prev) =>
+      prev.map((item) =>
+        item.id === id && item.type === type
+          ? { ...item, status: newStatus }
+          : item,
+      ),
+    );
+  });
+
   return (
-    <Box sx={{ height: "100%" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+      }}
+    >
       {explorersAndConverters.length === 0 ? (
         <Box
           sx={{
@@ -107,27 +121,18 @@ export default function NotebookView({ notebook }) {
           </Typography>
         </Box>
       ) : (
-        <AutoSizer>
-          {({ height, width }) => (
-            <List
-              ref={listRef}
-              height={height}
-              itemCount={explorersAndConverters.length}
-              itemSize={340}
-              width={width}
-            >
-              {({ index, style }) => (
-                <RowItem
-                  item={explorersAndConverters[index]}
-                  handleExplorerDetailsClick={handleExplorerDetailsClick}
-                  style={style}
-                />
-              )}
-            </List>
+        <Virtuoso
+          style={{ height: "100%" }}
+          data={explorersAndConverters}
+          itemContent={(index, item) => (
+            <RowItem
+              item={item}
+              handleExplorerDetailsClick={handleExplorerDetailsClick}
+              handleStatusChange={handleStatusChange}
+            />
           )}
-        </AutoSizer>
+        />
       )}
-
       <ExplorerDetailsModal
         open={openExplorerDetails}
         onClose={() => {
