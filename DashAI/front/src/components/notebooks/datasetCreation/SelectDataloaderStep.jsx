@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
-import { getComponents as getComponentsRequest } from "../../../api/component";
-import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
-import { Button, Grid, Box } from "@mui/material";
+import { getComponents as getComponentsRequest } from "../../api/component";
+import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
+import { DialogContentText, Grid } from "@mui/material";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 
 /**
  * This component renders a list of dataloaders and allows the user to select one.
@@ -83,24 +84,17 @@ export default function SelectDataloaderStep({
           />
         )}
       </Grid>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          mt: 2,
-        }}
-      >
-        <Button variant="outlined" onClick={goToPrevStep} sx={{ mr: 1 }}>
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          onClick={goToNextStep}
-          disabled={!selectedDataloader.name}
-        >
-          Next
-        </Button>
-      </Box>
+      <Grid item sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+        <FormSchemaButtonGroup
+          onCancel={goToPrevStep}
+          onFormSubmit={goToNextStep}
+          formik={{
+            errors: selectedDataloader.name ? {} : { dataloader: "Required" },
+          }}
+          saveButtonText="Next"
+          backButtonText="Back"
+        />
+      </Grid>
     </Grid>
   );
 }

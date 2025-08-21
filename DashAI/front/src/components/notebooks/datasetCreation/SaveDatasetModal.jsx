@@ -3,15 +3,14 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
   TextField,
   Box,
   Typography,
   IconButton,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import ConverterHistoryList from "../converter/ConverterHistoryList";
+import ConverterHistoryList from "./ConverterHistoryList";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 
 export function SaveDatasetModal({
   open,
@@ -61,18 +60,19 @@ export function SaveDatasetModal({
               <ConverterHistoryList converters={appliedConverters} />
             )}
           </Box>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+            <FormSchemaButtonGroup
+              onCancel={onClose}
+              onFormSubmit={handleSubmit}
+              formik={{
+                errors: name.trim() ? {} : { name: "Name is required" },
+              }}
+              saveButtonText="Save Dataset"
+              backButtonText="Cancel"
+            />
+          </Box>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!name.trim()}
-        >
-          Save Dataset
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

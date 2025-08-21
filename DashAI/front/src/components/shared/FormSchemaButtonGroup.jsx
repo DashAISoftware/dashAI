@@ -7,13 +7,14 @@ function FormSchemaButtonGroup({
   autoSave,
   formik,
   error,
-  saveButtonText = "Save", // New prop with default value
+  saveButtonText = "Save",
+  backButtonText = "Back",
 }) {
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
       {onCancel && (
         <Button variant="outlined" onClick={onCancel}>
-          Back
+          {backButtonText}
         </Button>
       )}
       {!autoSave && (

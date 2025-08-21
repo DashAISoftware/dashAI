@@ -3,8 +3,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  Button,
   TextField,
   Box,
   Typography,
@@ -12,8 +10,9 @@ import {
   Chip,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { getDatasetInfo } from "../../../api/datasets";
-import { formatDate } from "../../../pages/results/constants/formatDate";
+import { getDatasetInfo } from "../../api/datasets";
+import { formatDate } from "../../pages/results/constants/formatDate";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 
 export function CreateNotebookModal({
   open,
@@ -156,21 +155,17 @@ export function CreateNotebookModal({
             placeholder="Describe what this notebook will be used for (optional)"
             sx={{ mb: 2 }}
           />
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+            <FormSchemaButtonGroup
+              onCancel={handleClose}
+              onFormSubmit={handleSubmit}
+              formik={{ errors: {} }} // No validation errors for this modal
+              saveButtonText="Create Notebook"
+              backButtonText="Cancel"
+            />
+          </Box>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          sx={{
-            bgcolor: "#00BEBB",
-            "&:hover": { bgcolor: "#008582" },
-          }}
-        >
-          Create Notebook
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }

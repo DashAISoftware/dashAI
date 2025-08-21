@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Grid, Paper, Box, Button } from "@mui/material";
-import Upload from "./Upload";
-import { getComponents as getComponentsRequest } from "../../../api/component";
+import { Grid, Paper } from "@mui/material";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
+import Upload from "../datasets/Upload";
+import { getComponents as getComponentsRequest } from "../../api/component";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
 import {
@@ -151,24 +152,15 @@ export default function ConfigureAndUploadDataset({
           )}
         </Grid>
       </Grid>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          mt: 2,
+      <FormSchemaButtonGroup
+        onCancel={goToPrevStep}
+        onFormSubmit={handleSubmitNewDataset}
+        formik={{
+          errors: nextEnabled ? {} : { dataset: "Required fields missing" },
         }}
-      >
-        <Button variant="outlined" onClick={goToPrevStep} sx={{ mr: 1 }}>
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          disabled={!nextEnabled}
-          onClick={() => handleSubmitNewDataset()}
-        >
-          Upload
-        </Button>
-      </Box>
+        saveButtonText="Upload"
+        backButtonText="Back"
+      />
     </Grid>
   );
 }
