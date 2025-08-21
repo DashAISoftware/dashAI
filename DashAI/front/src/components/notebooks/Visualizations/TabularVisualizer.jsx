@@ -36,6 +36,7 @@ function TabularVisualizer({
             },
           },
         },
+        pageSizeOptions: [4],
       }
     : {
         autoHeight: true,
