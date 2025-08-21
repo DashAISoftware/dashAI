@@ -144,7 +144,7 @@ export default function NotebookView({ notebook }) {
         <Virtuoso
           ref={listBoxRef}
           style={{ height: "100%" }}
-          initialTopMostItemIndex={listSize - 1}
+          initialTopMostItemIndex={listSize > 1 ? listSize - 1 : 0}
           data={explorersAndConverters}
           itemContent={(index, item) => (
             <RowItem
