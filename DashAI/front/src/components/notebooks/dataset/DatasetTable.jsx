@@ -10,7 +10,7 @@ import {
   gridFilteredSortedRowIdsSelector,
   gridVisibleColumnFieldsSelector,
 } from "@mui/x-data-grid";
-import { Button } from "@mui/material";
+import { Button, Menu, MenuItem } from "@mui/material";
 import { Download } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
 import { exportDatasetCsvByPath } from "../../api/datasets";
@@ -95,7 +95,18 @@ export default function DatasetTable({
 
   // Custom CSV Export Button
   function CsvExportButton() {
-    const handleExport = async () => {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+
+    const handleClick = (event) => {
+      setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    const handleExportCsv = async () => {
       try {
         if (datasetPath) {
           // Usar nuestro endpoint personalizado
@@ -132,13 +143,38 @@ export default function DatasetTable({
           delimiter: ",",
           utf8WithBom: true,
         });
+      } finally {
+        handleClose();
       }
     };
 
     return (
-      <Button size="small" startIcon={<Download />} onClick={handleExport}>
-        Export CSV
-      </Button>
+      <>
+        <Button
+          size="small"
+          startIcon={<Download />}
+          onClick={handleClick}
+          aria-controls={open ? "export-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? "true" : undefined}
+        >
+          Export
+        </Button>
+        <Menu
+          id="export-menu"
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          MenuListProps={{
+            "aria-labelledby": "export-button",
+          }}
+        >
+          <MenuItem onClick={handleExportCsv}>
+            <Download sx={{ mr: 1, fontSize: 16 }} />
+            Download as CSV
+          </MenuItem>
+        </Menu>
+      </>
     );
   }
 
