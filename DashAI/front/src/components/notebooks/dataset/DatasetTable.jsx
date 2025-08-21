@@ -1,7 +1,19 @@
 // src/components/common/ServerDataGrid.jsx
 import { useEffect, useMemo, useState } from "react";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridToolbarContainer,
+  GridToolbarColumnsButton,
+  GridToolbarFilterButton,
+  GridToolbarDensitySelector,
+  useGridApiContext,
+  gridFilteredSortedRowIdsSelector,
+  gridVisibleColumnFieldsSelector,
+} from "@mui/x-data-grid";
+import { Button } from "@mui/material";
+import { Download } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
+import { exportDatasetCsvByPath } from "../../api/datasets";
 
 /**
  * Props:
@@ -11,6 +23,7 @@ import { LinearProgress } from "@mui/material";
  * - deps?: any[] (optional)
  * - autoHeight?: boolean (default true)
  * - pageSizeOptions?: number[] (default [5, 10, 25])
+ * - datasetPath?: string (optional) - Path to dataset for CSV export
  */
 export default function DatasetTable({
   fetchPage,
@@ -20,6 +33,7 @@ export default function DatasetTable({
   autoHeight = true,
   density = "compact",
   pageSizeOptions = [5, 10, 25],
+  datasetPath, // Nueva prop para la ruta del dataset
   ...props
 }) {
   const [rows, setRows] = useState([]);
@@ -79,6 +93,67 @@ export default function DatasetTable({
       }));
   }, [rows, columnsProp]);
 
+  // Custom CSV Export Button
+  function CsvExportButton() {
+    const handleExport = async () => {
+      try {
+        if (datasetPath) {
+          // Usar nuestro endpoint personalizado
+          const blob = await exportDatasetCsvByPath(datasetPath);
+
+          // Crear URL temporal y descargar
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+
+          // Extraer nombre del dataset desde la ruta
+          const datasetName = datasetPath.split("/").pop() || "dataset";
+          link.download = `${datasetName}.csv`;
+
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } else {
+          // Fallback al método original del DataGrid
+          const apiRef = useGridApiContext();
+          apiRef.current.exportDataAsCsv({
+            fileName: "dataset-export",
+            delimiter: ",",
+            utf8WithBom: true,
+          });
+        }
+      } catch (error) {
+        console.error("Error exporting CSV:", error);
+        // Fallback al método original en caso de error
+        const apiRef = useGridApiContext();
+        apiRef.current.exportDataAsCsv({
+          fileName: "dataset-export",
+          delimiter: ",",
+          utf8WithBom: true,
+        });
+      }
+    };
+
+    return (
+      <Button size="small" startIcon={<Download />} onClick={handleExport}>
+        Export CSV
+      </Button>
+    );
+  }
+
+  // Custom toolbar with CSV-only export
+  function CustomToolbar() {
+    return (
+      <GridToolbarContainer>
+        <GridToolbarColumnsButton />
+        <GridToolbarFilterButton />
+        <GridToolbarDensitySelector />
+        <CsvExportButton />
+      </GridToolbarContainer>
+    );
+  }
+
   return (
     <DataGrid
       rows={rows}
@@ -93,7 +168,7 @@ export default function DatasetTable({
       pageSizeOptions={pageSizeOptions}
       density={density}
       slots={{
-        toolbar: GridToolbar,
+        toolbar: CustomToolbar,
         loadingOverlay: LinearProgress,
       }}
       {...props}

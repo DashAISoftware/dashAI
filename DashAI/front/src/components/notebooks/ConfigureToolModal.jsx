@@ -147,6 +147,7 @@ export default function ConfigureToolModal({
               disableColumnFilter
               disableColumnSelector
               disableDensitySelector
+              datasetPath={notebook.file_path}
             />
           )}
         </Box>

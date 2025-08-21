@@ -162,6 +162,7 @@ export default function DatasetPreviewNotebook({
               deps={[notebook.file_path]}
               initialPageSize={5}
               density="compact"
+              datasetPath={notebook.file_path}
               initialState={{
                 pagination: {
                   paginationModel: {

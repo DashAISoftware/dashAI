@@ -81,3 +81,18 @@ export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
   });
   return response.data;
 };
+
+export const exportDatasetCsvById = async (id: number): Promise<Blob> => {
+  const response = await api.get(`${datasetEndpoint}/${id}/export/csv`, {
+    responseType: "blob",
+  });
+  return response.data;
+};
+
+export const exportDatasetCsvByPath = async (path: string): Promise<Blob> => {
+  const response = await api.get(`${datasetEndpoint}/export/csv`, {
+    params: { path },
+    responseType: "blob",
+  });
+  return response.data;
+};
