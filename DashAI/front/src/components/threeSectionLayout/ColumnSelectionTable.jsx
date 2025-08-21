@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Chip, Stack } from "@mui/material";
 import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
+import { getDatasetTypesByFilePath } from "../../api/datasets";
 
 const defaultColumns = [
   {
@@ -46,7 +47,7 @@ const defaultColumns = [
  * - Any component requiring column selection with constraints
  *
  * @param {Object} props
- * @param {Array} props.datasetColumns - Array of available columns
+ * @param {Array} props.file_path - String path to the dataset file
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
  * @param {Array} props.allowedDtypes - Array of allowed data types (optional)
  * @param {Array} props.restrictedDtypes - Array of restricted data types (optional)
@@ -60,7 +61,7 @@ const defaultColumns = [
  * @param {Object} props.gridProps - Additional DataGrid props (optional)
  */
 function ColumnSelectionTable({
-  datasetColumns = [],
+  file_path,
   inputCardinality = {},
   allowedDtypes = [],
   restrictedDtypes = [],
@@ -76,20 +77,43 @@ function ColumnSelectionTable({
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState(initialSelection);
   const [selectedColumns, setSelectedColumns] = useState([]);
+  const [datasetColumns, setDatasetColumns] = useState([]);
 
-  // Transform dataset columns to grid rows
   useEffect(() => {
-    if (datasetColumns.length > 0) {
-      const gridRows = datasetColumns.map((column, index) => ({
-        id: column.id !== undefined ? column.id : index,
-        columnName: column.columnName || column.name,
-        valueType: column.valueType || "Unknown",
-        dataType: column.dataType || "Unknown",
-        order: 0,
-      }));
-      setRows(gridRows);
-    }
-  }, [datasetColumns]);
+    let isMounted = true;
+    console.log("Fetching dataset columns for file:", file_path);
+    const fetchAllData = async () => {
+      try {
+        const types = await getDatasetTypesByFilePath(file_path);
+
+        if (!isMounted) return;
+
+        const datasetColumns = Object.entries(types).map(
+          ([columnName, typeInfo], idx) => ({
+            id: idx,
+            columnName: columnName,
+            valueType: typeInfo.type || "Unknown",
+            dataType: typeInfo.dtype || "Unknown",
+            order: idx,
+          }),
+        );
+
+        setDatasetColumns(datasetColumns);
+        setRows(datasetColumns);
+
+        console.log("Dataset columns:", datasetColumns);
+        console.log("Dataset types:", types);
+      } catch (error) {
+        console.error("Error fetching dataset info/types:", error);
+      }
+    };
+
+    fetchAllData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [file_path]);
 
   // Handle automatic column selection based on cardinality
   useEffect(() => {
@@ -371,7 +395,7 @@ function ColumnSelectionTable({
 }
 
 ColumnSelectionTable.propTypes = {
-  datasetColumns: PropTypes.array.isRequired,
+  file_path: PropTypes.string.isRequired,
   inputCardinality: PropTypes.shape({
     min: PropTypes.number,
     max: PropTypes.number,

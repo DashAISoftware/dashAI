@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Tooltip, IconButton, Button } from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Typography, Tooltip, IconButton } from "@mui/material";
 import ConverterClassColumnModal from "./ConverterClassColumnModal";
 import HelpIcon from "@mui/icons-material/Help";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
@@ -89,7 +89,7 @@ export default function ScopeStepConverter({
         </Typography>
         {/* Scope selection UI */}
         <ColumnSelectionTable
-          datasetColumns={datasetColumns}
+          file_path={notebook.file_path}
           onSelectionChange={(columnsInfo) => {
             const selectedOrders = columnsInfo.map((col) => col.order);
             setColumns(selectedOrders);
