@@ -1,14 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
+import React, { useState } from "react";
+import { Box } from "@mui/material";
 
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
-import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
-import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { useSnackbar } from "notistack";
-import { ViewColumn } from "@mui/icons-material";
-import HelpIcon from "@mui/icons-material/Help";
-import ConverterClassColumnModal from "./ConverterClassColumnModal";
 import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
 import { enqueueConverterJob } from "../../../api/job";
@@ -49,19 +44,14 @@ export default function FormConverterSection({
         enqueueSnackbar(`Converter ${tool.name} created successfully `, {
           variant: "success",
         });
-        enqueueConverterJob(data.id)
-          .then((jobResponse) => {
-            console.log("Converter job enqueued successfully:", jobResponse);
-          })
-          .catch((error) => {
-            console.error("Error enqueuing converter job:", error);
-          });
+        enqueueConverterJob(data.id).catch((error) => {
+          console.error("Error enqueuing converter job:", error);
+        });
       },
       (error) => {
         console.error("Error saving converter:", error);
       },
     );
-    console.log("Saving converter with params:", data);
     handleClose();
   };
 
