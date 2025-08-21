@@ -10,7 +10,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import ConverterHistoryList from "./ConverterHistoryList";
+import ConverterHistoryList from "../converter/ConverterHistoryList";
 
 export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
   if (!notebook) return null;

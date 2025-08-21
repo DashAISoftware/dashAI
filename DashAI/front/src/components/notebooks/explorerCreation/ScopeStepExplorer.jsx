@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
-import ColumnSelectionTable from "../../threeSectionLayout/ColumnSelectionTable";
+import ColumnSelector from "../ColumnSelector";
 
 export default function ScopeStepExplorer({
   notebook,
@@ -33,7 +33,7 @@ export default function ScopeStepExplorer({
           Select the columns to be used by the explorer.
         </Typography>
 
-        <ColumnSelectionTable
+        <ColumnSelector
           file_path={notebook.file_path}
           inputCardinality={inputCardinality}
           allowedDtypes={allowedDtypes}

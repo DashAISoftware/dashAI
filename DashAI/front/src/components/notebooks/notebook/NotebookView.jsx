@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import {
   getExplorersByNotebookId,
   getConvertersByNotebookId,
-} from "../../api/notebook";
-import ExplorerBox from "./ExplorerBox";
-import ConverterBox from "./ConverterBox";
-import ExplorerDetailsModal from "./ExplorerDetailsModal";
-import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
+} from "../../../api/notebook";
+import ExplorerBox from "../explorer/ExplorerBox";
+import ConverterBox from "../converter/ConverterBox";
+import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { Virtuoso } from "react-virtuoso";
 
 const RowItem = React.memo(function RowItem({

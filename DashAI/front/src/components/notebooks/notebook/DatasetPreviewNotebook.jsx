@@ -11,12 +11,12 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
-import { SaveDatasetModal } from "./SaveDatasetModal";
-import { getConvertersByNotebookId } from "../../api/notebook";
-import { getDatasetFile } from "../../api/datasets";
-import DatasetTable from "./DatasetTable";
+import { SaveDatasetModal } from "../datasetCreation/SaveDatasetModal";
+import { getConvertersByNotebookId } from "../../../api/notebook";
+import { getDatasetFile } from "../../../api/datasets";
+import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
-import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
 export default function DatasetPreviewNotebook({
   notebook,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,9 +9,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Analytics, Info } from "@mui/icons-material";
-import Results from "./ExplorerDetailTabs/Results";
-import { getExplorerStatus } from "../../utils/explorerStatus";
-import { getExplorerById } from "../../api/explorer";
+import Results from "../explorerDetailTabs/Results";
+import { getExplorerStatus } from "../../../utils/explorerStatus";
+import { getExplorerById } from "../../../api/explorer";
 
 export default function ExplorerBox({
   explorer,

@@ -11,7 +11,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import ConverterHistoryList from "./ConverterHistoryList";
+import ConverterHistoryList from "../converter/ConverterHistoryList";
 
 export function SaveDatasetModal({
   open,

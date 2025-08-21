@@ -4,10 +4,10 @@ import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
-import UploadDatasetSteps from "../../components/notebooks/UploadDatasetSteps";
-import UploadNotebookSteps from "../../components/notebooks/UploadNotebookSteps";
-import DatasetVisualization from "../../components/notebooks/DatasetVisualization";
-import NotebookVisualization from "../../components/notebooks/NotebookVisualization";
+import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
+import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
+import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
+import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
 import { getDatasets, deleteDataset, getDatasetInfo } from "../../api/datasets";
 import {
   getNotebooks,

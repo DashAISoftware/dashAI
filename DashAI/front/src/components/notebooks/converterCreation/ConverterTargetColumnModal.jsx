@@ -40,9 +40,9 @@ const columns = [
  * @param {number} props.classColumnInitialValue - Initial value of the class column index
  * @param {number} props.notebook - notebook
  */
-const ConverterClassColumnModal = ({
+const ConverterTargetColumnModal = ({
   updateClassColumn,
-  classColumnInitialValue,
+  classColumnInitialValue = null,
   notebook,
 }) => {
   const [open, setOpen] = useState(false);
@@ -211,14 +211,10 @@ const ConverterClassColumnModal = ({
   );
 };
 
-ConverterClassColumnModal.propTypes = {
+ConverterTargetColumnModal.propTypes = {
   updateClassColumn: PropTypes.func.isRequired,
   classColumnInitialValue: PropTypes.number,
   datasetId: PropTypes.number.isRequired,
 };
 
-ConverterClassColumnModal.defaultProps = {
-  classColumnInitialValue: null,
-};
-
-export default ConverterClassColumnModal;
+export default ConverterTargetColumnModal;

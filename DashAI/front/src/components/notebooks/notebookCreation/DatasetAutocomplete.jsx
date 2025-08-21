@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Autocomplete, TextField, Chip } from "@mui/material";
-import { formatDate } from "../../pages/results/constants/formatDate";
-import { getDatasetInfo } from "../../api/datasets";
+import { formatDate } from "../../../pages/results/constants/formatDate";
+import { getDatasetInfo } from "../../../api/datasets";
 
 export default function DatasetAutocomplete({
   datasets,

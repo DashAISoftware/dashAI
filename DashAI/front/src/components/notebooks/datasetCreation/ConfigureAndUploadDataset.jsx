@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Grid, Paper, Box, Button } from "@mui/material";
-import Upload from "../datasets/Upload";
-import { getComponents as getComponentsRequest } from "../../api/component";
+import Upload from "./Upload"
+import { getComponents as getComponentsRequest } from "../../../api/component";
 import { useSnackbar } from "notistack";
-import DataloaderConfiguration from "../datasets/DataloaderConfiguration";
+import DataloaderConfiguration from "./DataloaderConfiguration";
 import {
   enqueueDatasetJob as enqueueDatasetRequest,
   startJobQueue,
-} from "../../api/job";
+} from "../../../api/job";
 
 /**
  * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.

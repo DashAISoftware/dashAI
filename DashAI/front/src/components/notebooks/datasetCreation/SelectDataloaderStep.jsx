@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
-import { getComponents as getComponentsRequest } from "../../api/component";
-import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
-import { Button, DialogContentText, Grid, Box } from "@mui/material";
+import { getComponents as getComponentsRequest } from "../../../api/component";
+import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
+import { Button, Grid, Box } from "@mui/material";
 
 /**
  * This component renders a list of dataloaders and allows the user to select one.

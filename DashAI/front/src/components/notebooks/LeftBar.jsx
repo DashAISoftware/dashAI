@@ -8,7 +8,7 @@ import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
-import InfoNotebookModal from "./InfoNotebookModal";
+import InfoNotebookModal from "./notebook/InfoNotebookModal";
 
 export default function DatasetsNotebooksBar({
   datasets = [],

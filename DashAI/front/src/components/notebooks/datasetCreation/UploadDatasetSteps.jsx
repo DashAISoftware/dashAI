@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import SelectDataloaderStep from "../../components/notebooks/SelectDataloaderStep";
-import ConfigureAndUploadDataset from "../../components/notebooks/ConfigureAndUploadDataset";
-import CustomLayout from "../custom/CustomLayout";
+import SelectDataloaderStep from "./SelectDataloaderStep";
+import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
+import CustomLayout from "../../custom/CustomLayout";
 
 const defaultNewDataset = {
   dataloader: "",

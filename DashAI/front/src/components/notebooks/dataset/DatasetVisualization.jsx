@@ -10,10 +10,10 @@ import {
   Divider,
 } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { getDatasetFile, getDatasetInfo } from "../../api/datasets";
-import { createNotebook } from "../../api/notebook";
-import DatasetTable from "./DatasetTable";
-import { CreateNotebookModal } from "./CreateNotebookModal";
+import { getDatasetFile, getDatasetInfo } from "../../../api/datasets";
+import { createNotebook } from "../../../api/notebook";
+import DatasetTable from "../dataset/DatasetTable";
+import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
 
 export default function DatasetVisualization({ dataset, onNotebookCreated }) {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, Typography, Tooltip } from "@mui/material";
-import ConfigureToolModal from "./toolModal/ConfigureToolModal";
-import FormExplorerSection from "./explorerModals/FormExplorerSection";
+import ConfigureToolModal from "../ConfigureToolModal";
+import FormExplorerSection from "./FormExplorerSection";
 
 export default function ExplorerList({
   explorers,

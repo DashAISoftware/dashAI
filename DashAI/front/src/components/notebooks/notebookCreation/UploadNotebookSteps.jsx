@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Typography, TextField, Button, Box } from "@mui/material";
 import { useFormik } from "formik";
-import CustomLayout from "../custom/CustomLayout";
+import CustomLayout from "../../custom/CustomLayout";
 import DatasetAutocomplete from "./DatasetAutocomplete";
-import { createNotebook } from "../../api/notebook";
+import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 
 export default function UploadNotebookSteps({

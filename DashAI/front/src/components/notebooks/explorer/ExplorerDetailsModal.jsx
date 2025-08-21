@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Tabs,
   Tab,
@@ -24,7 +24,7 @@ import {
   TabResults,
   TabInfo,
   TabParameters,
-} from "./ExplorerDetailTabs";
+} from "../explorerDetailTabs";
 
 const tabs = [
   { label: "Info", value: 0, icon: <InfoOutlined /> },

@@ -7,7 +7,7 @@ import {
   TabularVisualizer,
   PlotlyJsonVisualizer,
   ImageVisualizer,
-} from "../Visualizations";
+} from "../explorerVisualizations";
 /**
  * NullCell component to render null values in the tabular visualizer
  * @param {Object} props

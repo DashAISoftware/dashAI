@@ -9,9 +9,9 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import Transform from "@mui/icons-material/Transform";
-import { getConverterStatus } from "../../utils/converterStatus";
-import { getComponentById } from "../../api/component";
-import { getConverterById } from "../../api/converter";
+import { getConverterStatus } from "../../../utils/converterStatus";
+import { getComponentById } from "../../../api/component";
+import { getConverterById } from "../../../api/converter";
 
 export default function ConverterBox({
   converter,

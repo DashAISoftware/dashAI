@@ -14,9 +14,9 @@ import { Close } from "@mui/icons-material";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
-import DatasetSummaryTable from "../DatasetSummaryTable";
-import DatasetTable from "../DatasetTable";
-import { getDatasetFile } from "../../../api/datasets";
+import DatasetSummaryTable from "./dataset/DatasetSummaryTable";
+import DatasetTable from "./dataset/DatasetTable";
+import { getDatasetFile } from "../../api/datasets";
 
 export default function ConfigureToolModal({
   tool,

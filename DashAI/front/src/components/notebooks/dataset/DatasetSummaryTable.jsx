@@ -5,8 +5,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import {
   getDatasetSampleByFilePath as getDatasetSampleRequest,
   getDatasetTypesByFilePath as getDatasetTypesRequest,
-} from "../../api/datasets";
-import { Box, Typography, CircularProgress } from "@mui/material";
+} from "../../../api/datasets";
+import { Box, CircularProgress } from "@mui/material";
 
 function DatasetSummaryTable({ file, ...props }) {
   const [loading, setLoading] = useState(true);

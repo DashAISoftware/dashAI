@@ -55,7 +55,7 @@ const columns = [
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
  */
-function ColumnSelectionTable({
+function ColumnSelector({
   file_path,
   inputCardinality = {},
   allowedDtypes = [],
@@ -349,7 +349,7 @@ function ColumnSelectionTable({
   );
 }
 
-ColumnSelectionTable.propTypes = {
+ColumnSelector.propTypes = {
   file_path: PropTypes.string.isRequired,
   inputCardinality: PropTypes.shape({
     min: PropTypes.number,
@@ -362,4 +362,4 @@ ColumnSelectionTable.propTypes = {
   onValidationChange: PropTypes.func,
 };
 
-export default ColumnSelectionTable;
+export default ColumnSelector;

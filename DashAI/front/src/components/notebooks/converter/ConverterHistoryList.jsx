@@ -1,8 +1,8 @@
 import React from "react";
 import { List, ListItem, ListItemText, Chip, Box } from "@mui/material";
 import { Transform } from "@mui/icons-material";
-import { formatDate } from "../../pages/results/constants/formatDate";
-import { formatScope } from "./utils";
+import { formatDate } from "../../../pages/results/constants/formatDate";
+import { formatScope } from "../utils";
 
 export default function ConverterHistoryList({ converters }) {
   return (
