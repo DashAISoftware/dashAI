@@ -107,8 +107,8 @@ export default function ExplorerBox({
               bgcolor: "#2e3037",
               borderRadius: 1,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              flexDirection: "column",
+              overflow: "hidden",
             }}
           >
             <Results id={explorer.id} minimalist height={300} />
