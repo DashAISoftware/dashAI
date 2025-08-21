@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import { Divider, Grid, Typography } from "@mui/material";
-import { formatDate } from "../../../utils";
+import { formatDate } from "../../../../utils";
 
 const nameInfo = [
   { key: "name", label: "Name" },

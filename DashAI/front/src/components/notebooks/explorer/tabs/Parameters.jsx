@@ -1,14 +1,15 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 
 import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
-import JsonDisplayer from "../../shared/JsonDisplayer";
+import JsonDisplayer from "../../../shared/JsonDisplayer";
 
 /**
- * Component that displays the columns associated with an object.
+ * Component that displays the parameters associated with an object.
  * @param {object} data object that contains all the necesary info
  */
-function Columns({ data }) {
+function Parameters({ data }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
 
   return (
@@ -31,9 +32,13 @@ function Columns({ data }) {
       </Grid>
 
       {/* JSON object display */}
-      <JsonDisplayer displayMode={displayMode} name="Columns" data={data} />
+      <JsonDisplayer displayMode={displayMode} name="Parameters" data={data} />
     </Grid>
   );
 }
 
-export default Columns;
+Parameters.propTypes = {
+  data: PropTypes.object.isRequired,
+};
+
+export default Parameters;

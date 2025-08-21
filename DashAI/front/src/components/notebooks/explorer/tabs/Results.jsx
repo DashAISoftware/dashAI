@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 
 import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
+import { getExplorerResults } from "../../../../api/explorer";
+import ImageVisualizer from "../visualizations/ImageVisualizer";
+import PlotlyJsonVisualizer from "../visualizations/PlotlyJsonVisualizer";
+import TabularVisualizer from "../visualizations/TabularVisualizer";
 
-import { getExplorerResults } from "../../../api/explorer";
-import {
-  TabularVisualizer,
-  PlotlyJsonVisualizer,
-  ImageVisualizer,
-} from "../explorerVisualizations";
 /**
  * NullCell component to render null values in the tabular visualizer
  * @param {Object} props

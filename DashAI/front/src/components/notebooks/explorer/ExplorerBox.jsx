@@ -9,7 +9,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Analytics, Info } from "@mui/icons-material";
-import Results from "../explorerDetailTabs/Results";
+import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
 import { getExplorerById } from "../../../api/explorer";
 
@@ -111,7 +111,7 @@ export default function ExplorerBox({
               overflow: "hidden",
             }}
           >
-            <Results id={explorer.id} minimalist height={300} />
+            <TabResults id={explorer.id} minimalist height={300} />
           </Box>
         ) : statusLabel === "Error" ? (
           <Box

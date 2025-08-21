@@ -19,12 +19,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
-import {
-  TabColumns,
-  TabResults,
-  TabInfo,
-  TabParameters,
-} from "../explorerDetailTabs";
+import { TabColumns, TabResults, TabInfo, TabParameters } from "./tabs";
 
 const tabs = [
   { label: "Info", value: 0, icon: <InfoOutlined /> },
