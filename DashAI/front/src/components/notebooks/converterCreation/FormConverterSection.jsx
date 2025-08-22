@@ -6,7 +6,7 @@ import { useExplorersAndConverters } from "../context/ExplorersAndConvertersCont
 import { useSnackbar } from "notistack";
 import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
-import { enqueueConverterJob } from "../../../api/job";
+import { enqueueConverterJob, startJobQueue } from "../../../api/job";
 
 export default function FormConverterSection({
   step,
@@ -37,22 +37,28 @@ export default function FormConverterSection({
       },
     };
 
-    saveConverterList(data).then(
-      (response) => {
+    saveConverterList(data)
+      .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
         enqueueSnackbar(`Converter ${tool.name} created successfully `, {
           variant: "success",
         });
-        enqueueConverterJob(data.id).catch((error) => {
-          console.error("Error enqueuing converter job:", error);
-        });
-      },
-      (error) => {
-        console.error("Error saving converter:", error);
-      },
-    );
-    handleClose();
+        enqueueConverterJob(data.id)
+          .then(() => {
+            startJobQueue();
+          })
+          .catch((error) => {
+            console.error("Error enqueuing converter job:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Error creating converter:", error);
+        enqueueSnackbar("Failed to create converter", { variant: "error" });
+      })
+      .finally(() => {
+        handleClose();
+      });
   };
 
   return (

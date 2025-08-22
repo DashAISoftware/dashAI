@@ -6,7 +6,7 @@ import { useSnackbar } from "notistack";
 import ParameterStepExplorer from "./ParameterStepExplorer";
 import ScopeStepExplorer from "./ScopeStepExplorer";
 import { createNotebookExplorer } from "../../../api/explorer";
-import { enqueueExplorerJob } from "../../../api/job";
+import { enqueueExplorerJob, startJobQueue } from "../../../api/job";
 
 export default function FormExplorerSection({
   step,
@@ -15,7 +15,6 @@ export default function FormExplorerSection({
   tool,
   notebook,
 }) {
-  const [initialParams, setInitialParams] = useState({});
   const [classColumnInitialValue, setClassColumnInitialValue] = useState(null);
   const [scopeColumns, setScopeColumns] = useState([]);
   const [formValues, setFormValues] = useState({
@@ -47,33 +46,28 @@ export default function FormExplorerSection({
       ...(c.order !== undefined ? { order: c.order } : {}),
     }));
 
-    try {
-      const created = await createNotebookExplorer(
-        notebook.id,
-        selectedColumns,
-        tool.name,
-        params,
-      );
-
-      // Update UI list immediately
-      const withType = { ...created, type: "explorer" };
-      setExplorersAndConverters((prev) => [...prev, withType]);
-
-      // Enqueue backend job
-      try {
-        await enqueueExplorerJob(created.id);
-      } catch (e) {
-        console.error("Error enqueuing explorer job:", e);
-      }
-
-      enqueueSnackbar(`Explorer ${tool.name} created successfully`, {
-        variant: "success",
+    createNotebookExplorer(notebook.id, selectedColumns, tool.name, params)
+      .then((created) => {
+        const data = { ...created, type: "explorer" };
+        setExplorersAndConverters((prev) => [...prev, data]);
+        enqueueSnackbar(`Explorer ${tool.name} created successfully`, {
+          variant: "success",
+        });
+        enqueueExplorerJob(created.id)
+          .then(() => {
+            startJobQueue();
+          })
+          .catch((error) => {
+            console.error("Error enqueuing explorer job:", error);
+          });
+      })
+      .catch((error) => {
+        console.error("Error creating explorer:", error);
+        enqueueSnackbar("Failed to create explorer", { variant: "error" });
+      })
+      .finally(() => {
+        handleClose();
       });
-      handleClose();
-    } catch (error) {
-      console.error("Error creating explorer:", error);
-      enqueueSnackbar("Failed to create explorer", { variant: "error" });
-    }
   };
 
   useEffect(() => {
@@ -107,7 +101,7 @@ export default function FormExplorerSection({
       {step === 1 && (
         <ParameterStepExplorer
           explorer={tool.name}
-          initialParams={initialParams}
+          initialParams={{}}
           handleSaveExplorer={handleSaveExplorer}
           setStep={setStep}
         />
