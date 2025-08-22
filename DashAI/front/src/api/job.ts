@@ -77,6 +77,7 @@ export const enqueueExplorerJob = async (
   };
 
   formData.append("job_type", "ExplorerJob");
+  formData.append("stop_when_queue_empties", JSON.stringify(true));
   formData.append("kwargs", JSON.stringify(kwargs));
 
   const response = await api.post<object>("/v1/job/", formData, {
@@ -117,10 +118,15 @@ export const enqueueConverterJob = async (
     kwargs: {
       converter_list_id: converterListId,
     },
+    stop_when_queue_empties: true,
   };
 
   const formData = new FormData();
   formData.append("job_type", data.job_type);
+  formData.append(
+    "stop_when_queue_empties",
+    JSON.stringify(data.stop_when_queue_empties),
+  );
   formData.append("kwargs", JSON.stringify(data.kwargs));
 
   const response = await api.post<object>("/v1/job/", formData, {
