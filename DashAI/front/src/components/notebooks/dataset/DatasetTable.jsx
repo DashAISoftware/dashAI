@@ -7,13 +7,11 @@ import {
   GridToolbarFilterButton,
   GridToolbarDensitySelector,
   useGridApiContext,
-  gridFilteredSortedRowIdsSelector,
-  gridVisibleColumnFieldsSelector,
 } from "@mui/x-data-grid";
 import { Button, Menu, MenuItem } from "@mui/material";
 import { Download } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
-import { exportDatasetCsvByPath } from "../../api/datasets";
+import { exportDatasetCsvByPath } from "../../../api/datasets";
 
 /**
  * Props:

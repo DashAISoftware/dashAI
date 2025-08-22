@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
-import { getComponents as getComponentsRequest } from "../../api/component";
-import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
-import { DialogContentText, Grid } from "@mui/material";
-import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
+import { getComponents as getComponentsRequest } from "../../../api/component";
+import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
+import { Grid } from "@mui/material";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 
 /**
  * This component renders a list of dataloaders and allows the user to select one.

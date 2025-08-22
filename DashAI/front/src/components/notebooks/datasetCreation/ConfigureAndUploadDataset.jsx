@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Grid, Paper } from "@mui/material";
-import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
-import Upload from "../datasets/Upload";
-import { getComponents as getComponentsRequest } from "../../api/component";
+import { useState, useEffect } from "react";
+import { Grid } from "@mui/material";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import Upload from "./Upload";
+import { getComponents as getComponentsRequest } from "../../../api/component";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
 import {

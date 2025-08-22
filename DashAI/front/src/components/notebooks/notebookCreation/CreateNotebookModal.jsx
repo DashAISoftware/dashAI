@@ -10,9 +10,9 @@ import {
   Chip,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { getDatasetInfo } from "../../api/datasets";
-import { formatDate } from "../../pages/results/constants/formatDate";
-import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
+import { getDatasetInfo } from "../../../api/datasets";
+import { formatDate } from "../../../pages/results/constants/formatDate";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 
 export function CreateNotebookModal({
   open,

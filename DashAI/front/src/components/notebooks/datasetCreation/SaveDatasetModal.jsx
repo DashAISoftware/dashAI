@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,8 +9,8 @@ import {
   IconButton,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import ConverterHistoryList from "./ConverterHistoryList";
-import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
+import ConverterHistoryList from "../converter/ConverterHistoryList";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 
 export function SaveDatasetModal({
   open,

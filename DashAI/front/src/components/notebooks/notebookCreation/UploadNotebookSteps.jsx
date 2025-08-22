@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Typography, TextField, Box } from "@mui/material";
 import { useFormik } from "formik";
 import CustomLayout from "../../custom/CustomLayout";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
-import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 
 export default function UploadNotebookSteps({
   backHome,
