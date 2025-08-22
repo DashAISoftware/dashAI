@@ -104,14 +104,14 @@ export default function ConfigureToolModal({
         }}
       >
         <Tab
-          icon={<SummarizeIcon fontSize="small" />}
-          iconPosition="start"
-          label="Summary"
-        />
-        <Tab
           icon={<DatasetIcon fontSize="small" />}
           iconPosition="start"
           label="Dataset"
+        />
+        <Tab
+          icon={<SummarizeIcon fontSize="small" />}
+          iconPosition="start"
+          label="Summary"
         />
       </Tabs>
 
@@ -127,10 +127,11 @@ export default function ConfigureToolModal({
         {/* Tab Panels */}
         <Box sx={{ flex: 1, overflow: "auto", p: 2, height: "35%" }}>
           {activeTab === 0 && (
-            <DatasetSummaryTable
-              file={notebook.file_path}
+            <DatasetTable
+              fetchPage={fetchDatasetPage}
+              deps={[notebook.file_path]}
+              initialPageSize={5}
               density="compact"
-              hideFooter
               disableColumnMenu
               disableColumnFilter
               disableColumnSelector
@@ -138,11 +139,10 @@ export default function ConfigureToolModal({
             />
           )}
           {activeTab === 1 && (
-            <DatasetTable
-              fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path]}
-              initialPageSize={5}
+            <DatasetSummaryTable
+              file={notebook.file_path}
               density="compact"
+              hideFooter
               disableColumnMenu
               disableColumnFilter
               disableColumnSelector
