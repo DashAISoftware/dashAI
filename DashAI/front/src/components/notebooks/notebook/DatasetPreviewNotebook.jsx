@@ -170,6 +170,22 @@ export default function DatasetPreviewNotebook({
                 },
               }}
               pageSizeOptions={[5]}
+              autoHeight={false}
+              disableDensitySelector
+              componentsProps={{
+                noRowsOverlay: {
+                  style: { height: "100%" },
+                },
+              }}
+              sx={{
+                height: "100%",
+                "& .MuiDataGrid-virtualScroller": {
+                  minHeight: "100%",
+                },
+                "& .MuiDataGrid-overlay": {
+                  height: "100%",
+                },
+              }}
             />{" "}
           </Box>
         </AccordionDetails>

@@ -23,6 +23,7 @@ function TabularVisualizer({
           height: "100%",
           width: "100%",
           "& .MuiDataGrid-virtualScroller": {
+            overflowY: "hidden",
             "&::-webkit-scrollbar": {
               width: "0px",
               height: "0px",
