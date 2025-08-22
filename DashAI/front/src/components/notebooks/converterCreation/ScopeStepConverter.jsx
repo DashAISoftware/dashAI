@@ -102,7 +102,6 @@ export default function ScopeStepConverter({
           totalRows={datasetInfo?.total_rows || 0}
           initialRows={rows}
           onSelectionChange={(selectedRows) => {
-            console.log("Selected rows:", selectedRows);
             setRows(selectedRows);
           }}
         />

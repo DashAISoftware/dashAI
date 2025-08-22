@@ -105,7 +105,6 @@ export default function NotebookView({ notebook }) {
   const scrollToBottom = () => {
     if (!listBoxRef.current || explorersAndConverters.length === 0) return;
 
-    console.log("Scrolling to bottom", listSize);
     listBoxRef.current.scrollToIndex({
       index: listSize - 1,
       align: "start",

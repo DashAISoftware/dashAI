@@ -52,10 +52,6 @@ export default function DatasetPreviewNotebook({
   );
 
   useEffect(() => {
-    console.log("Converters:", converters);
-  }, [converters]);
-
-  useEffect(() => {
     let intervalId;
 
     const fetchConverters = async () => {
