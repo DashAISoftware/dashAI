@@ -46,6 +46,8 @@ class ScatterMatrixExplorer(BaseExplorer):
         "for each pair of columns. The diagonal plots are histograms of the columns. "
     )
 
+    SHORT_DESCRIPTION = "Display a scatter matrix plot of selected columns."
+
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
         "allowed_dtypes": ["*"],

@@ -28,7 +28,7 @@ class RowExplorerSchema(BaseExplorerSchema):
         t=bool_field(),
         placeholder=True,
         description=(
-            "Take the rows from the Head of the dataset. " "Else, take from the Tail."
+            "Take the rows from the Head of the dataset. Else, take from the Tail."
         ),
     )  # type: ignore
 
@@ -46,6 +46,8 @@ class RowExplorer(BaseExplorer):
         "display them on tabular format. It can take the rows from the top or the "
         "bottom of the dataset and shuffle them if needed."
     )
+
+    SHORT_DESCRIPTION = "Display a sample of rows from the dataset."
 
     SCHEMA = RowExplorerSchema
     metadata: Dict[str, Any] = {

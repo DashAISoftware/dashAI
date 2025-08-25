@@ -45,6 +45,7 @@ class BaseExplorer(ConfigObject, ABC):
     TYPE: Final[str] = "Explorer"
     DISPLAY_NAME: Final[str] = ""
     DESCRIPTION: Final[str] = ""
+    SHORT_DESCRIPTION: Final[str] = ""
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
 
@@ -65,6 +66,9 @@ class BaseExplorer(ConfigObject, ABC):
         metadata = cls.metadata
         metadata["display_name"] = (
             cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
+        )
+        metadata["short_description"] = (
+            cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented

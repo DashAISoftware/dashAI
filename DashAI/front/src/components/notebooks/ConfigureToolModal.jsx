@@ -16,6 +16,8 @@ import DatasetIcon from "@mui/icons-material/Dataset";
 
 import DatasetSummaryTable from "./dataset/DatasetSummaryTable";
 import DatasetTable from "./dataset/DatasetTable";
+import DescriptionIcon from "@mui/icons-material/Description";
+
 import { getDatasetFile } from "../../api/datasets";
 
 export default function ConfigureToolModal({
@@ -104,7 +106,7 @@ export default function ConfigureToolModal({
         }}
       >
         <Tab
-          icon={<SummarizeIcon fontSize="small" />}
+          icon={<DescriptionIcon fontSize="small" />}
           iconPosition="start"
           label="Description"
         />

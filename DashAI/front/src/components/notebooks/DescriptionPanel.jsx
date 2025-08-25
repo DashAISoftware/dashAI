@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography } from "@mui/material";
 
 export default function DescriptionPanel({ hoveredTool }) {
@@ -17,7 +16,9 @@ export default function DescriptionPanel({ hoveredTool }) {
     >
       {hoveredTool ? (
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {hoveredTool.description}
+          {hoveredTool.metadata.short_description ||
+            hoveredTool.description ||
+            "No description available."}
         </Typography>
       ) : (
         <Typography

@@ -62,6 +62,8 @@ class DescribeExplorer(BaseExplorer):
         " the data types to include or exclude."
     )
 
+    SHORT_DESCRIPTION = "Generate a statistical summary of the dataset."
+
     SCHEMA = DescribeExplorerSchema
     metadata: Dict[str, Any] = {
         "allowed_dtypes": ["*"],

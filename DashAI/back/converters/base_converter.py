@@ -1,13 +1,23 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from typing import Final, Type, Union
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Final, Type, Union
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class BaseConverter(ConfigObject, metaclass=ABCMeta):
+class BaseConverterSchema(BaseSchema):
+    """
+    Base schema for converters, it defines the parameters to be used in each converter.
+
+    The schema should be assigned to the converter class to define the parameters of
+    its configuration.
+    """
+
+
+class BaseConverter(ConfigObject, ABC):
     """
     Base class for all converters
 
@@ -16,6 +26,30 @@ class BaseConverter(ConfigObject, metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "Converter"
+    DISPLAY_NAME: Final[str] = ""
+    DESCRIPTION: Final[str] = ""
+    SHORT_DESCRIPTION: Final[str] = ""
+    SCHEMA: BaseConverterSchema
+    metadata: Dict[str, Any] = {}
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """
+        Get metadata values for the current converter.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with the metadata
+        """
+        metadata = cls.metadata
+        metadata["display_name"] = (
+            cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
+        )
+        metadata["short_description"] = (
+            cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
+        )
+        return metadata
 
     def changes_row_count(self) -> bool:
         """
