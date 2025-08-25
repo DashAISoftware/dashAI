@@ -1,11 +1,14 @@
+import copy
 import pytest
 from datasets import DatasetDict, concatenate_datasets
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    select_columns,
+    DashAIDataset,
+    divide_columns,
     split_dataset,
     split_indexes,
+    to_dashai_dataset
 )
 from DashAI.back.explainability import (
     KernelShap,
@@ -16,6 +19,10 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
+from DashAI.back.types.value_types import Float
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+import pyarrow as pa
 
 INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -51,6 +58,20 @@ def tabular_model_fixture():
         },
     )
 
+    datasetdict.types = datasetdict.types = {
+        "SepalLengthCm": Float(arrow_type=pa.float64()),
+        "SepalWidthCm": Float(arrow_type=pa.float64()),
+        "PetalLengthCm": Float(arrow_type=pa.float64()),
+        "PetalWidthCm": Float(arrow_type=pa.float64()),
+        "Species": Categorical(values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]),
+    }
+
+    new_table = save_types_in_arrow_metadata(datasetdict.arrow_table, {
+        col: dtype.to_string() for col, dtype in datasetdict.types.items()
+    })
+
+    datasetdict = DashAIDataset(new_table, splits=datasetdict.splits, types=datasetdict.types)
+
     total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
@@ -62,10 +83,10 @@ def tabular_model_fixture():
         val_indexes=val_indexes,
     )
 
-    x, y = select_columns(split_dataset_dict, INPUT_COLUMNS, OUTPUT_COLUMNS)
-    types = {column: "Categorical" for column in OUTPUT_COLUMNS}
+    x, y = divide_columns(split_dataset_dict, INPUT_COLUMNS, OUTPUT_COLUMNS)
+    #types = {column: "Categorical" for column in OUTPUT_COLUMNS}
 
-    y = split_dataset(y.change_columns_type(types))
+    y = split_dataset(y)
     x = split_dataset(x)
 
     dataset = x, y
@@ -95,7 +116,7 @@ def test_partial_dependence(trained_model: BaseModel, dataset):
         "upper_percentile": 0.99,
     }
     explainer = PartialDependence(trained_model, **parameters)
-    explanation = explainer.explain(dataset)
+    explanation = explainer.explain(copy.deepcopy(dataset))
     plot = explainer.plot(explanation)
 
     metadata = explanation.pop("metadata")
@@ -130,7 +151,9 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         "max_samples": 1,
     }
     explainer = PermutationFeatureImportance(trained_model, **parameters)
-    explanation = explainer.explain(dataset)
+    print("dataset pre explain;", dataset[1]["test"].arrow_table)
+    explanation = explainer.explain(copy.deepcopy(dataset))
+    print("dataset post explain;", dataset[1]["test"].arrow_table)
     plot = explainer.plot(explanation)
 
     assert all(
@@ -149,7 +172,7 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         "max_samples": 1,
     }
     explainer = PermutationFeatureImportance(trained_model, **parameters)
-    explanation = explainer.explain(dataset)
+    explanation = explainer.explain(copy.deepcopy(dataset))
     plot = explainer.plot(explanation)
 
     assert all(
@@ -171,7 +194,7 @@ def test_kernel_shap(trained_model: BaseModel, dataset: DatasetDict):
         "n_background_samples": 50,
         "sampling_method": "kmeans",
     }
-
+    dataset = copy.deepcopy(dataset)
     explainer = KernelShap(trained_model, **parameters)
     explainer.fit(background_dataset=dataset, **fit_parameters)
     explanation = explainer.explain_instance(dataset[0])

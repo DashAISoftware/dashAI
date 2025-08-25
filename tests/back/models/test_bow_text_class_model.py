@@ -6,10 +6,11 @@ import pytest
 from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    select_columns,
+    divide_columns,
     split_dataset,
     split_indexes,
     to_dashai_dataset,
+    DashAIDataset
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.models import RandomForestClassifier
@@ -17,7 +18,37 @@ from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
+from DashAI.back.types.value_types import Text
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+import pyarrow as pa
 
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.model_job import ModelJob
+from DashAI.back.optimizers import OptunaOptimizer
+
+
+@pytest.fixture(autouse=True, name="test_registry")
+def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
+    """Setup a test registry with test task, dataloader and model components."""
+    container = client.app.container
+
+    test_registry = ComponentRegistry(
+        initial_components=[
+            JSONDataLoader,
+            ModelJob,
+            OptunaOptimizer,
+            RandomForestClassifier,
+            BagOfWordsTextClassificationModel,
+        ]
+    )
+
+    monkeypatch.setitem(
+        container._services,
+        "component_registry",
+        test_registry,
+    )
+    return test_registry
 
 @pytest.fixture(scope="module", name="splited_dataset")
 def splited_dataset_fixture():
@@ -37,6 +68,16 @@ def splited_dataset_fixture():
     )
 
     datasetdict = to_dashai_dataset(datasetdict)
+    datasetdict.types = datasetdict.types = {
+        "text": Text(arrow_type=pa.string()),
+        "class": Categorical(values=["0", "1"]),
+    }
+
+    new_table = save_types_in_arrow_metadata(datasetdict.arrow_table, {
+        col: dtype.to_string() for col, dtype in datasetdict.types.items()
+    })
+
+    datasetdict = DashAIDataset(new_table, splits=datasetdict.splits, types=datasetdict.types)
 
     splited_dataset = split_dataset(
         datasetdict,
@@ -45,7 +86,7 @@ def splited_dataset_fixture():
         val_indexes=[5, 6],
     )
 
-    x, y = select_columns(
+    x, y = divide_columns(
         splited_dataset,
         ["text"],
         ["class"],

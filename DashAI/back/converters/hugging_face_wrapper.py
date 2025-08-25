@@ -8,6 +8,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
 )
 
+from DashAI.back.converters.converter_types import HF_CONVERTERS_TYPES
+
 
 class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
     """Abstract base wrapper for HuggingFace transformers."""
@@ -54,4 +56,15 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
 
         # Concatenate all results
         concatenated_dataset = concatenate_datasets(all_results)
-        return DashAIDataset(concatenated_dataset.data.table)
+        converted_dataset = DashAIDataset(concatenated_dataset.data.table)
+
+        converter_name = self.__class__.__name__
+        dashai_type = HF_CONVERTERS_TYPES.get(converter_name, None)
+
+        if dashai_type is not None:
+            for col in converted_dataset.column_names:
+                converted_dataset.types[col] = dashai_type
+        else:
+            print(f"Warning: No DashAI type found for converter '{converter_name}', check HF_CONVERTERS_TYPES.")
+
+        return converted_dataset

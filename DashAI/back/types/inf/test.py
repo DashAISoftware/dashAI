@@ -14,7 +14,7 @@ def test_inference():
     # Add your test cases here
 
     current_dir = os.path.dirname(__file__)
-    file_path = os.path.join(current_dir, "twitterDataset.json")
+    file_path = os.path.join(current_dir, "ImdbSentimentDatasetSmall.json")
 
     df = pd.read_json(file_path)
 

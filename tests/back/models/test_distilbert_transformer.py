@@ -5,13 +5,17 @@ import pytest
 import torch
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    select_columns,
+    divide_columns,
     split_dataset,
     to_dashai_dataset,
+    DashAIDataset
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
-
+from DashAI.back.types.value_types import Text
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+import pyarrow as pa
 
 @pytest.fixture(scope="module", name="splited_dataset")
 def splited_dataset_fixture():
@@ -32,6 +36,17 @@ def splited_dataset_fixture():
 
     datasetdict = to_dashai_dataset(datasetdict)
 
+    datasetdict.types = datasetdict.types = {
+        "text": Text(arrow_type=pa.string()),
+        "class": Categorical(values=["0", "1"]),
+    }
+
+    new_table = save_types_in_arrow_metadata(datasetdict.arrow_table, {
+        col: dtype.to_string() for col, dtype in datasetdict.types.items()
+    })
+
+    datasetdict = DashAIDataset(new_table, splits=datasetdict.splits, types=datasetdict.types)
+
     splited_dataset = split_dataset(
         datasetdict,
         train_indexes=[0, 1, 2],
@@ -39,7 +54,7 @@ def splited_dataset_fixture():
         val_indexes=[5, 6],
     )
 
-    x, y = select_columns(
+    x, y = divide_columns(
         splited_dataset,
         ["text"],
         ["class"],

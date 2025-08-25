@@ -36,6 +36,8 @@ class DummyModel(BaseModel):
 
     def fit(self, x, y):
         return
+    def prepare_dataset(self, dataset, is_fit = False):
+        return dataset
 
 
 class FailDummyModel(BaseModel):
@@ -52,6 +54,9 @@ class FailDummyModel(BaseModel):
 
     def fit(self, x, y):
         raise Exception("Always fails")
+    
+    def prepare_dataset(self, dataset, is_fit = False):
+        return dataset
 
 
 class DummyMetric(BaseMetric):

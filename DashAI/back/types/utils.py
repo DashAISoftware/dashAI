@@ -198,7 +198,9 @@ def get_types_from_arrow_metadata(
             _type = info.get("type")
             if _type == "Categorical":
                 cats = info.get("categories", [])
-                dashai_types[column] = Categorical(cats)
+                converted = info.get("converted", False)
+                encoding = info.get("encoding", None)
+                dashai_types[column] = Categorical(values=cats, encoding=encoding, converted=converted)
             elif _type == "Image":
                 if info.get("base_path"):
                     dashai_types[column] = DashAIImage(

@@ -81,13 +81,18 @@ def categorical_label_encoder(
         array = table[col]
         # Check every column dashai_type to find the categorical ones
         if isinstance(_type, Categorical):
-            values = [_type.str2int(x.as_py()) for x in array]
-            new_columns[col] = pa.array(values, type=pa.int64())
             encodings[col] = dict(_type._str2int)  # Store the encoding for later use
+
+            #Need to check everything later, predictions and model reuse.
+            if not _type.converted:
+                values = [_type.str2int(x.as_py()) for x in array]
+                new_columns[col] = pa.array(values, type=pa.int64())
+            else:
+                new_columns[col] = array
         else:
             new_columns[col] = array
 
-    return modify_table(dataset, columns=new_columns), encodings
+    return modify_table(dataset, columns=new_columns, types=dataset.types), encodings
 
 #This function is used to apply the encodings stored in the model to the categorical columns in the dataset.
 def apply_categorical_label_encoder(
@@ -117,16 +122,17 @@ def apply_categorical_label_encoder(
         array = table[col]
         _type = types[col]
 
-        if col in encodings and isinstance(_type, Categorical):
+        if col in encodings and isinstance(_type, Categorical) and not _type.converted:
             # Apply the stored encodings to the categorical columns
 
             encoding = encodings[col]
             try:
-                encoded_values = [encoding[x.as_py()] for x in array]
+                categories = _type.categories
+                cat_type = Categorical(categories, encoding=encoding)
+                encoded_values = [cat_type.str2int(x.as_py()) for x in array]
                 new_columns[col] = pa.array(encoded_values, type=pa.int64())
 
-                categories = list(encoding.keys())
-                types[col] = Categorical(categories, encoding=encoding)
+                types[col] = cat_type
             except KeyError as e:
                 raise ValueError(f"Value {e} not found in encoding for column '{col}'") from e
         else:

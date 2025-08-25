@@ -9,6 +9,7 @@ from datasets.features import Features
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.job.base_job import JobError
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -34,8 +35,8 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
                 "Imbalanced-learn samplers require a non-empty target dataset (y)."
             )
 
-        X_df = x.to_pandas()
-        y_series = y.to_pandas().iloc[:, 0]
+        X_df = dashai_to_pandas(x)
+        y_series = dashai_to_pandas(y).iloc[:, 0]
 
         self.original_target_column_name_ = y.column_names[0]
         self.original_X_column_names_ = list(x.column_names)
@@ -101,13 +102,14 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         if self._resampled_table is None:
             raise RuntimeError("Resampled PyArrow Table not available. Call fit first.")
 
+        ds_types = x.types.copy()
+        if y is not None:
+            y_types = y.types.copy()
+            ds_types.update(y_types)
         try:
-            resampled_features = Features.from_arrow_schema(
-                self._resampled_table.schema
-            )
-            return DashAIDataset(
-                table=self._resampled_table, features=resampled_features, splits={}
-            )
+            dataset = DashAIDataset(self._resampled_table, types=ds_types, splits={})
+            return dataset
+ 
         except Exception as e:
             raise JobError(
                 f"Failed to create DashAIDataset from resampled data: {e}"

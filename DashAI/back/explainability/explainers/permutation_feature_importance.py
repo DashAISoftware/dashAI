@@ -123,10 +123,10 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         # Select split
         x_test = self.model.prepare_dataset(x["test"])
+
         y_test = self.model.prepare_dataset(y["test"])
 
         input_columns = x_test.column_names
-        output_columns = y_test.column_names[0]
 
 
 

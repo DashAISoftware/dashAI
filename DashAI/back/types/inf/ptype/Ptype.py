@@ -89,7 +89,10 @@ class Ptype:
         uniform = np.ones(len(p_t)) / len(p_t)
         if np.allclose(list(p_t.values()), uniform, rtol=1e-2):
             p_t = {t: 1.0 if t == "string" else 0.0 for t in self.types}
-            p_z = {}
+            I = logP.shape[0]
+            p_z = {
+                "string": np.tile([1.0, 0.0, 0.0], (I, 1))
+            }
 
         return Column(series=df[col_name], p_t=p_t, p_z=p_z)
 

@@ -176,7 +176,7 @@ class DistilBertTransformer(TextClassificationModel):
         x_train = self.prepare_dataset(x_train, is_fit=True)
         y_train = self.prepare_dataset(y_train, is_fit=True)
         
-        train_dataset = train_dataset.add_column("label", y_train[output_column_name])
+        train_dataset = x_train.add_column("label", y_train[output_column_name])
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args_obj = TrainingArguments(

@@ -376,6 +376,7 @@ class KernelShap(BaseLocalExplainer):
                 }
             )
 
+            data["shap_values_abs"] = np.abs(data["shap_values"])
             data = data.sort_values(by="shap_values_abs", ascending=True)
 
             if len(data) > max_features:

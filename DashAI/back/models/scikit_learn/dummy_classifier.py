@@ -27,3 +27,6 @@ class DummyClassifier(
     def __init__(self, **kwargs) -> None:
         kwargs = self.validate_and_transform(kwargs)
         super().__init__(**kwargs)
+    
+    def prepare_dataset(self, dataset, is_fit = False):
+        return dataset

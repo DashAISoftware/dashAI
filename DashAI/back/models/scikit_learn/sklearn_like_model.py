@@ -82,7 +82,6 @@ class SklearnLikeModel(BaseModel):
                 #We apply as many transformations from dashai_dataset_utils as needed.
                 dataset, encodings = categorical_label_encoder(dataset)
                 self.encodings.update(encodings)  # Store the encodings for later use
-                print(f"Categorical encodings: {self.encodings}")
                 return dataset
             except Exception as e:
                 print(f"Couldn't apply transformations to the dataset for the model: {e}")    

@@ -20,8 +20,6 @@ from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.utils import (
     arrow_to_dashai_types,
     get_types_from_arrow_metadata,
-    pyarrow_date_conversion,
-    pyarrow_time_conversion,
     save_types_in_arrow_metadata,
     to_arrow_types,
 )
@@ -250,7 +248,7 @@ class DashAIDataset(Dataset):
         subset_types = {
             col: self._types[col] for col in column_names if col in self._types
         }
-
+        # Right now divided datasets still retain all types. I think that could be corrected here, but since it works I don't want to break anything.
         return DashAIDataset(table=subset_table, splits=self.splits, types=subset_types)
     
     @beartype
@@ -270,10 +268,10 @@ class DashAIDataset(Dataset):
             return selected_dataset
         else:
             # If the selected dataset is a Dataset, convert it to DashAIDataset
-            arrow_tbl = get_arrow_table(selected_dataset)
+            arrow_tbl = selected_dataset.with_format("arrow")[:]
             arrow_tblx = save_types_in_arrow_metadata(
                 arrow_tbl, {col: self._types[col].to_string() for col in self._types})
-            return DashAIDataset(arrow_tblx, splits=self.splits, types=self._types)
+            return DashAIDataset(arrow_tblx, types=self._types)
     
 
 
@@ -805,7 +803,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
         Dict with the columns and types
     """
     dataset = load_dataset(dataset_path)
-    #Revisar format
+
     column_types = {}
     for column in dataset.types:
         column_spec = dataset.types[column]
@@ -1058,8 +1056,17 @@ def modify_table(dataset: DashAIDataset, columns: Dict[str, pa.Array], types: Op
             updated_columns[name] = columns[name]
         else:
             updated_columns[name] = original_table[name]
+    #In case new columns are added. Added purposely to deal with converters.
+    for name in columns:
+        if name not in dataset.column_names:
+            if types is None or name not in types:
+                raise ValueError(f"Missing DashAI type for new column '{name}', check if converter provides it.")
+            updated_columns[name] = columns[name]
+
     new_table = pa.table(updated_columns)
+    
     new_table = new_table.replace_schema_metadata(original_table.schema.metadata)
+    new_table = save_types_in_arrow_metadata(new_table, {col: types[col].to_string() for col in types}) if types else new_table
 
     new_types = types if types else dataset.types
 

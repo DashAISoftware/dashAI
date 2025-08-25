@@ -31,5 +31,5 @@ class RandomUnderSamplerConverter(ImbalancedLearnWrapper, RandomUnderSampler):
         "Randomly remove samples from the majority class to balance the dataset."
     )
 
-    def __init___(self, **kwargs):
+    def __init__(self, **kwargs):
         super(RandomUnderSamplerConverter, self).__init__(**kwargs)

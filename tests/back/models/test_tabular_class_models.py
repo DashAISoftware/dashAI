@@ -9,10 +9,11 @@ from sklearn.utils.validation import check_is_fitted
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    select_columns,
+    divide_columns,
     split_dataset,
     split_indexes,
     to_dashai_dataset,
+    DashAIDataset
 )
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
@@ -20,7 +21,10 @@ from DashAI.back.models.scikit_learn.random_forest_classifier import (
 )
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.scikit_learn.svc import SVC
-
+from DashAI.back.types.value_types import Float
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.utils import save_types_in_arrow_metadata
+import pyarrow as pa
 
 @pytest.fixture(scope="module", name="divided_dataset")
 def tabular_model_fixture():
@@ -44,6 +48,20 @@ def tabular_model_fixture():
 
     datasetdict = to_dashai_dataset(datasetdict)
 
+    datasetdict.types = datasetdict.types = {
+        "SepalLengthCm": Float(arrow_type=pa.float64()),
+        "SepalWidthCm": Float(arrow_type=pa.float64()),
+        "PetalLengthCm": Float(arrow_type=pa.float64()),
+        "PetalWidthCm": Float(arrow_type=pa.float64()),
+        "Species": Categorical(values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]),
+    }
+
+    new_table = save_types_in_arrow_metadata(datasetdict.arrow_table, {
+        col: dtype.to_string() for col, dtype in datasetdict.types.items()
+    })
+
+    datasetdict = DashAIDataset(new_table, splits=datasetdict.splits, types=datasetdict.types)
+
     total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
@@ -62,7 +80,7 @@ def tabular_model_fixture():
         "PetalWidthCm",
     ]
     outputs_columns = ["Species"]
-    x, y = select_columns(split_dataset_dict, inputs_columns, outputs_columns)
+    x, y = divide_columns(split_dataset_dict, inputs_columns, outputs_columns)
     x = split_dataset(x)
     y = split_dataset(y)
     return (x, y)
