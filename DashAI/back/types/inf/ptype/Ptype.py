@@ -1,20 +1,19 @@
+# flake8: noqa
+
 import numpy as np
-import sys
-import os
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
-sys.path.insert(0, project_root)
-from back.types.inf.ptype.Column import (
+from back.types.inf.ptype.Machine import PI
+from back.types.inf.ptype.Machines import Machines
+from back.types.inf.ptype.Schema import Schema
+from back.types.inf.ptype.Trainer import likelihoods_normalize, sum_weighted_likelihoods
+from back.types.inf.ptype.utils import normalize_log_probs
+
+from DashAI.back.types.inf.ptype.Column import (
     ANOMALIES_INDEX,
     MISSING_INDEX,
     TYPE_INDEX,
     Column,
     _get_unique_vals,
 )
-from back.types.inf.ptype.Machine import PI
-from back.types.inf.ptype.Machines import Machines
-from back.types.inf.ptype.Trainer import likelihoods_normalize, sum_weighted_likelihoods
-from back.types.inf.ptype.Schema import Schema
-from back.types.inf.ptype.utils import normalize_log_probs, LOG_EPS
 
 
 class Ptype:
@@ -30,13 +29,12 @@ class Ptype:
             "date-eu",
             "date-non-std-subtype",
             "date-non-std",
-            
         ]
         self.machines = Machines(self.types)
         self.verbose = False
 
     def schema_fit(self, df):
-        """ Run inference for each column in a dataframe.
+        """Run inference for each column in a dataframe.
 
         :param df: dataframe loaded by reading values as strings.
         :return: Schema object with information about each column.
@@ -90,9 +88,7 @@ class Ptype:
         if np.allclose(list(p_t.values()), uniform, rtol=1e-2):
             p_t = {t: 1.0 if t == "string" else 0.0 for t in self.types}
             I = logP.shape[0]
-            p_z = {
-                "string": np.tile([1.0, 0.0, 0.0], (I, 1))
-            }
+            p_z = {"string": np.tile([1.0, 0.0, 0.0], (I, 1))}
 
         return Column(series=df[col_name], p_t=p_t, p_z=p_z)
 

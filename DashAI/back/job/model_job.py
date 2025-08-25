@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
+    divide_columns,
     load_dataset,
     prepare_for_experiment,
-    divide_columns,
     split_dataset,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
@@ -116,7 +116,6 @@ class ModelJob(BaseJob):
                 ) from e
 
             try:
-
                 prepared_dataset = task.prepare_for_task(
                     loaded_dataset, experiment.output_columns
                 )

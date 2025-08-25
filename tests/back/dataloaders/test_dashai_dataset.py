@@ -8,25 +8,24 @@ from typing import List
 import datasets
 import pytest
 from datasets import DatasetDict
-from pyarrow.lib import ArrowInvalid
 from sklearn.datasets import load_iris
 
 from DashAI.back.api.api_v1.schemas.datasets_params import ColumnSpecItemParams
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
-    get_arrow_table,
+    divide_columns,
     get_column_names_from_indexes,
     load_dataset,
     save_dataset,
-    divide_columns,
     split_dataset,
     split_indexes,
     to_dashai_dataset,
     update_columns_spec,
     update_dataset_splits,
-    #validate_inputs_outputs,
 )
+
+# validate_inputs_outputs,
 from tests.back.test_datasets_generator import CSVTestDatasetGenerator
 
 
@@ -79,69 +78,6 @@ def load_test_datasetdict(test_datasets_path: pathlib.Path) -> DatasetDict:
     )
 
     return test_datasetdict
-
-
-# ----------------------------------------------------------------------------
-# test validate_inputs_outputs
-
-
-# @pytest.mark.parametrize(
-#     ("input_columns", "output_columns", "match"),
-#     [
-#         # test case 1 - empty input cols
-#         (
-#             [],
-#             ["target"],
-#             r"Inputs and outputs columns lists to validate must not be empty",
-#         ),
-#         # test case 2 - extra output cols
-#         (
-#             [
-#                 "sepal length (cm)",
-#                 "sepal width (cm)",
-#                 "petal length (cm)",
-#                 "petal width (cm)",
-#             ],
-#             ["target", "sepal width (cm)"],
-#             (
-#                 r"Inputs and outputs cannot have more elements than names. Number of "
-#                 r"inputs: 4, number of outputs: 2, number of names: 5. "
-#             ),
-#         ),
-#         # test case 3 - non existant input col
-#         (
-#             [
-#                 "unexistant_col",
-#                 "sepal width (cm)",
-#                 "petal length (cm)",
-#                 "petal width (cm)",
-#             ],
-#             ["target"],
-#             (
-#                 r"Inputs and outputs can only contain elements that exist in names. "
-#                 r"Extra elements: unexistant_col"
-#             ),
-#         ),
-#     ],
-#     ids=[
-#         "test_validate_inputs_outputs_throws_error_for_empty_input_columns",
-#         "test_validate_inputs_outputs_throws_error_for_wrong_size_inputs_output_columns",
-#         "test_validate_inputs_outputs_throws_error_for_wrong_input_columns",
-#     ],
-# )
-# def test_validate_inputs_outputs_errors(
-#     test_datasetdict: DatasetDict, input_columns, output_columns, match
-# ):
-#     """Test several validate_inputs_outputs cases."""
-#     with pytest.raises(
-#         ValueError,
-#         match=match,
-#     ):
-#         validate_inputs_outputs(
-#             datasetdict=test_datasetdict,
-#             inputs=input_columns,
-#             outputs=output_columns,
-#         )
 
 
 @pytest.fixture(name="dashai_datasetdict")
@@ -204,74 +140,6 @@ def test_sample_dashaidataset(dashai_datasetdict: list, method: str, n_samples: 
             for key in one_sample:
                 one_sample[key] = sample[key][index]
             assert any(one_sample == data for data in dataset)
-
-
-# ----------------------------------------------------------------------------
-# test change_columns_type
-
-
-# @pytest.mark.parametrize(
-#     ("col_types", "expected_exception", "match"),
-#     [
-#         # test case 1 - try to change the type of an unexistant col.
-#         (
-#             {"unexistant_col": "Categorical"},
-#             ValueError,
-#             (
-#                 r"Error while changing column types: column 'unexistant_col' does not "
-#                 r"exist in dataset."
-#             ),
-#         ),
-#         # test case 2 - try to change a col to an incompatible type.
-#         (
-#             {"sepal length (cm)": "Categorical"},
-#             ArrowInvalid,
-#             r"Float value \d+\.\d+ was truncated converting to int64",
-#         ),
-#     ],
-#     ids=[
-#         "test_change_columns_type_raises_error_for_unexistant_col",
-#         "test_change_columns_type_raises_error_for_incompatible_type_casting",
-#     ],
-# )
-# def test_change_columns_type_errors(
-#     dashai_datasetdict: list, col_types, expected_exception, match
-# ):
-#     with pytest.raises(expected_exception, match=match):
-#         dashai_datasetdict.change_columns_type(col_types)
-
-
-# def test_dashai_datasetdict_change_columns_type_target_col_as_cat(
-#     dashai_datasetdict: DashAIDataset,
-# ):
-#     """Test target column casting to a Categorical (ClassLabel) type."""
-
-#     original_features = dashai_datasetdict.features.copy()
-
-#     dashai_datasetdict = dashai_datasetdict.change_columns_type(
-#         {"target": "Categorical"}
-#     )
-#     new_features = dashai_datasetdict.features
-
-#     assert len(original_features) == len(new_features)
-
-#     assert original_features["target"].dtype == "int64"
-#     assert new_features["target"].dtype == "int64"
-
-#     # check the new types.
-#     assert isinstance(original_features["target"], datasets.features.Value)
-#     assert isinstance(new_features["target"], datasets.features.ClassLabel)
-
-#     # check that the rest of the features remain unmodified.
-#     for feature_name in original_features:
-#         if feature_name != "target":
-#             assert isinstance(original_features[feature_name], datasets.features.Value)
-#             assert isinstance(new_features[feature_name], datasets.features.Value)
-#             assert original_features[feature_name] == new_features[feature_name]
-
-
-# ----------------------------------------------------------------------------
-# test split dataset
 
 
 # TODO: Test invalid parameters (like split size of 0)

@@ -1,10 +1,13 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Union, List
-import pandas as pd
-import numpy as np
-from DashAI.back.types.inf.inference_methods import DashAIPtype, DummyCategoricalInference, DashAIImageInference
+from typing import Dict, List, Union
 
-        
+import numpy as np
+import pandas as pd
+
+from DashAI.back.types.inf.inference_methods import (
+    DashAIImageInference,
+    DashAIPtype,
+    DummyCategoricalInference,
+)
 
 AcceptedDataInput = Union[
     pd.DataFrame,
@@ -17,14 +20,11 @@ AcceptedDataInput = Union[
 AcceptedMethods = {
     "DashAIPtype": DashAIPtype,
     "Dummy": DummyCategoricalInference,
-    "Image": DashAIImageInference
+    "Image": DashAIImageInference,
 }
 
 
-def infer_types(
-    data: AcceptedDataInput, 
-    method: str
-) -> dict:
+def infer_types(data: AcceptedDataInput, method: str) -> dict:
     """
     Infers types from the provided data using the specified inference method.
 
@@ -42,9 +42,11 @@ def infer_types(
         A dictionary mapping column names to inferred types.
     """
     if method not in AcceptedMethods:
-        raise ValueError(f"Method '{method}' is not supported. Available methods: {list(AcceptedMethods.keys())}")
-    
+        raise ValueError(
+            f"Method '{method}' is not supported. "
+            f"Available methods: {list(AcceptedMethods.keys())}"
+        )
+
     infer_method = AcceptedMethods[method]()
 
     return infer_method.infer_types(data)
-

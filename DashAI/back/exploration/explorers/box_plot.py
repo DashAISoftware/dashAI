@@ -11,10 +11,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
-
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
-from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class BoxPlotSchema(BaseExplorerSchema):
@@ -44,7 +42,8 @@ class BoxPlotExplorer(BaseExplorer):
 
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {
-        #It should be added, maybe in a own validate_columns method, that in this case at least one column should be numeric
+        # It should be added, maybe in a own validate_columns method,
+        # that in this case at least one column should be numeric
         "allowed_value_types": ["Integer", "Float", "Decimal", "Categorical"],
         "restricted_value_types": [],
         "input_cardinality": {"min": 1, "max": 2},
@@ -110,5 +109,3 @@ class BoxPlotExplorer(BaseExplorer):
         result = result.to_json()
 
         return {"data": result, "type": resultType, "config": config}
-
-

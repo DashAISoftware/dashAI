@@ -10,8 +10,8 @@ from sqlalchemy import exc
 from sqlalchemy.orm import Session
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
-    load_dataset,
     divide_columns,
+    load_dataset,
     split_dataset,
 )
 from DashAI.back.dependencies.database.models import (

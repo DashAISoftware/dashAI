@@ -13,11 +13,11 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
-from DashAI.back.models import BaseModel
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
     dashai_to_pandas,
 )
+from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
+from DashAI.back.models import BaseModel
 from DashAI.back.types.categorical import Categorical
 
 
@@ -114,7 +114,8 @@ class PartialDependence(BaseGlobalExplainer):
         features_names = x["test"].column_names
 
         categorical_features = [
-            1 if isinstance(types[feature], Categorical) else 0 for feature in features_names
+            1 if isinstance(types[feature], Categorical) else 0
+            for feature in features_names
         ]
 
         output_column = list(y["test"].column_names)[0]

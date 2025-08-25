@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Union
 
 import torch
-from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from torch.utils.data import DataLoader
 from transformers import (
@@ -24,10 +23,12 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import categorical_label_encoder, apply_categorical_label_encoder
-from DashAI.back.types.categorical import Categorical
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
+    apply_categorical_label_encoder,
+    categorical_label_encoder,
+)
+from DashAI.back.models.text_classification_model import TextClassificationModel
 
 
 class DistilBertTransformerSchema(BaseSchema):
@@ -175,7 +176,7 @@ class DistilBertTransformer(TextClassificationModel):
 
         x_train = self.prepare_dataset(x_train, is_fit=True)
         y_train = self.prepare_dataset(y_train, is_fit=True)
-        
+
         train_dataset = x_train.add_column("label", y_train[output_column_name])
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
@@ -250,7 +251,7 @@ class DistilBertTransformer(TextClassificationModel):
             probabilities.extend(probs.detach().cpu().numpy())
 
         return probabilities
-        
+
     def prepare_dataset(
         self, dataset: DashAIDataset, is_fit: bool = False
     ) -> DashAIDataset:
@@ -264,7 +265,8 @@ class DistilBertTransformer(TextClassificationModel):
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to an accepted format in the model.
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
         """
         if not is_fit:
             try:
@@ -276,14 +278,16 @@ class DistilBertTransformer(TextClassificationModel):
         else:
             try:
                 dataset, encodings = categorical_label_encoder(dataset)
-                self.encodings.update(encodings) 
+                self.encodings.update(encodings)
 
                 dataset = self.tokenize_data(dataset)
-                
+
             except Exception as e:
-                print(f"Couldn't apply transformations to the dataset for the model: {e}")
+                print(
+                    f"Couldn't apply transformations to the dataset for the model: {e}"
+                )
         return dataset
-    
+
     def save(self, filename: Union[str, Path]) -> None:
         self.model.save_pretrained(filename)
         config = AutoConfig.from_pretrained(filename)

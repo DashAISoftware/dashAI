@@ -19,7 +19,7 @@ class ImageClassificationTask(BaseTask):
 
     metadata: dict = {
         "inputs_types": [Image],
-        "outputs_types": [ClassLabel], #Categorical
+        "outputs_types": [ClassLabel],  # Categorical
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
@@ -41,7 +41,5 @@ class ImageClassificationTask(BaseTask):
         DashAIDataset
             Dataset with the new types
         """
-        #types = {column: "Categorical" for column in outputs_columns}
         datasetdict = to_dashai_dataset(datasetdict)
-        #dataset = datasetdict.change_columns_type(types)
         return datasetdict

@@ -1,12 +1,10 @@
+# flake8: noqa
+# Not implemented yet
 from dataclasses import dataclass
-
-from datasets import Image
+from typing import Optional
 
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from typing import Optional
-import numpy as np
-import PIL.Image
-from typing import Union
+
 
 @dataclass
 class DashAIImage(DashAIDataType):
@@ -20,22 +18,24 @@ class DashAIImage(DashAIDataType):
     base_path : Optional[str]
         An optional base path for images, useful if images are represented just by their filenames.
     """
-    
-    dtype: str = "string" # Default: Path to image (str)
+
+    dtype: str = "string"  # Default: Path to image (str)
     ####
     # Optional base path in case images are represented just by their filenames
-    # Since Dataloaders are not something I'm working on, this is a thought in the basis that the final image dataloader
-    # will contain an optional parameter to specify a base path for images (If they are in the same folder, for example).
+    # Since Dataloaders are not something I'm working on,
+    # this was done in the basis that the final image dataloader
+    # will contain an optional parameter to specify a base path for images
+    # (If they are in the same folder, for example).
     base_path: Optional[str] = None
     ####
 
     def __init__(self, dtype: str = "string"):
         self.dtype = dtype
-        
+
     def to_string(self):
         """
         Convert the DashAIImage type to a string representation.
-        
+
         Returns
         -------
         dict
@@ -45,4 +45,3 @@ class DashAIImage(DashAIDataType):
             return {"type": "Image", "dtype": self.dtype, "base_path": self.base_path}
 
         return {"type": "Image", "dtype": self.dtype}
-            

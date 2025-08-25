@@ -1,13 +1,9 @@
+# flake8: noqa
+
 from collections import OrderedDict
 from enum import Enum
-import joblib
-import numpy as np
-import sys
-import os
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
-sys.path.insert(0, project_root)
-from back.types.inf.ptype.utils import project_root
 
+import numpy as np
 
 TYPE_INDEX = 0
 MISSING_INDEX = 1
@@ -141,4 +137,3 @@ class Column:
         self.p_t["categorical"] = self.p_t[t_hat] * p_cat
         self.p_t[t_hat] = 1 - self.p_t["categorical"]
         self.type = self.inferred_type()
-

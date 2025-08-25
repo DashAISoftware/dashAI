@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import pandas as pd
 
 
@@ -66,8 +68,11 @@ class Schema:
 
     def _as_normal(self):
         def as_normal(col):
-            vs = self._cols[col.name].get_normal_values()  # expensive to recompute inside loop
+            vs = self._cols[
+                col.name
+            ].get_normal_values()  # expensive to recompute inside loop
             return col.map(lambda v: v if v in vs else pd.NA)
+
         return as_normal
 
     def transform(self, df):
@@ -76,7 +81,7 @@ class Schema:
 
          :param df: dataframe to transform.
          :return: Transformed dataframe with appropriately typed columns.
-         """
+        """
         df = df.apply(self._as_normal(), axis=0)
         ptype_pandas_mapping = {
             "integer": "Int64",
@@ -86,20 +91,22 @@ class Schema:
             "string": "string",
             "boolean": "boolean",  # will remove boolean later
             "float": "float64",
-            "time": "time"
+            "time": "time",
         }
         for col_name in df:
             new_dtype = ptype_pandas_mapping[self._cols[col_name].type]
-            #print(f"Transforming column '{col_name}' detected as '{self.cols[col_name].type}' to dtype '{new_dtype}'")
+            # print(f"Transforming column '{col_name}' detected as '{self.cols[col_name].type}' to dtype '{new_dtype}'")
             if new_dtype == "boolean":
                 df[col_name] = df[col_name].apply(
                     lambda x: False
                     if str(x) in ["F"]
                     else (True if str(x) in ["T"] else x)
                 )
-  
-            elif (new_dtype == "time"):
-                df[col_name] = pd.to_datetime(df[col_name], format="%H:%M:%S", errors="coerce")
+
+            elif new_dtype == "time":
+                df[col_name] = pd.to_datetime(
+                    df[col_name], format="%H:%M:%S", errors="coerce"
+                )
                 continue
 
             # elif (new_dtype == "datetime64[ms]"):
@@ -113,4 +120,3 @@ class Schema:
                     new_dtype
                 )
         return df
-

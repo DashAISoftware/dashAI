@@ -11,7 +11,7 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import (
     Binary,
-    #Boolean,
+    # Boolean,
     DashAIValue,
     Date,
     Decimal,
@@ -64,7 +64,7 @@ PTYPE_TO_DASHAI = {
     "integer": {"type": "Integer", "dtype": "int64"},
     "float": {"type": "Float", "dtype": "float64"},
     "string": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
-    #For simplicity, we use categorical for booleans.
+    # For simplicity, we use categorical for booleans.
     "boolean": {"type": "Categorical", "dtype": "string"},
     "categorical": {"type": "Categorical", "dtype": "string"},
     "date-iso-8601": {"type": "Date", "dtype": "date32"},
@@ -105,7 +105,7 @@ def arrow_to_dashai_types(arrow_type, format: str = None) -> DashAIValue:
         elif pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
             return Text(arrow_type)
         elif pa.types.is_boolean(arrow_type):
-            return Categorical(values = ["True", "False"])
+            return Categorical(values=["True", "False"])
         elif pa.types.is_duration(arrow_type):
             return Duration(arrow_type)
         elif pa.types.is_decimal(arrow_type):
@@ -126,7 +126,7 @@ def arrow_to_dashai_schema(arrow_tbl):
 
 def to_arrow_types(dashai_type) -> pa.DataType:
     """Convert a DashAI type to an Arrow type."""
-    return dtype_arrow_map.get(dashai_type, None)
+    return dtype_arrow_map.get(dashai_type)
 
 
 def save_types_in_arrow_metadata(
@@ -200,7 +200,9 @@ def get_types_from_arrow_metadata(
                 cats = info.get("categories", [])
                 converted = info.get("converted", False)
                 encoding = info.get("encoding", None)
-                dashai_types[column] = Categorical(values=cats, encoding=encoding, converted=converted)
+                dashai_types[column] = Categorical(
+                    values=cats, encoding=encoding, converted=converted
+                )
             elif _type == "Image":
                 if info.get("base_path"):
                     dashai_types[column] = DashAIImage(
@@ -211,13 +213,17 @@ def get_types_from_arrow_metadata(
             else:
                 dtype = info.get("dtype")
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
-    except:
+    except KeyError:
+        # If the key is not found, we can log it or handle it as needed
+        print(f"KeyError: {dtype} not found in dtype_arrow_map")
         dashai_types = {}
 
     return dashai_types
 
-#Both Date and Time conversion functions are in the case if DashAI decides to use pyarrow dates and times instead of strings. 
-#Both should be modified accordingly to function properly.
+
+# Both Date and Time conversion functions are in the case
+# if DashAI decides to use pyarrow dates and times instead of strings.
+# Both should be modified accordingly to function properly.
 def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Array:
     """
     Convert a PyArrow array of date strings to a PyArrow date32 array.
@@ -240,8 +246,9 @@ def pyarrow_date_conversion(column: pa.Array, format: str = "%Y-%m-%d") -> pa.Ar
         parsed_dates = pd.to_datetime(str_dates, format=format, errors="coerce")
     except ValueError as e:
         raise ValueError(
-            f"Invalid date format: {e} - expected format is {format} check, clean your data and try again."
-        )
+            f"Invalid date format: {e} - expected format is {format} "
+            f"check and clean your data and try again."
+        ) from e
 
     return pa.array(parsed_dates, type=pa.date32())
 
@@ -269,8 +276,9 @@ def pyarrow_time_conversion(column: pa.Array, format: str = "%H:%M:%S") -> pa.Ar
         parsed_times = pd.to_datetime(str_times, format=format, errors="coerce")
     except ValueError as e:
         raise ValueError(
-            f"Invalid time format: {e} - expected format is {format} check, clean your data and try again."
-        )
+            f"Invalid time format: {e} - expected format is {format} "
+            f"check and clean your data and try again."
+        ) from e
 
     return pa.array(parsed_times, type=pa.time32("s"))
 

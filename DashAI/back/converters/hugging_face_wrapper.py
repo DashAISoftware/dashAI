@@ -4,11 +4,10 @@ from typing import Type
 from datasets import concatenate_datasets
 
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.converters.converter_types import HF_CONVERTERS_TYPES
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
 )
-
-from DashAI.back.converters.converter_types import HF_CONVERTERS_TYPES
 
 
 class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
@@ -65,6 +64,9 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
             for col in converted_dataset.column_names:
                 converted_dataset.types[col] = dashai_type
         else:
-            print(f"Warning: No DashAI type found for converter '{converter_name}', check HF_CONVERTERS_TYPES.")
+            print(
+                f"Warning: No DashAI type found for converter '{converter_name}', "
+                f"check HF_CONVERTERS_TYPES."
+            )
 
         return converted_dataset

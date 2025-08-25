@@ -40,7 +40,9 @@ function EditDataTypeModal({ datasetId, updateDatasets }) {
       updateDatasets();
       setOpen(false);
     } catch (error) {
-      enqueueSnackbar("Error while trying to update the dataset", { variant: "error" });
+      enqueueSnackbar("Error while trying to update the dataset", {
+        variant: "error",
+      });
       console.error(error);
     }
   };
@@ -57,7 +59,10 @@ function EditDataTypeModal({ datasetId, updateDatasets }) {
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
         <DialogTitle>Edit Data Types</DialogTitle>
         <DialogContent onClick={(event) => event.stopPropagation()}>
-          <Paper variant="outlined" sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
+          >
             <Grid container direction="column" alignItems="center">
               <Grid item>
                 <Typography variant="subtitle1">Dataset Summary</Typography>
@@ -66,7 +71,8 @@ function EditDataTypeModal({ datasetId, updateDatasets }) {
                   component="h3"
                   sx={{ mb: 2, color: "grey" }}
                 >
-                  Summary of the dataset. You can modify the type by selecting a different value.
+                  Summary of the dataset. You can modify the type by selecting a
+                  different value.
                 </Typography>
               </Grid>
               <Grid item>

@@ -2,8 +2,8 @@ from typing import Any
 
 from datasets import Dataset
 
-from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.models.text_classification_model import TextClassificationModel
 
 
 class DummyTextClassifier(TextClassificationModel):
@@ -61,5 +61,5 @@ class DummyTextClassifier(TextClassificationModel):
             self.most_frequent_label = f.readline().strip()
         self.is_trained = True
 
-    def prepare_dataset(self, dataset, is_fit = False):
+    def prepare_dataset(self, dataset, is_fit=False):
         return dataset

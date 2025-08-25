@@ -14,11 +14,11 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
-from DashAI.back.models import BaseModel
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
     dashai_to_pandas,
 )
+from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
+from DashAI.back.models import BaseModel
 
 
 class PermutationFeatureImportanceSchema(BaseSchema):
@@ -127,9 +127,6 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         y_test = self.model.prepare_dataset(y["test"])
 
         input_columns = x_test.column_names
-
-
-
 
         def patched_metric(y_true, y_pred_probas):
             return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))

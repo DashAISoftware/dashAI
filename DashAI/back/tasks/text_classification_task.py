@@ -48,4 +48,3 @@ class TextClassificationTask(BaseTask):
             Dataset with the new types
         """
         return to_dashai_dataset(datasetdict)
-

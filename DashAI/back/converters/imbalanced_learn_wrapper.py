@@ -4,12 +4,11 @@ from typing import Type, Union
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-from datasets.features import Features
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.job.base_job import JobError
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
+from DashAI.back.job.base_job import JobError
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -109,7 +108,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         try:
             dataset = DashAIDataset(self._resampled_table, types=ds_types, splits={})
             return dataset
- 
+
         except Exception as e:
             raise JobError(
                 f"Failed to create DashAIDataset from resampled data: {e}"

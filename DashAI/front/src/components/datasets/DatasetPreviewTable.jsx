@@ -41,7 +41,6 @@ function DatasetPreviewTable({
     }
   }, [previewData, columnsSpec]);
 
-
   const updateCellValue = async (id, field, newValue) => {
     await apiRef.current.setEditCellValue({ id, field, value: newValue });
     apiRef.current.stopCellEditMode({ id, field });
@@ -64,9 +63,9 @@ function DatasetPreviewTable({
     const updateColumns = { ...columnsSpec };
     if (field === "columnType") {
       updateColumns[columnName].type = newValue;
-      updateColumns[columnName].dtype = dataTypesbyColumnType[newValue]?.[0] || "";
-    }
-    else if (field === "dataType") {
+      updateColumns[columnName].dtype =
+        dataTypesbyColumnType[newValue]?.[0] || "";
+    } else if (field === "dataType") {
       updateColumns[columnName].dtype = newValue;
     }
 
@@ -75,7 +74,7 @@ function DatasetPreviewTable({
     console.log(`Columna ${columnName} actualizada:`, {
       field,
       newValue,
-      currentSpec: updateColumns[columnName]
+      currentSpec: updateColumns[columnName],
     });
   };
 
@@ -88,7 +87,7 @@ function DatasetPreviewTable({
     } else if (params.field === "columnType") {
       options = columnTypesList;
     }
-  
+
     return (
       <SelectTypeCell
         id={params.id}
@@ -126,13 +125,11 @@ function DatasetPreviewTable({
     {
       field: "dataType",
       headerName: "Data type",
-      renderEditCell: (params) =>
-        isEditable && renderSelectCell(params),
+      renderEditCell: (params) => isEditable && renderSelectCell(params),
       minWidth: 200,
       editable: isEditable,
     },
   ]);
-
 
   return (
     <DataGrid

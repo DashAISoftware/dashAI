@@ -6,9 +6,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    categorical_label_encoder,
-)
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
@@ -53,4 +50,3 @@ class TabularClassificationTask(BaseTask):
         """
 
         return to_dashai_dataset(datasetdict)
-

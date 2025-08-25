@@ -4,8 +4,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
     AutoConfig,
@@ -22,6 +20,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.translation_model import TranslationModel
 
 
@@ -89,7 +88,9 @@ class OpusMtEnESTransformer(TranslationModel):
         )
         self.fitted = model is not None
 
-    def tokenize_data(self, x: DashAIDataset, y: Optional[DashAIDataset] = None) -> DashAIDataset:
+    def tokenize_data(
+        self, x: DashAIDataset, y: Optional[DashAIDataset] = None
+    ) -> DashAIDataset:
         """Tokenize input and output.
 
         Parameters
@@ -213,9 +214,7 @@ class OpusMtEnESTransformer(TranslationModel):
 
         return translations
 
-    def prepare_dataset(
-        self, dataset: DashAIDataset
-    ) -> DashAIDataset:
+    def prepare_dataset(self, dataset: DashAIDataset) -> DashAIDataset:
         """Apply the model transformations to the dataset.
 
         Parameters
@@ -226,10 +225,11 @@ class OpusMtEnESTransformer(TranslationModel):
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to an accepted format in the model.
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
         """
         try:
-            #Useless in this case, but we keep it for consistency with other models.
+            # Useless in this case, but we keep it for consistency with other models.
             return dataset
         except Exception as e:
             print(f"Couldn't apply transformations to the dataset for the model: {e}")

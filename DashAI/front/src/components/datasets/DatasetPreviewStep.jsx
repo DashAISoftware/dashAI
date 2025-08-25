@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Paper, Grid, Typography, CircularProgress } from "@mui/material";
 import PropTypes from "prop-types";
 import DatasetPreviewTable from "./DatasetPreviewTable";
-import { Button } from "@mui/material"; 
+import { Button } from "@mui/material";
 
 function DatasetPreviewStep({
   previewData, // preview data from the API
@@ -13,8 +13,7 @@ function DatasetPreviewStep({
   useEffect(() => {
     if (previewData && Object.keys(previewData).length > 0) {
       setNextEnabled(true);
-    }
-    else {
+    } else {
       setNextEnabled(false);
     }
   }, [previewData, setNextEnabled]);
@@ -37,15 +36,15 @@ function DatasetPreviewStep({
           </Typography>
         </Grid>
         <Grid item>
-          {previewData  ? (
+          {previewData ? (
             <>
-            <DatasetPreviewTable
-              previewData={previewData}
-              isEditable={true}
-              columnsSpec={columnsSpec}
-              setColumnsSpec={setColumnsSpec}
-            />
-          </>
+              <DatasetPreviewTable
+                previewData={previewData}
+                isEditable={true}
+                columnsSpec={columnsSpec}
+                setColumnsSpec={setColumnsSpec}
+              />
+            </>
           ) : (
             <CircularProgress />
           )}

@@ -3,6 +3,7 @@
 import shutil
 from typing import Any, Dict
 
+import pandas as pd
 from beartype import beartype
 from datasets import load_dataset
 
@@ -18,8 +19,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
-import pyarrow as pa
-import pandas as pd
+
 
 class CSVDataloaderSchema(BaseSchema):
     name: schema_field(
@@ -102,15 +102,15 @@ class CSVDataLoader(BaseDataLoader):
             shutil.rmtree(prepared_path[0])
 
         return to_dashai_dataset(dataset)
-    
+
     def load_preview(
-            self, 
-            filepath_or_buffer: str,
-            params: Dict[str, Any],
-            n_rows: int = 5,
-            ) -> pd.DataFrame:
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 5,
+    ) -> pd.DataFrame:
         """Load a preview of the dataset.
-        
+
         Parameters
         ----------
         filepath_or_buffer : str
@@ -127,16 +127,16 @@ class CSVDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, None)
 
         if prepared_path[1] == "file":
-            df = pd.read_csv(
+            loaded_dataset = pd.read_csv(
                 prepared_path[0],
                 sep=separator,
                 nrows=n_rows,
             )
         else:
-            df = pd.read_csv(
+            loaded_dataset = pd.read_csv(
                 prepared_path[0],
                 sep=separator,
                 nrows=n_rows,
             )
             shutil.rmtree(prepared_path[0])
-        return df
+        return loaded_dataset

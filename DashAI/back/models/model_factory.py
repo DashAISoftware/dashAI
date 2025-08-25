@@ -131,7 +131,9 @@ class ModelFactory:
                     and "multiclass" in metric.score.__code__.co_varnames
                     and multiclass is not None
                 ):
-                    score = metric.score(transformed_y, predictions, multiclass=multiclass)
+                    score = metric.score(
+                        transformed_y, predictions, multiclass=multiclass
+                    )
                 else:
                     # For metrics that don't accept the multiclass parameter
                     score = metric.score(transformed_y, predictions)

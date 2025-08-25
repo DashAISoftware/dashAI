@@ -1,11 +1,13 @@
 from typing import List, Union
 
+import pyarrow as pa
+
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.types.value_types import Text, Integer
-import pyarrow as pa
+from DashAI.back.types.value_types import Integer, Text
+
 
 class CharacterReplacerSchema(BaseSchema):
     char_to_replace: schema_field(
@@ -129,7 +131,7 @@ class CharacterReplacer(BaseConverter):
 
         return DashAIDataset(
             transformed_hf_dataset.data.table,
-            types =new_types,
+            types=new_types,
             splits=x.splits,
         )
 

@@ -1,15 +1,13 @@
+# flake8: noqa
+
 from copy import deepcopy
-from scipy import optimize
+
 import numpy as np
+from scipy import optimize
 
-import sys
-import os
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
-sys.path.insert(0, project_root)
-
-from back.types.inf.ptype.Column import MISSING_INDEX, ANOMALIES_INDEX
-from back.types.inf.ptype.Machine import PI
-from back.types.inf.ptype.utils import (
+from DashAI.back.types.inf.ptype.Column import ANOMALIES_INDEX, MISSING_INDEX
+from DashAI.back.types.inf.ptype.Machine import PI
+from DashAI.back.types.inf.ptype.utils import (
     LOG_EPS,
     log_weighted_sum_normalize_probs,
     normalize_log_probs,
@@ -54,12 +52,13 @@ LLHOOD_TYPE_START_INDEX = 2
 
 
 class Trainer:
-    """ A Trainer object.
+    """A Trainer object.
 
     :param machines: PFSMs to train.
     :param dfs: data frames to train with.
     :param labels: column types labeled by hand, where _label[i][j] denotes the type of j^th column in i^th dataframe.
     """
+
     def __init__(self, machines, dfs, labels):
         self.machines = machines
         self.dfs = dfs
@@ -83,7 +82,7 @@ class Trainer:
         }
 
     def train(self, max_iter=20, uniformly=False, threshold=1e-10):
-        """ Train the PFSMs.
+        """Train the PFSMs.
 
         :param max_iter: the maximum number of iterations the optimization algorithm runs as long as it's not converged.
         :param uniformly: a binary variable used to initialize the PFSMs - True allows initializing uniformly rather than using hand-crafted values.

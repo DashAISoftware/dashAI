@@ -4,9 +4,6 @@ from importlib import import_module
 from pathlib import Path
 from typing import Dict, List
 
-import pyarrow as pa
-from datasets.arrow_dataset import update_metadata_with_features
-from datasets.features import Features
 from kink import inject
 from sqlalchemy import exc
 
@@ -15,8 +12,8 @@ from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
-    save_dataset,
     modify_table,
+    save_dataset,
 )
 from DashAI.back.dependencies.database.models import ConverterList
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
@@ -64,7 +61,7 @@ def _rebuild_dataset_with_transformed_columns(
 
     original_columns = base.column_names
     transformed_cols = transformed.column_names
-    
+
     replacement_cols = transformed_cols[: len(scope_column_indexes)]
     new_cols = transformed_cols[len(scope_column_indexes) :]
 
@@ -84,11 +81,13 @@ def _rebuild_dataset_with_transformed_columns(
     }
 
     updated_types = base.types.copy()
-    updated_types.update({
-        col: transformed.types[col]
-        for col in replacement_cols + new_cols
-        if col in transformed.types
-    })
+    updated_types.update(
+        {
+            col: transformed.types[col]
+            for col in replacement_cols + new_cols
+            if col in transformed.types
+        }
+    )
 
     modified_dataset = modify_table(base, updated_arrays, types=updated_types)
 

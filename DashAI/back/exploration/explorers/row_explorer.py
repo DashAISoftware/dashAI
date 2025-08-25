@@ -9,9 +9,9 @@ from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class RowExplorerSchema(BaseExplorerSchema):
@@ -29,7 +29,7 @@ class RowExplorerSchema(BaseExplorerSchema):
         t=bool_field(),
         placeholder=True,
         description=(
-            "Take the rows from the Head of the dataset. " "Else, take from the Tail."
+            "Take the rows from the Head of the dataset. Else, take from the Tail."
         ),
     )  # type: ignore
 

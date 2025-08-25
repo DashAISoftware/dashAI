@@ -10,7 +10,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 class BaseModel(ConfigObject, metaclass=ABCMeta):
     """Abstract class of all machine learning models.
 
-    All models must extend this class and implement save, load and prepare_dataset methods.
+    All models must extend this class and implement
+    save, load and prepare_dataset methods.
     """
 
     TYPE: Final[str] = "Model"
@@ -48,6 +49,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to an accepted format in the model.
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
         """
         raise NotImplementedError

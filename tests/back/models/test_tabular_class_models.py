@@ -2,6 +2,7 @@ import os
 from typing import Tuple
 
 import numpy as np
+import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 from sklearn.exceptions import NotFittedError
@@ -9,11 +10,11 @@ from sklearn.utils.validation import check_is_fitted
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
     divide_columns,
     split_dataset,
     split_indexes,
     to_dashai_dataset,
-    DashAIDataset
 )
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
@@ -21,10 +22,10 @@ from DashAI.back.models.scikit_learn.random_forest_classifier import (
 )
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.scikit_learn.svc import SVC
-from DashAI.back.types.value_types import Float
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata
-import pyarrow as pa
+from DashAI.back.types.value_types import Float
+
 
 @pytest.fixture(scope="module", name="divided_dataset")
 def tabular_model_fixture():
@@ -53,14 +54,19 @@ def tabular_model_fixture():
         "SepalWidthCm": Float(arrow_type=pa.float64()),
         "PetalLengthCm": Float(arrow_type=pa.float64()),
         "PetalWidthCm": Float(arrow_type=pa.float64()),
-        "Species": Categorical(values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]),
+        "Species": Categorical(
+            values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+        ),
     }
 
-    new_table = save_types_in_arrow_metadata(datasetdict.arrow_table, {
-        col: dtype.to_string() for col, dtype in datasetdict.types.items()
-    })
+    new_table = save_types_in_arrow_metadata(
+        datasetdict.arrow_table,
+        {col: dtype.to_string() for col, dtype in datasetdict.types.items()},
+    )
 
-    datasetdict = DashAIDataset(new_table, splits=datasetdict.splits, types=datasetdict.types)
+    datasetdict = DashAIDataset(
+        new_table, splits=datasetdict.splits, types=datasetdict.types
+    )
 
     total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(

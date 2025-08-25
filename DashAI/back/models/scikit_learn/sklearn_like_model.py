@@ -4,9 +4,9 @@ import joblib
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
+    apply_categorical_label_encoder,
     categorical_label_encoder,
     dashai_to_pandas,
-    apply_categorical_label_encoder
 )
 from DashAI.back.models.base_model import BaseModel
 
@@ -17,7 +17,8 @@ class SklearnLikeModel(BaseModel):
     def __init__(self, *args, **kwargs):
         """Initialize the SklearnLikeModel."""
         super().__init__(*args, **kwargs)
-        self.encodings = {} #We store the dictionary of encodings for categorical columns.
+        # We store the dictionary of encodings for categorical columns.
+        self.encodings = {}
 
     def save(self, filename: str) -> None:
         """Save the model in the specified path."""
@@ -48,9 +49,13 @@ class SklearnLikeModel(BaseModel):
         self
             The fitted estimator object.
         """
-        # We recieve base DashAIDataset, so we first need to apply the transformations and then convert to desired format to fit the model.
+        # We recieve base DashAIDataset,
+        # so we first need to apply the transformations
+        # and then convert to desired format to fit the model.
         x_processed = dashai_to_pandas(self.prepare_dataset(x_train, is_fit=True))
-        y_processed = dashai_to_pandas(self.prepare_dataset(y_train, is_fit=True), squeeze=True)
+        y_processed = dashai_to_pandas(
+            self.prepare_dataset(y_train, is_fit=True), squeeze=True
+        )
         return super().fit(x_processed, y_processed)
 
     def prepare_dataset(
@@ -68,20 +73,22 @@ class SklearnLikeModel(BaseModel):
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to an accepted format in the model.
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
         """
         if not is_fit:
             try:
-                ("applying stored categorical label encodings:", self.encodings)
                 dataset = apply_categorical_label_encoder(dataset, self.encodings)
                 return dataset
             except Exception as e:
                 print(f"Couldn't apply categorical label encoding: {e}")
         else:
             try:
-                #We apply as many transformations from dashai_dataset_utils as needed.
+                # We apply as many transformations from dashai_dataset_utils as needed.
                 dataset, encodings = categorical_label_encoder(dataset)
                 self.encodings.update(encodings)  # Store the encodings for later use
                 return dataset
             except Exception as e:
-                print(f"Couldn't apply transformations to the dataset for the model: {e}")    
+                print(
+                    f"Couldn't apply transformations to the dataset for the model: {e}"
+                )

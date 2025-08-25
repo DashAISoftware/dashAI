@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 import joblib
 import numpy as np
+import pyarrow as pa
 from datasets import Dataset
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -12,16 +13,15 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset, DashAIDataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.text_classification_model import TextClassificationModel
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    apply_categorical_label_encoder,
-    categorical_label_encoder
-)
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float
-import pyarrow as pa
+
 
 class BagOfWordsTextClassificationModelSchema(BaseSchema):
     """
@@ -207,7 +207,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
 
     def fit(self, x: Dataset, y: Dataset):
         tokenized_dataset = self.prepare_dataset(x, is_fit=True)
-        #y encoding will be done on the prepare_dataset on self.classifier.fit
+        # y encoding will be done on the prepare_dataset on self.classifier.fit
         self.classifier.fit(tokenized_dataset, y)
 
     def predict(self, x: Dataset):
@@ -225,7 +225,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         model = joblib.load(filename)
         return model
 
-    def prepare_dataset(self, dataset: DashAIDataset, is_fit = False):
+    def prepare_dataset(self, dataset: DashAIDataset, is_fit=False):
         """Apply the model transformations to the dataset.
 
         Parameters
@@ -238,12 +238,13 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         Returns
         -------
         DashAIDataset
-            The prepared dataset ready to be converted to an accepted format in the model.
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
         """
         try:
             input_column = dataset.column_names[0]
             input_type = dataset.types[input_column]
-            
+
             if isinstance(input_type, Categorical):
                 if is_fit:
                     dataset = super().prepare_dataset(dataset, is_fit=True)
@@ -251,19 +252,20 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
                 else:
                     dataset = super().prepare_dataset(dataset, is_fit=False)
                     return dataset
-                
+
             if is_fit:
                 self.vectorizer.fit(dataset[input_column])
-            
+
             tokenizer_func = self.get_vectorizer(input_column)
             dataset = dataset.map(tokenizer_func, remove_columns=input_column)
             dataset = to_dashai_dataset(dataset)
 
             dataset.types = {
-                col: Float(arrow_type=pa.float32()) for col in dataset.column_names
+                col: Float(arrow_type=pa.float32())
+                for col in dataset.column_names
                 if col.startswith(input_column)
             }
-         
+
             return dataset
         except Exception as e:
             print(f"Couldn't apply transformations to the dataset for the model: {e}")

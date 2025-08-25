@@ -124,6 +124,7 @@ class DummyModel(BaseModel):
     def prepare_dataset(self, dataset, is_fit=False):
         return dataset
 
+
 class DummyGlobalExplainer(BaseGlobalExplainer):
     COMPATIBLE_COMPONENTS = ["DummyTask"]
 

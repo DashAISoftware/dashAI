@@ -10,9 +10,9 @@ from DashAI.back.core.schema_fields import int_field, none_type, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 
 
 class DensityHeatmapSchema(BaseExplorerSchema):

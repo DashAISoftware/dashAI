@@ -1,4 +1,6 @@
 import copy
+
+import pyarrow as pa
 import pytest
 from datasets import DatasetDict, concatenate_datasets
 
@@ -8,7 +10,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     divide_columns,
     split_dataset,
     split_indexes,
-    to_dashai_dataset
 )
 from DashAI.back.explainability import (
     KernelShap,
@@ -19,10 +20,9 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
-from DashAI.back.types.value_types import Float
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata
-import pyarrow as pa
+from DashAI.back.types.value_types import Float
 
 INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -63,14 +63,19 @@ def tabular_model_fixture():
         "SepalWidthCm": Float(arrow_type=pa.float64()),
         "PetalLengthCm": Float(arrow_type=pa.float64()),
         "PetalWidthCm": Float(arrow_type=pa.float64()),
-        "Species": Categorical(values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]),
+        "Species": Categorical(
+            values=["Iris-setosa", "Iris-versicolor", "Iris-virginica"]
+        ),
     }
 
-    new_table = save_types_in_arrow_metadata(datasetdict.arrow_table, {
-        col: dtype.to_string() for col, dtype in datasetdict.types.items()
-    })
+    new_table = save_types_in_arrow_metadata(
+        datasetdict.arrow_table,
+        {col: dtype.to_string() for col, dtype in datasetdict.types.items()},
+    )
 
-    datasetdict = DashAIDataset(new_table, splits=datasetdict.splits, types=datasetdict.types)
+    datasetdict = DashAIDataset(
+        new_table, splits=datasetdict.splits, types=datasetdict.types
+    )
 
     total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
@@ -84,7 +89,6 @@ def tabular_model_fixture():
     )
 
     x, y = divide_columns(split_dataset_dict, INPUT_COLUMNS, OUTPUT_COLUMNS)
-    #types = {column: "Categorical" for column in OUTPUT_COLUMNS}
 
     y = split_dataset(y)
     x = split_dataset(x)

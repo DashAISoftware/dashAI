@@ -1,16 +1,10 @@
-from DashAI.back.types.value_types import (
-    Text,
-    Integer,
-    Float,
-    Time,
-    Timestamp,
-    Duration,
-    Decimal,
-    Date,
-    Binary,
-)
-from DashAI.back.types.categorical import Categorical
 import pyarrow as pa
+
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import (
+    Float,
+    Integer,
+)
 
 SKLEARN_CONVERTERS_TYPES = {
     "AdditiveChi2Sampler": Float(arrow_type=pa.float64()),
@@ -20,14 +14,18 @@ SKLEARN_CONVERTERS_TYPES = {
     "IncrementalPCA": Float(arrow_type=pa.float64()),
     "KNNImputer": Float(arrow_type=pa.float64()),
     "LabelBinarizer": Integer(arrow_type=pa.int64()),
-    "LabelEncoder": Categorical(values=pa.array(["0", "1"])), #Placeholder for initialization
+    "LabelEncoder": Categorical(
+        values=pa.array(["0", "1"])
+    ),  # Placeholder for initialization
     "MaxAbsScaler": Float(arrow_type=pa.float64()),
     "MinMaxScaler": Float(arrow_type=pa.float64()),
     "MissingIndicator": Integer(arrow_type=pa.int64()),
     "Normalizer": Float(arrow_type=pa.float64()),
     "Nystroem": Float(arrow_type=pa.float64()),
     "OneHotEncoder": Integer(arrow_type=pa.int64()),
-    "OrdinalEncoder": Categorical(values=pa.array(["0", "1"])),  # Placeholder for initialization
+    "OrdinalEncoder": Categorical(
+        values=pa.array(["0", "1"])
+    ),  # Placeholder for initialization
     "PCA": Float(arrow_type=pa.float64()),
     "PolynomialFeatures": Float(arrow_type=pa.float64()),
     "RBFSampler": Float(arrow_type=pa.float64()),
@@ -41,14 +39,10 @@ SKLEARN_CONVERTERS_TYPES = {
     "StandardScaler": Float(arrow_type=pa.float64()),
     "TruncatedSVD": Float(arrow_type=pa.float64()),
     "VarianceThreshold": Float(arrow_type=pa.float64()),
-    
 }
 
 HF_CONVERTERS_TYPES = {
     "Embedding": Float(arrow_type=pa.float32()),
 }
 
-IMBALANCED_LEARN_CONVERTERS_TYPES = {
-    
-
-}
+IMBALANCED_LEARN_CONVERTERS_TYPES = {}

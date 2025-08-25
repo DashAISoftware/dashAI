@@ -1,16 +1,13 @@
 from typing import List
 
-from datasets import DatasetDict, Value
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-
-from DashAI.back.types.dashai_value import DashAIValue
-
-
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.dashai_value import DashAIValue
 
 
 class RegressionTask(BaseTask):
