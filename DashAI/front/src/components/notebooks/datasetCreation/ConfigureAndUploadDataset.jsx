@@ -152,15 +152,17 @@ export default function ConfigureAndUploadDataset({
           )}
         </Grid>
       </Grid>
-      <FormSchemaButtonGroup
-        onCancel={goToPrevStep}
-        onFormSubmit={handleSubmitNewDataset}
-        formik={{
-          errors: nextEnabled ? {} : { dataset: "Required fields missing" },
-        }}
-        saveButtonText="Upload"
-        backButtonText="Back"
-      />
+      <Grid item sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+        <FormSchemaButtonGroup
+          onCancel={goToPrevStep}
+          onFormSubmit={handleSubmitNewDataset}
+          formik={{
+            errors: nextEnabled ? {} : { dataset: "Required fields missing" },
+          }}
+          saveButtonText="Upload"
+          backButtonText="Back"
+        />
+      </Grid>
     </Grid>
   );
 }
