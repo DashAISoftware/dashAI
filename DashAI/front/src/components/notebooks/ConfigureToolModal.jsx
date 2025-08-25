@@ -104,6 +104,11 @@ export default function ConfigureToolModal({
         }}
       >
         <Tab
+          icon={<SummarizeIcon fontSize="small" />}
+          iconPosition="start"
+          label="Description"
+        />
+        <Tab
           icon={<DatasetIcon fontSize="small" />}
           iconPosition="start"
           label="Dataset"
@@ -127,6 +132,16 @@ export default function ConfigureToolModal({
         {/* Tab Panels */}
         <Box sx={{ flex: 1, overflow: "auto", p: 2, height: "35%" }}>
           {activeTab === 0 && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              gutterBottom
+              //textAlign="center"
+            >
+              {tool.description || "No description available."}
+            </Typography>
+          )}
+          {activeTab === 1 && (
             <DatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path]}
@@ -138,7 +153,7 @@ export default function ConfigureToolModal({
               disableDensitySelector
             />
           )}
-          {activeTab === 1 && (
+          {activeTab === 2 && (
             <DatasetSummaryTable
               file={notebook.file_path}
               density="compact"
