@@ -53,7 +53,7 @@ def tabular_model_fixture():
     )
 
     x, y = select_columns(split_dataset_dict, INPUT_COLUMNS, OUTPUT_COLUMNS)
-    types = {column: "Categorical" for column in OUTPUT_COLUMNS}
+    types = dict.fromkeys(OUTPUT_COLUMNS, "Categorical")
 
     y = split_dataset(y.change_columns_type(types))
     x = split_dataset(x)

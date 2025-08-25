@@ -32,7 +32,8 @@
     "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts test",
     "eject": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts eject",
-    "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001"
+    "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --config eslint.config.js"
   },
   "eslintConfig": {
     "extends": [

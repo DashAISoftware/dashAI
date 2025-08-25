@@ -160,8 +160,8 @@ const ConverterTable = ({
           const columnsLabel = row.isStepInChain
             ? "-"
             : columns.length > 0
-            ? parseIndexToRange(columns).join(", ")
-            : "All columns";
+              ? parseIndexToRange(columns).join(", ")
+              : "All columns";
           return <Typography variant="p">{columnsLabel}</Typography>;
         },
       },
@@ -177,8 +177,8 @@ const ConverterTable = ({
           const rowsLabel = row.isStepInChain
             ? "-"
             : rows.length > 0
-            ? parseIndexToRange(rows).join(", ")
-            : "All rows";
+              ? parseIndexToRange(rows).join(", ")
+              : "All rows";
           return <Typography variant="p">{rowsLabel}</Typography>;
         },
       },

@@ -46,7 +46,7 @@ def splited_dataset_fixture():
     return (x, y)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_model():
     model = DistilBertTransformer(
         num_train_epochs=2,
