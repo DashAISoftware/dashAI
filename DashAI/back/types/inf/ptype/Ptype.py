@@ -1,11 +1,11 @@
 # flake8: noqa
 
 import numpy as np
-from back.types.inf.ptype.Machine import PI
-from back.types.inf.ptype.Machines import Machines
-from back.types.inf.ptype.Schema import Schema
-from back.types.inf.ptype.Trainer import likelihoods_normalize, sum_weighted_likelihoods
-from back.types.inf.ptype.utils import normalize_log_probs
+from DashAI.back.types.inf.ptype.Machine import PI
+from DashAI.back.types.inf.ptype.Machines import Machines
+from DashAI.back.types.inf.ptype.Schema import Schema
+from DashAI.back.types.inf.ptype.Trainer import likelihoods_normalize, sum_weighted_likelihoods
+from DashAI.back.types.inf.ptype.utils import normalize_log_probs
 
 from DashAI.back.types.inf.ptype.Column import (
     ANOMALIES_INDEX,

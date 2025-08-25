@@ -4,8 +4,8 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-from back.types.inf.ptype import Ptype
-from back.types.inf.ptype.Machines import Machines
+from DashAI.back.types.inf.ptype import Ptype
+from DashAI.back.types.inf.ptype.Machines import Machines
 
 CAT_TRAINED_TYPES = [
     "integer",
