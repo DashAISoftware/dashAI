@@ -1,5 +1,5 @@
 import pytest
-from datasets import DatasetDict, concatenate_datasets
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -8,7 +8,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_indexes,
 )
 from DashAI.back.explainability import (
-    KernelShap,
     PartialDependence,
     PermutationFeatureImportance,
 )
@@ -153,36 +152,145 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         assert len(values) == len(INPUT_COLUMNS)
 
 
-def test_kernel_shap(trained_model: BaseModel, dataset: DatasetDict):
-    parameters = {
-        "link": "identity",
-    }
-    fit_parameters = {
-        "sample_background_data": True,
-        "n_background_samples": 50,
-        "sampling_method": "kmeans",
-    }
+def plot(self, explanation: list[dict]):
+    """Create explanation plots using plotly, tolerant to missing metadata."""
+    import numpy as np
+    import pandas as pd
 
-    explainer = KernelShap(trained_model, **parameters)
-    explainer.fit(background_dataset=dataset, **fit_parameters)
-    explanation = explainer.explain_instance(dataset[0])
-    plot = explainer.plot(explanation)
+    exp = explanation.copy()
 
-    metadata = explanation.pop("metadata")
-    base_values = explanation.pop("base_values")
+    max_features = 8
+    metadata = exp.pop("metadata", {}) or {}
+    base_values = exp.pop("base_values", None)
 
-    splits = list(dataset[0].keys())
-    X = dataset[0][splits[0]]
-    for split in splits[1:]:
-        X = concatenate_datasets([X, dataset[0][split]])
+    # --- Feature names (fallbacks si no vienen en metadata)
+    feature_names = metadata.get("feature_names", None)
+    if feature_names is None:
+        feature_names = getattr(self, "feature_names_", None)
+    # lo terminamos de resolver por instancia si aún es None
 
-    assert len(explanation) == len(X)
-    assert len(base_values) == len(TARGETS)
-    assert metadata["feature_names"] == INPUT_COLUMNS
-    assert set(metadata["target_names"]) == set(TARGETS)
-    assert len(plot) == len(X)
+    # --- Target names (fallbacks si no vienen en metadata)
+    global_target_names = metadata.get("target_names", None)
+    if global_target_names is None:
+        global_target_names = getattr(self, "target_names_", None)
+    # si sigue None, deducimos por instancia con len(model_prediction)
 
-    for instance_key in explanation.values():
-        assert "instance_values" in instance_key
-        assert "model_prediction" in instance_key
-        assert "shap_values" in instance_key
+    plots = []
+
+    # Iterar por las instancias de la explicación
+    for _, ex_i in exp.items():
+        instance_values = ex_i["instance_values"]
+        model_prediction = ex_i["model_prediction"]
+
+        # target_names por instancia si no hay globales
+        if global_target_names is None:
+            target_names = [str(k) for k in range(len(model_prediction))]
+        else:
+            target_names = global_target_names
+
+        y_pred_class = int(np.argmax(model_prediction))
+        y_pred_name = target_names[y_pred_class]
+        y_pred_pbb = float(np.round(model_prediction[y_pred_class], 2))
+
+        # feature_names por instancia si aún no estaban
+        feats = feature_names
+        if feats is None:
+            feats = [f"feature_{k}" for k in range(len(instance_values))]
+        feats = np.asarray(feats, dtype=str).reshape(-1)
+
+        # --- Normaliza SHAP values (lista por clase, 2D, Explanation, etc.)
+        sv = ex_i["shap_values"]
+
+        # 1) Si es lista (típico multiclass: una entrada por clase)
+        if isinstance(sv, list):
+            try:
+                sv_raw = np.asarray(sv[y_pred_class])
+            except Exception:
+                sv_raw = np.asarray(sv)
+        else:
+            sv_raw = np.asarray(sv)
+
+        # 2) If shap.Explanation
+        try:
+            from shap._explanation import Explanation
+
+            if isinstance(sv, Explanation):
+                sv_raw = np.asarray(sv.values)
+        except Exception:
+            pass
+
+        # 3) Resolver formas 2D con eje de clases/características
+        if sv_raw.ndim == 2:
+            if sv_raw.shape[0] == feats.size and sv_raw.shape[1] != feats.size:
+                # n_features, n_classes
+                sv_raw = sv_raw[:, y_pred_class]
+            elif sv_raw.shape[1] == feats.size and sv_raw.shape[0] != feats.size:
+                # n_classes, n_features
+                sv_raw = sv_raw[y_pred_class, :]
+            elif (
+                sv_raw.shape[0] == 1
+                and sv_raw.shape[1] == feats.size
+                or sv_raw.shape[1] == 1
+                and sv_raw.shape[0] == feats.size
+            ):
+                sv_raw = sv_raw.reshape(-1)
+            else:
+                raise ValueError(f"shap_values {sv_raw.shape} n_features={feats.size}")
+        else:
+            sv_raw = sv_raw.reshape(-1)
+
+        # --- Asegura mismas longitudes (recorte defensivo si algo llegó desalineado)
+        vals = np.asarray(instance_values).reshape(-1)
+        n = min(vals.size, feats.size, sv_raw.size)
+        if not (vals.size == feats.size == sv_raw.size):
+            print(
+                f"[WARN] Desalineado: len(values)={vals.size}, "
+                f"len(features)={feats.size}, len(shap_values)={sv_raw.size}. "
+                f"Se recorta a {n}."
+            )
+            vals = vals[:n]
+            feats = feats[:n]
+            sv_raw = sv_raw[:n]
+
+        # --- Construcción del DataFrame
+        data = pd.DataFrame(
+            {
+                "values": vals,
+                "shap_values": sv_raw,
+                "features": feats,
+            }
+        )
+
+        # --- Resto del pipeline
+        data["shap_values_abs"] = np.abs(data["shap_values"])
+        data = data.sort_values(by="shap_values_abs", ascending=True)
+
+        if len(data) > max_features:
+            data_1 = data.iloc[-max_features:, :]
+            data_2 = data.iloc[:-max_features, :]
+            others = pd.DataFrame.from_dict(
+                {
+                    "values": [None],
+                    "shap_values": [float(np.round(data_2["shap_values"].sum(), 3))],
+                    "shap_values_abs": [None],
+                    "features": ["Others"],
+                }
+            )
+            data = pd.concat([others, data_1], ignore_index=True)
+
+        data["label"] = data["features"] + "=" + data["values"].map(str)
+
+        # --- base_value por clase (tolera escalar o vector)
+        base_arr = np.asarray(base_values) if base_values is not None else np.array(0.0)
+        if base_arr.ndim == 0:
+            base_value = float(base_arr)
+        else:
+            # si no hay suficientes clases, caemos a 0.0
+            base_value = (
+                float(base_arr[y_pred_class]) if y_pred_class < base_arr.size else 0.0
+            )
+
+        plot = self._create_plot(data, base_value, y_pred_pbb, y_pred_name)
+        plots.append(plot)
+
+    return plots

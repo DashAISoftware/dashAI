@@ -34,6 +34,7 @@ function ExperimentsTable({
     try {
       const experiments = await getExperimentsRequest();
       setExperiments(experiments);
+      console.log(experiments);
       // initially set all experiments running state to false
       const initialRunningState = experiments.reduce((accumulator, current) => {
         return { ...accumulator, [current.id]: false };
@@ -132,7 +133,7 @@ function ExperimentsTable({
       {
         field: "actions",
         type: "actions",
-        minWidth: 80,
+        minWidth: 180,
         getActions: (params) => [
           <RunnerDialog
             key="runner-dialog"

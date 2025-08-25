@@ -1,7 +1,8 @@
 import logging
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Union
 
 from beartype import beartype
+from beartype.typing import Dict, List, Type
 
 from DashAI.back.dependencies.registry.relationship_manager import RelationshipManager
 
@@ -26,6 +27,7 @@ class ComponentRegistry:
         "schema": {...},  # Configurable object schema if applies.
         "metadata": {...},  # Component metadata if applies.
         "description": "...",  # An object description.
+        "display_name": "...",  # A readable label.
     }
     ```
 
@@ -199,6 +201,7 @@ class ComponentRegistry:
                 else None
             ),
             "description": getattr(new_component, "DESCRIPTION", None),
+            "display_name": getattr(new_component, "DISPLAY_NAME", None),
         }
 
         if base_type not in self._registry:

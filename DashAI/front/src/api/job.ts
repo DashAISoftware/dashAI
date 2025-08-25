@@ -109,6 +109,26 @@ export const enqueuePredictionJob = async (
   return response.data;
 };
 
+export const enqueueGenerativeProcessJob = async (
+  processId: number,
+): Promise<object> => {
+  const data = {
+    job_type: "GenerativeJob",
+    kwargs: { generative_process_id: processId },
+  };
+
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const enqueueConverterJob = async (
   converterListId: number,
   targetColumnIndex: number,
@@ -143,5 +163,25 @@ export const startJobQueue = async (
   }
 
   const response = await api.post<object>("/v1/job/start/", null, { params });
+  return response.data;
+};
+
+export const enqueuePipelineJob = async (
+  pipelineId: number,
+): Promise<object> => {
+  const data = {
+    job_type: "PipelineJob",
+    kwargs: { id: pipelineId },
+  };
+
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };

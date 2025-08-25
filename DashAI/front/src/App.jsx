@@ -10,9 +10,13 @@ import ExplainersDashboard from "./components/explainers/ExplainersDashboard";
 import ExplainersPage from "./pages/ExplainersPage";
 import ExplainerData from "./components/explainers/ExplainerData";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
+import PipelinesPage from "./pages/pipelines/Pipelines";
+import NewPipeline from "./pages/pipelines/NewPipeline";
 import PluginsPage from "./pages/plugins/Plugins";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import PredictionPage from "./pages/predictions/PredictionPage";
+import Generative from "./pages/generative/Generative";
+import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 
 function App() {
   return (
@@ -32,6 +36,13 @@ function App() {
             element={<ExplainerData />}
           />
         </Route>
+        <Route path="/app/generative" element={<Generative />} />
+        <Route path="/app/pipelines" element={<PipelinesPage />} />
+        <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
+        <Route
+          path="/app/pipelines/:pipelineId"
+          element={<NewPipelineWrapper />}
+        />
         <Route path="/app/plugins">
           <Route index element={<PluginsPage />} />
           <Route path=":category">

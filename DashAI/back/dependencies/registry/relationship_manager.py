@@ -1,8 +1,9 @@
 import logging
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List
+from typing import Any
 
 from beartype import beartype
+from beartype.typing import DefaultDict, Dict, List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
