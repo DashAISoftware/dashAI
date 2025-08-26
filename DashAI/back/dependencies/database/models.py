@@ -280,7 +280,9 @@ class ConverterList(Base):
     Table to store a list of converters applied to a dataset.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebook.id"))
+    notebook_id: Mapped[int] = mapped_column(
+        ForeignKey("notebook.id", ondelete="CASCADE")
+    )
     converter: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
@@ -347,10 +349,10 @@ class Notebook(Base):
     description: Mapped[str] = mapped_column(String, nullable=True)
     # Relationships
     explorers: Mapped[List["Explorer"]] = relationship(
-        back_populates="notebook", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="notebook", cascade="all, delete-orphan"
     )
     converters: Mapped[List["ConverterList"]] = relationship(
-        back_populates="notebook", cascade="all, delete-orphan", passive_deletes=True
+        back_populates="notebook", cascade="all, delete-orphan"
     )
     dataset: Mapped["Dataset"] = relationship(back_populates="notebooks")
 
@@ -361,7 +363,9 @@ class Explorer(Base):
     Table to store all the information about a explorer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    notebook_id: Mapped[int] = mapped_column(ForeignKey("notebook.id"))
+    notebook_id: Mapped[int] = mapped_column(
+        ForeignKey("notebook.id", ondelete="CASCADE")
+    )
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
