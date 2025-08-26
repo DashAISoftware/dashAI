@@ -90,7 +90,7 @@ export default function ScopeStepConverter({
         <ColumnSelector
           file_path={notebook.file_path}
           onSelectionChange={(columnsInfo) => {
-            const selectedOrders = columnsInfo.map((col) => col.order);
+            const selectedOrders = columnsInfo.map((col) => col.id);
             setColumns(selectedOrders);
           }}
           onValidationChange={() => {}}
