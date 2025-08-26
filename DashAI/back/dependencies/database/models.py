@@ -26,6 +26,7 @@ class Dataset(Base):
     __tablename__ = "dataset"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -72,6 +73,7 @@ class Run(Base):
     experiment_id: Mapped[int] = mapped_column(
         ForeignKey("experiment.id", ondelete="CASCADE")
     )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -175,6 +177,7 @@ class GlobalExplainer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     run_id: Mapped[int] = mapped_column(nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_path: Mapped[str] = mapped_column(String, nullable=True)
@@ -215,6 +218,7 @@ class LocalExplainer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     run_id: Mapped[int] = mapped_column(nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     dataset_id: Mapped[int] = mapped_column(nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
@@ -259,6 +263,7 @@ class ConverterList(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     dataset_id: Mapped[int] = mapped_column(nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     converters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
@@ -321,6 +326,7 @@ class Explorer(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     exploration_id: Mapped[int] = mapped_column(ForeignKey("exploration.id"))
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,

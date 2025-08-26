@@ -5,6 +5,26 @@ export const getJobs = async (): Promise<object> => {
   return response.data;
 };
 
+export const getJobDetails = async (jobId: string): Promise<object> => {
+  const response = await api.get<object>(`/v1/job/${jobId}/details`);
+  return response.data;
+};
+
+export const updateJobPriority = async (
+  jobId: string,
+  priority: number,
+): Promise<object> => {
+  try {
+    const response = await api.put(`/v1/job/${jobId}/priority`, {
+      priority: priority,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating job priority:", error);
+    throw error;
+  }
+};
+
 export const enqueueRunnerJob = async (runId: number): Promise<object> => {
   const data = {
     job_type: "ModelJob",

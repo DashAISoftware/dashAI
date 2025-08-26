@@ -70,6 +70,8 @@ class ModelJob(BaseJob):
 
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
+            run.huey_id = self.kwargs.get("huey_id", None)
+            db.commit()
             try:
                 # Get the experiment, dataset, task, metrics and splits
                 experiment: Experiment = db.get(Experiment, run.experiment_id)
@@ -336,4 +338,5 @@ class ModelJob(BaseJob):
                 db.commit()
                 raise e
             finally:
+
                 gc.collect()

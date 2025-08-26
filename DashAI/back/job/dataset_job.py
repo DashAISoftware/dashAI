@@ -90,6 +90,7 @@ class DatasetJob(BaseJob):
                     new_dataset = Dataset(
                         name=parsed_params.name,
                         file_path=folder_path,
+                        huey_id=self.kwargs.get("huey_id"),
                     )
                     db.add(new_dataset)
                     db.commit()

@@ -139,6 +139,11 @@ async function pollOnce() {
     }
 
     if (queueEmpty && !changed && !recentlyCompleted) {
+      if (state.mode !== "confirm") {
+        state.mode = "confirm";
+        schedule(state.confirmDelayMs);
+        return;
+      }
       state.mode = "sleep";
       clearTimer();
       return;
@@ -251,10 +256,20 @@ export async function checkQueueAndMaybeStartPolling() {
 /**
  * Manual refresh (UI buttons). Does not reset cursor.
  */
-export function forceRefreshNow() {
+export async function forceRefreshNow() {
   if (!state.started) {
     startJobPoller(state.intervalMs);
     return;
+  }
+  // checkear si en la db está listo
+  if (state.started) {
+    const r = await api.get(`/v1/job/${state.jobId}/details`);
+    const isEmpty = !!r?.data?.is_empty;
+    if (!isEmpty) {
+      if (!state.started) startJobPoller(state.intervalMs);
+      else if (state.mode === "sleep") schedule(0);
+      return true;
+    }
   }
   schedule(0);
 }

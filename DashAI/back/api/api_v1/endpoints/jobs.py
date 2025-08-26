@@ -5,13 +5,14 @@ import tempfile
 from datetime import datetime, timezone
 from urllib.parse import unquote_plus  # NOTE: plus -> space
 
-from fastapi import APIRouter, Depends, Query, Request, Response, status
+from fastapi import APIRouter, Body, Depends, Query, Request, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import FileTarget, ValueTarget
 from streaming_form_data.validators import MaxSizeValidator
 
+from DashAI.back.dependencies.database.utils import find_entity_by_huey_id
 from DashAI.back.dependencies.job_queues import BaseJobQueue
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
 from DashAI.back.dependencies.registry import ComponentRegistry
@@ -130,6 +131,67 @@ async def get_jobs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve jobs: {str(e)}",
+        )
+
+
+@router.get("/{job_id}/details")
+@inject
+async def get_job_details(
+    job_id: str, job_queue: BaseJobQueue = Depends(lambda: di["job_queue"])
+):
+    """
+    Get detailed information about a job, including its associated entity.
+    """
+    try:
+        job_info = job_queue.status(job_id)
+
+        entity_info = find_entity_by_huey_id(job_id)
+        if entity_info:
+            job_info.update(entity_info)
+
+        return job_info
+    except JobQueueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving job details: {str(e)}",
+        )
+
+
+@router.put("/{job_id}/priority")
+@inject
+async def update_job_priority(
+    job_id: str,
+    priority: int = Body(..., embed=True),
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """
+    Update the priority of a pending job.
+    Higher numbers = higher priority.
+    """
+    try:
+        job_status = job_queue.status(job_id)
+        if job_status.get("status") != "not_started":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only pending jobs can have their priority changed",
+            )
+
+        result = job_queue.update_priority(job_id, priority)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found or could not be updated",
+            )
+
+        return {"success": True, "job_id": job_id, "priority": priority}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating job priority: {str(e)}",
         )
 
 

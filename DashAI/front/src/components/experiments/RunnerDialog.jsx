@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   PlayArrow as PlayArrowIcon,
@@ -17,13 +17,14 @@ import {
   Typography,
 } from "@mui/material";
 import { getRuns as getRunsRequest } from "../../api/run";
-import {
-  enqueueRunnerJob as enqueueRunnerJobRequest,
-  startJobQueue as startJobQueueRequest,
-} from "../../api/job";
+import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../utils/runStatus";
 import { LoadingButton } from "@mui/lab";
+import {
+  checkQueueAndMaybeStartPolling,
+  forceRefreshNow,
+} from "../../utils/jobPoller";
 
 /**
  * Modal for selecting the runs to be sent to execute in an experiment
@@ -38,42 +39,65 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const [finishedRunning, setFinishedRunning] = useState(false);
   const intervalRef = useRef(null);
 
+  // Función mejorada que sigue más de cerca la implementación original
   const getRuns = async ({ showLoading = true } = {}) => {
     if (showLoading) {
       setLoading(true);
     }
+
     try {
       const runs = await getRunsRequest(experiment.id.toString());
-      const firstRunInExecution = runs.find((run) => run.status === 2); // searches for a run with the status "running"
+
+      // Buscar explícitamente un run con status "running" (2)
+      const firstRunInExecution = runs.find((run) => run.status === 2);
+
+      // Si hay un run ejecutándose, asegurarse de que expRunning refleje eso
       if (firstRunInExecution !== undefined) {
-        // modify state only if the value changes
+        // Modificar el estado solo si el valor cambia
         if (!expRunning[experiment.id]) {
           setExpRunning({ ...expRunning, [experiment.id]: true });
         }
       }
-      // transform status code to a string
+
+      // Transformar código de estado a texto
       const runsWithStringStatus = runs.map((run) => {
         return { ...run, status: getRunStatus(run.status) };
       });
 
       setRows(runsWithStringStatus);
 
+      // Inicializar selección si es necesario
       if (rowSelectionModel.length === 0) {
-        setRowSelectionModel(runs.map((run, idx) => run.id));
+        setRowSelectionModel(runs.map((run) => run.id));
       }
 
+      // Verificar si todos los runs seleccionados han terminado
       if (expRunning[experiment.id]) {
-        const allRunsFinished = runs
-          .filter((run) => rowSelectionModel.includes(run.id)) // get only the runs that have been selected to be sent to the runner
-          .every((run) => run.status === 3 || run.status === 4); // finished or error
+        const selectedRuns = runs.filter((run) =>
+          rowSelectionModel.includes(run.id),
+        );
+
+        const allRunsFinished =
+          selectedRuns.length > 0 &&
+          selectedRuns.every((run) => run.status === 3 || run.status === 4); // finished o error
+
         if (allRunsFinished) {
           setExpRunning({ ...expRunning, [experiment.id]: false });
-          // only shows snackbar one time
+
+          // Solo mostrar snackbar una vez
           if (!finishedRunning) {
             enqueueSnackbar(`${experiment.name} has completed all its runs`, {
               variant: "success",
             });
             setFinishedRunning(true);
+
+            setTimeout(() => {
+              forceRefreshNow();
+            }, 300);
+
+            setTimeout(() => {
+              forceRefreshNow();
+            }, 1000);
           }
         }
       }
@@ -81,13 +105,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       enqueueSnackbar(
         `Error while trying to obtain the runs associated to ${experiment.name}`,
       );
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error fetching runs:", error);
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -97,49 +115,38 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
 
   const enqueueRunnerJob = async (runId) => {
     try {
-      await enqueueRunnerJobRequest(runId);
-      return false; // return false for sucess
+      const response = await enqueueRunnerJobRequest(runId);
+
+      return false; // retornar false para éxito
     } catch (error) {
       enqueueSnackbar(`Error while trying to enqueue run with id ${runId}`);
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-      return true; // return true for error
-    }
-  };
-
-  const startJobQueue = async () => {
-    try {
-      await startJobQueueRequest();
-    } catch (error) {
-      setExpRunning({ ...expRunning, [experiment.id]: false });
-      enqueueSnackbar("Error while trying to start job queue");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error enqueueing run:", error);
+      return true; // retornar true para error
     }
   };
 
   const handleExecuteRuns = async () => {
     setExpRunning({ ...expRunning, [experiment.id]: true });
+    setFinishedRunning(false);
     let enqueueErrors = 0;
-    // send runs to the job queue
+
+    // Enviar runs al job queue
     for (const runId of rowSelectionModel) {
       const error = await enqueueRunnerJob(runId);
       enqueueErrors = error ? enqueueErrors + 1 : enqueueErrors;
     }
 
-    // verify that at least one job was succesfully enqueued to start the job queue
+    // Verificar que al menos un job fue encolado con éxito
     if (enqueueErrors < rowSelectionModel.length) {
-      startJobQueue(true); // true to stop when queue empties
+      // Obtener un update inmediato
+      checkQueueAndMaybeStartPolling();
+      setTimeout(() => {
+        forceRefreshNow();
+      }, 300);
+
+      setTimeout(() => {
+        getRuns({ showLoading: false });
+      }, 100);
     } else {
       setExpRunning({ ...expRunning, [experiment.id]: false });
     }
@@ -166,31 +173,39 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
     },
   ];
 
-  // on mount, fetches runs associated to the experiment.
+  // Al montar, obtener runs asociados al experimento
   useEffect(() => {
     getRuns();
   }, []);
 
-  // polling to update the state of the runs
+  // Polling para actualizar el estado de los runs - ESTA ES LA PARTE CLAVE
   useEffect(() => {
-    if (expRunning[experiment.id]) {
-      // Fetch data initially
+    // Si el experimento está corriendo o el modal está abierto, hacer polling
+    if (expRunning[experiment.id] || open) {
+      // Obtener datos inicialmente
       const initialGetRuns = async () => {
         await getRuns({ showLoading: false });
       };
+
       initialGetRuns().then(() => {
-        // clear previous interval
+        // Limpiar intervalo anterior
         clearInterval(intervalRef.current);
-        // start polling
+
+        // Iniciar polling
         intervalRef.current = setInterval(
           () => getRuns({ showLoading: false }),
-          1000, // Poll every 1 second
+          1000, // Poll cada segundo
         );
       });
     } else {
       clearInterval(intervalRef.current);
     }
-  }, [expRunning]);
+
+    // Limpiar al desmontar
+    return () => {
+      clearInterval(intervalRef.current);
+    };
+  }, [expRunning[experiment.id], open]);
 
   return (
     <React.Fragment>
@@ -220,7 +235,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         <DialogContent>
           <Paper
             sx={{ px: 3, py: 2 }}
-            // solves a mui problem related to putting datagrid inside another datagrid
+            // Soluciona un problema de mui relacionado con poner datagrid dentro de otro datagrid
             onClick={(event) => {
               event.target = document.body;
             }}
@@ -252,16 +267,6 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         </DialogContent>
         <DialogActions>
           <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 2 }}>
-            {/* {finishedRunning ? (
-              <LoadingButton
-                variant="outlined"
-                loading={expRunning[experiment.id]}
-                endIcon={<PlayArrowIcon />}
-                onClick={handleExecuteRuns}
-              >
-                {"Re Run"}
-              </LoadingButton>
-            ) : null} */}
             <LoadingButton
               variant="contained"
               loading={expRunning[experiment.id]}

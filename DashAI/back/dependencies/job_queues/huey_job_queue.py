@@ -13,6 +13,7 @@ from huey.signals import (
     SIGNAL_ERROR,
     SIGNAL_EXECUTING,
 )
+from kink import di
 
 from DashAI.back.dependencies.job_queues.base_job_queue import (
     BaseJobQueue,
@@ -46,13 +47,13 @@ class HueyJobQueue(BaseJobQueue):
         self._ensure_task_copy_table()
         self._register_signals()
 
-        @self.huey.task()
-        def _execute_base_job(job: BaseJob):
+        @self.huey.task(context=True, priority=0)
+        def _execute_base_job(job: BaseJob, task=None):
+            job.kwargs["huey_id"] = task.id
             result = job.run()
             return result
 
         self._execute = _execute_base_job
-
 
     @staticmethod
     def _normalize_to_utc_str(ts: str) -> str:
@@ -96,7 +97,6 @@ class HueyJobQueue(BaseJobQueue):
 
         return dt.strftime("%Y-%m-%d %H:%M:%S.%f")
 
-
     def _register_signals(self):
         """Attach Huey lifecycle signal handlers to keep 'task_copy' in sync:
         - SIGNAL_ENQUEUED: insert or replace a row with status `not_started`
@@ -114,13 +114,15 @@ class HueyJobQueue(BaseJobQueue):
 
         @self.huey.signal(SIGNAL_ENQUEUED)
         def on_enqueue(signal, task):
+            job_type = task.args[0].__class__.__name__
+            priority = getattr(task, "priority", 0)
             exec_sql(
                 (
                     "INSERT OR REPLACE INTO task_copy "
-                    "(id, task_type, status, last_update) "
-                    f"VALUES (?, ?, ?, {NOW_MICRO})"
+                    "(id, task_type, status, last_update, priority) "
+                    f"VALUES (?, ?, ?, {NOW_MICRO}, ?)"
                 ),
-                (task.id, task.name, "not_started"),
+                (task.id, job_type, "not_started", priority),
             )
 
         @self.huey.signal(SIGNAL_EXECUTING)
@@ -157,7 +159,6 @@ class HueyJobQueue(BaseJobQueue):
                 ("error", str(exc), task.id),
             )
 
-
     def _enable_wal(self):
         """Enable Write-Ahead Logging mode in SQLite to improve concurrent reads/writes."""
         with sqlite3.connect(self.db_path) as conn:
@@ -174,6 +175,7 @@ class HueyJobQueue(BaseJobQueue):
         - status (TEXT NOT NULL): one of: 'not_started', 'started', 'finished', 'deleted', 'error'
         - last_update (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP (UTC)
         - error_msg (TEXT): optional error message when a task fails
+        - priority (INTEGER NOT NULL): the priority of the task (higher values indicate higher priority)
         """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
@@ -184,14 +186,14 @@ class HueyJobQueue(BaseJobQueue):
                     enqueued_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     status TEXT NOT NULL,
                     last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    error_msg TEXT
+                    error_msg TEXT,
+                    priority INTEGER DEFAULT 0
                 )
                 """
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_task_copy_last_update ON task_copy(last_update, id)"
             )
-
 
     def status(self, job_id: str) -> dict:
         conn = sqlite3.connect(self.db_path)
@@ -211,6 +213,7 @@ class HueyJobQueue(BaseJobQueue):
 
     def put(self, job: BaseJob) -> int:
         result = self._execute(job)
+
         return result
 
     def to_list(self) -> list[dict]:
@@ -219,7 +222,8 @@ class HueyJobQueue(BaseJobQueue):
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, task_type, enqueued_at, status, last_update, error_msg
+                SELECT id, task_type, enqueued_at, status, last_update,
+                       error_msg, priority
                 FROM task_copy
                 ORDER BY last_update DESC
                 """
@@ -238,7 +242,8 @@ class HueyJobQueue(BaseJobQueue):
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, task_type, enqueued_at, status, last_update, error_msg
+                SELECT id, task_type, enqueued_at, status, last_update,
+                        error_msg, priority
                 FROM task_copy
                 WHERE last_update > ?
                 ORDER BY last_update DESC
@@ -322,6 +327,43 @@ class HueyJobQueue(BaseJobQueue):
             except JobQueueError:
                 await asyncio.sleep(0.1)
 
+    def update_priority(self, job_id: str, priority: int) -> bool:
+        """
+        Update the priority of a pending job.
+        Only works for jobs that are still in the queue (not started).
+
+        Returns True if priority was updated, False if job wasn't found or couldn't
+        be updated.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute("SELECT status FROM task_copy WHERE id = ?", (job_id,))
+                row = cur.fetchone()
+
+                if not row or row["status"] != "not_started":
+                    return False
+
+            with sqlite3.connect(self.db_path) as conn:
+                cur = conn.cursor()
+
+                cur.execute(
+                    "UPDATE task SET priority = ? WHERE id = ?", (priority, job_id)
+                )
+                task = self.peek(job_id)
+                if task:
+                    task.priority = priority
+                cur.execute(
+                    "UPDATE task_copy SET priority = ? WHERE id = ?", (priority, job_id)
+                )
+
+                return cur.rowcount > 0
+
+        except Exception as e:
+            print(f"Error updating job priority: {e}")
+            return False
+
 
 _job_queue = HueyJobQueue("job_queue")
 huey = _job_queue.huey
@@ -337,7 +379,6 @@ def create_container_huey():
 
     local_path_str = os.environ.get("DASHAI_LOCAL_PATH")
     if local_path_str:
-        print("paso por aki pathstr")
         local_path = Path(os.path.expanduser(local_path_str))
     else:
         local_path = Path.home() / ".DashAI"
@@ -345,4 +386,5 @@ def create_container_huey():
     logging_level = os.environ.get("DASHAI_LOGGING_LEVEL", "INFO")
 
     config = build_config_dict(local_path=local_path, logging_level=logging_level)
+    build_container(config)
     build_container(config)
