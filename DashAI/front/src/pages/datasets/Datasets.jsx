@@ -183,7 +183,13 @@ export default function DatasetsPage() {
           enqueueSnackbar("Dataset created successfully", {
             variant: "success",
           });
-          setDatasets((prevDatasets) => [...prevDatasets, data]);
+          const enrichedDatasets = await enrichDatasetsWithInfo(
+            [data],
+            datasets,
+          );
+          const enrichedNewDataset = enrichedDatasets[0];
+
+          setDatasets((prevDatasets) => [...prevDatasets, enrichedNewDataset]);
         }
       } catch (error) {
         enqueueSnackbar("Failed to create dataset from notebook:", {
