@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: DashAI/back/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./DashAI/back:/DashAI/back
+      - ./tests:/tests
+      - ./DashAI/__init__.py:/DashAI/__init__.py
+      - ./DashAI/__main__.py:/DashAI/__main__.py
+    networks:
+      - dashai-network
+
+  frontend:
+    build:
+      context: DashAI/front
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api
+      - CHOKIDAR_USEPOLLING=true
+      - NODE_OPTIONS=--max-old-space-size=4096
+    volumes:
+      - ./DashAI/front:/app
+      - /app/node_modules
+    networks:
+      - dashai-network
+    depends_on:
+      - backend
+
+networks:
+  dashai-network:
+    driver: bridge
+
+volumes:
+  node_modules:

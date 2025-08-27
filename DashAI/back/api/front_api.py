@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from kink import di, inject
 from starlette.responses import FileResponse
@@ -16,6 +16,15 @@ router = APIRouter()
 async def read_index(
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
+    if os.getenv("ENV") == "dev":
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Frontend routes are not available in development mode. "
+                "Use the React development server instead."
+            )
+        )
+
     front_build_path = config["FRONT_BUILD_PATH"]
     index_path = Path(f"{front_build_path}/index.html").absolute()
     return FileResponse(index_path)
@@ -28,6 +37,15 @@ async def serve_files(
     file: str,
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
+    if os.getenv("ENV") == "dev":
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Frontend routes are not available in development mode. "
+                "Use the React development server instead."
+            )
+        )
+
     front_build_path = config["FRONT_BUILD_PATH"]
     try:
         if file == "":

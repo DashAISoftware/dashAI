@@ -65,7 +65,7 @@ def main(
             local_path=local_path,
             logging_level=logging_level.value,
         ),
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=8000,
     )
 
