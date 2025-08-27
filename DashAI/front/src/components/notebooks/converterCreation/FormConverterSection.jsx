@@ -33,7 +33,7 @@ export default function FormConverterSection({
           rows: rows,
         },
         order: 1,
-        target_index: tool.metadata.supervised ? targetColumn : 1,
+        target_index: targetColumn,
       },
     };
 
