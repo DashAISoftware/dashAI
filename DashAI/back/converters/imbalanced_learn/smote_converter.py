@@ -33,6 +33,7 @@ class SMOTESchema(BaseSchema):
 class SMOTEConverter(ImbalancedLearnWrapper, SMOTE):
     SCHEMA = SMOTESchema
     DESCRIPTION = "SMOTE: Synthetic Minority Over-sampling Technique."
+    SUPERVISED = True
 
     def __init___(self, **kwargs):
         super(SMOTEConverter, self).__init__(**kwargs)

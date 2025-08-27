@@ -34,3 +34,4 @@ class GenericUnivariateSelect(SklearnWrapper, GenericUnivariateSelectOperation):
 
     SCHEMA = GenericUnivariateSelectSchema
     DESCRIPTION = "Univariate feature selector with configurable strategy."
+    SUPERVISED = True

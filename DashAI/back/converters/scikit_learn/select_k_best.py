@@ -1,6 +1,4 @@
-from sklearn.feature_selection import (
-    SelectKBest as SelectKBestOperation,
-)
+from sklearn.feature_selection import SelectKBest as SelectKBestOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
@@ -25,3 +23,4 @@ class SelectKBest(SklearnWrapper, SelectKBestOperation):
 
     SCHEMA = SelectKBestSchema
     DESCRIPTION = "Select features according to the k highest scores."
+    SUPERVISED = True

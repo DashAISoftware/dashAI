@@ -1,12 +1,7 @@
-from sklearn.feature_selection import (
-    SelectFdr as SelectFdrOperation,
-)
+from sklearn.feature_selection import SelectFdr as SelectFdrOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import (
-    float_field,
-    schema_field,
-)
+from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
@@ -23,3 +18,4 @@ class SelectFdr(SklearnWrapper, SelectFdrOperation):
 
     SCHEMA = SelectFdrSchema
     DESCRIPTION = "Filter: Select features according to a false discovery rate test."
+    SUPERVISED = True

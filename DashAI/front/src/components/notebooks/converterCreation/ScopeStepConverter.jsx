@@ -11,6 +11,7 @@ import {
 } from "../../../api/datasets";
 
 export default function ScopeStepConverter({
+  supervised,
   targetColumn,
   setTargetColumn,
   rows,
@@ -117,22 +118,28 @@ export default function ScopeStepConverter({
           gap: 1,
         }}
       >
-        <Tooltip
-          title="Supervised converters will include this column in their learning process."
-          placement="top"
-        >
-          <IconButton>
-            <HelpIcon />
-          </IconButton>
-        </Tooltip>
-        <ConverterClassColumnModal
-          updateClassColumn={setTargetColumn}
-          classColumnInitialValue={targetColumn}
-          notebook={notebook}
-        />
+        {supervised && (
+          <Tooltip
+            title="Supervised converters will include this column in their learning process."
+            placement="top"
+          >
+            <IconButton>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {supervised && (
+          <ConverterClassColumnModal
+            updateClassColumn={setTargetColumn}
+            classColumnInitialValue={targetColumn}
+            notebook={notebook}
+          />
+        )}
+
         <FormSchemaButtonGroup
           onFormSubmit={() => setStep((s) => s + 1)}
-          error={!targetColumn}
+          error={supervised ? !targetColumn : false}
           saveButtonText="Next"
         />
       </Box>

@@ -1,12 +1,7 @@
-from sklearn.feature_selection import (
-    SelectFwe as SelectFweOperation,
-)
+from sklearn.feature_selection import SelectFwe as SelectFweOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import (
-    float_field,
-    schema_field,
-)
+from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
@@ -23,3 +18,4 @@ class SelectFwe(SklearnWrapper, SelectFweOperation):
 
     SCHEMA = SelectFweSchema
     DESCRIPTION = "Filter: Select features according to a family-wise error rate test."
+    SUPERVISED = True
