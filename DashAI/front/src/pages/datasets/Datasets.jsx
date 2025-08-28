@@ -8,11 +8,17 @@ import UploadDatasetSteps from "../../components/notebooks/datasetCreation/Uploa
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
 import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
-import { getDatasets, deleteDataset, getDatasetInfo } from "../../api/datasets";
+import {
+  getDatasets,
+  deleteDataset,
+  getDatasetInfo,
+  updateDataset,
+} from "../../api/datasets";
 import {
   getNotebooks,
   deleteNotebook,
   createDatasetFromNotebook,
+  updateNotebook,
 } from "../../api/notebook";
 import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
@@ -253,6 +259,45 @@ export default function DatasetsPage() {
     pollForRealDataset();
   };
 
+  const handleEditDataset = async (id, newName) => {
+    try {
+      const updatedDataset = await updateDataset(id, { name: newName });
+      setDatasets((prevDatasets) =>
+        prevDatasets.map((dataset) =>
+          dataset.id === id ? { ...dataset, name: newName } : dataset,
+        ),
+      );
+
+      enqueueSnackbar("Dataset updated successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar("Failed to update dataset:", {
+        variant: "error",
+      });
+      console.error("Failed to update dataset:", error);
+    }
+  };
+
+  const handleEditNotebook = async (id, newName) => {
+    try {
+      const updatedNotebook = await updateNotebook(id, { name: newName });
+      setNotebooks((prevNotebooks) =>
+        prevNotebooks.map((notebook) =>
+          notebook.id === id ? updatedNotebook : notebook,
+        ),
+      );
+      enqueueSnackbar("Notebook updated successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar("Failed to update notebook:", {
+        variant: "error",
+      });
+      console.error("Failed to update notebook:", error);
+    }
+  };
+
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -266,8 +311,10 @@ export default function DatasetsPage() {
           selectedNotebookId={selectedNotebookId}
           onDatasetClick={handleDatasetClick}
           onDatasetDelete={handleDatasetDelete}
+          onDatasetEdit={handleEditDataset}
           onNotebookClick={handleNotebookClick}
           onNotebookDelete={handleNotebookDelete}
+          onNotebookEdit={handleEditNotebook}
           handleNewSessionButton={handleNewSessionButton}
         />
       </Box>

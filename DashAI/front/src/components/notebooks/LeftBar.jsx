@@ -17,8 +17,10 @@ export default function DatasetsNotebooksBar({
   selectedNotebookId,
   onDatasetClick,
   onDatasetDelete,
+  onDatasetEdit,
   onNotebookClick,
   onNotebookDelete,
+  onNotebookEdit,
   handleNewSessionButton,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,6 +90,7 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
+          onItemEdit={onDatasetEdit}
           defaultOpen={true}
           title="Available Datasets"
           Icon={StorageIcon}
@@ -100,6 +103,7 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedNotebookId}
           onItemClick={onNotebookClick}
           onItemDelete={onNotebookDelete}
+          onItemEdit={onNotebookEdit}
           onItemInfo={handleNotebookInfo}
           defaultOpen={true}
           title="Notebooks"

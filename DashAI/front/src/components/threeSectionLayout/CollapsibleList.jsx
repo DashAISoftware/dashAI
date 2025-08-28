@@ -10,6 +10,7 @@ export default function CollapsibleList({
   selectedItemId,
   onItemClick,
   onItemDelete,
+  onItemEdit,
   onItemInfo,
   defaultOpen = true,
   title = "Available Items",
@@ -111,6 +112,7 @@ export default function CollapsibleList({
                 id={ds.id}
                 onClick={() => onItemClick(ds.id)}
                 onDelete={() => onItemDelete(ds.id)}
+                onEdit={(name) => onItemEdit(ds.id, name)}
                 onInfo={onItemInfo ? () => onItemInfo(ds.id) : undefined}
               />
             ))
