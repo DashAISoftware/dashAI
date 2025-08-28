@@ -39,6 +39,9 @@ setup(
     python_requires=">=3.10",
     install_requires=requirements,
     test_require=test_requirements,
+    extras_require={
+        "full": ["llama-cpp-python==0.2.90"],
+    },
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
