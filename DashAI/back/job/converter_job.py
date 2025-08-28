@@ -225,13 +225,13 @@ class ConverterListJob(BaseJob):
         # Load dataset
         try:
             # Validate target column index
-            if target_column_index is not None:
-                if int(target_column_index) < 1 or int(target_column_index) > len(
-                    loaded_dataset.features
-                ):
-                    raise JobError(
-                        f"Target column index {target_column_index} is out of bounds"
-                    )
+            if target_column_index is not None and (
+                int(target_column_index) < 1
+                or int(target_column_index) > len(loaded_dataset.features)
+            ):
+                raise JobError(
+                    f"Target column index {target_column_index} is out of bounds"
+                )
 
         except Exception as e:
             log.exception(e)
