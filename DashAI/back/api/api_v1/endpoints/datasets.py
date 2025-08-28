@@ -19,7 +19,6 @@ from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
-    update_columns_spec,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment
 
