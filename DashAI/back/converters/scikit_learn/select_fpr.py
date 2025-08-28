@@ -19,3 +19,4 @@ class SelectFpr(SklearnWrapper, SelectFprOperation):
     SCHEMA = SelectFprSchema
     DESCRIPTION = "Filter: Select features according to a false positive rate test."
     SUPERVISED = True
+    metadata = {}

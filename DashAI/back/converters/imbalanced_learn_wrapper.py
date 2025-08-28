@@ -4,7 +4,6 @@ from typing import Type, Union
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-from datasets.features import Features
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -13,6 +12,9 @@ from DashAI.back.job.base_job import JobError
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     """Generic wrapper for imbalanced-learn samplers (e.g., SMOTE, ADASYN)."""
+
+    SUPERVISED = True
+    metadata = {}
 
     def __init__(self, **kwargs):
         super(ImbalancedLearnWrapper, self).__init__(**kwargs)

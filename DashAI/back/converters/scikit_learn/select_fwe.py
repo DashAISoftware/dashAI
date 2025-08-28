@@ -19,3 +19,4 @@ class SelectFwe(SklearnWrapper, SelectFweOperation):
     SCHEMA = SelectFweSchema
     DESCRIPTION = "Filter: Select features according to a family-wise error rate test."
     SUPERVISED = True
+    metadata = {}

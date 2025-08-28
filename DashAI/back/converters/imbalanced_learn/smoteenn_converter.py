@@ -33,7 +33,6 @@ class SMOTEENNSchema(BaseSchema):
 class SMOTEENNConverter(ImbalancedLearnWrapper, SMOTEENN):
     SCHEMA = SMOTEENNSchema
     DESCRIPTION = "SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."
-    SUPERVISED = True
 
-    def __init___(self, **kwargs):
+    def __init__(self, **kwargs):
         super(SMOTEENNConverter, self).__init__(**kwargs)

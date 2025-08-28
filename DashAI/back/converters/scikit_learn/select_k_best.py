@@ -24,3 +24,4 @@ class SelectKBest(SklearnWrapper, SelectKBestOperation):
     SCHEMA = SelectKBestSchema
     DESCRIPTION = "Select features according to the k highest scores."
     SUPERVISED = True
+    metadata = {}
