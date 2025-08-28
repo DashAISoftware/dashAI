@@ -297,8 +297,16 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
         writer.close()
 
     metadata_filepath = os.path.join(path, "splits.json")
-    with open(metadata_filepath, "w") as f:
-        json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
+    # Update splits with dataset shape and column names
+    metadata = dataset.splits
+    metadata.update(
+        {
+            "total_rows": dataset.shape[0],
+            "column_names": dataset.column_names,
+        }
+    )
+    with open(metadata_filepath, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
 
 @beartype
@@ -767,24 +775,16 @@ def get_dataset_info(dataset_path: str) -> object:
     else:
         splits_data = {"split_indices": {}}
 
-    data_filepath = os.path.join(dataset_path, "data.arrow")
-    with pa.OSFile(data_filepath, "rb") as source:
-        reader = ipc.open_file(source)
-        schema = reader.schema
-        column_names = schema.names
-
-        total_rows = 0
-        for i in range(reader.num_record_batches):
-            total_rows += reader.get_batch(i).num_rows
-
     splits = splits_data.get("split_indices", {})
     train_indices = splits.get("train", [])
     test_indices = splits.get("test", [])
     val_indices = splits.get("validation", [])
+    total_rows = splits_data.get("total_rows", 0)
+    column_names = splits_data.get("column_names", [])
 
     return {
         "total_rows": total_rows,
-        "total_columns": len(schema),
+        "total_columns": len(column_names),
         "column_names": column_names,
         "train_size": len(train_indices),
         "test_size": len(test_indices),
