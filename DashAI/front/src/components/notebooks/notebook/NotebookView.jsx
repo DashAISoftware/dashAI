@@ -9,6 +9,7 @@ import ExplorerBox from "../explorer/ExplorerBox";
 import ConverterBox from "../converter/ConverterBox";
 import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
+import ItemsToDeleteList from "../converter/ItemsToDeleteList";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { deleteExplorer } from "../../../api/explorer";
 import { deleteConverterById } from "../../../api/converter";
@@ -71,6 +72,7 @@ export default function NotebookView({ notebook }) {
   const [explorerToDelete, setExplorerToDelete] = useState(null);
   const [converterToDelete, setConverterToDelete] = useState(null);
   const [deleteModalContent, setDeleteModalContent] = useState("");
+  const [itemsToDelete, setItemsToDelete] = useState([]);
   const [listSize, setListSize] = useState(explorersAndConverters.length);
   const listBoxRef = useRef(null);
 
@@ -97,6 +99,20 @@ export default function NotebookView({ notebook }) {
     }
   }, [notebook.id, setExplorersAndConverters]);
 
+  const getItemsToDelete = useCallback(
+    (converterToDelete) => {
+      const converterIndex = explorersAndConverters.findIndex(
+        (item) => item.id === converterToDelete.id && item.type === "converter",
+      );
+
+      if (converterIndex === -1) return [];
+
+      // Todos los items desde el converter en adelante (incluyendo el converter)
+      return explorersAndConverters.slice(converterIndex);
+    },
+    [explorersAndConverters],
+  );
+
   useEffect(() => {
     fetchExplorersAndConverters();
   }, [fetchExplorersAndConverters]);
@@ -114,13 +130,20 @@ export default function NotebookView({ notebook }) {
     setOpenDeleteExplorerConfirmation(true);
   }, []);
 
-  const handleConverterDeleteClick = useCallback((converter) => {
-    setConverterToDelete(converter);
-    setDeleteModalContent(
-      `Are you sure you want to delete the converter "${converter?.converter}"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.`,
-    );
-    setOpenDeleteConverterConfirmation(true);
-  }, []);
+  const handleConverterDeleteClick = useCallback(
+    (converter) => {
+      setConverterToDelete(converter);
+
+      const items = getItemsToDelete(converter);
+      setItemsToDelete(items);
+
+      setDeleteModalContent(
+        `Are you sure you want to delete the converter "${converter?.converter}"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.`,
+      );
+      setOpenDeleteConverterConfirmation(true);
+    },
+    [getItemsToDelete],
+  );
 
   const handleConfirmDelete = useCallback(async () => {
     if (explorerToDelete) {
@@ -152,6 +175,7 @@ export default function NotebookView({ notebook }) {
         setOpenDeleteConverterConfirmation(false);
         setConverterToDelete(null);
         setDeleteModalContent("");
+        setItemsToDelete([]);
       } catch (error) {
         console.error("Failed to delete converter:", error);
       }
@@ -161,6 +185,9 @@ export default function NotebookView({ notebook }) {
   const handleCancelDelete = useCallback(() => {
     setOpenDeleteExplorerConfirmation(false);
     setOpenDeleteConverterConfirmation(false);
+    setExplorerToDelete(null);
+    setConverterToDelete(null);
+    setItemsToDelete([]);
   }, []);
 
   const handleStatusChange = useCallback((id, newStatus, type) => {
@@ -245,7 +272,12 @@ export default function NotebookView({ notebook }) {
         open={openDeleteConverterConfirmation}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmConverterDelete}
-        content={deleteModalContent}
+        content={
+          <Box>
+            <Typography>{deleteModalContent}</Typography>
+            <ItemsToDeleteList items={itemsToDelete} />
+          </Box>
+        }
       />
     </Box>
   );
