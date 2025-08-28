@@ -552,7 +552,7 @@ async def update_dataset(
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
-            if params.name:
+            if params.name and params.name != dataset.name:
                 setattr(dataset, "name", params.name)
                 db.commit()
                 db.refresh(dataset)

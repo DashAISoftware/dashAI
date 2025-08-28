@@ -376,7 +376,7 @@ async def update_notebook(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Notebook not found",
                 )
-            if not params.name:
+            if not params.name or params.name == notebook.name:
                 raise HTTPException(
                     status_code=status.HTTP_304_NOT_MODIFIED,
                     detail="No fields to update",
