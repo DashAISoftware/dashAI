@@ -88,7 +88,7 @@ class QwenModel(TextToTextGenerationTaskModel):
     def __init__(self, **kwargs):
         if Llama is None:
             raise RuntimeError(
-                "llama-cpp-python no está instalado. Instálalo para usar QwenModel."
+                "llama-cpp-python is not installed. Please install it to use QwenModel."
             )
 
         kwargs = self.validate_and_transform(kwargs)
