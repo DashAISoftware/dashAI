@@ -531,7 +531,7 @@ async def update_dataset(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
-    """Updates the name and/or task name of a dataset with the provided ID.
+    """Updates the name of a dataset with the provided ID.
 
     Parameters
     ----------
@@ -539,12 +539,8 @@ async def update_dataset(
         ID of the dataset to update.
     params : DatasetUpdateParams
         A dictionary containing the new values for the dataset.
-        name : str, optional
+        name : str
             New name for the dataset.
-        task_name : str, optional
-            New task name for the dataset.
-        columns : Dict[str, ColumnSpecItemParams], optional
-            New column specification for the dataset.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -557,12 +553,8 @@ async def update_dataset(
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
-            if params.columns:
-                update_columns_spec(f"{dataset.file_path}/dataset", params.columns)
-            elif params.name:
+            if params.name:
                 setattr(dataset, "name", params.name)
-                new_folder_path = config["DATASETS_PATH"] / params.name
-                os.rename(dataset.file_path, new_folder_path)
                 db.commit()
                 db.refresh(dataset)
                 return dataset

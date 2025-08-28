@@ -19,3 +19,7 @@ class Notebook(NotebookBase):
     created: datetime
     last_modified: datetime
     file_path: str
+
+
+class NotebookUpdateParams(BaseModel):
+    name: str = None
