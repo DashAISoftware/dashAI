@@ -267,14 +267,7 @@ export default function DatasetsPage() {
           dataset.id === id ? { ...dataset, name: newName } : dataset,
         ),
       );
-
-      enqueueSnackbar("Dataset updated successfully", {
-        variant: "success",
-      });
     } catch (error) {
-      enqueueSnackbar("Failed to update dataset:", {
-        variant: "error",
-      });
       console.error("Failed to update dataset:", error);
     }
   };
@@ -287,13 +280,7 @@ export default function DatasetsPage() {
           notebook.id === id ? updatedNotebook : notebook,
         ),
       );
-      enqueueSnackbar("Notebook updated successfully", {
-        variant: "success",
-      });
     } catch (error) {
-      enqueueSnackbar("Failed to update notebook:", {
-        variant: "error",
-      });
       console.error("Failed to update notebook:", error);
     }
   };
