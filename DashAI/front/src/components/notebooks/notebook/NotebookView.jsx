@@ -11,11 +11,13 @@ import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { deleteExplorer } from "../../../api/explorer";
+import { deleteConverterById } from "../../../api/converter";
 
 const RowItem = React.memo(function RowItem({
   item,
   handleExplorerDetailsClick,
   handleExplorerDeleteClick,
+  handleConverterDeleteClick,
   handleStatusChange,
 }) {
   return (
@@ -36,6 +38,7 @@ const RowItem = React.memo(function RowItem({
       ) : item.type === "converter" ? (
         <ConverterBox
           converter={item}
+          handleConverterDeleteClick={handleConverterDeleteClick}
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "converter")
           }
@@ -61,38 +64,42 @@ export default function NotebookView({ notebook }) {
     useExplorersAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
-  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
+    useState(false);
+  const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
+    useState(false);
   const [explorerToDelete, setExplorerToDelete] = useState(null);
+  const [converterToDelete, setConverterToDelete] = useState(null);
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [listSize, setListSize] = useState(explorersAndConverters.length);
   const listBoxRef = useRef(null);
 
-  useEffect(() => {
-    const fetchExplorersAndConverters = async () => {
-      try {
-        const [explorersData, convertersData] = await Promise.all([
-          getExplorersByNotebookId(notebook.id),
-          getConvertersByNotebookId(notebook.id),
-        ]);
-        const explorersWithType = explorersData.map((item) => ({
-          ...item,
-          type: "explorer",
-        }));
-        const convertersWithType = convertersData.map((item) => ({
-          ...item,
-          type: "converter",
-        }));
-        const merged = [...explorersWithType, ...convertersWithType].sort(
-          (a, b) => new Date(a.created) - new Date(b.created),
-        );
-        setExplorersAndConverters(merged);
-      } catch (error) {
-        console.error("Failed to fetch explorers and converters:", error);
-      }
-    };
+  const fetchExplorersAndConverters = useCallback(async () => {
+    try {
+      const [explorersData, convertersData] = await Promise.all([
+        getExplorersByNotebookId(notebook.id),
+        getConvertersByNotebookId(notebook.id),
+      ]);
+      const explorersWithType = explorersData.map((item) => ({
+        ...item,
+        type: "explorer",
+      }));
+      const convertersWithType = convertersData.map((item) => ({
+        ...item,
+        type: "converter",
+      }));
+      const merged = [...explorersWithType, ...convertersWithType].sort(
+        (a, b) => new Date(a.created) - new Date(b.created),
+      );
+      setExplorersAndConverters(merged);
+    } catch (error) {
+      console.error("Failed to fetch explorers and converters:", error);
+    }
+  }, [notebook.id, setExplorersAndConverters]);
 
+  useEffect(() => {
     fetchExplorersAndConverters();
-  }, [notebook]);
+  }, [fetchExplorersAndConverters]);
 
   const handleExplorerDetailsClick = useCallback((explorer) => {
     setSelectedExplorer(explorer);
@@ -103,8 +110,16 @@ export default function NotebookView({ notebook }) {
     setExplorerToDelete(explorer);
     setDeleteModalContent(
       `Are you sure you want to delete the explorer "${explorer?.exploration_type}"? This action cannot be undone.`,
-    ); // Setear el contenido aquí
-    setOpenDeleteConfirmation(true);
+    );
+    setOpenDeleteExplorerConfirmation(true);
+  }, []);
+
+  const handleConverterDeleteClick = useCallback((converter) => {
+    setConverterToDelete(converter);
+    setDeleteModalContent(
+      `Are you sure you want to delete the converter "${converter?.converter}"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.`,
+    );
+    setOpenDeleteConverterConfirmation(true);
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -118,7 +133,7 @@ export default function NotebookView({ notebook }) {
           ),
         );
 
-        setOpenDeleteConfirmation(false);
+        setOpenDeleteExplorerConfirmation(false);
         setExplorerToDelete(null);
         setDeleteModalContent("");
       } catch (error) {
@@ -127,8 +142,25 @@ export default function NotebookView({ notebook }) {
     }
   }, [explorerToDelete, setExplorersAndConverters]);
 
+  const handleConfirmConverterDelete = useCallback(async () => {
+    if (converterToDelete) {
+      try {
+        await deleteConverterById(converterToDelete.id);
+
+        await fetchExplorersAndConverters();
+
+        setOpenDeleteConverterConfirmation(false);
+        setConverterToDelete(null);
+        setDeleteModalContent("");
+      } catch (error) {
+        console.error("Failed to delete converter:", error);
+      }
+    }
+  }, [converterToDelete, setExplorersAndConverters]);
+
   const handleCancelDelete = useCallback(() => {
-    setOpenDeleteConfirmation(false);
+    setOpenDeleteExplorerConfirmation(false);
+    setOpenDeleteConverterConfirmation(false);
   }, []);
 
   const handleStatusChange = useCallback((id, newStatus, type) => {
@@ -189,6 +221,7 @@ export default function NotebookView({ notebook }) {
               item={item}
               handleExplorerDetailsClick={handleExplorerDetailsClick}
               handleExplorerDeleteClick={handleExplorerDeleteClick}
+              handleConverterDeleteClick={handleConverterDeleteClick}
               handleStatusChange={handleStatusChange}
             />
           )}
@@ -203,9 +236,15 @@ export default function NotebookView({ notebook }) {
         explorer={selectedExplorer}
       />
       <DeleteConfirmationModal
-        open={openDeleteConfirmation}
+        open={openDeleteExplorerConfirmation}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
+        content={deleteModalContent}
+      />
+      <DeleteConfirmationModal
+        open={openDeleteConverterConfirmation}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmConverterDelete}
         content={deleteModalContent}
       />
     </Box>
