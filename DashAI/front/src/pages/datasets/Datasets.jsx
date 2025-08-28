@@ -36,7 +36,6 @@ export default function DatasetsPage() {
   const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
     const enrichedDatasets = await Promise.all(
       newDatasets.map(async (dataset) => {
-        // Check if we already have enriched info for this dataset
         const existingDataset = existingDatasets.find(
           (d) => d.id === dataset.id,
         );
