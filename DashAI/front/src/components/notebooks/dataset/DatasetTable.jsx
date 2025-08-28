@@ -8,10 +8,13 @@ import {
   GridToolbarDensitySelector,
   useGridApiContext,
 } from "@mui/x-data-grid";
-import { Button, Menu, MenuItem } from "@mui/material";
+import { Button, Menu, MenuItem, Typography } from "@mui/material";
 import { Download } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
-import { exportDatasetCsvByPath } from "../../../api/datasets";
+import {
+  exportDatasetCsvByPath,
+  getDatasetTypesByFilePath,
+} from "../../../api/datasets";
 
 /**
  * Props:
@@ -37,11 +40,26 @@ export default function DatasetTable({
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [columnTypes, setColumnTypes] = useState({});
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: initialPageSize,
   });
+
+  useEffect(() => {
+    if (!datasetPath) return;
+    const fetchColumnTypes = async () => {
+      try {
+        const types = await getDatasetTypesByFilePath(datasetPath);
+        setColumnTypes(types);
+      } catch (e) {
+        console.error("Error fetching column types:", e);
+      }
+    };
+
+    fetchColumnTypes();
+  }, [datasetPath]);
 
   useEffect(() => {
     let alive = true;
@@ -88,8 +106,39 @@ export default function DatasetTable({
         headerName: field,
         flex: 1,
         minWidth: 120,
+        renderHeader: () => (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              width: "100%",
+            }}
+          >
+            <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
+              {field}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              style={{ fontSize: "0.7rem" }}
+            >
+              {columnTypes[field]?.type || "unknown"}
+            </Typography>
+            {columnTypes[field]?.dtype && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                style={{ fontSize: "0.7rem", opacity: 0.8 }}
+              >
+                {columnTypes[field]?.dtype}
+              </Typography>
+            )}
+          </div>
+        ),
       }));
-  }, [rows, columnsProp]);
+  }, [rows, columnsProp, columnTypes]);
 
   // Custom CSV Export Button
   function CsvExportButton() {
@@ -205,6 +254,7 @@ export default function DatasetTable({
         toolbar: CustomToolbar,
         loadingOverlay: LinearProgress,
       }}
+      columnHeaderHeight={85}
       {...props}
     />
   );
