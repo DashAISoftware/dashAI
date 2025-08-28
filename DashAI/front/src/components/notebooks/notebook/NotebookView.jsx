@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Virtuoso } from "react-virtuoso";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import {
   getExplorersByNotebookId,
@@ -7,12 +8,14 @@ import {
 import ExplorerBox from "../explorer/ExplorerBox";
 import ConverterBox from "../converter/ConverterBox";
 import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
+import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
-import { Virtuoso } from "react-virtuoso";
+import { deleteExplorer } from "../../../api/explorer";
 
 const RowItem = React.memo(function RowItem({
   item,
   handleExplorerDetailsClick,
+  handleExplorerDeleteClick,
   handleStatusChange,
 }) {
   return (
@@ -25,6 +28,7 @@ const RowItem = React.memo(function RowItem({
         <ExplorerBox
           explorer={item}
           handleExplorerDetailsClick={handleExplorerDetailsClick}
+          handleExplorerDeleteClick={handleExplorerDeleteClick}
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
           }
@@ -57,6 +61,9 @@ export default function NotebookView({ notebook }) {
     useExplorersAndConverters();
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
+  const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+  const [explorerToDelete, setExplorerToDelete] = useState(null);
+  const [deleteModalContent, setDeleteModalContent] = useState("");
   const [listSize, setListSize] = useState(explorersAndConverters.length);
   const listBoxRef = useRef(null);
 
@@ -90,6 +97,38 @@ export default function NotebookView({ notebook }) {
   const handleExplorerDetailsClick = useCallback((explorer) => {
     setSelectedExplorer(explorer);
     setOpenExplorerDetails(true);
+  }, []);
+
+  const handleExplorerDeleteClick = useCallback((explorer) => {
+    setExplorerToDelete(explorer);
+    setDeleteModalContent(
+      `Are you sure you want to delete the explorer "${explorer?.exploration_type}"? This action cannot be undone.`,
+    ); // Setear el contenido aquí
+    setOpenDeleteConfirmation(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (explorerToDelete) {
+      try {
+        await deleteExplorer(explorerToDelete.id);
+        setExplorersAndConverters((prev) =>
+          prev.filter(
+            (item) =>
+              !(item.id === explorerToDelete.id && item.type === "explorer"),
+          ),
+        );
+
+        setOpenDeleteConfirmation(false);
+        setExplorerToDelete(null);
+        setDeleteModalContent("");
+      } catch (error) {
+        console.error("Failed to delete explorer:", error);
+      }
+    }
+  }, [explorerToDelete, setExplorersAndConverters]);
+
+  const handleCancelDelete = useCallback(() => {
+    setOpenDeleteConfirmation(false);
   }, []);
 
   const handleStatusChange = useCallback((id, newStatus, type) => {
@@ -149,6 +188,7 @@ export default function NotebookView({ notebook }) {
             <RowItem
               item={item}
               handleExplorerDetailsClick={handleExplorerDetailsClick}
+              handleExplorerDeleteClick={handleExplorerDeleteClick}
               handleStatusChange={handleStatusChange}
             />
           )}
@@ -161,6 +201,12 @@ export default function NotebookView({ notebook }) {
           setSelectedExplorer(null);
         }}
         explorer={selectedExplorer}
+      />
+      <DeleteConfirmationModal
+        open={openDeleteConfirmation}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        content={deleteModalContent}
       />
     </Box>
   );
