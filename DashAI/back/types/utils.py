@@ -215,7 +215,7 @@ def get_types_from_arrow_metadata(
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
     except KeyError:
         # If the key is not found, we can log it or handle it as needed
-        print(f"KeyError: dtype not found in dtype_arrow_map")
+        print("KeyError: dtype not found in dtype_arrow_map")
         dashai_types = {}
 
     return dashai_types
