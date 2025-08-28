@@ -50,7 +50,7 @@ class BaseConverter(ConfigObject, ABC):
         metadata["short_description"] = (
             cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
-        metadata["supervised"] = cls.SUPERVISED if cls.SUPERVISED else False
+        metadata["supervised"] = cls.SUPERVISED
 
         return metadata
 
