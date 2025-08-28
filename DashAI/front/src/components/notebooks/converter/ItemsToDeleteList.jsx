@@ -14,7 +14,7 @@ const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
         border: "1px solid rgba(255, 255, 255, 0.1)",
       }}
     >
-      <Typography variant="subtitle2" sx={{ color: "#00BEBB", mb: 1 }}>
+      <Typography variant="subtitle2" sx={{ color: "error.main", mb: 1 }}>
         The following items will be deleted:
       </Typography>
       <Box sx={{ maxHeight: 200, overflow: "auto" }}>
