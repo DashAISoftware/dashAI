@@ -1,13 +1,13 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class NodeDefinition(BaseModel):
     type: str
     name: str
     icon: str
-    requires_configuration: bool = Field(..., alias="requiresConfiguration")
+    requiresConfiguration: bool  # noqa: N815
     source: bool
     target: bool
     predecessors: List[str]
@@ -15,10 +15,7 @@ class NodeDefinition(BaseModel):
     description: str
     input: Optional[str] = None
     output: Optional[str] = None
-    config_type: str = Field(..., alias="configType")
-
-    class Config:
-        populate_by_name = True
+    configType: str  # noqa: N815
 
 
 NODES: List[NodeDefinition] = [
@@ -99,4 +96,4 @@ NODES: List[NodeDefinition] = [
     ),
 ]
 
-NODE_TYPES = [node.model_dump(by_alias=True) for node in NODES]
+NODE_TYPES = [node.model_dump() for node in NODES]
