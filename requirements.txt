@@ -17,7 +17,6 @@ datasets
 diffusers
 evaluate
 accelerate
-llama-cpp-python==0.2.90
 Pillow
 beartype
 plotly

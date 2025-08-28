@@ -19,7 +19,7 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.2.1",
+    version="0.2.2",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
@@ -39,6 +39,9 @@ setup(
     python_requires=">=3.10",
     install_requires=requirements,
     test_require=test_requirements,
+    extras_require={
+        "full": ["llama-cpp-python==0.2.90"],
+    },
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
