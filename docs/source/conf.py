@@ -1,6 +1,8 @@
 import os
 import sys
 
+MOCK_IN_CI = os.getenv("BUILDING_DOCS") == "1"  # o CI/READTHEDOCS
+
 # Get the directory of conf.py (e.g. /home/ctamblay/CENIA/DashAI/docs/source)
 conf_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -36,11 +38,23 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx_rtd_theme",
+    "sphinx_design",
 ]
 autosummary_generate = True
 add_module_names = False
 templates_path = ["_templates"]
 exclude_patterns = []
+
+if MOCK_IN_CI:
+    autodoc_mock_imports = [
+        "llama_cpp",
+        "llama_cpp_python",
+        "llama_cpp_cuda",
+        "torch",
+        "tensorflow",
+    ]
+else:
+    autodoc_mock_imports = []
 
 
 # -- Options for HTML output -------------------------------------------------

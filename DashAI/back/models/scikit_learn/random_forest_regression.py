@@ -48,8 +48,7 @@ class RandomForestRegressionSchema(BaseSchema):
             "lower_bound": 2,
             "upper_bound": 20,
         },
-        description="The minimum number of samples required to split "
-        "an internal node.",
+        description="The minimum number of samples required to split an internal node.",
     )  # type: ignore
 
     min_samples_leaf: schema_field(
@@ -80,7 +79,7 @@ class RandomForestRegressionSchema(BaseSchema):
             optimizer_float_field(gt=0.0, le=1.0),
             enum_field(enum=["auto", "sqrt", "log2", None]),
         ),
-        placeholder="auto",
+        placeholder="sqrt",
         description="The number of features to consider when looking for the"
         " best split.",
     )  # type: ignore
@@ -104,13 +103,13 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     bootstrap: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Whether bootstrap samples are used when building trees.",
     )  # type: ignore
 
     oob_score: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="Whether to use out-of-bag samples to estimate the "
         "generalization score.",
@@ -141,7 +140,7 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     warm_start: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="When set to True, reuse the solution of the previous "
         "call to fit and add more estimators to the ensemble.",
@@ -163,13 +162,6 @@ class RandomForestRegressionSchema(BaseSchema):
         placeholder=None,
         description="If bootstrap is True, the number of samples to draw from"
         " X to train each base estimator.",
-    )  # type: ignore
-
-    monotonic_cst: schema_field(
-        none_type((float)),
-        placeholder=None,
-        description="A constraint vector indicating the monotonicity "
-        "constraint on each feature.",
     )  # type: ignore
 
 

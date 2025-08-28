@@ -22,7 +22,7 @@ class PCASchema(BaseSchema):
                 enum_field(["mle"]),
             ),
         ),
-        None,
+        2,
         "Number of components to keep. If None, all components are kept.",
     )  # type: ignore
     use_copy: schema_field(
@@ -59,7 +59,7 @@ class PCASchema(BaseSchema):
     tol: schema_field(
         float_field(ge=0.0),
         0.0,
-        ("Tolerance for singular values computed by " "svd_solver == 'arpack'."),
+        ("Tolerance for singular values computed by svd_solver == 'arpack'."),
     )  # type: ignore
     iterated_power: schema_field(
         union_type(int_field(ge=1), enum_field(["auto"])),

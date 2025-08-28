@@ -15,6 +15,7 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import DatasetSummaryTable from "./DatasetSummaryTable";
 import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";
@@ -282,7 +283,7 @@ function ConvertDatasetModal({ datasetId }) {
         {/* Actions - Close and Modify */}
         <DialogActions>
           <Button onClick={handleCloseContent}>Close</Button>
-          <Button
+          <LoadingButton
             onClick={handleSaveConfig}
             autoFocus
             variant="contained"
@@ -292,9 +293,10 @@ function ConvertDatasetModal({ datasetId }) {
               targetColumnIndex === null ||
               running
             }
+            loading={running}
           >
             Modify
-          </Button>
+          </LoadingButton>
         </DialogActions>
       </Dialog>
       {/* Modal to make a copy of the dataset */}

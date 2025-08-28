@@ -20,7 +20,7 @@ const pages = [
   { name: "Predictions", to: "/app/predict", disabled: false },
   { name: "Explainability", to: "/app/explainers", disabled: false },
   { name: "Generative", to: "/app/generative", disabled: false },
-  { name: "Play", to: "/app/play", disabled: true },
+  { name: "Pipelines", to: "/app/pipelines", disabled: false },
   { name: "Plugins", to: "/app/plugins/browse", disabled: false },
 ];
 

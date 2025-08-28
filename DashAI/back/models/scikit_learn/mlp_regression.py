@@ -86,7 +86,7 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
     shuffle: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Whether to shuffle samples in each iteration.",
     )  # type: ignore
@@ -110,13 +110,13 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
     verbose: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="Whether to print progress messages to stdout.",
     )  # type: ignore
 
     warm_start: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="When set to True, reuse the solution of the previous call"
         " to fit as initialization.",
@@ -134,13 +134,13 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
     nesterovs_momentum: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=True,
         description="Whether to use Nesterov’s momentum.",
     )  # type: ignore
 
     early_stopping: schema_field(
-        bool_field,
+        bool_field(),
         placeholder=False,
         description="Whether to use early stopping to terminate training when"
         " validation score is not improving.",

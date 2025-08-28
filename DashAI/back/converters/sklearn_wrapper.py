@@ -1,6 +1,9 @@
 from abc import ABCMeta
 from typing import Type, Union
 
+import numpy as np
+import pandas as pd
+
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -53,5 +56,10 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         """Generic transform method for sklearn transformers"""
 
         x_pandas = x.to_pandas()
-        x_new_pandas = super(BaseConverter, self).transform(x_pandas)
-        return to_dashai_dataset(x_new_pandas)
+        x_new = super(BaseConverter, self).transform(x_pandas)
+
+        if isinstance(x_new, np.ndarray):
+            columns = x_pandas.columns if hasattr(x_pandas, "columns") else None
+            x_new = pd.DataFrame(x_new, columns=columns)
+
+        return to_dashai_dataset(x_new)

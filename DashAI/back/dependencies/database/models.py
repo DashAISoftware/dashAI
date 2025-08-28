@@ -1,8 +1,8 @@
 import logging
 import pathlib
 from datetime import datetime
+from typing import Any, Dict, List
 
-from beartype.typing import List
 from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -81,6 +81,7 @@ class Run(Base):
     # model and parameters
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
+    split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
@@ -373,6 +374,20 @@ class GenerativeSession(Base):
     processes: Mapped[List["GenerativeProcess"]] = relationship(
         "GenerativeProcess", cascade="all, delete-orphan", back_populates="session"
     )
+
+
+class Pipeline(Base):
+    __tablename__ = "pipeline"
+    """
+    Table to store all the information about a pipeline.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
 
 
 class ConverterList(Base):

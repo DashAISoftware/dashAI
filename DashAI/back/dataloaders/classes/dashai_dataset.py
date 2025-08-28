@@ -297,8 +297,16 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
         writer.close()
 
     metadata_filepath = os.path.join(path, "splits.json")
-    with open(metadata_filepath, "w") as f:
-        json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
+    # Update splits with dataset shape and column names
+    metadata = dataset.splits
+    metadata.update(
+        {
+            "total_rows": dataset.shape[0],
+            "column_names": dataset.column_names,
+        }
+    )
+    with open(metadata_filepath, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
 
 @beartype
@@ -411,7 +419,7 @@ def split_indexes(
 
     # Generate shuffled indexes
     if seed is None:
-        np.random.seed(seed)
+        seed = 42
     indexes = np.arange(total_rows)
 
     test_val = test_size + val_size
@@ -436,7 +444,7 @@ def split_indexes(
         shuffle=shuffle,
         stratify=stratify_labels_test_val,
     )
-    return list(train_indexes), list(test_indexes), list(val_indexes)
+    return train_indexes.tolist(), test_indexes.tolist(), val_indexes.tolist()
 
 
 @beartype
@@ -767,23 +775,17 @@ def get_dataset_info(dataset_path: str) -> object:
     else:
         splits_data = {"split_indices": {}}
 
-    data_filepath = os.path.join(dataset_path, "data.arrow")
-    with pa.OSFile(data_filepath, "rb") as source:
-        reader = ipc.open_file(source)
-        schema = reader.schema
-
-        total_rows = 0
-        for i in range(reader.num_record_batches):
-            total_rows += reader.get_batch(i).num_rows
-
     splits = splits_data.get("split_indices", {})
     train_indices = splits.get("train", [])
     test_indices = splits.get("test", [])
     val_indices = splits.get("validation", [])
+    total_rows = splits_data.get("total_rows", 0)
+    column_names = splits_data.get("column_names", [])
 
     return {
         "total_rows": total_rows,
-        "total_columns": len(schema),
+        "total_columns": len(column_names),
+        "column_names": column_names,
         "train_size": len(train_indices),
         "test_size": len(test_indices),
         "val_size": len(val_indices),
@@ -850,13 +852,14 @@ def prepare_for_experiment(
             output_column = output_columns[0]
             try:
                 column_values = dataset[output_column]
-
                 # Check column type and convert to numerical indices if needed
                 if isinstance(column_values[0], str):
-                    import pandas as pd
-
-                    labels_array, unique_values = pd.factorize(column_values)
-                    labels = labels_array.tolist()
+                    unique_values = {}
+                    labels = []
+                    for val in column_values:
+                        if val not in unique_values:
+                            unique_values[val] = len(unique_values)
+                        labels.append(unique_values[val])
                 else:
                     labels = [
                         int(x) if not isinstance(x, (list, tuple)) else int(x[0])
@@ -883,4 +886,8 @@ def prepare_for_experiment(
             test_indexes=test_indexes,
             val_indexes=val_indexes,
         )
-    return prepared_dataset
+    return prepared_dataset, {
+        "train_indexes": train_indexes,
+        "test_indexes": test_indexes,
+        "val_indexes": val_indexes,
+    }

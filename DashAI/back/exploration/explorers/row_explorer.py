@@ -28,7 +28,7 @@ class RowExplorerSchema(BaseExplorerSchema):
         t=bool_field(),
         placeholder=True,
         description=(
-            "Take the rows from the Head of the dataset. " "Else, take from the Tail."
+            "Take the rows from the Head of the dataset. Else, take from the Tail."
         ),
     )  # type: ignore
 

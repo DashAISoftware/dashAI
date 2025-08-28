@@ -302,10 +302,10 @@ export default function NewExperimentModal({
               activeStep === 2
                 ? TIMESTAMP_KEYS.experiments.configureModel
                 : activeStep === 3
-                ? TIMESTAMP_KEYS.experiments.submitModel
-                : activeStep === 4
-                ? TIMESTAMP_KEYS.experiments.configureOptimazer
-                : null
+                  ? TIMESTAMP_KEYS.experiments.submitModel
+                  : activeStep === 4
+                    ? TIMESTAMP_KEYS.experiments.configureOptimazer
+                    : null
             }
           >
             <Button
