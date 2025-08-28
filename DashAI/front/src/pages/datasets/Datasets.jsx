@@ -261,12 +261,15 @@ export default function DatasetsPage() {
 
   const handleEditDataset = async (id, newName) => {
     try {
-      const updatedDataset = await updateDataset(id, { name: newName });
-      setDatasets((prevDatasets) =>
-        prevDatasets.map((dataset) =>
-          dataset.id === id ? { ...dataset, name: newName } : dataset,
-        ),
-      );
+      updateDataset(id, { name: newName }).then(async (updatedDataset) => {
+        setDatasets((prevDatasets) =>
+          prevDatasets.map((dataset) =>
+            dataset.id === id
+              ? { ...dataset, name: updatedDataset.name }
+              : dataset,
+          ),
+        );
+      });
     } catch (error) {
       console.error("Failed to update dataset:", error);
     }
@@ -274,12 +277,15 @@ export default function DatasetsPage() {
 
   const handleEditNotebook = async (id, newName) => {
     try {
-      const updatedNotebook = await updateNotebook(id, { name: newName });
-      setNotebooks((prevNotebooks) =>
-        prevNotebooks.map((notebook) =>
-          notebook.id === id ? updatedNotebook : notebook,
-        ),
-      );
+      await updateNotebook(id, { name: newName }).then((updatedNotebook) => {
+        setNotebooks((prevNotebooks) =>
+          prevNotebooks.map((notebook) =>
+            notebook.id === id
+              ? { ...notebook, name: updatedNotebook.name }
+              : notebook,
+          ),
+        );
+      });
     } catch (error) {
       console.error("Failed to update notebook:", error);
     }

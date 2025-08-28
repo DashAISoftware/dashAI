@@ -29,7 +29,11 @@ export default function ItemBox({
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       setIsEditing(false);
-      onEdit(editedName);
+      if (editedName.trim() !== name && editedName.trim() !== "") {
+        onEdit(editedName);
+      } else {
+        setEditedName(name);
+      }
     }
     if (e.key === "Escape") {
       setIsEditing(false);
@@ -48,7 +52,11 @@ export default function ItemBox({
     }
 
     setIsEditing(false);
-    onEdit(id, editedName);
+    if (editedName.trim() !== name && editedName.trim() !== "") {
+      onEdit(editedName);
+    } else {
+      setEditedName(name);
+    }
   };
 
   return (
