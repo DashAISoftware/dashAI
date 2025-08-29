@@ -52,11 +52,7 @@ export default function ItemBox({
     }
 
     setIsEditing(false);
-    if (editedName.trim() !== name && editedName.trim() !== "") {
-      onEdit(editedName);
-    } else {
-      setEditedName(name);
-    }
+    setEditedName(name);
   };
 
   return (
