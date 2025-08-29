@@ -121,7 +121,7 @@ export default function ConverterBox({
                   {
                     id: 2,
                     key: "Target Column",
-                    value: converter.parameters.target.columnName,
+                    value: converter.parameters.target?.columnName,
                   },
                   {
                     id: 3,
