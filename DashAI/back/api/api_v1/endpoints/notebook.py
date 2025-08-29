@@ -283,6 +283,8 @@ async def delete_notebook(
                     detail="Notebook not found",
                 )
 
+            shutil.rmtree(notebook.file_path, ignore_errors=True)
+
             db.delete(notebook)
             db.commit()
 
