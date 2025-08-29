@@ -120,8 +120,8 @@ export default function ConverterBox({
                 rows={[
                   {
                     id: 2,
-                    key: "Target Index",
-                    value: converter.parameters.target_index,
+                    key: "Target Column",
+                    value: converter.parameters.target.columnName,
                   },
                   {
                     id: 3,
@@ -129,7 +129,9 @@ export default function ConverterBox({
                     value:
                       converter.parameters.scope?.columns?.length === 0
                         ? "All"
-                        : converter.parameters.scope.columns.join(", "),
+                        : converter.parameters.scope.columns
+                            .map((col) => col.columnName)
+                            .join(", "),
                   },
                   {
                     id: 4,

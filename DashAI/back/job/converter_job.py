@@ -211,7 +211,9 @@ class ConverterListJob(BaseJob):
             # dataset to edit
             dataset_path = f"{converter_list.notebook.file_path}/dataset"
             loaded_dataset = load_dataset(dataset_path)
-            target_column_index = converter_list.parameters.pop("target_index")
+            print("Pre target column")
+            target_column_index = converter_list.parameters.get("target", {}).get("idx")
+            print(target_column_index)
 
             if not loaded_dataset:
                 raise JobError(f"Dataset with path {dataset_path} not found")
@@ -347,7 +349,9 @@ class ConverterListJob(BaseJob):
                 converter_scope = converter_info["scope"]
 
                 # Process columns scope
-                columns_scope = [column - 1 for column in converter_scope["columns"]]
+                columns_scope = [
+                    column["idx"] - 1 for column in converter_scope["columns"]
+                ]
                 scope_column_indexes = sorted(set(columns_scope))
 
                 # If no columns specified, use all columns
