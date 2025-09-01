@@ -16,7 +16,6 @@ import {
   Divider,
   Chip,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -27,39 +26,12 @@ import ErrorIcon from "@mui/icons-material/Error";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import useJobQueue from "../../hooks/useJobQueue";
 import JobDetailsDialog from "./JobDetailsDialog";
-import useJobPolling, {
-  checkQueueAndMaybeStartPolling,
-} from "../../hooks/useJobPolling";
-import { forceRefreshNow } from "../../utils/jobPoller";
+import useJobQueue from "../../hooks/useJobQueue";
+import useJobPolling, { forceRefreshNow } from "../../hooks/useJobPolling";
 
-const WidgetContainer = styled(Paper)(({ theme }) => ({
-  position: "fixed",
-  bottom: theme.spacing(3),
-  right: theme.spacing(3),
-  zIndex: 1000,
-  width: 320,
-  maxHeight: "80vh",
-  display: "flex",
-  flexDirection: "column",
-  boxShadow: theme.shadows[6],
-  borderRadius: theme.shape.borderRadius * 1.5,
-  overflow: "hidden",
-  transition: "all 0.3s ease",
-}));
-
-const WidgetHeader = styled(Box)(({ theme }) => ({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: theme.spacing(1, 2),
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  cursor: "pointer",
-}));
-
-const StatusIcon = ({ status }) => {
+// Exportar estos componentes para uso general
+export const StatusIcon = ({ status }) => {
   switch (status) {
     case "not_started":
       return <HourglassEmptyIcon fontSize="small" />;
@@ -76,7 +48,7 @@ const StatusIcon = ({ status }) => {
   }
 };
 
-const statusText = {
+export const statusText = {
   not_started: "Queued",
   started: "Running",
   finished: "Completed",
@@ -85,6 +57,7 @@ const statusText = {
 };
 
 const JobQueueWidget = () => {
+  // Estado local
   const [expanded, setExpanded] = useState(() => {
     try {
       const savedState = localStorage.getItem("jobQueueWidgetExpanded");
@@ -95,25 +68,52 @@ const JobQueueWidget = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showFinished, setShowFinished] = useState(false);
+
+  // Usar el hook existente que ya funcionaba
   const { jobs, loading, error, refetch } = useJobQueue(500);
 
+  // Usar el polling existente que ya funcionaba
+  useJobPolling(
+    3000,
+    useCallback(
+      (changes, meta) => {
+        const hasChanges = Array.isArray(changes) && changes.length > 0;
+        const justCompleted = !!meta?.recentlyCompleted;
+        const queueNotEmpty = meta?.queueEmpty === false;
+
+        if (hasChanges || justCompleted) {
+          setTimeout(() => refetch(), justCompleted ? 500 : 0);
+          return;
+        }
+
+        if (queueNotEmpty) {
+          refetch();
+        }
+      },
+      [refetch],
+    ),
+  );
+
+  // Calcular jobs filtrados
   const activeJobs = jobs.filter(
     (job) => job.status === "started" || job.status === "not_started",
   );
   const finishedJobs = jobs.filter((job) => job.status === "finished");
   const errorJobs = jobs.filter((job) => job.status === "error");
 
+  // Guardar el estado de expansión en localStorage
   useEffect(() => {
     try {
       localStorage.setItem("jobQueueWidgetExpanded", expanded.toString());
     } catch (e) {}
   }, [expanded]);
 
+  // Expandir automáticamente cuando hay jobs activos
   useEffect(() => {
     if (activeJobs.length > 0 && !expanded) {
       setExpanded(true);
     }
-  }, [activeJobs.length, expanded]);
+  }, [activeJobs.length, expanded, jobs]);
 
   const handleToggleExpand = () => {
     setExpanded(!expanded);
@@ -129,17 +129,17 @@ const JobQueueWidget = () => {
 
   const handleRefresh = () => {
     console.log("Manual refresh triggered");
-    forceRefreshNow();
-    refetch();
+    forceRefreshNow(); // Usar la función existente para forzar un refresh
   };
 
   const getJobsToShow = () => {
     if (showFinished) {
       return jobs.slice(0, 10);
+    } else {
+      return [...activeJobs, ...errorJobs]
+        .sort((a, b) => new Date(b.last_update) - new Date(a.last_update))
+        .slice(0, 10);
     }
-    return [...activeJobs, ...errorJobs]
-      .sort((a, b) => new Date(b.last_update) - new Date(a.last_update))
-      .slice(0, 10);
   };
 
   const getRelativeTime = (timestamp) => {
@@ -173,32 +173,40 @@ const JobQueueWidget = () => {
     }
   };
 
-  useJobPolling(
-    3000,
-    useCallback(
-      (changes, meta) => {
-        const hasChanges = Array.isArray(changes) && changes.length > 0;
-        const justCompleted = !!meta?.recentlyCompleted;
-        const queueNotEmpty = meta?.queueEmpty === false;
-
-        if (hasChanges || justCompleted) {
-          setTimeout(() => refetch(), justCompleted ? 500 : 0);
-          return;
-        }
-
-        if (queueNotEmpty) {
-          refetch();
-        }
-      },
-      [refetch],
-    ),
-  );
+  const jobsToShow = getJobsToShow();
 
   return (
     <>
       <Fade in={true}>
-        <WidgetContainer elevation={6}>
-          <WidgetHeader onClick={handleToggleExpand}>
+        <Paper
+          elevation={6}
+          sx={{
+            position: "fixed",
+            bottom: (theme) => theme.spacing(3),
+            right: (theme) => theme.spacing(3),
+            zIndex: 1000,
+            width: 320,
+            maxHeight: "80vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: (theme) => theme.shadows[6],
+            borderRadius: (theme) => theme.shape.borderRadius,
+            overflow: "hidden",
+            transition: "all 0.3s ease",
+          }}
+        >
+          <Box
+            onClick={handleToggleExpand}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: (theme) => theme.spacing(1, 2),
+              backgroundColor: (theme) => theme.palette.primary.main,
+              color: (theme) => theme.palette.primary.contrastText,
+              cursor: "pointer",
+            }}
+          >
             <Box display="flex" alignItems="center">
               <Badge
                 badgeContent={activeJobs.length}
@@ -230,53 +238,58 @@ const JobQueueWidget = () => {
                 <KeyboardArrowUpIcon fontSize="small" />
               )}
             </Box>
-          </WidgetHeader>
+          </Box>
 
           <Collapse in={expanded} timeout="auto">
             <Box
               sx={{
-                maxHeight: 320,
-                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
                 backgroundColor: (theme) => theme.palette.background.paper,
               }}
             >
-              {loading && jobs.length === 0 && (
-                <Box display="flex" justifyContent="center" p={2}>
-                  <Typography variant="body2" color="text.secondary">
-                    Loading jobs...
-                  </Typography>
-                </Box>
-              )}
+              <Box
+                sx={{
+                  maxHeight: 280,
+                  overflowY: "auto",
+                }}
+              >
+                {loading && jobs.length === 0 && (
+                  <Box display="flex" justifyContent="center" p={2}>
+                    <Typography variant="body2" color="text.secondary">
+                      Loading jobs...
+                    </Typography>
+                  </Box>
+                )}
 
-              {error && (
-                <Box p={2}>
-                  <Typography variant="body2" color="error">
-                    Error: {error}
-                  </Typography>
-                </Box>
-              )}
+                {error && (
+                  <Box p={2}>
+                    <Typography variant="body2" color="error">
+                      Error: {error}
+                    </Typography>
+                  </Box>
+                )}
 
-              {jobs.length === 0 && !loading && (
-                <Box display="flex" justifyContent="center" p={2}>
-                  <Typography variant="body2" color="text.secondary">
-                    No jobs in queue
-                  </Typography>
-                </Box>
-              )}
+                {jobs.length === 0 && !loading && (
+                  <Box display="flex" justifyContent="center" p={2}>
+                    <Typography variant="body2" color="text.secondary">
+                      No jobs in queue
+                    </Typography>
+                  </Box>
+                )}
 
-              {jobs.length > 0 && (
-                <>
+                {jobsToShow.length > 0 && (
                   <List dense disablePadding>
-                    {getJobsToShow().map((job) => (
+                    {jobsToShow.map((job) => (
                       <ListItem
                         key={job.id}
                         button
                         divider
                         onClick={() => handleJobClick(job)}
                         sx={{
-                          bgcolor:
+                          backgroundColor:
                             job.status === "started"
-                              ? (theme) => theme.palette.action.selected
+                              ? "rgba(25, 118, 210, 0.08)"
                               : undefined,
                         }}
                       >
@@ -285,11 +298,15 @@ const JobQueueWidget = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary={
-                            <Tooltip title={job.task_type || ""}>
-                              <Typography variant="body2" noWrap>
-                                {job.task_type || "Unknown Job"}
-                              </Typography>
-                            </Tooltip>
+                            <Box display="flex" alignItems="center">
+                              <Tooltip title={job.task_type || ""}>
+                                <Typography variant="body2" noWrap>
+                                  {job.task_type
+                                    ? job.task_type.split(".").pop()
+                                    : "Unknown Job"}
+                                </Typography>
+                              </Tooltip>
+                            </Box>
                           }
                           secondary={
                             <Typography
@@ -322,14 +339,22 @@ const JobQueueWidget = () => {
                       </ListItem>
                     ))}
                   </List>
+                )}
+              </Box>
 
+              {/* Panel fijo para los controles */}
+              {jobs.length > 0 && (
+                <>
                   <Divider />
-
                   <Box
                     display="flex"
                     justifyContent="space-between"
                     alignItems="center"
                     p={1}
+                    sx={{
+                      borderTop: "1px solid",
+                      borderTopColor: "divider",
+                    }}
                   >
                     <Box display="flex" gap={0.5}>
                       <Chip
@@ -360,10 +385,9 @@ const JobQueueWidget = () => {
               )}
             </Box>
           </Collapse>
-        </WidgetContainer>
+        </Paper>
       </Fade>
 
-      {/* Details Dialog */}
       <JobDetailsDialog
         job={selectedJob}
         open={Boolean(selectedJob)}

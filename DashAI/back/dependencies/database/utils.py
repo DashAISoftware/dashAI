@@ -185,3 +185,91 @@ def upgrade_plugin_info_in_db(
             db.rollback()
             logger.exception(e)
             raise exc.SQLAlchemyError("Error storing plugin.") from e
+
+
+def find_entity_by_huey_id(huey_id: str) -> dict:
+    """
+    Find the entity associated with a huey_id and return its details.
+    Returns None if no entity is found.
+    """
+    from kink import di
+
+    from DashAI.back.dependencies.database.models import (
+        ConverterList,
+        Dataset,
+        Explorer,
+        GlobalExplainer,
+        LocalExplainer,
+        Run,
+    )
+
+    session_factory = di["session_factory"]
+
+    with session_factory() as db:
+        run = db.query(Run).filter(Run.huey_id == huey_id).first()
+        if run:
+            return {
+                "entity_type": "train_model",
+                "entity_id": run.id,
+                "entity_name": run.name,
+                "created_at": run.created,
+                "last_modified": run.last_modified,
+            }
+
+        dataset = db.query(Dataset).filter(Dataset.huey_id == huey_id).first()
+        if dataset:
+            return {
+                "entity_type": "dataset",
+                "entity_id": dataset.id,
+                "entity_name": dataset.name,
+                "created_at": dataset.created,
+                "last_modified": dataset.last_modified,
+            }
+
+        explorer = db.query(Explorer).filter(Explorer.huey_id == huey_id).first()
+        if explorer:
+            return {
+                "entity_type": "explorer",
+                "entity_id": explorer.id,
+                "entity_name": explorer.name,
+                "created_at": explorer.created,
+                "last_modified": explorer.last_modified,
+            }
+
+        global_explainer = (
+            db.query(GlobalExplainer).filter(GlobalExplainer.huey_id == huey_id).first()
+        )
+        if global_explainer:
+            return {
+                "entity_type": "global_explainer",
+                "entity_id": global_explainer.id,
+                "entity_name": global_explainer.name,
+                "created_at": global_explainer.created,
+                "last_modified": global_explainer.last_modified,
+            }
+
+        local_explainer = (
+            db.query(LocalExplainer).filter(LocalExplainer.huey_id == huey_id).first()
+        )
+        if local_explainer:
+            return {
+                "entity_type": "local_explainer",
+                "entity_id": local_explainer.id,
+                "entity_name": local_explainer.name,
+                "created_at": local_explainer.created,
+                "last_modified": local_explainer.last_modified,
+            }
+
+        converter_list = (
+            db.query(ConverterList).filter(ConverterList.huey_id == huey_id).first()
+        )
+        if converter_list:
+            return {
+                "entity_type": "converter",
+                "entity_id": converter_list.id,
+                "entity_name": converter_list.name,
+                "created_at": converter_list.created,
+                "last_modified": converter_list.last_modified,
+            }
+
+        return None

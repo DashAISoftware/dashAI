@@ -5,6 +5,11 @@ export const getJobs = async (): Promise<object> => {
   return response.data;
 };
 
+export const getJobDetails = async (jobId: string): Promise<object> => {
+  const response = await api.get<object>(`/v1/job/${jobId}/details`);
+  return response.data;
+};
+
 export const enqueueRunnerJob = async (runId: number): Promise<object> => {
   const data = {
     job_type: "ModelJob",

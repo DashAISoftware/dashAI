@@ -139,6 +139,11 @@ async function pollOnce() {
     }
 
     if (queueEmpty && !changed && !recentlyCompleted) {
+      if (state.mode !== "confirm") {
+        state.mode = "confirm";
+        schedule(state.confirmDelayMs);
+        return;
+      }
       state.mode = "sleep";
       clearTimer();
       return;
@@ -251,10 +256,22 @@ export async function checkQueueAndMaybeStartPolling() {
 /**
  * Manual refresh (UI buttons). Does not reset cursor.
  */
-export function forceRefreshNow() {
+export async function forceRefreshNow() {
   if (!state.started) {
     startJobPoller(state.intervalMs);
     return;
   }
+
+  try {
+    const r = await api.get("/v1/job/is_empty");
+    const isEmpty = !!r?.data?.is_empty;
+    if (!isEmpty) {
+      if (state.mode === "sleep") schedule(0);
+      return true;
+    }
+  } catch (e) {
+    console.warn("[JobPoller] Refresh failed:", e?.message || e);
+  }
+
   schedule(0);
 }

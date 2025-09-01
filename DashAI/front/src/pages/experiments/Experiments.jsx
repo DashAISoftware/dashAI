@@ -12,16 +12,6 @@ function ExperimentsPage() {
     React.useState(false);
   const [updateTableFlag, setUpdateTableFlag] = React.useState(false);
 
-  const bumpTable = useCallback(() => {
-    setUpdateTableFlag((v) => !v);
-  }, []);
-
-  const handleJobsUpdated = useCallback(() => {
-    bumpTable();
-  }, [bumpTable]);
-
-  useJobPolling(3000, handleJobsUpdated, ["started", "finished", "error"]);
-
   return (
     <>
       <CustomLayout
