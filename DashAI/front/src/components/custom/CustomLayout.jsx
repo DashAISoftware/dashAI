@@ -9,7 +9,13 @@ import { useTheme } from "@emotion/react";
  * @param {React.ReactNode} children The content to be rendered within the layout
  * @param {boolean} disableContainer If true, the Container component will be deactivated and the content will be rendered without it.
  */
-function CustomLayout({ title, subtitle, children, disableContainer }) {
+function CustomLayout({
+  title,
+  subtitle,
+  children,
+  disableContainer,
+  padding = 2,
+}) {
   const xxl = 1600;
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up(xxl));
@@ -29,7 +35,7 @@ function CustomLayout({ title, subtitle, children, disableContainer }) {
           {subtitle}
         </Typography>
       )}
-      <Box sx={{ p: 2 }}>{children}</Box>
+      <Box sx={{ p: padding }}>{children}</Box>
     </Container>
   );
 }

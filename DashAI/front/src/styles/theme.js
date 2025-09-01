@@ -22,6 +22,7 @@ const theme = {
     },
     text: {
       primary: "#ffffff",
+      secondary: "#b0b0b0",
     },
     error: {
       main: "#ff8383",
