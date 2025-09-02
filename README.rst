@@ -20,7 +20,7 @@ Quick installation (Pypi)
 =========================
 
 
-DashAI needs Python 3.8 or greater to be installed. Once that requirement is satisfied, you can install DashAI via pip:
+DashAI needs Python 3.10 or greater to be installed. Once that requirement is satisfied, you can install DashAI via pip:
 
 .. code:: bash
 
@@ -99,42 +99,6 @@ Then, launch the front-end development server by running the following command:
 
     $ yarn start
 
-If you want to launch the front-end test server (without launching the backend) with dummy data, run:
-
-.. code:: bash
-
-    $ yarn json-server
-
-Linting and formatting
-~~~~~~~~~~~~~~~~~~~~~~
-
-The project uses as default linter `eslint <https://eslint.org/>`_ with
-the `react/recommended`, `standard-with-typescript`` and `prettier`` styles.
-
-To manually run the linter, move to `DashAI/front` and run:
-
-.. code:: bash
-
-    $ yarn eslint src
-
-
-The project uses `prettier <https://prettier.io/>`_ as default formatter.
-
-To format the code manually, move to `DashAI/front` and execute:
-
-.. code:: bash
-
-    $ yarn prettier --write src
-
-
-Build the frontend
-~~~~~~~~~~~~~~~~~~
-
-Execute from `DashAI/front`:
-
-.. code:: bash
-
-    $ yarn build
 
 Backend
 -------
@@ -143,7 +107,7 @@ Backend
 Prepare the environment
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-First, set the python enviroment using
+First, set the python enviroment, for that you can use
 `conda <https://docs.conda.io/en/latest/miniconda.html>`_:
 
 .. code: bash
@@ -162,9 +126,9 @@ Later, install the requirements:
 
 .. code:: bash
 
-    $ pip install pip-tools
-    $ pip-sync requirements.txt requirements-dev.txt
-
+    $ pip install -r requirements.txt
+    $ pip install -r requirements-dev.txt
+    $ pre-commit install
 
 Running the Backend
 ~~~~~~~~~~~~~~~~~~~
@@ -181,14 +145,16 @@ There are three ways to run DashAI:
 
 .. code:: bash
 
-    $ pip install .
+    $ pip install . -e
     $ dashai
 
-If you chose the second way, remember to install it each time you make changes.
+
+Optional Flags
+==============
 
 **Setting the local execution path**
 
-With the `--local-path` option you can determine where DashAI will save its local
+With the `--local-path` (alias `-lp`) option you can determine where DashAI will save its local
 files, such as datasets, experiments, runs and others.
 The following example shows how to set the folder in the local `.DashAI` directory:
 
@@ -199,7 +165,7 @@ The following example shows how to set the folder in the local `.DashAI` directo
 
 **Setting the logging level**
 
-Through the --logging_level parameter, you can set which logging level the DashAI
+Through the `--logging-level` (alias `-ll`) parameter, you can set which logging level the DashAI
 backend server will have.
 
 .. code:: bash
@@ -208,9 +174,20 @@ backend server will have.
 
 The possible levels available are: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
 
-Note that the --logging-level not only affects the DashAI loggers, but also
+Note that the `--logging-level` not only affects the DashAI loggers, but also
 the datasets (which is set to the same level as DashAI) and the
 SQLAlchemy (which is only activated when logging level is DEBUG).
+
+
+**Disabling automatic browser opening**
+
+By default, DashAI will open a browser window pointing to the application
+after starting. If you prefer to disable this behavior, you can use the
+`--no-browser` (alias `-nb`) flag:
+
+.. code:: bash
+
+    $ python -m DashAI --no-browser
 
 
 **Checking Available Options**
@@ -220,6 +197,10 @@ You can check all available options through the command:
 .. code:: bash
 
     $ python -m DashAI --help
+
+
+Testing
+=======
 
 Execute tests
 ~~~~~~~~~~~~~
@@ -246,27 +227,6 @@ To execute the backend tests
     ``db: Session = Depends(get_db)`` so we can test endpoints on a test database
     without making changes to the main database.
 
-
-Linting and formatting
-~~~~~~~~~~~~~~~~~~~~~~
-
-The project uses as default backend linter
-`ruff <https://github.com/charliermarsh/ruff>`_:
-
-To manually run the linter, move to `DashAI/back` and execute:
-
-.. code:: bash
-
-    $ ruff .
-
-
-The project uses `black <https://black.readthedocs.io/en/stable/>`_ as default formatter.
-
-To manually format the code, move to `DashAI/back` and execute:
-
-.. code:: bash
-
-    $ black .
 
 
 Acknowledgments
