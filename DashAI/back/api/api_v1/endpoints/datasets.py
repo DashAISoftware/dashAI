@@ -15,7 +15,7 @@ from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
+from DashAI.back.api.api_v1.schemas import datasets_params as schemas
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
@@ -25,6 +25,46 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.post("/", response_model=schemas.Dataset, status_code=status.HTTP_201_CREATED)
+@inject
+async def create_dataset(
+    params: schemas.DatasetCreateParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Create a new dataset entry in the database with NOT_STARTED status.
+
+    Parameters
+    ----------
+    params : DatasetCreateParams
+        A schema containing the dataset creation parameters.
+    session_factory : sessionmaker
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    Dataset
+        The newly created dataset with NOT_STARTED status.
+    """
+    logger.debug("Creating new dataset entry.")
+    with session_factory() as db:
+        try:
+            dataset = Dataset(
+                name=params.name,
+                file_path="",
+            )
+            db.add(dataset)
+            db.commit()
+            db.refresh(dataset)
+            return dataset
+
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.get("/")
@@ -527,7 +567,7 @@ async def delete_dataset(
 @inject
 async def update_dataset(
     dataset_id: int,
-    params: DatasetUpdateParams,
+    params: schemas.DatasetUpdateParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
