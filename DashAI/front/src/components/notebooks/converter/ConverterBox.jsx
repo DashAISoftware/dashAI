@@ -101,7 +101,12 @@ export default function ConverterBox({
             <IconButton
               size="small"
               onClick={() => handleConverterDeleteClick(converter)}
-              color="error"
+              sx={{
+                width: 24,
+                height: 24,
+                bgcolor: "error.main",
+                "&:hover": { bgcolor: "error.dark" },
+              }}
             >
               <Delete sx={{ fontSize: 16 }} />
             </IconButton>
