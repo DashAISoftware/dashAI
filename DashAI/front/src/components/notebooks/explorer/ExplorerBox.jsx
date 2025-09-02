@@ -101,14 +101,7 @@ export default function ExplorerBox({
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDeleteClick(explorer)}
-                  sx={{
-                    bgcolor: "#FF8383",
-                    color: "white",
-                    width: 24,
-                    height: 24,
-                    ml: 0.5,
-                    "&:hover": { bgcolor: "#FF8383" },
-                  }}
+                  color="error"
                 >
                   <Delete sx={{ fontSize: 16 }} />
                 </IconButton>
