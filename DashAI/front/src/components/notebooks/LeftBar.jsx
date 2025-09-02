@@ -52,6 +52,25 @@ export default function DatasetsNotebooksBar({
     }
   };
 
+  const getDatasetDescription = (dataset) => {
+    return (
+      dataset.description ||
+      `${dataset.total_rows || 0} rows, ${dataset.total_columns || 0} cols`
+    );
+  };
+
+  const getNotebookDescription = (notebook) => {
+    if (notebook.dataset_id && datasets.length > 0) {
+      const associatedDataset = datasets.find(
+        (dataset) => dataset.id === notebook.dataset_id,
+      );
+      return associatedDataset?.name
+        ? `from ${associatedDataset.name} dataset`
+        : "No dataset";
+    }
+    return notebook.description || "";
+  };
+
   return (
     <SideBar>
       {/* Header */}
@@ -94,6 +113,7 @@ export default function DatasetsNotebooksBar({
           defaultOpen={true}
           title="Available Datasets"
           Icon={StorageIcon}
+          getItemDescription={getDatasetDescription}
         />
 
         <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
@@ -108,6 +128,8 @@ export default function DatasetsNotebooksBar({
           defaultOpen={true}
           title="Notebooks"
           Icon={DescriptionIcon}
+          datasets={datasets}
+          getItemDescription={getNotebookDescription}
         />
       </Box>
 
