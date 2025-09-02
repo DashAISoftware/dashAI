@@ -6,6 +6,7 @@ import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import DatasetNoteBox from "../notebook/DatasetNoteBox";
 
 export default function UploadNotebookSteps({
   backHome,
@@ -44,6 +45,7 @@ export default function UploadNotebookSteps({
   });
   return (
     <CustomLayout title={"Create a New Notebook"} subtitle={""} padding={0}>
+      <DatasetNoteBox />
       <Typography
         variant="h6"
         sx={{
