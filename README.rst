@@ -46,7 +46,7 @@ Development
 
 
 To download and run the development version of DashAI, first, download the repository
-and switch to the developing branch: :
+and switch to the developing branch:
 
 .. code:: bash
 
@@ -203,7 +203,7 @@ Testing
 =======
 
 Execute tests
-~~~~~~~~~~~~~
+-------------
 
 DashAI uses `pytest <https://docs.pytest.org/>`_ to perform the backend
 tests.
