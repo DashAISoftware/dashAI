@@ -87,11 +87,11 @@ export default function ExplorerBox({
                 size="small"
                 onClick={() => handleExplorerDetailsClick(explorer)}
                 sx={{
-                  bgcolor: "#00BEBB",
                   color: "white",
                   width: 24,
                   height: 24,
-                  "&:hover": { bgcolor: "#008582" },
+                  bgcolor: "primary.main",
+                  "&:hover": { bgcolor: "primary.dark" },
                 }}
               >
                 <Info sx={{ fontSize: 16 }} />
