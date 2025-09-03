@@ -16,6 +16,7 @@ import {
 } from "../../api/notebook";
 import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
+import { getDatasetStatus } from "../../utils/datasetStatus";
 
 export default function DatasetsPage() {
   const [step, setStep] = useState(0);
@@ -223,10 +224,10 @@ export default function DatasetsPage() {
         const datasets = await getDatasets();
 
         const dataset = datasets.find((d) => d.id === newDataset.id);
-        if (dataset.status === 3) {
+        if (getDatasetStatus(dataset.status) === "Finished") {
           const enrichedDatasets = await enrichDatasetsWithInfo(datasets);
           setDatasets(enrichedDatasets);
-        } else if (dataset.status === 4) {
+        } else if (getDatasetStatus(dataset.status) === "Error") {
           console.error("Dataset creation failed:", dataset.error);
           enqueueSnackbar("Dataset creation failed:", {
             variant: "error",
