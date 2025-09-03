@@ -207,49 +207,43 @@ export default function DatasetsPage() {
     setSelectedDatasetId(null);
   };
 
-  const handleDatasetCreated = async (tempDataset) => {
-    // Temporary dataset
-    setDatasets((prevDatasets) => [...prevDatasets, tempDataset]);
+  const handleDatasetCreated = async (newDataset) => {
+    setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
+    setSelectedDatasetId(newDataset.id);
+
     setStep(0);
     setSelectedOption("dataset");
-    setSelectedDatasetId(tempDataset.id);
     setSelectedNotebookId(null);
 
-    // Real dataset
-    const pollForRealDataset = async (attempt = 1, maxAttempts = 10) => {
-      try {
-        const realDatasets = await getDatasets();
-        const realDataset = realDatasets.find(
-          (d) =>
-            d.name === tempDataset.name && !d.id.toString().startsWith("temp_"),
-        );
+    let timerId;
 
-        if (realDataset) {
-          const enrichedDatasets = await enrichDatasetsWithInfo(
-            realDatasets,
-            datasets,
-          );
+    // Check and wait for new dataset to be ready:
+    const checkDatasetReady = async () => {
+      try {
+        const datasets = await getDatasets();
+
+        const dataset = datasets.find((d) => d.id === newDataset.id);
+        if (dataset.status === 3) {
+          const enrichedDatasets = await enrichDatasetsWithInfo(datasets);
           setDatasets(enrichedDatasets);
-          setSelectedDatasetId(realDataset.id);
-        } else if (attempt < maxAttempts) {
-          const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
-          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), delay);
+        } else if (dataset.status === 4) {
+          console.error("Dataset creation failed:", dataset.error);
+          enqueueSnackbar("Dataset creation failed:", {
+            variant: "error",
+          });
         } else {
-          console.log(
-            "Max polling attempts reached, keeping temporary dataset",
-          );
-          await fetchDatasets();
+          timerId = setTimeout(checkDatasetReady, 1000);
         }
       } catch (error) {
-        console.error("Error polling for real dataset:", error);
-        if (attempt < maxAttempts) {
-          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), 5000);
-        }
+        console.error("Error checking dataset readiness:", error);
       }
     };
 
-    //setTimeout(() => pollForRealDataset(), 1000);
-    pollForRealDataset();
+    checkDatasetReady();
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
   };
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
