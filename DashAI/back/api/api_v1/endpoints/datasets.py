@@ -404,7 +404,6 @@ async def get_types(
     """
     with session_factory() as db:
         try:
-
             dataset = db.get(Dataset, dataset_id)
             if not dataset:
                 raise HTTPException(

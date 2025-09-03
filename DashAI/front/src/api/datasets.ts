@@ -62,19 +62,20 @@ export const getExperimentsExist = async (id: number): Promise<object> => {
   return response.data;
 };
 
-export const createDataset = async (
-  name: string
-): Promise<IDataset> => {
-  const response = await api.post<IDataset>(`${datasetEndpoint}/`, { name: name });
+export const createDataset = async (name: string): Promise<IDataset> => {
+  const response = await api.post<IDataset>(`${datasetEndpoint}/`, {
+    name: name,
+  });
   return response.data;
 };
-
 
 export const updateDataset = async (
   id: number,
   formData: object,
 ): Promise<IDataset> => {
-  const response = await api.patch<IDataset>(`${datasetEndpoint}/${id}`, { ...formData });
+  const response = await api.patch<IDataset>(`${datasetEndpoint}/${id}`, {
+    ...formData,
+  });
   return response.data;
 };
 
@@ -104,4 +105,3 @@ export const exportDatasetCsvByPath = async (path: string): Promise<Blob> => {
   });
   return response.data;
 };
-
