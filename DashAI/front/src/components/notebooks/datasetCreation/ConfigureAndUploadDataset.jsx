@@ -14,17 +14,21 @@ import { createDataset } from "../../../api/datasets";
 
 /**
  * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.
- * @param {object} newDataset An object that stores all the important states for the dataset modal.
- * @param {function} setNewDataset function that modifies newDataset state
- * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal.
- * @param {object} formSubmitRef useRef to trigger form submit from outside "ParameterForm" component
+ * It creates the dataset entry in the database and then enqueues a job to process the uploaded file.
+ *
+ * @param {object} newDataset - An object that stores all the important states for the dataset modal (file, url, params, dataloader).
+ * @param {function} setNewDataset - Function that modifies newDataset state.
+ * @param {object} formSubmitRef - useRef to trigger form submit from outside "ParameterForm" component.
+ * @param {function} goToPrevStep - Function to navigate back to the previous step in the dataset creation flow.
+ * @param {function} backHome - Function to navigate back to the home/initial state, typically called on error.
+ * @param {function} handleDatasetCreated - Callback function called when dataset is successfully created, receives the created dataset data.
  */
+
 export default function ConfigureAndUploadDataset({
   newDataset,
   setNewDataset,
   formSubmitRef,
   goToPrevStep,
-  updateDatasets,
   backHome,
   handleDatasetCreated,
 }) {
@@ -33,7 +37,6 @@ export default function ConfigureAndUploadDataset({
   const [error, setError] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const [nextEnabled, setNextEnabled] = useState(false);
-  const [requestError, setRequestError] = useState(false);
 
   const handleSubmitNewDataset = async () => {
     const name =
