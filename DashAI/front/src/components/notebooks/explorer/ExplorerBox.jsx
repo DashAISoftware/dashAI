@@ -17,7 +17,6 @@ export default function ExplorerBox({
   explorer,
   handleExplorerDetailsClick,
   onStatusChange,
-  height = "320px",
 }) {
   useEffect(() => {
     let intervalId;
@@ -54,7 +53,7 @@ export default function ExplorerBox({
   return (
     <Card
       key={explorer.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height }}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
     >
       <CardContent
         sx={{

@@ -19,6 +19,7 @@ const RowItem = React.memo(function RowItem({
     <Box
       sx={{
         my: 2,
+        height: "370px",
       }}
     >
       {item.type === "explorer" ? (

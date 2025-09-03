@@ -13,11 +13,7 @@ import { getConverterStatus } from "../../../utils/converterStatus";
 import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
 
-export default function ConverterBox({
-  converter,
-  height = "320px",
-  onStatusChange,
-}) {
+export default function ConverterBox({ converter, onStatusChange }) {
   const [converterComponent, setConverterComponent] = useState({});
 
   useEffect(() => {
@@ -68,7 +64,7 @@ export default function ConverterBox({
   return (
     <Card
       key={converter.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height }}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
     >
       <CardContent
         sx={{
@@ -144,7 +140,7 @@ export default function ConverterBox({
                 ]}
                 columns={[
                   { field: "key", headerName: "Parameter", flex: 1 },
-                  { field: "value", headerName: "Value", flex: 2 },
+                  { field: "value", headerName: "Value", flex: 4 },
                 ]}
                 hideFooter
                 disableColumnMenu
@@ -155,10 +151,10 @@ export default function ConverterBox({
                   height: "100%",
                   width: "100%",
                   "& .MuiDataGrid-virtualScroller": {
-                    "&::-webkit-scrollbar": {
-                      width: "0px",
-                      height: "0px",
-                    },
+                    overflowX: "auto",
+                  },
+                  "& .MuiDataGrid-cell": {
+                    whiteSpace: "nowrap", // keep everything on one line
                   },
                 }}
               />
