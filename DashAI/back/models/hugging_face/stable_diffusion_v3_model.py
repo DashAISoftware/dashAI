@@ -31,7 +31,6 @@ class StableDiffusionSchema(BaseSchema):
         enum_field(
             enum=[
                 "stabilityai/stable-diffusion-3-medium-diffusers",
-                "stabilityai/stable-diffusion-3-medium-tensorrt",
                 "stabilityai/stable-diffusion-3.5-medium",
                 "stabilityai/stable-diffusion-3.5-large",
                 "stabilityai/stable-diffusion-3.5-large-turbo",
