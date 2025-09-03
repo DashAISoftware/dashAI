@@ -240,10 +240,6 @@ export default function DatasetsPage() {
     };
 
     checkDatasetReady();
-
-    return () => {
-      if (timerId) clearTimeout(timerId);
-    };
   };
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
