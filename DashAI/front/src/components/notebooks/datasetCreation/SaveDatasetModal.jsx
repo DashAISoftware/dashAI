@@ -11,6 +11,7 @@ import {
 import { Close } from "@mui/icons-material";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import NoteBox from "../NoteBox";
 
 export function SaveDatasetModal({
   open,
@@ -40,6 +41,7 @@ export function SaveDatasetModal({
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
+          <NoteBox message="A new dataset will be created with these transformations. It can be used with other modules without affecting the original." />
           <TextField
             fullWidth
             label="Dataset Name"
@@ -60,6 +62,7 @@ export function SaveDatasetModal({
               <ConverterHistoryList converters={appliedConverters} />
             )}
           </Box>
+
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
             <FormSchemaButtonGroup
               onCancel={onClose}

@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 
-export default function DatasetNoteBox() {
+export default function NoteBox({ message }) {
   return (
     <Box
       sx={{
@@ -15,10 +15,7 @@ export default function DatasetNoteBox() {
       <Typography variant="subtitle2" sx={{ color: "#00BEBB", mb: 1 }}>
         Note:
       </Typography>
-      <Typography variant="body2">
-        A copy of the selected dataset will be created to work in the notebook
-        without altering the original.
-      </Typography>
+      <Typography variant="body2">{message}</Typography>
     </Box>
   );
 }

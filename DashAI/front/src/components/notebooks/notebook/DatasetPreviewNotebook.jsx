@@ -134,7 +134,7 @@ export default function DatasetPreviewNotebook({
                 minWidth: "auto",
               }}
             >
-              SAVE NEW DATA
+              Save as new Dataset
             </Button>
             <IconButton
               size="small"
