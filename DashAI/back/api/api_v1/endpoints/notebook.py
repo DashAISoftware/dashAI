@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import DashAI.back.api.api_v1.schemas.datasets_params as dataset_params
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
+from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dependencies.database.models import (
     ConverterList,
     Dataset,
@@ -326,7 +327,11 @@ async def create_dataset_from_notebook(
             os.makedirs(new_folder_path, exist_ok=True)
             shutil.copytree(dataset_folder, new_folder_path, dirs_exist_ok=True)
 
-            dataset = Dataset(name=params.name, file_path=new_folder_path)
+            dataset = Dataset(
+                name=params.name,
+                file_path=new_folder_path,
+                status=DatasetStatus.FINISHED,
+            )
             db.add(dataset)
             db.commit()
             db.refresh(dataset)
