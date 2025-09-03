@@ -16,6 +16,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import datasets_params as schemas
+from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
@@ -169,12 +170,18 @@ async def get_sample(
     """
     with session_factory() as db:
         try:
-            file_path = db.get(Dataset, dataset_id).file_path
-            if not file_path:
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+            file_path = dataset.file_path
 
             arrow_path = os.path.join(file_path, "dataset", "data.arrow")
 
@@ -311,6 +318,13 @@ async def get_info(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+
             info = get_dataset_info(f"{dataset.file_path}/dataset")
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -347,6 +361,13 @@ async def get_experiments_exist(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+
             # Check if there are any experiments associated with the dataset
             experiments_exist = (
                 db.query(Experiment).filter(Experiment.dataset_id == dataset_id).first()
@@ -383,13 +404,19 @@ async def get_types(
     """
     with session_factory() as db:
         try:
-            file_path = db.get(Dataset, dataset_id).file_path
-            if not file_path:
+
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-            columns_spec = get_columns_spec(f"{file_path}/dataset")
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+            columns_spec = get_columns_spec(f"{dataset.file_path}/dataset")
             if not columns_spec:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -471,6 +498,11 @@ async def copy_dataset(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Original dataset not found.",
+            )
+        if original_dataset.status != DatasetStatus.FINISHED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Original dataset is not in finished state",
             )
 
         # Create a new folder for the copied dataset
@@ -790,6 +822,11 @@ async def export_dataset_csv_by_id(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
+                )
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
                 )
 
             file_path = dataset.file_path
