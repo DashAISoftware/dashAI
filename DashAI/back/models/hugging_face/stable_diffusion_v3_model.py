@@ -2,6 +2,7 @@ from typing import Any, List, Optional
 
 import torch
 from diffusers import DiffusionPipeline
+from huggingface_hub import login
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -38,6 +39,12 @@ class StableDiffusionSchema(BaseSchema):
         ),
         placeholder="stabilityai/stable-diffusion-3-medium-diffusers",
         description="The specific Stable Diffusion model version to use.",
+    )  # type: ignore
+
+    huggingface_key: schema_field(
+        string_field(),
+        placeholder="",
+        description="Hugging Face API key for private models.",
     )  # type: ignore
 
     negative_prompt: Optional[
@@ -111,6 +118,22 @@ class StableDiffusionV3Model(TextToImageGenerationTaskModel):
         self.model_name = kwargs.get(
             "model_name", "stabilityai/stable-diffusion-3-medium-diffusers"
         )
+        self.huggingface_key = kwargs.get("huggingface_key")
+
+        if self.huggingface_key:
+            try:
+                login(token=self.huggingface_key)
+            except Exception as e:
+                raise ValueError(
+                    "Failed to login to Hugging Face. Please check your API key."
+                ) from e
+
+        try:
+            self.model = DiffusionPipeline.from_pretrained(
+                self.model_name,
+            ).to(self.device)
+        except Exception as e:
+            raise ValueError(f"Failed to load model {self.model_name}. {e}") from e
 
         self.model = DiffusionPipeline.from_pretrained(
             self.model_name,
