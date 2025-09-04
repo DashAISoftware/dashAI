@@ -12,6 +12,7 @@ export default function UploadNotebookSteps({
   backHome,
   datasets,
   handleNotebookCreated,
+  existingNotebooks = [], // Add this prop to get existing notebooks
 }) {
   const [selectedDataset, setSelectedDataset] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
@@ -25,8 +26,25 @@ export default function UploadNotebookSteps({
     enableReinitialize: true,
     onSubmit: async (values) => {
       try {
+        // Generate automatic name similar to ConfigureModelsStep
+        let notebookName;
+        if (values.name.trim() === "") {
+          const baseName = selectedDataset?.name
+            ? `Notebook_${selectedDataset.name}`
+            : "Notebook";
+
+          // Count existing notebooks with similar names
+          const existingNotebooksOfType = existingNotebooks.filter((notebook) =>
+            notebook.name.startsWith(baseName),
+          ).length;
+
+          notebookName = `${baseName}_${existingNotebooksOfType + 1}`;
+        } else {
+          notebookName = values.name;
+        }
+
         const notebookData = {
-          name: values.name,
+          name: notebookName,
           description: values.description,
           dataset_id: selectedDataset.id,
         };
@@ -43,6 +61,19 @@ export default function UploadNotebookSteps({
       }
     },
   });
+
+  // Generate placeholder text based on selected dataset and existing notebooks
+  const getPlaceholder = () => {
+    if (selectedDataset) {
+      const baseName = `Notebook_${selectedDataset.name}`;
+      const existingNotebooksOfType = existingNotebooks.filter((notebook) =>
+        notebook.name.startsWith(baseName),
+      ).length;
+      return `${baseName}_${existingNotebooksOfType + 1}`;
+    }
+    return "Notebook_1";
+  };
+
   return (
     <CustomLayout title={"Create a New Notebook"} subtitle={""} padding={0}>
       <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
@@ -74,13 +105,16 @@ export default function UploadNotebookSteps({
       {/* Notebook name */}
       <TextField
         fullWidth
-        label="Notebook Name"
+        label="Notebook Name (optional)"
         name="name"
         value={formik.values.name}
         onChange={formik.handleChange}
+        placeholder={getPlaceholder()}
+        InputLabelProps={{ shrink: true }}
         error={Boolean(formik.errors.name)}
         helperText={formik.errors.name}
         sx={{ mb: 2 }}
+        key={selectedDataset?.id} // Re-render when dataset changes
       />
       {/* Notebook description */}
       <TextField

@@ -375,6 +375,7 @@ export default function DatasetsPage() {
                 }}
                 datasets={datasets}
                 handleNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : null}
           </CenterBox>
