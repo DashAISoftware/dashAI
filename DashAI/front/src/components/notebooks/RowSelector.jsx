@@ -185,8 +185,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           {selectedRows.length === 0
             ? "all"
             : selectedRows.length > 0
-            ? selectedRows.join(", ")
-            : "None"}{" "}
+              ? selectedRows.join(", ")
+              : "None"}{" "}
           | Total rows: {totalRows}
         </Typography>
       </Box>
