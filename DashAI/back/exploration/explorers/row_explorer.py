@@ -9,7 +9,7 @@ from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
 
@@ -47,6 +47,8 @@ class RowExplorer(BaseExplorer):
         "bottom of the dataset and shuffle them if needed."
     )
 
+    SHORT_DESCRIPTION = "Display a sample of rows from the dataset."
+
     SCHEMA = RowExplorerSchema
     metadata: Dict[str, Any] = {
         "allowed_dtypes": ["*"],
@@ -75,9 +77,9 @@ class RowExplorer(BaseExplorer):
 
         return _df
 
-    def save_exploration(
+    def save_notebook(
         self,
-        __exploration_info__: Exploration,
+        __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
         result: pd.DataFrame,

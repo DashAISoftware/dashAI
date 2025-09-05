@@ -27,6 +27,7 @@ function FormSchema({
   error,
   setError,
   errorsMessage,
+  saveButtonText, // New prop
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,
@@ -55,6 +56,7 @@ function FormSchema({
         autoSave={autoSave}
         formik={formik}
         error={error}
+        saveButtonText={saveButtonText}
       />
     </>
   );
@@ -70,6 +72,7 @@ FormSchema.propTypes = {
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
+  saveButtonText: PropTypes.string,
 };
 
 export default FormSchema;

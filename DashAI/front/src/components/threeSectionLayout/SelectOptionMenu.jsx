@@ -1,0 +1,76 @@
+import { useState } from "react";
+import { Box, Grid, Button } from "@mui/material";
+import SearchBar from "./SearchBar";
+import CustomLayout from "../custom/CustomLayout";
+import OptionBox from "./OptionBox";
+
+export default function SelectOptionMenu({
+  goToNextStep,
+  goToPrevStep = null,
+  title,
+  subtitle,
+  options,
+  searchBar = false,
+}) {
+  const [search, setSearch] = useState("");
+
+  const filteredOptions = options.filter((option) =>
+    option.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <CustomLayout title={title} subtitle={subtitle} padding={0}>
+      <Box
+        display={"flex"}
+        height={"100%"}
+        width={"100%"}
+        flexDirection={"column"}
+        justifyContent={"flex-start"}
+      >
+        {searchBar && (
+          <Box width={"450px"}>
+            <SearchBar
+              placeholder="Search ..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </Box>
+        )}
+
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="stretch"
+          spacing={1}
+          sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
+        >
+          {filteredOptions.map((option, index) => (
+            <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+              <OptionBox
+                optionName={option.display_name}
+                description={option.description}
+                onClick={() => goToNextStep(option.name)}
+                Icon={option.Icon}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          mt: 2,
+        }}
+      >
+        {goToPrevStep && (
+          <Button variant="outlined" onClick={goToPrevStep} sx={{ mr: 1 }}>
+            Back
+          </Button>
+        )}
+      </Box>
+    </CustomLayout>
+  );
+}

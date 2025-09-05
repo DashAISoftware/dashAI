@@ -94,8 +94,8 @@ class DataExploration(BaseJob):
                         prepared_dataset, explorer_info
                     )
 
-                    save_path = explorer_instance.save_exploration(
-                        __exploration_info__=None,
+                    save_path = explorer_instance.save_notebook(
+                        __notebook_info__=None,
                         explorer_info=explorer_info,
                         save_path=base_path,
                         result=result,
