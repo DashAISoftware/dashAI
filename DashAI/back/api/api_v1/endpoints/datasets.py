@@ -607,7 +607,6 @@ async def get_dataset_file(
 
     start = page * page_size
     end = start + page_size
-    total_rows = 0
     rows_collected = 0
 
     with pa.memory_map(arrow_file_path, "r") as source:
@@ -619,9 +618,6 @@ async def get_dataset_file(
             batch_start = current_index
             batch_end = current_index + batch.num_rows
             current_index = batch_end
-
-            # Count total rows on the fly
-            total_rows += batch.num_rows
 
             # Skip batches before the page start
             if batch_end <= start:
@@ -645,6 +641,8 @@ async def get_dataset_file(
 
             if rows_collected >= page_size:
                 break
+
+    total_rows = get_dataset_info(f"{path}/dataset")["total_rows"]
 
     return JSONResponse(content={"rows": rows, "total": total_rows})
 
