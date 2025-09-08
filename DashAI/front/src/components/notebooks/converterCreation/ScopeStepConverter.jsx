@@ -91,8 +91,13 @@ export default function ScopeStepConverter({
         <ColumnSelector
           file_path={notebook.file_path}
           onSelectionChange={(columnsInfo) => {
-            const selectedOrders = columnsInfo.map((col) => col.id + 1);
-            setColumns(selectedOrders);
+            const processedColumns = columnsInfo.map((col) => ({
+              idx: col.id + 1,
+              columnName: col.columnName,
+              valueType: col.valueType,
+              dataType: col.dataType,
+            }));
+            setColumns(processedColumns);
           }}
           onValidationChange={() => {}}
         />
@@ -131,8 +136,16 @@ export default function ScopeStepConverter({
 
         {supervised && (
           <ConverterClassColumnModal
-            updateClassColumn={setTargetColumn}
-            classColumnInitialValue={targetColumn}
+            updateClassColumn={(column) => {
+              const processedColumn = {
+                idx: column.id + 1,
+                columnName: column.columnName,
+                valueType: column.valueType,
+                dataType: column.dataType,
+              };
+              setTargetColumn(processedColumn);
+            }}
+            classColumnInitialValue={targetColumn?.idx}
             notebook={notebook}
           />
         )}

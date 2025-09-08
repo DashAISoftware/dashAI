@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import shutil
+import uuid
 from typing import Any, Dict
 
 from kink import inject
@@ -57,7 +58,8 @@ class DatasetJob(BaseJob):
 
             parsed_params = parse_params(DatasetParams, json.dumps(params))
             dataloader = component_registry[parsed_params.dataloader]["class"]()
-            folder_path = config["DATASETS_PATH"] / parsed_params.name
+            random_name = str(uuid.uuid4())
+            folder_path = config["DATASETS_PATH"] / random_name
 
             try:
                 log.debug("Trying to create a new dataset path: %s", folder_path)
@@ -65,7 +67,7 @@ class DatasetJob(BaseJob):
             except FileExistsError as e:
                 log.exception(e)
                 raise JobError(
-                    f"A dataset with the name {parsed_params.name} already exists."
+                    f"A dataset with the name {random_name} already exists."
                 ) from e
 
             try:
@@ -90,7 +92,11 @@ class DatasetJob(BaseJob):
                 try:
                     folder_path = os.path.realpath(folder_path)
                     new_dataset = Dataset(
-                        name=parsed_params.name,
+                        name=(
+                            parsed_params.name
+                            if parsed_params.name
+                            else "Untitled Dataset"
+                        ),
                         file_path=folder_path,
                     )
                     db.add(new_dataset)

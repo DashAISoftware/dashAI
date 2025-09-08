@@ -6,15 +6,15 @@ from pydantic import BaseModel
 class ConverterParams(BaseModel):
     order: int = 0
     params: Dict[str, Union[str, int, float, bool, None]] = None
-    scope: Dict[str, List[int]] = None
-    target_index: int = None
+    scope: Dict[str, Union[List[int], List[Dict[str, Any]]]] = None
+    target: Union[Dict[str, Any], None] = None
 
     def serialize(self) -> Dict[str, Any]:
         return {
             "order": self.order,
             "params": self.params,
             "scope": self.scope,
-            "target_index": self.target_index,
+            "target": self.target,
         }
 
 

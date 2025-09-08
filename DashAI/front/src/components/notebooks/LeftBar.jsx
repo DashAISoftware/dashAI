@@ -17,8 +17,10 @@ export default function DatasetsNotebooksBar({
   selectedNotebookId,
   onDatasetClick,
   onDatasetDelete,
+  onDatasetEdit,
   onNotebookClick,
   onNotebookDelete,
+  onNotebookEdit,
   handleNewSessionButton,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +50,25 @@ export default function DatasetsNotebooksBar({
     if (notebook) {
       setSelectedInfoNotebook(notebook);
     }
+  };
+
+  const getDatasetDescription = (dataset) => {
+    return (
+      dataset.description ||
+      `${dataset.total_rows || 0} rows, ${dataset.total_columns || 0} cols`
+    );
+  };
+
+  const getNotebookDescription = (notebook) => {
+    if (notebook.dataset_id && datasets.length > 0) {
+      const associatedDataset = datasets.find(
+        (dataset) => dataset.id === notebook.dataset_id,
+      );
+      return associatedDataset?.name
+        ? `from ${associatedDataset.name} dataset`
+        : "No dataset";
+    }
+    return notebook.description || "";
   };
 
   return (
@@ -88,9 +109,11 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
+          onItemEdit={onDatasetEdit}
           defaultOpen={true}
           title="Available Datasets"
           Icon={StorageIcon}
+          getItemDescription={getDatasetDescription}
         />
 
         <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
@@ -100,10 +123,13 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedNotebookId}
           onItemClick={onNotebookClick}
           onItemDelete={onNotebookDelete}
+          onItemEdit={onNotebookEdit}
           onItemInfo={handleNotebookInfo}
           defaultOpen={true}
           title="Notebooks"
           Icon={DescriptionIcon}
+          datasets={datasets}
+          getItemDescription={getNotebookDescription}
         />
       </Box>
 

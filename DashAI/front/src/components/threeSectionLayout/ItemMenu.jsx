@@ -7,10 +7,12 @@ import {
   ListItemText,
   Divider,
   styled,
+  Box,
 } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -20,7 +22,7 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   },
 }));
 
-export default function ItemMenu({ itemId, onInfo, onDelete }) {
+export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const open = Boolean(anchorEl);
@@ -82,9 +84,15 @@ export default function ItemMenu({ itemId, onInfo, onDelete }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Only show Info button if onInfo is provided */}
-        {onInfo && (
-          <>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+          }}
+        >
+          {/* Only show Info button if onInfo is provided */}
+          {onInfo && (
             <MenuItem
               onClick={(e) => {
                 e.stopPropagation();
@@ -96,9 +104,20 @@ export default function ItemMenu({ itemId, onInfo, onDelete }) {
               </ListItemIcon>
               <ListItemText>Info</ListItemText>
             </MenuItem>
-            <Divider />
-          </>
-        )}
+          )}
+          <MenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAction(onEdit, itemId);
+            }}
+          >
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Edit</ListItemText>
+          </MenuItem>
+          <Divider />
+        </Box>
         <DeleteMenuItem
           onClick={(e) => {
             e.stopPropagation();

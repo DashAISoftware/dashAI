@@ -10,13 +10,17 @@ export default function CollapsibleList({
   selectedItemId,
   onItemClick,
   onItemDelete,
+  onItemEdit,
   onItemInfo,
   defaultOpen = true,
   title = "Available Items",
   Icon = FolderIcon,
+  getItemDescription,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const count = items?.length ?? 0;
+
+  const defaultGetDescription = (item) => item.description || "";
 
   return (
     <Box
@@ -46,7 +50,7 @@ export default function CollapsibleList({
         }}
         onClick={() => setOpen((v) => !v)}
       >
-        <Icon sx={{ fontSize: 20, color: "#16FFFF", mr: 1 }} />
+        <Icon sx={{ fontSize: 20, color: "#00BEBB", mr: 1 }} />
 
         <Typography
           sx={{
@@ -80,13 +84,13 @@ export default function CollapsibleList({
         </Box>
 
         {open ? (
-          <KeyboardArrowDownIcon sx={{ fontSize: 20, color: "#16FFFF" }} />
+          <KeyboardArrowDownIcon sx={{ fontSize: 20, color: "#00BEBB" }} />
         ) : (
-          <KeyboardArrowRightIcon sx={{ fontSize: 20, color: "#16FFFF" }} />
+          <KeyboardArrowRightIcon sx={{ fontSize: 20, color: "#00BEBB" }} />
         )}
       </Box>
 
-      {/* Lista colapsable de datasets */}
+      {/* Lista colapsable */}
       <Collapse
         in={open}
         timeout="auto"
@@ -107,10 +111,15 @@ export default function CollapsibleList({
                 key={ds.id ?? ds.name}
                 isSelected={ds.id === selectedItemId}
                 name={ds.name}
-                description={ds.description}
+                description={
+                  getItemDescription
+                    ? getItemDescription(ds)
+                    : defaultGetDescription(ds)
+                }
                 id={ds.id}
                 onClick={() => onItemClick(ds.id)}
                 onDelete={() => onItemDelete(ds.id)}
+                onEdit={(name) => onItemEdit(ds.id, name)}
                 onInfo={onItemInfo ? () => onItemInfo(ds.id) : undefined}
               />
             ))
