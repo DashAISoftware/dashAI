@@ -10,7 +10,7 @@ from datasets.features import Features
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
+from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
