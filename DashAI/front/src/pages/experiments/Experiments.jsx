@@ -1,14 +1,42 @@
-import React from "react";
+import { useState, useEffect } from "react";
+import { useSnackbar } from "notistack";
 
 import NewExperimentModal from "../../components/experiments/NewExperimentModal";
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
-import { rows } from "../../example_data/experiments";
 import CustomLayout from "../../components/custom/CustomLayout";
+import { getExperiments as getExperimentsRequest } from "../../api/experiment";
 
 function ExperimentsPage() {
-  const [showNewExperimentModal, setShowNewExperimentModal] =
-    React.useState(false);
-  const [updateTableFlag, setUpdateTableFlag] = React.useState(false);
+  const [showNewExperimentModal, setShowNewExperimentModal] = useState(false);
+  const [updateTableFlag, setUpdateTableFlag] = useState(false);
+  const [experiments, setExperiments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const getExperiments = async () => {
+    setLoading(true);
+    try {
+      const experimentsData = await getExperimentsRequest();
+      setExperiments(experimentsData);
+    } catch (error) {
+      enqueueSnackbar("Error while trying to obtain experiments.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getExperiments();
+  }, []);
+
+  // Update experiments when table is updated
+  useEffect(() => {
+    if (updateTableFlag) {
+      setUpdateTableFlag(false);
+      getExperiments();
+    }
+  }, [updateTableFlag]);
 
   return (
     <CustomLayout
@@ -20,19 +48,20 @@ function ExperimentsPage() {
         open={showNewExperimentModal}
         setOpen={setShowNewExperimentModal}
         updateExperiments={() => setUpdateTableFlag(true)}
+        existingExperiments={experiments}
       />
 
       {/* Experiment table */}
       <ExperimentsTable
-        initialRows={rows}
         handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
         updateTableFlag={updateTableFlag}
         setUpdateTableFlag={setUpdateTableFlag}
+        experiments={experiments}
+        loading={loading}
+        onUpdateExperiments={getExperiments}
       />
     </CustomLayout>
   );
 }
-
-ExperimentsPage.propTypes = {};
 
 export default ExperimentsPage;

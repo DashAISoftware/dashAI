@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
@@ -8,17 +8,19 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 
-function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
+function SetNameAndTaskStep({
+  newExp,
+  setNewExp,
+  setNextEnabled,
+  defaultExperimentName,
+}) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [loading, setLoading] = useState(false);
-
-  // experiment name state
   const [nModifications, setNModifications] = useState(0);
-  const [expNameOk, setExpNameOk] = useState(false);
+  const [expNameOk, setExpNameOk] = useState(true);
   const [expNameError, setExpNameError] = useState(false);
 
-  // tasks state
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
   const [taskNameOk, setTaskNameOk] = useState(false);
@@ -31,7 +33,6 @@ function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
         hasRelatedOfType: "Model",
       });
       setTasks(tasks);
-      // autoselect task and if some task was selected previously.
       if (typeof newExp.task_name === "string" && newExp.task_name !== "") {
         const previouslySelectedTask =
           tasks.find((task) => task.name === newExp.task_name) || {};
@@ -52,11 +53,12 @@ function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
   };
 
   const handleNameInputChange = (event) => {
-    setNewExp({ ...newExp, name: event.target.value });
+    const inputValue = event.target.value;
+    setNewExp({ ...newExp, name: inputValue });
     setNModifications(nModifications + 1);
 
     if (nModifications + 1 >= 4) {
-      if (event.target.value.length < 4) {
+      if (inputValue.trim().length > 0 && inputValue.trim().length < 4) {
         setExpNameError(true);
         setExpNameOk(false);
       } else {
@@ -84,14 +86,6 @@ function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
     getTasks();
   }, []);
 
-  // in mount, set name ok if the experiment has already a valid name.
-  useEffect(() => {
-    if (typeof newExp.name === "string" && newExp.name.length >= 4) {
-      setExpNameOk(true);
-      setNModifications(4);
-    }
-  }, []);
-
   // enable next button y nameOk and taskOk are true.
   useEffect(() => {
     if (expNameOk && taskNameOk) {
@@ -117,11 +111,12 @@ function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
 
         <TextField
           id="experiment-name-input"
-          label="Experiment name"
+          label="Experiment name (optional)"
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}
-          autoComplete="off"
+          placeholder={defaultExperimentName}
+          InputLabelProps={{ shrink: true }}
           sx={{ mb: 2 }}
           error={expNameError}
           helperText="The experiment name must have at least 4 alphanumeric characters."
@@ -167,6 +162,7 @@ SetNameAndTaskStep.propTypes = {
   }),
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
+  defaultExperimentName: PropTypes.string,
 };
 
 export default SetNameAndTaskStep;

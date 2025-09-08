@@ -2,11 +2,12 @@ import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import uuid from "react-uuid";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
+import { generateModelName } from "../../utils/modelNameGeneratior";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -21,6 +22,12 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const [compatibleModels, setCompatibleModels] = useState([]);
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
+
+  const { defaultName, placeholderName } = useMemo(
+    () => generateModelName(selectedModel, newExp.runs),
+    [selectedModel, newExp.runs],
+  );
+
   const getCompatibleModels = async () => {
     try {
       const models = await getComponentsRequest({
@@ -41,14 +48,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   };
 
   const handleAddButton = () => {
-    const existingModelsOfType = newExp.runs.filter(
-      (run) => run.model === selectedModel,
-    ).length;
-
-    const modelName =
-      name.trim() === ""
-        ? `${selectedModel}_${existingModelsOfType + 1}`
-        : name;
+    const modelName = name.trim() === "" ? defaultName : name.trim();
 
     const newModel = {
       id: uuid(),
@@ -68,7 +68,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     setSelectedModel("");
   };
 
-  // checks if there is at least 1 model added to enable the "Next" button
   useEffect(() => {
     // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
     if (newExp.runs.length) {
@@ -104,7 +103,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               label="Name (optional)"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={selectedModel ? `${selectedModel}_1` : "Model_1"}
+              placeholder={placeholderName}
               InputLabelProps={{ shrink: true }}
               fullWidth
               key={selectedModel}
