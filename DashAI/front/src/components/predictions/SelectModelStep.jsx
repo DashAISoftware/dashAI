@@ -11,6 +11,7 @@ function SelectModelStep({
   setNextEnabled,
   onPredictNameInput,
   setTrainDataset,
+  defaultPredictionName,
 }) {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,12 +96,14 @@ function SelectModelStep({
 
   const validateAndUpdateNextButton = useCallback(
     (name, rowIsClicked) => {
-      const isValid = isValidPredictName(name);
+      // If name is empty, use defaultPredictionName for validation
+      const nameToValidate = name.trim() === "" ? defaultPredictionName : name;
+      const isValid = isValidPredictName(nameToValidate);
       setPredictNameError(!isValid && name.length > 0);
       setNextEnabled(isValid && (rowIsClicked || rowClicked));
       return isValid;
     },
-    [rowClicked, setNextEnabled],
+    [rowClicked, setNextEnabled, defaultPredictionName],
   );
 
   const handlePredictNameInput = useCallback(
@@ -113,9 +116,22 @@ function SelectModelStep({
     [rowClicked, onPredictNameInput],
   );
 
+  // Initialize as valid since we always have a default name
   useEffect(() => {
     setNextEnabled(false);
   }, []);
+
+  // Validate with default name when it becomes available
+  useEffect(() => {
+    if (defaultPredictionName) {
+      validateAndUpdateNextButton(predictName, rowClicked);
+    }
+  }, [
+    defaultPredictionName,
+    predictName,
+    rowClicked,
+    validateAndUpdateNextButton,
+  ]);
 
   useEffect(() => {
     get_Models();
@@ -136,7 +152,7 @@ function SelectModelStep({
 
         <TextField
           id="predict-name-input"
-          label="Enter a unique name"
+          label="Prediction name (optional)"
           value={predictName}
           fullWidth
           onChange={handlePredictNameInput}
@@ -144,6 +160,8 @@ function SelectModelStep({
           sx={{ mb: 4 }}
           error={predictNameError}
           helperText="The prediction name must have at least 4 alphanumeric characters."
+          placeholder={defaultPredictionName}
+          InputLabelProps={{ shrink: true }}
         />
       </Grid>
 
@@ -178,6 +196,7 @@ SelectModelStep.propTypes = {
   setNextEnabled: PropTypes.func.isRequired,
   onPredictNameInput: PropTypes.func.isRequired,
   setTrainDataset: PropTypes.func.isRequired,
+  defaultPredictionName: PropTypes.string,
 };
 
 export default SelectModelStep;
