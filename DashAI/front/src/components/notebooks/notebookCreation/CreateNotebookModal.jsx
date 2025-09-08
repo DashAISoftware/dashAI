@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,18 +14,25 @@ import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
+import { generateNotebookName } from "../../../utils/notebookNameGenerator";
 
 export function CreateNotebookModal({
   open,
   onClose,
   onCreateNotebook,
   dataset,
+  existingNotebooks = [],
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [infoError, setInfoError] = useState(null);
+
+  const { defaultName, placeholderName } = useMemo(
+    () => generateNotebookName(dataset, existingNotebooks),
+    [dataset, existingNotebooks],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -53,8 +60,14 @@ export function CreateNotebookModal({
   }, [dataset?.id]);
 
   const handleSubmit = () => {
+    const notebookName = name.trim() || defaultName;
+
+    if (existingNotebooks.some((nb) => nb.name === notebookName)) {
+      console.warn("Notebook name already exists:", notebookName);
+    }
+
     onCreateNotebook({
-      name: name.trim() || "Untitled Notebook",
+      name: notebookName,
       description: description.trim() || "",
     });
     handleClose();
@@ -137,15 +150,15 @@ export function CreateNotebookModal({
           >
             Name your Notebook
           </Typography>
-          {/* Notebook name */}
           <TextField
             fullWidth
-            label="Notebook Name"
+            label="Notebook Name (optional)"
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
-            placeholder="Enter a name for your notebook (optional)"
+            InputLabelProps={{ shrink: true }}
+            placeholder={placeholderName}
             sx={{ mb: 2 }}
           />
           {/* Notebook description */}
@@ -163,7 +176,7 @@ export function CreateNotebookModal({
             <FormSchemaButtonGroup
               onCancel={handleClose}
               onFormSubmit={handleSubmit}
-              formik={{ errors: {} }} // No validation errors for this modal
+              formik={{ errors: {} }}
               saveButtonText="Create Notebook"
               backButtonText="Cancel"
             />

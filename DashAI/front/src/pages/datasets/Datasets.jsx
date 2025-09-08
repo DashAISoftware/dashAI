@@ -326,6 +326,7 @@ export default function DatasetsPage() {
               <DatasetVisualization
                 dataset={selectedDataset}
                 onNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : selectedNotebookId ? (
               <NotebookVisualization
@@ -365,6 +366,7 @@ export default function DatasetsPage() {
                   fetchDatasets();
                 }}
                 handleDatasetCreated={handleDatasetCreated}
+                existingDatasets={datasets}
               />
             ) : step === 1 && selectedOption === "notebook" ? (
               <UploadNotebookSteps
