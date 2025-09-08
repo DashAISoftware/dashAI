@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -101,11 +101,13 @@ class JSONDataLoader(BaseDataLoader):
 
         if prepared_path[1] == "file":
             dataset = load_dataset(
-                "json",
-                data_files=prepared_path[0],
-                field=field,
+                "json", data_files=prepared_path[0], field=field, streaming=sample
             )
         else:
-            dataset = load_dataset("json", data_dir=prepared_path[0], field=field)
+            dataset = load_dataset(
+                "json", data_dir=prepared_path[0], field=field, streaming=sample
+            )
             shutil.rmtree(prepared_path[0])
+        if sample:
+            dataset = Dataset.from_list(list(dataset.take(10)))
         return to_dashai_dataset(dataset)

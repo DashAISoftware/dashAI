@@ -205,8 +205,7 @@ class ExcelDataLoader(BaseDataLoader):
         if prepared_path[1] == "file":
             try:
                 dataset = pd.read_excel(
-                    io=prepared_path[0],
-                    **pandas_params,
+                    io=prepared_path[0], **pandas_params, nrows=10 if sample else None
                 )
             except ValueError as e:
                 raise DatasetGenerationError from e
@@ -220,8 +219,7 @@ class ExcelDataLoader(BaseDataLoader):
             try:
                 train_df_list = [
                     pd.read_excel(
-                        io=file_path,
-                        **pandas_params,
+                        io=file_path, **pandas_params, nrows=10 if sample else None
                     )
                     for file_path in sorted(train_files)
                 ]
@@ -229,8 +227,7 @@ class ExcelDataLoader(BaseDataLoader):
                 train_df = pd.concat(train_df_list)
                 test_df_list = [
                     pd.read_excel(
-                        io=file_path,
-                        **pandas_params,
+                        io=file_path, **pandas_params, nrows=10 if sample else None
                     )
                     for file_path in sorted(test_files)
                 ]
@@ -238,8 +235,7 @@ class ExcelDataLoader(BaseDataLoader):
 
                 val_df_list = [
                     pd.read_excel(
-                        io=file_path,
-                        **pandas_params,
+                        io=file_path, **pandas_params, nrows=10 if sample else None
                     )
                     for file_path in sorted(val_files)
                 ]

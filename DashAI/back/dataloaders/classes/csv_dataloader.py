@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -215,16 +215,13 @@ class CSVDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
             dataset = load_dataset(
-                "csv",
-                data_files=prepared_path[0],
-                **clean_params,
+                "csv", data_files=prepared_path[0], **clean_params, streaming=sample
             )
         else:
             dataset = load_dataset(
-                "csv",
-                data_dir=prepared_path[0],
-                **clean_params,
+                "csv", data_dir=prepared_path[0], **clean_params, streaming=sample
             )
             shutil.rmtree(prepared_path[0])
-
+        if sample:
+            dataset = Dataset.from_list(list(dataset.take(10)))
         return to_dashai_dataset(dataset)

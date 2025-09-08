@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import Audio, load_dataset
+from datasets import Audio, Dataset, load_dataset
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -47,9 +47,12 @@ class AudioDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "dir":
             dataset = load_dataset(
-                "audiofolder",
-                data_dir=prepared_path[0],
-            ).cast_column(
+                "audiofolder", data_dir=prepared_path[0], streaming=sample
+            )
+            if sample:
+                dataset = Dataset.from_list(list(dataset.take(10)))
+
+            dataset.cast_column(
                 "audio",
                 Audio(decode=False),
             )
