@@ -105,12 +105,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             raise RuntimeError("Resampled PyArrow Table not available. Call fit first.")
 
         try:
-            resampled_features = Features.from_arrow_schema(
-                self._resampled_table.schema
-            )
-            return DashAIDataset(
-                table=self._resampled_table, features=resampled_features, splits={}
-            )
+            return DashAIDataset(table=self._resampled_table, splits={})
         except Exception as e:
             raise JobError(
                 f"Failed to create DashAIDataset from resampled data: {e}"
