@@ -212,7 +212,12 @@ class ConverterListJob(BaseJob):
             dataset_path = f"{converter_list.notebook.file_path}/dataset"
             loaded_dataset = load_dataset(dataset_path)
             print("Pre target column")
-            target_column_index = converter_list.parameters.get("target", {}).get("idx")
+            params = converter_list.parameters or {}
+            target_column_index = (
+                params["target"].get("idx")
+                if params.get("target") is not None
+                else None
+            )
             print(target_column_index)
 
             if not loaded_dataset:
