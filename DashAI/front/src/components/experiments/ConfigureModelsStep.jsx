@@ -7,7 +7,7 @@ import uuid from "react-uuid";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
-import { generateModelName } from "../../utils/modelNameGeneratior";
+import { generateModelName } from "../../utils/modelNameGenerator";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
