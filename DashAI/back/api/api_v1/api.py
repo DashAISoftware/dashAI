@@ -6,11 +6,11 @@ from DashAI.back.api.api_v1.endpoints import (
     datasets,
     experiments,
     explainers,
-    explorations,
     explorers,
     generative_process,
     generative_session,
     jobs,
+    notebook,
     pipelines,
     plugins,
     predict,
@@ -23,7 +23,6 @@ api_router_v1.include_router(components.router, prefix="/component")
 api_router_v1.include_router(datasets.router, prefix="/dataset")
 api_router_v1.include_router(experiments.router, prefix="/experiment")
 api_router_v1.include_router(explainers.router, prefix="/explainer")
-api_router_v1.include_router(explorations.router, prefix="/exploration")
 api_router_v1.include_router(explorers.router, prefix="/explorer")
 api_router_v1.include_router(jobs.router, prefix="/job")
 api_router_v1.include_router(runs.router, prefix="/run")
@@ -32,3 +31,4 @@ api_router_v1.include_router(generative_session.router, prefix="/generative-sess
 api_router_v1.include_router(generative_process.router, prefix="/generative-process")
 api_router_v1.include_router(pipelines.router, prefix="/pipelines")
 api_router_v1.include_router(plugins.router, prefix="/plugin")
+api_router_v1.include_router(notebook.router, prefix="/notebook")

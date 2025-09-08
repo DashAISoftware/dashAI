@@ -67,6 +67,8 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
         "computing the singular value decomposition. "
         "This means it can work with sparse matrices efficiently."
     )
+    SHORT_DESCRIPTION = "Dimensionality reduction using truncated SVD."
+    metadata = {}
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

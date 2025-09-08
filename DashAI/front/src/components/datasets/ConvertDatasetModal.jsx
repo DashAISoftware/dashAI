@@ -23,7 +23,7 @@ import { useSnackbar } from "notistack";
 import { enqueueConverterJob as enqueueConverterJobRequest } from "../../api/job";
 import { startJobQueue as startJobQueueRequest } from "../../api/job";
 import {
-  saveDatasetConverterList,
+  saveConverterList,
   getDatasetConverterList,
 } from "../../api/converter";
 import { ConverterListStatus } from "../../types/converter";
@@ -101,7 +101,7 @@ function ConvertDatasetModal({ datasetId }) {
         {},
       );
 
-      const response = await saveDatasetConverterList(id, flattenConverterList);
+      const response = await saveConverterList(id, flattenConverterList);
 
       const converterListId = response.id;
       setConverterListId(converterListId);

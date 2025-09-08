@@ -3,14 +3,10 @@ import { IConverter } from "../types/converter";
 
 const converterEndpoint = "/v1/converter";
 
-export const saveDatasetConverterList = async (
-  datasetId: number,
+export const saveConverterList = async (
   converters: object,
 ): Promise<IConverter> => {
-  const data = {
-    dataset_id: datasetId,
-    converters: { ...converters },
-  };
+  const data = converters;
 
   const response = await api.post<IConverter>(`${converterEndpoint}`, data);
   return response.data;
@@ -23,4 +19,22 @@ export const getDatasetConverterList = async (
     `${converterEndpoint}/${datasetId}`,
   );
   return response.data;
+};
+
+export const getConvertersByNotebook = async (
+  notebookId: number,
+): Promise<IConverter[]> => {
+  const response = await api.get<IConverter[]>(
+    `${converterEndpoint}/notebook/${notebookId}`,
+  );
+  return response.data;
+};
+
+export const getConverterById = async (id: number): Promise<IConverter> => {
+  const response = await api.get<IConverter>(`${converterEndpoint}/${id}`);
+  return response.data;
+};
+
+export const deleteConverterById = async (id: number): Promise<void> => {
+  await api.delete(`${converterEndpoint}/${id}`);
 };

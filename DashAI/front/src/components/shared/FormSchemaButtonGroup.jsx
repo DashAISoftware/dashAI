@@ -7,21 +7,23 @@ function FormSchemaButtonGroup({
   autoSave,
   formik,
   error,
+  saveButtonText = "Save",
+  backButtonText = "Back",
 }) {
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
       {onCancel && (
         <Button variant="outlined" onClick={onCancel}>
-          Back
+          {backButtonText}
         </Button>
       )}
       {!autoSave && (
         <Button
           variant="contained"
           onClick={onFormSubmit}
-          disabled={Object.keys(formik?.errors).length > 0 || error}
+          disabled={Object.keys(formik?.errors ?? {}).length > 0 || error}
         >
-          Save
+          {saveButtonText}
         </Button>
       )}
     </ButtonGroup>

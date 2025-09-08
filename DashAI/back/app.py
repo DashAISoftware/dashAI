@@ -99,7 +99,7 @@ def create_app(
     _create_path_if_not_exists(config["DATASETS_PATH"])
     _create_path_if_not_exists(config["IMAGES_PATH"])
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
-    _create_path_if_not_exists(config["EXPLORATIONS_PATH"])
+    _create_path_if_not_exists(config["NOTEBOOK_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
 
     logger.debug("5. Creating database.")
