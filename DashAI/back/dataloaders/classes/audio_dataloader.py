@@ -22,6 +22,7 @@ class AudioDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        sample: bool = False,
     ) -> DashAIDataset:
         """Load and audio dataset into a DatasetDict.
 
@@ -35,6 +36,8 @@ class AudioDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - `separator` (str): The character that delimits the CSV data.
+        sample : bool
+            Flag to just load first 10 rows of the dataset.
 
         Returns
         -------

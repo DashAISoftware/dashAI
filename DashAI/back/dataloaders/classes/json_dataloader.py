@@ -73,6 +73,7 @@ class JSONDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        sample: bool = False,
     ) -> DashAIDataset:
         """Load the uploaded JSON dataset into a DatasetDict.
 
@@ -86,6 +87,8 @@ class JSONDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - data_key (str): The key of the json where the data is contained.
+        sample : bool
+            Flag to just load first 10 rows of the dataset.
 
         Returns
         -------
