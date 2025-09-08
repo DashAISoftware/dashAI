@@ -128,7 +128,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         input_columns = list(x_test.features)
         output_columns = list(y_test.features)
 
-        types = {column: "Categorical" for column in output_columns}
+        types = dict.fromkeys(output_columns, "Categorical")
         y_test = y_test.change_columns_type(types)
 
         def patched_metric(y_true, y_pred_probas):

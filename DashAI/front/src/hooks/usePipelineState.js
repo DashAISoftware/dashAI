@@ -151,6 +151,8 @@ export function usePipelineState(pipelineId, location, navigate) {
             source: nodeInfo?.source || false,
             target: nodeInfo?.target || false,
             type: nodeInfo?.type || node.type,
+            configType: nodeInfo?.configType,
+            configSchema: nodeInfo?.configSchema || null,
           },
         };
       }),

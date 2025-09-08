@@ -20,6 +20,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+class ConverterParams(PydanticBaseModel):
+    order: int = 0
+    params: Dict[str, Union[str, int, float, bool, None]] = None
+    scope: Dict[str, List[int]] = None
+    target_index: Union[int, None] = None
+
+    def serialize(self) -> Dict[str, Any]:
+        return {
+            "order": self.order,
+            "params": self.params,
+            "scope": self.scope,
+            "target_index": self.target_index,
+        }
+
+
+class ConverterListParams(PydanticBaseModel):
+    notebook_id: int
+    converter: str
+    parameters: ConverterParams
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def post_notebook_converter_list(

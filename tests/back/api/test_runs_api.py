@@ -35,9 +35,9 @@ def create_dataset(client):
             headers=headers,
         )
 
-        assert (
-            response.status_code == 201
-        ), f"Failed to create dataset job: {response.text}"
+        assert response.status_code == 201, (
+            f"Failed to create dataset job: {response.text}"
+        )
 
         client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
 

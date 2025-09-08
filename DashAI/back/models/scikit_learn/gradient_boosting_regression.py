@@ -71,8 +71,7 @@ class GradientBoostingRSchema(BaseSchema):
             "lower_bound": 2,
             "upper_bound": 20,
         },
-        description="The minimum number of samples required to split "
-        "an internal node.",
+        description="The minimum number of samples required to split an internal node.",
     )  # type: ignore
 
     min_samples_leaf: schema_field(

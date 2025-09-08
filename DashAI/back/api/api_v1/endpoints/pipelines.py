@@ -22,6 +22,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Pipeline
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
+from DashAI.back.pipeline.validator.nodes_definitions import NODES
 from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
 from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
 
@@ -61,36 +62,21 @@ async def get_pipelines(
 
 @router.get("/nodes")
 async def get_nodes() -> List[Dict[str, Any]]:
-    """Retrieve pipeline node definitions.
-
-    Returns
-    -------
-    List[Dict[str, Any]]
-        A list of node definitions from the nodes.json file.
-
-    Raises
-    ------
-    HTTPException
-        500: Failed to load node definitions.
-    """
+    """Retrieve pipeline node definitions."""
     try:
-        json_path = Path(__file__).resolve().parents[3] / "pipeline" / "nodes.json"
-        with open(json_path, "r") as f:
-            nodes = json.load(f)
-
-        type_to_name = {node["type"]: node["name"] for node in nodes}
-        for node in nodes:
-            successors = node.get("successors", [])
-            node["next"] = [type_to_name.get(s, s) for s in successors]
+        type_to_name = {node.type: node.name for node in NODES}
+        nodes_with_next = []
+        for node in NODES:
+            node_dict = node.model_dump()
+            node_dict["next"] = [type_to_name.get(s, s) for s in node.successors]
+            nodes_with_next.append(node_dict)
+        return nodes_with_next
 
     except Exception as e:
-        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to load node definitions",
         ) from e
-
-    return nodes
 
 
 @router.get("/predict_summary")

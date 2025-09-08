@@ -14,6 +14,9 @@ from DashAI.back.job.base_job import JobError
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     """Generic wrapper for imbalanced-learn samplers (e.g., SMOTE, ADASYN)."""
 
+    SUPERVISED = True
+    metadata = {}
+
     def __init__(self, **kwargs):
         super(ImbalancedLearnWrapper, self).__init__(**kwargs)
         self.fitted = False

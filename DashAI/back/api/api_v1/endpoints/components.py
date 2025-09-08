@@ -116,8 +116,7 @@ async def get_components(
         raise HTTPException(
             status_code=422,
             detail=(
-                f"Related component {related_component} does not exist in "
-                "the registry."
+                f"Related component {related_component} does not exist in the registry."
             ),
         )
 

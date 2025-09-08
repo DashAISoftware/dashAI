@@ -75,9 +75,9 @@ class PartialDependence(BaseGlobalExplainer):
             feature. Defaults to 100.
         """
 
-        assert (
-            upper_percentile > lower_percentile
-        ), "upper_percentile value must be greater than lower_percentile"
+        assert upper_percentile > lower_percentile, (
+            "upper_percentile value must be greater than lower_percentile"
+        )
 
         super().__init__(model)
 
@@ -126,7 +126,7 @@ class PartialDependence(BaseGlobalExplainer):
             )
 
             explanation[features_names[idx]] = {
-                "grid_values": np.round(pd["values"][0], 3).tolist(),
+                "grid_values": np.round(pd["grid_values"][0], 3).tolist(),
                 "average": np.round(pd["average"], 3).tolist(),
             }
 

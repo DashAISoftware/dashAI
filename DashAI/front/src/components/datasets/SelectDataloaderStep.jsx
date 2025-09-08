@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
-import { DialogContentText, Grid } from "@mui/material";
+import { DialogContentText, Grid, Typography } from "@mui/material";
 
 /**
  * This component renders a list of dataloaders and allows the user to select one.
@@ -71,9 +71,22 @@ function SelectDataloaderStep({ newDataset, setNewDataset, setNextEnabled }) {
     >
       {/* Title */}
       <Grid item>
-        <DialogContentText
+        <Typography
           sx={{ mb: 3 }}
-        >{`Select a way to upload your data`}</DialogContentText>
+        >{`Select a way to upload your data`}</Typography>
+        {/* General information about supported formats */}
+
+        <Typography variant="subtitle2" sx={{ mb: 2 }} color="text.secondary">
+          <strong>Supported formats:</strong>
+          <br />
+          • Single files: Upload individual data files
+          <br />
+          • ZIP files with splits: Organize files in folders (train/, test/,
+          validation/) or use naming conventions (filename_train.ext,
+          filename_test.ext, filename_validation.ext)
+          <br />• The system will automatically detect and load the appropriate
+          data structure
+        </Typography>
       </Grid>
       {/* List of dataloaders */}
       <Grid item>
