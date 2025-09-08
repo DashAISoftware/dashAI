@@ -29,6 +29,7 @@ class BaseConverter(ConfigObject, ABC):
     DISPLAY_NAME: Final[str] = ""
     DESCRIPTION: Final[str] = ""
     SHORT_DESCRIPTION: Final[str] = ""
+    SUPERVISED: bool = False
     SCHEMA: BaseConverterSchema
     metadata: Dict[str, Any] = {}
 
@@ -49,6 +50,8 @@ class BaseConverter(ConfigObject, ABC):
         metadata["short_description"] = (
             cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
+        metadata["supervised"] = cls.SUPERVISED
+
         return metadata
 
     def changes_row_count(self) -> bool:

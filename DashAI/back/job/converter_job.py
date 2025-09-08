@@ -327,6 +327,7 @@ class ConverterListJob(BaseJob):
                         camel_to_snake,
                         converter_submodule_inverse_index,
                     )
+                    print(converter_instance.metadata)
 
                     # Get scope or use default
                     scope = converter_params.get("scope", {"columns": [], "rows": []})
