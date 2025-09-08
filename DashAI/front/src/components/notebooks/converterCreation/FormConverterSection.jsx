@@ -73,6 +73,7 @@ export default function FormConverterSection({
       {/* Step content */}
       {step === 0 && (
         <ScopeStepConverter
+          supervised={tool.metadata.supervised}
           targetColumn={targetColumn}
           setTargetColumn={setTargetColumn}
           rows={rows}

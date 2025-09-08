@@ -1,12 +1,7 @@
-import json
 import re
-from pathlib import Path
 from typing import Dict, List
 
-try:
-    NODE_TYPES = json.loads((Path(__file__).parent.parent / "nodes.json").read_text())
-except (FileNotFoundError, json.JSONDecodeError) as e:
-    raise RuntimeError(f"Error loading node types: {e}") from e
+from DashAI.back.pipeline.validator.nodes_definitions import NODE_TYPES
 
 
 class PipelineValidator:

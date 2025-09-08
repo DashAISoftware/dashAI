@@ -1,0 +1,27 @@
+import api from "./api";
+import type { ISession } from "../types/session";
+
+export const getSessions = async (): Promise<ISession[]> => {
+  const response = await api.get<ISession[]>("/v1/generative-session");
+  return response.data;
+};
+
+export const removeSession = async (sessionId: string): Promise<void> => {
+  await api.delete(`/v1/generative-session/${sessionId}`);
+};
+
+export const getSessionById = async (sessionId: string): Promise<ISession> => {
+  const response = await api.get<ISession>(
+    `/v1/generative-session/${sessionId}`,
+  );
+  return response.data;
+};
+
+export const getHistoryBySessionId = async (
+  sessionId: string,
+): Promise<ISession[]> => {
+  const response = await api.get<ISession[]>(
+    `/v1/generative-session/parameters-history/${sessionId}`,
+  );
+  return response.data;
+};

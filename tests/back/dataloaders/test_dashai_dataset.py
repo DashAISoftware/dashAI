@@ -190,7 +190,7 @@ def test_sample_dashaidataset(dashai_datasetdict: list, method: str, n_samples: 
 
     elif method == "random":
         for index in list(range(len_sample)):
-            one_sample = {key: None for key in sample}
+            one_sample = dict.fromkeys(sample)
             for key in one_sample:
                 one_sample[key] = sample[key][index]
             assert any(one_sample == data for data in dataset)

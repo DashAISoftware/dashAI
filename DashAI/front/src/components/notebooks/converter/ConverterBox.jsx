@@ -6,14 +6,20 @@ import {
   Typography,
   Chip,
   CircularProgress,
+  IconButton,
 } from "@mui/material";
+import { Delete } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../../utils/converterStatus";
 import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
 
-export default function ConverterBox({ converter, onStatusChange }) {
+export default function ConverterBox({
+  converter,
+  onStatusChange,
+  handleConverterDeleteClick,
+}) {
   const [converterComponent, setConverterComponent] = useState({});
 
   useEffect(() => {
@@ -36,7 +42,6 @@ export default function ConverterBox({ converter, onStatusChange }) {
       try {
         const updatedConverter = await getConverterById(converter.id);
 
-        // 🔑 notificar al padre si cambia el estado
         if (updatedConverter.status !== converter.status) {
           onStatusChange(updatedConverter.id, updatedConverter.status);
         }
@@ -86,11 +91,25 @@ export default function ConverterBox({ converter, onStatusChange }) {
             <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
             <Typography variant="h6">{converter.converter}</Typography>
           </Box>
-          <Chip
-            label={statusLabel}
-            color={statusLabel === "Finished" ? "primary" : "default"}
-            size="small"
-          />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip
+              label={statusLabel}
+              color={statusLabel === "Finished" ? "primary" : "default"}
+              size="small"
+            />
+            <IconButton
+              size="small"
+              onClick={() => handleConverterDeleteClick(converter)}
+              sx={{
+                width: 24,
+                height: 24,
+                bgcolor: "error.main",
+                "&:hover": { bgcolor: "error.dark" },
+              }}
+            >
+              <Delete sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
         </Box>
 
         {statusLabel === "Finished" ? (

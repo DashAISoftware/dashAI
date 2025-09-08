@@ -78,8 +78,8 @@ const CustomNode = ({ data, isConnectable }) => {
             background: isDisabled
               ? "#ccc"
               : data.hasError
-              ? theme.palette.error.main
-              : "#555",
+                ? theme.palette.error.main
+                : "#555",
             width: 8,
             height: 8,
             borderRadius: "50%",

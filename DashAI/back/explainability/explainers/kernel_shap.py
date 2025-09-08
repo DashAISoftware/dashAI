@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -327,7 +327,7 @@ class KernelShap(BaseLocalExplainer):
 
         return plotly.io.to_json(fig)
 
-    def plot(self, explanation: List[dict]):
+    def plot(self, explanation: list[dict]):
         """Method to create the explanation plot using plotly.
 
         Parameters
@@ -340,32 +340,91 @@ class KernelShap(BaseLocalExplainer):
             list of JSONs containing the information of the explanation plot
             to be rendered.
         """
-        explanation = explanation.copy()
+
+        exp = explanation.copy()
 
         max_features = 8
-        metadata = explanation.pop("metadata")
-        base_values = explanation.pop("base_values")
+        metadata = exp.pop("metadata")
+        base_values = exp.pop("base_values")
         feature_names = metadata["feature_names"]
         target_names = metadata["target_names"]
 
+        # Normaliza feature_names a 1D
+        feats = np.asarray(feature_names, dtype=str).reshape(-1)
+
         plots = []
-        for i in explanation:
-            instance_values = explanation[i]["instance_values"]
-            model_prediction = explanation[i]["model_prediction"]
-
-            y_pred_class = np.argmax(model_prediction)
+        for i in exp:
+            instance_values = exp[i]["instance_values"]
+            model_prediction = exp[i]["model_prediction"]
+            y_pred_class = int(np.argmax(model_prediction))
             y_pred_name = target_names[y_pred_class]
-            y_pred_pbb = np.round(model_prediction[y_pred_class], 2)
+            y_pred_pbb = float(np.round(model_prediction[y_pred_class], 2))
 
-            shap_values = explanation[i]["shap_values"][y_pred_class]
+            # --- Normaliza valores de la instancia a 1D
+            vals = np.asarray(instance_values).reshape(-1)
 
+            # --- Normaliza shap_values a 1D alineado con feats
+            sv = exp[i]["shap_values"]
+            # 1) Si viene como lista (típico multiclass: una entrada por clase)
+            if isinstance(sv, list):
+                sv_raw = np.asarray(sv[y_pred_class])
+            else:
+                sv_raw = np.asarray(sv)
+
+            # 2) Intenta extraer del objeto shap.Explanation si aplica
+            try:
+                from shap._explanation import Explanation
+
+                if isinstance(sv, Explanation):
+                    sv_raw = np.asarray(sv.values)
+            except Exception:
+                pass
+
+            # 3) Resolver formas 2D con eje de clases/características
+            if sv_raw.ndim == 2:
+                if sv_raw.shape[0] == feats.size and sv_raw.shape[1] != feats.size:
+                    # n_features, n_classes
+                    sv_raw = sv_raw[:, y_pred_class]
+                elif sv_raw.shape[1] == feats.size and sv_raw.shape[0] != feats.size:
+                    # n_classes n_features
+                    sv_raw = sv_raw[y_pred_class, :]
+                elif (
+                    sv_raw.shape[0] == 1
+                    and sv_raw.shape[1] == feats.size
+                    or sv_raw.shape[1] == 1
+                    and sv_raw.shape[0] == feats.size
+                ):
+                    sv_raw = sv_raw.reshape(-1)
+                else:
+                    raise ValueError(
+                        f"shap_values {sv_raw.shape} n_features={feats.size}"
+                    )
+            else:
+                sv_raw = sv_raw.reshape(-1)
+
+            # 4) Asegura mismas longitudes (recorte defensivo si algo llegó desalineado)
+            n = min(vals.size, feats.size, sv_raw.size)
+            if not (vals.size == feats.size == sv_raw.size):
+                # Puedes cambiar este print por un logger si lo prefieres
+                print(
+                    f"[WARN] Desalineado: len(values)={vals.size}, "
+                    f"len(features)={feats.size}, len(shap_values)={sv_raw.size}. "
+                    f"Se recorta a {n}."
+                )
+                vals = vals[:n]
+                feats = feats[:n]
+                sv_raw = sv_raw[:n]
+
+            # --- Construcción del DataFrame ya normalizado
             data = pd.DataFrame(
                 {
-                    "values": instance_values,
-                    "shap_values": shap_values,
-                    "features": feature_names,
+                    "values": vals,
+                    "shap_values": sv_raw,
+                    "features": feats,
                 }
             )
+
+            # --- Resto de tu pipeline
             data["shap_values_abs"] = np.abs(data["shap_values"])
             data = data.sort_values(by="shap_values_abs", ascending=True)
 
@@ -373,17 +432,26 @@ class KernelShap(BaseLocalExplainer):
                 data_1 = data.iloc[-max_features:, :]
                 data_2 = data.iloc[:-max_features, :]
                 others = pd.DataFrame.from_dict(
-                    data={
+                    {
                         "values": [None],
-                        "shap_values": np.round(data_2["shap_values"].sum(), 3),
+                        "shap_values": [
+                            float(np.round(data_2["shap_values"].sum(), 3))
+                        ],
                         "shap_values_abs": [None],
                         "features": ["Others"],
                     }
                 )
-                data = pd.concat([others, data_1])
+                data = pd.concat([others, data_1], ignore_index=True)
 
             data["label"] = data["features"] + "=" + data["values"].map(str)
-            base_value = base_values[y_pred_class]
+
+            # base_values puede ser escalar o vector por clase
+            base_arr = np.asarray(base_values)
+            if base_arr.ndim == 0:
+                base_value = float(base_arr)
+            else:
+                base_value = float(base_arr[y_pred_class])
+
             plot = self._create_plot(data, base_value, y_pred_pbb, y_pred_name)
             plots.append(plot)
 

@@ -11,6 +11,7 @@ import {
 } from "../../../api/datasets";
 
 export default function ScopeStepConverter({
+  supervised,
   targetColumn,
   setTargetColumn,
   rows,
@@ -122,30 +123,36 @@ export default function ScopeStepConverter({
           gap: 1,
         }}
       >
-        <Tooltip
-          title="Supervised converters will include this column in their learning process."
-          placement="top"
-        >
-          <IconButton>
-            <HelpIcon />
-          </IconButton>
-        </Tooltip>
-        <ConverterClassColumnModal
-          updateClassColumn={(column) => {
-            const processedColumn = {
-              idx: column.id + 1,
-              columnName: column.columnName,
-              valueType: column.valueType,
-              dataType: column.dataType,
-            };
-            setTargetColumn(processedColumn);
-          }}
-          classColumnInitialValue={targetColumn?.idx}
-          notebook={notebook}
-        />
+        {supervised && (
+          <Tooltip
+            title="Supervised converters will include this column in their learning process."
+            placement="top"
+          >
+            <IconButton>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {supervised && (
+          <ConverterClassColumnModal
+            updateClassColumn={(column) => {
+              const processedColumn = {
+                idx: column.id + 1,
+                columnName: column.columnName,
+                valueType: column.valueType,
+                dataType: column.dataType,
+              };
+              setTargetColumn(processedColumn);
+            }}
+            classColumnInitialValue={targetColumn?.idx}
+            notebook={notebook}
+          />
+        )}
+
         <FormSchemaButtonGroup
           onFormSubmit={() => setStep((s) => s + 1)}
-          error={!targetColumn}
+          error={supervised ? !targetColumn : false}
           saveButtonText="Next"
         />
       </Box>
