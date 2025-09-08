@@ -127,11 +127,6 @@ export default function DatasetPreviewNotebook({
               }}
               disabled={false}
               sx={{
-                bgcolor: "#00BEBB",
-                "&:hover": { bgcolor: "#008582" },
-                "&:disabled": { bgcolor: "#444", color: "#666" },
-                color: "white",
-                fontWeight: "bold",
                 fontSize: "0.7rem",
                 px: 1.5,
                 py: 0.5,
@@ -139,11 +134,11 @@ export default function DatasetPreviewNotebook({
                 minWidth: "auto",
               }}
             >
-              SAVE NEW DATA
+              Save as new Dataset
             </Button>
             <IconButton
               size="small"
-              sx={{ color: "#00BEBB", ml: 1 }}
+              sx={{ color: "primary.main", ml: 1 }}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowNotebookHistoryModal(true);

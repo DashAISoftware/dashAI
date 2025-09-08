@@ -69,6 +69,10 @@ def create_notebook(
             shutil.copytree(dataset_folder, new_folder_path, dirs_exist_ok=True)
 
             notebook_data = params.model_dump()
+            notebook_data = {
+                **notebook_data,
+                "name": notebook_data.get("name") or "Untitled Notebook",
+            }
             notebook_data["file_path"] = new_folder_path
             notebook_model = Notebook(**notebook_data)
             db.add(notebook_model)
@@ -338,3 +342,56 @@ async def create_dataset_from_notebook(
             ) from e
 
     return dataset
+
+
+@router.patch("/{notebook_id}")
+@inject
+async def update_notebook(
+    notebook_id: int,
+    params: schemas.NotebookUpdateParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Updates the name of a notebook with the provided ID.
+
+    Parameters
+    ----------
+    notebook_id : int
+        ID of the notebook to update.
+    params : NotebookUpdateParams
+        A dictionary containing the new values for the notebook.
+        name : str
+            New name for the notebook.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing the updated dataset record.
+    """
+    with session_factory() as db:
+        try:
+            notebook = db.get(Notebook, notebook_id)
+            if not notebook:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Notebook not found",
+                )
+            if not params.name or params.name == notebook.name:
+                raise HTTPException(
+                    status_code=status.HTTP_304_NOT_MODIFIED,
+                    detail="No fields to update",
+                )
+
+            setattr(notebook, "name", params.name)
+            db.commit()
+            db.refresh(notebook)
+        except Exception as e:
+            log.error(f"Error updating notebook {notebook_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update notebook",
+            ) from e
+
+    return notebook
