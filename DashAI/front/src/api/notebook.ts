@@ -53,3 +53,14 @@ export const createDatasetFromNotebook = async (
 
   return response.data;
 };
+
+export const updateNotebook = async (
+  id: number,
+  formData: object,
+): Promise<INotebook> => {
+  console.log("updating notebook with id:", id, "and formData:", formData);
+  const response = await api.patch(`${notebookEndpoint}/${id}`, {
+    ...formData,
+  });
+  return response.data;
+};

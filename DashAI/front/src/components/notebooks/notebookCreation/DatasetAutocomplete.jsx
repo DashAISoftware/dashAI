@@ -144,9 +144,11 @@ export default function DatasetAutocomplete({
               {/* Single line for Rows | Columns */}
               <Typography variant="body2" fontWeight="medium">
                 Rows:{" "}
-                {loadingInfo ? "Loading..." : datasetInfo?.total_rows ?? "-"} |{" "}
-                Columns:{" "}
-                {loadingInfo ? "Loading..." : datasetInfo?.total_columns ?? "-"}
+                {loadingInfo ? "Loading..." : (datasetInfo?.total_rows ?? "-")}{" "}
+                | Columns:{" "}
+                {loadingInfo
+                  ? "Loading..."
+                  : (datasetInfo?.total_columns ?? "-")}
               </Typography>
               {infoError && (
                 <Typography variant="caption" color="error">

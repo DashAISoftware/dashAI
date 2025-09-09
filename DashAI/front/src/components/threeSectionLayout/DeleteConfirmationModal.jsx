@@ -14,6 +14,7 @@ export default function DeleteConfirmationModal({
   onClose,
   onConfirm,
   content,
+  onExited,
 }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -24,6 +25,8 @@ export default function DeleteConfirmationModal({
       open={open}
       onClose={onClose}
       aria-labelledby="delete-confirmation-dialog-title"
+      TransitionProps={{ onExited }}
+      keepMounted={false}
     >
       <DialogTitle id="delete-confirmation-dialog-title">
         Confirm Deletion

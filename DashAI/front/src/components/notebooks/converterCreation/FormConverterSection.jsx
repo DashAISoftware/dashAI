@@ -33,7 +33,7 @@ export default function FormConverterSection({
           rows: rows,
         },
         order: 1,
-        target_index: targetColumn,
+        target: targetColumn,
       },
     };
 
@@ -73,6 +73,7 @@ export default function FormConverterSection({
       {/* Step content */}
       {step === 0 && (
         <ScopeStepConverter
+          supervised={tool.metadata.supervised}
           targetColumn={targetColumn}
           setTargetColumn={setTargetColumn}
           rows={rows}

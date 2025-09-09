@@ -1,4 +1,5 @@
-import { Box, Typography } from "@mui/material";
+import { useState, useRef, useEffect } from "react";
+import { Box, Typography, TextField } from "@mui/material";
 import ItemMenu from "./ItemMenu";
 
 export default function ItemBox({
@@ -8,8 +9,52 @@ export default function ItemBox({
   id,
   onClick,
   onDelete,
+  onEdit,
   onInfo,
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(name);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      setIsEditing(false);
+      if (editedName.trim() !== name && editedName.trim() !== "") {
+        onEdit(editedName);
+      } else {
+        setEditedName(name);
+      }
+    }
+    if (e.key === "Escape") {
+      setIsEditing(false);
+      setEditedName(name);
+    }
+  };
+
+  const handleBlur = (e) => {
+    const next = e.relatedTarget;
+
+    if (
+      next &&
+      (next.closest("#dataset-menu") || next.closest(".MuiMenu-root"))
+    ) {
+      return;
+    }
+
+    setIsEditing(false);
+    setEditedName(name);
+  };
+
   return (
     <Box
       sx={{
@@ -19,16 +64,14 @@ export default function ItemBox({
         justifyContent: "space-between",
         alignItems: "center",
         borderRadius: 1,
-        cursor: isSelected ? "default" : "pointer",
+        cursor: isSelected || isEditing ? "default" : "pointer",
         bgcolor: isSelected ? "rgba(255, 255, 255, 0.05)" : "transparent",
         p: 0.5,
         "&:hover": {
-          backgroundColor: isSelected
-            ? "rgba(255, 255, 255, 0.05)"
-            : "rgba(255, 255, 255, 0.05)",
+          backgroundColor: "rgba(255, 255, 255, 0.05)",
         },
       }}
-      onClick={isSelected ? undefined : onClick}
+      onClick={isSelected || isEditing ? undefined : onClick}
     >
       <Box
         sx={{
@@ -38,14 +81,38 @@ export default function ItemBox({
           width: "100%",
         }}
       >
-        <Box>
-          <Typography
-            variant="body2"
-            noWrap
-            sx={{ maxWidth: 180, fontSize: 14 }}
-          >
-            {name ? name : "Untitled Session"}
-          </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
+            width: "100%",
+          }}
+        >
+          {isEditing ? (
+            <TextField
+              inputRef={inputRef}
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
+              size="small"
+              variant="outlined"
+              sx={{
+                maxWidth: 180,
+                fontSize: 14,
+                "& .MuiInputBase-input": { fontSize: 14, padding: "2px 6px" },
+              }}
+            />
+          ) : (
+            <Typography
+              variant="body2"
+              noWrap
+              sx={{ maxWidth: 180, fontSize: 14 }}
+            >
+              {editedName}
+            </Typography>
+          )}
           <Typography
             variant="caption"
             noWrap
@@ -55,7 +122,12 @@ export default function ItemBox({
           </Typography>
         </Box>
       </Box>
-      <ItemMenu itemId={id} onInfo={onInfo} onDelete={onDelete} />
+      <ItemMenu
+        itemId={id}
+        onInfo={onInfo}
+        onDelete={onDelete}
+        onEdit={handleEdit}
+      />
     </Box>
   );
 }

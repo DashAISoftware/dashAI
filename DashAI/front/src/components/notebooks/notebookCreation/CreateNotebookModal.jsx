@@ -13,6 +13,7 @@ import { Close } from "@mui/icons-material";
 import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import NoteBox from "../NoteBox";
 
 export function CreateNotebookModal({
   open,
@@ -78,6 +79,7 @@ export function CreateNotebookModal({
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
           {/* Selected Dataset Info Box */}
           {dataset && (
             <Box
@@ -109,11 +111,13 @@ export function CreateNotebookModal({
                 </Box>
                 <Typography variant="body2" fontWeight="medium">
                   Rows:{" "}
-                  {loadingInfo ? "Loading..." : datasetInfo?.total_rows ?? "-"}{" "}
+                  {loadingInfo
+                    ? "Loading..."
+                    : (datasetInfo?.total_rows ?? "-")}{" "}
                   | Columns:{" "}
                   {loadingInfo
                     ? "Loading..."
-                    : datasetInfo?.total_columns ?? "-"}
+                    : (datasetInfo?.total_columns ?? "-")}
                 </Typography>
                 {infoError && (
                   <Typography variant="caption" color="error">

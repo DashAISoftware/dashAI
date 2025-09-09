@@ -250,6 +250,9 @@ export default function DatasetTable({
       onPaginationModelChange={setPaginationModel}
       pageSizeOptions={pageSizeOptions}
       density={density}
+      initialState={{
+        pagination: { paginationModel: { pageSize: initialPageSize } },
+      }}
       slots={{
         toolbar: CustomToolbar,
         loadingOverlay: LinearProgress,
