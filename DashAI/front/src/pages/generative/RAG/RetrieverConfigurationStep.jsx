@@ -1,5 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { Box, Autocomplete, TextField, Typography } from "@mui/material";
+import { 
+  Box, 
+  Dialog, 
+  DialogTitle,
+  DialogContent, 
+  Autocomplete, 
+  TextField, 
+  Typography,
+  IconButton,
+
+} from "@mui/material";
+import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
+
 import { DataGrid } from "@mui/x-data-grid";
 import { getRetrieverComponents, getRetrievalParadigm } from "../../../api/rag";
 import { useSnackbar } from "notistack";
@@ -8,7 +20,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import FormSchemaDialog from "../../../components/shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../../../components/shared/FormSchemaWithSelectedModel";
-
+import FormSchemaContainer from "../../../components/shared/FormSchemaContainer";
+import FormSchemaHeader from "../../../components/shared/FormSchemaHeader";
 
 export default function RetrieverConfigurationStep({ setNextEnabled }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -26,7 +39,8 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
   } = useSchema({ modelName: selectedRetriever?.name });
 
 
-  const [open, setOpen] = useState(false);
+  const [schemaDialogOpen, setSchemaDialogOpen] = useState(false);
+  const handleSchemaDialogClose = () => setSchemaDialogOpen(false);
 
   const fetchRetrievalParadigms = async () => {
     try {
@@ -140,27 +154,45 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
                     key="edit-button"
                     icon={<SettingsIcon />}
                     label="Edit"
-                    onClick={() => setOpen(true)}
+                    onClick={() => setSchemaDialogOpen(true)}
                   />
-                  <FormSchemaDialog
-                    modelToConfigure={selectedRetriever.name}
-                    open={open}
-                    setOpen={setOpen}
-                    onFormSubmit={(values) => {
-                      handleRetrieverParametersChange(values);
-                      setOpen(false);
-                    }}
-                  >
-                    <FormSchemaWithSelectedModel
-                      modelToConfigure={selectedRetriever.name}
-                      initialValues={retrieverInitialParameters}
-                      onFormSubmit={(values) => {
-                        handleRetrieverParametersChange(values);
-                        setOpen(false);
+                   <Dialog
+                      open={schemaDialogOpen}
+                      onClose={handleSchemaDialogClose}
+                      PaperProps={{
+                        sx: {
+                          width: { md: 820 },
+                          maxHeight: { lg: 700, xl: "auto" },
+                          maxWidth: 2000,
+                          transition: "width 0.3s ease, height 0.3s ease",
+                        },
                       }}
-                      onCancel={() => setOpen(false)}
-                    />
-                  </FormSchemaDialog>
+                    >
+                      <FormSchemaContainer>
+                        <DialogTitle>
+                          <Box display="flex" alignItems="center">
+                            <IconButton onClick={handleSchemaDialogClose}>
+                              <ArrowBackOutlined />
+                            </IconButton>
+                            <Typography variant="h5" sx={{ ml: 2 }}>
+                              {`${selectedRetriever.name} configuration`}
+                            </Typography>
+                          </Box>
+                        </DialogTitle>
+                        <DialogContent>
+
+                          <FormSchemaWithSelectedModel
+                            modelToConfigure={selectedRetriever.name}
+                            initialValues={retrieverInitialParameters}
+                            onFormSubmit={(values) => {
+                              handleRetrieverParametersChange(values);
+                              setSchemaDialogOpen(false);
+                            }}
+                            onCancel={() => setSchemaDialogOpen(false)}
+                            />
+                      </DialogContent>
+                    </FormSchemaContainer>
+                  </Dialog>
                 </>
               ],
             }]}
