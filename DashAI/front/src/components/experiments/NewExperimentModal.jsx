@@ -27,7 +27,7 @@ import SelectDatasetStep from "./SelectDatasetStep";
 import PrepareDatasetStep from "./PrepareDatasetStep";
 import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
 import ConfigureModelsStep from "./ConfigureModelsStep";
-import { generateExperimentName } from "../../utils/experimentNameGenerator";
+import { generateExperimentName } from "../../utils/nameGenerator";
 
 import { useSnackbar } from "notistack";
 import { checkIfHaveOptimazers } from "../../utils/schema";
