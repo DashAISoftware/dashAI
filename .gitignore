@@ -180,3 +180,5 @@ __pycache__
 *.DS_Store
 
 .prettierrc
+
+*.ipynb

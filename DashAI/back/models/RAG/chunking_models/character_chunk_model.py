@@ -11,13 +11,13 @@ class CharacterChunkModelSchema(BaseSchema):
     """Schema for character-based chunking model."""
     
     chunk_size: schema_field(
-        int_field(min_value=1),
+        int_field(gt=1),
         placeholder=None,
         description="Size of each chunk in characters."
     )  # type: ignore
 
     chunk_overlap: schema_field(
-        int_field(min_value=0),
+        int_field(gt=0),
         placeholder=None,
         description="Number of characters to overlap between chunks."
     )  # type: ignore

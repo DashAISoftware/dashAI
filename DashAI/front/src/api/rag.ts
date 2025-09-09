@@ -2,6 +2,8 @@ import api from "./api";
 import { ISession } from "../types/session";
 import { IGenerativeTask } from "../types/generativeTask";
 import { IDocumentResponse } from "../types/documentResponse";
+import { IComponent } from "../types/component";
+import { getChildComponents } from "./component";
 
 
 // Fetch all RAG sessions
@@ -108,18 +110,25 @@ export const updateGenerativeSessionParams = async (
   return response.data;
 }
 
+export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
 
-export const getRetrieverComponents = async (): Promise<IGenerativeTask[]> => {
+  const response = getChildComponents('RetrieverModel', false);
+  if (!response) {
+    throw new Error(`Failed to fetch retrieval options`);
+  }
+  return response;
+}
 
-  const response = await api.get(
-    `/v1/component/?select_types=RetrieverModel`
-  );
 
-  if (response.status !== 200) {
-    throw new Error(`Failed to fetch retriever components: ${response.statusText}`);
+export const getRetrieverComponents = async (retrievalParadigm: string): Promise<IComponent[]> => {
+
+  const response = getChildComponents(retrievalParadigm, false);
+
+  if (!response) {
+    throw new Error(`Failed to fetch retriever components`);
   }
 
-  return response.data;
+  return response;
 
 }
 

@@ -174,7 +174,7 @@ function DocumentTable({
                 },
               },
             }}
-            getRowId={(row) => row.id}
+            getRowId={(row) => String(row.id)}
             pageSize={5}
             sortModel={[{ field: "id", sort: "asc" }]}
             pageSizeOptions={[5, 10]}

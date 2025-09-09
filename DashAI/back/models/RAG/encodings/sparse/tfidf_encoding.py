@@ -1,5 +1,6 @@
 import os
-from DashAI.back.models.RAG.embeddings.sparse_embedding import SparseEmbedding
+from DashAI.back.converters.hugging_face import embedding
+from DashAI.back.models.RAG.encodings.sparse_encoding import SparseEncoding
 from DashAI.back.models.RAG.documents import BaseDocument, PDFDocument, TxtDocument
 from typing import List, Dict, Any, Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -19,7 +20,7 @@ from DashAI.back.core.schema_fields import (
     string_field
 )
 
-class TFIDFEmbeddingSchema(BaseSchema):
+class TFIDFEncodingSchema(BaseSchema):
 
     strip_accents: schema_field(
         enum_field(
@@ -115,10 +116,10 @@ class TFIDFEmbeddingSchema(BaseSchema):
         description="Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).",
     ) # type: ignore
 
-class TFIDFEmbedding(SparseEmbedding):
+class TFIDFEncoding(SparseEncoding):
     """
-    TF-IDF embedding model for text documents.
-    This class implements the TF-IDF algorithm to generate embeddings for text documents.
+    TF-IDF encoding (embedding) model for text documents.
+    This class implements the TF-IDF algorithm to generate encodings (embeddings) for text documents.
     """
 
     def __init__(
@@ -139,7 +140,7 @@ class TFIDFEmbedding(SparseEmbedding):
             store_model: bool = True
     ) -> None:
         """
-        Initialize the TF-IDF embedding model with the given document chunks.
+        Initialize the TF-IDF encoding (embedding) model with the given document chunks.
 
         Args:
             documents_chunks (Dict[int, List[str]]): A dictionary where keys are document IDs and values are lists of text chunks.
@@ -209,19 +210,19 @@ class TFIDFEmbedding(SparseEmbedding):
         """
         return hashlib.sha256(input_string.encode('utf-8')).hexdigest()
     
-    def _calculate_embeddings_hash(self) -> str:
+    def _get_encoding_signature(self) -> str:
         """
-        Generate a hash to identify the embeddings for caching purposes.
-        
-        Hash is calculated over the documents' content to ensure consistency in embeddings, it must:
-        - Be consistent across runs with the same documents content, chunking strategy and embedding model parameters.
+        Generate a hash to identify the encoding (embeddings) for caching purposes.
+
+        Hash is calculated over the documents' content to ensure consistency in encoding (embeddings), it must:
+        - Be consistent across runs with the same documents content, chunking strategy and encoding (embeddings) model parameters.
         - Change if the documents are modified.
         - Change if the documents content is modified.
         - Change if the chunking strategy is modified.
-        - Change if the embedding model parameters are modified.
-        
+        - Change if the encoding (embeddings) model parameters are modified.
+
         Returns:
-            str: A hash string representing the embeddings.
+            str: A hash string representing the encoding (embeddings).
         """
         params_hash = self._hash_function(str(self.hyperparameters))
         documents_chunks_hash = self._hash_function(str(self.chunks_mapping))
@@ -247,7 +248,6 @@ class TFIDFEmbedding(SparseEmbedding):
             sublinear_tf=self.sublinear_tf
         )        
         self._term_matrix = self.vectorizer.fit_transform(self.chunks_texts)
-        self._feature_names = self.vectorizer.get_feature_names_out()
 
     def _get_model_paths(self) -> Tuple[str, str, str, str]:
         """
@@ -255,15 +255,14 @@ class TFIDFEmbedding(SparseEmbedding):
         Returns a tuple containing the folder path, vectorizer path, term matrix path, and feature names path.
         """
         folder_path = os.path.join(
-            self.EMBEDDINGS_PATH, 
-            self._calculate_embeddings_hash()
+            self.EMBEDDINGS_PATH,
+            self._get_encoding_signature()
         )
         
         vectorizer_path = os.path.join(folder_path, "vectorizer.pkl")
         term_matrix_path = os.path.join(folder_path, "term_matrix.pkl")
-        feature_names_path = os.path.join(folder_path, "feature_names.pkl")
 
-        return folder_path, vectorizer_path, term_matrix_path, feature_names_path
+        return folder_path, vectorizer_path, term_matrix_path
 
     def _save_model(self) -> None:
         """
@@ -271,7 +270,7 @@ class TFIDFEmbedding(SparseEmbedding):
         This method saves the vectorizer, term matrix, and feature names to their respective files.
         """
 
-        folder_path, vectorizer_path, term_matrix_path, feature_names_path = self._get_model_paths()
+        folder_path, vectorizer_path, term_matrix_path = self._get_model_paths()
 
         # Create the folder if it doesn't exist
         os.makedirs(folder_path, exist_ok=True)
@@ -284,21 +283,16 @@ class TFIDFEmbedding(SparseEmbedding):
         with open(term_matrix_path, 'wb') as f:
             pickle.dump(self._term_matrix, f)
 
-        # Save the feature names
-        with open(feature_names_path, 'wb') as f:
-            pickle.dump(self._feature_names, f)
-
     def _load_model(self) -> None:
         """
         Try to load the model components from disk.
         If the model components are not found, return False.
         If the model components are found, load them into the instance variables and return True.
         """
-        folder_path, vectorizer_path, term_matrix_path, feature_names_path = self._get_model_paths()
+        folder_path, vectorizer_path, term_matrix_path= self._get_model_paths()
         if not (
             os.path.exists(vectorizer_path) and
-            os.path.exists(term_matrix_path) and
-            os.path.exists(feature_names_path)):
+            os.path.exists(term_matrix_path)):
             return False
 
         # Load the vectorizer
@@ -309,48 +303,44 @@ class TFIDFEmbedding(SparseEmbedding):
         with open(term_matrix_path, 'rb') as f:
             self._term_matrix = pickle.load(f)
 
-        # Load the feature names
-        with open(feature_names_path, 'rb') as f:
-            self._feature_names = pickle.load(f)
-
         return True
         
 
-    def get_documents_chunks_embeddings(self) -> Dict[int, List[np.ndarray]]:
+    def get_documents_chunks_encodings(self) -> Dict[int, List[np.ndarray]]:
         """
-        Get the embeddings for each document chunk.
+        Get the encodings (embeddings) for each document chunk.
         
         Returns:
-            Dict[int, List[np.ndarray]]: A dictionary where keys are document IDs and values are lists of embeddings for each chunk.
+            Dict[int, List[np.ndarray]]: A dictionary where keys are document IDs and values are lists of encodings (embeddings) for each chunk.
         """
         if not hasattr(self, 'vectorizer'):
-            raise RuntimeError("The model has not been fitted yet. Call _fit_model() before getting embeddings.")   
+            raise RuntimeError("The model has not been fitted yet. Call _fit_model() before getting encodings (embeddings).")
         
-        embeddings = self._term_matrix.toarray()
-        n_chunks = embeddings.shape[0]
+        encodings = self._term_matrix.toarray()
+        n_chunks = encodings.shape[0]
 
-        # Map the embeddings back to the document IDs using the chunks_mapping
-        documents_chunks_embeddings = {}
+        # Map the encodings back to the document IDs using the chunks_mapping
+        documents_chunks_encodings = {}
         for i in range(n_chunks):
             doc_id, _ = self.chunks_mapping[i]
-            if doc_id not in documents_chunks_embeddings:
-                documents_chunks_embeddings[doc_id] = []
-            documents_chunks_embeddings[doc_id].append(embeddings[i])
+            if doc_id not in documents_chunks_encodings:
+                documents_chunks_encodings[doc_id] = []
+            documents_chunks_encodings[doc_id].append(encodings[i])
 
-        return documents_chunks_embeddings
-    
-    def embed(self, text: str) -> List[float]:
+        return documents_chunks_encodings
+
+    def encode(self, text: str) -> List[float]:
         """
-        Generate TF-IDF embeddings for the given text.
-        
+        Generate TF-IDF encodings (embeddings) for the given text.
+
         Args:
             text (str): The input text to embed.
         
         Returns:
-            List[float]: A list representing the TF-IDF embeddings of the input text.
+            List[float]: A list representing the TF-IDF encodings (embeddings) of the input text.
         """
         if not hasattr(self, 'vectorizer'):
-            raise RuntimeError("The model has not been fitted yet. Call _fit_model() before embedding text.")
+            raise RuntimeError("The model has not been fitted yet. Call _fit_model() before encoding (embedding) text.")
         
         # Transform the input text to get its TF-IDF representation
         tfidf_vector = self.vectorizer.transform([text])

@@ -97,6 +97,7 @@ async def get_components(
     print("has_related_of_type", str(has_related_of_type))
     print("get_components api ")
     # when select_type is not none, check if it exists in the registry.
+
     if select_types is not None:
         for select_type in select_types:
             if select_type not in component_registry._registry:
@@ -206,6 +207,8 @@ async def get_components(
         _delete_class(component_dict) for component_dict in selected_components.values()
     ]
 
+    print(out)
+
     return out
 
 
@@ -282,3 +285,25 @@ async def update_component() -> None:
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Method not implemented"
     )
+
+@router.get("/{component_name}/children/")
+async def get_child_components(
+    component_name:str,
+    recursive:bool=False,
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"])):
+    """Get child components of a specific component.
+
+    Args:
+        component_name (str): The name of the component to get children for.
+        recursive (bool): Whether to get child components recursively.
+
+    Returns:
+        List[Dict[str, Any]]: A list of child component dictionaries.
+    """
+    children_list = component_registry.get_child_components(component_name, recursive=recursive)
+    print("children_list", children_list)
+    # Remove "class" key from each child component
+    cleaned_children = [_delete_class(child) for child in children_list]
+    print("cleaned_children", cleaned_children)
+
+    return cleaned_children

@@ -13,7 +13,7 @@ from DashAI.back.models.text_to_text_generation_model import TextToTextGeneratio
 from DashAI.back.models.RAG.Retrievers import (
     TFIDFRetriever,
     DenseRetriever,
-    BaseRetriever)
+    RetrieverModel)
 
 from DashAI.back.models.RAG.prompts import (
     ContextMergePrompt,
@@ -114,7 +114,7 @@ class RAGPipeline(BaseGenerativeModel):
             new_retriever_args[key] = value
 
         print("Initializing retriever model")
-        self.retriever: BaseRetriever = retriever_model_class(**new_retriever_args)
+        self.retriever: RetrieverModel = retriever_model_class(**new_retriever_args)
 
         self.retrieval_algorithm = "SINGLE_INTERACTION"
         print("RAG pipeline initialized")

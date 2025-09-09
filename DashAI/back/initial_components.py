@@ -90,13 +90,30 @@ from DashAI.back.models import (
     RidgeRegression,
     StableDiffusionV2Model,
     StableDiffusionV3Model,
-    RAGPipeline,
-    BaseRetriever,
-    TFIDFRetriever,
-    DenseRetriever,
-
     StableDiffusionXLV1ControlNet,
 )
+
+from DashAI.back.models.RAG import (
+    # Chunking Models
+    CharacterChunkModel,
+    TokenChunkModel,
+    # Encodings
+    DenseEncoding,
+    FastTextEmbedding,
+    HuggingFaceEmbedding,
+    SparseEncoding,
+    TFIDFEncoding,
+    BM25Encoding,
+    # Prompts
+    AugmentationPrompt,
+    ContextMergePrompt,
+    # Retrievers
+    DenseRetriever,
+    SparseRetriever,
+    TFIDFRetriever
+)
+
+
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
@@ -159,10 +176,6 @@ def get_initial_components():
         RidgeRegression,
         LinearSVR,
         LinearRegression,
-        RAGPipeline,
-        TFIDFRetriever,
-        DenseRetriever,
-        #BaseRetriever,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,
@@ -250,6 +263,24 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
+
+        # RAG
+        CharacterChunkModel,
+        TokenChunkModel,
+        # Encodings
+        DenseEncoding,
+        FastTextEmbedding,
+        HuggingFaceEmbedding,
+        SparseEncoding,
+        TFIDFEncoding,
+        BM25Encoding,
+        # Prompts
+        AugmentationPrompt,
+        ContextMergePrompt,
+        # Retrievers
+        DenseRetriever,
+        SparseRetriever,
+        TFIDFRetriever
     ]
 
     # Obtener plugins instalados

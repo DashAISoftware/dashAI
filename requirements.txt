@@ -449,5 +449,5 @@ zipp==3.20.2
     #   importlib-metadata
     #   importlib-resources
 imblearn
-chromadb==0.5.5
-chroma-hnswlib==0.7.6
+
+fasttext-wheel

@@ -1,5 +1,5 @@
 import os
-from .BaseRetriever import BaseRetriever
+from DashAI.back.models.RAG.Retrievers.retriever_model import RetrieverModel
 from DashAI.back.models.RAG.documents import BaseDocument, PDFDocument, TxtDocument
 from typing import List, Dict, Any, Optional, Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -7,6 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 import numpy as np
 import hashlib
 import pickle
+from DashAI.back.models.RAG.Retrievers.sparse_retriever import SparseRetriever
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -57,7 +58,7 @@ class TFIDFRetrieverSchema(BaseSchema):
         description="Overlap between chunks when splitting documents."
     )  # type: ignore
 
-class TFIDFRetriever(BaseRetriever):
+class TFIDFRetriever(SparseRetriever):
     """
     A retriever that uses TF-IDF to retrieve documents based on a query.
     """
@@ -140,14 +141,14 @@ class TFIDFRetriever(BaseRetriever):
         map_path = os.path.join(base_name, "chunk_to_doc_id_map")
         return vectorizer_path, tfidf_matrix_path, map_path
 
-    def get_hashable_parameters(self):
+    def get_signature_parameters(self):
         return {
             "chunk_size": self.chunk_size,
             "chunk_overlap": self.chunk_overlap,
         }
     
     def _generate_cache_hash(self) -> str:
-        hashable_params = self.get_hashable_parameters()
+        hashable_params = self.get_signature_parameters()
         text = f"{self._documents_paths}{hashable_params}"
         params_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
         docs_hashes = []

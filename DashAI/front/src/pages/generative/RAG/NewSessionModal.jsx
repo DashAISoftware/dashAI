@@ -18,7 +18,8 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 import DocumentSelectionStep from "./DocumentSelectionStep";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
-import GeneratorConfigurationStep from "./GeneratorConfigurationStep"; 
+import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
+//import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 
 const steps = [
   {
@@ -26,6 +27,11 @@ const steps = [
     label: "Select documents",
     component: DocumentSelectionStep,
   },
+//  {
+//    name: "configure-chunking",
+//    label: "Configure chunking",
+//    component: ChunkingConfigurationStep,
+//  },
   {
     name: "configure-retriever",
     label: "Configure retriever",
@@ -45,6 +51,9 @@ const defaultNewSession = {
   displayName: "",
   parameters: {
     "documents": [],
+    // "chunking": {
+    //   "parameters": {},
+    // },
     "retriever_model": {
       "name": "",
       "parameters": {},
@@ -65,9 +74,10 @@ export default function NewSessionModal({
 }) {
   const theme = useTheme();
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
+  
   const [activeStep, setActiveStep] = useState(0);
-  const [sessionData, setSessionData] = useState(session || defaultNewSession);
   const [stepValidity, setStepValidity] = useState(new Array(steps.length).fill(false));
+  const [sessionData, setSessionData] = useState(session || defaultNewSession);
 
 
   useEffect(() => {

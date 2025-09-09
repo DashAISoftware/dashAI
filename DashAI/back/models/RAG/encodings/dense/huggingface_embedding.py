@@ -1,20 +1,28 @@
+from transformers import AutoModel
+
+
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    schema_field,
+    enum_field
+)
+from DashAI.back.models.RAG.encodings.dense_encoding import DenseEncoding
+
 from typing import Final, List
 import numpy as np
 import torch
-from datasets import Dataset, concatenate_datasets
 from transformers import AutoModel, AutoTokenizer
 
-from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
+from DashAI.back.models.RAG.encodings.dense_encoding import DenseEncoding
 from DashAI.back.core.schema_fields import (
     enum_field,
     int_field,
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class EmbeddingSchema(BaseSchema):
+class HuggingFaceEmbeddingSchema(BaseSchema):
     model_name: schema_field(
         enum_field(
             [
@@ -59,10 +67,10 @@ class EmbeddingSchema(BaseSchema):
     )  # type: ignore
 
 
-class Embedding(HuggingFaceWrapper):
-    """HuggingFace embedding converter."""
+class HuggingFaceEmbedding(DenseEncoding):
+    """HuggingFace embedding"""
 
-    SCHEMA = EmbeddingSchema
+    SCHEMA = HuggingFaceEmbeddingSchema
     DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
     
     def __init__(self, **kwargs):
@@ -113,30 +121,7 @@ class Embedding(HuggingFaceWrapper):
         embeddings_np = embeddings.cpu().numpy()
         return embeddings_np
 
-    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
-        """Process a batch of text into embeddings."""
-        all_column_embeddings = []
-
-        for column in batch.column_names:
-            # Get text data from dataset
-            texts = [row[column] for row in batch]
-
-            embeddings_np = self._encode_texts(texts)
-
-            # Create a dictionary with embedding columns
-            embedding_dict = {
-                f"{column}_embedding_{i}": embeddings_np[:, i].tolist()
-                for i in range(embeddings_np.shape[1])
-            }
-
-            # Create a HuggingFace Dataset and convert it to a PyArrow table
-            hf_dataset = Dataset.from_dict(embedding_dict)
-            arrow_table = hf_dataset.data.table
-
-            # Create a new dataset for this column's embeddings
-            column_dataset = DashAIDataset(arrow_table)
-            all_column_embeddings.append(column_dataset)
-
-        # Concatenate all column embeddings
-        concatenated_dataset = concatenate_datasets(all_column_embeddings)
-        return DashAIDataset(concatenated_dataset.data.table)
+    def encode(self, text: str) -> np.ndarray:
+        """Encode a single text into an embedding."""
+        embeddings = self._encode_texts([text])
+        return embeddings[0] if embeddings else np.array([])

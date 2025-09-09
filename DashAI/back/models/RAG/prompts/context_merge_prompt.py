@@ -1,7 +1,7 @@
 from typing import Any, List, Tuple
-from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
+from DashAI.back.models.RAG.prompts.prompt import Prompt
 
-class ContextMergePrompt(BasePrompt):
+class ContextMergePrompt(Prompt):
     """
     ContextMergePrompt class for generating prompts that merge the use input, the retrieved 
     documents and the chat history into a single context for the language model.

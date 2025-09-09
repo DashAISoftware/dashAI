@@ -1,7 +1,8 @@
-from abc import ABC
 from typing import Any
 
-class BasePrompt(ABC):
+from DashAI.back.models.base_model import BaseModel
+
+class Prompt(BaseModel):
     """
     Base class for all RAG prompt templates.
     This class defines the interface for creating and formatting prompts.

@@ -1,2 +1,7 @@
+from DashAI.back.models.RAG.chunking_models import *
+from DashAI.back.models.RAG.documents import *
+from DashAI.back.models.RAG.encodings import *
+from DashAI.back.models.RAG.prompts import *
+from DashAI.back.models.RAG.Retrievers import *
+
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
-from DashAI.back.models.RAG.Retrievers import BaseRetriever, TFIDFRetriever, DenseRetriever

@@ -2,29 +2,20 @@ from abc import ABC
 import os
 from typing import Any, Dict, List, Final
 from DashAI.back.models.RAG.documents import BaseDocument, PDFDocument, TxtDocument
-from DashAI.back.config_object import ConfigObject
 import hashlib
+
+from DashAI.back.models.base_model import BaseModel
 
 SUPPORTED_DOCUMENT_TYPES = ['pdf', 'txt']
 
-class BaseRetriever(ABC, ConfigObject):
+class RetrieverModel(BaseModel):
     """
-    Base class for retrievers.
+    Abstract class to define the interface for retriever models.
     """
 
     RETRIEVERS_PATH = "./StoredRetrievers"
     COMPATIBLE_COMPONENTS = ["RAGTask"]
-    TYPE: Final[str] = "RetrieverModel"
 
-
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the retriever.
-        """
-        self.params = None
-        self._documents_paths = None
-        self.chunk_size = None
-        self.chunk_overlap = None
 
     def _load_document(self, document_path: str) -> BaseDocument:
         """
@@ -52,7 +43,7 @@ class BaseRetriever(ABC, ConfigObject):
         assert self._documents_paths is not None, "Document paths must be provided."
         assert len(self._documents_paths) > 0, "At least one document path must be provided."
         
-        self._documents_paths = sorted(self._documents_paths)  # Sort for consistent hashing
+        self._documents_paths = sorted(self._documents_paths)  # Sort for consistent hashing in signature
         documents = {}
         for path in self._documents_paths:
             doc = self._load_document(path)
@@ -83,10 +74,10 @@ class BaseRetriever(ABC, ConfigObject):
         assert self.params is not None, "Retriever parameters are not set."
         return self.params
     
-    def get_hashable_parameters(self) -> Dict[str, Any]:
+    def get_signature_parameters(self) -> Dict[str, Any]:
         """
         Get the parameters used for storing the fitted retriever in the database.
-        This parameters are a subset of the retriever parameters, the non-hashable parameters are
+        This parameters are a subset of the retriever parameters, the non-signature parameters are
         those whose change does not require a retraining of the retriever, i.e. n_docs, 
         max_distance, etc.
         
@@ -95,7 +86,7 @@ class BaseRetriever(ABC, ConfigObject):
         """
         raise NotImplementedError("This method should be implemented by subclasses.")
     
-    def _get_documents_hash(self) -> str:
+    def _get_documents_signature(self) -> str:
         """
         Generate a hash representing the current set of documents.
 
@@ -109,7 +100,7 @@ class BaseRetriever(ABC, ConfigObject):
             hashes += f"{filename}{doc_hash}"
         return hashlib.sha256(hashes.encode('utf-8')).hexdigest()
     
-    def _get_parameters_hash(self) -> str:
+    def _get_parameters_signature(self) -> str:
         """
         Generate a hash representing the retriever parameters.
 
@@ -119,19 +110,19 @@ class BaseRetriever(ABC, ConfigObject):
         Returns:
             str: A hash string representing the parameters.
         """
-        hashable_parameters = sorted(self.get_hashable_parameters().items())
+        hashable_parameters = sorted(self.get_signature_parameters().items())
         params_string = "".join(f"{key}{value}" for key, value in hashable_parameters)
         return hashlib.sha256(params_string.encode('utf-8')).hexdigest()
 
-    def _get_cache_hash(self) -> str:
+    def _get_model_signature(self) -> str:
         """
         Generate a unique hash for the retriever based on its documents and parameters.
 
         Returns:
             str: A hash string representing the retriever's state.
         """
-        documents_hash = self._get_documents_hash()
-        parameters_hash = self._get_parameters_hash()
+        documents_hash = self._get_documents_signature()
+        parameters_hash = self._get_parameters_signature()
         return f"{self.__class__.__name__}_{documents_hash}_{parameters_hash}"
 
     def add_document(self, document: BaseDocument) -> None:
