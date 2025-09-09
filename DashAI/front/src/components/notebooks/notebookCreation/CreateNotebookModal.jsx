@@ -14,7 +14,7 @@ import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
-import { generateNotebookName } from "../../../utils/notebookNameGenerator";
+import { generateNotebookName } from "../../../utils/nameGenerator";
 
 export function CreateNotebookModal({
   open,

@@ -8,7 +8,7 @@ import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
-import { generateNotebookName } from "../../../utils/notebookNameGenerator";
+import { generateNotebookName } from "../../../utils/nameGenerator";
 
 export default function UploadNotebookSteps({
   backHome,

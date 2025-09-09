@@ -31,6 +31,7 @@ export default function ConfigureAndUploadDataset({
   goToPrevStep,
   backHome,
   handleDatasetCreated,
+  existingDatasets = [],
 }) {
   const [schema, setSchema] = useState({});
   const [loading, setLoading] = useState(true);
@@ -148,6 +149,7 @@ export default function ConfigureAndUploadDataset({
               newDataset={newDataset}
               setError={setError}
               error={error}
+              existingDatasets={existingDatasets}
             />
           )}
         </Grid>
