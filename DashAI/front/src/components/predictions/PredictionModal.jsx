@@ -22,7 +22,7 @@ import { useSnackbar } from "notistack";
 import SelectModelStep from "./SelectModelStep";
 import SelectDatasetStep from "./SelectDatasetStep";
 import { enqueuePredictionJob, startJobQueue } from "../../api/job";
-import { generatePredictionName } from "../../utils/predictionNameGenerator";
+import { generatePredictionName } from "../../utils/nameGenerator";
 
 function PredictionModal({
   open,
