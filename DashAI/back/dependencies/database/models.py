@@ -47,22 +47,30 @@ class Dataset(Base):
     )
 
     def set_status_as_delivered(self) -> None:
-        """Update the status of the dataset to delivered and set delivery_time to now."""
+        """
+        Update the status of the dataset to delivered and set delivery_time to now.
+        """
         self.status = DatasetStatus.DELIVERED
         self.delivery_time = datetime.now()
 
     def set_status_as_started(self) -> None:
-        """Update the status of the dataset to started and set start_time to now."""
+        """
+        Update the status of the dataset to started and set start_time to now.
+        """
         self.status = DatasetStatus.STARTED
         self.start_time = datetime.now()
 
     def set_status_as_finished(self) -> None:
-        """Update the status of the dataset to finished and set end_time to now."""
+        """
+        Update the status of the dataset to finished and set end_time to now.
+        """
         self.status = DatasetStatus.FINISHED
         self.end_time = datetime.now()
 
     def set_status_as_error(self) -> None:
-        """Update the status of the dataset to error."""
+        """
+        Update the status of the dataset to error.
+        """
         self.status = DatasetStatus.ERROR
 
 
