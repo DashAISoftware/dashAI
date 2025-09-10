@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
-from DashAI.back.dependencies.database.models import Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.metrics import BaseMetric
@@ -87,53 +87,10 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     return test_registry
 
 
-@pytest.fixture(scope="module", name="dataset_id", autouse=True)
-def fixture_dataset_id(client: TestClient):
-    script_dir = os.path.dirname(__file__)
-    test_dataset = "iris.csv"
-    abs_file_path = os.path.join(script_dir, test_dataset)
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "test_csv3",
-            "separator": ",",
-        }
-
-        kwargs = {
-            "name": "test_csv3",
-            "url": "",
-            "params": params,
-        }
-
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
-
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-    response = client.get("/api/v1/dataset/")
-    assert response.status_code == 200, response.text
-    datasets = response.json()
-    dataset_id = None
-    for dataset in datasets:
-        if dataset["name"] == "test_csv3":
-            dataset_id = dataset["id"]
-            break
-
-    assert dataset_id is not None, "Dataset not found after job completion"
-
-    yield dataset_id
-
-    response = client.delete(f"/api/v1/dataset/{dataset_id}")
-    assert response.status_code == 204, response.text
+@pytest.fixture(scope="module", name="dataset_id")
+def dataset_id(dataset_1: Dataset) -> int:
+    """Get the dataset ID from the dataset_1 fixture."""
+    return dataset_1.id
 
 
 @pytest.fixture(scope="module", name="experiment_id", autouse=True)

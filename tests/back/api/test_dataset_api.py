@@ -5,40 +5,6 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dependencies.database.models import Dataset
-from DashAI.back.job.dataset_job import DatasetJob
-
-
-@pytest.fixture(scope="module")
-def dataset_1(client) -> Dataset:
-    """Create testing dataset 1 using job system."""
-    abs_file_path = Path(__file__).parent / "iris.csv"
-
-    container = client.app.container
-    session_factory = container["session_factory"]
-
-    with session_factory() as db:
-        iris_dataset_entry = Dataset(
-            name="test_csv_1",
-            file_path="",
-        )
-        db.add(iris_dataset_entry)
-        db.commit()
-        db.refresh(iris_dataset_entry)
-
-        # run dataset_job directly to be sure the dataset is ready when the test starts
-        kwargs = {
-            "dataset_id": iris_dataset_entry.id,
-            "url": "",
-            "params": {
-                "dataloader": "CSVDataLoader",
-                "separator": ",",
-                "name": iris_dataset_entry.name,
-            },
-            "file_path": abs_file_path,
-        }
-        job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
-    return iris_dataset_entry
 
 
 @pytest.fixture(scope="module")

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -6,9 +7,11 @@ import joblib
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
@@ -57,6 +60,7 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             DummyTask,
             DummyModel,
             DummyMetric,
+            CSVDataLoader,
             JSONDataLoader,
             ModelJob,
             OptunaOptimizer,
@@ -73,90 +77,96 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture(scope="module", name="dataset", autouse=True)
 def create_dataset(client: TestClient):
-    """Create testing dataset using job system."""
-    script_dir = os.path.dirname(__file__)
-    test_dataset = "irisDataset.json"
-    abs_file_path = os.path.join(script_dir, test_dataset)
+    """Create testing dataset using job system for JSON dataset."""
+    abs_file_path = Path(__file__).parent / "irisDataset.json"
 
-    with open(abs_file_path, "rb") as json_file:
-        params = {
-            "dataloader": "JSONDataLoader",
-            "name": "test_json",
-            "data_key": "data",
-        }
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        json_dataset_entry = Dataset(
+            name="test_json",
+            file_path="",
+        )
+        db.add(json_dataset_entry)
+        db.commit()
+        db.refresh(json_dataset_entry)
 
         kwargs = {
-            "name": "test_json",
+            "dataset_id": json_dataset_entry.id,
             "url": "",
-            "params": params,
+            "params": {
+                "dataloader": "JSONDataLoader",
+                "name": json_dataset_entry.name,
+                "data_key": "data",
+            },
+            "file_path": abs_file_path,
         }
+        job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
+        asyncio.run(job.run())
 
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+        db.refresh(json_dataset_entry)
 
-        files = {"file": ("irisDataset.json", json_file, "application/json")}
-        headers = {"filename": "irisDataset.json"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-        assert response.status_code == 201, response.text
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        response = client.get("/api/v1/dataset/1")
-        assert response.status_code == 200, response.text
-        dataset = response.json()
+        dataset = {
+            "id": json_dataset_entry.id,
+            "name": json_dataset_entry.name,
+            "file_path": json_dataset_entry.file_path,
+        }
 
     yield dataset
 
-    response = client.delete(f"/api/v1/dataset/{dataset['id']}")
-    assert response.status_code == 204, response.text
+    with session_factory() as db:
+        dataset_to_delete = db.get(Dataset, dataset["id"])
+        if dataset_to_delete:
+            db.delete(dataset_to_delete)
+            db.commit()
 
 
 @pytest.fixture(name="dataset_2", autouse=True, scope="module")
 def create_dataset_2(client: TestClient):
-    """Create testing dataset 2."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
+    """Create testing dataset 2 using CSV file."""
+    abs_file_path = Path(__file__).parent / "iris.csv"
 
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "test_csv",
-            "separator": ",",
-        }
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        csv_dataset_entry = Dataset(
+            name="test_csv",
+            file_path="",
+        )
+        db.add(csv_dataset_entry)
+        db.commit()
+        db.refresh(csv_dataset_entry)
 
         kwargs = {
-            "name": "test_csv",
+            "dataset_id": csv_dataset_entry.id,
             "url": "",
-            "params": params,
+            "params": {
+                "dataloader": "CSVDataLoader",
+                "separator": ",",
+                "name": csv_dataset_entry.name,
+            },
+            "file_path": abs_file_path,
         }
+        job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
+        asyncio.run(job.run())
 
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+        db.refresh(csv_dataset_entry)
 
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-        assert response.status_code == 201, response.text
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        response = client.get("/api/v1/dataset/2")
-        assert response.status_code == 200, response.text
-        dataset = response.json()
+        dataset = {
+            "id": csv_dataset_entry.id,
+            "name": csv_dataset_entry.name,
+            "file_path": csv_dataset_entry.file_path,
+        }
 
     yield dataset
 
-    response = client.delete(f"/api/v1/dataset/{dataset['id']}")
-    assert response.status_code == 204, response.text
+    with session_factory() as db:
+        dataset_to_delete = db.get(Dataset, dataset["id"])
+        if dataset_to_delete:
+            db.delete(dataset_to_delete)
+            db.commit()
 
 
 @pytest.fixture(scope="module", name="experiment_id", autouse=True)
