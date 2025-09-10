@@ -149,7 +149,7 @@ export default function DatasetPreviewNotebook({
           </Box>
         </AccordionSummary>
         <AccordionDetails>
-          <Box sx={{ height: 320, width: "100%" }}>
+          <Box sx={{ height: 325, width: "100%" }}>
             {" "}
             {/* Table */}
             <DatasetTable
@@ -176,7 +176,7 @@ export default function DatasetPreviewNotebook({
               sx={{
                 height: "100%",
                 "& .MuiDataGrid-virtualScroller": {
-                  minHeight: "100%",
+                  "overflow-y": "hidden",
                 },
                 "& .MuiDataGrid-overlay": {
                   height: "100%",
