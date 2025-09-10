@@ -67,4 +67,6 @@ def create_dataset_1(client) -> Dataset:
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
         asyncio.run(job.run())
+
+        db.refresh(iris_dataset_entry)
     return iris_dataset_entry

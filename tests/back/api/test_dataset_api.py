@@ -25,7 +25,7 @@ def dataset_not_started(client) -> Dataset:
     return iris_dataset_entry
 
 
-@pytest.mark.dependency()
+@pytest.mark.dependency
 def test_create_dataset(client: TestClient) -> None:
     response = client.post("/api/v1/dataset/", json={"name": "test_csv"})
 
@@ -63,10 +63,7 @@ def test_get_dataset(client: TestClient, dataset_1: Dataset) -> None:
     assert data["name"] == dataset_1.name
     assert data["id"] == dataset_1.id
     assert data["status"] == DatasetStatus.FINISHED.value
-    expected_path = (
-        client.app.container._services["config"]["DATASETS_PATH"] / dataset_1.name
-    )
-    expected_path_str = os.path.normpath(str(expected_path))
+    expected_path_str = os.path.normpath(str(dataset_1.file_path))
     actual_path_str = os.path.normpath(data["file_path"])
     assert actual_path_str == expected_path_str
 
