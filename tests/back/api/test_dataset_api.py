@@ -1,109 +1,120 @@
-import json
 import os
 
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.core.enums.status import DatasetStatus
+from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.job.dataset_job import DatasetJob
 
-@pytest.fixture(name="response_1", autouse=True)
-def create_dataset_1(client):
+
+@pytest.fixture(scope="module")
+def dataset_1(client) -> Dataset:
     """Create testing dataset 1 using job system."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
+    abs_file_path = Path(__file__).parent / "iris.csv"
 
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "test_csv",
-            "separator": ",",
-        }
+    container = client.app.container
+    session_factory = container["session_factory"]
 
-        kwargs = {
-            "name": "test_csv",
-            "url": "",
-            "params": params,
-        }
-
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
-
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
+    with session_factory() as db:
+        iris_dataset_entry = Dataset(
+            name="test_csv_1",
+            file_path="",
         )
+        db.add(iris_dataset_entry)
+        db.commit()
+        db.refresh(iris_dataset_entry)
 
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+        # run dataset_job directly to be sure the dataset is ready when the test starts
+        kwargs = {
+            "dataset_id": iris_dataset_entry.id,
+            "url": "",
+            "params": {
+                "dataloader": "CSVDataLoader",
+                "separator": ",",
+                "name": iris_dataset_entry.name,
+            },
+            "file_path": abs_file_path,
+        }
+        job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
+        asyncio.run(job.run())
+    return iris_dataset_entry
 
-    return response
 
-
-@pytest.fixture(name="response_2", autouse=True)
-def create_dataset_2(client):
+@pytest.fixture(scope="module")
+def dataset_not_started(client) -> Dataset:
     """Create testing dataset 2 using job system."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
+    container = client.app.container
+    session_factory = container["session_factory"]
 
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "test_csv2",
-            "separator": ",",
-        }
-
-        kwargs = {
-            "name": "test_csv2",
-            "url": "",
-            "params": params,
-        }
-
-        # Crear un formulario multipart similar a job.ts
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
-
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
+    with session_factory() as db:
+        iris_dataset_entry = Dataset(
+            name="test_csv_2",
+            file_path="",
         )
+        db.add(iris_dataset_entry)
+        db.commit()
+        db.refresh(iris_dataset_entry)
 
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-    return response
+    return iris_dataset_entry
 
 
-def test_create_csv_dataset(client: TestClient, response_1, response_2) -> None:
-    assert response_1.status_code == 201, response_1.text
-    response_1 = client.get("/api/v1/dataset/1")
-    assert response_1.status_code == 200, response_1.text
-    data = response_1.json()
+@pytest.mark.dependency()
+def test_create_dataset(client: TestClient) -> None:
+    response = client.post("/api/v1/dataset/", json={"name": "test_csv"})
+
+    assert response.status_code == 201, response.text
+    data = response.json()
     assert data["name"] == "test_csv"
-    response_2 = client.get("/api/v1/dataset/2")
-    assert response_2.status_code == 200, response_2.text
-    data = response_2.json()
-    assert data["name"] == "test_csv2"
+
+    response = client.get(f"/api/v1/dataset/{data['id']}")
+
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["name"] == "test_csv"
+    assert data["status"] == DatasetStatus.NOT_STARTED.value
+    assert data["id"] is not None
+    assert data["file_path"] == ""
 
 
-def test_get_all_datasets(client: TestClient):
+@pytest.mark.dependency(depends=["test_create_dataset"])
+def test_get_all_datasets(client: TestClient, dataset_1: Dataset) -> None:
     response = client.get("/api/v1/dataset/")
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data[0]["name"] == "test_csv"
-    assert data[1]["name"] == "test_csv2"
+
+    assert len(data) == 2, "There should be 2 datasets in the DB"
+
+    dataset_names = [dataset["name"] for dataset in data]
+    assert "test_csv" in dataset_names
+    assert "test_csv_1" in dataset_names
 
 
-def test_get_unexistant_dataset(client: TestClient):
+def test_get_dataset(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["name"] == dataset_1.name
+    assert data["id"] == dataset_1.id
+    assert data["status"] == DatasetStatus.FINISHED.value
+    expected_path = (
+        client.app.container._services["config"]["DATASETS_PATH"] / dataset_1.name
+    )
+    expected_path_str = os.path.normpath(str(expected_path))
+    actual_path_str = os.path.normpath(data["file_path"])
+    assert actual_path_str == expected_path_str
+
+
+def test_get_unexistant_dataset(client: TestClient) -> None:
     response = client.get("/api/v1/dataset/31415")
     assert response.status_code == 404, response.text
     assert response.text == '{"detail":"Dataset not found"}'
 
 
-def test_get_types(client: TestClient):
-    response = client.get("/api/v1/dataset/2/types")
+def test_get_types(
+    client: TestClient, dataset_1: Dataset, dataset_not_started: Dataset
+) -> None:
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}/types")
     data = response.json()
     assert data == {
         "SepalLengthCm": {"type": "Value", "dtype": "float64"},
@@ -113,22 +124,26 @@ def test_get_types(client: TestClient):
         "Species": {"type": "Value", "dtype": "string"},
     }
 
+    response = client.get(f"/api/v1/dataset/{dataset_not_started.id}/types")
+    assert response.status_code == 422, response.text
+    assert response.text == '{"detail":"Dataset is not in finished state"}'
 
-def test_modify_dataset_name(client: TestClient):
+
+def test_modify_dataset_name(client: TestClient, dataset_1: Dataset) -> None:
     response = client.patch(
-        "/api/v1/dataset/2",
+        f"/api/v1/dataset/{dataset_1.id}",
         json={"name": "test_modify_name"},
     )
     assert response.status_code == 200, response.text
-    response = client.get("/api/v1/dataset/2")
+    response = client.get(f"/api/v1/dataset/{dataset_1.id}")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == "test_modify_name"
 
 
-def test_delete_dataset(client: TestClient):
-    response = client.delete("/api/v1/dataset/1")
+def test_delete_dataset(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.delete(f"/api/v1/dataset/{dataset_1.id}")
     assert response.status_code == 204, response.text
 
-    response = client.delete("/api/v1/dataset/2")
-    assert response.status_code == 204, response.text
+    response = client.delete("/api/v1/dataset/10000")
+    assert response.status_code == 404, response.text
