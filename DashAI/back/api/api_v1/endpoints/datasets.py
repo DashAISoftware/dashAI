@@ -20,7 +20,6 @@ from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
-    update_columns_spec,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment
 
@@ -602,7 +601,7 @@ async def update_dataset(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
-    """Updates the name and/or task name of a dataset with the provided ID.
+    """Updates the name of a dataset with the provided ID.
 
     Parameters
     ----------
@@ -610,12 +609,8 @@ async def update_dataset(
         ID of the dataset to update.
     params : DatasetUpdateParams
         A dictionary containing the new values for the dataset.
-        name : str, optional
+        name : str
             New name for the dataset.
-        task_name : str, optional
-            New task name for the dataset.
-        columns : Dict[str, ColumnSpecItemParams], optional
-            New column specification for the dataset.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -628,12 +623,8 @@ async def update_dataset(
     with session_factory() as db:
         try:
             dataset = db.get(Dataset, dataset_id)
-            if params.columns:
-                update_columns_spec(f"{dataset.file_path}/dataset", params.columns)
-            elif params.name:
+            if params.name and params.name != dataset.name:
                 setattr(dataset, "name", params.name)
-                new_folder_path = config["DATASETS_PATH"] / params.name
-                os.rename(dataset.file_path, new_folder_path)
                 db.commit()
                 db.refresh(dataset)
                 return dataset
@@ -678,7 +669,6 @@ async def get_dataset_file(
 
     start = page * page_size
     end = start + page_size
-    total_rows = 0
     rows_collected = 0
 
     with pa.memory_map(arrow_file_path, "r") as source:
@@ -690,9 +680,6 @@ async def get_dataset_file(
             batch_start = current_index
             batch_end = current_index + batch.num_rows
             current_index = batch_end
-
-            # Count total rows on the fly
-            total_rows += batch.num_rows
 
             # Skip batches before the page start
             if batch_end <= start:
@@ -716,6 +703,8 @@ async def get_dataset_file(
 
             if rows_collected >= page_size:
                 break
+
+    total_rows = get_dataset_info(f"{path}/dataset")["total_rows"]
 
     return JSONResponse(content={"rows": rows, "total": total_rows})
 

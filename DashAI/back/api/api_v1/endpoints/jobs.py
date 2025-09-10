@@ -26,6 +26,41 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+async def _enqueue_job_logic(
+    job_type: str,
+    kwargs: dict,
+    session_factory: sessionmaker,
+    component_registry: ComponentRegistry,
+    job_queue: BaseJobQueue,
+) -> BaseJob:
+    """Core logic to create a job and enqueue it."""
+    with session_factory() as db:
+        params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
+        job: BaseJob = component_registry[params.job_type]["class"](
+            **params.model_dump()
+        )
+
+        try:
+            job.set_status_as_delivered()
+        except JobError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Job not delivered",
+            ) from e
+
+        try:
+            job_queue.put(job)
+        except JobQueueError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Job not enqueued",
+            ) from e
+
+    return job
+
+
 @router.post("/start/")
 async def start_job_queue(
     request: Request,
@@ -184,31 +219,9 @@ async def enqueue_job(
         kwargs["temp_dir"] = temp_dir
         kwargs["filename"] = filename
 
-        with session_factory() as db:
-            params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
-            job: BaseJob = component_registry[params.job_type]["class"](
-                **params.model_dump()
-            )
-
-            try:
-                job.set_status_as_delivered()
-            except JobError as e:
-                logger.exception(e)
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Job not delivered",
-                ) from e
-
-            try:
-                job_queue.put(job)
-            except JobQueueError as e:
-                logger.exception(e)
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Job not enqueued",
-                ) from e
-
-        return job
+        return await _enqueue_job_logic(
+            job_type, kwargs, session_factory, component_registry, job_queue
+        )
 
     else:
         form = await request.form()
@@ -222,32 +235,9 @@ async def enqueue_job(
             )
 
         kwargs = json.loads(kwargs_str)
-
-        with session_factory() as db:
-            params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
-            job: BaseJob = component_registry[params.job_type]["class"](
-                **params.model_dump()
-            )
-
-            try:
-                job.set_status_as_delivered()
-            except JobError as e:
-                logger.exception(e)
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Job not delivered",
-                ) from e
-
-            try:
-                job_queue.put(job)
-            except JobQueueError as e:
-                logger.exception(e)
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Job not enqueued",
-                ) from e
-
-        return job
+        return await _enqueue_job_logic(
+            job_type, kwargs, session_factory, component_registry, job_queue
+        )
 
 
 @router.delete("/")

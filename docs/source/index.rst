@@ -35,6 +35,16 @@ the detailed API documentation and extensive examples. Check out :doc:`getting_s
    tutorials/converter.rst
    tutorials/converter_chain.rst
    tutorials/explorer.rst
+   tutorials/generative.rst
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Plugin Development
+
+   tutorials/plugins/plugin_example.rst
+   tutorials/plugins/plugin_structure.rst
+   tutorials/plugins/plugin_develop.rst
+   tutorials/plugins/how_upload_plugins.rst
 
 .. toctree::
    :maxdepth: 1

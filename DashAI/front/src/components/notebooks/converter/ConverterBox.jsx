@@ -6,7 +6,9 @@ import {
   Typography,
   Chip,
   CircularProgress,
+  IconButton,
 } from "@mui/material";
+import { Delete } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../../utils/converterStatus";
@@ -15,8 +17,8 @@ import { getConverterById } from "../../../api/converter";
 
 export default function ConverterBox({
   converter,
-  height = "320px",
   onStatusChange,
+  handleConverterDeleteClick,
 }) {
   const [converterComponent, setConverterComponent] = useState({});
 
@@ -40,7 +42,6 @@ export default function ConverterBox({
       try {
         const updatedConverter = await getConverterById(converter.id);
 
-        // 🔑 notificar al padre si cambia el estado
         if (updatedConverter.status !== converter.status) {
           onStatusChange(updatedConverter.id, updatedConverter.status);
         }
@@ -68,7 +69,7 @@ export default function ConverterBox({
   return (
     <Card
       key={converter.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height }}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
     >
       <CardContent
         sx={{
@@ -90,11 +91,25 @@ export default function ConverterBox({
             <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
             <Typography variant="h6">{converter.converter}</Typography>
           </Box>
-          <Chip
-            label={statusLabel}
-            color={statusLabel === "Finished" ? "primary" : "default"}
-            size="small"
-          />
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip
+              label={statusLabel}
+              color={statusLabel === "Finished" ? "primary" : "default"}
+              size="small"
+            />
+            <IconButton
+              size="small"
+              onClick={() => handleConverterDeleteClick(converter)}
+              sx={{
+                width: 24,
+                height: 24,
+                bgcolor: "error.main",
+                "&:hover": { bgcolor: "error.dark" },
+              }}
+            >
+              <Delete sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
         </Box>
 
         {statusLabel === "Finished" ? (
@@ -120,8 +135,8 @@ export default function ConverterBox({
                 rows={[
                   {
                     id: 2,
-                    key: "Target Index",
-                    value: converter.parameters.target_index,
+                    key: "Target Column",
+                    value: converter.parameters.target?.columnName,
                   },
                   {
                     id: 3,
@@ -129,7 +144,9 @@ export default function ConverterBox({
                     value:
                       converter.parameters.scope?.columns?.length === 0
                         ? "All"
-                        : converter.parameters.scope.columns.join(", "),
+                        : converter.parameters.scope.columns
+                            .map((col) => col.columnName)
+                            .join(", "),
                   },
                   {
                     id: 4,
@@ -142,7 +159,7 @@ export default function ConverterBox({
                 ]}
                 columns={[
                   { field: "key", headerName: "Parameter", flex: 1 },
-                  { field: "value", headerName: "Value", flex: 2 },
+                  { field: "value", headerName: "Value", flex: 4 },
                 ]}
                 hideFooter
                 disableColumnMenu
@@ -153,10 +170,10 @@ export default function ConverterBox({
                   height: "100%",
                   width: "100%",
                   "& .MuiDataGrid-virtualScroller": {
-                    "&::-webkit-scrollbar": {
-                      width: "0px",
-                      height: "0px",
-                    },
+                    overflowX: "auto",
+                  },
+                  "& .MuiDataGrid-cell": {
+                    whiteSpace: "nowrap", // keep everything on one line
                   },
                 }}
               />

@@ -8,7 +8,7 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
-import { Analytics, Info } from "@mui/icons-material";
+import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
 import { getExplorerById } from "../../../api/explorer";
@@ -16,8 +16,8 @@ import { getExplorerById } from "../../../api/explorer";
 export default function ExplorerBox({
   explorer,
   handleExplorerDetailsClick,
+  handleExplorerDeleteClick,
   onStatusChange,
-  height = "320px",
 }) {
   useEffect(() => {
     let intervalId;
@@ -54,7 +54,7 @@ export default function ExplorerBox({
   return (
     <Card
       key={explorer.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height }}
+      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
     >
       <CardContent
         sx={{
@@ -83,19 +83,33 @@ export default function ExplorerBox({
               size="small"
             />
             {statusLabel === "Finished" && (
-              <IconButton
-                size="small"
-                onClick={() => handleExplorerDetailsClick(explorer)}
-                sx={{
-                  bgcolor: "#00BEBB",
-                  color: "white",
-                  width: 24,
-                  height: 24,
-                  "&:hover": { bgcolor: "#008582" },
-                }}
-              >
-                <Info sx={{ fontSize: 16 }} />
-              </IconButton>
+              <>
+                <IconButton
+                  size="small"
+                  onClick={() => handleExplorerDetailsClick(explorer)}
+                  sx={{
+                    color: "white",
+                    width: 24,
+                    height: 24,
+                    bgcolor: "primary.main",
+                    "&:hover": { bgcolor: "primary.dark" },
+                  }}
+                >
+                  <Info sx={{ fontSize: 16 }} />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => handleExplorerDeleteClick(explorer)}
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: "error.main",
+                    "&:hover": { bgcolor: "error.dark" },
+                  }}
+                >
+                  <Delete sx={{ fontSize: 16 }} />
+                </IconButton>
+              </>
             )}
           </Box>
         </Box>

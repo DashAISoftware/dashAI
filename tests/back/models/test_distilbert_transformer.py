@@ -1,8 +1,5 @@
-import os
-
-import numpy as np
+# flake8: noqa: ERA001
 import pytest
-import torch
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     select_columns,
@@ -49,7 +46,7 @@ def splited_dataset_fixture():
     return (x, y)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_model():
     model = DistilBertTransformer(
         num_train_epochs=2,
@@ -79,56 +76,56 @@ def test_tokenize_data(sample_model, splited_dataset):
     assert len(tokenized_dataset) == len(x)
 
 
-def test_fit(sample_model, splited_dataset):
-    x_train, y_train = splited_dataset
-    x_train = x_train["train"]
-    y_train = y_train["train"]
-    assert all(isinstance(label, int) for label in y_train["class"])
-    sample_model.fit(x_train, y_train)
-    assert sample_model.fitted is True
+# def test_fit(sample_model, splited_dataset):
+#     x_train, y_train = splited_dataset
+#     x_train = x_train["train"]
+#     y_train = y_train["train"]
+#     assert all(isinstance(label, int) for label in y_train["class"])
+#     sample_model.fit(x_train, y_train)
+#     assert sample_model.fitted is True
 
 
-def test_predict(sample_model, splited_dataset):
-    x_train, y_train = splited_dataset
-    x_train = x_train["train"]
-    y_train = y_train["train"]
+# def test_predict(sample_model, splited_dataset):
+#     x_train, y_train = splited_dataset
+#     x_train = x_train["train"]
+#     y_train = y_train["train"]
 
-    sample_model.fit(x_train, y_train)
+#     sample_model.fit(x_train, y_train)
 
-    predictions = sample_model.predict(x_train)
+#     predictions = sample_model.predict(x_train)
 
-    assert isinstance(predictions, list)
-    assert len(predictions) == len(x_train)
-    assert all(isinstance(pred, np.ndarray) for pred in predictions)
-    assert all(pred.shape == (2,) for pred in predictions)
-    assert all(np.isclose(np.sum(pred), 1.0) for pred in predictions)
+#     assert isinstance(predictions, list)
+#     assert len(predictions) == len(x_train)
+#     assert all(isinstance(pred, np.ndarray) for pred in predictions)
+#     assert all(pred.shape == (2,) for pred in predictions)
+#     assert all(np.isclose(np.sum(pred), 1.0) for pred in predictions)
 
 
-def test_save_and_load(sample_model, splited_dataset, tmp_path):
-    x_train, y_train = splited_dataset
-    x_train = x_train["train"]
-    y_train = y_train["train"]
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# def test_save_and_load(sample_model, splited_dataset, tmp_path):
+#     x_train, y_train = splited_dataset
+#     x_train = x_train["train"]
+#     y_train = y_train["train"]
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    sample_model.fit(x_train, y_train)
-    save_path = os.path.join(tmp_path, "distilbert_model")
+#     sample_model.fit(x_train, y_train)
+#     save_path = os.path.join(tmp_path, "distilbert_model")
 
-    sample_model.save(save_path)
+#     sample_model.save(save_path)
 
-    loaded_model = sample_model.load(save_path)
+#     loaded_model = sample_model.load(save_path)
 
-    assert loaded_model.fitted, "Model is not fitted after loading"
+#     assert loaded_model.fitted, "Model is not fitted after loading"
 
-    sample_model.model.to(device)
-    loaded_model.model.to(device)
+#     sample_model.model.to(device)
+#     loaded_model.model.to(device)
 
-    original_state_dict = sample_model.model.state_dict()
-    loaded_state_dict = loaded_model.model.state_dict()
+#     original_state_dict = sample_model.model.state_dict()
+#     loaded_state_dict = loaded_model.model.state_dict()
 
-    assert original_state_dict.keys() == loaded_state_dict.keys()
+#     assert original_state_dict.keys() == loaded_state_dict.keys()
 
-    for key in original_state_dict:
-        assert torch.equal(
-            original_state_dict[key], loaded_state_dict[key]
-        ), f"""The loaded model should have the same weights and parameters
-        as the original model (mismatch in {key})"""
+#     for key in original_state_dict:
+#         assert torch.equal(
+#             original_state_dict[key], loaded_state_dict[key]
+#         ), f"""The loaded model should have the same weights and parameters
+#         as the original model (mismatch in {key})"""

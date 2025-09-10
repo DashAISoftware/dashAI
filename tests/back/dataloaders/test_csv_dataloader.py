@@ -52,15 +52,15 @@ class TestCSVDataloader(BaseTabularDataLoaderTester):
         [
             ("iris/comma.csv", {"separator": ","}, 150, 5),
             ("iris/semicolon.csv", {"separator": ";"}, 150, 5),
-            ("iris/tab.csv", {"separator": "\t"}, 150, 5),
+            ("iris/tab.csv", {"separator": "tab"}, 150, 5),
             ("iris/vert_bar.csv", {"separator": "|"}, 150, 5),
             ("wine/comma.csv", {"separator": ","}, 178, 14),
             ("wine/semicolon.csv", {"separator": ";"}, 178, 14),
-            ("wine/tab.csv", {"separator": "\t"}, 178, 14),
+            ("wine/tab.csv", {"separator": "tab"}, 178, 14),
             ("wine/vert_bar.csv", {"separator": "|"}, 178, 14),
             ("diabetes/comma.csv", {"separator": ","}, 442, 11),
             ("diabetes/semicolon.csv", {"separator": ";"}, 442, 11),
-            ("diabetes/tab.csv", {"separator": "\t"}, 442, 11),
+            ("diabetes/tab.csv", {"separator": "tab"}, 442, 11),
             ("diabetes/vert_bar.csv", {"separator": "|"}, 442, 11),
         ],
         ids=[

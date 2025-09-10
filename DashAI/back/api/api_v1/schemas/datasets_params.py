@@ -24,7 +24,6 @@ class ColumnsSpecParams(BaseModel):
 
 class DatasetUpdateParams(BaseModel):
     name: str = None
-    columns: Dict[str, ColumnSpecItemParams] = None
 
 
 class DatasetUploadFromNotebookParams(BaseModel):

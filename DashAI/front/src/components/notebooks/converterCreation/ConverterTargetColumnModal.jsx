@@ -96,7 +96,7 @@ const ConverterTargetColumnModal = ({
     if (selectedColumn === null) {
       return;
     }
-    updateClassColumn(selectedColumn + 1);
+    updateClassColumn(datasetColumns[selectedColumn]);
     setOpen(false);
   };
 
@@ -214,7 +214,6 @@ const ConverterTargetColumnModal = ({
 ConverterTargetColumnModal.propTypes = {
   updateClassColumn: PropTypes.func.isRequired,
   classColumnInitialValue: PropTypes.number,
-  datasetId: PropTypes.number.isRequired,
 };
 
 export default ConverterTargetColumnModal;

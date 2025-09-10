@@ -214,7 +214,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           <DatasetTable
             fetchPage={fetchDatasetPage}
             deps={[dataset.file_path]}
-            initialPageSize={5}
+            initialPageSize={10}
             datasetPath={dataset.file_path}
           />
         )}

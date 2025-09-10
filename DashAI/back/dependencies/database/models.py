@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -287,6 +287,130 @@ class LocalExplainer(Base):
         self.status = ExplainerStatus.ERROR
 
 
+class GenerativeProcess(Base):
+    __tablename__ = "generative_process"
+    """
+    Table to store all the information about a specific process of a generative model.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+    # metadata
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE")
+    )
+    status: Mapped[Enum] = mapped_column(
+        Enum(RunStatus), nullable=False, default=RunStatus.NOT_STARTED
+    )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+
+    session = relationship("GenerativeSession", back_populates="processes")
+    input = relationship(
+        "ProcessData",
+        primaryjoin=(
+            "and_("
+            "GenerativeProcess.id == ProcessData.process_id, "
+            "ProcessData.is_input == True)"
+        ),
+        lazy="selectin",
+        overlaps="output,process",
+    )
+    output = relationship(
+        "ProcessData",
+        primaryjoin=(
+            "and_("
+            "GenerativeProcess.id == ProcessData.process_id, "
+            "ProcessData.is_input == False)"
+        ),
+        lazy="selectin",
+        overlaps="input,process",
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """
+        Update the status of the run to delivered and set delivery_time
+        to now.
+        """
+        self.status = RunStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the process to started and set start_time to now."""
+        self.status = RunStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the process to finished and set end_time to now."""
+        self.status = RunStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """Update the status of the process to error."""
+        self.status = RunStatus.ERROR
+
+
+class ProcessData(Base):
+    __tablename__ = "process_data"
+    """
+    Base table to store the data of a generative process.
+    """
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    data: Mapped[str] = mapped_column(String, nullable=False)
+    data_type: Mapped[str] = mapped_column(String, nullable=False)
+    process_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_process.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    is_input: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    process = relationship(
+        "GenerativeProcess", foreign_keys=[process_id], overlaps="input,output"
+    )
+
+
+class GenerativeSession(Base):
+    __tablename__ = "generative_session"
+    """
+    Table to store all the information about a specific session of a generative model.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+    # task name
+    task_name: Mapped[str] = mapped_column(String, nullable=False)
+    # model and parameters
+    model_name: Mapped[str] = mapped_column(String)
+    parameters: Mapped[JSON] = mapped_column(JSON)
+    # metadata
+    name: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+
+    # Relationship with GenerativeSessionParameterHistory
+    parameters_history: Mapped[List["GenerativeSessionParameterHistory"]] = (
+        relationship(
+            "GenerativeSessionParameterHistory",
+            cascade="all, delete-orphan",
+            back_populates="session",
+        )
+    )
+
+    # Relationship with GenerativeProcess
+    processes: Mapped[List["GenerativeProcess"]] = relationship(
+        "GenerativeProcess", cascade="all, delete-orphan", back_populates="session"
+    )
+
+
 class Pipeline(Base):
     __tablename__ = "pipeline"
     """
@@ -294,12 +418,6 @@ class Pipeline(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-    last_modified: Mapped[DateTime] = mapped_column(
-        DateTime,
-        default=datetime.now,
-        onupdate=datetime.now,
-    )
     steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
@@ -388,6 +506,31 @@ class Notebook(Base):
         back_populates="notebook", cascade="all, delete-orphan"
     )
     dataset: Mapped["Dataset"] = relationship(back_populates="notebooks")
+
+
+class GenerativeSessionParameterHistory(Base):
+    __tablename__ = "parameter_history"
+    """
+    Table to store the parameters of a generative session and their
+    modification history.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    modified_at: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+    )
+
+    # Relationship with GenerativeSession
+    session = relationship(
+        "GenerativeSession",
+        back_populates="parameters_history",
+        cascade="all, delete",
+    )
 
 
 class Explorer(Base):

@@ -20,24 +20,20 @@ function TabularVisualizer({
         slots: {},
         slotProps: {},
         sx: {
-          height: "100%",
+          // height: "100%",
           width: "100%",
-          "& .MuiDataGrid-virtualScroller": {
-            overflowY: "hidden",
-            "&::-webkit-scrollbar": {
-              width: "0px",
-              height: "0px",
-            },
-          },
         },
         initialState: {
           pagination: {
             paginationModel: {
-              pageSize: 4,
+              pageSize: 5,
             },
           },
         },
-        pageSizeOptions: [4],
+        noRowsOverlay: {
+          style: { height: "100%" },
+        },
+        pageSizeOptions: [5],
       }
     : {
         autoHeight: true,

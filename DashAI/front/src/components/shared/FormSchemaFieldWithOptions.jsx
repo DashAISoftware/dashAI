@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import FormSchemaField from "./FormSchemaField";
 import SingleSelectChipGroup from "./SingleSelectChipGroup";
 import { getValidator } from "../../utils/schema";
@@ -47,13 +47,17 @@ function FormSchemaFieldsWithOptions({
   const [selectedType, setSelectedType] = useState(null);
   const [errorField, setErrorField] = useState(null);
 
-  const fieldProps = {
-    paramJsonSchema: {
+  const paramJsonSchema = useMemo(() => {
+    return {
       title,
       description,
       required,
       ...options.find((option) => option.type === selectedType),
-    },
+    };
+  }, [title, description, required, options, selectedType]);
+
+  const fieldProps = {
+    paramJsonSchema,
     field,
     ...rest,
   };

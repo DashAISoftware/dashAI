@@ -10,7 +10,7 @@ from datasets.features import Features
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
+from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -211,7 +211,14 @@ class ConverterListJob(BaseJob):
             # dataset to edit
             dataset_path = f"{converter_list.notebook.file_path}/dataset"
             loaded_dataset = load_dataset(dataset_path)
-            target_column_index = converter_list.parameters.pop("target_index")
+            print("Pre target column")
+            params = converter_list.parameters or {}
+            target_column_index = (
+                params["target"].get("idx")
+                if params.get("target") is not None
+                else None
+            )
+            print(target_column_index)
 
             if not loaded_dataset:
                 raise JobError(f"Dataset with path {dataset_path} not found")
@@ -327,6 +334,7 @@ class ConverterListJob(BaseJob):
                         camel_to_snake,
                         converter_submodule_inverse_index,
                     )
+                    print(converter_instance.metadata)
 
                     # Get scope or use default
                     scope = converter_params.get("scope", {"columns": [], "rows": []})
@@ -347,7 +355,9 @@ class ConverterListJob(BaseJob):
                 converter_scope = converter_info["scope"]
 
                 # Process columns scope
-                columns_scope = [column - 1 for column in converter_scope["columns"]]
+                columns_scope = [
+                    column["idx"] - 1 for column in converter_scope["columns"]
+                ]
                 scope_column_indexes = sorted(set(columns_scope))
 
                 # If no columns specified, use all columns

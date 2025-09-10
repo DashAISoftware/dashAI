@@ -6,11 +6,7 @@ from typing import Any, Dict
 from beartype import beartype
 from datasets import load_dataset
 
-from DashAI.back.core.schema_fields import (
-    none_type,
-    schema_field,
-    string_field,
-)
+from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -51,6 +47,12 @@ class JSONDataLoader(BaseDataLoader):
         "TranslationTask",
     ]
     SCHEMA = JSONDataloaderSchema
+
+    DESCRIPTION: str = """
+    Data loader for tabular data in JSON files.
+    Supports both standard JSON array format (a list of dictionaries)
+    and nested JSON data where records are contained within a specific key.
+    """
 
     def _check_params(self, params: Dict[str, Any]) -> None:
         if "data_key" not in params:

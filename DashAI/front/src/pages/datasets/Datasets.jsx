@@ -8,11 +8,17 @@ import UploadDatasetSteps from "../../components/notebooks/datasetCreation/Uploa
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
 import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
-import { getDatasets, deleteDataset, getDatasetInfo } from "../../api/datasets";
+import {
+  getDatasets,
+  deleteDataset,
+  getDatasetInfo,
+  updateDataset,
+} from "../../api/datasets";
 import {
   getNotebooks,
   deleteNotebook,
   createDatasetFromNotebook,
+  updateNotebook,
 } from "../../api/notebook";
 import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
@@ -243,6 +249,38 @@ export default function DatasetsPage() {
     checkDatasetReady();
   };
 
+  const handleEditDataset = async (id, newName) => {
+    try {
+      updateDataset(id, { name: newName }).then(async (updatedDataset) => {
+        setDatasets((prevDatasets) =>
+          prevDatasets.map((dataset) =>
+            dataset.id === id
+              ? { ...dataset, name: updatedDataset.name }
+              : dataset,
+          ),
+        );
+      });
+    } catch (error) {
+      console.error("Failed to update dataset:", error);
+    }
+  };
+
+  const handleEditNotebook = async (id, newName) => {
+    try {
+      await updateNotebook(id, { name: newName }).then((updatedNotebook) => {
+        setNotebooks((prevNotebooks) =>
+          prevNotebooks.map((notebook) =>
+            notebook.id === id
+              ? { ...notebook, name: updatedNotebook.name }
+              : notebook,
+          ),
+        );
+      });
+    } catch (error) {
+      console.error("Failed to update notebook:", error);
+    }
+  };
+
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -256,8 +294,10 @@ export default function DatasetsPage() {
           selectedNotebookId={selectedNotebookId}
           onDatasetClick={handleDatasetClick}
           onDatasetDelete={handleDatasetDelete}
+          onDatasetEdit={handleEditDataset}
           onNotebookClick={handleNotebookClick}
           onNotebookDelete={handleNotebookDelete}
+          onNotebookEdit={handleEditNotebook}
           handleNewSessionButton={handleNewSessionButton}
         />
       </Box>

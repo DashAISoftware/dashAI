@@ -1,3 +1,4 @@
+# flake8: noqa: ERA001
 import os
 from pathlib import Path
 
