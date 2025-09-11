@@ -35,7 +35,7 @@ class LabelEncoder(SklearnWrapper):
         x_pandas = x.to_pandas()
 
         for col in x_pandas.columns:
-            if x_pandas[col].dtype.name in ["object", "category", "string"]:
+            if x_pandas[col].dtype.name in self.metadata["supported_dtypes"]:
                 mask = x_pandas[col].notna()
                 if mask.any():
                     encoder = LabelEncoderOperation()
