@@ -1,6 +1,5 @@
 from typing import Union
 
-import pandas as pd
 from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
