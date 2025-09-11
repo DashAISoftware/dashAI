@@ -11,10 +11,8 @@ import {
   StepLabel,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import SummarizeIcon from "@mui/icons-material/Summarize";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
-import DatasetSummaryTable from "./dataset/DatasetSummaryTable";
 import DatasetTable from "./dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
 
@@ -115,11 +113,6 @@ export default function ConfigureToolModal({
           iconPosition="start"
           label="Dataset"
         />
-        <Tab
-          icon={<SummarizeIcon fontSize="small" />}
-          iconPosition="start"
-          label="Summary"
-        />
       </Tabs>
 
       {/* CONTENT AREA */}
@@ -149,17 +142,6 @@ export default function ConfigureToolModal({
               deps={[notebook.file_path]}
               initialPageSize={5}
               density="compact"
-              disableColumnMenu
-              disableColumnFilter
-              disableColumnSelector
-              disableDensitySelector
-            />
-          )}
-          {activeTab === 2 && (
-            <DatasetSummaryTable
-              file={notebook.file_path}
-              density="compact"
-              hideFooter
               disableColumnMenu
               disableColumnFilter
               disableColumnSelector

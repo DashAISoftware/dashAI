@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import uuid
 from typing import Dict, List, Literal, Tuple, Union
 
 import numpy as np
@@ -57,7 +58,10 @@ class DashAIDataset(Dataset):
         table : Table
             Arrow table from which the dataset will be created
         """
-        super().__init__(table, *args, **kwargs)
+        fingerprint = (
+            f"manual-{hash((table.num_rows, str(table.schema)))}-{str(uuid.uuid4())}"
+        )
+        super().__init__(table, *args, fingerprint=fingerprint, **kwargs)
         self.splits = splits or {}
 
     @beartype

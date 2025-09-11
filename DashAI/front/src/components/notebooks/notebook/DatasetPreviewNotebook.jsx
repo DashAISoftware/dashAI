@@ -149,7 +149,7 @@ export default function DatasetPreviewNotebook({
           </Box>
         </AccordionSummary>
         <AccordionDetails>
-          <Box sx={{ height: 325, width: "100%" }}>
+          <Box sx={{ height: 345, width: "100%" }}>
             {" "}
             {/* Table */}
             <DatasetTable
