@@ -22,7 +22,7 @@ class LabelEncoder(SklearnWrapper):
     SHORT_DESCRIPTION = "Convert categorical labels to numeric values"
 
     def __init__(self, **kwargs):
-        super(SklearnWrapper, self).__init__()
+        super().__init__()
         self.encoders = {}
         self.fitted_columns = []
         self.metadata = {
