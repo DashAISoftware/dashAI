@@ -13,6 +13,7 @@ function SetNameAndTaskStep({
   setNewExp,
   setNextEnabled,
   defaultExperimentName,
+  existingExperiments = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -57,18 +58,56 @@ function SetNameAndTaskStep({
     setNewExp({ ...newExp, name: inputValue });
     setNModifications(nModifications + 1);
 
+    const isEmpty = !inputValue.trim();
+    const isTooShort =
+      inputValue.trim().length > 0 && inputValue.trim().length < 4;
+
     if (nModifications + 1 >= 4) {
-      if (inputValue.trim().length > 0 && inputValue.trim().length < 4) {
+      if (isTooShort) {
         setExpNameError(true);
+        setExpNameOk(false);
+      } else if (isEmpty) {
+        setExpNameError(false);
         setExpNameOk(false);
       } else {
         setExpNameError(false);
         setExpNameOk(true);
       }
+    } else {
+      setExpNameOk(!isEmpty);
     }
   };
 
-  // when a task is selected it synchronizes the value of the selected task (object) with the value in newExp (string)
+  const getNameError = () => {
+    const currentName = (
+      typeof newExp.name === "string" ? newExp.name : ""
+    ).trim();
+
+    if (!currentName && defaultExperimentName && nModifications === 0) {
+      return null;
+    }
+
+    if (!currentName) {
+      return "Name is required";
+    }
+
+    const nameExists = existingExperiments.some(
+      (experiment) =>
+        experiment.name &&
+        experiment.name.toLowerCase() === currentName.toLowerCase(),
+    );
+    if (nameExists) {
+      return "An experiment with this name already exists";
+    }
+
+    if (expNameError) {
+      return "The experiment name must have at least 4 alphanumeric characters.";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
+
   useEffect(() => {
     if (selectedTask && "name" in selectedTask) {
       setNewExp({
@@ -81,12 +120,17 @@ function SetNameAndTaskStep({
     }
   }, [selectedTask]);
 
-  // on mount, fetch tasks.
+  useEffect(() => {
+    if (defaultExperimentName && !newExp.name) {
+      setNewExp({ ...newExp, name: defaultExperimentName });
+      setExpNameOk(true);
+    }
+  }, [defaultExperimentName]);
+
   useEffect(() => {
     getTasks();
   }, []);
 
-  // enable next button y nameOk and taskOk are true.
   useEffect(() => {
     if (expNameOk && taskNameOk) {
       setNextEnabled(true);
@@ -111,15 +155,14 @@ function SetNameAndTaskStep({
 
         <TextField
           id="experiment-name-input"
-          label="Experiment name (optional)"
+          label="Experiment name"
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}
-          placeholder={defaultExperimentName}
           InputLabelProps={{ shrink: true }}
           sx={{ mb: 2 }}
-          error={expNameError}
-          helperText="The experiment name must have at least 4 alphanumeric characters."
+          error={Boolean(nameError)}
+          helperText={nameError}
         />
       </Grid>
 
@@ -163,6 +206,7 @@ SetNameAndTaskStep.propTypes = {
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   defaultExperimentName: PropTypes.string,
+  existingExperiments: PropTypes.array,
 };
 
 export default SetNameAndTaskStep;

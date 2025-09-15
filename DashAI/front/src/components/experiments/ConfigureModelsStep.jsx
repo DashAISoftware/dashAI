@@ -20,10 +20,11 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const [name, setName] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [compatibleModels, setCompatibleModels] = useState([]);
+  const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
 
-  const { defaultName, placeholderName } = useMemo(
+  const { defaultName } = useMemo(
     () => generateModelName(selectedModel, newExp.runs),
     [selectedModel, newExp.runs],
   );
@@ -48,7 +49,12 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   };
 
   const handleAddButton = () => {
-    const modelName = name.trim() === "" ? defaultName : name.trim();
+    const modelName = name.trim();
+
+    if (!modelName) {
+      setHasUserTouchedName(true);
+      return;
+    }
 
     const newModel = {
       id: uuid(),
@@ -64,9 +70,27 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     };
 
     setNewExp({ ...newExp, runs: [newModel, ...newExp.runs] });
+    setHasUserTouchedName(false);
     setName("");
     setSelectedModel("");
   };
+
+  const getNameError = () => {
+    if (!selectedModel || selectedModel.trim() === "") {
+      return null;
+    }
+
+    if (hasUserTouchedName) {
+      const currentName = name.trim();
+      if (!currentName) {
+        return "Name is required";
+      }
+    }
+
+    return null;
+  };
+
+  const nameError = getNameError();
 
   useEffect(() => {
     // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
@@ -81,6 +105,21 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   useEffect(() => {
     getCompatibleModels();
   }, []);
+
+  useEffect(() => {
+    if (selectedModel && defaultName) {
+      setName(defaultName);
+      setHasUserTouchedName(false);
+    }
+  }, [selectedModel, defaultName]);
+
+  // Clear touched flag when model is cleared
+  useEffect(() => {
+    if (!selectedModel) {
+      setHasUserTouchedName(false);
+      setName("");
+    }
+  }, [selectedModel]);
 
   return (
     <Grid
@@ -100,13 +139,27 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
           <Grid item xs={4} md={12}>
             <TextField
-              label="Name (optional)"
+              label="Model Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={placeholderName}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (!hasUserTouchedName) {
+                  setHasUserTouchedName(true);
+                }
+              }}
+              onBlur={() => setHasUserTouchedName(true)}
               InputLabelProps={{ shrink: true }}
+              error={Boolean(
+                selectedModel && selectedModel.trim() !== "" && nameError,
+              )}
+              helperText={
+                selectedModel && selectedModel.trim() !== "" ? nameError : ""
+              }
               fullWidth
-              key={selectedModel}
+              disabled={!selectedModel}
+              placeholder={
+                !selectedModel ? "Select a model first" : "Model Name"
+              }
             />
           </Grid>
 
@@ -137,7 +190,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           <Grid item xs={1} md={2}>
             <Button
               variant="outlined"
-              disabled={selectedModel === ""}
+              disabled={selectedModel === "" || name.trim() === ""}
               startIcon={<AddIcon />}
               onClick={handleAddButton}
               sx={{ height: "100%" }}

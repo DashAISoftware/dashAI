@@ -86,7 +86,7 @@ export default function NewExperimentModal({
 
   const { defaultName } = useMemo(
     () => generateExperimentName(existingExperiments),
-    [existingExperiments],
+    [existingExperiments, open],
   );
 
   const uploadRuns = async (experimentId) => {
@@ -183,7 +183,12 @@ export default function NewExperimentModal({
 
       if (!haveOptimazers) {
         uploadNewExperiment();
-        handleCloseDialog();
+        setOpen(false);
+        setTimeout(() => {
+          setActiveStep(0);
+          setNewExp(defaultNewExp);
+          setNextEnabled(false);
+        }, 100);
         return;
       }
     }
