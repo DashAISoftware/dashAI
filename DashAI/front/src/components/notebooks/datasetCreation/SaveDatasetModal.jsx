@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,31 +9,76 @@ import {
   IconButton,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
+import { generateDatasetName } from "../../../utils/nameGenerator";
 
 export function SaveDatasetModal({
   open,
   onClose,
   onSaveDataset,
   appliedConverters,
+  existingDatasets = [],
 }) {
   const [name, setName] = useState("");
+  const [frozenDefaultName, setFrozenDefaultName] = useState("");
+  const { enqueueSnackbar } = useSnackbar();
+
+  const { defaultName } = useMemo(() => {
+    return generateDatasetName(existingDatasets);
+  }, [existingDatasets]);
+
+  useEffect(() => {
+    if (open && defaultName) {
+      setFrozenDefaultName(defaultName);
+      setName(defaultName);
+    }
+  }, [open, defaultName]);
 
   const handleSubmit = () => {
-    if (name.trim()) {
-      onSaveDataset(name.trim());
-      onClose();
+    const datasetName = name.trim();
+
+    if (datasetName) {
+      if (existingDatasets.some((dataset) => dataset.name === datasetName)) {
+        enqueueSnackbar("A dataset with this name already exists", {
+          variant: "warning",
+        });
+        return;
+      }
+
+      onSaveDataset(datasetName);
+      handleClose();
     }
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  const getNameError = () => {
+    const currentName = name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+    if (
+      currentName !== frozenDefaultName &&
+      existingDatasets.some((dataset) => dataset.name === currentName)
+    ) {
+      return "A dataset with this name already exists";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         Save Processed Dataset
         <IconButton
-          onClick={onClose}
+          onClick={handleClose}
           sx={{ position: "absolute", right: 8, top: 8 }}
         >
           <Close />
@@ -48,6 +93,8 @@ export function SaveDatasetModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
+            error={Boolean(nameError)}
+            helperText={nameError}
           />
 
           <Box>
@@ -65,10 +112,10 @@ export function SaveDatasetModal({
 
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
             <FormSchemaButtonGroup
-              onCancel={onClose}
+              onCancel={handleClose}
               onFormSubmit={handleSubmit}
               formik={{
-                errors: name.trim() ? {} : { name: "Name is required" },
+                errors: nameError ? { name: nameError } : {},
               }}
               saveButtonText="Save Dataset"
               backButtonText="Cancel"

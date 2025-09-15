@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Typography, TextField, Box } from "@mui/material";
 import { useFormik } from "formik";
 import CustomLayout from "../../custom/CustomLayout";
@@ -32,12 +32,9 @@ export default function UploadNotebookSteps({
     enableReinitialize: true,
     onSubmit: async (values) => {
       try {
-        const notebookName = values.name.trim() || defaultName;
+        const notebookName = values.name.trim();
 
-        if (existingNotebooks.some((nb) => nb.name === notebookName)) {
-          enqueueSnackbar("A notebook with this name already exists", {
-            variant: "warning",
-          });
+        if (!notebookName) {
           return;
         }
 
@@ -55,15 +52,33 @@ export default function UploadNotebookSteps({
         handleNotebookCreated(createdNotebook);
       } catch (error) {
         console.error("Error creating notebook:", error);
-
-        if (error.response?.status === 409) {
-          enqueueSnackbar("Notebook name already exists", { variant: "error" });
-        } else {
-          enqueueSnackbar("Error creating notebook", { variant: "error" });
-        }
+        enqueueSnackbar("Error creating notebook", { variant: "error" });
       }
     },
   });
+
+  useEffect(() => {
+    if (selectedDataset && defaultName && !formik.values.name.trim()) {
+      formik.setValues({
+        name: defaultName,
+        description: formik.values.description,
+      });
+    }
+  }, [selectedDataset, defaultName]);
+
+  const getNameError = () => {
+    if (!selectedDataset) {
+      return null;
+    }
+
+    const currentName = formik.values.name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
 
   return (
     <CustomLayout title={"Create a New Notebook"} subtitle={""} padding={0}>
@@ -96,16 +111,16 @@ export default function UploadNotebookSteps({
       {/* Notebook name */}
       <TextField
         fullWidth
-        label="Notebook Name (optional)"
+        label="Notebook Name"
         name="name"
         value={formik.values.name}
         onChange={formik.handleChange}
-        placeholder={placeholderName}
         InputLabelProps={{ shrink: true }}
-        error={Boolean(formik.errors.name)}
-        helperText={formik.errors.name}
+        error={Boolean(nameError)}
+        helperText={nameError}
         sx={{ mb: 2 }}
         key={selectedDataset?.id}
+        placeholder="Notebook Name"
       />
       {/* Notebook description */}
       <TextField
@@ -123,7 +138,10 @@ export default function UploadNotebookSteps({
           onCancel={backHome}
           onFormSubmit={formik.handleSubmit}
           formik={{
-            errors: selectedDataset ? {} : { dataset: "Dataset is required" },
+            errors: {
+              ...(nameError ? { name: nameError } : {}),
+              ...(selectedDataset ? {} : { dataset: "Dataset is required" }),
+            },
           }}
           saveButtonText="Create Notebook"
           backButtonText="Back"

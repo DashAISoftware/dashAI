@@ -6,6 +6,7 @@ import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
 export default function NotebookVisualization({
   notebook,
   handleAddDatasetFromNotebook,
+  existingDatasets = [],
 }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -14,6 +15,7 @@ export default function NotebookVisualization({
         <DatasetPreviewNotebook
           notebook={notebook}
           handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+          existingDatasets={existingDatasets}
         />
       </Box>
 

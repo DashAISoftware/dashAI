@@ -35,6 +35,13 @@ export function CreateNotebookModal({
   );
 
   useEffect(() => {
+    if (open && defaultName) {
+      setName(defaultName);
+      setDescription(""); // Reset description when modal opens
+    }
+  }, [open, defaultName]);
+
+  useEffect(() => {
     let cancelled = false;
     const fetchInfo = async () => {
       if (!dataset?.id) {
@@ -60,22 +67,28 @@ export function CreateNotebookModal({
   }, [dataset?.id]);
 
   const handleSubmit = () => {
-    const notebookName = name.trim() || defaultName;
+    const notebookName = name.trim();
 
-    if (existingNotebooks.some((nb) => nb.name === notebookName)) {
-      console.warn("Notebook name already exists:", notebookName);
+    if (notebookName) {
+      onCreateNotebook({
+        name: notebookName,
+        description: description.trim() || "",
+      });
+      handleClose();
     }
-
-    onCreateNotebook({
-      name: notebookName,
-      description: description.trim() || "",
-    });
-    handleClose();
   };
 
+  const getNameError = () => {
+    const currentName = name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
+
   const handleClose = () => {
-    setName("");
-    setDescription("");
     onClose();
   };
 
@@ -152,13 +165,14 @@ export function CreateNotebookModal({
           </Typography>
           <TextField
             fullWidth
-            label="Notebook Name (optional)"
+            label="Notebook Name"
             name="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            placeholder={placeholderName}
+            error={Boolean(nameError)}
+            helperText={nameError}
             sx={{ mb: 2 }}
           />
           {/* Notebook description */}
@@ -176,7 +190,7 @@ export function CreateNotebookModal({
             <FormSchemaButtonGroup
               onCancel={handleClose}
               onFormSubmit={handleSubmit}
-              formik={{ errors: {} }}
+              formik={{ errors: nameError ? { name: nameError } : {} }}
               saveButtonText="Create Notebook"
               backButtonText="Cancel"
             />

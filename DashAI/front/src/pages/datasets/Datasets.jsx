@@ -332,6 +332,7 @@ export default function DatasetsPage() {
               <NotebookVisualization
                 notebook={selectedNotebook}
                 handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+                existingDatasets={datasets}
               />
             ) : step === 0 ? (
               <SelectOptionMenu
