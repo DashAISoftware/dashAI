@@ -143,13 +143,14 @@ async def get_job_details(
     Get detailed information about a job, including its associated entity.
     """
     try:
-        job_info = job_queue.status(job_id)
-
         entity_info = find_entity_by_huey_id(job_id)
-        if entity_info:
-            job_info.update(entity_info)
+        if not entity_info:
+            return {"id": job_id, "no_entity": True}
 
-        return job_info
+        task_info = job_queue.status(job_id)
+        entity_info.update(task_info)
+
+        return entity_info
     except JobQueueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
@@ -249,21 +250,45 @@ async def enqueue_job(
         raise
 
 
-@router.delete("/")
+@router.delete("/all")
+@inject
+async def cancel_all_jobs(
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """Delete all jobs from the job queue."""
+    try:
+        # Usar una función en HueyJobQueue para eliminar todos los jobs
+        count = job_queue.delete_all_jobs()
+        return {"deleted": count}
+    except Exception as e:
+        logging.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error canceling all jobs: {str(e)}",
+        )
+
+
+@router.delete("/{job_id}")
 @inject
 async def cancel_job(
-    job_id: int,
+    job_id: str,
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
     """Delete the job with id job_id from the job queue."""
     try:
-        job_queue.get(job_id)
-    except JobQueueError as e:
+        success = job_queue.delete_from_db(job_id)
+        if success:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+            )
+    except Exception as e:
         logging.exception(e)
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
-        ) from e
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error canceling job: {str(e)}",
+        )
 
 
 @router.patch("/")

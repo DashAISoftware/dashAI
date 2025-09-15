@@ -28,20 +28,39 @@ class PredictJob(BaseJob):
         self, session_factory: sessionmaker = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
-        run_id: int = self.kwargs["run_id"]
+        log.debug("Prediction job marked as delivered")
 
-        with session_factory() as db:
-            run: Run = db.get(Run, run_id)
-            if not run:
-                raise JobError(f"Run {run_id} does not exist in DB.")
+    @inject
+    def set_status_as_error(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+    ) -> None:
+        """Set the status of the prediction job as error."""
+        log.error(f"Prediction job failed: {self.kwargs}")
+
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        run_id = self.kwargs.get("run_id")
+        dataset_id = self.kwargs.get("id")
+        json_filename = self.kwargs.get("json_filename", "")
+
+        if json_filename:
+            return f"Predict: {json_filename}"
+
+        if run_id and dataset_id:
+            from kink import di
+
+            session_factory = di["session_factory"]
+
             try:
-                run.set_status_as_delivered()
-                db.commit()
-            except exc.SQLAlchemyError as e:
-                log.exception(e)
-                raise JobError(
-                    "Internal database error",
-                ) from e
+                with session_factory() as db:
+                    run = db.get(Run, run_id)
+                    dataset = db.get(Dataset, dataset_id)
+                    if run and dataset:
+                        return f"Predict: {run.name} on {dataset.name}"
+            except Exception:
+                pass
+
+        return f"Prediction (Run:{run_id}, Dataset:{dataset_id})"
 
     @inject
     def run(

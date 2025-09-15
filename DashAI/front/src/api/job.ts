@@ -1,12 +1,37 @@
 import api from "./api";
 
+export const isQueueEmpty = async (): Promise<boolean> => {
+  const response = await api.get<{ is_empty: boolean }>("/v1/job/is_empty");
+  return response.data.is_empty;
+};
+
 export const getJobs = async (): Promise<object> => {
   const response = await api.get<object>("/v1/job/");
   return response.data;
 };
 
+export const getJobChanges = async (
+  since: string,
+): Promise<{
+  jobs: any[];
+  cursor: string;
+  server_now: string;
+  queue_empty: boolean;
+  recently_completed: boolean;
+}> => {
+  const response = await api.get<any>("/v1/job/changes", {
+    params: { since },
+  });
+  return response.data;
+};
+
 export const getJobDetails = async (jobId: string): Promise<object> => {
   const response = await api.get<object>(`/v1/job/${jobId}/details`);
+  return response.data;
+};
+
+export const getJobStatus = async (jobId: string): Promise<any> => {
+  const response = await api.get<any>(`/v1/job/status/${jobId}`);
   return response.data;
 };
 
@@ -154,4 +179,13 @@ export const startJobQueue = async (
   stopWhenQueueEmpties?: boolean,
 ): Promise<void> => {
   return;
+};
+
+export const deleteJob = async (jobId: string): Promise<void> => {
+  await api.delete(`/v1/job/${jobId}`);
+};
+
+export const deleteAllJobs = async (): Promise<{ deleted: number }> => {
+  const response = await api.delete<{ deleted: number }>("/v1/job/all");
+  return response.data;
 };

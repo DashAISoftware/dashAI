@@ -141,6 +141,49 @@ class ConverterListJob(BaseJob):
                 ) from e
 
     @inject
+    def set_status_as_error(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+    ) -> None:
+        """Set the status of the converter list as error."""
+        converter_list_id = self.kwargs.get("converter_list_id")
+        if converter_list_id is None:
+            return
+
+        with session_factory() as db:
+            converter_list = db.get(ConverterList, converter_list_id)
+            if converter_list is None:
+                return
+
+            try:
+                converter_list.set_status_as_error()
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        converter_list_id = self.kwargs.get("converter_list_id")
+        if not converter_list_id:
+            return "Converter Job"
+
+        from kink import di
+
+        session_factory = di["session_factory"]
+
+        try:
+            with session_factory() as db:
+                converter_list = db.get(ConverterList, converter_list_id)
+                if converter_list:
+                    dataset = db.get(DatasetModel, converter_list.dataset_id)
+                    if dataset and dataset.name:
+                        return f"Convert: {dataset.name}"
+                    return f"Converter List #{converter_list_id}"
+        except Exception:
+            pass
+
+        return f"Converter Job #{converter_list_id}"
+
+    @inject
     def run(
         self,
     ) -> None:

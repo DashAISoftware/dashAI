@@ -8,7 +8,12 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-from DashAI.back.dependencies.database.models import Dataset, Exploration, Explorer
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    Exploration,
+    Explorer,
+    GlobalExplainer,
+)
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -40,6 +45,64 @@ class ExplorerJob(BaseJob):
                 raise JobError(
                     "Error while setting the status of the explorer as delivered."
                 ) from e
+
+    @inject
+    def set_status_as_error(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+    ) -> None:
+        """Set the status of the explainer as error."""
+        explainer_id: int = self.kwargs.get("explainer_id")
+        explainer_scope: str = self.kwargs.get("explainer_scope", "")
+
+        if explainer_id is None:
+            return
+
+        with session_factory() as db:
+            try:
+                if explainer_scope == "global":
+                    explainer = db.get(GlobalExplainer, explainer_id)
+                elif explainer_scope == "local":
+                    explainer = db.get(LocalExplainer, explainer_id)
+                else:
+                    return
+
+                if explainer:
+                    explainer.set_status_as_error()
+                    db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        explainer_id = self.kwargs.get("explainer_id")
+        explainer_scope = self.kwargs.get("explainer_scope", "")
+
+        if not explainer_id:
+            return f"{explainer_scope.capitalize()} Explanation"
+
+        from kink import di
+
+        session_factory = di["session_factory"]
+
+        try:
+            with session_factory() as db:
+                if explainer_scope == "global":
+                    explainer = db.get(GlobalExplainer, explainer_id)
+                elif explainer_scope == "local":
+                    explainer = db.get(LocalExplainer, explainer_id)
+                else:
+                    return (
+                        f"{explainer_scope.capitalize()} Explanation ({explainer_id})"
+                    )
+
+                if explainer and explainer.name:
+                    return f"Explain: {explainer.name}"
+                if explainer and explainer.explainer_name:
+                    return f"Explain: {explainer.explainer_name.split('.')[-1]}"
+        except Exception:
+            pass
+
+        return f"{explainer_scope.capitalize()} Explanation ({explainer_id})"
 
     @inject
     def run(

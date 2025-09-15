@@ -1,15 +1,6 @@
 import api from "../api/api";
 
-/**
- * Centralized, singleton job poller.
- * - Polls /api/v1/job/changes?since=...
- * - If activity: keeps polling every `intervalMs`
- * - On completion: ONE confirm poll after `confirmDelayMs` (default 2000ms), then sleep if quiet
- * - If queue looks not-empty but no changes appear, "coast" briefly, then HARD SLEEP (anti-loop)
- *
- * Subscribers receive: (jobs, meta)
- *   meta = { cursor, queueEmpty, recentlyCompleted, serverNow }
- */
+import { getJobChanges, isQueueEmpty } from "../api/job";
 
 const POLLER_INSTANCE_ID = Math.random().toString(36).slice(2, 10);
 
@@ -118,10 +109,7 @@ async function pollOnce() {
   state.inFlight = true;
 
   try {
-    const resp = await api.get("/v1/job/changes", {
-      params: { since: state.since },
-    });
-    const data = resp?.data || {};
+    const data = await getJobChanges(state.since);
     const jobs = data.jobs || [];
     const cursor = data.cursor || state.since;
     const queueEmpty = !!data.queue_empty;
@@ -238,8 +226,7 @@ export function setTriggerStatuses(statuses) {
  */
 export async function checkQueueAndMaybeStartPolling() {
   try {
-    const r = await api.get("/v1/job/is_empty");
-    const isEmpty = !!r?.data?.is_empty;
+    const isEmpty = await isQueueEmpty();
     if (!isEmpty) {
       if (!state.started) startJobPoller(state.intervalMs);
       else if (state.mode === "sleep") schedule(0);
@@ -262,16 +249,15 @@ export async function forceRefreshNow() {
     return;
   }
 
+  schedule(0);
+
   try {
     const r = await api.get("/v1/job/is_empty");
     const isEmpty = !!r?.data?.is_empty;
-    if (!isEmpty) {
-      if (state.mode === "sleep") schedule(0);
-      return true;
+    if (!isEmpty && state.mode === "sleep") {
+      setTimeout(() => schedule(0), 500);
     }
   } catch (e) {
-    console.warn("[JobPoller] Refresh failed:", e?.message || e);
+    console.warn("[JobPoller] is_empty check failed:", e?.message || e);
   }
-
-  schedule(0);
 }

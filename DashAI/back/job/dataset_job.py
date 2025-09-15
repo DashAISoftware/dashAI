@@ -37,6 +37,21 @@ class DatasetJob(BaseJob):
         """Set the job status as delivered in the database."""
         log.debug("DatasetJob marked as delivered")
 
+    def set_status_as_error(self) -> None:
+        """Set the job status as error."""
+        log.debug("DatasetJob marked as error")
+
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        name = self.kwargs.get("name", "")
+        if name:
+            return f"Dataset: {name}"
+
+        params = self.kwargs.get("params", {})
+        if params and isinstance(params, dict) and "name" in params:
+            return f"Dataset: {params['name']}"
+        return "Dataset load"
+
     @inject
     def run(
         self,

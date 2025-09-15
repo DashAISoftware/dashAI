@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
   Box,
   Paper,
   Typography,
@@ -7,6 +12,7 @@ import {
   Badge,
   Collapse,
   List,
+  CircularProgress,
   ListItem,
   ListItemIcon,
   ListItemText,
@@ -16,6 +22,8 @@ import {
   Divider,
   Chip,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { deleteJob } from "../../api/job";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -29,8 +37,9 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import JobDetailsDialog from "./JobDetailsDialog";
 import useJobQueue from "../../hooks/useJobQueue";
 import useJobPolling, { forceRefreshNow } from "../../hooks/useJobPolling";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import { deleteAllJobs } from "../../api/job";
 
-// Exportar estos componentes para uso general
 export const StatusIcon = ({ status }) => {
   switch (status) {
     case "not_started":
@@ -57,7 +66,6 @@ export const statusText = {
 };
 
 const JobQueueWidget = () => {
-  // Estado local
   const [expanded, setExpanded] = useState(() => {
     try {
       const savedState = localStorage.getItem("jobQueueWidgetExpanded");
@@ -68,21 +76,78 @@ const JobQueueWidget = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showFinished, setShowFinished] = useState(false);
+  const [items, setItems] = useState([]);
+  const [jobToDelete, setJobToDelete] = useState(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [clearingAll, setClearingAll] = useState(false);
 
-  // Usar el hook existente que ya funcionaba
+  const handleClearAllJobs = () => {
+    setConfirmClearAll(true);
+  };
+
+  const confirmClearAllJobs = async () => {
+    try {
+      setClearingAll(true);
+      const result = await deleteAllJobs();
+      console.log(`Deleted ${result.deleted} jobs`);
+
+      forceRefreshNow();
+      setTimeout(() => {
+        refetch();
+        setClearingAll(false);
+        setConfirmClearAll(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error clearing all jobs:", error);
+      setClearingAll(false);
+      setConfirmClearAll(false);
+    }
+  };
+
+  const cancelClearAllJobs = () => {
+    setConfirmClearAll(false);
+  };
+
+  const handleDeleteJob = (job) => {
+    setJobToDelete(job);
+  };
+
+  const confirmDeleteJob = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      await deleteJob(jobToDelete.id);
+
+      setItems(items.filter((job) => job.id !== jobToDelete.id));
+
+      setTimeout(() => {
+        forceRefreshNow();
+      }, 500);
+    } catch (error) {
+      console.error("Error deleting job:", error);
+    } finally {
+      setJobToDelete(null);
+    }
+  };
+
+  const cancelDeleteJob = () => {
+    setJobToDelete(null);
+  };
+
   const { jobs, loading, error, refetch } = useJobQueue(500);
 
-  // Usar el polling existente que ya funcionaba
   useJobPolling(
     3000,
     useCallback(
       (changes, meta) => {
+        console.log("Changes received:", changes); // Para depuración
+
         const hasChanges = Array.isArray(changes) && changes.length > 0;
         const justCompleted = !!meta?.recentlyCompleted;
         const queueNotEmpty = meta?.queueEmpty === false;
 
         if (hasChanges || justCompleted) {
-          setTimeout(() => refetch(), justCompleted ? 500 : 0);
+          refetch();
           return;
         }
 
@@ -93,22 +158,18 @@ const JobQueueWidget = () => {
       [refetch],
     ),
   );
-
-  // Calcular jobs filtrados
   const activeJobs = jobs.filter(
     (job) => job.status === "started" || job.status === "not_started",
   );
   const finishedJobs = jobs.filter((job) => job.status === "finished");
   const errorJobs = jobs.filter((job) => job.status === "error");
 
-  // Guardar el estado de expansión en localStorage
   useEffect(() => {
     try {
       localStorage.setItem("jobQueueWidgetExpanded", expanded.toString());
     } catch (e) {}
   }, [expanded]);
 
-  // Expandir automáticamente cuando hay jobs activos
   useEffect(() => {
     if (activeJobs.length > 0 && !expanded) {
       setExpanded(true);
@@ -129,7 +190,14 @@ const JobQueueWidget = () => {
 
   const handleRefresh = () => {
     console.log("Manual refresh triggered");
-    forceRefreshNow(); // Usar la función existente para forzar un refresh
+
+    refetch();
+
+    forceRefreshNow();
+
+    setTimeout(() => {
+      refetch();
+    }, 300);
   };
 
   const getJobsToShow = () => {
@@ -220,6 +288,20 @@ const JobQueueWidget = () => {
               </Typography>
             </Box>
             <Box display="flex" alignItems="center">
+              {jobs.length > 0 && (
+                <Tooltip title="Clear All Jobs">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClearAllJobs();
+                    }}
+                    sx={{ color: "white", opacity: 0.8, mr: 0.5 }}
+                  >
+                    <DeleteSweepIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip title="Refresh">
                 <IconButton
                   size="small"
@@ -299,9 +381,11 @@ const JobQueueWidget = () => {
                         <ListItemText
                           primary={
                             <Box display="flex" alignItems="center">
-                              <Tooltip title={job.task_type || ""}>
+                              <Tooltip title={job.job_name || ""}>
                                 <Typography variant="body2" noWrap>
-                                  {job.task_type
+                                  {job.job_name
+                                    ? job.job_name
+                                    : job.task_type
                                     ? job.task_type.split(".").pop()
                                     : "Unknown Job"}
                                 </Typography>
@@ -332,9 +416,32 @@ const JobQueueWidget = () => {
                           }
                         />
                         <ListItemSecondaryAction>
-                          <Typography variant="caption" color="text.secondary">
-                            {getRelativeTime(job.last_update)}
-                          </Typography>
+                          <Box display="flex" alignItems="center">
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ mr: 1 }}
+                            >
+                              {getRelativeTime(job.last_update)}
+                            </Typography>
+                            {(job.status === "not_started" ||
+                              job.status === "error") && (
+                              <Tooltip title="Cancel job">
+                                <IconButton
+                                  edge="end"
+                                  aria-label="delete"
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteJob(job);
+                                  }}
+                                  sx={{ opacity: 0.7 }}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </Box>
                         </ListItemSecondaryAction>
                       </ListItem>
                     ))}
@@ -393,6 +500,65 @@ const JobQueueWidget = () => {
         open={Boolean(selectedJob)}
         onClose={handleCloseDetails}
       />
+
+      <Dialog
+        open={Boolean(jobToDelete)}
+        onClose={cancelDeleteJob}
+        aria-labelledby="delete-job-dialog-title"
+      >
+        <DialogTitle id="delete-job-dialog-title">Delete Job</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this job?
+            {jobToDelete && (
+              <Box component="span" fontWeight="bold" display="block" mt={1}>
+                {jobToDelete.job_name || jobToDelete.task_type || "Unknown Job"}
+              </Box>
+            )}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDeleteJob} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDeleteJob} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={confirmClearAll}
+        onClose={cancelClearAllJobs}
+        aria-labelledby="clear-all-dialog-title"
+      >
+        <DialogTitle id="clear-all-dialog-title">Clear All Jobs</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete ALL registered jobs?
+            <Box component="span" fontWeight="bold" display="block" mt={1}>
+              This will cancel all jobs in the queue.
+            </Box>
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={cancelClearAllJobs}
+            color="primary"
+            disabled={clearingAll}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmClearAllJobs}
+            color="error"
+            disabled={clearingAll}
+            startIcon={clearingAll ? <CircularProgress size={20} /> : null}
+          >
+            {clearingAll ? "Clearing..." : "Clear All"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

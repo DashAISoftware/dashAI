@@ -109,7 +109,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
                   wordBreak: "break-word",
                 }}
               >
-                {displayJob.entity_name || "Unnamed Job"}
+                {displayJob.job_name || "Unnamed Job"}
               </Typography>
             </Grid>
 

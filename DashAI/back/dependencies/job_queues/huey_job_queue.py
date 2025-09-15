@@ -1,6 +1,5 @@
-# DashAI/back/dependencies/job_queues/huey_job_queue.py
-
 import asyncio
+import logging
 import sqlite3
 from datetime import datetime, timezone
 
@@ -20,6 +19,9 @@ from DashAI.back.dependencies.job_queues.base_job_queue import (
     JobQueueError,
 )
 from DashAI.back.job.base_job import BaseJob
+
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 class DillSerializer(BaseSerializer):
@@ -115,13 +117,21 @@ class HueyJobQueue(BaseJobQueue):
         @self.huey.signal(SIGNAL_ENQUEUED)
         def on_enqueue(signal, task):
             job_type = task.args[0].__class__.__name__
+            job_name = None
+
+            try:
+                if hasattr(task.args[0], "get_job_name"):
+                    job_name = task.args[0].get_job_name()
+            except Exception:
+                pass
+
             exec_sql(
                 (
                     "INSERT OR REPLACE INTO task_copy "
-                    "(id, task_type, status, last_update) "
-                    f"VALUES (?, ?, ?, {NOW_MICRO})"
+                    "(id, task_type, job_name, status, last_update) "
+                    f"VALUES (?, ?, ?, ?, {NOW_MICRO})"
                 ),
-                (task.id, job_type, "not_started"),
+                (task.id, job_type, job_name, "not_started"),
             )
 
         @self.huey.signal(SIGNAL_EXECUTING)
@@ -170,8 +180,10 @@ class HueyJobQueue(BaseJobQueue):
         Columns:
         - id (TEXT PRIMARY KEY): unique identifier for the job (UUID as text)
         - task_type (TEXT NOT NULL): the name of the Huey task
+        - job_name (TEXT): a more descriptive name for the job (from get_job_name)
         - enqueued_at (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP (UTC)
-        - status (TEXT NOT NULL): one of: 'not_started', 'started', 'finished', 'deleted', 'error'
+        - status (TEXT NOT NULL): one of: 'not_started', 'started', 'finished',
+        'deleted', 'error'
         - last_update (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP (UTC)
         - error_msg (TEXT): optional error message when a task fails
         """
@@ -181,6 +193,7 @@ class HueyJobQueue(BaseJobQueue):
                 CREATE TABLE IF NOT EXISTS task_copy (
                     id TEXT PRIMARY KEY,
                     task_type TEXT NOT NULL,
+                    job_name TEXT,
                     enqueued_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     status TEXT NOT NULL,
                     last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -197,7 +210,7 @@ class HueyJobQueue(BaseJobQueue):
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT status, last_update, error_msg
+            SELECT status, last_update, error_msg, job_name
             FROM task_copy WHERE id = ?
             """,
             (str(job_id),),
@@ -206,7 +219,12 @@ class HueyJobQueue(BaseJobQueue):
         conn.close()
         if not row:
             raise JobQueueError(f"No job with id={job_id}")
-        return {"status": row[0], "updated": row[1], "error": row[2]}
+        return {
+            "status": row[0],
+            "updated": row[1],
+            "error": row[2],
+            "job_name": row[3],
+        }
 
     def put(self, job: BaseJob) -> int:
         result = self._execute(job)
@@ -219,7 +237,7 @@ class HueyJobQueue(BaseJobQueue):
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, task_type, enqueued_at, status, last_update,
+                SELECT id, task_type, job_name, enqueued_at, status, last_update,
                        error_msg
                 FROM task_copy
                 ORDER BY last_update DESC
@@ -239,7 +257,7 @@ class HueyJobQueue(BaseJobQueue):
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT id, task_type, enqueued_at, status, last_update,
+                SELECT id, task_type, job_name, enqueued_at, status, last_update,
                         error_msg
                 FROM task_copy
                 WHERE last_update > ?
@@ -271,7 +289,12 @@ class HueyJobQueue(BaseJobQueue):
         payload = self.serializer.loads(row[0])
         return payload[6][0]
 
-    def get(self, job_id: int | None = None) -> BaseJob:
+    def get(self, job_id: str | None = None) -> BaseJob:
+        """
+        Get a job from the queue and remove it.
+        If job_id is provided, get and remove that specific job.
+        Otherwise, get the highest priority job.
+        """
         with sqlite3.connect(self.db_path) as conn:
             conn.isolation_level = None
             cur = conn.cursor()
@@ -323,6 +346,106 @@ class HueyJobQueue(BaseJobQueue):
                 return self.get()
             except JobQueueError:
                 await asyncio.sleep(0.1)
+
+    def delete_from_db(self, job_id: str) -> bool:
+        """
+        Delete a job from both task and task_copy tables.
+
+        Args:
+            job_id: The UUID of the job to delete
+
+        Returns:
+            bool: True if the job was deleted from at least one table
+        """
+        deleted_from_any = False
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+
+                cur.execute(
+                    "SELECT id, data FROM task WHERE queue = ?",
+                    (self.huey.storage.name,),
+                )
+
+                numeric_id = None
+                row_data = None
+
+                for row in cur.fetchall():
+                    try:
+                        task_data = self.serializer._deserialize(row["data"])
+                        if task_data[0] == job_id:
+                            numeric_id = row["id"]
+                            row_data = task_data
+                            break
+                    except Exception:
+                        continue
+
+                if numeric_id is not None:
+                    cur.execute("DELETE FROM task WHERE id = ?", (numeric_id,))
+                    try:
+                        row_data[6][0].set_status_as_error()
+                    except Exception as e:
+                        log.exception(f"Error setting job status to error: {e}")
+                    deleted_from_any = True
+
+                # Siempre eliminar del historial
+                cur.execute("DELETE FROM task_copy WHERE id = ?", (job_id,))
+                if cur.rowcount > 0:
+                    deleted_from_any = True
+
+            return deleted_from_any
+        except Exception as e:
+            log.exception(f"Error deleting job: {e}")
+            return False
+
+    def delete_all_jobs(self) -> int:
+        """
+        Delete all jobs from both task and task_copy tables.
+
+        Returns:
+            int: Number of jobs deleted
+        """
+        deleted_count = 0
+
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+
+                cur.execute(
+                    "SELECT id, data FROM task WHERE queue = ?",
+                    (self.huey.storage.name,),
+                )
+
+                jobs_to_delete = []
+
+                for row in cur.fetchall():
+                    try:
+                        job_data = self.serializer._deserialize(row["data"])
+                        try:
+                            job_data[6][0].set_status_as_error()
+                        except Exception:
+                            pass
+                        jobs_to_delete.append(row["id"])
+                    except Exception:
+                        jobs_to_delete.append(row["id"])
+
+                if jobs_to_delete:
+                    placeholders = ",".join(["?"] * len(jobs_to_delete))
+                    cur.execute(
+                        f"DELETE FROM task WHERE id IN ({placeholders})", jobs_to_delete
+                    )
+                    deleted_count = cur.rowcount
+
+                cur.execute("DELETE FROM task_copy")
+                deleted_count += cur.rowcount
+
+            return deleted_count
+        except Exception as e:
+            log.exception(f"Error deleting all jobs: {e}")
+            return 0
 
 
 _job_queue = HueyJobQueue("job_queue")

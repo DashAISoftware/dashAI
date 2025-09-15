@@ -52,6 +52,45 @@ class ModelJob(BaseJob):
                 ) from e
 
     @inject
+    def set_status_as_error(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+    ) -> None:
+        """Set the status of the job as error."""
+        run_id: int = self.kwargs.get("run_id")
+        if run_id is None:
+            return
+
+        with session_factory() as db:
+            run: Run = db.get(Run, run_id)
+            if not run:
+                return
+            try:
+                run.set_status_as_error()
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        run_id = self.kwargs.get("run_id")
+        if not run_id:
+            return "Model Training"
+
+        from kink import di
+
+        session_factory = di["session_factory"]
+
+        try:
+            with session_factory() as db:
+                run: Run = db.get(Run, run_id)
+                if run and run.name:
+                    return f"Train: {run.name}"
+        except Exception:
+            pass
+
+        return f"Model Training ({run_id})"
+
+    @inject
     def run(
         self,
     ) -> None:
