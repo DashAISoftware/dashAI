@@ -116,11 +116,13 @@ export default function UploadNotebookSteps({
         value={formik.values.name}
         onChange={formik.handleChange}
         InputLabelProps={{ shrink: true }}
-        error={Boolean(nameError)}
-        helperText={nameError}
+        error={Boolean(selectedDataset && nameError)}
+        helperText={selectedDataset ? nameError : ""}
         sx={{ mb: 2 }}
-        key={selectedDataset?.id}
-        placeholder="Notebook Name"
+        disabled={!selectedDataset}
+        placeholder={
+          !selectedDataset ? "Select a dataset first" : "Notebook Name"
+        }
       />
       {/* Notebook description */}
       <TextField
