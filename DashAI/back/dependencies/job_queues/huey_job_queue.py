@@ -12,7 +12,6 @@ from huey.signals import (
     SIGNAL_ERROR,
     SIGNAL_EXECUTING,
 )
-from kink import di
 
 from DashAI.back.dependencies.job_queues.base_job_queue import (
     BaseJobQueue,
@@ -36,7 +35,12 @@ class HueyJobQueue(BaseJobQueue):
     """JobQueue implementation using Huey+SQLite."""
 
     def __init__(self, queue_name: str):
-        self.db_path = queue_name.strip() + ".db"
+        from kink import di
+
+        config = di["config"]
+        local_path = config["LOCAL_PATH"]
+
+        self.db_path = local_path / (queue_name.strip() + ".db")
         self.serializer = DillSerializer()
         self.huey = SqliteHuey(
             name=queue_name,
