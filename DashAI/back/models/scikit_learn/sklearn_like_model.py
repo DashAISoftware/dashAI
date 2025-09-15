@@ -6,7 +6,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
     apply_categorical_label_encoder,
     categorical_label_encoder,
-    dashai_to_pandas,
 )
 from DashAI.back.models.base_model import BaseModel
 
@@ -52,10 +51,8 @@ class SklearnLikeModel(BaseModel):
         # We recieve base DashAIDataset,
         # so we first need to apply the transformations
         # and then convert to desired format to fit the model.
-        x_processed = dashai_to_pandas(self.prepare_dataset(x_train, is_fit=True))
-        y_processed = dashai_to_pandas(
-            self.prepare_dataset(y_train, is_fit=True), squeeze=True
-        )
+        x_processed = self.prepare_dataset(x_train, is_fit=True).to_pandas()
+        y_processed = self.prepare_dataset(y_train, is_fit=True).to_pandas()
         return super().fit(x_processed, y_processed)
 
     def prepare_dataset(

@@ -13,9 +13,6 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    dashai_to_pandas,
-)
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
 from DashAI.back.types.categorical import Categorical
@@ -107,7 +104,7 @@ class PartialDependence(BaseGlobalExplainer):
         x["test"] = self.model.prepare_dataset(x["test"])
         y["test"] = self.model.prepare_dataset(y["test"])
 
-        x_test = dashai_to_pandas(x["test"])
+        x_test = x["test"].to_pandas()
 
         types = x["train"].types
 

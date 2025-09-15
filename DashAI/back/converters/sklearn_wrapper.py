@@ -11,9 +11,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    dashai_to_pandas,
-)
 from DashAI.back.types.categorical import Categorical
 
 
@@ -37,9 +34,9 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
     ) -> Type[BaseConverter]:
         """Generic fit method for sklearn transformers"""
 
-        x_pandas = dashai_to_pandas(x)
+        x_pandas = x.to_pandas()
         if y is not None:
-            y_pandas = dashai_to_pandas(y)
+            y_pandas = y.to_pandas()
 
         requires_y = hasattr(self, "_get_tags") and self._get_tags().get(
             "requires_y", False
@@ -61,7 +58,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
     ) -> DashAIDataset:
         """Generic transform method for sklearn transformers"""
 
-        x_pandas = dashai_to_pandas(x)
+        x_pandas = x.to_pandas()
         x_new = super(BaseConverter, self).transform(x_pandas)
 
         if isinstance(x_new, np.ndarray):

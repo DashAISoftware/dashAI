@@ -10,7 +10,6 @@ from DashAI.back.core.schema_fields import bool_field, enum_field, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -59,7 +58,7 @@ class BoxPlotExplorer(BaseExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dashai_to_pandas(dataset)
+        _df = dataset.to_pandas()
         cols = [col["columnName"] for col in explorer_info.columns]
 
         if len(cols) == 1:

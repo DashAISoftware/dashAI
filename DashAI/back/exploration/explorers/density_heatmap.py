@@ -10,7 +10,6 @@ from DashAI.back.core.schema_fields import int_field, none_type, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -53,7 +52,7 @@ class DensityHeatmapExplorer(BaseExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dashai_to_pandas(dataset)
+        _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
         fig = px.density_heatmap(
