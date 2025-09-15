@@ -7,43 +7,7 @@ import pyarrow as pa
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, modify_table
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import to_arrow_types
-from DashAI.back.types.value_types import (
-    Text,
-)
-
-# This module provides utility functions to
-# convert DashAIDataset to various formats when needed,
-# as DashAIDataset should be the main data structure used in DashAI.
-# If a new transformation is needed,
-# it should be added here to allow further extensibility.
-
-# Format Convertions
-
-
-def dashai_to_pandas(
-    dataset: DashAIDataset,
-    squeeze: bool = False,
-) -> pd.DataFrame:
-    """Convert DashAIDataset to pandas DataFrame."""
-    if squeeze:
-        return dataset.to_pandas().squeeze()
-
-    return dataset.to_pandas()
-
-
-def dashai_to_numpy(
-    dataset: DashAIDataset,
-) -> np.ndarray:
-    """Convert DashAIDataset to numpy array."""
-    return dataset.to_numpy()
-
-
-def dashai_to_dict(
-    dataset: DashAIDataset,
-) -> dict:
-    """Convert DashAIDataset to dictionary."""
-    return dataset.to_dict()
-
+from DashAI.back.types.value_types import Text
 
 ###### Data Transformations ######
 
