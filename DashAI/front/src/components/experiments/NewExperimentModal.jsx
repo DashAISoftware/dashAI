@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-
 import {
   Button,
   Dialog,
@@ -18,64 +17,59 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { useSnackbar } from "notistack";
 
 import { createExperiment as createExperimentRequest } from "../../api/experiment";
 import { createRun as createRunRequest } from "../../api/run";
-
-import SetNameAndTaskStep from "./SetNameAndTaskStep";
-import SelectDatasetStep from "./SelectDatasetStep";
-import PrepareDatasetStep from "./PrepareDatasetStep";
-import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
-import ConfigureModelsStep from "./ConfigureModelsStep";
-
-import { useSnackbar } from "notistack";
 import { checkIfHaveOptimazers } from "../../utils/schema";
-
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
 
-const steps = [
-  { name: "selectTask", label: "Set name and task" },
-  { name: "selectDataset", label: "Select dataset" },
-  { name: "prepareDataset", label: "Prepare dataset" },
-  { name: "configureModels", label: "Configure models" },
-  {
-    name: "configureOptimizer",
-    label: "Configure hyperparameter optimization",
-  },
-];
+import { renderStep } from "./renderStep";
 
-const defaultNewExp = {
-  id: "",
-  name: "",
-  dataset: null,
-  task_name: "",
-  input_columns: [],
-  output_columns: [],
-  splits: {
-    train: 0.6,
-    validation: 0.2,
-    test: 0.2,
-  },
-  step: "SET_NAME",
-  created: null,
-  last_modified: null,
-  runs: [],
-};
-/**
- * This component renders a modal that takes the user through the process of creating a new experiment.
- * @param {bool} open true to open the modal, false to close it
- * @param {function} setOpen function to modify the value of open
- * @param {function} updateExperiments function to update the experiments table
- */
 export default function NewExperimentModal({
   open,
   setOpen,
   updateExperiments,
+  preselectedDataset,
+  setPreselectedDataset,
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const defaultNewExp = {
+    id: "",
+    name: "",
+    dataset: preselectedDataset,
+    task_name: "",
+    input_columns: [],
+    output_columns: [],
+    splits: {
+      train: 0.6,
+      validation: 0.2,
+      test: 0.2,
+    },
+    step: "SET_NAME",
+    created: null,
+    last_modified: null,
+    runs: [],
+  };
+
+  // Build steps dynamically
+  const steps = [
+    { name: "selectTask", label: "Set name and task" },
+    ...(preselectedDataset
+      ? []
+      : [{ name: "selectDataset", label: "Select dataset" }]),
+    { name: "prepareDataset", label: "Prepare dataset" },
+    { name: "configureModels", label: "Configure models" },
+    {
+      name: "configureOptimizer",
+      label: "Configure hyperparameter optimization",
+    },
+  ];
+
   const { enqueueSnackbar } = useSnackbar();
 
   const [activeStep, setActiveStep] = useState(0);
@@ -146,6 +140,7 @@ export default function NewExperimentModal({
     setActiveStep(0);
     setOpen(false);
     setNewExp(defaultNewExp);
+    setPreselectedDataset(null);
     setNextEnabled(false);
   };
 
@@ -170,7 +165,7 @@ export default function NewExperimentModal({
       return;
     }
 
-    if (activeStep === 3) {
+    if (steps[activeStep].name === "configureModels") {
       const haveOptimazers = newExp.runs.some(checkIfHaveOptimazers);
 
       if (!haveOptimazers) {
@@ -254,41 +249,7 @@ export default function NewExperimentModal({
 
       {/* Main content - steps */}
       <DialogContent dividers>
-        {activeStep === 0 && (
-          <SetNameAndTaskStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 1 && (
-          <SelectDatasetStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 2 && (
-          <PrepareDatasetStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 3 && (
-          <ConfigureModelsStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 4 && (
-          <HyperparameterOptimizationStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
+        {renderStep(steps[activeStep].name, newExp, setNewExp, setNextEnabled)}
       </DialogContent>
 
       {/* Actions - Back and Next */}
@@ -299,13 +260,13 @@ export default function NewExperimentModal({
           </Button>
           <TimestampWrapper
             eventName={
-              activeStep === 2
+              steps[activeStep].name === "prepareDataset"
                 ? TIMESTAMP_KEYS.experiments.configureModel
-                : activeStep === 3
-                  ? TIMESTAMP_KEYS.experiments.submitModel
-                  : activeStep === 4
-                    ? TIMESTAMP_KEYS.experiments.configureOptimazer
-                    : null
+                : steps[activeStep].name === "configureModels"
+                ? TIMESTAMP_KEYS.experiments.submitModel
+                : steps[activeStep].name === "configureOptimizer"
+                ? TIMESTAMP_KEYS.experiments.configureOptimazer
+                : null
             }
           >
             <Button
@@ -315,7 +276,7 @@ export default function NewExperimentModal({
               color="primary"
               disabled={!nextEnabled}
             >
-              {activeStep === 4 ? "Save" : "Next"}
+              {activeStep === steps.length - 1 ? "Save" : "Next"}
             </Button>
           </TimestampWrapper>
         </ButtonGroup>
@@ -328,4 +289,6 @@ NewExperimentModal.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   updateExperiments: PropTypes.func.isRequired,
+  preselectedDataset: PropTypes.object,
+  setPreselectedDataset: PropTypes.func.isRequired,
 };

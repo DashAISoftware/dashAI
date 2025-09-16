@@ -15,11 +15,13 @@ import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
 
 export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -181,6 +183,19 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
             {dataset.name}
           </Typography>
           <Grid item>
+            <Button
+              variant="contained"
+              disabled={isProcessing}
+              onClick={() => {
+                navigate("../app/experiments", {
+                  state: { dataset: dataset },
+                });
+              }}
+              endIcon={<AddIcon />}
+              sx={{ mr: 2 }}
+            >
+              New Experiment
+            </Button>
             <Button
               variant="contained"
               endIcon={<AddIcon />}
