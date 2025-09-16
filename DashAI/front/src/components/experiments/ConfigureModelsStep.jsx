@@ -7,7 +7,7 @@ import uuid from "react-uuid";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
-import { generateModelName } from "../../utils/nameGenerator";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -24,10 +24,18 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
 
-  const { defaultName } = useMemo(
-    () => generateModelName(selectedModel, newExp.runs),
-    [selectedModel, newExp.runs],
-  );
+  const { defaultName } = useMemo(() => {
+    if (!selectedModel) {
+      return { defaultName: "" };
+    }
+
+    return generateSequentialName({
+      base: selectedModel,
+      items: newExp.runs,
+      getName: (run) => run.name,
+      filter: (run) => run.model === selectedModel,
+    });
+  }, [selectedModel, newExp.runs]);
 
   const getCompatibleModels = async () => {
     try {
@@ -113,7 +121,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     }
   }, [selectedModel, defaultName]);
 
-  // Clear touched flag when model is cleared
   useEffect(() => {
     if (!selectedModel) {
       setHasUserTouchedName(false);
