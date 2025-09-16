@@ -13,8 +13,8 @@ import { Close } from "@mui/icons-material";
 import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
-import { generateNotebookName } from "../../../utils/nameGenerator";
 
 export function CreateNotebookModal({
   open,
@@ -29,15 +29,21 @@ export function CreateNotebookModal({
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [infoError, setInfoError] = useState(null);
 
-  const { defaultName, placeholderName } = useMemo(
-    () => generateNotebookName(dataset, existingNotebooks),
-    [dataset, existingNotebooks],
-  );
+  const { defaultName } = useMemo(() => {
+    if (!dataset) {
+      return { defaultName: "" };
+    }
+    return generateSequentialName({
+      base: `Notebook_${dataset.name}`,
+      items: existingNotebooks,
+      filter: (notebook) => notebook.dataset_id === dataset.id,
+    });
+  }, [dataset, existingNotebooks]);
 
   useEffect(() => {
     if (open && defaultName) {
       setName(defaultName);
-      setDescription(""); // Reset description when modal opens
+      setDescription("");
     }
   }, [open, defaultName]);
 

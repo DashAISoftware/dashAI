@@ -7,8 +7,8 @@ import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
-import { generateNotebookName } from "../../../utils/nameGenerator";
 
 export default function UploadNotebookSteps({
   backHome,
@@ -19,10 +19,17 @@ export default function UploadNotebookSteps({
   const [selectedDataset, setSelectedDataset] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
-  const { defaultName, placeholderName } = useMemo(
-    () => generateNotebookName(selectedDataset, existingNotebooks),
-    [selectedDataset, existingNotebooks],
-  );
+  const { defaultName } = useMemo(() => {
+    if (!selectedDataset) {
+      return { defaultName: "" };
+    }
+
+    return generateSequentialName({
+      base: `Notebook_${selectedDataset.name}`,
+      items: existingNotebooks,
+      filter: (notebook) => notebook.dataset_id === selectedDataset.id,
+    });
+  }, [selectedDataset, existingNotebooks]);
 
   const formik = useFormik({
     initialValues: {
