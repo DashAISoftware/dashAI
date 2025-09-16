@@ -22,7 +22,7 @@ import { useSnackbar } from "notistack";
 import SelectModelStep from "./SelectModelStep";
 import SelectDatasetStep from "./SelectDatasetStep";
 import { enqueuePredictionJob, startJobQueue } from "../../api/job";
-import { generatePredictionName } from "../../utils/nameGenerator";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 function PredictionModal({
   open,
@@ -43,9 +43,14 @@ function PredictionModal({
   const [trainDataset, setTrainDataset] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Generate automatic prediction name using current predictions
   const { defaultName } = useMemo(
-    () => generatePredictionName(existingPredictions),
+    () =>
+      generateSequentialName({
+        base: "Prediction",
+        items: existingPredictions,
+        getName: (prediction) => prediction.pred_name,
+        allowExtension: true,
+      }),
     [existingPredictions],
   );
 
