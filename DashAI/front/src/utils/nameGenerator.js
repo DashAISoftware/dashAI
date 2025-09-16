@@ -3,7 +3,7 @@ export function generateSequentialName({
   items = [],
   getName = (item) => item.name,
   filter = () => true,
-  allowExtension = false, // útil para .json
+  allowExtension = false, // Whether to allow file extensions (e.g., .json) in the name
   startAt = 1,
 }) {
   const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
