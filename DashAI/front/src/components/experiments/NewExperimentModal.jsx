@@ -27,7 +27,7 @@ import SelectDatasetStep from "./SelectDatasetStep";
 import PrepareDatasetStep from "./PrepareDatasetStep";
 import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
 import ConfigureModelsStep from "./ConfigureModelsStep";
-import { generateExperimentName } from "../../utils/nameGenerator";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 import { useSnackbar } from "notistack";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -85,7 +85,11 @@ export default function NewExperimentModal({
   const [newExp, setNewExp] = useState(defaultNewExp);
 
   const { defaultName } = useMemo(
-    () => generateExperimentName(existingExperiments),
+    () =>
+      generateSequentialName({
+        base: "Experiment",
+        items: existingExperiments,
+      }),
     [existingExperiments, open],
   );
 
