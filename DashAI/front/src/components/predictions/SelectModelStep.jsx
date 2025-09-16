@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
-import { Grid, Paper, Typography, TextField, Hidden } from "@mui/material";
+import { Grid, Paper, Typography, TextField } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { get_model_table } from "../../api/predict";
@@ -20,6 +20,7 @@ function SelectModelStep({
   const [predictName, setPredictName] = useState("");
   const [predictNameError, setPredictNameError] = useState(false);
   const [rowClicked, setRowClicked] = useState(false);
+  const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
 
   const columns = React.useMemo(() => [
     {
@@ -96,42 +97,51 @@ function SelectModelStep({
 
   const validateAndUpdateNextButton = useCallback(
     (name, rowIsClicked) => {
-      // If name is empty, use defaultPredictionName for validation
-      const nameToValidate = name.trim() === "" ? defaultPredictionName : name;
-      const isValid = isValidPredictName(nameToValidate);
-      setPredictNameError(!isValid && name.length > 0);
+      const trimmedName = name.trim();
+      let isValid = false;
+      let hasError = false;
+
+      if (trimmedName === "") {
+        if (hasUserTouchedName) {
+          isValid = false;
+          hasError = false;
+        } else {
+          isValid = isValidPredictName(defaultPredictionName || "");
+          hasError = false;
+        }
+      } else {
+        isValid = isValidPredictName(trimmedName);
+        hasError = !isValid;
+      }
+
+      setPredictNameError(hasError);
       setNextEnabled(isValid && (rowIsClicked || rowClicked));
       return isValid;
     },
-    [rowClicked, setNextEnabled, defaultPredictionName],
+    [rowClicked, setNextEnabled, defaultPredictionName, hasUserTouchedName],
   );
 
   const handlePredictNameInput = useCallback(
     (event) => {
       const value = event.target.value;
+      setHasUserTouchedName(true);
       setPredictName(value);
       onPredictNameInput(value);
       validateAndUpdateNextButton(value, rowClicked);
     },
-    [rowClicked, onPredictNameInput],
+    [rowClicked, onPredictNameInput, validateAndUpdateNextButton],
   );
 
-  // Initialize as valid since we always have a default name
   useEffect(() => {
     setNextEnabled(false);
   }, []);
 
-  // Validate with default name when it becomes available
   useEffect(() => {
-    if (defaultPredictionName) {
-      validateAndUpdateNextButton(predictName, rowClicked);
+    if (defaultPredictionName && !predictName.trim() && !hasUserTouchedName) {
+      setPredictName(defaultPredictionName);
+      onPredictNameInput(defaultPredictionName);
     }
-  }, [
-    defaultPredictionName,
-    predictName,
-    rowClicked,
-    validateAndUpdateNextButton,
-  ]);
+  }, [defaultPredictionName, onPredictNameInput, hasUserTouchedName]);
 
   useEffect(() => {
     get_Models();
@@ -147,20 +157,27 @@ function SelectModelStep({
     >
       <Grid item xs={12}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Provide a prediction name to continue and select a model
+          Provide a prediction name and select a model
         </Typography>
 
         <TextField
           id="predict-name-input"
-          label="Prediction name (optional)"
+          label="Prediction name"
           value={predictName}
           fullWidth
           onChange={handlePredictNameInput}
           autoComplete="off"
           sx={{ mb: 4 }}
-          error={predictNameError}
-          helperText="The prediction name must have at least 4 alphanumeric characters."
-          placeholder={defaultPredictionName}
+          error={
+            !!((predictName === "" && hasUserTouchedName) || predictNameError)
+          }
+          helperText={
+            predictName === "" && hasUserTouchedName
+              ? "Name is required"
+              : predictNameError
+                ? "The prediction name must have at least 4 alphanumeric characters."
+                : ""
+          }
           InputLabelProps={{ shrink: true }}
         />
       </Grid>
