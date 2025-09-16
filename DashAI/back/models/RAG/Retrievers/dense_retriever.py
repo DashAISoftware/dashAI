@@ -19,7 +19,7 @@ class DenseRetrieverSchema(BaseSchema):
 
     encoding_model: schema_field(
         component_field(
-            parent="Encoding"
+            parent="DenseEmbedding"
         ),
         placeholder={"component": "Embedding", "params": {}},
         description="Model to convert text into dense vector representations."

@@ -98,19 +98,17 @@ from DashAI.back.models.RAG import (
     CharacterChunkModel,
     TokenChunkModel,
     # Encodings
-    DenseEncoding,
+    DenseEmbedding,
     FastTextEmbedding,
     HuggingFaceEmbedding,
-    SparseEncoding,
-    TFIDFEncoding,
-    BM25Encoding,
     # Prompts
     AugmentationPrompt,
     ContextMergePrompt,
     # Retrievers
     DenseRetriever,
     SparseRetriever,
-    TFIDFRetriever
+    TFIDFRetriever,
+    TFIDFVectorizerModel,
 )
 
 
@@ -267,20 +265,22 @@ def get_initial_components():
         # RAG
         CharacterChunkModel,
         TokenChunkModel,
+        # Chunking Models
+        CharacterChunkModel,
+        TokenChunkModel,
         # Encodings
-        DenseEncoding,
+        DenseEmbedding,
         FastTextEmbedding,
         HuggingFaceEmbedding,
-        SparseEncoding,
-        TFIDFEncoding,
-        BM25Encoding,
         # Prompts
         AugmentationPrompt,
         ContextMergePrompt,
         # Retrievers
         DenseRetriever,
         SparseRetriever,
-        TFIDFRetriever
+        TFIDFRetriever,
+        TFIDFVectorizerModel,
+
     ]
 
     # Obtener plugins instalados

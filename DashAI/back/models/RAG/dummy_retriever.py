@@ -3,7 +3,6 @@ import os
 #from chromadb import Settings
 from typing import List, Dict
 from pypdf import PdfReader
-from DashAI.back.models.RAG.encodings.tf_idf_encoding import TfidfEmbeddingFunction
 from DashAI.back.models.RAG.text_splitter import TextSplitter
 from DashAI.back.models.RAG.text_preprocessor import TextPreprocessor
 

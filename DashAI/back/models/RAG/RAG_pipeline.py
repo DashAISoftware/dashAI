@@ -48,6 +48,16 @@ class RAGPipelineSchema(BaseSchema):
         description="List of documents to be used in the RAG pipeline."
     ) # type: ignore
 
+    chunking_model: schema_field(
+        component_field(
+            parent="BaseChunkingModel"),
+        description="Chunking model used to split documents into smaller pieces.",
+        placeholder={
+            "component": "CharacterChunkModel",
+            "params": {}
+            }
+        ) # type: ignore
+
     # RAG algorithm parameters
     retriever_model: schema_field(
         component_field(parent="RetrieverModel"),

@@ -6,14 +6,12 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     enum_field
 )
-from DashAI.back.models.RAG.encodings.dense_encoding import DenseEncoding
-
 from typing import Final, List
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-from DashAI.back.models.RAG.encodings.dense_encoding import DenseEncoding
+from DashAI.back.models.RAG.embeddings.dense_encoding import DenseEmbedding
 from DashAI.back.core.schema_fields import (
     enum_field,
     int_field,
@@ -67,7 +65,7 @@ class HuggingFaceEmbeddingSchema(BaseSchema):
     )  # type: ignore
 
 
-class HuggingFaceEmbedding(DenseEncoding):
+class HuggingFaceEmbedding(DenseEmbedding):
     """HuggingFace embedding"""
 
     SCHEMA = HuggingFaceEmbeddingSchema

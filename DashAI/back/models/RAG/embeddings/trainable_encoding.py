@@ -4,9 +4,9 @@ from typing import Any, List
 import numpy as np
 
 from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
-from DashAI.back.models.RAG.encodings.encoding import Encoding
+from DashAI.back.models.RAG.embeddings.dense_encoding import DenseEmbedding
 
-class TrainableEncoding(Encoding):
+class TrainableEncoding(DenseEmbedding):
     """
     Base class for all encoding (embedding) models.
     This class should be inherited by any specific encoding (embedding) model implementation.

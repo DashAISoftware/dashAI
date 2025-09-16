@@ -15,18 +15,146 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
     int_field,
+    list_field,
+    string_field,
+    bool_field,
+    component_field
 )
+from DashAI.back.models.base_model import BaseModel
 
 similarities = {
     "cosine": cosine_similarity,
     "euclidean": euclidean_distances
 }
 
+class TFIDFVectorizerSchema(BaseSchema):
+
+    strip_accents: schema_field(
+        enum_field(
+            enum=["ascii", "unicode", None],
+        ),
+        placeholder=None,
+        description="Whether to strip accents from the text.",
+    ) # type: ignore
+
+    lowercase: schema_field(
+        bool_field(),
+        placeholder=True,
+        description="Whether to convert all characters to lowercase.",
+
+    ) # type: ignore
+
+    analyzer: schema_field(
+        enum_field(
+            enum=["word", "char", "char_wb"],
+        ),
+        placeholder="word",
+        description="Whether the feature should be made of word or character n-grams. Option 'char_wb' creates character n-grams only from text inside word boundaries; n-grams at the edges of words are padded with space.",
+    ) # type: ignore
+
+    stop_words: schema_field(
+        list_field(
+            string_field(),
+            min_items=1,
+        ),
+        placeholder=None,
+        description="List of stop words to be used in the TF-IDF vectorization.",
+    ) # type: ignore
+
+    ngram_range: schema_field(
+        list_field(
+            int_field(),
+            min_items=2,
+            max_items=2,
+        ),
+        placeholder=[1, 1],
+        description="The lower and upper boundary of the range of n-values for different n-grams to be extracted.",
+    ) # type: ignore
+
+    max_df: schema_field(
+        float_field(
+            ge=0.0,
+            le=1.0,
+        ),
+        placeholder=1.0,
+        description="When building the vocabulary ignore terms that have a document frequency strictly higher than the given threshold (corpus-specific stop words).",
+    ) # type: ignore
+
+    min_df: schema_field(
+        float_field(
+            ge=0.0,
+            le=1.0,
+        ),
+        placeholder=1.0,
+        description="When building the vocabulary ignore terms that have a document frequency strictly lower than the given threshold (corpus-specific stop words).",
+    ) # type: ignore
+
+    max_features: schema_field(
+        int_field(
+            ge=1,
+        ),
+        placeholder=None,
+        description="If not None, build a vocabulary that only consider the top max_features ordered by term frequency across the corpus.",
+    ) # type: ignore
+
+    norm: schema_field(
+        enum_field(
+            enum=["l1", "l2", None],
+        ),
+        placeholder="l2",
+        description="The norm used to normalize term vectors. If None, no normalization is applied.",
+    ) # type: ignore
+
+    use_idf: schema_field(
+        bool_field(),
+        placeholder=True,
+        description="Enable inverse-document-frequency reweighting.",
+    ) # type: ignore
+
+    smooth_idf: schema_field(
+        bool_field(),
+        placeholder=True,
+        description="Smooth idf weights by adding one to document frequencies, as if an extra document was seen containing every term in the collection exactly once. This prevents zero divisions.",
+    ) # type: ignore
+
+    sublinear_tf: schema_field(
+        bool_field(),
+        placeholder=False,
+        description="Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).",
+    ) # type: ignore
+
+class TFIDFVectorizerModel(BaseModel):
+
+    SCHEMA = TFIDFVectorizerSchema
+    
+    def __init__(self, **kwargs) -> None:
+        self.params = kwargs
+        self.model = TfidfVectorizer(
+            strip_accents=kwargs.get("strip_accents", None),
+            lowercase=kwargs.get("lowercase", True),
+            analyzer=kwargs.get("analyzer", "word"),
+            stop_words=kwargs.get("stop_words", None),
+            ngram_range=tuple(kwargs.get("ngram_range", (1, 1))),
+            max_df=kwargs.get("max_df", 1.0),
+            min_df=kwargs.get("min_df", 1.0),
+            max_features=kwargs.get("max_features", None),
+            norm=kwargs.get("norm", "l2"),
+            use_idf=kwargs.get("use_idf", True),
+            smooth_idf=kwargs.get("smooth_idf", True),
+            sublinear_tf=kwargs.get("sublinear_tf", False),
+        )
 
 class TFIDFRetrieverSchema(BaseSchema):
     """
     Schema for the TFIDFRetriever.
     """
+
+    TFIDFVectorizer: schema_field(
+        component_field(parent="TFIDFVectorizerModel"),
+        placeholder={"component": "TFIDFVectorizerModel", "params": {}},
+        description="TF-IDF Vectorizer parameters.",
+    )  # type: ignore
+
 
     similarity_function: schema_field(
         enum_field(['cosine', 'euclidean']),
@@ -44,18 +172,6 @@ class TFIDFRetrieverSchema(BaseSchema):
         float_field(),
         placeholder=0.5,
         description="Maximum or minimum distance for retrieved documents based on the similarity_function."
-    )  # type: ignore
-
-    chunk_size: schema_field(
-        int_field(ge=1),
-        placeholder=512,
-        description="Size of chunks to split the documents into."
-    )  # type: ignore
-
-    chunk_overlap: schema_field(
-        int_field(ge=0),
-        placeholder=50,
-        description="Overlap between chunks when splitting documents."
     )  # type: ignore
 
 class TFIDFRetriever(SparseRetriever):

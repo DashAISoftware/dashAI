@@ -6,7 +6,7 @@ import numpy as np
 from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
 from DashAI.back.models.base_model import BaseModel
 
-class Encoding(BaseModel):
+class DenseEmbedding(BaseModel):
     """
     Base class for all encoding (embedding) models.
     This class should be inherited by any specific encoding (embedding) model implementation.

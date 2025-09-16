@@ -18,17 +18,19 @@ import {
 } from "@mui/material";
 import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 
+import { DataGrid } from "@mui/x-data-grid";
 import { getRetrieverComponents, getRetrievalParadigm } from "../../../api/rag";
 import { useSnackbar } from "notistack";
 import useSchema from "../../../hooks/useSchema";
-
+import SettingsIcon from "@mui/icons-material/Settings";
+import { GridActionsCellItem } from "@mui/x-data-grid";
 import FormSchemaModelSelect from "../../../components/shared/FormSchemaModelSelect";
 import FormSchemaContainer from "../../../components/shared/FormSchemaContainer";
 import { useFormSchemaStore } from "../../../contexts/schema";
 import FormSchemaBreadScrumbs from "../../../components/shared/FormSchemaBreadScrumbs";
 import FormSchema from "../../../components/shared/FormSchema";
 
-import FormSchemaDialog from "../../../components/shared/FormSchemaDialog";
+
 
 export default function RetrieverConfigurationStep({ setNextEnabled }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -37,7 +39,6 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
 
   const [retrieverOptions, setRetrieverOptions] = useState([]);
   const [selectedRetriever, setSelectedRetriever] = useState(null);
-  const [openConfig, setOpenConfig] = useState(false);
 
   const {defaultValues: retrieverInitialParameters} = useSchema({ modelName: selectedRetriever?.name });
 
@@ -82,20 +83,12 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
   // Handle paradigm change
   const handleRetrievalParadigmChange = (event, newValue) => {
     setSelectedRetrievalParadigm(newValue);
-    if (newValue === "SparseRetriever") {
-      setSelectedRetriever(null);
-    }
-    else { 
-      setRetrieverOptions([newValue]);
-      setSelectedRetriever(newValue); 
-    }
+    setSelectedRetriever(null); // Reset retriever selection
   };
 
   // Handle retriever change
   const handleRetrieverSelectionChange = (event, newValue) => {
     setSelectedRetriever(newValue);
-    setOpenConfig(true);
-    setNextEnabled(false);
     // Optionally reset config if needed
   };
 
@@ -159,26 +152,90 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
       </Box>
 
       {/* Right column: configuration, only if retriever selected */}
-      {selectedRetriever && openConfig && (
+      {selectedRetriever && (
         <Box flex={2} minWidth={400} p={2} display="flex" flexDirection="column">
-          <FormSchemaDialog
-            modelToConfigure={selectedRetriever.name}
-            open={openConfig}
-            setOpen={setOpenConfig}
-            onFormSubmit={() => {
-              setNextEnabled(true)
-              setOpenConfig(false)
-            }}
-          >
-            <FormSchema
-              model={selectedRetriever.name}
-              initialValues={selectedRetriever.parameters}
-              onFormSubmit={handleRetrieverParametersChange}
-              onCancel={() => setOpenConfig(false)}
+          <FormSchemaContainer>
+            <ModelConfigurationSubcomponent
+              selectedRetriever={selectedRetriever}
+              retrieverInitialParameters={retrieverInitialParameters}
+              handleRetrieverParametersChange={handleRetrieverParametersChange}
             />
-          </FormSchemaDialog>
+          </FormSchemaContainer>
         </Box>
       )}
     </Box>
+  );
+}
+
+function ModelConfigurationSubcomponent({
+  selectedRetriever,
+  retrieverInitialParameters,
+  handleRetrieverParametersChange,
+}) {
+  const {
+    formValues,
+    properties,
+    propertyData,
+    valuesByProperties,
+    removeLastProperty,
+    setErrorForm,
+  } = useFormSchemaStore();
+
+  const [selectedModel, setSelectedModel] = useState(
+    selectedRetriever?.name || propertyData?.model,
+  );
+
+  const selectedProperty = Boolean(propertyData?.selected);
+
+  const defaultValues = useMemo(() => {
+    if (selectedProperty) {
+      if (propertyData.params) {
+        return propertyData.params;
+      } else return null;
+    }
+    return retrieverInitialParameters ?? valuesByProperties;
+  }, [selectedModel, propertyData.params]);
+
+  useEffect(() => {
+    if (propertyData.model) {
+      setSelectedModel(propertyData.model);
+    } else {
+      setSelectedModel(selectedRetriever?.name);
+    }
+  }, [propertyData.model, propertyData.params, selectedRetriever?.name]);
+
+  return (
+    <Stack spacing={4} sx={{ py: 2 }} transition="ease">
+      <Box display="flex" alignItems="center">
+        <ArrowBackOutlined />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          {`${selectedRetriever.name} configuration`}
+        </Typography>
+      </Box>
+      {console.log("propertyData:", propertyData)}
+      {Boolean(propertyData?.parent) && (
+        <>
+          <FormSchemaBreadScrumbs />
+          <FormSchemaModelSelect
+            parent={propertyData.parent}
+            selectedModel={selectedModel}
+            onChange={setSelectedModel}
+          />
+        </>
+      )}
+      <FormSchema
+        model={selectedModel}
+        initialValues={defaultValues}
+        onFormSubmit={() => {
+          handleRetrieverParametersChange(formValues);
+        }}
+        setError={setErrorForm}
+        onCancel={() => {
+          if (properties.length > 0) {
+            removeLastProperty();
+          }
+        }}
+      />
+    </Stack>
   );
 }

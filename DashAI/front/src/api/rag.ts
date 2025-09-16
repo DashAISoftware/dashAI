@@ -146,6 +146,14 @@ export const getGeneratorComponents = async (): Promise<IGenerativeTask[]> => {
 
 }
 
+export const getChunkingComponents = async (): Promise<IComponent[]> => {
+  const response = await getChildComponents('BaseChunkingModel', false);
+  if (!response) {
+    throw new Error(`Failed to fetch chunking components`);
+  }
+  return response;
+}
+
 export const loadDocuments = async (): Promise<IDocumentResponse[]> => {
   const response = await api.get<IDocumentResponse[]>("/v1/document/");
   if (response.status !== 200) {

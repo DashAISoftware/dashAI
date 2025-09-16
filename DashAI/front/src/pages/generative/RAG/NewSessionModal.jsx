@@ -17,9 +17,9 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import DocumentSelectionStep from "./DocumentSelectionStep";
+import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
 import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
-//import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 
 const steps = [
   {
@@ -27,11 +27,11 @@ const steps = [
     label: "Select documents",
     component: DocumentSelectionStep,
   },
-//  {
-//    name: "configure-chunking",
-//    label: "Configure chunking",
-//    component: ChunkingConfigurationStep,
-//  },
+  {
+    name: "configure-chunking",
+    label: "Configure chunking",
+    component: ChunkingConfigurationStep,
+  },
   {
     name: "configure-retriever",
     label: "Configure retriever",
@@ -51,9 +51,9 @@ const defaultNewSession = {
   displayName: "",
   parameters: {
     "documents": [],
-    // "chunking": {
-    //   "parameters": {},
-    // },
+    "chunking": {
+       "parameters": {},
+     },
     "retriever_model": {
       "name": "",
       "parameters": {},
@@ -241,6 +241,17 @@ export default function NewSessionModal({
           />
         )}
         {activeStep === 1 && (
+          <ChunkingConfigurationStep
+            chunkingModel={sessionData.parameters.chunking}
+            setChunkingModel={(model) => setSessionData(prev => ({
+              ...prev,
+              parameters: { ...prev.parameters, chunking: model }
+            }))}
+            setNextEnabled={(isValid) => handleStepValidation(1, isValid)}
+          />
+        )}
+
+        {activeStep === 2 && (
           <RetrieverConfigurationStep
             retrieverModel={sessionData.parameters.retriever_model}
             setRetrieverModel={(model) => setSessionData(prev => ({
@@ -250,7 +261,7 @@ export default function NewSessionModal({
             setNextEnabled={(isValid) => handleStepValidation(1, isValid)}
           />
         )}
-        {activeStep === 2 && (
+        {activeStep === 3 && (
           <GeneratorConfigurationStep
             generatorModel={sessionData.parameters.generator_model}
             setGeneratorModel={(model) => setSessionData(prev => ({
