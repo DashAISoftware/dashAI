@@ -13,7 +13,7 @@ import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
-import { generateDatasetName } from "../../../utils/nameGenerator";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 
 export function SaveDatasetModal({
   open,
@@ -27,7 +27,10 @@ export function SaveDatasetModal({
   const { enqueueSnackbar } = useSnackbar();
 
   const { defaultName } = useMemo(() => {
-    return generateDatasetName(existingDatasets);
+    return generateSequentialName({
+      base: "Dataset",
+      items: existingDatasets,
+    });
   }, [existingDatasets]);
 
   useEffect(() => {

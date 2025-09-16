@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useState, useMemo } from "react";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaLayout from "../../shared/FormSchemaLayout";
-import { generateDatasetName } from "../../../utils/nameGenerator";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 
 /**
  * This component is a form to configure a dataloader
@@ -23,7 +23,11 @@ function DataloaderConfiguration({
   const [splitError, setSplitError] = useState(false);
 
   const { defaultName } = useMemo(
-    () => generateDatasetName(existingDatasets),
+    () =>
+      generateSequentialName({
+        base: "Dataset",
+        items: existingDatasets,
+      }),
     [existingDatasets],
   );
 
