@@ -3,7 +3,7 @@ export function getDatasetStatus(statusNumber) {
     case 0:
       return "Not Started";
     case 1:
-      return "In Progress";
+      return "Delivered";
     case 2:
       return "Started";
     case 3:

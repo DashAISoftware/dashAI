@@ -53,7 +53,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   useEffect(() => {
     const fetchDatasetInfo = async () => {
       if (
-        getDatasetStatus(dataset.status) === "In Progress" ||
+        getDatasetStatus(dataset.status) === "Delivered" ||
         getDatasetStatus(dataset.status) === "Not Started" ||
         getDatasetStatus(dataset.status) === "Started"
       ) {
@@ -76,7 +76,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
     async (page, pageSize) => {
       // Don't try to fetch data if it's a temporary/processing dataset
       if (
-        getDatasetStatus(dataset.status) === "In Progress" ||
+        getDatasetStatus(dataset.status) === "Delivered" ||
         getDatasetStatus(dataset.status) === "Not Started" ||
         getDatasetStatus(dataset.status) === "Started"
       ) {
@@ -122,7 +122,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   };
 
   const isProcessing =
-    getDatasetStatus(dataset.status) === "In Progress" ||
+    getDatasetStatus(dataset.status) === "Delivered" ||
     getDatasetStatus(dataset.status) === "Not Started" ||
     getDatasetStatus(dataset.status) === "Started";
 
