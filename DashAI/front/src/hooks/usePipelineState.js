@@ -8,7 +8,8 @@ import {
   getNodeTypesMap,
   buildNodeHelp,
 } from "../components/pipelines";
-import { getPipelineById } from "../api/pipeline";
+import { getPipelineById, getPipelines } from "../api/pipeline";
+import { generateSequentialName } from "../utils/nameGenerator";
 import RunPipeline from "../components/pipelines/Run";
 
 export function usePipelineState(pipelineId, location, navigate) {
@@ -27,8 +28,49 @@ export function usePipelineState(pipelineId, location, navigate) {
   const [nodeHelp, setNodeHelp] = useState({});
   const [availableNodes, setAvailableNodes] = useState([]);
   const [nodeTypesMap, setNodeTypesMap] = useState([]);
+
+  // Name validation states
+  const [nameError, setNameError] = useState(false);
+  const [nameErrorMessage, setNameErrorMessage] = useState("");
+  const [userHasModifiedName, setUserHasModifiedName] = useState(false);
+  const [existingPipelines, setExistingPipelines] = useState([]);
   const [nodeIdCounter, setNodeIdCounter] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
+
+  // Generate default name for new pipelines
+  const { defaultName } = useMemo(() => {
+    console.log(
+      "useMemo executing with existingPipelines:",
+      existingPipelines.length,
+      existingPipelines,
+    );
+
+    if (pipelineId) return { defaultName: null }; // Don't auto-name existing pipelines
+
+    const result = generateSequentialName({
+      base: "Pipeline",
+      items: existingPipelines,
+    });
+
+    console.log("Generated result:", result);
+    return result;
+  }, [existingPipelines, pipelineId]);
+
+  // Load existing pipelines for name generation
+  useEffect(() => {
+    const fetchPipelines = async () => {
+      try {
+        const pipelines = await getPipelines();
+        setExistingPipelines(pipelines);
+      } catch (error) {
+        console.error("Error fetching pipelines:", error);
+      }
+    };
+
+    if (!pipelineId) {
+      fetchPipelines();
+    }
+  }, [pipelineId]);
 
   // Load node types and available nodes
   useEffect(() => {
@@ -52,6 +94,31 @@ export function usePipelineState(pipelineId, location, navigate) {
     }),
     [nodeTypesMap],
   );
+
+  // Set initial name validation and default value for new pipelines
+  useEffect(() => {
+    console.log("useEffect triggered with:", {
+      defaultName,
+      userHasModifiedName,
+      pipelineId,
+      pipelineName,
+    });
+
+    if (defaultName && !userHasModifiedName && !pipelineId) {
+      if (
+        pipelineName === "undefined" ||
+        pipelineName.startsWith("Pipeline_")
+      ) {
+        console.log("Setting pipeline name to:", defaultName);
+        setPipelineName(defaultName);
+        setNameError(false);
+        setNameErrorMessage("");
+      }
+    } else if (pipelineName === "" && userHasModifiedName) {
+      setNameError(true);
+      setNameErrorMessage("Name is required");
+    }
+  }, [defaultName, pipelineName, userHasModifiedName, pipelineId]);
 
   // Handle active tab changes
   useEffect(() => {
@@ -107,6 +174,7 @@ export function usePipelineState(pipelineId, location, navigate) {
         setNodeData(configMap);
         setResultId(pipelineId);
         setPipelineName(pipeline.name);
+        setUserHasModifiedName(false);
 
         // Update nodeIdCounter
         const maxCounter = Math.max(
@@ -166,6 +234,20 @@ export function usePipelineState(pipelineId, location, navigate) {
     event.dataTransfer.effectAllowed = "move";
   };
 
+  // Handle pipeline name input changes with validation
+  const handlePipelineNameChange = (event) => {
+    setPipelineName(event.target.value);
+    setUserHasModifiedName(true);
+
+    if (event.target.value.trim() === "") {
+      setNameError(true);
+      setNameErrorMessage("Name is required");
+    } else {
+      setNameError(false);
+      setNameErrorMessage("");
+    }
+  };
+
   const handleCloseDialog = () => {
     setSelectedNode(null);
   };
@@ -179,6 +261,18 @@ export function usePipelineState(pipelineId, location, navigate) {
   };
 
   const handleRun = async () => {
+    // Check if name is valid
+    if (
+      !pipelineName ||
+      pipelineName.trim() === "" ||
+      pipelineName === "undefined"
+    ) {
+      setNameError(true);
+      setNameErrorMessage("Name is required");
+      enqueueSnackbar("Pipeline name is required", { variant: "error" });
+      return;
+    }
+
     const unconfiguredNodes = nodes.filter((node) => node.data?.notConfigured);
     const sortedNodes = sortNodes(nodes, edges);
     const errors = await validatePipeline(sortedNodes, edges);
@@ -248,6 +342,8 @@ export function usePipelineState(pipelineId, location, navigate) {
     availableNodes,
     nodeTypes,
     nodeIdCounter,
+    nameError,
+    nameErrorMessage,
 
     // Setters
     setNodes,
@@ -275,5 +371,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     onNodeMouseEnter,
     onNodeMouseLeave,
     onPaneClick,
+    handlePipelineNameChange,
   };
 }
