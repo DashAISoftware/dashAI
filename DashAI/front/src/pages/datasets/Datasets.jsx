@@ -230,6 +230,11 @@ export default function DatasetsPage() {
         const datasets = await getDatasets();
 
         const dataset = datasets.find((d) => d.id === newDataset.id);
+        if (!dataset) {
+          console.error("Dataset not found in response:", newDataset.id);
+          return;
+        }
+
         if (getDatasetStatus(dataset.status) === "Finished") {
           const enrichedDatasets = await enrichDatasetsWithInfo(datasets);
           setDatasets(enrichedDatasets);
