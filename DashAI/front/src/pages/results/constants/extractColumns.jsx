@@ -1,7 +1,17 @@
 import { actionsColumns } from "./actionsColumns";
 import { initialColumns } from "./initialColumns";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import PsychologyAltIcon from "@mui/icons-material/PsychologyAlt";
+import InfoIcon from "@mui/icons-material/Info";
 
-export const extractColumns = (rawMetrics, rawRuns, handleRunResultsOpen) => {
+export const extractColumns = (
+  rawMetrics,
+  rawRuns,
+  datasetId,
+  handleRunResultsOpen,
+  handlePrediction,
+  handleExplainer,
+) => {
   // extract metrics
   let metrics = [];
   for (const metric of rawMetrics) {
@@ -44,10 +54,26 @@ export const extractColumns = (rawMetrics, rawRuns, handleRunResultsOpen) => {
   });
 
   const columns = [
-    ...actionsColumns(handleRunResultsOpen),
     ...initialColumns,
     ...metrics,
     ...parameters,
+    ...actionsColumns([
+      {
+        title: "Details",
+        Icon: InfoIcon,
+        handleAction: handleRunResultsOpen,
+      },
+      {
+        title: "Predict",
+        Icon: QueryStatsIcon,
+        handleAction: (runId) => handlePrediction(runId, datasetId),
+      },
+      {
+        title: "Explain",
+        Icon: PsychologyAltIcon,
+        handleAction: handleExplainer,
+      },
+    ]),
   ];
 
   return { columns, columnGroupingModel, columnVisibilityModel };

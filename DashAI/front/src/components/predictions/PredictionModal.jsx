@@ -18,30 +18,46 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
+import { renderStep } from "./renderStep";
 
 import SelectModelStep from "./SelectModelStep";
 import SelectDatasetStep from "./SelectDatasetStep";
 import { enqueuePredictionJob, startJobQueue } from "../../api/job";
 
-function PredictionModal({ open, onClose, updatePredictions }) {
+function PredictionModal({
+  open,
+  onClose,
+  updatePredictions,
+  preselectedModelId,
+  setPreselectedModelId,
+  preselectedTrainedDatasetId,
+  setPreselectedTrainedDatasetId,
+}) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
   const { enqueueSnackbar } = useSnackbar();
 
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedModelId, setSelectedModelId] = useState(null);
+  const [selectedModelId, setSelectedModelId] = useState(preselectedModelId);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [predictName, setPredictName] = useState("");
-  const [trainDataset, setTrainDataset] = useState(null);
+  const [trainDataset, setTrainDataset] = useState(preselectedTrainedDatasetId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const steps = ["Select Model", "Select Dataset"];
+  const steps = [
+    ...(preselectedModelId
+      ? []
+      : [{ name: "selectModel", label: "Select Model" }]),
+    { name: "selectDataset", label: "Select Dataset" },
+  ];
 
   const resetModal = () => {
     setActiveStep(0);
     setSelectedModelId(null);
+    setPreselectedModelId(null);
+    setPreselectedTrainedDatasetId(null);
     setSelectedDatasetId(null);
     setNextEnabled(false);
     setPredictName("");
@@ -192,12 +208,12 @@ function PredictionModal({ open, onClose, updatePredictions }) {
             >
               {steps.map((step, index) => (
                 <Step
-                  key={`${step}`}
+                  key={`${step.name}`}
                   completed={activeStep > index}
                   disabled={activeStep < index}
                 >
                   <StepButton color="inherit" onClick={handleStepButton(index)}>
-                    {step}
+                    {step.label}
                   </StepButton>
                 </Step>
               ))}
@@ -207,20 +223,15 @@ function PredictionModal({ open, onClose, updatePredictions }) {
       </DialogTitle>
 
       <DialogContent dividers>
-        {activeStep === 0 && (
-          <SelectModelStep
-            setSelectedModelId={setSelectedModelId}
-            setNextEnabled={setNextEnabled}
-            onPredictNameInput={handlePredictNameInput}
-            setTrainDataset={setTrainDataset}
-          />
-        )}
-        {activeStep === 1 && (
-          <SelectDatasetStep
-            setSelectedDatasetId={setSelectedDatasetId}
-            setNextEnabled={setNextEnabled}
-            trainDataset={trainDataset}
-          />
+        {renderStep(
+          steps[activeStep].name,
+          preselectedModelId,
+          setSelectedModelId,
+          setSelectedDatasetId,
+          setNextEnabled,
+          handlePredictNameInput,
+          setTrainDataset,
+          trainDataset,
         )}
       </DialogContent>
 

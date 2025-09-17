@@ -1,24 +1,28 @@
 // columns related to open details of runs
 import React from "react";
-import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import { GridActionsCellItem } from "@mui/x-data-grid";
+import { IconButton } from "@mui/material";
+import { getRunStatus } from "../../../utils/runStatus";
 
-export const actionsColumns = (handleRunResultsOpen) => [
-  {
-    field: "actions",
-    headerName: "Details",
-    type: "actions",
+export const actionsColumns = (actions) =>
+  actions.map((action) => ({
+    field: action.title.toLowerCase(),
+    headerName: action.title,
+    sortable: false,
+    filterable: false,
+    disableColumnMenu: true,
+    align: "center",
+    headerAlign: "center",
     minWidth: 80,
-    getActions: (params) => [
-      <GridActionsCellItem
-        key="specific-results-button"
-        icon={<QueryStatsIcon />}
-        label="Run Results"
-        onClick={() => {
-          handleRunResultsOpen(params.id);
-        }}
-        sx={{ color: "primary.main" }}
-      />,
-    ],
-  },
-];
+    renderCell: (params) => (
+      <IconButton
+        onClick={() => action.handleAction(params.id, params)}
+        title={action.title}
+        color="primary"
+        size="small"
+        disabled={params.row.status !== "Finished"}
+      >
+        <action.Icon />
+      </IconButton>
+    ),
+  }));

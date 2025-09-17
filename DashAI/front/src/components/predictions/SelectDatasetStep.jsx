@@ -8,6 +8,7 @@ import {
   Link,
   Paper,
   Typography,
+  TextField,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
@@ -44,6 +45,8 @@ const columns = [
 ];
 
 function SelectDatasetStep({
+  preselectedModelId,
+  handlePredictNameInput,
   setSelectedDatasetId,
   setNextEnabled,
   trainDataset,
@@ -55,6 +58,7 @@ function SelectDatasetStep({
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
   const [datasetPaths, setDatasetPaths] = useState([]);
+  const [predictName, setPredictName] = useState("");
 
   const getDatasets = async () => {
     setLoading(true);
@@ -102,6 +106,23 @@ function SelectDatasetStep({
 
   return (
     <React.Fragment>
+      {preselectedModelId && (
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
+            Provide a prediction name to continue and select a model
+          </Typography>
+
+          <TextField
+            id="predict-name-input"
+            label="Enter a unique name"
+            value={predictName}
+            fullWidth
+            onChange={handlePredictNameInput}
+            autoComplete="off"
+            sx={{ mb: 4 }}
+          />
+        </Grid>
+      )}
       <Grid
         container
         direction="row"
@@ -113,7 +134,6 @@ function SelectDatasetStep({
           Select a dataset for the selected task
         </Typography>
       </Grid>
-
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
           <Alert severity="warning" sx={{ mb: 2 }}>
