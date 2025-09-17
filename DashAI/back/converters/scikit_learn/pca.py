@@ -59,7 +59,7 @@ class PCASchema(BaseSchema):
     tol: schema_field(
         float_field(ge=0.0),
         0.0,
-        ("Tolerance for singular values computed by " "svd_solver == 'arpack'."),
+        ("Tolerance for singular values computed by svd_solver == 'arpack'."),
     )  # type: ignore
     iterated_power: schema_field(
         union_type(int_field(ge=1), enum_field(["auto"])),
@@ -100,6 +100,8 @@ class PCA(SklearnWrapper, PCAOPERATION):
 
     SCHEMA = PCASchema
     DESCRIPTION = "Principal component analysis (PCA)."
+    SHORT_DESCRIPTION = "Dimensionality reduction using PCA."
+    metadata = {}
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

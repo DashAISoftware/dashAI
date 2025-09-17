@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict
 
 from pydantic import BaseModel, ConfigDict
@@ -21,4 +22,15 @@ class ColumnsSpecParams(BaseModel):
 
 class DatasetUpdateParams(BaseModel):
     name: str = None
-    columns: Dict[str, ColumnSpecItemParams] = None
+
+
+class DatasetUploadFromNotebookParams(BaseModel):
+    name: str
+
+
+class Dataset(BaseModel):
+    id: int
+    name: str
+    created: datetime
+    last_modified: datetime
+    file_path: str

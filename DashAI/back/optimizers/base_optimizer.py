@@ -259,7 +259,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                             "visible": [j == i for j in range(len(traces))]
                             + [j == i for j in range(len(scatter_traces))]
                         },
-                        {"title": f'Contour plot for {traces[i]["name"]}'},
+                        {"title": f"Contour plot for {traces[i]['name']}"},
                     ],
                 }
             )
@@ -269,7 +269,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         fig = go.Figure(data=traces + scatter_traces)
         fig.update_layout(
             updatemenus=updatemenus,
-            title=f'Contour plot for {traces[0]["name"]}',
+            title=f"Contour plot for {traces[0]['name']}",
             xaxis_title=param_names[0],
             yaxis_title=param_names[1],
         )

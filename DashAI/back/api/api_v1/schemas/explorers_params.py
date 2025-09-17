@@ -13,13 +13,13 @@ class ExplorerBase(BaseModel):
 
 
 class ExplorerCreate(ExplorerBase):
-    exploration_id: int
+    notebook_id: int
     exploration_type: str
 
 
 class Explorer(ExplorerBase):
     id: int
-    exploration_id: int
+    notebook_id: int
     exploration_type: str
     created: datetime
     last_modified: datetime

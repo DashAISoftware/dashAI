@@ -24,7 +24,7 @@ function DataloaderConfiguration({
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 4 }}>
+    <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
       <Stack spacing={3}>
         {/* Form title */}
 

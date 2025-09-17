@@ -16,6 +16,7 @@ class DefaultSettings(BaseSettings):
     LOCAL_PATH: str = "~/.DashAI"
     SQLITE_DB_PATH: str = "db.sqlite"
     DATASETS_PATH: str = "datasets"
+    IMAGES_PATH: str = "images"
     RUNS_PATH: str = "runs"
     EXPLANATIONS_PATH: str = "explanations"
-    EXPLORATIONS_PATH: str = "explorations"
+    NOTEBOOK_PATH: str = "notebook"

@@ -17,10 +17,8 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 class SimpleImputerSchema(BaseSchema):
     missing_values: schema_field(
-        none_type(
-            union_type(int_field(), union_type(float_field(), string_field()))
-        ),  # int, float, str, np.nan, None or pandas.NA
-        None,  # np.nan,
+        none_type(string_field()),  # int, float, str, np.nan, None or pandas.NA
+        "np.nan",
         "The placeholder for the missing values.",
     )  # type: ignore
     strategy: schema_field(

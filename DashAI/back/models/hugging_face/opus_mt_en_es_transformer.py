@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
+import torch
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
@@ -22,6 +23,13 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.translation_model import TranslationModel
+
+if torch.cuda.is_available():
+    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
+    DEVICE_PLACEHOLDER = "cuda:0"
+else:
+    DEVICE_ENUM = ["cpu"]
+    DEVICE_PLACEHOLDER = "cpu"
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -45,8 +53,8 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
-        enum_field(enum=["gpu", "cpu"]),
-        placeholder="gpu",
+        enum_field(enum=DEVICE_ENUM),
+        placeholder=DEVICE_PLACEHOLDER,
         description="Hardware on which the training is run. If available, GPU is "
         "recommended for efficiency reasons. Otherwise, use CPU.",
     )  # type: ignore

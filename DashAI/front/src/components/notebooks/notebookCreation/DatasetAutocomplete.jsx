@@ -1,0 +1,164 @@
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Autocomplete, TextField, Chip } from "@mui/material";
+import { formatDate } from "../../../pages/results/constants/formatDate";
+import { getDatasetInfo } from "../../../api/datasets";
+
+export default function DatasetAutocomplete({
+  datasets,
+  selectedDataset,
+  setSelectedDataset,
+}) {
+  const [datasetInfo, setDatasetInfo] = useState(null);
+  const [loadingInfo, setLoadingInfo] = useState(false);
+  const [infoError, setInfoError] = useState(null);
+  const [infosById, setInfosById] = useState({});
+
+  // Fetch info for selected dataset (detail panel)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchInfo = async () => {
+      if (!selectedDataset?.id) {
+        setDatasetInfo(null);
+        setInfoError(null);
+        return;
+      }
+      try {
+        setLoadingInfo(true);
+        setInfoError(null);
+        const info = await getDatasetInfo(selectedDataset.id);
+        if (!cancelled) setDatasetInfo(info);
+      } catch (e) {
+        console.error("Failed to fetch dataset info:", e);
+        if (!cancelled) setInfoError("Failed to load dataset info");
+      } finally {
+        if (!cancelled) setLoadingInfo(false);
+      }
+    };
+    fetchInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDataset?.id]);
+
+  const fetchMissingInfos = async (items) => {
+    const missing = items.filter((d) => d?.id != null && !infosById[d.id]);
+    if (missing.length === 0) return;
+    try {
+      const results = await Promise.allSettled(
+        missing.map((d) => getDatasetInfo(d.id)),
+      );
+      const map = {};
+      results.forEach((res, idx) => {
+        const id = missing[idx]?.id;
+        if (res.status === "fulfilled" && id != null) {
+          map[id] = res.value;
+        }
+      });
+      setInfosById((prev) => ({ ...prev, ...map }));
+    } catch (e) {
+      console.warn("Some dataset infos could not be fetched", e);
+    }
+  };
+
+  useEffect(() => {
+    if (!datasets || datasets.length === 0) return;
+  }, [datasets]);
+
+  return (
+    <Box width="100%">
+      <Box sx={{ width: "100%", mx: "auto" }}>
+        <Autocomplete
+          options={datasets}
+          getOptionLabel={(option) => option.name}
+          isOptionEqualToValue={(opt, val) => opt.id === val.id}
+          value={selectedDataset}
+          onOpen={() => fetchMissingInfos(datasets)}
+          onChange={(event, newValue) => {
+            setSelectedDataset(newValue);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Select a dataset"
+              variant="outlined"
+              placeholder="Type to search datasets..."
+            />
+          )}
+          renderOption={(props, option) => {
+            const info = infosById[option.id];
+            return (
+              <Box component="li" {...props}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "100%",
+                    gap: 0.25,
+                  }}
+                >
+                  <Typography variant="body1" fontWeight="medium">
+                    {option.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Created: {formatDate(option.created)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Rows: {info ? info.total_rows : "..."} | Columns:{" "}
+                    {info ? info.total_columns : "..."}
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          }}
+          sx={{ mb: 3 }}
+        />
+
+        {selectedDataset && (
+          <Box
+            sx={{
+              mt: 3,
+              p: 3,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Selected Dataset
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body2" fontWeight="medium">
+                  Name:
+                </Typography>
+                <Chip label={selectedDataset.name} size="small" />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="body2" fontWeight="medium">
+                  Created:
+                </Typography>
+                <Typography variant="body2">
+                  {formatDate(selectedDataset.created)}
+                </Typography>
+              </Box>
+              {/* Single line for Rows | Columns */}
+              <Typography variant="body2" fontWeight="medium">
+                Rows:{" "}
+                {loadingInfo ? "Loading..." : (datasetInfo?.total_rows ?? "-")}{" "}
+                | Columns:{" "}
+                {loadingInfo
+                  ? "Loading..."
+                  : (datasetInfo?.total_columns ?? "-")}
+              </Typography>
+              {infoError && (
+                <Typography variant="caption" color="error">
+                  {infoError}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}

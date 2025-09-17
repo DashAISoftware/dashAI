@@ -1,12 +1,7 @@
-from sklearn.feature_selection import (
-    SelectFpr as SelectFprOperation,
-)
+from sklearn.feature_selection import SelectFpr as SelectFprOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields import (
-    float_field,
-    schema_field,
-)
+from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
@@ -23,3 +18,5 @@ class SelectFpr(SklearnWrapper, SelectFprOperation):
 
     SCHEMA = SelectFprSchema
     DESCRIPTION = "Filter: Select features according to a false positive rate test."
+    SUPERVISED = True
+    metadata = {}

@@ -1,4 +1,4 @@
-Byte-coVscode mpiled / optimized / DLL files
+# Vscode compiled / optimized / DLL files
 *.py[cod]
 *$py.class
 
@@ -136,7 +136,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
+docs/source/api/generated
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -173,11 +173,16 @@ user_models
 user_explainers
 job_queue.db
 __pycache__
+dvclive
 
 # ruff cache
 .ruff_cache
 
 # MacOS
 *.DS_Store
+
 job_queue.db-shm
 job_queue.db-wal
+
+db.sqlite
+trained_models/

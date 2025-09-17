@@ -99,8 +99,8 @@ function NestedListDisplayer({
             {typeof value === "boolean"
               ? String(value)
               : value === null
-              ? "null"
-              : value}
+                ? "null"
+                : value}
           </Typography>
         }
       />

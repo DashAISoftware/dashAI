@@ -9,10 +9,10 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import (
-    Dataset,
-    Exploration,
     Explorer,
     GlobalExplainer,
+    LocalExplainer,
+    Notebook,
 )
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -114,7 +114,6 @@ class ExplorerJob(BaseJob):
         session_factory = di["session_factory"]
         config = di["config"]
         explorer_id: int = self.kwargs["explorer_id"]
-
         with session_factory() as db:
             # Load the explorer information
             try:
@@ -127,45 +126,30 @@ class ExplorerJob(BaseJob):
                 log.exception(e)
                 raise JobError("Error while loading the explorer info.") from e
 
-            # Load the exploration information
+            # Load the notebook information
             try:
-                exploration_info: Exploration = db.query(Exploration).get(
-                    explorer_info.exploration_id
+                notebook_info: Notebook = db.query(Notebook).get(
+                    explorer_info.notebook_id
                 )
-                if exploration_info is None:
+                if notebook_info is None:
                     raise JobError(
-                        f"Exploration with id {explorer_info.exploration_id} not found."
+                        f"Notebook with id {explorer_info.notebook_id} not found."
                     )
             except exc.SQLAlchemyError as e:
                 log.exception(e)
                 explorer_info.set_status_as_error()
                 db.commit()
-                raise JobError("Error while loading the exploration info.") from e
+                raise JobError("Error while loading the notebook info.") from e
 
-            # Load the dataset information
+            # Load the dataset from the notebook
             try:
-                dataset_info: Dataset = db.query(Dataset).get(
-                    exploration_info.dataset_id
-                )
-                if dataset_info is None:
-                    raise JobError(
-                        f"Dataset with id {exploration_info.dataset_id} not found."
-                    )
-            except exc.SQLAlchemyError as e:
-                log.exception(e)
-                explorer_info.set_status_as_error()
-                db.commit()
-                raise JobError("Error while loading the dataset info.") from e
-
-            # Load the dataset
-            try:
-                loaded_dataset = load_dataset(f"{dataset_info.file_path}/dataset")
+                loaded_dataset = load_dataset(f"{notebook_info.file_path}/dataset")
             except Exception as e:
                 log.exception(e)
                 explorer_info.set_status_as_error()
                 db.commit()
                 raise JobError(
-                    f"Can not load dataset from path {dataset_info.file_path}",
+                    f"Can not load dataset from path {notebook_info.file_path}",
                 ) from e
 
             # obtain the explorer component from the registry
@@ -178,10 +162,7 @@ class ExplorerJob(BaseJob):
                 explorer_info.set_status_as_error()
                 db.commit()
                 raise JobError(
-                    (
-                        f"Explorer {explorer_info.exploration_type} not found in the "
-                        "registry."
-                    )
+                    f"Explorer {explorer_info.exploration_type} not found in the registry."
                 ) from e
 
             # Instance the explorer (the explorer handles its validation)
@@ -227,18 +208,18 @@ class ExplorerJob(BaseJob):
 
             # Save the result
             try:
-                # save in the exploration folder
+                # save in the notebook folder
                 save_path = pathlib.Path(
                     os.path.join(
-                        config["EXPLORATIONS_PATH"],
-                        (f"{exploration_info.id}"),
+                        config["NOTEBOOK_PATH"],
+                        (f"{notebook_info.id}"),
                     )
                 )
                 if not save_path.exists():
                     save_path.mkdir(parents=True)
 
-                save_path = explorer_instance.save_exploration(
-                    exploration_info, explorer_info, save_path, result
+                save_path = explorer_instance.save_notebook(
+                    notebook_info, explorer_info, save_path, result
                 )
                 if isinstance(save_path, str):
                     save_path = pathlib.Path(save_path)

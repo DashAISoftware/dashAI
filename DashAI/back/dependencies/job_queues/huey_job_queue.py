@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 import dill
 from huey import SqliteHuey
@@ -35,10 +36,9 @@ class HueyJobQueue(BaseJobQueue):
     """JobQueue implementation using Huey+SQLite."""
 
     def __init__(self, queue_name: str):
-        from kink import di
 
-        config = di["config"]
-        local_path = config["LOCAL_PATH"]
+        # SOLUCION PARCHE, DEPENDENCIA CIRCULAR AL USAR CONTAINER
+        local_path = Path.home() / ".DashAI"
 
         self.db_path = local_path / (queue_name.strip() + ".db")
         self.serializer = DillSerializer()

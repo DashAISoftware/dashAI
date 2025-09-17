@@ -70,15 +70,16 @@ def create_app(
     logger.debug("App parameters: %s.", str(config))
     logger.debug("Logging level set to %s.", config["LOGGING_LEVEL"])
 
-    logger.debug("3. Creating app container and setting up dependency injection.")
-    container = build_container(config=config)
-
     logger.debug("Creating local paths.")
     _create_path_if_not_exists(config["LOCAL_PATH"])
     _create_path_if_not_exists(config["DATASETS_PATH"])
+    _create_path_if_not_exists(config["IMAGES_PATH"])
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
-    _create_path_if_not_exists(config["EXPLORATIONS_PATH"])
+    _create_path_if_not_exists(config["NOTEBOOK_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
+
+    logger.debug("3. Creating app container and setting up dependency injection.")
+    container = build_container(config=config)
 
     logger.debug("5. Creating database.")
     Base.metadata.create_all(bind=container["engine"])

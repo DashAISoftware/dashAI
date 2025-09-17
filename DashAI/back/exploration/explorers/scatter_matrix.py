@@ -16,7 +16,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
 
@@ -45,6 +45,8 @@ class ScatterMatrixExplorer(BaseExplorer):
         "of selected columns of a dataset. Multiple scatter plots are generated "
         "for each pair of columns. The diagonal plots are histograms of the columns. "
     )
+
+    SHORT_DESCRIPTION = "Display a scatter matrix plot of selected columns."
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
@@ -110,9 +112,9 @@ class ScatterMatrixExplorer(BaseExplorer):
 
         return fig
 
-    def save_exploration(
+    def save_notebook(
         self,
-        __exploration_info__: Exploration,
+        __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
         result: Figure,

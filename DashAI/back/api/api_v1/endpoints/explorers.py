@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from DashAI.back.api.api_v1.schemas import explorers_params as schemas
 from DashAI.back.core.enums.status import ExplorerStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
-from DashAI.back.dependencies.database.models import Dataset, Exploration, Explorer
+from DashAI.back.dependencies.database.models import Dataset, Explorer, Notebook
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 
@@ -63,14 +63,14 @@ def validate_explorer_params(
         )
 
     # validate dataset_id and columns against dataset
-    exploration = session.query(Exploration).get(explorer.exploration_id)
-    if exploration is None:
+    notebook = session.query(Notebook).get(explorer.notebook_id)
+    if notebook is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Exploration not found",
+            detail="Notebook not found",
         )
 
-    dataset = session.query(Dataset).get(exploration.dataset_id)
+    dataset = session.query(Dataset).get(notebook.dataset_id)
     if dataset is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -79,7 +79,7 @@ def validate_explorer_params(
 
     if validate_columns:
         # validate columns against dataset columns
-        dataset_path = f"{dataset.file_path}/dataset"
+        dataset_path = f"{notebook.file_path}/dataset"
         columns_spec = get_columns_spec(dataset_path)
 
         try:
@@ -260,21 +260,21 @@ async def get_explorer_results(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ):
-    db: Session = session_factory()
-
-    try:
-        explorer_info = db.query(Explorer).get(explorer_id)
-        if explorer_info is None:
+    db: Session
+    with session_factory() as db:
+        try:
+            explorer_info = db.query(Explorer).get(explorer_id)
+            if explorer_info is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Explorer with id {explorer_id} not found",
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Explorer with id {explorer_id} not found",
-            )
-    except exc.SQLAlchemyError as e:
-        log.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error while loading the explorer info",
-        ) from e
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Error while loading the explorer info",
+            ) from e
 
     # validate explorer status and result path
     validate_explorer_finished(explorer=explorer_info)

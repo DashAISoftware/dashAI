@@ -5,11 +5,8 @@ from beartype.typing import Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    select_columns,
-)
-from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, select_columns
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 
 
 class BaseExplorerSchema(BaseSchema):
@@ -31,7 +28,7 @@ class BaseExplorer(ConfigObject, ABC):
     - Create a new class that extends `BaseExplorer` and assign the
         previous schema to the `SCHEMA` attribute.
     - Implement the `launch_exploration` method.
-    - Implement the `save_exploration` method.
+    - Implement the `save_notebook` method.
     - Implement the `get_results` method.
 
     You can also optionally:
@@ -48,6 +45,7 @@ class BaseExplorer(ConfigObject, ABC):
     TYPE: Final[str] = "Explorer"
     DISPLAY_NAME: Final[str] = ""
     DESCRIPTION: Final[str] = ""
+    SHORT_DESCRIPTION: Final[str] = ""
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
 
@@ -68,6 +66,9 @@ class BaseExplorer(ConfigObject, ABC):
         metadata = cls.metadata
         metadata["display_name"] = (
             cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
+        )
+        metadata["short_description"] = (
+            cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented
@@ -200,9 +201,9 @@ class BaseExplorer(ConfigObject, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def save_exploration(
+    def save_notebook(
         self,
-        exploration_info: Exploration,
+        notebook_info: Notebook,
         explorer_info: Explorer,
         save_path: Path,
         result: Any,

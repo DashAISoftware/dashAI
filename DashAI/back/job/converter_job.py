@@ -11,7 +11,7 @@ from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.api.api_v1.endpoints.converters import ConverterParams
+from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
 from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -222,6 +222,7 @@ class ConverterListJob(BaseJob):
             camel_to_snake: re.Pattern,
             converter_submodule_inverse_index: Dict,
         ) -> ConverterChain:
+
             converter_instances = []
 
             for converter_name, converter_params in steps:
@@ -237,17 +238,13 @@ class ConverterListJob(BaseJob):
 
         # Extract job parameters
         converter_list_id = self.kwargs["converter_list_id"]
-        target_column_index = self.kwargs["target_column_index"]
-
         with session_factory() as db:
             # Validate input parameters
             try:
-                if converter_list_id is None or target_column_index is None:
-                    raise JobError(
-                        "Converter list ID and target column index are required"
-                    )
+                if converter_list_id is None:
+                    raise JobError("Converter list ID is required")
 
-                converter_list = db.get(ConverterList, converter_list_id)
+                converter_list: ConverterList = db.get(ConverterList, converter_list_id)
                 if not converter_list:
                     raise JobError(
                         f"Converter list with id {converter_list_id} not found"
@@ -261,11 +258,23 @@ class ConverterListJob(BaseJob):
 
             # Get dataset
             try:
-                dataset_id = converter_list.dataset_id
+                dataset_id = converter_list.notebook.dataset_id
                 dataset = db.get(DatasetModel, dataset_id)
 
-                if not dataset:
-                    raise JobError(f"Dataset with id {dataset_id} not found")
+                # dataset to edit
+                dataset_path = f"{converter_list.notebook.file_path}/dataset"
+                loaded_dataset = load_dataset(dataset_path)
+                print("Pre target column")
+                params = converter_list.parameters or {}
+                target_column_index = (
+                    params["target"].get("idx")
+                    if params.get("target") is not None
+                    else None
+                )
+                print(target_column_index)
+
+                if not loaded_dataset:
+                    raise JobError(f"Dataset with path {dataset_path} not found")
 
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -275,17 +284,14 @@ class ConverterListJob(BaseJob):
 
             # Load dataset
             try:
-                dataset_path = f"{dataset.file_path}/dataset"
-                loaded_dataset = load_dataset(dataset_path)
-
                 # Validate target column index
-                if int(target_column_index) < 1 or int(target_column_index) > len(
-                    loaded_dataset.features
+                if target_column_index is not None and (
+                    int(target_column_index) < 1
+                    or int(target_column_index) > len(loaded_dataset.features)
                 ):
                     raise JobError(
                         f"Target column index {target_column_index} is out of bounds"
                     )
-
             except Exception as e:
                 log.exception(e)
                 converter_list.set_status_as_error()
@@ -331,14 +337,12 @@ class ConverterListJob(BaseJob):
                     converters_stored_info.items(), key=lambda x: x[1]["order"]
                 )
 
-                # Process converters
                 i = 0
                 converter_instances = []
 
                 while i < len(converters_sorted_list):
                     converter_name = converters_sorted_list[i][0]
                     converter_params = converters_sorted_list[i][1]
-
                     # Check if it's a chain of converters
                     if converter_name == "ConverterChain":
                         try:
@@ -407,7 +411,7 @@ class ConverterListJob(BaseJob):
 
                     # Process columns scope
                     columns_scope = [
-                        column - 1 for column in converter_scope["columns"]
+                        column["idx"] - 1 for column in converter_scope["columns"]
                     ]
                     scope_column_indexes = sorted(set(columns_scope))
 
@@ -425,19 +429,30 @@ class ConverterListJob(BaseJob):
                     scope_rows_indexes = sorted(set(rows_scope))
 
                     # Adjust target column index (0-based internally)
-                    target_column_index_0based = int(target_column_index) - 1
-                    target_column_name = dataset_original_columns[
-                        target_column_index_0based
-                    ]
+                    y_dataset_fit = None
+                    target_column_name = None
+                    y_full_transform = None
+                    if target_column_index is not None:
+                        target_column_index_0based = int(target_column_index) - 1
+                        target_column_name = dataset_original_columns[
+                            target_column_index_0based
+                        ]
+                        y_dataset_fit = loaded_dataset.select_columns(
+                            [target_column_name]
+                        )
+                        if scope_rows_indexes:
+                            y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
+
+                        y_full_transform = loaded_dataset.select_columns(
+                            [target_column_name]
+                        )
 
                     # Select data for fitting using DashAIDataset operations
                     X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
-                    y_dataset_fit = loaded_dataset.select_columns([target_column_name])
 
                     # Select specified rows if provided
                     if scope_rows_indexes:
                         X_dataset_fit = X_dataset_fit.select(scope_rows_indexes)
-                        y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
 
                     try:
                         converter = converter.fit(X_dataset_fit, y_dataset_fit)
@@ -451,9 +466,6 @@ class ConverterListJob(BaseJob):
                     # Samplers will ignore x_full and y_full, and use internally stored
                     # resampled data.
                     X_full_transform = loaded_dataset.select_columns(scope_column_names)
-                    y_full_transform = loaded_dataset.select_columns(
-                        [target_column_name]
-                    )
 
                     try:
                         transformed_dataset = converter.transform(
@@ -468,8 +480,6 @@ class ConverterListJob(BaseJob):
                     if converter.changes_row_count():
                         loaded_dataset = transformed_dataset
                     else:
-                        # Now we need to merge the transformed data back
-                        # into the original
                         # dataset, preserving their original positions
                         loaded_dataset = _rebuild_dataset_with_transformed_columns(
                             loaded_dataset,
