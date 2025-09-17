@@ -227,17 +227,22 @@ export default function DatasetsPage() {
     // Check and wait for new dataset to be ready:
     const checkDatasetReady = async () => {
       try {
-        const datasets = await getDatasets();
+        const freshDatasets = await getDatasets();
 
-        const dataset = datasets.find((d) => d.id === newDataset.id);
+        const dataset = freshDatasets.find((d) => d.id === newDataset.id);
         if (!dataset) {
           console.error("Dataset not found in response:", newDataset.id);
           return;
         }
 
         if (getDatasetStatus(dataset.status) === "Finished") {
-          const enrichedDatasets = await enrichDatasetsWithInfo(datasets);
-          setDatasets(enrichedDatasets);
+          // Get current datasets and enrich with preserved data
+          setDatasets((currentDatasets) => {
+            enrichDatasetsWithInfo(freshDatasets, currentDatasets).then(
+              setDatasets,
+            );
+            return currentDatasets;
+          });
         } else if (getDatasetStatus(dataset.status) === "Error") {
           console.error("Dataset creation failed:", dataset.error);
           enqueueSnackbar("Dataset creation failed:", {
