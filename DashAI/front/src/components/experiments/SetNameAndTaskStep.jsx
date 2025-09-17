@@ -72,7 +72,6 @@ function SetNameAndTaskStep({ newExp, setNewExp, setNextEnabled }) {
       setNewExp({
         ...newExp,
         task_name: selectedTask.name,
-        dataset: null,
         runs: [],
       });
       setTaskNameOk(true);
