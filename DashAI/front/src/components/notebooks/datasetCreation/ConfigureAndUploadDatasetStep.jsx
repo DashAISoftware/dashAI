@@ -24,7 +24,7 @@ import { createDataset } from "../../../api/datasets";
  * @param {function} handleDatasetCreated - Callback function called when dataset is successfully created, receives the created dataset data.
  */
 
-export default function ConfigureAndUploadDataset({
+export default function ConfigureAndUploadDatasetStep({
   newDataset,
   setNewDataset,
   formSubmitRef,

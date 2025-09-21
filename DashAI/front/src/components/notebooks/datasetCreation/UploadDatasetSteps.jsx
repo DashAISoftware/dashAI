@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import SelectDataloaderStep from "./SelectDataloaderStep";
-import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
+import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import CustomLayout from "../../custom/CustomLayout";
 
 const defaultNewDataset = {
@@ -51,7 +51,7 @@ export default function UploadDatasetSteps({
         />
       )}
       {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
-        <ConfigureAndUploadDataset
+        <ConfigureAndUploadDatasetStep
           newDataset={newDataset}
           setNewDataset={setNewDataset}
           goToNextStep={() => {
