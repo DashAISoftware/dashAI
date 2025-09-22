@@ -10,9 +10,8 @@ function ExperimentsPage() {
   const [updateTableFlag, setUpdateTableFlag] = React.useState(false);
   const location = useLocation();
   const [dataset, setDataset] = React.useState(location.state?.dataset);
-  const [showNewExperimentModal, setShowNewExperimentModal] = React.useState(
-    !!dataset,
-  );
+  const [showNewExperimentModal, setShowNewExperimentModal] =
+    React.useState(!!dataset);
 
   return (
     <CustomLayout
