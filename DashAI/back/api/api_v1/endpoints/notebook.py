@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import DashAI.back.api.api_v1.schemas.datasets_params as dataset_params
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
-from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dependencies.database.models import (
     ConverterList,
     Dataset,
