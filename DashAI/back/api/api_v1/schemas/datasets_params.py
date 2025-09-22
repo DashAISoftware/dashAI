@@ -41,3 +41,4 @@ class Dataset(BaseModel):
 
 class DatasetCreateParams(BaseModel):
     name: str
+    notebook_id: int = None

@@ -313,40 +313,30 @@ async def create_dataset_from_notebook(
     notebook_id: int,
     params: dataset_params.DatasetUploadFromNotebookParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: dict = Depends(lambda: di["config"]),
 ):
     with session_factory() as db:
         try:
             notebook = db.get(Notebook, notebook_id)
             if not notebook:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Notebook not found"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Notebook not found",
                 )
-            dataset_folder = notebook.file_path
-            random_name = uuid.uuid4().hex[:8]
-            new_folder_path = os.path.join(
-                config["DATASETS_PATH"],
-                random_name,
-            )
-            os.makedirs(new_folder_path, exist_ok=True)
-            shutil.copytree(dataset_folder, new_folder_path, dirs_exist_ok=True)
 
-            dataset = Dataset(
+            new_dataset = Dataset(
                 name=params.name,
-                file_path=new_folder_path,
-                status=DatasetStatus.FINISHED,
+                file_path="",
             )
-            db.add(dataset)
+            db.add(new_dataset)
             db.commit()
-            db.refresh(dataset)
+            db.refresh(new_dataset)
+            return new_dataset
         except Exception as e:
             log.error(f"Error creating dataset from notebook {notebook_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create dataset",
             ) from e
-
-    return dataset
 
 
 @router.patch("/{notebook_id}")
