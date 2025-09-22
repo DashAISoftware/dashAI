@@ -8,7 +8,7 @@ from typing import Any, Dict
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
@@ -40,7 +40,7 @@ class DatasetJob(BaseJob):
     def set_status_as_delivered(self) -> None:
         """Set the status of the dataset as delivered."""
         dataset_id: int = self.kwargs["dataset_id"]
-        db: sessionmaker = self.kwargs["db"]
+        db: Session = self.kwargs["db"]
 
         dataset: Dataset = db.get(Dataset, dataset_id)
 

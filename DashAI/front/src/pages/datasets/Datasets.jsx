@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
@@ -214,6 +214,8 @@ export default function DatasetsPage() {
     setSelectedDatasetId(null);
   };
 
+  const timerId = useRef(null);
+
   const handleDatasetCreated = async (newDataset) => {
     setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
     setSelectedDatasetId(newDataset.id);
@@ -221,8 +223,6 @@ export default function DatasetsPage() {
     setStep(0);
     setSelectedOption("dataset");
     setSelectedNotebookId(null);
-
-    let timerId;
 
     // Check and wait for new dataset to be ready:
     const checkDatasetReady = async () => {
@@ -249,7 +249,7 @@ export default function DatasetsPage() {
             variant: "error",
           });
         } else {
-          timerId = setTimeout(checkDatasetReady, 1000);
+          timerId.current = setTimeout(checkDatasetReady, 1000);
         }
       } catch (error) {
         console.error("Error checking dataset readiness:", error);
@@ -258,6 +258,14 @@ export default function DatasetsPage() {
 
     checkDatasetReady();
   };
+
+  useEffect(() => {
+    return () => {
+      if (timerId.current) {
+        clearTimeout(timerId.current);
+      }
+    };
+  }, []);
 
   const handleEditDataset = async (id, newName) => {
     try {
