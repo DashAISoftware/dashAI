@@ -1,5 +1,5 @@
 import api from "./api";
-import type { IDataset, DatasetPage } from "../types/dataset";
+import type { IDataset } from "../types/dataset";
 
 const datasetEndpoint = "/v1/dataset";
 
@@ -62,11 +62,20 @@ export const getExperimentsExist = async (id: number): Promise<object> => {
   return response.data;
 };
 
+export const createDataset = async (name: string): Promise<IDataset> => {
+  const response = await api.post<IDataset>(`${datasetEndpoint}/`, {
+    name: name,
+  });
+  return response.data;
+};
+
 export const updateDataset = async (
   id: number,
   formData: object,
 ): Promise<IDataset> => {
-  const response = await api.patch(`${datasetEndpoint}/${id}`, { ...formData });
+  const response = await api.patch<IDataset>(`${datasetEndpoint}/${id}`, {
+    ...formData,
+  });
   return response.data;
 };
 
