@@ -1,0 +1,60 @@
+from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
+
+
+class NanRemoverSchema(BaseSchema):
+    pass
+
+
+class NanRemover(BaseConverter):
+    """
+    Converter that removes specified columns from the dataset.
+    This converter uses the scope columns defined in the converter job UI.
+    The columns selected in the scope will be the ones removed from the dataset.
+    """
+
+    SCHEMA = NanRemoverSchema
+    DESCRIPTION = "Removes the rows with NaN values from the dataset."
+    SHORT_DESCRIPTION = "Removes the rows with NaN values from the dataset."
+    DISPLAY_NAME = "NaN Remover"
+
+    def __init__(self):
+        super().__init__()
+        self.columns = []
+
+    def fit(self, x: DashAIDataset, y: DashAIDataset = None) -> "NanRemover":
+        """
+        Fit the NaN remover.
+
+        The columns to be affected are determined by the columns passed to x,
+        which are selected by scope in converter_job.
+        """
+        self.columns = x.column_names
+        return self
+
+    def transform(self, x: DashAIDataset, y: DashAIDataset = None) -> DashAIDataset:
+        """
+        Remove the nan rows from the columns selected in the scope.
+        """
+        missing = [col for col in self.columns if col not in x.column_names]
+        if missing:
+            raise ValueError(
+                f"Cannot remove nan from columns that do not exist in the dataset: {missing}"
+            )
+
+        df = x.to_pandas()
+        mask = df[self.columns].notna().all(axis=1)
+
+        cleaned_df = df[mask]
+
+        return to_dashai_dataset(cleaned_df)
+
+    def changes_row_count(self) -> bool:
+        """
+        Indicates that the converter changes the number of rows in the dataset.
+        """
+        return True
