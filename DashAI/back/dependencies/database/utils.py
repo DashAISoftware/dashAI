@@ -214,6 +214,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "entity_name": run.name,
                 "created_at": run.created,
                 "last_modified": run.last_modified,
+                "status": run.status,
             }
 
         dataset = db.query(Dataset).filter(Dataset.huey_id == huey_id).first()
@@ -224,6 +225,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "entity_name": dataset.name,
                 "created_at": dataset.created,
                 "last_modified": dataset.last_modified,
+                "status": dataset.status,
             }
 
         explorer = db.query(Explorer).filter(Explorer.huey_id == huey_id).first()
@@ -234,6 +236,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "entity_name": explorer.name,
                 "created_at": explorer.created,
                 "last_modified": explorer.last_modified,
+                "status": explorer.status,
             }
 
         global_explainer = (

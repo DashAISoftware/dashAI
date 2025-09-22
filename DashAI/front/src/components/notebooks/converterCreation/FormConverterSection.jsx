@@ -6,7 +6,7 @@ import { useExplorersAndConverters } from "../context/ExplorersAndConvertersCont
 import { useSnackbar } from "notistack";
 import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
-import { enqueueConverterJob, startJobQueue } from "../../../api/job";
+import { startJobPolling } from "../../../utils/jobPoller";
 
 export default function FormConverterSection({
   step,
@@ -41,15 +41,61 @@ export default function FormConverterSection({
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
-        enqueueSnackbar(`Converter ${tool.name} created successfully `, {
+        enqueueSnackbar(`Converter ${tool.name} created successfully`, {
           variant: "success",
         });
+
         enqueueConverterJob(data.id)
-          .then(() => {
-            startJobQueue();
+          .then((jobResponse) => {
+            if (jobResponse && jobResponse.id) {
+              console.log(`Starting to track converter job: ${jobResponse.id}`);
+
+              startJobPolling(
+                jobResponse.id,
+
+                (result) => {
+                  console.log("Converter job completed successfully:", result);
+                  enqueueSnackbar(
+                    `Converter ${tool.name} processed successfully`,
+                    {
+                      variant: "success",
+                    },
+                  );
+
+                  setExplorersAndConverters((prev) =>
+                    prev.map((item) =>
+                      item.id === data.id && item.type === "converter"
+                        ? { ...item, status: 3 }
+                        : item,
+                    ),
+                  );
+                },
+
+                (result) => {
+                  console.error("Converter job failed:", result);
+                  enqueueSnackbar(
+                    `Error processing converter: ${
+                      result.error || "Unknown error"
+                    }`,
+                    { variant: "error" },
+                  );
+
+                  setExplorersAndConverters((prev) =>
+                    prev.map((item) =>
+                      item.id === data.id && item.type === "converter"
+                        ? { ...item, status: 4 }
+                        : item,
+                    ),
+                  );
+                },
+              );
+            }
           })
           .catch((error) => {
             console.error("Error enqueuing converter job:", error);
+            enqueueSnackbar("Failed to process converter", {
+              variant: "error",
+            });
           });
       })
       .catch((error) => {

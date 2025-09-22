@@ -39,6 +39,8 @@ class HueyJobQueue(BaseJobQueue):
 
         # SOLUCION PARCHE, DEPENDENCIA CIRCULAR AL USAR CONTAINER
         local_path = Path.home() / ".DashAI"
+        if not local_path.exists():
+            local_path.mkdir(parents=True)
 
         self.db_path = local_path / (queue_name.strip() + ".db")
         self.serializer = DillSerializer()
@@ -335,14 +337,28 @@ class HueyJobQueue(BaseJobQueue):
         return self.serializer.loads(blob)[6][0]
 
     def is_empty(self) -> bool:
+        """
+        Check if the queue is empty.
+        Returns False if either:
+        1. There are pending tasks in the 'task' table, OR
+        2. There are tasks with 'started' status in the 'task_copy' table
+        """
         with sqlite3.connect(self.db_path) as conn:
             cur = conn.cursor()
+
             cur.execute(
                 "SELECT 1 FROM task WHERE queue = ? LIMIT 1",
                 (self.huey.storage.name,),
             )
-            empty = cur.fetchone() is None
-        return empty
+            task_empty = cur.fetchone() is None
+
+            if not task_empty:
+                return False
+
+            cur.execute("SELECT 1 FROM task_copy WHERE status = 'started' LIMIT 1")
+            no_started_tasks = cur.fetchone() is None
+
+            return task_empty and no_started_tasks
 
     async def async_get(self) -> BaseJob:
         while True:

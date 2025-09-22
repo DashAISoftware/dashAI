@@ -17,10 +17,7 @@ import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
 import { updateDataset as updateDatasetRequest } from "../../api/datasets";
-import {
-  enqueueDatasetJob as enqueueDatasetRequest,
-  startJobQueue,
-} from "../../api/job";
+import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetSummaryStep from "./DatasetSummaryStep";
 
 const steps = [
@@ -64,7 +61,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
         newDataset.url,
         newDataset.params,
       );
-      await startJobQueue();
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
       updateDatasets();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -35,10 +35,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import JobDetailsDialog from "./JobDetailsDialog";
-import useJobQueue from "../../hooks/useJobQueue";
-import useJobPolling, { forceRefreshNow } from "../../hooks/useJobPolling";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import { deleteAllJobs } from "../../api/job";
+import { useJobManager } from "../../hooks/useJobPolling";
 
 export const StatusIcon = ({ status }) => {
   switch (status) {
@@ -76,10 +75,11 @@ const JobQueueWidget = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showFinished, setShowFinished] = useState(false);
-  const [items, setItems] = useState([]);
   const [jobToDelete, setJobToDelete] = useState(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
+  const prevActiveJobsCount = useRef(0);
 
   const handleClearAllJobs = () => {
     setConfirmClearAll(true);
@@ -91,9 +91,9 @@ const JobQueueWidget = () => {
       const result = await deleteAllJobs();
       console.log(`Deleted ${result.deleted} jobs`);
 
-      forceRefreshNow();
+      refresh();
       setTimeout(() => {
-        refetch();
+        refresh();
         setClearingAll(false);
         setConfirmClearAll(false);
       }, 500);
@@ -118,10 +118,8 @@ const JobQueueWidget = () => {
     try {
       await deleteJob(jobToDelete.id);
 
-      setItems(items.filter((job) => job.id !== jobToDelete.id));
-
       setTimeout(() => {
-        forceRefreshNow();
+        refresh();
       }, 500);
     } catch (error) {
       console.error("Error deleting job:", error);
@@ -134,30 +132,8 @@ const JobQueueWidget = () => {
     setJobToDelete(null);
   };
 
-  const { jobs, loading, error, refetch } = useJobQueue(500);
+  const { jobs, loading, error, refresh } = useJobManager();
 
-  useJobPolling(
-    3000,
-    useCallback(
-      (changes, meta) => {
-        console.log("Changes received:", changes); // Para depuración
-
-        const hasChanges = Array.isArray(changes) && changes.length > 0;
-        const justCompleted = !!meta?.recentlyCompleted;
-        const queueNotEmpty = meta?.queueEmpty === false;
-
-        if (hasChanges || justCompleted) {
-          refetch();
-          return;
-        }
-
-        if (queueNotEmpty) {
-          refetch();
-        }
-      },
-      [refetch],
-    ),
-  );
   const activeJobs = jobs.filter(
     (job) => job.status === "started" || job.status === "not_started",
   );
@@ -171,10 +147,19 @@ const JobQueueWidget = () => {
   }, [expanded]);
 
   useEffect(() => {
-    if (activeJobs.length > 0 && !expanded) {
+    if (
+      activeJobs.length > 0 &&
+      activeJobs.length !== prevActiveJobsCount.current &&
+      !expanded
+    ) {
       setExpanded(true);
+      const toastTimeout = setTimeout(() => {
+        console.log("New active job");
+      }, 100);
+      return () => clearTimeout(toastTimeout);
     }
-  }, [activeJobs.length, expanded, jobs]);
+    prevActiveJobsCount.current = activeJobs.length;
+  }, [activeJobs.length, expanded]);
 
   const handleToggleExpand = () => {
     setExpanded(!expanded);
@@ -190,56 +175,54 @@ const JobQueueWidget = () => {
 
   const handleRefresh = () => {
     console.log("Manual refresh triggered");
-
-    refetch();
-
-    forceRefreshNow();
-
-    setTimeout(() => {
-      refetch();
-    }, 300);
+    setForceUpdate((prev) => prev + 1);
+    refresh();
   };
 
   const getJobsToShow = () => {
     if (showFinished) {
-      return jobs.slice(0, 10);
+      return jobs;
     } else {
-      return [...activeJobs, ...errorJobs]
+      return [...activeJobs]
         .sort((a, b) => new Date(b.last_update) - new Date(a.last_update))
         .slice(0, 10);
     }
   };
 
-  const getRelativeTime = (timestamp) => {
-    try {
-      const date = timestamp.includes("T")
-        ? new Date(timestamp)
-        : new Date(timestamp.replace(" ", "T") + "Z");
+  const getRelativeTime = useCallback(
+    (timestamp) => {
+      try {
+        const date = timestamp.includes("T")
+          ? new Date(timestamp)
+          : new Date(timestamp.replace(" ", "T") + "Z");
 
-      const now = new Date();
+        const now = new Date();
 
-      const diffSeconds = Math.floor((now - date) / 1000);
+        const diffSeconds = Math.floor((now - date) / 1000);
 
-      if (diffSeconds < 0) {
-        if (diffSeconds > -60) return "just now";
+        if (diffSeconds < 0) {
+          if (diffSeconds > -60) return "just now";
 
-        const absDiff = Math.abs(diffSeconds);
-        if (absDiff < 60) return `in ${absDiff}s`;
-        if (absDiff < 3600) return `in ${Math.floor(absDiff / 60)}m`;
-        if (absDiff < 86400) return `in ${Math.floor(absDiff / 3600)}h`;
-        return `in ${Math.floor(absDiff / 86400)}d`;
+          const absDiff = Math.abs(diffSeconds);
+          if (absDiff < 60) return `in ${absDiff}s`;
+          if (absDiff < 3600) return `in ${Math.floor(absDiff / 60)}m`;
+          if (absDiff < 86400) return `in ${Math.floor(absDiff / 3600)}h`;
+          return `in ${Math.floor(absDiff / 86400)}d`;
+        }
+
+        if (diffSeconds < 30) return "just now";
+        if (diffSeconds < 60) return `${diffSeconds}s ago`;
+        if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+        if (diffSeconds < 86400)
+          return `${Math.floor(diffSeconds / 3600)}h ago`;
+        return `${Math.floor(diffSeconds / 86400)}d ago`;
+      } catch (e) {
+        console.error("Error parsing time:", e, timestamp);
+        return "time unknown";
       }
-
-      if (diffSeconds < 30) return "just now";
-      if (diffSeconds < 60) return `${diffSeconds}s ago`;
-      if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
-      if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
-      return `${Math.floor(diffSeconds / 86400)}d ago`;
-    } catch (e) {
-      console.error("Error parsing time:", e, timestamp);
-      return "time unknown";
-    }
-  };
+    },
+    [forceUpdate],
+  );
 
   const jobsToShow = getJobsToShow();
 

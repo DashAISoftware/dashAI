@@ -6,7 +6,8 @@ import { useSnackbar } from "notistack";
 import ParameterStepExplorer from "./ParameterStepExplorer";
 import ScopeStepExplorer from "./ScopeStepExplorer";
 import { createNotebookExplorer } from "../../../api/explorer";
-import { enqueueExplorerJob, startJobQueue } from "../../../api/job";
+import { enqueueExplorerJob } from "../../../api/job";
+import { startJobPolling } from "../../../utils/jobPoller";
 
 export default function FormExplorerSection({
   step,
@@ -36,38 +37,55 @@ export default function FormExplorerSection({
   const { enqueueSnackbar } = useSnackbar();
 
   const handleSaveExplorer = async (params) => {
-    // Build columns as expected by backend (list of objects with at least columnName)
-    const selectedColumns = scopeColumns.map((c) => ({
-      columnName: c.columnName,
-      // keep any available metadata if present
-      ...(c.valueType ? { valueType: c.valueType } : {}),
-      ...(c.dataType ? { dataType: c.dataType } : {}),
-      ...(c.id !== undefined ? { id: c.id } : {}),
-      ...(c.order !== undefined ? { order: c.order } : {}),
-    }));
+    try {
+      // Build columns as expected by backend (list of objects with at least columnName)
+      const selectedColumns = scopeColumns.map((c) => ({
+        columnName: c.columnName,
+        // keep any available metadata if present
+        ...(c.valueType ? { valueType: c.valueType } : {}),
+        ...(c.dataType ? { dataType: c.dataType } : {}),
+        ...(c.id !== undefined ? { id: c.id } : {}),
+        ...(c.order !== undefined ? { order: c.order } : {}),
+      }));
+      const created = await createNotebookExplorer(
+        notebook.id,
+        selectedColumns,
+        tool.name,
+        params,
+      );
+      const data = { ...created, type: "explorer" };
+      setExplorersAndConverters((prev) => [...prev, data]);
 
-    createNotebookExplorer(notebook.id, selectedColumns, tool.name, params)
-      .then((created) => {
-        const data = { ...created, type: "explorer" };
-        setExplorersAndConverters((prev) => [...prev, data]);
-        enqueueSnackbar(`Explorer ${tool.name} created successfully`, {
-          variant: "success",
-        });
-        enqueueExplorerJob(created.id)
-          .then(() => {
-            startJobQueue();
-          })
-          .catch((error) => {
-            console.error("Error enqueuing explorer job:", error);
-          });
-      })
-      .catch((error) => {
-        console.error("Error creating explorer:", error);
-        enqueueSnackbar("Failed to create explorer", { variant: "error" });
-      })
-      .finally(() => {
-        handleClose();
-      });
+      const response = await enqueueExplorerJob(created.id);
+      console.log("Enqueued job with ID:", response.id);
+
+      if (response && response.id) {
+        const jobId = response.id;
+
+        startJobPolling(
+          jobId,
+          (result) => {
+            enqueueSnackbar(`Explorer ${tool.name} procesado correctamente`, {
+              variant: "success",
+            });
+          },
+          (result) => {
+            enqueueSnackbar(
+              `Error procesando explorer: ${
+                result.error || "Error desconocido"
+              }`,
+              { variant: "error" },
+            );
+          },
+        );
+      }
+      handleClose();
+
+      console.log("Enqueued explorer job:", response);
+    } catch (error) {
+      console.error("Error creating explorer:", error);
+      enqueueSnackbar("Failed to create explorer", { variant: "error" });
+    }
   };
 
   useEffect(() => {

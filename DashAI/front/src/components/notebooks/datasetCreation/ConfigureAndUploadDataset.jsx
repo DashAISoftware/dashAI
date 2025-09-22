@@ -5,10 +5,7 @@ import Upload from "./Upload";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
-import {
-  enqueueDatasetJob as enqueueDatasetRequest,
-  startJobQueue,
-} from "../../../api/job";
+import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 
 /**
  * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.
@@ -41,13 +38,12 @@ export default function ConfigureAndUploadDataset({
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
 
-      await enqueueDatasetRequest(
+      const response = await enqueueDatasetRequest(
         newDataset.file,
         name,
         newDataset.url,
         newDataset.params,
       );
-      await startJobQueue();
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
 
@@ -59,6 +55,7 @@ export default function ConfigureAndUploadDataset({
         created: new Date().toISOString(),
         last_modified: new Date().toISOString(),
         status: "processing", // Indicate it's still being processed
+        jobId: response.id,
       };
 
       // Call the callback if provided

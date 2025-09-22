@@ -89,6 +89,7 @@ class ExplainerJob(BaseJob):
             except exc.SQLAlchemyError as e:
                 log.exception(e)
 
+    @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
         explainer_id = self.kwargs.get("explainer_id")

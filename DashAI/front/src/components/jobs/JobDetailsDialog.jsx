@@ -20,7 +20,6 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
   const [jobDetails, setJobDetails] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Cargar los detalles cuando cambie el job seleccionado
   useEffect(() => {
     if (job && job.id && open) {
       setLoading(true);

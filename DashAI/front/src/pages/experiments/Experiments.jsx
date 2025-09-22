@@ -4,8 +4,6 @@ import NewExperimentModal from "../../components/experiments/NewExperimentModal"
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
 import { rows } from "../../example_data/experiments";
 import CustomLayout from "../../components/custom/CustomLayout";
-import useJobPolling from "../../hooks/useJobPolling";
-import JobQueueWidget from "../../components/jobs/JobQueueWidget";
 
 function ExperimentsPage() {
   const [showNewExperimentModal, setShowNewExperimentModal] =
@@ -13,28 +11,23 @@ function ExperimentsPage() {
   const [updateTableFlag, setUpdateTableFlag] = React.useState(false);
 
   return (
-    <>
-      <CustomLayout
-        title="Experiments Module"
-        subtitle="Configure experiments to train models"
-      >
-        <NewExperimentModal
-          open={showNewExperimentModal}
-          setOpen={setShowNewExperimentModal}
-          updateExperiments={() => setUpdateTableFlag(true)}
-        />
+    <CustomLayout
+      title="Experiments Module"
+      subtitle="Configure experiments to train models"
+    >
+      <NewExperimentModal
+        open={showNewExperimentModal}
+        setOpen={setShowNewExperimentModal}
+        updateExperiments={() => setUpdateTableFlag(true)}
+      />
 
-        <ExperimentsTable
-          initialRows={rows}
-          handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
-          updateTableFlag={updateTableFlag}
-          setUpdateTableFlag={setUpdateTableFlag}
-        />
-      </CustomLayout>
-
-      {/* Add the JobQueueWidget */}
-      <JobQueueWidget />
-    </>
+      <ExperimentsTable
+        initialRows={rows}
+        handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
+        updateTableFlag={updateTableFlag}
+        setUpdateTableFlag={setUpdateTableFlag}
+      />
+    </CustomLayout>
   );
 }
 

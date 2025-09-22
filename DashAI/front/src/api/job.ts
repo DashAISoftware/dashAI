@@ -18,6 +18,7 @@ export const getJobChanges = async (
   server_now: string;
   queue_empty: boolean;
   recently_completed: boolean;
+  all_jobs: any[];
 }> => {
   const response = await api.get<any>("/v1/job/changes", {
     params: { since },
@@ -187,18 +188,6 @@ export const enqueueConverterJob = async (
   return response.data;
 };
 
-// export const startJobQueue = async (
-//   stopWhenQueueEmpties: boolean | undefined,
-// ): Promise<object> => {
-//   let params = {};
-
-//   if (stopWhenQueueEmpties !== undefined) {
-//     params = { ...params, stop_when_queue_empties: stopWhenQueueEmpties };
-//   }
-
-//   const response = await api.post<object>("/v1/job/start/", null, { params });
-//   return response.data;
-// };
 export const startJobQueue = async (
   stopWhenQueueEmpties?: boolean,
 ): Promise<void> => {

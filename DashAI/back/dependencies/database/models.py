@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
     ConverterListStatus,
+    DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
     PluginStatus,
@@ -40,6 +41,27 @@ class Dataset(Base):
     experiments: Mapped[List["Experiment"]] = relationship(
         "Experiment", cascade="all, delete-orphan", back_populates="dataset"
     )
+    status: Mapped[Enum] = mapped_column(
+        Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status of the dataset to delivered."""
+        self.status = DatasetStatus.DELIVERED
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the dataset to started and set start_time to now."""
+        self.status = DatasetStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the dataset to finished and set end_time to now."""
+        self.status = DatasetStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """Update the status of the dataset to error."""
+        self.status = DatasetStatus.ERROR
 
 
 class Experiment(Base):
@@ -513,6 +535,7 @@ class Explorer(Base):
     notebook_id: Mapped[int] = mapped_column(
         ForeignKey("notebook.id", ondelete="CASCADE")
     )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,

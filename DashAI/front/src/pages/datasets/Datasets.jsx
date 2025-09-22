@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import JobQueueWidget from "../../components/jobs/JobQueueWidget";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
@@ -14,6 +15,7 @@ import {
   getDatasetInfo,
   updateDataset,
 } from "../../api/datasets";
+import { startJobPolling } from "../../utils/jobPoller";
 import {
   getNotebooks,
   deleteNotebook,
@@ -214,48 +216,128 @@ export default function DatasetsPage() {
   };
 
   const handleDatasetCreated = async (tempDataset) => {
-    // Temporary dataset
+    // Add temporary dataset to UI immediately
     setDatasets((prevDatasets) => [...prevDatasets, tempDataset]);
     setStep(0);
     setSelectedOption("dataset");
     setSelectedDatasetId(tempDataset.id);
     setSelectedNotebookId(null);
 
-    // Real dataset
-    const pollForRealDataset = async (attempt = 1, maxAttempts = 10) => {
-      try {
-        const realDatasets = await getDatasets();
-        const realDataset = realDatasets.find(
-          (d) =>
-            d.name === tempDataset.name && !d.id.toString().startsWith("temp_"),
+    // Start polling for the real dataset
+    pollForRealDataset(tempDataset);
+  };
+
+  const pollForRealDataset = async (
+    tempDataset,
+    attempt = 1,
+    maxAttempts = 10,
+  ) => {
+    console.log("jobid of tempdataset", tempDataset.jobId);
+    // Set up job polling if we have a jobId (only on first attempt)
+    if (tempDataset.jobId && attempt === 1) {
+      console.log(
+        `Setting up job polling for dataset creation job: ${tempDataset.jobId}`,
+      );
+
+      startJobPolling(
+        tempDataset.jobId,
+        // Success callback
+        async (result) => {
+          console.log(`Dataset job completed successfully`);
+          enqueueSnackbar(
+            `Dataset "${tempDataset.name}" created successfully`,
+            {
+              variant: "success",
+            },
+          );
+
+          // Attempt to get the real dataset
+          try {
+            const realDatasets = await getDatasets();
+            const realDataset = realDatasets.find(
+              (d) =>
+                d.name === tempDataset.name &&
+                !d.id.toString().startsWith("temp_"),
+            );
+
+            if (realDataset) {
+              const enrichedDatasets = await enrichDatasetsWithInfo(
+                realDatasets,
+                datasets,
+              );
+              setDatasets(enrichedDatasets);
+              setSelectedDatasetId(realDataset.id);
+            } else {
+              console.log(
+                "Dataset job completed but couldn't find real dataset",
+              );
+              await fetchDatasets();
+            }
+          } catch (error) {
+            console.error(
+              "Error fetching datasets after job completion:",
+              error,
+            );
+            await fetchDatasets();
+          }
+        },
+        // Error callback
+        (result) => {
+          console.error(`Dataset job failed:`, result);
+          enqueueSnackbar(
+            `Error creating dataset: ${result.error || "Unknown error"}`,
+            { variant: "error" },
+          );
+          fetchDatasets();
+        },
+      );
+    }
+
+    // Continue with traditional polling as backup
+    try {
+      const realDatasets = await getDatasets();
+      const realDataset = realDatasets.find(
+        (d) =>
+          d.name === tempDataset.name && !d.id.toString().startsWith("temp_"),
+      );
+
+      if (realDataset) {
+        const enrichedDatasets = await enrichDatasetsWithInfo(
+          realDatasets,
+          datasets,
         );
+        setDatasets(enrichedDatasets);
+        setSelectedDatasetId(realDataset.id);
 
-        if (realDataset) {
-          const enrichedDatasets = await enrichDatasetsWithInfo(
-            realDatasets,
-            datasets,
+        // Only show success notification here if we don't have a jobId
+        // (to avoid duplicate notifications)
+        if (!tempDataset.jobId) {
+          enqueueSnackbar(
+            `Dataset "${tempDataset.name}" created successfully`,
+            {
+              variant: "success",
+            },
           );
-          setDatasets(enrichedDatasets);
-          setSelectedDatasetId(realDataset.id);
-        } else if (attempt < maxAttempts) {
-          const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
-          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), delay);
-        } else {
-          console.log(
-            "Max polling attempts reached, keeping temporary dataset",
-          );
-          await fetchDatasets();
         }
-      } catch (error) {
-        console.error("Error polling for real dataset:", error);
-        if (attempt < maxAttempts) {
-          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), 5000);
-        }
+      } else if (attempt < maxAttempts) {
+        const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
+        setTimeout(
+          () => pollForRealDataset(tempDataset, attempt + 1, maxAttempts),
+          delay,
+        );
+      } else {
+        console.log("Max polling attempts reached, keeping temporary dataset");
+        await fetchDatasets();
       }
-    };
-
-    //setTimeout(() => pollForRealDataset(), 1000);
-    pollForRealDataset();
+    } catch (error) {
+      console.error("Error polling for real dataset:", error);
+      if (attempt < maxAttempts) {
+        setTimeout(
+          () => pollForRealDataset(tempDataset, attempt + 1, maxAttempts),
+          5000,
+        );
+      }
+    }
   };
 
   const handleEditDataset = async (id, newName) => {

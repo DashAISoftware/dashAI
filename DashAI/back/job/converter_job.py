@@ -160,6 +160,7 @@ class ConverterListJob(BaseJob):
             except exc.SQLAlchemyError as e:
                 log.exception(e)
 
+    @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
         converter_list_id = self.kwargs.get("converter_list_id")
@@ -173,13 +174,18 @@ class ConverterListJob(BaseJob):
         try:
             with session_factory() as db:
                 converter_list = db.get(ConverterList, converter_list_id)
-                if converter_list:
-                    dataset = db.get(DatasetModel, converter_list.dataset_id)
+                if not converter_list:
+                    return f"Converter Job #{converter_list_id}"
+                converter_name = converter_list.converter
+
+                if hasattr(converter_list, "notebook") and converter_list.notebook:
+                    dataset = db.get(DatasetModel, converter_list.notebook.dataset_id)
                     if dataset and dataset.name:
-                        return f"Convert: {dataset.name}"
-                    return f"Converter List #{converter_list_id}"
-        except Exception:
-            pass
+                        return f"{converter_name}: {dataset.name}"
+
+                return f"{converter_name}"
+        except Exception as e:
+            log.exception(f"Error getting job name: {e}")
 
         return f"Converter Job #{converter_list_id}"
 
@@ -329,7 +335,9 @@ class ConverterListJob(BaseJob):
                 }
 
                 # Get stored converter configurations
-                converters_stored_info = converter_list.converters
+                converters_stored_info = {
+                    converter_list.converter: converter_list.parameters
+                }
                 dataset_original_columns = loaded_dataset.column_names
 
                 # Sort converters by order

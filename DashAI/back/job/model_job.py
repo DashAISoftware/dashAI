@@ -70,6 +70,7 @@ class ModelJob(BaseJob):
             except exc.SQLAlchemyError as e:
                 log.exception(e)
 
+    @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
         run_id = self.kwargs.get("run_id")

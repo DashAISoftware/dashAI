@@ -37,6 +37,7 @@ class PredictJob(BaseJob):
         """Set the status of the prediction job as error."""
         log.error(f"Prediction job failed: {self.kwargs}")
 
+    @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
         run_id = self.kwargs.get("run_id")

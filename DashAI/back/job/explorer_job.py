@@ -72,6 +72,7 @@ class ExplorerJob(BaseJob):
             except exc.SQLAlchemyError as e:
                 log.exception(e)
 
+    @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
         explainer_id = self.kwargs.get("explainer_id")
@@ -121,6 +122,7 @@ class ExplorerJob(BaseJob):
                 if explorer_info is None:
                     raise JobError(f"Explorer with id {explorer_id} not found.")
                 explorer_info.set_status_as_started()
+                explorer_info.huey_id = self.kwargs.get("huey_id", None)
                 db.commit()
             except exc.SQLAlchemyError as e:
                 log.exception(e)

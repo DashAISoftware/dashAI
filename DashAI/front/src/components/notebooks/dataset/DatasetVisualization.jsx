@@ -15,6 +15,7 @@ import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
+import JobQueueWidget from "../../jobs/JobQueueWidget";
 
 export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
@@ -238,6 +239,8 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           dataset={dataset}
         />
       </Paper>
+
+      <JobQueueWidget />
     </>
   );
 }
