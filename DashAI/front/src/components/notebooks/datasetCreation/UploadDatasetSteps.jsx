@@ -3,27 +3,23 @@ import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import CustomLayout from "../../custom/CustomLayout";
 
-const defaultNewDataset = {
-  dataloader: "",
-  file: null,
-  url: "",
-  params: {},
-};
-
 export default function UploadDatasetSteps({
   backHome,
   handleDatasetCreated,
   existingDatasets = [],
 }) {
-  const [step, setStep] = React.useState(0);
+  const [step, setStep] = useState(0);
   const [selectedDataloader, setSelectedDataloader] = useState({});
-  const [newDataset, setNewDataset] = useState(defaultNewDataset);
 
   const goToNextStep = () => {
     setStep((prevStep) => prevStep + 1);
   };
 
   const goToPrevStep = () => {
+    if (step === 0) {
+      backHome();
+      return;
+    }
     setStep((prevStep) => prevStep - 1);
   };
 
@@ -39,33 +35,16 @@ export default function UploadDatasetSteps({
     >
       {step === 0 && (
         <SelectDataloaderStep
-          newDataset={newDataset}
-          setNewDataset={setNewDataset}
           goToNextStep={goToNextStep}
-          goToPrevStep={() => {
-            goToPrevStep(null);
-            backHome();
-          }}
+          goToPrevStep={goToPrevStep}
           selectedDataloader={selectedDataloader}
           setSelectedDataloader={setSelectedDataloader}
         />
       )}
       {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
         <ConfigureAndUploadDatasetStep
-          newDataset={newDataset}
-          setNewDataset={setNewDataset}
-          goToNextStep={() => {
-            setStep(0);
-            setSelectedDataloader({});
-            setNewDataset(defaultNewDataset);
-          }}
-          goToPrevStep={() => {
-            goToPrevStep();
-            setNewDataset(defaultNewDataset);
-            setSelectedDataloader({});
-          }}
-          selectedDataloader={selectedDataloader}
-          setSelectedDataloader={setSelectedDataloader}
+          goToPrevStep={goToPrevStep}
+          selectedDataloader={selectedDataloader.name}
           backHome={backHome}
           handleDatasetCreated={handleDatasetCreated}
           existingDatasets={existingDatasets}
