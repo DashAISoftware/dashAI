@@ -105,9 +105,12 @@ class DatasetJob(BaseJob):
                             .first()
                         )
                         if not notebook_dataset:
-                            raise JobError(
-                                f"Notebook with ID {notebook_id} has no associated dataset."
+                            msg = (
+                                "Notebook with ID "
+                                f"{notebook_id}"
+                                " has no associated dataset."
                             )
+                            raise JobError(msg)
                         new_dataset = load_dataset(
                             os.path.join(notebook_dataset.file_path, "dataset")
                         )
