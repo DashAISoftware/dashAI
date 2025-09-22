@@ -20,7 +20,7 @@ export default function ParameterStepExplorer({
           modelToConfigure={explorer}
           initialValues={initialParams}
           onCancel={() => setStep(0)}
-          saveButtonText="SAVE AND RUN"
+          saveButtonText="Create Explorer"
         />
       </FormSchemaContainer>
     </Box>

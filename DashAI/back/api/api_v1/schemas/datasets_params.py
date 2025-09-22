@@ -3,6 +3,8 @@ from typing import Dict
 
 from pydantic import BaseModel, ConfigDict
 
+from DashAI.back.core.enums.status import DatasetStatus
+
 
 class DatasetParams(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -34,3 +36,8 @@ class Dataset(BaseModel):
     created: datetime
     last_modified: datetime
     file_path: str
+    status: DatasetStatus
+
+
+class DatasetCreateParams(BaseModel):
+    name: str

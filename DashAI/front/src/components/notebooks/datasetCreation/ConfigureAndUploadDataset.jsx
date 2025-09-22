@@ -10,19 +10,25 @@ import {
   startJobQueue,
 } from "../../../api/job";
 
+import { createDataset } from "../../../api/datasets";
+
 /**
  * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.
- * @param {object} newDataset An object that stores all the important states for the dataset modal.
- * @param {function} setNewDataset function that modifies newDataset state
- * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal.
- * @param {object} formSubmitRef useRef to trigger form submit from outside "ParameterForm" component
+ * It creates the dataset entry in the database and then enqueues a job to process the uploaded file.
+ *
+ * @param {object} newDataset - An object that stores all the important states for the dataset modal (file, url, params, dataloader).
+ * @param {function} setNewDataset - Function that modifies newDataset state.
+ * @param {object} formSubmitRef - useRef to trigger form submit from outside "ParameterForm" component.
+ * @param {function} goToPrevStep - Function to navigate back to the previous step in the dataset creation flow.
+ * @param {function} backHome - Function to navigate back to the home/initial state, typically called on error.
+ * @param {function} handleDatasetCreated - Callback function called when dataset is successfully created, receives the created dataset data.
  */
+
 export default function ConfigureAndUploadDataset({
   newDataset,
   setNewDataset,
   formSubmitRef,
   goToPrevStep,
-  updateDatasets,
   backHome,
   handleDatasetCreated,
 }) {
@@ -31,50 +37,44 @@ export default function ConfigureAndUploadDataset({
   const [error, setError] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const [nextEnabled, setNextEnabled] = useState(false);
-  const [requestError, setRequestError] = useState(false);
 
   const handleSubmitNewDataset = async () => {
-    try {
-      const name =
-        newDataset.params.name === null
-          ? newDataset.file.name
-          : newDataset.params.name;
-      newDataset.params["dataloader"] = newDataset.dataloader;
+    const name =
+      newDataset.params.name === null
+        ? newDataset.file.name
+        : newDataset.params.name;
 
-      await enqueueDatasetRequest(
-        newDataset.file,
-        name,
-        newDataset.url,
-        newDataset.params,
-      );
-      await startJobQueue();
+    newDataset.params["name"] = name;
+    newDataset.params["dataloader"] = newDataset.dataloader;
 
-      enqueueSnackbar("Dataset upload job started", { variant: "success" });
+    createDataset(name)
+      .then((data) => {
+        enqueueSnackbar(`Dataset ${data.name} created successfully`, {
+          variant: "success",
+        });
+        enqueueDatasetRequest(
+          data.id,
+          newDataset.file,
+          newDataset.url,
+          newDataset.params,
+        )
+          .then(() => {
+            startJobQueue();
+          })
+          .catch(() => {
+            enqueueSnackbar("Error when trying to enqueue the dataset job.", {
+              variant: "error",
+            });
+          });
 
-      // Create a temporary dataset object for immediate visualization
-      const tempDataset = {
-        id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Unique temporary ID
-        name: name,
-        file_path: newDataset.file ? newDataset.file.name : newDataset.url,
-        created: new Date().toISOString(),
-        last_modified: new Date().toISOString(),
-        status: "processing", // Indicate it's still being processed
-      };
-
-      // Call the callback if provided
-      if (handleDatasetCreated) {
-        handleDatasetCreated(tempDataset);
-      } else {
+        handleDatasetCreated(data);
+      })
+      .catch(() => {
+        enqueueSnackbar("Error when trying to create the dataset.", {
+          variant: "error",
+        });
         backHome();
-      }
-    } catch (error) {
-      console.error(error);
-      setRequestError(true);
-      enqueueSnackbar("Error when trying to upload the dataset.", {
-        variant: "error",
       });
-      backHome();
-    }
   };
 
   async function getSchema() {

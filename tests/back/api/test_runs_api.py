@@ -1,62 +1,15 @@
 import json
-import os
 
 import pytest
 from fastapi.testclient import TestClient
 
+from DashAI.back.dependencies.database.models import Dataset
+
 
 @pytest.fixture(scope="module", name="dataset_id")
-def create_dataset(client):
-    """Create testing dataset using job system."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
-
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "DummyDataset2",
-            "separator": ",",
-        }
-
-        kwargs = {
-            "name": "DummyDataset2",
-            "url": "",
-            "params": params,
-        }
-
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
-
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-
-        assert response.status_code == 201, (
-            f"Failed to create dataset job: {response.text}"
-        )
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        datasets_response = client.get("/api/v1/dataset/")
-        assert datasets_response.status_code == 200, datasets_response.text
-
-        datasets = datasets_response.json()
-        dataset_id = None
-        for dataset in datasets:
-            if dataset["name"] == "DummyDataset2":
-                dataset_id = dataset["id"]
-                break
-
-        assert dataset_id is not None, "Dataset not found after job completion"
-
-    yield dataset_id
-
-    response = client.delete(f"/api/v1/dataset/{dataset_id}")
-    assert response.status_code == 204, response.text
+def dataset_id(dataset_1: Dataset) -> int:
+    """Get the dataset ID from the dataset_1 fixture."""
+    return dataset_1.id
 
 
 @pytest.fixture(scope="module", name="experiment_id")
