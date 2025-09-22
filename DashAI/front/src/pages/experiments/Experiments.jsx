@@ -11,7 +11,7 @@ function ExperimentsPage() {
   const location = useLocation();
   const [dataset, setDataset] = React.useState(location.state?.dataset);
   const [showNewExperimentModal, setShowNewExperimentModal] = React.useState(
-    dataset ? true : false,
+    !!dataset,
   );
 
   return (
