@@ -367,6 +367,29 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Alert>
+      {!infoLoading ? (
+        Object.values(datasetInfo.nan).some((v) => v > 0) &&
+        Object.values(datasetInfo.nan).length !== 0 ? (
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            <AlertTitle>
+              The dataset contains missing values (NaN) in the columns:
+            </AlertTitle>
+            <Grid container spacing={2}>
+              {Object.entries(datasetInfo.nan)
+                .filter(([_, count]) => count > 0)
+                .map(([col, count]) => (
+                  <Grid item xs={12} key={col}>
+                    - {col}: {count} missing values
+                  </Grid>
+                ))}
+            </Grid>
+            <p>
+              It's recommended to preprocess the dataset to handle these missing
+              values before training a model.
+            </p>
+          </Alert>
+        ) : null
+      ) : null}
 
       {!infoLoading ? (
         <Grid container spacing={1}>
