@@ -94,7 +94,11 @@ export default function FormExplorerSection({
           notebook={notebook}
           tool={tool}
           setScopeColumns={setScopeColumns}
-          setStep={setStep}
+          nextStep={
+            Object.values(tool.schema.properties).length > 0
+              ? () => setStep((s) => s + 1)
+              : () => handleSaveExplorer({})
+          }
         />
       )}
 
