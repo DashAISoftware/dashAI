@@ -40,9 +40,9 @@ function ResultsTable({ experimentId }) {
   };
 
   const handlePrediction = (runId, trainedDatasetId) => {
-    navigate(`../app/predict/`, { state: { runId, trainedDatasetId } });
+    navigate(`../app/predict`, { state: { runId, trainedDatasetId } });
   };
-  1;
+
   const handleExplainer = (runId) => {
     navigate(`../app/explainers/runs/${runId}`);
   };
