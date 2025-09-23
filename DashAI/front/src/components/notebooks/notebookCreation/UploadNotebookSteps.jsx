@@ -6,7 +6,6 @@ import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
 
