@@ -1,7 +1,7 @@
 import { actionsColumns } from "./actionsColumns";
 import { initialColumns } from "./initialColumns";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
-import PsychologyAltIcon from "@mui/icons-material/PsychologyAlt";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
 
 export const extractColumns = (
@@ -40,12 +40,12 @@ export const extractColumns = (
     },
     {
       title: "Predict",
-      Icon: QueryStatsIcon,
+      Icon: TrendingUpIcon,
       handleAction: (runId) => handlePrediction(runId, datasetId),
     },
     {
       title: "Explain",
-      Icon: PsychologyAltIcon,
+      Icon: QueryStatsIcon,
       handleAction: handleExplainer,
     },
   ]);
