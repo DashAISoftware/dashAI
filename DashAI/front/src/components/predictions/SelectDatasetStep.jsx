@@ -50,6 +50,7 @@ function SelectDatasetStep({
   setSelectedDatasetId,
   setNextEnabled,
   trainDataset,
+  predictName,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -58,7 +59,6 @@ function SelectDatasetStep({
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
   const [datasetPaths, setDatasetPaths] = useState([]);
-  const [predictName, setPredictName] = useState("");
 
   const getDatasets = async () => {
     setLoading(true);
@@ -117,7 +117,7 @@ function SelectDatasetStep({
             label="Enter a unique name"
             value={predictName}
             fullWidth
-            onChange={handlePredictNameInput}
+            onChange={(e) => handlePredictNameInput(e.target.value)}
             autoComplete="off"
             sx={{ mb: 4 }}
           />

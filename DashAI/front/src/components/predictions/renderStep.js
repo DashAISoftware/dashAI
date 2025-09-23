@@ -11,6 +11,7 @@ export function renderStep(
   handlePredictNameInput,
   setTrainDataset,
   trainDataset,
+  predictName,
 ) {
   switch (stepName) {
     case "selectModel":
@@ -30,6 +31,7 @@ export function renderStep(
           setSelectedDatasetId={setSelectedDatasetId}
           setNextEnabled={setNextEnabled}
           trainDataset={trainDataset}
+          predictName={predictName}
         />
       );
     default:

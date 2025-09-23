@@ -230,6 +230,7 @@ function PredictionModal({
           handlePredictNameInput,
           setTrainDataset,
           trainDataset,
+          predictName,
         )}
       </DialogContent>
 
