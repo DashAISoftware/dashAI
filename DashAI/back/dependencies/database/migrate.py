@@ -1,58 +1,46 @@
 import logging
-import os
 import shutil
 import time
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from DashAI.back.dependencies.config_builder import build_config_dict
 
 logger = logging.getLogger(__name__)
 
-config = build_config_dict(local_path=Path("~/.DashAI"), logging_level="INFO")
 
-
-def get_database_url() -> str:
-    return f"sqlite:///{config['SQLITE_DB_PATH']}"
-
-
-def get_sqlite_file_path() -> os.PathLike:
-    return config["SQLITE_DB_PATH"]
-
-
-def get_alembic_ini_path() -> os.PathLike:
+def get_alembic_ini_path() -> Path:
+    # TODO: this is a bit hacky, but it works for now
     curr_path = Path(__file__).resolve().parents[4]
     return curr_path / "alembic.ini"
 
 
-def alembic_config() -> Config:
+def alembic_config(db_url: str) -> Config:
     ini_path = get_alembic_ini_path()
     cfg = Config(str(ini_path))
-    cfg.set_main_option("sqlalchemy.url", get_database_url())
+    cfg.set_main_option("sqlalchemy.url", db_url)
     return cfg
 
 
-def run_migrations() -> None:
-    cfg = alembic_config()
+def run_migrations(db_url: str) -> None:
+    cfg = alembic_config(db_url=db_url)
     command.upgrade(cfg, "head")
 
 
-def backup_and_recreate_db() -> None:
-    sqlite_file = get_sqlite_file_path()
-    if sqlite_file.exists():
+def backup_and_recreate_db(db_url: str, sqlite_file_path: Path) -> None:
+    if sqlite_file_path.exists():
         ts = time.strftime("%Y%m%d-%H%M%S")
-        backup = sqlite_file.with_suffix(f".bak-{ts}.sqlite3")
-        shutil.copy2(sqlite_file, backup)
-        sqlite_file.unlink()
+        backup = sqlite_file_path.with_suffix(f".bak-{ts}.sqlite3")
+        shutil.copy2(sqlite_file_path, backup)
+        sqlite_file_path.unlink()
 
-    # Crear desde cero: sube hasta head
-    run_migrations()
+    run_migrations(db_url=db_url)
 
 
-def migrate_on_startup() -> None:
+def migrate_on_startup(sqlite_file_path: Path) -> None:
     try:
-        run_migrations()
+        db_url = f"sqlite:///{sqlite_file_path}"
+        run_migrations(db_url=db_url)
     except Exception as exc:
         logger.error(
             (
@@ -60,5 +48,5 @@ def migrate_on_startup() -> None:
                 "Attempting to backup and recreate the database."
             )
         )
-        backup_and_recreate_db()
+        backup_and_recreate_db(db_url=db_url, sqlite_file_path=sqlite_file_path)
         raise

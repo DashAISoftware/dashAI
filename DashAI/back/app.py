@@ -82,7 +82,9 @@ def create_app(
     container = build_container(config=config)
 
     logger.debug("5. Running migrations.")
-    migrate_on_startup()
+    migrate_on_startup(
+        sqlite_file_path=pathlib.Path(config["SQLITE_DB_PATH"]),
+    )
 
     logger.debug("6. Initializing FastAPI application.")
     app = FastAPI(title="DashAI")
