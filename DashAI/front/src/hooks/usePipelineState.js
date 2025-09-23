@@ -39,20 +39,13 @@ export function usePipelineState(pipelineId, location, navigate) {
 
   // Generate default name for new pipelines
   const { defaultName } = useMemo(() => {
-    console.log(
-      "useMemo executing with existingPipelines:",
-      existingPipelines.length,
-      existingPipelines,
-    );
-
-    if (pipelineId) return { defaultName: null }; // Don't auto-name existing pipelines
+    if (pipelineId) return { defaultName: null };
 
     const result = generateSequentialName({
       base: "Pipeline",
       items: existingPipelines,
     });
 
-    console.log("Generated result:", result);
     return result;
   }, [existingPipelines, pipelineId]);
 
@@ -97,19 +90,11 @@ export function usePipelineState(pipelineId, location, navigate) {
 
   // Set initial name validation and default value for new pipelines
   useEffect(() => {
-    console.log("useEffect triggered with:", {
-      defaultName,
-      userHasModifiedName,
-      pipelineId,
-      pipelineName,
-    });
-
     if (defaultName && !userHasModifiedName && !pipelineId) {
       if (
         pipelineName === "undefined" ||
         pipelineName.startsWith("Pipeline_")
       ) {
-        console.log("Setting pipeline name to:", defaultName);
         setPipelineName(defaultName);
         setNameError(false);
         setNameErrorMessage("");
