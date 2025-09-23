@@ -9,7 +9,6 @@ from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm import Session, sessionmaker
 
-import DashAI.back.api.api_v1.schemas.datasets_params as dataset_params
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
 from DashAI.back.dependencies.database.models import (
     ConverterList,
@@ -305,37 +304,6 @@ async def delete_notebook(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete directory",
         ) from e
-
-
-@router.post("/{notebook_id}/dataset", response_model=dataset_params.Dataset)
-async def create_dataset_from_notebook(
-    notebook_id: int,
-    params: dataset_params.DatasetUploadFromNotebookParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-):
-    with session_factory() as db:
-        try:
-            notebook = db.get(Notebook, notebook_id)
-            if not notebook:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Notebook not found",
-                )
-
-            new_dataset = Dataset(
-                name=params.name,
-                file_path="",
-            )
-            db.add(new_dataset)
-            db.commit()
-            db.refresh(new_dataset)
-            return new_dataset
-        except Exception as e:
-            log.error(f"Error creating dataset from notebook {notebook_id}: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create dataset",
-            ) from e
 
 
 @router.patch("/{notebook_id}")

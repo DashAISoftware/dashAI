@@ -13,11 +13,11 @@ import {
   deleteDataset,
   getDatasetInfo,
   updateDataset,
+  createDataset,
 } from "../../api/datasets";
 import {
   getNotebooks,
   deleteNotebook,
-  createDatasetFromNotebook,
   updateNotebook,
 } from "../../api/notebook";
 
@@ -219,7 +219,7 @@ export default function DatasetsPage() {
   const handleAddDatasetFromNotebook = async (name) => {
     if (selectedNotebook) {
       try {
-        const data = await createDatasetFromNotebook(selectedNotebook.id, name);
+        const data = await createDataset(name);
         console.log("Posting job for dataset:", data);
         await enqueueDatasetJob(data.id, null, "", {}, selectedNotebook.id);
         enqueueSnackbar("Dataset creation started", {
