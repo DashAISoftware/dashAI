@@ -43,15 +43,18 @@ class NanRemover(BaseConverter):
         missing = [col for col in self.columns if col not in x.column_names]
         if missing:
             raise ValueError(
-                f"Cannot remove nan from columns that do not exist in the dataset: {missing}"
+                (
+                    "Cannot remove NaN from columns that do not exist "
+                    "in the dataset: {}"
+                ).format(missing)
             )
 
-        df = x.to_pandas()
-        mask = df[self.columns].notna().all(axis=1)
+        dataset = x.to_pandas()
+        mask = dataset[self.columns].notna().all(axis=1)
 
-        cleaned_df = df[mask]
+        cleaned_dataset = dataset[mask]
 
-        return to_dashai_dataset(cleaned_df)
+        return to_dashai_dataset(cleaned_dataset)
 
     def changes_row_count(self) -> bool:
         """
