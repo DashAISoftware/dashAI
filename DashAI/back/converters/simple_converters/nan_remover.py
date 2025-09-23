@@ -18,7 +18,11 @@ class NanRemover(BaseConverter):
     """
 
     SCHEMA = NanRemoverSchema
-    DESCRIPTION = "Removes the rows with NaN values from the dataset."
+    DESCRIPTION = (
+        "Removes the rows with NaN values from the dataset. "
+        "Keep in mind that this converter will also remove "
+        "columns not selected in the scope."
+    )
     SHORT_DESCRIPTION = "Removes the rows with NaN values from the dataset."
     DISPLAY_NAME = "NaN Remover"
 
