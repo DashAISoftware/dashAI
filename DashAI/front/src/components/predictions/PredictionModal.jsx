@@ -20,8 +20,6 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
 import { renderStep } from "./renderStep";
 
-import SelectModelStep from "./SelectModelStep";
-import SelectDatasetStep from "./SelectDatasetStep";
 import { enqueuePredictionJob, startJobQueue } from "../../api/job";
 
 function PredictionModal({

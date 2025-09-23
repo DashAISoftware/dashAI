@@ -13,7 +13,7 @@ export const actionsColumns = (actions) =>
     disableColumnMenu: true,
     align: "center",
     headerAlign: "center",
-    minWidth: 80,
+    minWidth: 50,
     renderCell: (params) => (
       <IconButton
         onClick={() => action.handleAction(params.id, params)}

@@ -32,11 +32,30 @@ export const extractColumns = (
     return { field: name };
   });
 
+  const actions = actionsColumns([
+    {
+      title: "Details",
+      Icon: InfoIcon,
+      handleAction: handleRunResultsOpen,
+    },
+    {
+      title: "Predict",
+      Icon: QueryStatsIcon,
+      handleAction: (runId) => handlePrediction(runId, datasetId),
+    },
+    {
+      title: "Explain",
+      Icon: PsychologyAltIcon,
+      handleAction: handleExplainer,
+    },
+  ]);
+
   // column grouping
   const columnGroupingModel = [
     { groupId: "Info", children: [...initialColumns] },
     { groupId: "Metrics", children: [...metrics] },
     { groupId: "Parameters", children: [...parameters] },
+    { groupId: "Actions", children: [...actions] },
   ];
 
   // column visibility
@@ -53,28 +72,7 @@ export const extractColumns = (
     columnVisibilityModel = { ...columnVisibilityModel, [col.field]: false };
   });
 
-  const columns = [
-    ...initialColumns,
-    ...metrics,
-    ...parameters,
-    ...actionsColumns([
-      {
-        title: "Details",
-        Icon: InfoIcon,
-        handleAction: handleRunResultsOpen,
-      },
-      {
-        title: "Predict",
-        Icon: QueryStatsIcon,
-        handleAction: (runId) => handlePrediction(runId, datasetId),
-      },
-      {
-        title: "Explain",
-        Icon: PsychologyAltIcon,
-        handleAction: handleExplainer,
-      },
-    ]),
-  ];
+  const columns = [...initialColumns, ...metrics, ...parameters, ...actions];
 
   return { columns, columnGroupingModel, columnVisibilityModel };
 };
