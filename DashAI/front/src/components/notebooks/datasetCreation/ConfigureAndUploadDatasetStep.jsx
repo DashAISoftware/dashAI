@@ -76,7 +76,7 @@ export default function ConfigureAndUploadDatasetStep({
     datasetFileToUpload,
     enqueueSnackbar,
     handleDatasetCreated,
-    formSubmitRef.current,
+    formSubmitRef,
   ]);
 
   const handleFileUpload = (file, url) => {
