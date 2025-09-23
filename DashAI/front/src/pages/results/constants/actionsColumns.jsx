@@ -16,7 +16,7 @@ export const actionsColumns = (actions) =>
     minWidth: 50,
     renderCell: (params) => (
       <IconButton
-        onClick={() => action.handleAction(params.id, params)}
+        onClick={() => action.handleAction(params.id)}
         title={action.title}
         color="primary"
         size="small"
