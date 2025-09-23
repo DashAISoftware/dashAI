@@ -1,0 +1,66 @@
+name: DB Migrations
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  alembic-migrations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      # Define DB_FILE y DATABASE_URL usando $RUNNER_TEMP del runner
+      - name: Set DB env vars
+        run: |
+          echo "DB_FILE=$RUNNER_TEMP/dashai-ci.sqlite3" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=sqlite:///$RUNNER_TEMP/dashai-ci.sqlite3" >> "$GITHUB_ENV"
+          echo "Temp dir: $RUNNER_TEMP"
+
+      - name: Show Alembic info
+        run: |
+          alembic --version
+          echo "DB will be at: $DATABASE_URL"
+
+      - name: Prepare temp dir
+        run: |
+          mkdir -p "$(dirname "$DB_FILE")"
+          rm -f "$DB_FILE"
+
+      # upgrade to head
+      - name: Upgrade to head
+        run: |
+          alembic -x url="$DATABASE_URL" upgrade head
+
+      # Checks downgrade and upgrade again (reversibility)
+      - name: Downgrade to base and upgrade again (reversibility check)
+        run: |
+          alembic -x url="$DATABASE_URL" downgrade base
+          alembic -x url="$DATABASE_URL" upgrade head
+
+      # Checks that no new migrations are needed
+      - name: Check for pending autogenerate (no-op)
+        run: |
+          OUT=$(alembic -x url="$DATABASE_URL" revision --autogenerate --sql -m "ci-check" || true)
+          if echo "$OUT" | grep -Eiq "(CREATE TABLE|ALTER TABLE|DROP TABLE|ADD COLUMN|DROP COLUMN|CREATE INDEX|DROP INDEX)"; then
+            echo "Detected schema drift! Autogenerate produced SQL:"
+            echo "$OUT"
+            exit 1
+          fi
+          echo "No pending schema changes detected."
