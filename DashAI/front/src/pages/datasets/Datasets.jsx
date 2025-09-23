@@ -182,6 +182,8 @@ export default function DatasetsPage() {
     deleteNotebook(id);
   };
 
+  const timerId = useRef(null);
+
   const checkDatasetReady = async (newDataset) => {
     try {
       const freshDatasets = await getDatasets();
@@ -209,7 +211,7 @@ export default function DatasetsPage() {
           variant: "error",
         });
       } else {
-        timerId.current = setTimeout(checkDatasetReady, 1000);
+        timerId.current = setTimeout(checkDatasetReady, 1000, newDataset);
       }
     } catch (error) {
       console.error("Error checking dataset readiness:", error);
@@ -220,11 +222,10 @@ export default function DatasetsPage() {
     if (selectedNotebook) {
       try {
         const data = await createDataset(name);
-        console.log("Posting job for dataset:", data);
-        await enqueueDatasetJob(data.id, null, "", {}, selectedNotebook.id);
         enqueueSnackbar("Dataset creation started", {
           variant: "success",
         });
+        await enqueueDatasetJob(data.id, null, "", {}, selectedNotebook.id);
 
         checkDatasetReady(data);
       } catch (error) {
@@ -244,9 +245,8 @@ export default function DatasetsPage() {
     setSelectedDatasetId(null);
   };
 
-  const timerId = useRef(null);
-
   const handleDatasetCreated = async (newDataset) => {
+    console.log("New dataset created:", newDataset);
     setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
     setSelectedDatasetId(newDataset.id);
 
