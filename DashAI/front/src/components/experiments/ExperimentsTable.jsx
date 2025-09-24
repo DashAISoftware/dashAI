@@ -26,6 +26,10 @@ function ExperimentsTable({
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
 
+  const datasetMap = React.useMemo(() => {
+    return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
+  }, [datasets]);
+
   const deleteExperiment = async (id) => {
     try {
       await deleteExperimentRequest(id);
@@ -77,8 +81,8 @@ function ExperimentsTable({
         minWidth: 200,
         editable: false,
         valueFormatter: (params) => {
-          const dataset = datasets.find((d) => d.id === params.value);
-          return dataset ? dataset.name : `Dataset ID: ${params.value}`;
+          const datasetName = datasetMap.get(params.value);
+          return datasetName || `Dataset ID: ${params.value}`;
         },
       },
       {
@@ -115,7 +119,7 @@ function ExperimentsTable({
         ],
       },
     ],
-    [handleDeleteExperiment, datasets],
+    [handleDeleteExperiment, datasetMap],
   );
 
   return (
