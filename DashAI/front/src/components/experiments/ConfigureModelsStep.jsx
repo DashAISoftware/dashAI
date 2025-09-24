@@ -115,18 +115,14 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   }, []);
 
   useEffect(() => {
-    if (selectedModel && defaultName) {
+    if (!selectedModel) {
+      setHasUserTouchedName(false);
+      setName("");
+    } else if (defaultName) {
       setName(defaultName);
       setHasUserTouchedName(false);
     }
   }, [selectedModel, defaultName]);
-
-  useEffect(() => {
-    if (!selectedModel) {
-      setHasUserTouchedName(false);
-      setName("");
-    }
-  }, [selectedModel]);
 
   return (
     <Grid
