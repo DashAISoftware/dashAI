@@ -12,9 +12,9 @@ class NanRemoverSchema(BaseSchema):
 
 class NanRemover(BaseConverter):
     """
-    Converter that removes specified columns from the dataset.
-    This converter uses the scope columns defined in the converter job UI.
-    The columns selected in the scope will be the ones removed from the dataset.
+    A converter that removes rows with NaN values from the dataset.
+    Only the columns selected in the scope are used to determine which
+    rows to drop; other columns are deleted entirely.
     """
 
     SCHEMA = NanRemoverSchema
