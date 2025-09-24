@@ -1,17 +1,48 @@
-import React from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSnackbar } from "notistack";
 
 import NewExperimentModal from "../../components/experiments/NewExperimentModal";
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
-import { rows } from "../../example_data/experiments";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useLocation } from "react-router-dom";
+import { getExperiments as getExperimentsRequest } from "../../api/experiment";
 
 function ExperimentsPage() {
-  const [updateTableFlag, setUpdateTableFlag] = React.useState(false);
   const location = useLocation();
-  const [dataset, setDataset] = React.useState(location.state?.dataset);
-  const [showNewExperimentModal, setShowNewExperimentModal] =
-    React.useState(!!dataset);
+  const [dataset, setDataset] = useState(location.state?.dataset);
+  const [showNewExperimentModal, setShowNewExperimentModal] = useState(
+    !!dataset,
+  );
+  const [updateTableFlag, setUpdateTableFlag] = useState(false);
+  const [experiments, setExperiments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const getExperiments = async () => {
+    setLoading(true);
+    try {
+      const experimentsData = await getExperimentsRequest();
+      console.log("Fetched experiments:", experimentsData);
+      setExperiments(experimentsData);
+    } catch (error) {
+      enqueueSnackbar("Error while trying to obtain experiments.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getExperiments();
+  }, []);
+
+  // Update experiments when table is updated
+  useEffect(() => {
+    if (updateTableFlag) {
+      setUpdateTableFlag(false);
+      getExperiments();
+    }
+  }, [updateTableFlag]);
 
   return (
     <CustomLayout
@@ -19,25 +50,28 @@ function ExperimentsPage() {
       subtitle="Configure experiments to train models"
     >
       {/* New experiment Modal */}
-      <NewExperimentModal
-        open={showNewExperimentModal}
-        setOpen={setShowNewExperimentModal}
-        updateExperiments={() => setUpdateTableFlag(true)}
-        preselectedDataset={dataset}
-        setPreselectedDataset={setDataset}
-      />
+      {!loading && (
+        <NewExperimentModal
+          open={showNewExperimentModal}
+          setOpen={setShowNewExperimentModal}
+          updateExperiments={() => setUpdateTableFlag(true)}
+          preselectedDataset={dataset}
+          setPreselectedDataset={setDataset}
+          existingExperiments={experiments}
+        />
+      )}
 
       {/* Experiment table */}
       <ExperimentsTable
-        initialRows={rows}
         handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
         updateTableFlag={updateTableFlag}
         setUpdateTableFlag={setUpdateTableFlag}
+        experiments={experiments}
+        loading={loading}
+        onUpdateExperiments={getExperiments}
       />
     </CustomLayout>
   );
 }
-
-ExperimentsPage.propTypes = {};
 
 export default ExperimentsPage;

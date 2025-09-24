@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,7 @@ import { Close } from "@mui/icons-material";
 import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
 
 export function CreateNotebookModal({
@@ -20,12 +21,31 @@ export function CreateNotebookModal({
   onClose,
   onCreateNotebook,
   dataset,
+  existingNotebooks = [],
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [infoError, setInfoError] = useState(null);
+
+  const { defaultName } = useMemo(() => {
+    if (!dataset) {
+      return { defaultName: "" };
+    }
+    return generateSequentialName({
+      base: `Notebook_${dataset.name}`,
+      items: existingNotebooks,
+      filter: (notebook) => notebook.dataset_id === dataset.id,
+    });
+  }, [dataset, existingNotebooks]);
+
+  useEffect(() => {
+    if (open && defaultName) {
+      setName(defaultName);
+      setDescription("");
+    }
+  }, [open, defaultName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,16 +73,28 @@ export function CreateNotebookModal({
   }, [dataset?.id]);
 
   const handleSubmit = () => {
-    onCreateNotebook({
-      name: name.trim() || "Untitled Notebook",
-      description: description.trim() || "",
-    });
-    handleClose();
+    const notebookName = name.trim();
+
+    if (notebookName) {
+      onCreateNotebook({
+        name: notebookName,
+        description: description.trim() || "",
+      });
+      handleClose();
+    }
   };
 
+  const getNameError = () => {
+    const currentName = name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
+
   const handleClose = () => {
-    setName("");
-    setDescription("");
     onClose();
   };
 
@@ -137,7 +169,6 @@ export function CreateNotebookModal({
           >
             Name your Notebook
           </Typography>
-          {/* Notebook name */}
           <TextField
             fullWidth
             label="Notebook Name"
@@ -145,7 +176,9 @@ export function CreateNotebookModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
-            placeholder="Enter a name for your notebook (optional)"
+            InputLabelProps={{ shrink: true }}
+            error={Boolean(nameError)}
+            helperText={nameError}
             sx={{ mb: 2 }}
           />
           {/* Notebook description */}
@@ -163,7 +196,7 @@ export function CreateNotebookModal({
             <FormSchemaButtonGroup
               onCancel={handleClose}
               onFormSubmit={handleSubmit}
-              formik={{ errors: {} }} // No validation errors for this modal
+              formik={{ errors: nameError ? { name: nameError } : {} }}
               saveButtonText="Create Notebook"
               backButtonText="Cancel"
             />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button,
@@ -21,6 +21,7 @@ import { useSnackbar } from "notistack";
 
 import { createExperiment as createExperimentRequest } from "../../api/experiment";
 import { createRun as createRunRequest } from "../../api/run";
+import { generateSequentialName } from "../../utils/nameGenerator";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
@@ -33,28 +34,32 @@ export default function NewExperimentModal({
   updateExperiments,
   preselectedDataset,
   setPreselectedDataset,
+  existingExperiments = [],
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const defaultNewExp = {
-    id: "",
-    name: "",
-    dataset: preselectedDataset,
-    task_name: "",
-    input_columns: [],
-    output_columns: [],
-    splits: {
-      train: 0.6,
-      validation: 0.2,
-      test: 0.2,
-    },
-    step: "SET_NAME",
-    created: null,
-    last_modified: null,
-    runs: [],
-  };
+  const defaultNewExp = useMemo(
+    () => ({
+      id: "",
+      name: "",
+      dataset: preselectedDataset,
+      task_name: "",
+      input_columns: [],
+      output_columns: [],
+      splits: {
+        train: 0.6,
+        validation: 0.2,
+        test: 0.2,
+      },
+      step: "SET_NAME",
+      created: null,
+      last_modified: null,
+      runs: [],
+    }),
+    [preselectedDataset],
+  );
 
   // Build steps dynamically
   const steps = [
@@ -75,6 +80,22 @@ export default function NewExperimentModal({
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newExp, setNewExp] = useState(defaultNewExp);
+  const [defaultName, setDefaultName] = useState(
+    generateSequentialName({
+      base: "Experiment",
+      items: existingExperiments,
+    }).defaultName,
+  );
+
+  useEffect(() => {
+    if (open) {
+      const generatedName = generateSequentialName({
+        base: "Experiment",
+        items: existingExperiments,
+      });
+      setDefaultName(generatedName.defaultName);
+    }
+  }, [open, existingExperiments]);
 
   const uploadRuns = async (experimentId) => {
     for (const run of newExp.runs) {
@@ -103,16 +124,21 @@ export default function NewExperimentModal({
         } else {
           console.error("Unknown Error", error.message);
         }
+      } finally {
+        setPreselectedDataset(null);
       }
     }
   };
 
   const uploadNewExperiment = async () => {
     try {
+      const finalExperimentName =
+        newExp.name.trim() === "" ? defaultName : newExp.name.trim();
+
       const response = await createExperimentRequest(
         newExp.dataset.id,
         newExp.task_name,
-        newExp.name,
+        finalExperimentName,
         newExp.input_columns,
         newExp.output_columns,
         JSON.stringify(newExp.splits),
@@ -156,8 +182,6 @@ export default function NewExperimentModal({
     }
   };
 
-  //CHECK IF HAVE OPTIMIZERS
-
   const handleNextButton = () => {
     if (activeStep === steps.length - 1) {
       uploadNewExperiment();
@@ -170,7 +194,12 @@ export default function NewExperimentModal({
 
       if (!haveOptimazers) {
         uploadNewExperiment();
-        handleCloseDialog();
+        setOpen(false);
+        setTimeout(() => {
+          setActiveStep(0);
+          setNewExp(defaultNewExp);
+          setNextEnabled(false);
+        }, 100);
         return;
       }
     }
@@ -249,7 +278,14 @@ export default function NewExperimentModal({
 
       {/* Main content - steps */}
       <DialogContent dividers>
-        {renderStep(steps[activeStep].name, newExp, setNewExp, setNextEnabled)}
+        {renderStep(
+          steps[activeStep].name,
+          newExp,
+          setNewExp,
+          setNextEnabled,
+          defaultName,
+          existingExperiments,
+        )}
       </DialogContent>
 
       {/* Actions - Back and Next */}
@@ -263,10 +299,10 @@ export default function NewExperimentModal({
               steps[activeStep].name === "prepareDataset"
                 ? TIMESTAMP_KEYS.experiments.configureModel
                 : steps[activeStep].name === "configureModels"
-                  ? TIMESTAMP_KEYS.experiments.submitModel
-                  : steps[activeStep].name === "configureOptimizer"
-                    ? TIMESTAMP_KEYS.experiments.configureOptimazer
-                    : null
+                ? TIMESTAMP_KEYS.experiments.submitModel
+                : steps[activeStep].name === "configureOptimizer"
+                ? TIMESTAMP_KEYS.experiments.configureOptimazer
+                : null
             }
           >
             <Button
@@ -291,4 +327,5 @@ NewExperimentModal.propTypes = {
   updateExperiments: PropTypes.func.isRequired,
   preselectedDataset: PropTypes.object,
   setPreselectedDataset: PropTypes.func.isRequired,
+  existingExperiments: PropTypes.array,
 };

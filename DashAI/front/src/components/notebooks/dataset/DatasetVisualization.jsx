@@ -17,7 +17,11 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
 
-export default function DatasetVisualization({ dataset, onNotebookCreated }) {
+export default function DatasetVisualization({
+  dataset,
+  onNotebookCreated,
+  existingNotebooks = [],
+}) {
   if (!dataset) {
     return (
       <Box
@@ -263,6 +267,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           onClose={() => setShowCreateNotebookModal(false)}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}
+          existingNotebooks={existingNotebooks}
         />
       </Paper>
     </>

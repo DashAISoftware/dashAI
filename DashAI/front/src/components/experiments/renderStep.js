@@ -5,7 +5,14 @@ import PrepareDatasetStep from "./PrepareDatasetStep";
 import ConfigureModelsStep from "./ConfigureModelsStep";
 import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
 
-export function renderStep(stepName, newExp, setNewExp, setNextEnabled) {
+export function renderStep(
+  stepName,
+  newExp,
+  setNewExp,
+  setNextEnabled,
+  defaultName,
+  existingExperiments,
+) {
   switch (stepName) {
     case "selectTask":
       return (
@@ -13,6 +20,8 @@ export function renderStep(stepName, newExp, setNewExp, setNextEnabled) {
           newExp={newExp}
           setNewExp={setNewExp}
           setNextEnabled={setNextEnabled}
+          defaultExperimentName={defaultName}
+          existingExperiments={existingExperiments}
         />
       );
     case "selectDataset":

@@ -36,6 +36,8 @@ function NewPipeline() {
     availableNodes,
     nodeTypes,
     nodeIdCounter,
+    nameError,
+    nameErrorMessage,
 
     // Setters
     setNodes,
@@ -63,6 +65,7 @@ function NewPipeline() {
     onNodeMouseEnter,
     onNodeMouseLeave,
     onPaneClick,
+    handlePipelineNameChange,
   } = usePipelineState(pipelineId, location, navigate);
 
   const { getConnectedNodeData } = useConnectedNodeData(nodes, nodeData, edges);
@@ -120,6 +123,9 @@ function NewPipeline() {
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}
                   onRun={handleRun}
+                  nameError={nameError}
+                  nameErrorMessage={nameErrorMessage}
+                  handlePipelineNameChange={handlePipelineNameChange}
                 />
 
                 <PipelineDesigner

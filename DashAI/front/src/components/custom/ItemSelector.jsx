@@ -23,6 +23,10 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
 
+  useEffect(() => {
+    setItemsToShow(itemsList.map(() => true));
+  }, [itemsList]);
+
   const handleClearSearchField = (event) => {
     setSearchField("");
     setItemsToShow(itemsList);

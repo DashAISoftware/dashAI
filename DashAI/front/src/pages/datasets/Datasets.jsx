@@ -326,11 +326,13 @@ export default function DatasetsPage() {
               <DatasetVisualization
                 dataset={selectedDataset}
                 onNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : selectedNotebookId ? (
               <NotebookVisualization
                 notebook={selectedNotebook}
                 handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+                existingDatasets={datasets}
               />
             ) : step === 0 ? (
               <SelectOptionMenu
@@ -365,6 +367,7 @@ export default function DatasetsPage() {
                   fetchDatasets();
                 }}
                 handleDatasetCreated={handleDatasetCreated}
+                existingDatasets={datasets}
               />
             ) : step === 1 && selectedOption === "notebook" ? (
               <UploadNotebookSteps
@@ -375,6 +378,7 @@ export default function DatasetsPage() {
                 }}
                 datasets={datasets}
                 handleNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : null}
           </CenterBox>

@@ -1,6 +1,6 @@
 import { DialogContentText, Paper, Stack } from "@mui/material";
 import PropTypes from "prop-types";
-import React, { useState } from "react";
+import { useState } from "react";
 import FormSchema from "../shared/FormSchema";
 import FormSchemaLayout from "../shared/FormSchemaLayout";
 /**

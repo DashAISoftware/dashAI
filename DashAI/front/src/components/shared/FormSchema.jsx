@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
-import React from "react";
 import useFormSchema from "../../hooks/useFormSchema";
 import FormSchemaButtonGroup from "./FormSchemaButtonGroup";
 import FormSchemaParameterContainer from "./FormSchemaParameterContainer";
 import FormSchemaRenderFields from "./FormSchemaRenderFields";
+
 /**
  * This code implements a component that is responsible for rendering the main form,
  * managing the values of all the subforms, and submitting the values of the parameters.
@@ -27,7 +27,7 @@ function FormSchema({
   error,
   setError,
   errorsMessage,
-  saveButtonText, // New prop
+  saveButtonText,
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,

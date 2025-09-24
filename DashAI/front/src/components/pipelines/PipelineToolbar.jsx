@@ -1,7 +1,14 @@
 import React from "react";
 import { Box, TextField, Button } from "@mui/material";
 
-function PipelineToolbar({ pipelineName, setPipelineName, onRun }) {
+function PipelineToolbar({
+  pipelineName,
+  setPipelineName,
+  onRun,
+  nameError,
+  nameErrorMessage,
+  handlePipelineNameChange,
+}) {
   return (
     <Box
       sx={{
@@ -16,7 +23,11 @@ function PipelineToolbar({ pipelineName, setPipelineName, onRun }) {
         variant="outlined"
         size="small"
         value={pipelineName}
-        onChange={(e) => setPipelineName(e.target.value)}
+        onChange={
+          handlePipelineNameChange || ((e) => setPipelineName(e.target.value))
+        }
+        error={nameError}
+        helperText={nameErrorMessage}
         sx={{
           mr: 2,
           input: { color: "black" },
