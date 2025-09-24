@@ -269,33 +269,65 @@ export default function DatasetsPage() {
 
   const handleEditDataset = async (id, newName) => {
     try {
-      updateDataset(id, { name: newName }).then(async (updatedDataset) => {
-        setDatasets((prevDatasets) =>
-          prevDatasets.map((dataset) =>
-            dataset.id === id
-              ? { ...dataset, name: updatedDataset.name }
-              : dataset,
-          ),
-        );
+      const updatedDataset = await updateDataset(id, { name: newName });
+      setDatasets((prevDatasets) =>
+        prevDatasets.map((dataset) =>
+          dataset.id === id
+            ? { ...dataset, name: updatedDataset.name }
+            : dataset,
+        ),
+      );
+      enqueueSnackbar("Dataset updated successfully", {
+        variant: "success",
       });
     } catch (error) {
       console.error("Failed to update dataset:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A dataset with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Dataset name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update dataset", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
   const handleEditNotebook = async (id, newName) => {
     try {
-      await updateNotebook(id, { name: newName }).then((updatedNotebook) => {
-        setNotebooks((prevNotebooks) =>
-          prevNotebooks.map((notebook) =>
-            notebook.id === id
-              ? { ...notebook, name: updatedNotebook.name }
-              : notebook,
-          ),
-        );
+      const updatedNotebook = await updateNotebook(id, { name: newName });
+      setNotebooks((prevNotebooks) =>
+        prevNotebooks.map((notebook) =>
+          notebook.id === id
+            ? { ...notebook, name: updatedNotebook.name }
+            : notebook,
+        ),
+      );
+      enqueueSnackbar("Notebook updated successfully", {
+        variant: "success",
       });
     } catch (error) {
       console.error("Failed to update notebook:", error);
+      if (error.response?.status === 422) {
+        enqueueSnackbar("Notebook name cannot be empty", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 304) {
+        enqueueSnackbar("No changes were made", {
+          variant: "info",
+        });
+      } else {
+        enqueueSnackbar("Failed to update notebook", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
