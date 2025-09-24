@@ -299,10 +299,10 @@ export default function NewExperimentModal({
               steps[activeStep].name === "prepareDataset"
                 ? TIMESTAMP_KEYS.experiments.configureModel
                 : steps[activeStep].name === "configureModels"
-                ? TIMESTAMP_KEYS.experiments.submitModel
-                : steps[activeStep].name === "configureOptimizer"
-                ? TIMESTAMP_KEYS.experiments.configureOptimazer
-                : null
+                  ? TIMESTAMP_KEYS.experiments.submitModel
+                  : steps[activeStep].name === "configureOptimizer"
+                    ? TIMESTAMP_KEYS.experiments.configureOptimazer
+                    : null
             }
           >
             <Button

@@ -10,9 +10,8 @@ import { getExperiments as getExperimentsRequest } from "../../api/experiment";
 function ExperimentsPage() {
   const location = useLocation();
   const [dataset, setDataset] = useState(location.state?.dataset);
-  const [showNewExperimentModal, setShowNewExperimentModal] = useState(
-    !!dataset,
-  );
+  const [showNewExperimentModal, setShowNewExperimentModal] =
+    useState(!!dataset);
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
