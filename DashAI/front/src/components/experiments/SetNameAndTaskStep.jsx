@@ -37,7 +37,6 @@ function SetNameAndTaskStep({
         selectTypes: ["Task"],
         hasRelatedOfType: "Model",
       });
-      console.log("Fetched tasks:", tasks);
       setTasks(tasks);
       if (typeof newExp.task_name === "string" && newExp.task_name !== "") {
         const previouslySelectedTask =

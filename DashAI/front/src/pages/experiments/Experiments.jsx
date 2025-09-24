@@ -21,7 +21,6 @@ function ExperimentsPage() {
     setLoading(true);
     try {
       const experimentsData = await getExperimentsRequest();
-      console.log("Fetched experiments:", experimentsData);
       setExperiments(experimentsData);
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain experiments.");
