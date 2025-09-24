@@ -376,27 +376,34 @@ async def update_notebook(
         A dictionary containing the updated dataset record.
     """
     with session_factory() as db:
-        try:
-            notebook = db.get(Notebook, notebook_id)
-            if not notebook:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Notebook not found",
-                )
-            if not params.name or params.name == notebook.name:
-                raise HTTPException(
-                    status_code=status.HTTP_304_NOT_MODIFIED,
-                    detail="No fields to update",
-                )
+        notebook = db.get(Notebook, notebook_id)
+        if not notebook:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Notebook not found",
+            )
 
-            setattr(notebook, "name", params.name)
+        if not params.name or not params.name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Name cannot be empty",
+            )
+
+        new_name = params.name.strip()
+
+        if new_name == notebook.name:
+            return notebook
+
+        notebook.name = new_name
+        try:
             db.commit()
             db.refresh(notebook)
-        except Exception as e:
-            log.error(f"Error updating notebook {notebook_id}: {e}")
+        except exc.SQLAlchemyError as e:
+            db.rollback()
+            log.error(f"Database error updating notebook {notebook_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update notebook",
+                detail="Internal database error",
             ) from e
 
     return notebook
