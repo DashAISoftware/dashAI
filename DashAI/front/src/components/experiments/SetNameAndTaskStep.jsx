@@ -121,8 +121,8 @@ function SetNameAndTaskStep({
   }, [selectedTask]);
 
   useEffect(() => {
-    if (defaultExperimentName && !newExp.name) {
-      setNewExp({ ...newExp, name: defaultExperimentName });
+    if (defaultExperimentName && !newExp?.name) {
+      setNewExp((prev) => ({ ...prev, name: defaultExperimentName }));
       setExpNameOk(true);
     }
   }, [defaultExperimentName]);
