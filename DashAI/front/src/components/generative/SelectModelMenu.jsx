@@ -34,7 +34,6 @@ export default function SelectModelMenu({
 
   const [nameError, setNameError] = useState(false);
   const [nameErrorMessage, setNameErrorMessage] = useState("");
-  const [userHasModifiedName, setUserHasModifiedName] = useState(false);
 
   // Generate default name based on task and existing sessions
   const { defaultName } = useMemo(() => {
@@ -75,13 +74,11 @@ export default function SelectModelMenu({
       );
 
       formik.setValues(initialValues);
-      setUserHasModifiedName(false);
     }
   }, [selectedModel, defaultName]);
 
   const handleNameInputChange = (event) => {
     formik.handleChange(event);
-    setUserHasModifiedName(true);
 
     if (event.target.value.trim() === "") {
       setNameError(true);
@@ -124,20 +121,6 @@ export default function SelectModelMenu({
       }
     },
   });
-
-  // Set initial name validation and default value
-  useEffect(() => {
-    if (defaultName && !userHasModifiedName) {
-      if (formik.values.name === "" || formik.values.name === defaultName) {
-        formik.setFieldValue("name", defaultName);
-        setNameError(false);
-        setNameErrorMessage("");
-      }
-    } else if (formik.values.name === "" && userHasModifiedName) {
-      setNameError(true);
-      setNameErrorMessage("Name is required");
-    }
-  }, [defaultName, formik.values.name, userHasModifiedName]);
 
   const processedProperties = selectedModel?.schema?.properties
     ? preprocessSchema(selectedModel.schema.properties)
