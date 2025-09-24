@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -9,10 +9,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 
-import {
-  getExperiments as getExperimentsRequest,
-  deleteExperiment as deleteExperimentRequest,
-} from "../../api/experiment";
+import { deleteExperiment as deleteExperimentRequest } from "../../api/experiment";
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
@@ -21,72 +18,36 @@ import DeleteItemModal from "../custom/DeleteItemModal";
 
 function ExperimentsTable({
   handleOpenNewExperimentModal,
-  updateTableFlag,
-  setUpdateTableFlag,
+  experiments = [],
+  loading = false,
+  onUpdateExperiments,
 }) {
-  const [loading, setLoading] = useState(true);
-  const [experiments, setExperiments] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
-
-  const getExperiments = async () => {
-    setLoading(true);
-    try {
-      const experiments = await getExperimentsRequest();
-      setExperiments(experiments);
-      console.log(experiments);
-      // initially set all experiments running state to false
-      const initialRunningState = experiments.reduce((accumulator, current) => {
-        return { ...accumulator, [current.id]: false };
-      }, {});
-      setExpRunning(initialRunningState);
-    } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the experiment table.");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const deleteExperiment = async (id) => {
     try {
       await deleteExperimentRequest(id);
-
       enqueueSnackbar("Experiment successfully deleted.", {
         variant: "success",
       });
+      onUpdateExperiments();
     } catch (error) {
       console.error(error);
       enqueueSnackbar("Error when trying to delete the experiment.");
     }
   };
 
-  // Fetch experiments when the component is mounting
-  React.useEffect(() => {
-    getExperiments();
-  }, []);
-
-  // triggers an update of the table when updateTableFlag is set to true
-  React.useEffect(() => {
-    if (updateTableFlag) {
-      setUpdateTableFlag(false);
-      getExperiments();
-    }
-  }, [updateTableFlag]);
-
-  const handleUpdateExperiments = () => {
-    getExperiments();
-  };
+  // Initialize running state when experiments change
+  useEffect(() => {
+    const initialRunningState = experiments.reduce((accumulator, current) => {
+      return { ...accumulator, [current.id]: false };
+    }, {});
+    setExpRunning(initialRunningState);
+  }, [experiments]);
 
   const handleDeleteExperiment = (id) => {
     deleteExperiment(id);
-    getExperiments();
   };
 
   const columns = React.useMemo(
@@ -179,7 +140,7 @@ function ExperimentsTable({
             <Grid item>
               <Button
                 variant="contained"
-                onClick={handleUpdateExperiments}
+                onClick={onUpdateExperiments}
                 endIcon={<UpdateIcon />}
               >
                 Update
@@ -216,9 +177,12 @@ function ExperimentsTable({
 }
 
 ExperimentsTable.propTypes = {
-  handleOpenNewExperimentModal: PropTypes.func,
-  updateTableFlag: PropTypes.bool.isRequired,
-  setUpdateTableFlag: PropTypes.func.isRequired,
+  handleOpenNewExperimentModal: PropTypes.func.isRequired,
+  updateTableFlag: PropTypes.bool,
+  setUpdateTableFlag: PropTypes.func,
+  experiments: PropTypes.array,
+  loading: PropTypes.bool,
+  onUpdateExperiments: PropTypes.func.isRequired,
 };
 
 export default ExperimentsTable;

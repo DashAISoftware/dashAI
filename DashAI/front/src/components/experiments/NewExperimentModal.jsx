@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -27,6 +27,7 @@ import SelectDatasetStep from "./SelectDatasetStep";
 import PrepareDatasetStep from "./PrepareDatasetStep";
 import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
 import ConfigureModelsStep from "./ConfigureModelsStep";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 import { useSnackbar } from "notistack";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -72,6 +73,7 @@ export default function NewExperimentModal({
   open,
   setOpen,
   updateExperiments,
+  existingExperiments = [],
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
@@ -81,6 +83,15 @@ export default function NewExperimentModal({
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newExp, setNewExp] = useState(defaultNewExp);
+
+  const { defaultName } = useMemo(
+    () =>
+      generateSequentialName({
+        base: "Experiment",
+        items: existingExperiments,
+      }),
+    [existingExperiments, open],
+  );
 
   const uploadRuns = async (experimentId) => {
     for (const run of newExp.runs) {
@@ -115,10 +126,13 @@ export default function NewExperimentModal({
 
   const uploadNewExperiment = async () => {
     try {
+      const finalExperimentName =
+        newExp.name.trim() === "" ? defaultName : newExp.name.trim();
+
       const response = await createExperimentRequest(
         newExp.dataset.id,
         newExp.task_name,
-        newExp.name,
+        finalExperimentName,
         newExp.input_columns,
         newExp.output_columns,
         JSON.stringify(newExp.splits),
@@ -161,8 +175,6 @@ export default function NewExperimentModal({
     }
   };
 
-  //CHECK IF HAVE OPTIMIZERS
-
   const handleNextButton = () => {
     if (activeStep === steps.length - 1) {
       uploadNewExperiment();
@@ -175,7 +187,12 @@ export default function NewExperimentModal({
 
       if (!haveOptimazers) {
         uploadNewExperiment();
-        handleCloseDialog();
+        setOpen(false);
+        setTimeout(() => {
+          setActiveStep(0);
+          setNewExp(defaultNewExp);
+          setNextEnabled(false);
+        }, 100);
         return;
       }
     }
@@ -259,6 +276,8 @@ export default function NewExperimentModal({
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
+            defaultExperimentName={defaultName}
+            existingExperiments={existingExperiments}
           />
         )}
         {activeStep === 1 && (
@@ -328,4 +347,5 @@ NewExperimentModal.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   updateExperiments: PropTypes.func.isRequired,
+  existingExperiments: PropTypes.array,
 };

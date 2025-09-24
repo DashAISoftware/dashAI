@@ -1,32 +1,51 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Typography, TextField, Box } from "@mui/material";
 import { useFormik } from "formik";
 import CustomLayout from "../../custom/CustomLayout";
+import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import DatasetAutocomplete from "./DatasetAutocomplete";
 import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
 
 export default function UploadNotebookSteps({
   backHome,
   datasets,
   handleNotebookCreated,
+  existingNotebooks = [],
 }) {
   const [selectedDataset, setSelectedDataset] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  const { defaultName } = useMemo(() => {
+    if (!selectedDataset) {
+      return { defaultName: "" };
+    }
+
+    return generateSequentialName({
+      base: `Notebook_${selectedDataset.name}`,
+      items: existingNotebooks,
+      filter: (notebook) => notebook.dataset_id === selectedDataset.id,
+    });
+  }, [selectedDataset, existingNotebooks]);
 
   const formik = useFormik({
     initialValues: {
       name: "",
       description: "",
     },
-    // validationSchema,
     enableReinitialize: true,
     onSubmit: async (values) => {
       try {
+        const notebookName = values.name.trim();
+
+        if (!notebookName) {
+          return;
+        }
+
         const notebookData = {
-          name: values.name,
+          name: notebookName,
           description: values.description,
           dataset_id: selectedDataset.id,
         };
@@ -43,6 +62,35 @@ export default function UploadNotebookSteps({
       }
     },
   });
+
+  useEffect(() => {
+    if (selectedDataset && defaultName && !formik.values.name.trim()) {
+      formik.setValues({
+        name: defaultName,
+        description: formik.values.description,
+      });
+    }
+  }, [
+    selectedDataset,
+    defaultName,
+    formik.values.name,
+    formik.values.description,
+  ]);
+
+  const getNameError = () => {
+    if (!selectedDataset) {
+      return null;
+    }
+
+    const currentName = formik.values.name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
+
   return (
     <CustomLayout title={"Create a New Notebook"} subtitle={""} padding={0}>
       <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
@@ -78,9 +126,14 @@ export default function UploadNotebookSteps({
         name="name"
         value={formik.values.name}
         onChange={formik.handleChange}
-        error={Boolean(formik.errors.name)}
-        helperText={formik.errors.name}
+        InputLabelProps={{ shrink: true }}
+        error={Boolean(selectedDataset && nameError)}
+        helperText={selectedDataset ? nameError : ""}
         sx={{ mb: 2 }}
+        disabled={!selectedDataset}
+        placeholder={
+          !selectedDataset ? "Select a dataset first" : "Notebook Name"
+        }
       />
       {/* Notebook description */}
       <TextField
@@ -98,7 +151,10 @@ export default function UploadNotebookSteps({
           onCancel={backHome}
           onFormSubmit={formik.handleSubmit}
           formik={{
-            errors: selectedDataset ? {} : { dataset: "Dataset is required" },
+            errors: {
+              ...(nameError ? { name: nameError } : {}),
+              ...(selectedDataset ? {} : { dataset: "Dataset is required" }),
+            },
           }}
           saveButtonText="Create Notebook"
           backButtonText="Back"
