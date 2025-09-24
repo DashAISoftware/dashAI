@@ -627,15 +627,16 @@ async def update_dataset(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
             )
 
-        if not params.name or params.name.strip() == dataset.name:
-            return dataset
-
-        new_name = params.name.strip()
-        if not new_name:
+        if not params.name or not params.name.strip():
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Name cannot be empty",
             )
+
+        new_name = params.name.strip()
+
+        if new_name == dataset.name:
+            return dataset
 
         exists = db.execute(
             select(Dataset.id).where(Dataset.name == new_name, Dataset.id != dataset_id)
