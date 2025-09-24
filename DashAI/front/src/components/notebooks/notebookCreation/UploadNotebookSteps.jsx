@@ -70,7 +70,12 @@ export default function UploadNotebookSteps({
         description: formik.values.description,
       });
     }
-  }, [selectedDataset, defaultName]);
+  }, [
+    selectedDataset,
+    defaultName,
+    formik.values.name,
+    formik.values.description,
+  ]);
 
   const getNameError = () => {
     if (!selectedDataset) {
