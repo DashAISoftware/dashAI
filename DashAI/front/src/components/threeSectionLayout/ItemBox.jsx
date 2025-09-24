@@ -28,12 +28,13 @@ export default function ItemBox({
 
   const handleKeyDown = async (e) => {
     if (e.key === "Enter") {
-      if (editedName.trim() !== name && editedName.trim() !== "") {
+      if (editedName.trim() !== name) {
         try {
           await onEdit(editedName.trim());
           setIsEditing(false);
         } catch (error) {
           setEditedName(name);
+          setIsEditing(false);
         }
       } else {
         setIsEditing(false);
@@ -56,11 +57,12 @@ export default function ItemBox({
       return;
     }
 
-    if (editedName.trim() !== name && editedName.trim() !== "") {
+    if (editedName.trim() !== name) {
       try {
         await onEdit(editedName.trim());
         setIsEditing(false);
       } catch (error) {
+        // If edit fails, restore original name and exit editing mode
         setEditedName(name);
         setIsEditing(false);
       }
