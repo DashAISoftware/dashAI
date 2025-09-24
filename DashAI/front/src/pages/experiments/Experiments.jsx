@@ -21,7 +21,7 @@ function ExperimentsPage() {
       const experimentsData = await getExperimentsRequest();
       setExperiments(experimentsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain experiments.");
+      enqueueSnackbar("Error while trying to get experiments.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -33,7 +33,7 @@ function ExperimentsPage() {
       const datasetsData = await getDatasets();
       setDatasets(datasetsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain datasets.");
+      enqueueSnackbar("Error while trying to get datasets.");
       console.error(error);
     }
   };
