@@ -141,7 +141,12 @@ function SelectModelStep({
       setPredictName(defaultPredictionName);
       onPredictNameInput(defaultPredictionName);
     }
-  }, [defaultPredictionName, onPredictNameInput, hasUserTouchedName]);
+  }, [
+    defaultPredictionName,
+    onPredictNameInput,
+    hasUserTouchedName,
+    predictName,
+  ]);
 
   useEffect(() => {
     get_Models();
