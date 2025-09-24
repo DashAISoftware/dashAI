@@ -19,6 +19,7 @@ import DeleteItemModal from "../custom/DeleteItemModal";
 function ExperimentsTable({
   handleOpenNewExperimentModal,
   experiments = [],
+  datasets = [],
   loading = false,
   onUpdateExperiments,
 }) {
@@ -75,6 +76,10 @@ function ExperimentsTable({
         headerName: "Dataset",
         minWidth: 200,
         editable: false,
+        valueFormatter: (params) => {
+          const dataset = datasets.find((d) => d.id === params.value);
+          return dataset ? dataset.name : `Dataset ID: ${params.value}`;
+        },
       },
       {
         field: "created",
@@ -110,7 +115,7 @@ function ExperimentsTable({
         ],
       },
     ],
-    [handleDeleteExperiment],
+    [handleDeleteExperiment, datasets],
   );
 
   return (
@@ -181,6 +186,7 @@ ExperimentsTable.propTypes = {
   updateTableFlag: PropTypes.bool,
   setUpdateTableFlag: PropTypes.func,
   experiments: PropTypes.array,
+  datasets: PropTypes.array,
   loading: PropTypes.bool,
   onUpdateExperiments: PropTypes.func.isRequired,
 };

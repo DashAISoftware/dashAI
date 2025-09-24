@@ -5,11 +5,13 @@ import NewExperimentModal from "../../components/experiments/NewExperimentModal"
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { getExperiments as getExperimentsRequest } from "../../api/experiment";
+import { getDatasets } from "../../api/datasets";
 
 function ExperimentsPage() {
   const [showNewExperimentModal, setShowNewExperimentModal] = useState(false);
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [experiments, setExperiments] = useState([]);
+  const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -26,8 +28,19 @@ function ExperimentsPage() {
     }
   };
 
+  const fetchDatasets = async () => {
+    try {
+      const datasetsData = await getDatasets();
+      setDatasets(datasetsData);
+    } catch (error) {
+      enqueueSnackbar("Error while trying to obtain datasets.");
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     getExperiments();
+    fetchDatasets();
   }, []);
 
   // Update experiments when table is updated
@@ -57,6 +70,7 @@ function ExperimentsPage() {
         updateTableFlag={updateTableFlag}
         setUpdateTableFlag={setUpdateTableFlag}
         experiments={experiments}
+        datasets={datasets}
         loading={loading}
         onUpdateExperiments={getExperiments}
       />
