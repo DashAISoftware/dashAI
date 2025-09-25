@@ -408,7 +408,8 @@ const JobQueueWidget = () => {
                               {getRelativeTime(job.last_update)}
                             </Typography>
                             {(job.status === "not_started" ||
-                              job.status === "error") && (
+                              job.status === "error" ||
+                              job.status === "finished") && (
                               <Tooltip title="Cancel job">
                                 <IconButton
                                   edge="end"

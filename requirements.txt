@@ -36,3 +36,4 @@ wordcloud
 opencv-python
 protobuf
 imblearn
+huey
