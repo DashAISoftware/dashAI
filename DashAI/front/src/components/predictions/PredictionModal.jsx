@@ -57,12 +57,6 @@ function PredictionModal({
     [existingPredictions],
   );
 
-  useEffect(() => {
-    if (open) {
-      resetModal();
-    }
-  }, [open]);
-
   const steps = [
     ...(preselectedModelId
       ? []

@@ -12,6 +12,7 @@ function PredictionPage() {
     modelId: location.state?.runId,
     trainedDatasetId: location.state?.trainedDatasetId,
   }));
+  const [loading, setLoading] = useState(true);
 
   const setModelId = useCallback((id) => {
     setSelection((prev) => ({ ...prev, modelId: id }));
@@ -22,21 +23,25 @@ function PredictionPage() {
   }, []);
 
   const { modelId, trainedDatasetId } = selection;
+  console.log("trainedDatasetId", trainedDatasetId);
 
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [isNewPredictionModalOpen, setIsNewPredictionModalOpen] = useState(
-    modelId ? true : false,
+    !!modelId,
   );
   const [predictions, setPredictions] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
 
   const getPredictions = async () => {
     try {
+      setLoading(true);
       const predictionsData = await get_metadata_prediction_json();
       setPredictions(predictionsData);
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain predictions.");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,23 +71,27 @@ function PredictionPage() {
       title="Prediction Module"
       subtitle="Use a model to make predictions"
     >
-      <PredictionTable
-        updateTableFlag={updateTableFlag}
-        setUpdateTableFlag={setUpdateTableFlag}
-        handleNewPredict={handleOpenNewPredictionModal}
-        predictions={predictions}
-      />
+      {!loading && (
+        <PredictionTable
+          updateTableFlag={updateTableFlag}
+          setUpdateTableFlag={setUpdateTableFlag}
+          handleNewPredict={handleOpenNewPredictionModal}
+          predictions={predictions}
+        />
+      )}
 
-      <PredictionModal
-        open={isNewPredictionModalOpen}
-        onClose={() => setIsNewPredictionModalOpen(false)}
-        updatePredictions={updatePredictions}
-        preselectedModelId={modelId}
-        setPreselectedModelId={setModelId}
-        preselectedTrainedDatasetId={trainedDatasetId}
-        setPreselectedTrainedDatasetId={setTrainedDatasetId}
-        existingPredictions={predictions}
-      />
+      {!loading && (
+        <PredictionModal
+          open={isNewPredictionModalOpen}
+          onClose={() => setIsNewPredictionModalOpen(false)}
+          updatePredictions={updatePredictions}
+          preselectedModelId={modelId}
+          setPreselectedModelId={setModelId}
+          preselectedTrainedDatasetId={trainedDatasetId}
+          setPreselectedTrainedDatasetId={setTrainedDatasetId}
+          existingPredictions={predictions}
+        />
+      )}
     </CustomLayout>
   );
 }
