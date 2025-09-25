@@ -152,9 +152,9 @@ class DashAIDataset(Dataset):
         -------
         None
         """
-        df = self.to_pandas()
+        dataset_df = self.to_pandas()
         # Calculate the number of NaN values per column
-        nan_count = df.isna().sum().to_dict()
+        nan_count = dataset_df.isna().sum().to_dict()
         self.splits.update({"nan": nan_count})
 
         return self
