@@ -78,8 +78,8 @@ function PredictionNameInput({
         predictName === "" && hasUserTouchedName
           ? "Name is required"
           : predictNameError
-          ? "The prediction name must have at least 4 alphanumeric characters."
-          : ""
+            ? "The prediction name must have at least 4 alphanumeric characters."
+            : ""
       }
       InputLabelProps={{ shrink: true }}
     />

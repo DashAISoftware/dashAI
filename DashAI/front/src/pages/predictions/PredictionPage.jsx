@@ -25,9 +25,8 @@ function PredictionPage() {
   const { modelId, trainedDatasetId } = selection;
 
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
-  const [isNewPredictionModalOpen, setIsNewPredictionModalOpen] = useState(
-    !!modelId,
-  );
+  const [isNewPredictionModalOpen, setIsNewPredictionModalOpen] =
+    useState(!!modelId);
   const [predictions, setPredictions] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
 
