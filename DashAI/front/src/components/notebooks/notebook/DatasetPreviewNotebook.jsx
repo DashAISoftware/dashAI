@@ -21,6 +21,7 @@ import { useExplorersAndConverters } from "../context/ExplorersAndConvertersCont
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
+  existingDatasets = [],
 }) {
   if (!notebook) {
     return (
@@ -193,6 +194,7 @@ export default function DatasetPreviewNotebook({
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,
         )} // Only show finished converters
+        existingDatasets={existingDatasets}
       />
       <NotebookHistoryModal
         open={showNotebookHistoryModal}

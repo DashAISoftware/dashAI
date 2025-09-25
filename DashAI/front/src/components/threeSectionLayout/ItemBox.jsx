@@ -26,12 +26,18 @@ export default function ItemBox({
     setIsEditing(true);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = async (e) => {
     if (e.key === "Enter") {
-      setIsEditing(false);
-      if (editedName.trim() !== name && editedName.trim() !== "") {
-        onEdit(editedName);
+      if (editedName.trim() !== name) {
+        try {
+          await onEdit(editedName.trim());
+          setIsEditing(false);
+        } catch (error) {
+          setEditedName(name);
+          setIsEditing(false);
+        }
       } else {
+        setIsEditing(false);
         setEditedName(name);
       }
     }
@@ -41,7 +47,7 @@ export default function ItemBox({
     }
   };
 
-  const handleBlur = (e) => {
+  const handleBlur = async (e) => {
     const next = e.relatedTarget;
 
     if (
@@ -51,8 +57,19 @@ export default function ItemBox({
       return;
     }
 
-    setIsEditing(false);
-    setEditedName(name);
+    if (editedName.trim() !== name) {
+      try {
+        await onEdit(editedName.trim());
+        setIsEditing(false);
+      } catch (error) {
+        // If edit fails, restore original name and exit editing mode
+        setEditedName(name);
+        setIsEditing(false);
+      }
+    } else {
+      setIsEditing(false);
+      setEditedName(name);
+    }
   };
 
   return (

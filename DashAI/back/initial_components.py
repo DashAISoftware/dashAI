@@ -17,6 +17,7 @@ from DashAI.back.converters import (
     MaxAbsScaler,
     MinMaxScaler,
     MissingIndicator,
+    NanRemover,
     Normalizer,
     Nystroem,
     OneHotEncoder,
@@ -204,6 +205,7 @@ def get_initial_components():
         ParallelCordinatesExplorer,
         # Converters
         ColumnRemover,
+        NanRemover,
         CharacterReplacer,
         FastICA,
         IncrementalPCA,

@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dataloaders.classes.dashai_dataset import save_dataset
-from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
+from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -66,6 +66,7 @@ class DatasetJob(BaseJob):
         log.debug("Starting dataset creation process.")
 
         dataset_id = self.kwargs.get("dataset_id")
+        notebook_id = self.kwargs.get("notebook_id", None)
         params = self.kwargs.get("params", {})
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
@@ -81,8 +82,6 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
-            parsed_params = parse_params(DatasetParams, json.dumps(params))
-            dataloader = component_registry[parsed_params.dataloader]["class"]()
             random_name = str(uuid.uuid4())
             folder_path = config["DATASETS_PATH"] / random_name
 
@@ -96,12 +95,37 @@ class DatasetJob(BaseJob):
                 ) from e
 
             try:
-                log.debug("Storing dataset in %s", folder_path)
-                new_dataset = dataloader.load_data(
-                    filepath_or_buffer=str(file_path) if file_path is not None else url,
-                    temp_path=str(temp_dir),
-                    params=parsed_params.model_dump(),
-                )
+                if notebook_id is not None:
+                    log.debug(f"Copying dataset from notebook id {notebook_id}.")
+                    with session_factory() as db:
+                        notebook_dataset = (
+                            db.query(Notebook)
+                            .filter(Notebook.id == notebook_id)
+                            .first()
+                        )
+                        if not notebook_dataset:
+                            msg = (
+                                "Notebook with ID "
+                                f"{notebook_id}"
+                                " has no associated dataset."
+                            )
+                            raise JobError(msg)
+                        new_dataset = load_dataset(
+                            os.path.join(notebook_dataset.file_path, "dataset")
+                        )
+
+                else:
+                    parsed_params = parse_params(DatasetParams, json.dumps(params))
+                    dataloader = component_registry[parsed_params.dataloader]["class"]()
+                    log.debug("Storing dataset in %s", folder_path)
+                    new_dataset = dataloader.load_data(
+                        filepath_or_buffer=(
+                            str(file_path) if file_path is not None else url
+                        ),
+                        temp_path=str(temp_dir),
+                        params=parsed_params.model_dump(),
+                    )
+
                 # Calculate nan per column
                 new_dataset.nan_per_column()
                 gc.collect()

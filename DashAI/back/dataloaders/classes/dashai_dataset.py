@@ -572,7 +572,7 @@ def to_dashai_dataset(
         arrow_tbl = get_arrow_table(dataset)
         return DashAIDataset(arrow_tbl)
     if isinstance(dataset, DataFrame):
-        hf_dataset = Dataset.from_pandas(dataset)
+        hf_dataset = Dataset.from_pandas(dataset, preserve_index=False)
         arrow_tbl = get_arrow_table(hf_dataset)
         return DashAIDataset(arrow_tbl)
     if isinstance(dataset, DatasetDict) and len(dataset) == 1:

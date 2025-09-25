@@ -23,6 +23,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { createLocalExplainer as createLocalExplainerRequest } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 import { startJobQueue as startJobQueueRequest } from "../../api/job";
+import { getExplainers } from "../../api/explainer";
 
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
 import SelectDatasetStep from "./SelectDatasetStep";
@@ -71,11 +72,28 @@ export default function NewLocalExplainerModal({
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newLocalExpl, setNewLocalExpl] = useState(defaultNewLocalExpl);
+  const [existingLocalExplainers, setExistingLocalExplainers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const { updateFlag: updateExplainers } = useUpdateFlag({
     flag: flags.EXPLAINERS,
   });
+
+  const loadExistingExplainers = async () => {
+    try {
+      const explainers = await getExplainers(undefined, "local");
+      setExistingLocalExplainers(explainers);
+    } catch (error) {
+      console.error("Error loading existing explainers:", error);
+      setExistingLocalExplainers([]);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      loadExistingExplainers();
+    }
+  }, [open]);
 
   const enqueueLocalExplainerJob = async (explainerId) => {
     try {
@@ -131,6 +149,7 @@ export default function NewLocalExplainerModal({
         variant: "success",
       });
       updateExplainers();
+      await loadExistingExplainers();
     } catch (error) {
       enqueueSnackbar("Error while trying to create a new explainer");
 
@@ -252,6 +271,7 @@ export default function NewLocalExplainerModal({
             setNextEnabled={setNextEnabled}
             scope={"Local"}
             taskName={taskName}
+            existingExplainers={existingLocalExplainers}
           />
         )}
         {activeStep === 1 && (

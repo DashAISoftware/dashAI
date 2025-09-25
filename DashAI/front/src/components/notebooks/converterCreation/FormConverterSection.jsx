@@ -76,12 +76,17 @@ export default function FormConverterSection({
           supervised={tool.metadata.supervised}
           targetColumn={targetColumn}
           setTargetColumn={setTargetColumn}
+          tool={tool}
           rows={rows}
           setRows={setRows}
           columns={columns}
           setColumns={setColumns}
           notebook={notebook}
-          setStep={setStep}
+          nextStep={
+            Object.values(tool.schema.properties).length > 0
+              ? () => setStep((s) => s + 1)
+              : () => handleSaveConverter({})
+          }
         />
       )}
 

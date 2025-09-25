@@ -20,6 +20,7 @@ export default function ParameterStepConverter({
           modelToConfigure={converter}
           initialValues={initialParams}
           onCancel={() => setStep(0)}
+          saveButtonText="Create Converter"
         />
       </FormSchemaContainer>
     </Box>
