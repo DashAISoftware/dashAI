@@ -26,6 +26,10 @@ function SetNameAndTaskStep({
   const [selectedTask, setSelectedTask] = useState({});
   const [taskNameOk, setTaskNameOk] = useState(false);
 
+  // useEffect(() => {
+  //   handleNameInputChange({ target: { value: defaultExperimentName } });
+  // }, [defaultExperimentName]);
+
   const getTasks = async () => {
     setLoading(true);
     try {
@@ -113,7 +117,6 @@ function SetNameAndTaskStep({
       setNewExp({
         ...newExp,
         task_name: selectedTask.name,
-        dataset: null,
         runs: [],
       });
       setTaskNameOk(true);

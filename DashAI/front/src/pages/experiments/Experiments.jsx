@@ -1,13 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSnackbar } from "notistack";
 
 import NewExperimentModal from "../../components/experiments/NewExperimentModal";
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
 import CustomLayout from "../../components/custom/CustomLayout";
+import { useLocation } from "react-router-dom";
 import { getExperiments as getExperimentsRequest } from "../../api/experiment";
 
 function ExperimentsPage() {
-  const [showNewExperimentModal, setShowNewExperimentModal] = useState(false);
+  const location = useLocation();
+  const [dataset, setDataset] = useState(location.state?.dataset);
+  const [showNewExperimentModal, setShowNewExperimentModal] =
+    useState(!!dataset);
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,12 +48,16 @@ function ExperimentsPage() {
       subtitle="Configure experiments to train models"
     >
       {/* New experiment Modal */}
-      <NewExperimentModal
-        open={showNewExperimentModal}
-        setOpen={setShowNewExperimentModal}
-        updateExperiments={() => setUpdateTableFlag(true)}
-        existingExperiments={experiments}
-      />
+      {!loading && (
+        <NewExperimentModal
+          open={showNewExperimentModal}
+          setOpen={setShowNewExperimentModal}
+          updateExperiments={() => setUpdateTableFlag(true)}
+          preselectedDataset={dataset}
+          setPreselectedDataset={setDataset}
+          existingExperiments={experiments}
+        />
+      )}
 
       {/* Experiment table */}
       <ExperimentsTable
