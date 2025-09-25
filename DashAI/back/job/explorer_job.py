@@ -50,24 +50,16 @@ class ExplorerJob(BaseJob):
     def set_status_as_error(
         self, session_factory: sessionmaker = lambda di: di["session_factory"]
     ) -> None:
-        """Set the status of the explainer as error."""
-        explainer_id: int = self.kwargs.get("explainer_id")
-        explainer_scope: str = self.kwargs.get("explainer_scope", "")
-
-        if explainer_id is None:
+        """Set the status of the explorer as error."""
+        explorer_id: int = self.kwargs.get("explorer_id")
+        if explorer_id is None:
             return
 
         with session_factory() as db:
             try:
-                if explainer_scope == "global":
-                    explainer = db.get(GlobalExplainer, explainer_id)
-                elif explainer_scope == "local":
-                    explainer = db.get(LocalExplainer, explainer_id)
-                else:
-                    return
-
-                if explainer:
-                    explainer.set_status_as_error()
+                explorer: Explorer = db.query(Explorer).get(explorer_id)
+                if explorer:
+                    explorer.set_status_as_error()
                     db.commit()
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -75,11 +67,9 @@ class ExplorerJob(BaseJob):
     @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
-        explainer_id = self.kwargs.get("explainer_id")
-        explainer_scope = self.kwargs.get("explainer_scope", "")
-
-        if not explainer_id:
-            return f"{explainer_scope.capitalize()} Explanation"
+        explorer_id = self.kwargs.get("explorer_id")
+        if not explorer_id:
+            return "Exploration"
 
         from kink import di
 
@@ -87,23 +77,15 @@ class ExplorerJob(BaseJob):
 
         try:
             with session_factory() as db:
-                if explainer_scope == "global":
-                    explainer = db.get(GlobalExplainer, explainer_id)
-                elif explainer_scope == "local":
-                    explainer = db.get(LocalExplainer, explainer_id)
-                else:
-                    return (
-                        f"{explainer_scope.capitalize()} Explanation ({explainer_id})"
-                    )
-
-                if explainer and explainer.name:
-                    return f"Explain: {explainer.name}"
-                if explainer and explainer.explainer_name:
-                    return f"Explain: {explainer.explainer_name.split('.')[-1]}"
+                explorer: Explorer = db.query(Explorer).get(explorer_id)
+                if explorer and explorer.name:
+                    return f"Explore: {explorer.name}"
+                if explorer and explorer.exploration_type:
+                    return f"Explore: {explorer.exploration_type}"
         except Exception:
             pass
 
-        return f"{explainer_scope.capitalize()} Explanation ({explainer_id})"
+        return f"Exploration ({explorer_id})"
 
     @inject
     def run(

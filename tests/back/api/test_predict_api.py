@@ -104,7 +104,9 @@ def create_dataset(client: TestClient):
         )
         assert response.status_code == 201, response.text
 
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+        job_id = response.json()["id"]
+        job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+        assert job_status["status"] == "finished", f"Dataset job failed: {job_status}"
 
         response = client.get("/api/v1/dataset/1")
         assert response.status_code == 200, response.text
@@ -147,7 +149,9 @@ def create_dataset_2(client: TestClient):
         )
         assert response.status_code == 201, response.text
 
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
+        job_id = response.json()["id"]
+        job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+        assert job_status["status"] == "finished", f"Dataset job failed: {job_status}"
 
         response = client.get("/api/v1/dataset/2")
         assert response.status_code == 200, response.text
@@ -234,8 +238,9 @@ def create_trained_run(client: TestClient, run_id: int):
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Model job failed: {job_status}"
 
     return run_id
 
@@ -256,8 +261,9 @@ def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset)
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Predict job failed: {job_status}"
 
     return kwargs["json_filename"] + ".json"
 

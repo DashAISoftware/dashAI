@@ -35,8 +35,6 @@ def create_dataset_1(client):
             headers=headers,
         )
 
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
     return response
 
 
@@ -70,8 +68,6 @@ def create_dataset_2(client):
             files=files,
             headers=headers,
         )
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
 
     return response
 

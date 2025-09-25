@@ -106,7 +106,7 @@ async def get_job_status(
 @router.get("/{job_id}")
 @inject
 async def get_job(
-    job_id: int,
+    job_id: str,
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
     """Return the selected job from the job queue."""

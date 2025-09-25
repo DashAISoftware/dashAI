@@ -36,11 +36,16 @@ class DillSerializer(BaseSerializer):
 class HueyJobQueue(BaseJobQueue):
     """JobQueue implementation using Huey+SQLite."""
 
-    def __init__(self, queue_name: str):
+    def __init__(self, queue_name: str, path_db: str = None):
         # SOLUCION PARCHE, DEPENDENCIA CIRCULAR AL USAR CONTAINER
-        local_path = Path.home() / ".DashAI"
-        if not local_path.exists():
-            local_path.mkdir(parents=True)
+        if path_db is None:
+            local_path = Path.home() / ".DashAI"
+            if not local_path.exists():
+                local_path.mkdir(parents=True)
+        else:
+            local_path = Path(path_db)
+            if not local_path.exists():
+                local_path.mkdir(parents=True)
 
         self.db_path = local_path / (queue_name.strip() + ".db")
         self.serializer = DillSerializer()
@@ -62,6 +67,13 @@ class HueyJobQueue(BaseJobQueue):
             return result
 
         self._execute = _execute_base_job
+
+    def set_test_mode(self, immediate: bool) -> None:
+        """
+        Set the immediate mode of the Huey job queue for testing.
+        """
+        self.huey.immediate = immediate
+        self.huey.immediate_use_memory = immediate
 
     @staticmethod
     def _normalize_to_utc_str(ts: str) -> str:
@@ -279,7 +291,7 @@ class HueyJobQueue(BaseJobQueue):
             )
             return [dict(row) for row in cur.fetchall()]
 
-    def peek(self, job_id: int | None = None) -> BaseJob:
+    def peek(self, job_id: str | None = None) -> BaseJob:
         with sqlite3.connect(self.db_path) as conn:
             cur = conn.cursor()
             if job_id is not None:
