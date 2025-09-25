@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -21,6 +21,7 @@ import { useSnackbar } from "notistack";
 import { renderStep } from "./renderStep";
 
 import { enqueuePredictionJob, startJobQueue } from "../../api/job";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 function PredictionModal({
   open,
@@ -30,6 +31,7 @@ function PredictionModal({
   setPreselectedModelId,
   preselectedTrainedDatasetId,
   setPreselectedTrainedDatasetId,
+  existingPredictions = [],
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
@@ -43,6 +45,23 @@ function PredictionModal({
   const [predictName, setPredictName] = useState("");
   const [trainDataset, setTrainDataset] = useState(preselectedTrainedDatasetId);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { defaultName } = useMemo(
+    () =>
+      generateSequentialName({
+        base: "Prediction",
+        items: existingPredictions,
+        getName: (prediction) => prediction.pred_name,
+        allowExtension: true,
+      }),
+    [existingPredictions],
+  );
+
+  useEffect(() => {
+    if (open) {
+      resetModal();
+    }
+  }, [open]);
 
   const steps = [
     ...(preselectedModelId
@@ -107,10 +126,14 @@ function PredictionModal({
 
       handleCloseDialog();
 
+      // Use generated name if user didn't provide one
+      const finalPredictionName =
+        predictName.trim() === "" ? defaultName : predictName.trim();
+
       const response = await enqueuePredictionJob(
         selectedModelId,
         selectedDatasetId,
-        predictName,
+        finalPredictionName,
       );
 
       console.log("Prediction job response:", response);
@@ -231,6 +254,7 @@ function PredictionModal({
           setTrainDataset,
           trainDataset,
           predictName,
+          defaultName,
         )}
       </DialogContent>
 
@@ -262,6 +286,7 @@ PredictionModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   updatePredictions: PropTypes.func.isRequired,
+  existingPredictions: PropTypes.array,
 };
 
 export default PredictionModal;

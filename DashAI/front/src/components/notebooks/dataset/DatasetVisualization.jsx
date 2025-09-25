@@ -7,7 +7,6 @@ import {
   CircularProgress,
   Box,
   Chip,
-  Divider,
 } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { getDatasetFile, getDatasetInfo } from "../../../api/datasets";
@@ -15,8 +14,24 @@ import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
+import { getDatasetStatus } from "../../../utils/datasetStatus";
 
-export default function DatasetVisualization({ dataset, onNotebookCreated }) {
+export default function DatasetVisualization({
+  dataset,
+  onNotebookCreated,
+  existingNotebooks = [],
+}) {
+  if (!dataset) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
@@ -42,8 +57,9 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   useEffect(() => {
     const fetchDatasetInfo = async () => {
       if (
-        dataset.status === "processing" ||
-        dataset.id.toString().startsWith("temp_")
+        getDatasetStatus(dataset.status) === "Delivered" ||
+        getDatasetStatus(dataset.status) === "Not Started" ||
+        getDatasetStatus(dataset.status) === "Started"
       ) {
         return;
       }
@@ -64,8 +80,9 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
     async (page, pageSize) => {
       // Don't try to fetch data if it's a temporary/processing dataset
       if (
-        dataset.status === "processing" ||
-        dataset.id.toString().startsWith("temp_")
+        getDatasetStatus(dataset.status) === "Delivered" ||
+        getDatasetStatus(dataset.status) === "Not Started" ||
+        getDatasetStatus(dataset.status) === "Started"
       ) {
         return { rows: [], total: 0 };
       }
@@ -109,8 +126,9 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   };
 
   const isProcessing =
-    dataset.status === "processing" ||
-    dataset.id.toString().startsWith("temp_");
+    getDatasetStatus(dataset.status) === "Delivered" ||
+    getDatasetStatus(dataset.status) === "Not Started" ||
+    getDatasetStatus(dataset.status) === "Started";
 
   return (
     <>
@@ -217,10 +235,8 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
               gap: 2,
             }}
           >
-            <CircularProgress size={60} />
-            <Typography variant="h6" color="text.secondary">
-              Processing your dataset...
-            </Typography>
+            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"
               color="text.secondary"
@@ -236,6 +252,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           onClose={() => setShowCreateNotebookModal(false)}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}
+          existingNotebooks={existingNotebooks}
         />
       </Paper>
     </>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
@@ -22,6 +22,7 @@ import {
 } from "../../api/notebook";
 import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
+import { getDatasetStatus } from "../../utils/datasetStatus";
 
 export default function DatasetsPage() {
   const [step, setStep] = useState(0);
@@ -213,80 +214,120 @@ export default function DatasetsPage() {
     setSelectedDatasetId(null);
   };
 
-  const handleDatasetCreated = async (tempDataset) => {
-    // Temporary dataset
-    setDatasets((prevDatasets) => [...prevDatasets, tempDataset]);
+  const timerId = useRef(null);
+
+  const handleDatasetCreated = async (newDataset) => {
+    setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
+    setSelectedDatasetId(newDataset.id);
+
     setStep(0);
     setSelectedOption("dataset");
-    setSelectedDatasetId(tempDataset.id);
     setSelectedNotebookId(null);
 
-    // Real dataset
-    const pollForRealDataset = async (attempt = 1, maxAttempts = 10) => {
+    // Check and wait for new dataset to be ready:
+    const checkDatasetReady = async () => {
       try {
-        const realDatasets = await getDatasets();
-        const realDataset = realDatasets.find(
-          (d) =>
-            d.name === tempDataset.name && !d.id.toString().startsWith("temp_"),
-        );
+        const freshDatasets = await getDatasets();
 
-        if (realDataset) {
-          const enrichedDatasets = await enrichDatasetsWithInfo(
-            realDatasets,
-            datasets,
-          );
-          setDatasets(enrichedDatasets);
-          setSelectedDatasetId(realDataset.id);
-        } else if (attempt < maxAttempts) {
-          const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
-          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), delay);
+        const dataset = freshDatasets.find((d) => d.id === newDataset.id);
+        if (!dataset) {
+          console.error("Dataset not found in response:", newDataset.id);
+          return;
+        }
+
+        if (getDatasetStatus(dataset.status) === "Finished") {
+          // Get current datasets and enrich with preserved data
+          setDatasets((currentDatasets) => {
+            enrichDatasetsWithInfo(freshDatasets, currentDatasets).then(
+              setDatasets,
+            );
+            return currentDatasets;
+          });
+        } else if (getDatasetStatus(dataset.status) === "Error") {
+          console.error("Dataset creation failed:", dataset.error);
+          enqueueSnackbar("Dataset creation failed:", {
+            variant: "error",
+          });
         } else {
-          console.log(
-            "Max polling attempts reached, keeping temporary dataset",
-          );
-          await fetchDatasets();
+          timerId.current = setTimeout(checkDatasetReady, 1000);
         }
       } catch (error) {
-        console.error("Error polling for real dataset:", error);
-        if (attempt < maxAttempts) {
-          setTimeout(() => pollForRealDataset(attempt + 1, maxAttempts), 5000);
-        }
+        console.error("Error checking dataset readiness:", error);
       }
     };
 
-    //setTimeout(() => pollForRealDataset(), 1000);
-    pollForRealDataset();
+    checkDatasetReady();
   };
+
+  useEffect(() => {
+    return () => {
+      if (timerId.current) {
+        clearTimeout(timerId.current);
+      }
+    };
+  }, []);
 
   const handleEditDataset = async (id, newName) => {
     try {
-      updateDataset(id, { name: newName }).then(async (updatedDataset) => {
-        setDatasets((prevDatasets) =>
-          prevDatasets.map((dataset) =>
-            dataset.id === id
-              ? { ...dataset, name: updatedDataset.name }
-              : dataset,
-          ),
-        );
+      const updatedDataset = await updateDataset(id, { name: newName });
+      setDatasets((prevDatasets) =>
+        prevDatasets.map((dataset) =>
+          dataset.id === id
+            ? { ...dataset, name: updatedDataset.name }
+            : dataset,
+        ),
+      );
+      enqueueSnackbar("Dataset updated successfully", {
+        variant: "success",
       });
     } catch (error) {
       console.error("Failed to update dataset:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A dataset with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Dataset name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update dataset", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
   const handleEditNotebook = async (id, newName) => {
     try {
-      await updateNotebook(id, { name: newName }).then((updatedNotebook) => {
-        setNotebooks((prevNotebooks) =>
-          prevNotebooks.map((notebook) =>
-            notebook.id === id
-              ? { ...notebook, name: updatedNotebook.name }
-              : notebook,
-          ),
-        );
+      const updatedNotebook = await updateNotebook(id, { name: newName });
+      setNotebooks((prevNotebooks) =>
+        prevNotebooks.map((notebook) =>
+          notebook.id === id
+            ? { ...notebook, name: updatedNotebook.name }
+            : notebook,
+        ),
+      );
+      enqueueSnackbar("Notebook updated successfully", {
+        variant: "success",
       });
     } catch (error) {
       console.error("Failed to update notebook:", error);
+      if (error.response?.status === 422) {
+        enqueueSnackbar("Notebook name cannot be empty", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 304) {
+        enqueueSnackbar("No changes were made", {
+          variant: "info",
+        });
+      } else {
+        enqueueSnackbar("Failed to update notebook", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
@@ -317,11 +358,13 @@ export default function DatasetsPage() {
               <DatasetVisualization
                 dataset={selectedDataset}
                 onNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : selectedNotebookId ? (
               <NotebookVisualization
                 notebook={selectedNotebook}
                 handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+                existingDatasets={datasets}
               />
             ) : step === 0 ? (
               <SelectOptionMenu
@@ -356,6 +399,7 @@ export default function DatasetsPage() {
                   fetchDatasets();
                 }}
                 handleDatasetCreated={handleDatasetCreated}
+                existingDatasets={datasets}
               />
             ) : step === 1 && selectedOption === "notebook" ? (
               <UploadNotebookSteps
@@ -366,6 +410,7 @@ export default function DatasetsPage() {
                 }}
                 datasets={datasets}
                 handleNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : null}
           </CenterBox>

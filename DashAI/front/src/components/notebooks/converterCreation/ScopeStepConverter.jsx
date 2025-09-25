@@ -14,12 +14,13 @@ export default function ScopeStepConverter({
   supervised,
   targetColumn,
   setTargetColumn,
+  tool,
   rows,
   setRows,
   columns,
   setColumns,
   notebook,
-  setStep,
+  nextStep,
 }) {
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
@@ -151,9 +152,13 @@ export default function ScopeStepConverter({
         )}
 
         <FormSchemaButtonGroup
-          onFormSubmit={() => setStep((s) => s + 1)}
+          onFormSubmit={nextStep}
           error={supervised ? !targetColumn : false}
-          saveButtonText="Next"
+          saveButtonText={
+            Object.values(tool.schema.properties).length > 0
+              ? "Next"
+              : "Create Converter"
+          }
         />
       </Box>
     </Box>

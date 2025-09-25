@@ -2,11 +2,12 @@ import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import uuid from "react-uuid";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -19,8 +20,23 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const [name, setName] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [compatibleModels, setCompatibleModels] = useState([]);
+  const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
+
+  const { defaultName } = useMemo(() => {
+    if (!selectedModel) {
+      return { defaultName: "" };
+    }
+
+    return generateSequentialName({
+      base: selectedModel,
+      items: newExp.runs,
+      getName: (run) => run.name,
+      filter: (run) => run.model === selectedModel,
+    });
+  }, [selectedModel, newExp.runs]);
+
   const getCompatibleModels = async () => {
     try {
       const models = await getComponentsRequest({
@@ -41,14 +57,12 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   };
 
   const handleAddButton = () => {
-    const existingModelsOfType = newExp.runs.filter(
-      (run) => run.model === selectedModel,
-    ).length;
+    const modelName = name.trim();
 
-    const modelName =
-      name.trim() === ""
-        ? `${selectedModel}_${existingModelsOfType + 1}`
-        : name;
+    if (!modelName) {
+      setHasUserTouchedName(true);
+      return;
+    }
 
     const newModel = {
       id: uuid(),
@@ -64,11 +78,28 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     };
 
     setNewExp({ ...newExp, runs: [newModel, ...newExp.runs] });
+    setHasUserTouchedName(false);
     setName("");
     setSelectedModel("");
   };
 
-  // checks if there is at least 1 model added to enable the "Next" button
+  const getNameError = () => {
+    if (!selectedModel || selectedModel.trim() === "") {
+      return null;
+    }
+
+    if (hasUserTouchedName) {
+      const currentName = name.trim();
+      if (!currentName) {
+        return "Name is required";
+      }
+    }
+
+    return null;
+  };
+
+  const nameError = getNameError();
+
   useEffect(() => {
     // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
     if (newExp.runs.length) {
@@ -82,6 +113,16 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   useEffect(() => {
     getCompatibleModels();
   }, []);
+
+  useEffect(() => {
+    if (!selectedModel) {
+      setHasUserTouchedName(false);
+      setName("");
+    } else if (defaultName) {
+      setName(defaultName);
+      setHasUserTouchedName(false);
+    }
+  }, [selectedModel, defaultName]);
 
   return (
     <Grid
@@ -101,13 +142,27 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
           <Grid item xs={4} md={12}>
             <TextField
-              label="Name (optional)"
+              label="Model Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={selectedModel ? `${selectedModel}_1` : "Model_1"}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (!hasUserTouchedName) {
+                  setHasUserTouchedName(true);
+                }
+              }}
+              onBlur={() => setHasUserTouchedName(true)}
               InputLabelProps={{ shrink: true }}
+              error={Boolean(
+                selectedModel && selectedModel.trim() !== "" && nameError,
+              )}
+              helperText={
+                selectedModel && selectedModel.trim() !== "" ? nameError : ""
+              }
               fullWidth
-              key={selectedModel}
+              disabled={!selectedModel}
+              placeholder={
+                !selectedModel ? "Select a model first" : "Model Name"
+              }
             />
           </Grid>
 
@@ -138,7 +193,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           <Grid item xs={1} md={2}>
             <Button
               variant="outlined"
-              disabled={selectedModel === ""}
+              disabled={selectedModel === "" || name.trim() === ""}
               startIcon={<AddIcon />}
               onClick={handleAddButton}
               sx={{ height: "100%" }}

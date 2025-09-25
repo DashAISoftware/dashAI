@@ -38,7 +38,10 @@ export default function ConfigureToolModal({
     [notebook.file_path],
   );
 
-  const steps = ["Configure Scope", "Configure Parameters"];
+  const steps =
+    Object.values(tool.schema.properties).length > 0
+      ? ["Configure Scope", "Configure Parameters"]
+      : ["Configure Scope"];
 
   return (
     <Dialog

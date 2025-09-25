@@ -33,16 +33,16 @@ router = APIRouter()
 @router.get("/global")
 @inject
 async def get_global_explainers(
-    run_id: int,
+    run_id: int = None,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Returns the global explanainers in the database associated with the
-    run_id.
+    """Returns the global explainers in the database.
 
     Parameters
     ----------
-    run_id: int
+    run_id: int, optional
         Run id to select the global explanations to retrieve.
+        If not provided, returns all global explainers.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -55,13 +55,18 @@ async def get_global_explainers(
     Raises
     ------
     HTTPException
-        If there are no global explainers associated with the run_id in the DB.
+        If there's a database error.
     """
     with session_factory() as db:
         try:
-            global_explainers = db.scalars(
-                select(GlobalExplainer).where(GlobalExplainer.run_id == run_id)
-            ).all()
+            if run_id is not None:
+                # Filter by run_id
+                global_explainers = db.scalars(
+                    select(GlobalExplainer).where(GlobalExplainer.run_id == run_id)
+                ).all()
+            else:
+                # Return all global explainers
+                global_explainers = db.scalars(select(GlobalExplainer)).all()
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -307,16 +312,16 @@ async def delete_global_explainer(
 @router.get("/local")
 @inject
 async def get_local_explainers(
-    run_id: int,
+    run_id: int = None,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Returns the local explanainers in the database associated with the
-    run_id.
+    """Returns the local explainers in the database.
 
     Parameters
     ----------
-    run_id: int
-        Run id to select the global explanations to retrieve.
+    run_id: int, optional
+        Run id to select the local explanations to retrieve.
+        If not provided, returns all local explainers.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -329,13 +334,18 @@ async def get_local_explainers(
     Raises
     ------
     HTTPException
-        If there are no local explainers associated with the run_id in the DB.
+        If there's a database error.
     """
     with session_factory() as db:
         try:
-            local_explainers = db.scalars(
-                select(LocalExplainer).where(LocalExplainer.run_id == run_id)
-            ).all()
+            if run_id is not None:
+                # Filter by run_id
+                local_explainers = db.scalars(
+                    select(LocalExplainer).where(LocalExplainer.run_id == run_id)
+                ).all()
+            else:
+                # Return all local explainers
+                local_explainers = db.scalars(select(LocalExplainer)).all()
 
         except exc.SQLAlchemyError as e:
             log.exception(e)

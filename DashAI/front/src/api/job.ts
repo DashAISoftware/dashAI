@@ -22,14 +22,14 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
 };
 
 export const enqueueDatasetJob = async (
+  dataset_id: number,
   file: File,
-  name: string,
   url: string,
   params: object,
 ): Promise<object> => {
   const formData = new FormData();
   const kwargs = {
-    name: name,
+    dataset_id: dataset_id,
     url: url,
     params: params,
   };
