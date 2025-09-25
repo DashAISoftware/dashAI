@@ -19,11 +19,16 @@ import DeleteItemModal from "../custom/DeleteItemModal";
 function ExperimentsTable({
   handleOpenNewExperimentModal,
   experiments = [],
+  datasets = [],
   loading = false,
   onUpdateExperiments,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
+
+  const datasetMap = React.useMemo(() => {
+    return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
+  }, [datasets]);
 
   const deleteExperiment = async (id) => {
     try {
@@ -75,6 +80,10 @@ function ExperimentsTable({
         headerName: "Dataset",
         minWidth: 200,
         editable: false,
+        valueFormatter: (params) => {
+          const datasetName = datasetMap.get(params.value);
+          return datasetName || `Dataset ID: ${params.value}`;
+        },
       },
       {
         field: "created",
@@ -110,7 +119,7 @@ function ExperimentsTable({
         ],
       },
     ],
-    [handleDeleteExperiment],
+    [handleDeleteExperiment, datasetMap],
   );
 
   return (
@@ -181,6 +190,7 @@ ExperimentsTable.propTypes = {
   updateTableFlag: PropTypes.bool,
   setUpdateTableFlag: PropTypes.func,
   experiments: PropTypes.array,
+  datasets: PropTypes.array,
   loading: PropTypes.bool,
   onUpdateExperiments: PropTypes.func.isRequired,
 };

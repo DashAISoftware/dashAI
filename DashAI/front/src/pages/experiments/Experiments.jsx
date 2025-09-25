@@ -6,6 +6,7 @@ import ExperimentsTable from "../../components/experiments/ExperimentsTable";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useLocation } from "react-router-dom";
 import { getExperiments as getExperimentsRequest } from "../../api/experiment";
+import { getDatasets } from "../../api/datasets";
 
 function ExperimentsPage() {
   const location = useLocation();
@@ -14,6 +15,7 @@ function ExperimentsPage() {
     useState(!!dataset);
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [experiments, setExperiments] = useState([]);
+  const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -23,15 +25,26 @@ function ExperimentsPage() {
       const experimentsData = await getExperimentsRequest();
       setExperiments(experimentsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain experiments.");
+      enqueueSnackbar("Error while trying to get experiments.");
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchDatasets = async () => {
+    try {
+      const datasetsData = await getDatasets();
+      setDatasets(datasetsData);
+    } catch (error) {
+      enqueueSnackbar("Error while trying to get datasets.");
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     getExperiments();
+    fetchDatasets();
   }, []);
 
   // Update experiments when table is updated
@@ -65,6 +78,7 @@ function ExperimentsPage() {
         updateTableFlag={updateTableFlag}
         setUpdateTableFlag={setUpdateTableFlag}
         experiments={experiments}
+        datasets={datasets}
         loading={loading}
         onUpdateExperiments={getExperiments}
       />
