@@ -13,13 +13,15 @@ import {
   deleteDataset,
   getDatasetInfo,
   updateDataset,
+  createDataset,
 } from "../../api/datasets";
 import {
   getNotebooks,
   deleteNotebook,
-  createDatasetFromNotebook,
   updateNotebook,
 } from "../../api/notebook";
+
+import { enqueueDatasetJob } from "../../api/job";
 import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { getDatasetStatus } from "../../utils/datasetStatus";
@@ -180,23 +182,52 @@ export default function DatasetsPage() {
     deleteNotebook(id);
   };
 
+  const timerId = useRef(null);
+
+  const checkDatasetReady = async (newDataset) => {
+    try {
+      const freshDatasets = await getDatasets();
+
+      const dataset = freshDatasets.find((d) => d.id === newDataset.id);
+      if (!dataset) {
+        console.error("Dataset not found in response:", newDataset.id);
+        return;
+      }
+
+      if (getDatasetStatus(dataset.status) === "Finished") {
+        // Get current datasets and enrich with preserved data
+        enqueueSnackbar("Dataset uploaded successfully!", {
+          variant: "success",
+        });
+        setDatasets((currentDatasets) => {
+          enrichDatasetsWithInfo(freshDatasets, currentDatasets).then(
+            setDatasets,
+          );
+          return currentDatasets;
+        });
+      } else if (getDatasetStatus(dataset.status) === "Error") {
+        console.error("Dataset creation failed:", dataset.error);
+        enqueueSnackbar("Dataset creation failed:", {
+          variant: "error",
+        });
+      } else {
+        timerId.current = setTimeout(checkDatasetReady, 1000, newDataset);
+      }
+    } catch (error) {
+      console.error("Error checking dataset readiness:", error);
+    }
+  };
+
   const handleAddDatasetFromNotebook = async (name) => {
     if (selectedNotebook) {
       try {
-        const data = await createDatasetFromNotebook(selectedNotebook.id, name);
+        const data = await createDataset(name);
+        enqueueSnackbar("Dataset creation started", {
+          variant: "success",
+        });
+        await enqueueDatasetJob(data.id, null, "", {}, selectedNotebook.id);
 
-        if (data) {
-          enqueueSnackbar("Dataset created successfully", {
-            variant: "success",
-          });
-          const enrichedDatasets = await enrichDatasetsWithInfo(
-            [data],
-            datasets,
-          );
-          const enrichedNewDataset = enrichedDatasets[0];
-
-          setDatasets((prevDatasets) => [...prevDatasets, enrichedNewDataset]);
-        }
+        checkDatasetReady(data);
       } catch (error) {
         enqueueSnackbar("Failed to create dataset from notebook:", {
           variant: "error",
@@ -214,8 +245,6 @@ export default function DatasetsPage() {
     setSelectedDatasetId(null);
   };
 
-  const timerId = useRef(null);
-
   const handleDatasetCreated = async (newDataset) => {
     setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
     setSelectedDatasetId(newDataset.id);
@@ -225,38 +254,7 @@ export default function DatasetsPage() {
     setSelectedNotebookId(null);
 
     // Check and wait for new dataset to be ready:
-    const checkDatasetReady = async () => {
-      try {
-        const freshDatasets = await getDatasets();
-
-        const dataset = freshDatasets.find((d) => d.id === newDataset.id);
-        if (!dataset) {
-          console.error("Dataset not found in response:", newDataset.id);
-          return;
-        }
-
-        if (getDatasetStatus(dataset.status) === "Finished") {
-          // Get current datasets and enrich with preserved data
-          setDatasets((currentDatasets) => {
-            enrichDatasetsWithInfo(freshDatasets, currentDatasets).then(
-              setDatasets,
-            );
-            return currentDatasets;
-          });
-        } else if (getDatasetStatus(dataset.status) === "Error") {
-          console.error("Dataset creation failed:", dataset.error);
-          enqueueSnackbar("Dataset creation failed:", {
-            variant: "error",
-          });
-        } else {
-          timerId.current = setTimeout(checkDatasetReady, 1000);
-        }
-      } catch (error) {
-        console.error("Error checking dataset readiness:", error);
-      }
-    };
-
-    checkDatasetReady();
+    checkDatasetReady(newDataset);
   };
 
   useEffect(() => {

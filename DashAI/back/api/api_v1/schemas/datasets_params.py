@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -41,3 +41,4 @@ class Dataset(BaseModel):
 
 class DatasetCreateParams(BaseModel):
     name: str
+    notebook_id: Optional[int] = None

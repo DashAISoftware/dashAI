@@ -9,9 +9,7 @@ from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm import Session, sessionmaker
 
-import DashAI.back.api.api_v1.schemas.datasets_params as dataset_params
 from DashAI.back.api.api_v1.schemas import notebook_params as schemas
-from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dependencies.database.models import (
     ConverterList,
     Dataset,
@@ -306,47 +304,6 @@ async def delete_notebook(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete directory",
         ) from e
-
-
-@router.post("/{notebook_id}/dataset", response_model=dataset_params.Dataset)
-async def create_dataset_from_notebook(
-    notebook_id: int,
-    params: dataset_params.DatasetUploadFromNotebookParams,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: dict = Depends(lambda: di["config"]),
-):
-    with session_factory() as db:
-        try:
-            notebook = db.get(Notebook, notebook_id)
-            if not notebook:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Notebook not found"
-                )
-            dataset_folder = notebook.file_path
-            random_name = uuid.uuid4().hex[:8]
-            new_folder_path = os.path.join(
-                config["DATASETS_PATH"],
-                random_name,
-            )
-            os.makedirs(new_folder_path, exist_ok=True)
-            shutil.copytree(dataset_folder, new_folder_path, dirs_exist_ok=True)
-
-            dataset = Dataset(
-                name=params.name,
-                file_path=new_folder_path,
-                status=DatasetStatus.FINISHED,
-            )
-            db.add(dataset)
-            db.commit()
-            db.refresh(dataset)
-        except Exception as e:
-            log.error(f"Error creating dataset from notebook {notebook_id}: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create dataset",
-            ) from e
-
-    return dataset
 
 
 @router.patch("/{notebook_id}")
