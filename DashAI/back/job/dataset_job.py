@@ -95,7 +95,6 @@ class DatasetJob(BaseJob):
                 ) from e
 
             try:
-                print("Notebook ID:", notebook_id)
                 if notebook_id is not None:
                     log.debug(f"Copying dataset from notebook id {notebook_id}.")
                     with session_factory() as db:

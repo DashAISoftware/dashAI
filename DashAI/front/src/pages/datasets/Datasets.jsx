@@ -246,7 +246,6 @@ export default function DatasetsPage() {
   };
 
   const handleDatasetCreated = async (newDataset) => {
-    console.log("New dataset created:", newDataset);
     setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
     setSelectedDatasetId(newDataset.id);
 
