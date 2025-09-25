@@ -46,13 +46,7 @@ function PredictionPage() {
     }
   };
 
-  const updatePredictions = useCallback(() => {
-    setUpdateTableFlag(true);
-    getPredictions();
-  }, []);
-
   const handleOpenNewPredictionModal = async () => {
-    await getPredictions();
     setIsNewPredictionModalOpen(true);
   };
 
@@ -83,7 +77,7 @@ function PredictionPage() {
         <PredictionModal
           open={isNewPredictionModalOpen}
           onClose={() => setIsNewPredictionModalOpen(false)}
-          updatePredictions={updatePredictions}
+          updatePredictions={() => setUpdateTableFlag(true)}
           preselectedModelId={modelId}
           setPreselectedModelId={setModelId}
           preselectedTrainedDatasetId={trainedDatasetId}
