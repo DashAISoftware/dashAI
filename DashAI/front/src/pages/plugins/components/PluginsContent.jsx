@@ -55,7 +55,7 @@ function PluginsContent({
 
       {/* Loading */}
       {loading && (
-        <Grid item xs={12} height={"218px"}>
+        <Grid size={{ xs: 12 }} height={"218px"}>
           <Card
             sx={{
               height: "100%",
@@ -71,7 +71,7 @@ function PluginsContent({
 
       {/* No plugins */}
       {!loading && !pluginsToShow.length && (
-        <Grid item xs={12} height={"218px"}>
+        <Grid size={{ xs: 12 }} height={"218px"}>
           <Card
             sx={{
               height: "100%",

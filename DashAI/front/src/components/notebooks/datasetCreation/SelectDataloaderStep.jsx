@@ -57,7 +57,7 @@ export default function SelectDataloaderStep({
       spacing={2}
     >
       {/* List of dataloaders */}
-      <Grid item>
+      <Grid>
         {!loading && (
           <ItemSelectorWithInfo
             itemsList={dataloaders}
@@ -66,7 +66,7 @@ export default function SelectDataloaderStep({
           />
         )}
       </Grid>
-      <Grid item sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={goToPrevStep}
           onFormSubmit={goToNextStep}
