@@ -228,7 +228,6 @@ class ConverterListJob(BaseJob):
             camel_to_snake: re.Pattern,
             converter_submodule_inverse_index: Dict,
         ) -> ConverterChain:
-
             converter_instances = []
 
             for converter_name, converter_params in steps:

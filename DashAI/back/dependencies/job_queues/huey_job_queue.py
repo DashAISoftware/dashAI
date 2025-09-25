@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sqlite3
+from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -36,7 +37,6 @@ class HueyJobQueue(BaseJobQueue):
     """JobQueue implementation using Huey+SQLite."""
 
     def __init__(self, queue_name: str):
-
         # SOLUCION PARCHE, DEPENDENCIA CIRCULAR AL USAR CONTAINER
         local_path = Path.home() / ".DashAI"
         if not local_path.exists():
@@ -111,7 +111,8 @@ class HueyJobQueue(BaseJobQueue):
         - SIGNAL_EXECUTING: update the row to status `started`
         - SIGNAL_COMPLETE: update the row to status `finished`
         - SIGNAL_ERROR: update the row to status `error` and store the exception
-        All writes stamp last_update with microsecond precision to avoid same-second races.
+        All writes stamp last_update with microsecond precision to avoid same-second
+        conflicts.
         """
 
         def exec_sql(sql, params=()):
@@ -175,7 +176,9 @@ class HueyJobQueue(BaseJobQueue):
             )
 
     def _enable_wal(self):
-        """Enable Write-Ahead Logging mode in SQLite to improve concurrent reads/writes."""
+        """
+        Enable Write-Ahead Logging mode in SQLite to improve concurrent reads/writes.
+        """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute("PRAGMA synchronous=NORMAL;")
@@ -208,7 +211,10 @@ class HueyJobQueue(BaseJobQueue):
                 """
             )
             conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_task_copy_last_update ON task_copy(last_update, id)"
+                (
+                    "CREATE INDEX IF NOT EXISTS idx_task_copy_last_update "
+                    "ON task_copy(last_update, id)"
+                )
             )
 
     def status(self, job_id: str) -> dict:
@@ -444,10 +450,8 @@ class HueyJobQueue(BaseJobQueue):
                 for row in cur.fetchall():
                     try:
                         job_data = self.serializer._deserialize(row["data"])
-                        try:
+                        with suppress(Exception):
                             job_data[6][0].set_status_as_error()
-                        except Exception:
-                            pass
                         jobs_to_delete.append(row["id"])
                     except Exception:
                         jobs_to_delete.append(row["id"])

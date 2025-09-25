@@ -79,6 +79,7 @@ const JobQueueWidget = () => {
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const prevActiveJobsCount = useRef(0);
 
   const handleClearAllJobs = () => {
@@ -225,12 +226,14 @@ const JobQueueWidget = () => {
   );
 
   const jobsToShow = getJobsToShow();
-
+  //filter: `brightness(${isHovered || expanded ? 1 : 0.7})`,
   return (
     <>
       <Fade in={true}>
         <Paper
           elevation={6}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           sx={{
             position: "fixed",
             bottom: (theme) => theme.spacing(3),
@@ -243,7 +246,11 @@ const JobQueueWidget = () => {
             boxShadow: (theme) => theme.shadows[6],
             borderRadius: (theme) => theme.shape.borderRadius,
             overflow: "hidden",
-            transition: "all 0.3s ease",
+          }}
+          style={{
+            opacity: `${isHovered || expanded ? 1 : 0.5}`,
+            filter: `brightness(${isHovered || expanded ? 1 : 0.5})`,
+            transition: "all 0.2s ease",
           }}
         >
           <Box
@@ -369,8 +376,8 @@ const JobQueueWidget = () => {
                                   {job.job_name
                                     ? job.job_name
                                     : job.task_type
-                                    ? job.task_type.split(".").pop()
-                                    : "Unknown Job"}
+                                      ? job.task_type.split(".").pop()
+                                      : "Unknown Job"}
                                 </Typography>
                               </Tooltip>
                             </Box>

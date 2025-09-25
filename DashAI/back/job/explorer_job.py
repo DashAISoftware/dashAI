@@ -164,7 +164,10 @@ class ExplorerJob(BaseJob):
                 explorer_info.set_status_as_error()
                 db.commit()
                 raise JobError(
-                    f"Explorer {explorer_info.exploration_type} not found in the registry."
+                    (
+                        f"Explorer {explorer_info.exploration_type} "
+                        "not found in the registry."
+                    )
                 ) from e
 
             # Instance the explorer (the explorer handles its validation)

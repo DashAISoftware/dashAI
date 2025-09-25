@@ -378,5 +378,4 @@ class ModelJob(BaseJob):
                 db.commit()
                 raise e
             finally:
-
                 gc.collect()

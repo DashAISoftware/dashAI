@@ -5,7 +5,6 @@ from typing import Any
 import torch
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session
 from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.dependencies.database.models import (
@@ -13,7 +12,6 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     ProcessData,
 )
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks import BaseGenerativeTask
@@ -122,7 +120,8 @@ class GenerativeJob(BaseJob):
                     )
                     if not generative_process:
                         raise JobError(
-                            f"Generative process {generative_process_id} not found in DB."
+                            f"Generative process {generative_process_id} "
+                            "not found in DB."
                         )
                 except Exception as e:
                     log.exception(e)
@@ -237,7 +236,10 @@ class GenerativeJob(BaseJob):
                     for o in output:
                         if not isinstance(o, tuple) or len(o) != 2:
                             raise JobError(
-                                "Output from task must be a list of tuples (data, type)."
+                                (
+                                    "Output from task must be a list of "
+                                    "tuples (data, type)."
+                                )
                             )
                         output_data, output_type = o
                         process_data = ProcessData(

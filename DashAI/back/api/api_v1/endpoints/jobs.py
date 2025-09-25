@@ -5,7 +5,7 @@ import tempfile
 from datetime import datetime, timezone
 from urllib.parse import unquote_plus  # NOTE: plus -> space
 
-from fastapi import APIRouter, Body, Depends, Query, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from streaming_form_data import StreamingFormDataParser
@@ -100,7 +100,7 @@ async def get_job_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
-        )
+        ) from e
 
 
 @router.get("/{job_id}")
@@ -134,7 +134,7 @@ async def get_jobs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve jobs: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/{job_id}/details")
@@ -155,12 +155,12 @@ async def get_job_details(
 
         return entity_info
     except JobQueueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving job details: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -268,7 +268,7 @@ async def cancel_all_jobs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error canceling all jobs: {str(e)}",
-        )
+        ) from e
 
 
 @router.delete("/{job_id}")
@@ -291,7 +291,7 @@ async def cancel_job(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error canceling job: {str(e)}",
-        )
+        ) from e
 
 
 @router.patch("/")
