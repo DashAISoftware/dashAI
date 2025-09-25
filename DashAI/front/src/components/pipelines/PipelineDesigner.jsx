@@ -151,7 +151,7 @@ function PipelineDesigner({
                   )
             }
             placement="top"
-            componentsProps={{
+            slotProps={{
               tooltip: {
                 sx: {
                   fontSize: "15px",

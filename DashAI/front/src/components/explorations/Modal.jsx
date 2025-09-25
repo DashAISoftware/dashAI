@@ -47,11 +47,13 @@ function ExplorationsModal({
       disableEscapeKeyDown
       maxWidth="lg"
       scroll="paper"
-      PaperProps={{
-        sx: {
-          minHeight: "80vh",
-          overflow: "auto",
-          maxHeight: "90vh",
+      slotProps={{
+        paper: {
+          sx: {
+            minHeight: "80vh",
+            overflow: "auto",
+            maxHeight: "90vh",
+          },
         },
       }}
     >

@@ -176,8 +176,10 @@ function PredictionModal({
       aria-labelledby="new-predict-dialog-title"
       aria-describedby="new-predict-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       <DialogTitle>
@@ -232,7 +234,6 @@ function PredictionModal({
           </Grid>
         </Grid>
       </DialogTitle>
-
       <DialogContent dividers>
         {activeStep === 0 && (
           <SelectModelStep
@@ -251,7 +252,6 @@ function PredictionModal({
           />
         )}
       </DialogContent>
-
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>

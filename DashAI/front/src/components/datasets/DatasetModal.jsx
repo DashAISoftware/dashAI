@@ -121,8 +121,10 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       fullWidth
       maxWidth={"lg"}
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
@@ -158,7 +160,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {/* Step 1: select dataloader */}
@@ -179,7 +180,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

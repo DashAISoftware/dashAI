@@ -15,7 +15,7 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import { LoadingButton } from "@mui/material";
 import DatasetSummaryTable from "./DatasetSummaryTable";
 import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";

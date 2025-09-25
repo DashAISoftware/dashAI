@@ -68,10 +68,6 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "session-menu-button",
-          dense: true,
-        }}
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "right",
@@ -81,6 +77,12 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
           horizontal: "right",
         }}
         onClick={(e) => e.stopPropagation()}
+        slotProps={{
+          list: {
+            "aria-labelledby": "session-menu-button",
+            dense: true,
+          },
+        }}
       >
         <MenuItem
           onClick={(e) => {
@@ -106,7 +108,6 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
           <ListItemText>Delete</ListItemText>
         </DeleteMenuItem>
       </Menu>
-
       {/* Confirmation Modal */}
       <DeleteSessionConfirmationModal
         open={deleteModalOpen}

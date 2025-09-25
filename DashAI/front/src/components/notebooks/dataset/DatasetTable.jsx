@@ -212,8 +212,10 @@ export default function DatasetTable({
           anchorEl={anchorEl}
           open={open}
           onClose={handleClose}
-          MenuListProps={{
-            "aria-labelledby": "export-button",
+          slotProps={{
+            list: {
+              "aria-labelledby": "export-button",
+            },
           }}
         >
           <MenuItem onClick={handleExportCsv}>

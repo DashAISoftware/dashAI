@@ -444,11 +444,13 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
               label="Metrics"
               select
               fullWidth
-              SelectProps={{ multiple: true }}
               value={metrics}
               onChange={(e) => setMetrics(e.target.value)}
               margin="normal"
               disabled={!task}
+              slotProps={{
+                select: { multiple: true },
+              }}
             >
               {availableMetrics.map((metric) => (
                 <MenuItem key={metric.name} value={metric.name}>
@@ -479,7 +481,6 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
           </Button>
         </Box>
       </DialogContent>
-
       <ParamsSettings
         open={openSettings}
         modelSchema={modelSchema}

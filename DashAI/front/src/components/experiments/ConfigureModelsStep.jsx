@@ -137,7 +137,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           Add models to your experiment
         </Typography>
       </Grid>
-
       <Grid item xs={12}>
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
           <Grid item xs={4} md={12}>
@@ -151,7 +150,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
                 }
               }}
               onBlur={() => setHasUserTouchedName(true)}
-              InputLabelProps={{ shrink: true }}
               error={Boolean(
                 selectedModel && selectedModel.trim() !== "" && nameError,
               )}
@@ -163,6 +161,9 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               placeholder={
                 !selectedModel ? "Select a model first" : "Model Name"
               }
+              slotProps={{
+                inputLabel: { shrink: true },
+              }}
             />
           </Grid>
 
@@ -203,7 +204,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Grid>
-
       {/* Models table */}
       <Grid item xs={12}>
         <ModelsTable newExp={newExp} setNewExp={setNewExp} />

@@ -183,8 +183,10 @@ function ExplorationEditor({ open = true, handleCloseDialog = () => {} }) {
       aria-labelledby="new-exploration-dialog-title"
       aria-describedby="new-exploration-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
@@ -240,7 +242,6 @@ function ExplorationEditor({ open = true, handleCloseDialog = () => {} }) {
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {loading && (
@@ -268,7 +269,6 @@ function ExplorationEditor({ open = true, handleCloseDialog = () => {} }) {
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

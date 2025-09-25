@@ -183,10 +183,11 @@ function SelectModelStep({
                 ? "The prediction name must have at least 4 alphanumeric characters."
                 : ""
           }
-          InputLabelProps={{ shrink: true }}
+          slotProps={{
+            inputLabel: { shrink: true },
+          }}
         />
       </Grid>
-
       <Grid item xs={12}>
         <Paper sx={{ height: 400, width: "100%" }}>
           <Typography variant="h6" component="h2" sx={{ pl: 2, pt: 1 }}>

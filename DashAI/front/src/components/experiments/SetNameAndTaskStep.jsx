@@ -162,13 +162,14 @@ function SetNameAndTaskStep({
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}
-          InputLabelProps={{ shrink: true }}
           sx={{ mb: 2 }}
           error={Boolean(nameError)}
           helperText={nameError}
+          slotProps={{
+            inputLabel: { shrink: true },
+          }}
         />
       </Grid>
-
       {/* Tasks Subcomponent */}
       <Grid item xs={12}>
         <Grid container spacing={1}>

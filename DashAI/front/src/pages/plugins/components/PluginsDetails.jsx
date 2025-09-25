@@ -135,10 +135,6 @@ function PluginsDetails() {
           >
             <CardHeader
               title={plugin.name.replace("dashai-", "")}
-              titleTypographyProps={{
-                variant: "h4",
-                noWrap: true,
-              }}
               sx={{
                 pb: 0,
                 width: "100%",
@@ -165,6 +161,12 @@ function PluginsDetails() {
                   <Grid item> {plugin.summary} </Grid>
                 </Grid>
               }
+              slotProps={{
+                title: {
+                  variant: "h4",
+                  noWrap: true,
+                },
+              }}
             />
             <CardContent sx={{ pb: 0 }}>
               {PluginsActions(plugin.status === PluginStatus.INSTALLED)}

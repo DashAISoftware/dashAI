@@ -38,17 +38,19 @@ function PluginsToolbar({
           <TextField
             id="input-with-icon-textfield"
             label="Search"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
             variant="outlined"
             value={searchField}
             onChange={handleSearchFieldChange}
             fullWidth
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
         </Grid>
         <Grid item>
@@ -73,7 +75,6 @@ function PluginsToolbar({
           </FormControl>
         </Grid>
       </Grid>
-
       <Grid
         item
         container

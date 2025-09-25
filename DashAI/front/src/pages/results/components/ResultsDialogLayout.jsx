@@ -36,11 +36,13 @@ function ResultsDialogLayout({
       fullWidth
       maxWidth={"lg"}
       onClose={handleOnClose}
-      PaperProps={{
-        sx: {
-          minHeight: "90vh",
-          overflow: "auto",
-          maxHeight: "90vh",
+      slotProps={{
+        paper: {
+          sx: {
+            minHeight: "90vh",
+            overflow: "auto",
+            maxHeight: "90vh",
+          },
         },
       }}
     >

@@ -82,7 +82,6 @@ function OptimizeNumberInput({
           <FormHelperText>{error || " "}</FormHelperText>
         </FormControl>
       )}
-
       {canOptimize && switchState ? (
         // If user toggled "optimize", show lower/upper bound
         <>

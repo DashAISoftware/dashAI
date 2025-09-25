@@ -218,8 +218,10 @@ export default function NewExperimentModal({
       aria-labelledby="new-experiment-dialog-title"
       aria-describedby="new-experiment-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
@@ -275,7 +277,6 @@ export default function NewExperimentModal({
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {renderStep(
@@ -287,7 +288,6 @@ export default function NewExperimentModal({
           existingExperiments,
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

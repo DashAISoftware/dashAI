@@ -199,8 +199,10 @@ export default function NewGlobalExplainerModal({
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
@@ -256,7 +258,6 @@ export default function NewGlobalExplainerModal({
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {activeStep === 0 && (
@@ -279,7 +280,6 @@ export default function NewGlobalExplainerModal({
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

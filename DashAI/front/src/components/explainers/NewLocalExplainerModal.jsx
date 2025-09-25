@@ -204,8 +204,10 @@ export default function NewLocalExplainerModal({
       aria-labelledby="new-local-explainer-dialog-title"
       aria-describedby="new-local-explainer-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
@@ -261,7 +263,6 @@ export default function NewLocalExplainerModal({
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {activeStep === 0 && (
@@ -291,7 +292,6 @@ export default function NewLocalExplainerModal({
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">
