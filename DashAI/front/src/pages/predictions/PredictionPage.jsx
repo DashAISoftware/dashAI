@@ -35,6 +35,7 @@ function PredictionPage() {
   const getPredictions = async () => {
     try {
       setLoading(true);
+      console.log("Fetching predictions...", predictions);
       const predictionsData = await get_metadata_prediction_json();
       setPredictions(predictionsData);
     } catch (error) {
@@ -71,14 +72,12 @@ function PredictionPage() {
       title="Prediction Module"
       subtitle="Use a model to make predictions"
     >
-      {!loading && (
-        <PredictionTable
-          updateTableFlag={updateTableFlag}
-          setUpdateTableFlag={setUpdateTableFlag}
-          handleNewPredict={handleOpenNewPredictionModal}
-          predictions={predictions}
-        />
-      )}
+      <PredictionTable
+        updateTableFlag={updateTableFlag}
+        setUpdateTableFlag={setUpdateTableFlag}
+        handleNewPredict={handleOpenNewPredictionModal}
+        predictions={predictions}
+      />
 
       {!loading && (
         <PredictionModal
