@@ -32,8 +32,10 @@ export function renderStep(
           handlePredictNameInput={handlePredictNameInput}
           setSelectedDatasetId={setSelectedDatasetId}
           setNextEnabled={setNextEnabled}
+          defaultPredictionName={defaultPredictionName}
           trainDataset={trainDataset}
           predictName={predictName}
+          onPredictNameInput={handlePredictNameInput}
         />
       );
     default:

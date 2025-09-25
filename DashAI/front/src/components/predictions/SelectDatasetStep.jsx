@@ -8,11 +8,11 @@ import {
   Link,
   Paper,
   Typography,
-  TextField,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
+import PredictionNameInput from "./PredictionNameInput";
 
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 
@@ -46,11 +46,11 @@ const columns = [
 
 function SelectDatasetStep({
   preselectedModelId,
-  handlePredictNameInput,
   setSelectedDatasetId,
   setNextEnabled,
   trainDataset,
-  predictName,
+  defaultPredictionName,
+  onPredictNameInput,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -59,6 +59,7 @@ function SelectDatasetStep({
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
   const [datasetPaths, setDatasetPaths] = useState([]);
+  const [isNameValid, setIsNameValid] = useState(false);
 
   const getDatasets = async () => {
     setLoading(true);
@@ -100,9 +101,13 @@ function SelectDatasetStep({
       // const dataset = datasets[datasetsSelected[0] - 1];
       const selectedDatasetId = datasetsSelected[0];
       setSelectedDatasetId(selectedDatasetId);
-      setNextEnabled(true);
+      if (preselectedModelId) {
+        setNextEnabled(isNameValid);
+      } else {
+        setNextEnabled(true);
+      }
     }
-  }, [datasetsSelected]);
+  }, [datasetsSelected, isNameValid, preselectedModelId]);
 
   return (
     <React.Fragment>
@@ -112,14 +117,10 @@ function SelectDatasetStep({
             Provide a prediction name to continue and select a model
           </Typography>
 
-          <TextField
-            id="predict-name-input"
-            label="Enter a unique name"
-            value={predictName}
-            fullWidth
-            onChange={(e) => handlePredictNameInput(e.target.value)}
-            autoComplete="off"
-            sx={{ mb: 4 }}
+          <PredictionNameInput
+            defaultPredictionName={defaultPredictionName}
+            onValidChange={setIsNameValid}
+            onNameChange={onPredictNameInput}
           />
         </Grid>
       )}
