@@ -114,7 +114,7 @@ function SelectDatasetStep({
       {preselectedModelId && (
         <Grid item xs={12}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-            Provide a prediction name to continue and select a model
+            Provide a prediction name to continue and select a dataset
           </Typography>
 
           <PredictionNameInput
