@@ -77,6 +77,7 @@ Metrics
    DashAI.back.metrics.Bleu
    DashAI.back.metrics.MAE
    DashAI.back.metrics.RMSE
+   DashAI.back.metrics.Ter
 
 Optimizers
 ==========
@@ -114,6 +115,9 @@ Explainers
 Converters
 ==========
 
+Base Converters
+~~~~~~~~~~~~~~~
+
 .. autosummary::
    :toctree: generated/
 
@@ -123,8 +127,98 @@ Converters
    DashAI.back.converters.scikit_learn.sklearn_like_converter.SklearnLikeConverter
    DashAI.back.converters.scikit_learn.converter_chain.ConverterChain
 
+Feature Engineering
+~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.ColumnRemover
+   DashAI.back.converters.CharacterReplacer
+   DashAI.back.converters.PolynomialFeatures
+   DashAI.back.converters.Embedding
+
+Scaling and Normalization
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.StandardScaler
+   DashAI.back.converters.MinMaxScaler
+   DashAI.back.converters.MaxAbsScaler
+   DashAI.back.converters.Normalizer
+   DashAI.back.converters.Binarizer
+
+Encoding
+~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.OneHotEncoder
+   DashAI.back.converters.OrdinalEncoder
+   DashAI.back.converters.LabelEncoder
+   DashAI.back.converters.LabelBinarizer
+
+Dimensionality Reduction
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.PCA
+   DashAI.back.converters.IncrementalPCA
+   DashAI.back.converters.FastICA
+   DashAI.back.converters.TruncatedSVD
+
+Feature Selection
+~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.VarianceThreshold
+   DashAI.back.converters.GenericUnivariateSelect
+   DashAI.back.converters.SelectKBest
+   DashAI.back.converters.SelectPercentile
+   DashAI.back.converters.SelectFpr
+   DashAI.back.converters.SelectFdr
+   DashAI.back.converters.SelectFwe
+
+Imputation
+~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.SimpleImputer
+   DashAI.back.converters.KNNImputer
+   DashAI.back.converters.MissingIndicator
+
+Kernel Approximation
+~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.AdditiveChi2Sampler
+   DashAI.back.converters.RBFSampler
+   DashAI.back.converters.SkewedChi2Sampler
+   DashAI.back.converters.Nystroem
+
+Sampling
+~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   DashAI.back.converters.SMOTEConverter
+   DashAI.back.converters.SMOTEENNConverter
+   DashAI.back.converters.RandomUnderSamplerConverter
+
 Explorers
-==========
+=========
 
 .. autosummary::
    :toctree: generated/

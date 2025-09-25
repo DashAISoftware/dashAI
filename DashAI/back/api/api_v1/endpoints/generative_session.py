@@ -102,8 +102,7 @@ async def upload_generative_session(
             if not issubclass(task_class, BaseGenerativeTask):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Task {params.task_name} is not a valid "
-                    f"generative task.",
+                    detail=f"Task {params.task_name} is not a valid generative task.",
                 )
 
             session = GenerativeSession(

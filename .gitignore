@@ -1,4 +1,4 @@
-Byte-coVscode mpiled / optimized / DLL files
+# Vscode compiled / optimized / DLL files
 *.py[cod]
 *$py.class
 
@@ -136,7 +136,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
+docs/source/api/generated
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -172,6 +172,7 @@ user_runs
 user_models
 user_explainers
 __pycache__
+dvclive
 
 # ruff cache
 .ruff_cache
@@ -183,3 +184,5 @@ __pycache__
 
 *.ipynb
 *.pkl
+db.sqlite
+trained_models/

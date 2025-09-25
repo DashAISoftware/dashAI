@@ -99,7 +99,7 @@ def create_app(
     _create_path_if_not_exists(config["DATASETS_PATH"])
     _create_path_if_not_exists(config["IMAGES_PATH"])
     _create_path_if_not_exists(config["EXPLANATIONS_PATH"])
-    _create_path_if_not_exists(config["EXPLORATIONS_PATH"])
+    _create_path_if_not_exists(config["NOTEBOOK_PATH"])
     _create_path_if_not_exists(config["RUNS_PATH"])
     _create_path_if_not_exists(config["DOCUMENTS_PATH"])
 
@@ -129,12 +129,5 @@ def create_app(
     )
     app.container = container
     logger.debug("Application successfully created.")
-
-    @app.on_event("startup")
-    async def maybe_start_job_loop():
-        if not hasattr(app.state, "job_loop") or app.state.job_loop.done():
-            app.state.job_loop = asyncio.create_task(
-                job_queue_loop(stop_when_queue_empties=False)
-            )
 
     return app

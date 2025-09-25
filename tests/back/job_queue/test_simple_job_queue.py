@@ -81,7 +81,7 @@ def test_get_jobs(job_queue: BaseJobQueue):
     assert jobs[0].id == job_2_id
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_async_get_job(job_queue: BaseJobQueue):
     job_1 = DummyJob()
     job_1_id = job_queue.put(job_1)

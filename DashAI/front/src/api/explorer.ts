@@ -62,6 +62,25 @@ export const createExplorer = async (
   return response.data;
 };
 
+// New: Create an explorer for a notebook (not exploration)
+export const createNotebookExplorer = async (
+  notebookId: number,
+  columns: object[],
+  explorationType: string,
+  parameters: object,
+  name?: string,
+): Promise<IExplorer> => {
+  const data: Record<string, any> = {
+    notebook_id: notebookId,
+    columns,
+    exploration_type: explorationType,
+    parameters,
+  };
+  if (name) data.name = name;
+  const response = await api.post<IExplorer>(`${explorerEndpoint}`, data);
+  return response.data;
+};
+
 export const updateExplorer = async (
   explorerId: string,
   columns: object,

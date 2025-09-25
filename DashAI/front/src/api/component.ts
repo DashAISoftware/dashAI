@@ -56,3 +56,7 @@ export const getChildComponents = async (componentName: string, recursive: boole
   });
   return response.data;
 };
+export const getComponentById = async (id: string): Promise<IComponent> => {
+  const response = await api.get<IComponent>(`/v1/component/${id}`);
+  return response.data;
+};

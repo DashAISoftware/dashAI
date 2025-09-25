@@ -1,7 +1,8 @@
 import logging
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Union
 
 from beartype import beartype
+from beartype.typing import Dict, List, Type
 
 from DashAI.back.dependencies.registry.relationship_manager import RelationshipManager
 

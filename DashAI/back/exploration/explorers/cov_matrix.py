@@ -12,7 +12,7 @@ from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
 
@@ -99,9 +99,9 @@ class CovarianceMatrixExplorer(BaseExplorer):
 
         return result
 
-    def save_exploration(
+    def save_notebook(
         self,
-        __exploration_info__: Exploration,
+        __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
         result: Union[pd.DataFrame, go.Figure],

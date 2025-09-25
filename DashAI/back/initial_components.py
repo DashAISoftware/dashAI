@@ -64,7 +64,9 @@ from DashAI.back.job import (
     DatasetJob,
     ExplainerJob,
     ExplorerJob,
+    GenerativeJob,
     ModelJob,
+    PipelineJob,
     PredictJob,
     GenerativeJob
 )
@@ -75,7 +77,6 @@ from DashAI.back.models import (
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
-    GemmaModel,
     GradientBoostingR,
     HistGradientBoostingClassifier,
     KNeighborsClassifier,
@@ -113,6 +114,13 @@ from DashAI.back.models.RAG import (
 
 
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
+from DashAI.back.pipeline import (
+    DataExploration,
+    DataSelector,
+    Prediction,
+    RetrieveModel,
+    Train,
+)
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
@@ -159,7 +167,6 @@ def get_initial_components():
         GradientBoostingR,
         HistGradientBoostingClassifier,
         KNeighborsClassifier,
-        GemmaModel,
         QwenModel,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
@@ -198,6 +205,7 @@ def get_initial_components():
         ConverterListJob,
         DatasetJob,
         GenerativeJob,
+        PipelineJob,
         # Explainers
         KernelShap,
         PartialDependence,
@@ -258,6 +266,11 @@ def get_initial_components():
         ScatterMatrixExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        DataSelector,
+        DataExploration,
+        Train,
+        RetrieveModel,
+        Prediction,
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,

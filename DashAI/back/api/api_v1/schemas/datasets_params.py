@@ -1,6 +1,9 @@
+from datetime import datetime
 from typing import Dict
 
 from pydantic import BaseModel, ConfigDict
+
+from DashAI.back.core.enums.status import DatasetStatus
 
 
 class DatasetParams(BaseModel):
@@ -21,4 +24,20 @@ class ColumnsSpecParams(BaseModel):
 
 class DatasetUpdateParams(BaseModel):
     name: str = None
-    columns: Dict[str, ColumnSpecItemParams] = None
+
+
+class DatasetUploadFromNotebookParams(BaseModel):
+    name: str
+
+
+class Dataset(BaseModel):
+    id: int
+    name: str
+    created: datetime
+    last_modified: datetime
+    file_path: str
+    status: DatasetStatus
+
+
+class DatasetCreateParams(BaseModel):
+    name: str

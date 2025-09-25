@@ -15,7 +15,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dependencies.database.models import Exploration, Explorer
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
 
@@ -81,9 +81,9 @@ class WordcloudExplorer(BaseExplorer):
 
         return wordcloud.to_image()
 
-    def save_exploration(
+    def save_notebook(
         self,
-        __exploration_info__: Exploration,
+        __exploration_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
         result: Image,

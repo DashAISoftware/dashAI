@@ -22,14 +22,14 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
 };
 
 export const enqueueDatasetJob = async (
+  dataset_id: number,
   file: File,
-  name: string,
   url: string,
   params: object,
 ): Promise<object> => {
   const formData = new FormData();
   const kwargs = {
-    name: name,
+    dataset_id: dataset_id,
     url: url,
     params: params,
   };
@@ -77,6 +77,7 @@ export const enqueueExplorerJob = async (
   };
 
   formData.append("job_type", "ExplorerJob");
+  formData.append("stop_when_queue_empties", JSON.stringify(true));
   formData.append("kwargs", JSON.stringify(kwargs));
 
   const response = await api.post<object>("/v1/job/", formData, {
@@ -131,18 +132,21 @@ export const enqueueGenerativeProcessJob = async (
 
 export const enqueueConverterJob = async (
   converterListId: number,
-  targetColumnIndex: number,
 ): Promise<object> => {
   const data = {
     job_type: "ConverterListJob",
     kwargs: {
       converter_list_id: converterListId,
-      target_column_index: targetColumnIndex,
     },
+    stop_when_queue_empties: true,
   };
 
   const formData = new FormData();
   formData.append("job_type", data.job_type);
+  formData.append(
+    "stop_when_queue_empties",
+    JSON.stringify(data.stop_when_queue_empties),
+  );
   formData.append("kwargs", JSON.stringify(data.kwargs));
 
   const response = await api.post<object>("/v1/job/", formData, {
@@ -163,5 +167,25 @@ export const startJobQueue = async (
   }
 
   const response = await api.post<object>("/v1/job/start/", null, { params });
+  return response.data;
+};
+
+export const enqueuePipelineJob = async (
+  pipelineId: number,
+): Promise<object> => {
+  const data = {
+    job_type: "PipelineJob",
+    kwargs: { id: pipelineId },
+  };
+
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };

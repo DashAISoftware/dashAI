@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: check-yaml
       - id: check-toml
@@ -12,35 +12,27 @@ repos:
       - id: trailing-whitespace
       - id: mixed-line-ending
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.7
+    rev: v0.12.10
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: "v9.2.0"
-    hooks:
-      - id: eslint
-        files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
-        types: [file]
-        args:
-          - "--config=DashAI/front/eslint.config.js"
-        additional_dependencies:
-          - eslint
-          - eslint-config-standard-with-typescript
-          - eslint-plugin-import
-          - eslint-plugin-n
-          - eslint-plugin-promise
-          - eslint-plugin-react
-          - eslint-config-prettier
-          - "@typescript-eslint/eslint-plugin"
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0-alpha.9-for-vscode" # Use the sha or tag you want to point at
+    rev: "v4.0.0-alpha.8"
     hooks:
       - id: prettier
-        files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
+        files: \.[jt]sx?$  # *.js, *.jsx, *.ts, *.tsx
         types: [file]
         args:
           - "--config=DashAI/front/.prettierrc"
           - "--ignore-path=DashAI/front/.prettierignore"
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: yarn lint
+        language: system
+        types: [javascript, jsx, ts, tsx]
+
 exclude: "(migrations|generated)/.*"

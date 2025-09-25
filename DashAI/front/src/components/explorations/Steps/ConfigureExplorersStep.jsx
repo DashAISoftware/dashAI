@@ -19,7 +19,7 @@ import { useSnackbar } from "notistack";
 
 import useSchema from "../../../hooks/useSchema";
 import { useExplorationsContext } from "../context";
-import { ExplorersTable } from "../";
+import ExplorersTable from "../ExplorationsTable";
 
 import { getComponents } from "../../../api/component";
 

@@ -277,22 +277,28 @@ def test_get_text_to_text_task_metadata():
 def test_prepare_for_task_text_to_text():
     text_to_text_task = TextToTextGenerationTask()
     input_data = [ProcessData(data="What is the capital of France?")]
-    prepared_input = text_to_text_task.prepare_for_task(input_data)
 
-    assert prepared_input == "Q: What is the capital of France?\nA:"
+    prepared = text_to_text_task.prepare_for_task(input_data)
+
+    expected = [
+        {"role": "user", "content": "What is the capital of France?"},
+    ]
+    assert prepared == expected
 
 
 def test_prepare_for_task_text_to_text_with_history():
     text_to_text_task = TextToTextGenerationTask()
     input_data = [ProcessData(data="What is the capital of France?")]
     history = [("What is the capital of Spain?", "Madrid")]
-    prepared_input = text_to_text_task.prepare_for_task(input_data, history=history)
 
-    expected_output = (
-        "Q: What is the capital of Spain?\nA: Madrid\n"
-        "Q: What is the capital of France?\nA:"
-    )
-    assert prepared_input == expected_output
+    prepared = text_to_text_task.prepare_for_task(input_data, history=history)
+
+    expected = [
+        {"role": "user", "content": "What is the capital of Spain?"},
+        {"role": "assistant", "content": "Madrid"},
+        {"role": "user", "content": "What is the capital of France?"},
+    ]
+    assert prepared == expected
 
 
 def prepare_input_for_database_text_to_text():

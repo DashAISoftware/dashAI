@@ -18,6 +18,8 @@ class ColumnRemover(BaseConverter):
 
     SCHEMA = ColumnRemoverSchema
     DESCRIPTION = "Removes the columns selected in scope from the dataset."
+    SHORT_DESCRIPTION = "Removes the columns selected in scope from the dataset."
+    DISPLAY_NAME = "Column Remover"
 
     def __init__(self):
         super().__init__()

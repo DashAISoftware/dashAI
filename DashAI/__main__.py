@@ -24,40 +24,45 @@ def open_browser() -> None:
 
 def main(
     local_path: Annotated[
-        pathlib.Path, typer.Option(help="Path where DashAI files will be stored.")
+        pathlib.Path,
+        typer.Option(
+            "--local-path",
+            "-lp",
+            help="Path where DashAI files will be stored.",
+        ),
     ] = "~/.DashAI",  # type: ignore
     logging_level: Annotated[
         LoggingLevel,
         typer.Option(
+            "--logging-level",
+            "-ll",
             help=(
                 "DashAI App Logging level. "
                 "Only in DEBUG mode, SQLAlchemy logging is enabled."
-            )
+            ),
         ),
     ] = LoggingLevel.INFO,
+    no_browser: Annotated[
+        bool,
+        typer.Option(
+            "--no-browser",
+            "-nb",
+            help="Run without automatically opening the browser.",
+            is_flag=True,
+        ),
+    ] = False,
 ) -> None:
-    """Main function for DashAI package.
-
-    This function is executed when the package is called from the command line.
-    It starts a timer to open the browser and runs the Dash application using Uvicorn.
-
-
-    Parameters
-    ----------
-    local_path : pathlib.Path,
-        Path where DashAI local files will be stored, by default "~/.DashAI".
-    logging_level : LoggingLevel
-        Logging level. Defaults to LoggingLevel.INFO.
-
-    """
+    """Main function for DashAI package."""
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
-
     logger = logging.getLogger(__name__)
 
     logger.info("Starting DashAI application.")
-    logger.info("Opening browser.")
-    timer = threading.Timer(interval=1, function=open_browser)
-    timer.start()
+    if not no_browser:
+        logger.info("Opening browser.")
+        timer = threading.Timer(interval=1, function=open_browser)
+        timer.start()
+    else:
+        logger.info("Browser auto-open disabled (--no-browser/-nb).")
 
     logger.info("Starting Uvicorn server application.")
     uvicorn.run(
