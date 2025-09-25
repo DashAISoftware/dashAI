@@ -23,7 +23,6 @@ function PredictionPage() {
   }, []);
 
   const { modelId, trainedDatasetId } = selection;
-  console.log("trainedDatasetId", trainedDatasetId);
 
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [isNewPredictionModalOpen, setIsNewPredictionModalOpen] = useState(
@@ -35,7 +34,6 @@ function PredictionPage() {
   const getPredictions = async () => {
     try {
       setLoading(true);
-      console.log("Fetching predictions...", predictions);
       const predictionsData = await get_metadata_prediction_json();
       setPredictions(predictionsData);
     } catch (error) {
