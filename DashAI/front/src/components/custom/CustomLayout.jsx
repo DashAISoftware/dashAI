@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import Container from "@mui/material/Container";
 import { useMediaQuery, Typography, Box } from "@mui/material";
-import { useTheme } from "@emotion/react";
+import { useTheme } from "@mui/material/styles";
 
 /**
  * This component renders a layout that allows you to choose whether to use the Container component or not.
@@ -13,7 +13,7 @@ function CustomLayout({
   title,
   subtitle,
   children,
-  disableContainer,
+  disableContainer = false,
   padding = 2,
 }) {
   const xxl = 1600;
@@ -43,10 +43,6 @@ function CustomLayout({
 CustomLayout.propTypes = {
   children: PropTypes.node.isRequired,
   disableContainer: PropTypes.bool,
-};
-
-CustomLayout.defaultProps = {
-  disableContainer: false,
 };
 
 export default CustomLayout;
