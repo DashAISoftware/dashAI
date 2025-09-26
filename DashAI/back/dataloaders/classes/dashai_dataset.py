@@ -150,7 +150,8 @@ class DashAIDataset(Dataset):
 
         Returns
         -------
-        None
+        DashAIDataset
+            The dataset with the updated metadata.
         """
         dataset_df = self.to_pandas()
         # Calculate the number of NaN values per column
