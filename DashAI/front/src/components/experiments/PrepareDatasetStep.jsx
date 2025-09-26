@@ -367,9 +367,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Alert>
-      {!infoLoading ? (
-        Object.values(datasetInfo.nan).some((v) => v > 0) &&
-        Object.values(datasetInfo.nan).length !== 0 ? (
+      {!infoLoading && datasetInfo.nan ? (
+        Object.values(datasetInfo.nan).some((v) => v > 0) ? (
           <Alert severity="warning" sx={{ mb: 1 }}>
             <AlertTitle>
               The dataset contains missing values (NaN) in the columns:
