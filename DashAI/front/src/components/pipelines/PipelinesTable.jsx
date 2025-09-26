@@ -72,13 +72,13 @@ function PipelinesTable({
         field: "created",
         headerName: "Created",
         minWidth: 150,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value, row) => formatDate(value),
       },
       {
         field: "last_modified",
         headerName: "Edited",
         minWidth: 150,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value, row) => formatDate(value),
       },
       {
         field: "actions",
@@ -112,7 +112,7 @@ function PipelinesTable({
         <Typography variant="h5">Current Pipelines</Typography>
         <Grid>
           <Grid container spacing={2}>
-            <Grid>
+            <Grid item>
               <Button
                 variant="contained"
                 onClick={() => navigate("/app/pipelines/new")}

@@ -24,13 +24,13 @@ function DivideDatasetColumns({
 
   return (
     <React.Fragment>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 0 }}>
           Indicate which columns of the dataset will be used as input and
           output.
         </Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography
           variant="caption"
           component="h3"

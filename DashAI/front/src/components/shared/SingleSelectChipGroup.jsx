@@ -17,7 +17,7 @@ const SingleSelectChipGroup = ({ options, onChange, selected }) => {
   return (
     <Grid container spacing={1}>
       {options.map((option, index) => (
-        <Grid item key={"option-" + option.key + "-" + index}>
+        <Grid key={"option-" + option.key + "-" + index}>
           <Chip
             label={option.label}
             sx={{ borderRadius: 2 }}

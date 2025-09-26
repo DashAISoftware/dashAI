@@ -75,8 +75,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
     <Paper sx={{ p: 3 }}>
       <Grid container spacing={2}>
         <Grid
-          item
-          xs={12}
+          size={{ xs: 12 }}
           container
           justifyContent="space-between"
           alignItems="center"
@@ -99,7 +98,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
           />
         )}
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <div style={{ height: 300 }}>
             <DataGrid
               rows={datasets}
@@ -117,7 +116,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig }) {
           </div>
         </Grid>
 
-        <Grid item xs={12} container justifyContent="flex-end">
+        <Grid size={{ xs: 12 }} container justifyContent="flex-end">
           <Button
             onClick={handleSave}
             disabled={!datasetId}

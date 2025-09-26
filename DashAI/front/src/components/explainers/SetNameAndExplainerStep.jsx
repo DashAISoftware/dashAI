@@ -106,7 +106,7 @@ function SetNameAndExplainerStep({
       spacing={2}
     >
       {/* Set Name subcomponent */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
           Select a {scope.toLowerCase()} explainer and anter a name
         </Typography>
@@ -125,7 +125,7 @@ function SetNameAndExplainerStep({
       </Grid>
 
       {/* Tasks Subcomponent */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container spacing={1}>
           {/* Tasks list and description */}
           {!loading ? (

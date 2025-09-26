@@ -50,7 +50,7 @@ function PredictionSummaryTab({ summary }) {
       spacing={2}
     >
       {/* Total Data Points */}
-      <Grid item xs={5} sx={{ mb: 2 }}>
+      <Grid size={{ xs: 5 }} sx={{ mb: 2 }}>
         <Typography variant="subtitle1">Total data points</Typography>
         <Typography variant="body2" style={{ color: "darkgray" }}>
           {summary["total_data_points"]}
@@ -58,13 +58,13 @@ function PredictionSummaryTab({ summary }) {
       </Grid>
 
       {/* Unique Classes Predicted */}
-      <Grid item xs={6}>
+      <Grid size={{ xs: 6 }}>
         <Typography variant="subtitle1">Unique classes predicted</Typography>
         <Typography variant="body2" style={{ color: "darkgray" }}>
           {summary["Unique_classes"]}
         </Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Paper sx={{ width: "100%" }}>
           <Typography variant="h6" component="h2" sx={{ p: 2 }}>
             Class distribution

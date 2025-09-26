@@ -38,7 +38,7 @@ function ResultsAll({ updateFlag = false, setUpdateFlag = () => {} }) {
       >
         <Grid container direction="column" spacing={2}>
           {filteredExplorers.map((explorer) => (
-            <Grid item key={explorer.id} width={"100%"}>
+            <Grid key={explorer.id} width={"100%"}>
               <Typography variant="h6" color={"GrayText"}>
                 {explorer.id} {` : ${explorer.exploration_type}`}{" "}
                 {explorer.name && `| ${explorer.name}`}

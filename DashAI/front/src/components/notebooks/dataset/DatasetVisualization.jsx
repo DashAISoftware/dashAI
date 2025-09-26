@@ -200,7 +200,7 @@ export default function DatasetVisualization({
           <Typography variant="h5" component="h2">
             {dataset.name}
           </Typography>
-          <Grid item>
+          <Grid>
             <Button
               variant="contained"
               disabled={isProcessing}

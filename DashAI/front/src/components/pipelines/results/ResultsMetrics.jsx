@@ -38,10 +38,10 @@ function PipelineResultsMetrics({ metricsData = {} }) {
         ) : (
           Object.entries(currentMetrics).map(([metricName, value]) => (
             <Grid container key={metricName}>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <Typography variant="body1">{metricName}</Typography>
               </Grid>
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <Typography variant="body1" align="right">
                   {typeof value === "number" ? value.toFixed(4) : value}
                 </Typography>

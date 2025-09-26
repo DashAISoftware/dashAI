@@ -54,7 +54,7 @@ function ResultsDialogLayout({
         handleShowGraphs={handleShowGraphs}
       />
       <Divider />
-      <Grid item xs={10}>
+      <Grid size={{ xs: 10 }}>
         <CustomLayout>
           {showTable ? (
             <ResultsTable experimentId={experiment.id.toString()} />
