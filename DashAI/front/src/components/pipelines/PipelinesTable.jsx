@@ -110,9 +110,9 @@ function PipelinesTable({
         sx={{ mb: 4 }}
       >
         <Typography variant="h5">Current Pipelines</Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={() => navigate("/app/pipelines/new")}
@@ -121,7 +121,7 @@ function PipelinesTable({
                 New Pipeline
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={fetchPipelines}

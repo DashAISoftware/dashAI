@@ -93,8 +93,7 @@ function PluginsContent({
           {pluginsToShow.map((plugin, i) => (
             <Grid
               key={i}
-              item
-              xs={cardView ? 4 : 12}
+              size={{ xs: cardView ? 4 : 12 }}
               height={cardView ? "250px" : "auto"}
             >
               <PluginCard
