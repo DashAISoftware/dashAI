@@ -349,7 +349,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           {taskRequirements.name} requirements
         </AlertTitle>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             The input columns must be of the types{" "}
             {taskRequirements
               ? parseListOfStrings(taskRequirements.metadata.inputs_types)
@@ -357,7 +357,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             , and they should have a cardinality of{" "}
             {taskRequirements.metadata.inputs_cardinality}.
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             The output columns must be of the types{" "}
             {taskRequirements
               ? parseListOfStrings(taskRequirements.metadata.outputs_types)

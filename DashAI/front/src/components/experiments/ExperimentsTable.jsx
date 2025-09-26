@@ -135,9 +135,9 @@ function ExperimentsTable({
         <Typography variant="h5" component="h2">
           Current experiments
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={handleOpenNewExperimentModal}
@@ -146,7 +146,7 @@ function ExperimentsTable({
                 New Experiment
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={onUpdateExperiments}

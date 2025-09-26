@@ -132,14 +132,14 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
       alignItems="stretch"
       spacing={2}
     >
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
           Add models to your experiment
         </Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
-          <Grid item xs={4} md={12}>
+          <Grid size={{ xs: 4, md: 12 }}>
             <TextField
               label="Model Name"
               value={name}
@@ -167,7 +167,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             />
           </Grid>
 
-          <Grid item xs={4} md={12}>
+          <Grid size={{ xs: 4, md: 12 }}>
             <TextField
               select
               label="Select a model to add"
@@ -191,7 +191,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             </TextField>
           </Grid>
 
-          <Grid item xs={1} md={2}>
+          <Grid size={{ xs: 1, md: 2 }}>
             <Button
               variant="outlined"
               disabled={selectedModel === "" || name.trim() === ""}
@@ -205,7 +205,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         </Grid>
       </Grid>
       {/* Models table */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <ModelsTable newExp={newExp} setNewExp={setNewExp} />
       </Grid>
     </Grid>

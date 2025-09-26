@@ -227,14 +227,14 @@ export default function NewExperimentModal({
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -244,7 +244,7 @@ export default function NewExperimentModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -256,7 +256,7 @@ export default function NewExperimentModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
