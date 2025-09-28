@@ -39,6 +39,7 @@ def test_datasets_path():
 def fixture_test_job_queue():
     """Create a HueyJobQueue instance configured for testing."""
     queue_path = TEST_PATH / "job_queues"
+    queue_path.mkdir(parents=True, exist_ok=True)
 
     queue_name = f"test_queue_{uuid.uuid4().hex}"
 

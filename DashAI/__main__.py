@@ -5,6 +5,7 @@ command line.
 """
 
 import logging
+import os
 import pathlib
 import signal
 import subprocess
@@ -55,15 +56,6 @@ def main(
             is_flag=True,
         ),
     ] = False,
-    no_huey: Annotated[
-        bool,
-        typer.Option(
-            "--no-huey",
-            "-nh",
-            help="Run without starting the Huey consumer process.",
-            is_flag=True,
-        ),
-    ] = False,
 ) -> None:
     """Main function for DashAI package."""
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
@@ -72,22 +64,23 @@ def main(
     logger.info("Starting DashAI application.")
     huey_process = None
 
-    # Start Huey consumer process if not disabled
-    if not no_huey:
-        logger.info("Starting Huey consumer process.")
-        huey_cmd = [
-            sys.executable,
-            "-m",
-            "huey.bin.huey_consumer",
-            "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
-            "--delay",
-            "1",
-        ]
+    resolved_local = pathlib.Path(local_path).expanduser().absolute()
+    os.environ["DASHAI_LOCAL_PATH"] = str(resolved_local)
+    os.environ["DASHAI_LOGGING_LEVEL"] = logging_level.value
+    child_env = os.environ.copy()
 
-        huey_process = subprocess.Popen(huey_cmd)
-        logger.info(f"Started Huey consumer with PID: {huey_process.pid}")
-    else:
-        logger.info("Huey consumer process disabled (--no-huey/-nh).")
+    logger.info("Starting Huey consumer process.")
+    huey_cmd = [
+        sys.executable,
+        "-m",
+        "huey.bin.huey_consumer",
+        "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
+        "--delay",
+        "1",
+    ]
+
+    huey_process = subprocess.Popen(huey_cmd, env=child_env)
+    logger.info(f"Started Huey consumer with PID: {huey_process.pid}")
 
     if not no_browser:
         logger.info("Opening browser.")
@@ -100,23 +93,20 @@ def main(
         logger.info("Starting Uvicorn server application.")
         uvicorn.run(
             app=create_app(
-                local_path=local_path,
+                local_path=resolved_local,
                 logging_level=logging_level.value,
             ),
             host="127.0.0.1",
             port=8000,
         )
     finally:
-        # Clean up the Huey process when Uvicorn exits
         if huey_process:
             logger.info(f"Terminating Huey consumer (PID: {huey_process.pid})")
             with suppress(Exception):
                 huey_process.send_signal(signal.SIGTERM)
-                huey_process.wait(
-                    timeout=5
-                )  # Wait up to 5 seconds for graceful shutdown
-                if huey_process.poll() is None:  # If still running
-                    huey_process.terminate()  # Force terminate
+                huey_process.wait(timeout=5)
+                if huey_process.poll() is None:
+                    huey_process.terminate()
 
 
 def run():

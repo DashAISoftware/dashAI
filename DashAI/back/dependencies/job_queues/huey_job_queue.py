@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sqlite3
 from contextlib import suppress
 from datetime import datetime, timezone
@@ -36,18 +37,8 @@ class DillSerializer(BaseSerializer):
 class HueyJobQueue(BaseJobQueue):
     """JobQueue implementation using Huey+SQLite."""
 
-    def __init__(self, queue_name: str, path_db: str = None):
-        # SOLUCION PARCHE, DEPENDENCIA CIRCULAR AL USAR CONTAINER
-        if path_db is None:
-            local_path = Path.home() / ".DashAI"
-            if not local_path.exists():
-                local_path.mkdir(parents=True)
-        else:
-            local_path = Path(path_db)
-            if not local_path.exists():
-                local_path.mkdir(parents=True)
-
-        self.db_path = local_path / (queue_name.strip() + ".db")
+    def __init__(self, queue_name: str, path_db: str):
+        self.db_path = Path(path_db) / (queue_name.strip() + ".db")
         self.serializer = DillSerializer()
         self.huey = SqliteHuey(
             name=queue_name,
@@ -484,24 +475,21 @@ class HueyJobQueue(BaseJobQueue):
             return 0
 
 
-_job_queue = HueyJobQueue("job_queue")
+_lp_str = os.environ.get("DASHAI_LOCAL_PATH")
+if _lp_str:
+    _lp = Path(os.path.expanduser(_lp_str))
+else:
+    _lp = Path.home() / ".DashAI"
+_job_queue = HueyJobQueue("job_queue", path_db=str(_lp))
 huey = _job_queue.huey
 
 
 @huey.on_startup()
 def create_container_huey():
-    import os
-    from pathlib import Path
-
     from DashAI.back.container import build_container
     from DashAI.back.dependencies.config_builder import build_config_dict
 
-    local_path_str = os.environ.get("DASHAI_LOCAL_PATH")
-    if local_path_str:
-        local_path = Path(os.path.expanduser(local_path_str))
-    else:
-        local_path = Path.home() / ".DashAI"
-
+    local_path = _lp
     logging_level = os.environ.get("DASHAI_LOGGING_LEVEL", "INFO")
 
     config = build_config_dict(local_path=local_path, logging_level=logging_level)
