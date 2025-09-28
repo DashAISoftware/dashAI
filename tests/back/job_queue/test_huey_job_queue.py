@@ -97,7 +97,7 @@ def test_changes_since(test_job_queue: HueyJobQueue):
 
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
     job_1 = DummyJob()
-    job_1_id = test_job_queue.put(job_1).id
+    test_job_queue.put(job_1)
 
     job_2 = DummyJob()
     job_2_id = test_job_queue.put(job_2).id

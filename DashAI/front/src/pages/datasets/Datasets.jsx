@@ -190,22 +190,22 @@ export default function DatasetsPage() {
         enqueueSnackbar("Dataset creation started", {
           variant: "success",
         });
-        setDatasets((prev) => [...prev, data]);     
-        setSelectedDatasetId(data.id);              
-        setSelectedOption("dataset");               
-        setSelectedNotebookId(null);               
+        setDatasets((prev) => [...prev, data]);
+        setSelectedDatasetId(data.id);
+        setSelectedOption("dataset");
+        setSelectedNotebookId(null);
 
         const job = await enqueueDatasetJob(
           data.id,
           null,
           "",
           {},
-          selectedNotebook.id
+          selectedNotebook.id,
         );
         pollForDataset(
-          {datasetId: data.id, datasetName: name},
-          { jobId: job.id }
-        )
+          { datasetId: data.id, datasetName: name },
+          { jobId: job.id },
+        );
       } catch (error) {
         enqueueSnackbar("Failed to create dataset from notebook:", {
           variant: "error",
@@ -232,40 +232,31 @@ export default function DatasetsPage() {
     setSelectedNotebookId(null);
 
     pollForDataset(
-      {datasetId: newDataset.id, datasetName: newDataset.name},
-      { jobId: datasetJob.id }
-    )
-
+      { datasetId: newDataset.id, datasetName: newDataset.name },
+      { jobId: datasetJob.id },
+    );
   };
 
   const pollForDataset = async (
-    {datasetId, datasetName},
-    { jobId},
+    { datasetId, datasetName },
+    { jobId },
     attempt = 1,
     maxAttempts = 10,
   ) => {
     if (jobId && attempt === 1) {
-      console.log(
-        `Setting up job polling for dataset creation job: ${jobId}`,
-      );
+      console.log(`Setting up job polling for dataset creation job: ${jobId}`);
 
       startJobPolling(
         jobId,
         async (result) => {
           console.log(`Dataset job completed successfully`);
-          enqueueSnackbar(
-            `Dataset "${datasetName}" created successfully`,
-            {
-              variant: "success",
-            },
-          );
+          enqueueSnackbar(`Dataset "${datasetName}" created successfully`, {
+            variant: "success",
+          });
 
           try {
             const freshDatasets = await getDatasets();
-            const dataset = freshDatasets.find(
-              (d) =>
-                d.id === datasetId
-            );
+            const dataset = freshDatasets.find((d) => d.id === datasetId);
 
             if (dataset) {
               const enrichedDatasets = await enrichDatasetsWithInfo(

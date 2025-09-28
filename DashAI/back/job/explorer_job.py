@@ -10,8 +10,6 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import (
     Explorer,
-    GlobalExplainer,
-    LocalExplainer,
     Notebook,
 )
 from DashAI.back.exploration.base_explorer import BaseExplorer

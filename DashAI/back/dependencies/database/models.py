@@ -36,10 +36,6 @@ class Dataset(Base):
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
 
-    status: Mapped[Enum] = mapped_column(
-        Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
-    )
-
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
     )
@@ -49,24 +45,6 @@ class Dataset(Base):
     status: Mapped[Enum] = mapped_column(
         Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
     )
-
-    def set_status_as_delivered(self) -> None:
-        """Update the status of the dataset to delivered."""
-        self.status = DatasetStatus.DELIVERED
-
-    def set_status_as_started(self) -> None:
-        """Update the status of the dataset to started and set start_time to now."""
-        self.status = DatasetStatus.STARTED
-        self.start_time = datetime.now()
-
-    def set_status_as_finished(self) -> None:
-        """Update the status of the dataset to finished and set end_time to now."""
-        self.status = DatasetStatus.FINISHED
-        self.end_time = datetime.now()
-
-    def set_status_as_error(self) -> None:
-        """Update the status of the dataset to error."""
-        self.status = DatasetStatus.ERROR
 
     def set_status_as_delivered(self) -> None:
         """
@@ -81,6 +59,7 @@ class Dataset(Base):
         """
         self.status = DatasetStatus.STARTED
         self.created = datetime.now()
+        self.start_time = datetime.now()
 
     def set_status_as_finished(self) -> None:
         """
@@ -88,6 +67,7 @@ class Dataset(Base):
         """
         self.status = DatasetStatus.FINISHED
         self.last_modified = datetime.now()
+        self.end_time = datetime.now()
 
     def set_status_as_error(self) -> None:
         """

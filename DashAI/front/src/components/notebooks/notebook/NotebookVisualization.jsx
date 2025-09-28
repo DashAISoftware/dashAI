@@ -11,15 +11,15 @@ export default function NotebookVisualization({
 }) {
   return (
     <>
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box sx={{ flexGrow: 0, position: "sticky" }}>
-        {/* Dataset View */}
-        <DatasetPreviewNotebook
-          notebook={notebook}
-          handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
-          existingDatasets={existingDatasets}
-        />
-      </Box>
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <Box sx={{ flexGrow: 0, position: "sticky" }}>
+          {/* Dataset View */}
+          <DatasetPreviewNotebook
+            notebook={notebook}
+            handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+            existingDatasets={existingDatasets}
+          />
+        </Box>
 
         <Divider sx={{ my: 1, mt: 1 }} />
 

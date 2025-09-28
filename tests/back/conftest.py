@@ -3,7 +3,6 @@ import pathlib
 import shutil
 import time
 import uuid
-from pathlib import Path
 
 import pytest
 
@@ -64,7 +63,7 @@ def fixture_test_job_queue():
 
 
 def remove_dir_with_retry(directory, max_attempts=5, sleep_seconds=1):
-    for attempt in range(max_attempts):
+    for _attempt in range(max_attempts):
         try:
             shutil.rmtree(directory)
             break

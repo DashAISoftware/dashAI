@@ -1,4 +1,3 @@
-import asyncio
 import shutil
 import time
 from pathlib import Path
@@ -75,7 +74,7 @@ def create_dataset_1(client) -> Dataset:
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(iris_dataset_entry)
     return iris_dataset_entry

@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 from pathlib import Path
@@ -103,7 +102,7 @@ def create_dataset(client: TestClient):
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(json_dataset_entry)
 
@@ -150,7 +149,7 @@ def create_dataset_2(client: TestClient):
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(csv_dataset_entry)
 

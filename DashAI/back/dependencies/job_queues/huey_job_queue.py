@@ -476,10 +476,7 @@ class HueyJobQueue(BaseJobQueue):
 
 
 _lp_str = os.environ.get("DASHAI_LOCAL_PATH")
-if _lp_str:
-    _lp = Path(os.path.expanduser(_lp_str))
-else:
-    _lp = Path.home() / ".DashAI"
+_lp = Path(os.path.expanduser(_lp_str)) if _lp_str else Path.home() / ".DashAI"
 _lp.mkdir(parents=True, exist_ok=True)
 _job_queue = HueyJobQueue("job_queue", path_db=str(_lp))
 huey = _job_queue.huey
