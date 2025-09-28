@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import JobQueueWidget from "../../components/jobs/JobQueueWidget";
+import { useState, useEffect, useRef } from "react";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
@@ -14,16 +13,19 @@ import {
   deleteDataset,
   getDatasetInfo,
   updateDataset,
+  createDataset,
 } from "../../api/datasets";
 import { startJobPolling } from "../../utils/jobPoller";
 import {
   getNotebooks,
   deleteNotebook,
-  createDatasetFromNotebook,
   updateNotebook,
 } from "../../api/notebook";
+
+import { enqueueDatasetJob } from "../../api/job";
 import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
+import { getDatasetStatus } from "../../utils/datasetStatus";
 
 export default function DatasetsPage() {
   const [step, setStep] = useState(0);
@@ -184,20 +186,26 @@ export default function DatasetsPage() {
   const handleAddDatasetFromNotebook = async (name) => {
     if (selectedNotebook) {
       try {
-        const data = await createDatasetFromNotebook(selectedNotebook.id, name);
+        const data = await createDataset(name);
+        enqueueSnackbar("Dataset creation started", {
+          variant: "success",
+        });
+        setDatasets((prev) => [...prev, data]);     
+        setSelectedDatasetId(data.id);              
+        setSelectedOption("dataset");               
+        setSelectedNotebookId(null);               
 
-        if (data) {
-          enqueueSnackbar("Dataset created successfully", {
-            variant: "success",
-          });
-          const enrichedDatasets = await enrichDatasetsWithInfo(
-            [data],
-            datasets,
-          );
-          const enrichedNewDataset = enrichedDatasets[0];
-
-          setDatasets((prevDatasets) => [...prevDatasets, enrichedNewDataset]);
-        }
+        const job = await enqueueDatasetJob(
+          data.id,
+          null,
+          "",
+          {},
+          selectedNotebook.id
+        );
+        pollForDataset(
+          {datasetId: data.id, datasetName: name},
+          { jobId: job.id }
+        )
       } catch (error) {
         enqueueSnackbar("Failed to create dataset from notebook:", {
           variant: "error",
@@ -215,63 +223,63 @@ export default function DatasetsPage() {
     setSelectedDatasetId(null);
   };
 
-  const handleDatasetCreated = async (tempDataset) => {
-    // Add temporary dataset to UI immediately
-    setDatasets((prevDatasets) => [...prevDatasets, tempDataset]);
+  const handleDatasetCreated = async (newDataset, datasetJob) => {
+    setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
+    setSelectedDatasetId(newDataset.id);
+
     setStep(0);
     setSelectedOption("dataset");
-    setSelectedDatasetId(tempDataset.id);
     setSelectedNotebookId(null);
 
-    // Start polling for the real dataset
-    pollForRealDataset(tempDataset);
+    pollForDataset(
+      {datasetId: newDataset.id, datasetName: newDataset.name},
+      { jobId: datasetJob.id }
+    )
+
   };
 
-  const pollForRealDataset = async (
-    tempDataset,
+  const pollForDataset = async (
+    {datasetId, datasetName},
+    { jobId},
     attempt = 1,
     maxAttempts = 10,
   ) => {
-    console.log("jobid of tempdataset", tempDataset.jobId);
-    // Set up job polling if we have a jobId (only on first attempt)
-    if (tempDataset.jobId && attempt === 1) {
+    if (jobId && attempt === 1) {
       console.log(
-        `Setting up job polling for dataset creation job: ${tempDataset.jobId}`,
+        `Setting up job polling for dataset creation job: ${jobId}`,
       );
 
       startJobPolling(
-        tempDataset.jobId,
-        // Success callback
+        jobId,
         async (result) => {
           console.log(`Dataset job completed successfully`);
           enqueueSnackbar(
-            `Dataset "${tempDataset.name}" created successfully`,
+            `Dataset "${datasetName}" created successfully`,
             {
               variant: "success",
             },
           );
 
-          // Attempt to get the real dataset
           try {
-            const realDatasets = await getDatasets();
-            const realDataset = realDatasets.find(
+            const freshDatasets = await getDatasets();
+            const dataset = freshDatasets.find(
               (d) =>
-                d.name === tempDataset.name &&
-                !d.id.toString().startsWith("temp_"),
+                d.id === datasetId
             );
 
-            if (realDataset) {
+            if (dataset) {
               const enrichedDatasets = await enrichDatasetsWithInfo(
-                realDatasets,
+                freshDatasets,
                 datasets,
               );
               setDatasets(enrichedDatasets);
-              setSelectedDatasetId(realDataset.id);
+              setSelectedDatasetId(datasetId);
             } else {
               console.log(
                 "Dataset job completed but couldn't find real dataset",
               );
               await fetchDatasets();
+              setSelectedDatasetId(datasetId);
             }
           } catch (error) {
             console.error(
@@ -279,9 +287,9 @@ export default function DatasetsPage() {
               error,
             );
             await fetchDatasets();
+            setSelectedDatasetId(datasetId);
           }
         },
-        // Error callback
         (result) => {
           console.error(`Dataset job failed:`, result);
           enqueueSnackbar(
@@ -292,83 +300,69 @@ export default function DatasetsPage() {
         },
       );
     }
-
-    // Continue with traditional polling as backup
-    try {
-      const realDatasets = await getDatasets();
-      const realDataset = realDatasets.find(
-        (d) =>
-          d.name === tempDataset.name && !d.id.toString().startsWith("temp_"),
-      );
-
-      if (realDataset) {
-        const enrichedDatasets = await enrichDatasetsWithInfo(
-          realDatasets,
-          datasets,
-        );
-        setDatasets(enrichedDatasets);
-        setSelectedDatasetId(realDataset.id);
-
-        // Only show success notification here if we don't have a jobId
-        // (to avoid duplicate notifications)
-        if (!tempDataset.jobId) {
-          enqueueSnackbar(
-            `Dataset "${tempDataset.name}" created successfully`,
-            {
-              variant: "success",
-            },
-          );
-        }
-      } else if (attempt < maxAttempts) {
-        const delay = Math.min(2000 + attempt * 1000, 10000); // Max 10s
-        setTimeout(
-          () => pollForRealDataset(tempDataset, attempt + 1, maxAttempts),
-          delay,
-        );
-      } else {
-        console.log("Max polling attempts reached, keeping temporary dataset");
-        await fetchDatasets();
-      }
-    } catch (error) {
-      console.error("Error polling for real dataset:", error);
-      if (attempt < maxAttempts) {
-        setTimeout(
-          () => pollForRealDataset(tempDataset, attempt + 1, maxAttempts),
-          5000,
-        );
-      }
-    }
   };
 
   const handleEditDataset = async (id, newName) => {
     try {
-      updateDataset(id, { name: newName }).then(async (updatedDataset) => {
-        setDatasets((prevDatasets) =>
-          prevDatasets.map((dataset) =>
-            dataset.id === id
-              ? { ...dataset, name: updatedDataset.name }
-              : dataset,
-          ),
-        );
+      const updatedDataset = await updateDataset(id, { name: newName });
+      setDatasets((prevDatasets) =>
+        prevDatasets.map((dataset) =>
+          dataset.id === id
+            ? { ...dataset, name: updatedDataset.name }
+            : dataset,
+        ),
+      );
+      enqueueSnackbar("Dataset updated successfully", {
+        variant: "success",
       });
     } catch (error) {
       console.error("Failed to update dataset:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A dataset with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Dataset name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update dataset", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
   const handleEditNotebook = async (id, newName) => {
     try {
-      await updateNotebook(id, { name: newName }).then((updatedNotebook) => {
-        setNotebooks((prevNotebooks) =>
-          prevNotebooks.map((notebook) =>
-            notebook.id === id
-              ? { ...notebook, name: updatedNotebook.name }
-              : notebook,
-          ),
-        );
+      const updatedNotebook = await updateNotebook(id, { name: newName });
+      setNotebooks((prevNotebooks) =>
+        prevNotebooks.map((notebook) =>
+          notebook.id === id
+            ? { ...notebook, name: updatedNotebook.name }
+            : notebook,
+        ),
+      );
+      enqueueSnackbar("Notebook updated successfully", {
+        variant: "success",
       });
     } catch (error) {
       console.error("Failed to update notebook:", error);
+      if (error.response?.status === 422) {
+        enqueueSnackbar("Notebook name cannot be empty", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 304) {
+        enqueueSnackbar("No changes were made", {
+          variant: "info",
+        });
+      } else {
+        enqueueSnackbar("Failed to update notebook", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
@@ -399,11 +393,13 @@ export default function DatasetsPage() {
               <DatasetVisualization
                 dataset={selectedDataset}
                 onNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : selectedNotebookId ? (
               <NotebookVisualization
                 notebook={selectedNotebook}
                 handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+                existingDatasets={datasets}
               />
             ) : step === 0 ? (
               <SelectOptionMenu
@@ -438,6 +434,7 @@ export default function DatasetsPage() {
                   fetchDatasets();
                 }}
                 handleDatasetCreated={handleDatasetCreated}
+                existingDatasets={datasets}
               />
             ) : step === 1 && selectedOption === "notebook" ? (
               <UploadNotebookSteps
@@ -448,6 +445,7 @@ export default function DatasetsPage() {
                 }}
                 datasets={datasets}
                 handleNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
               />
             ) : null}
           </CenterBox>

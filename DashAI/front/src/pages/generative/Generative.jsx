@@ -92,6 +92,7 @@ export default function Generative() {
               selectedTaskName={selectedTaskName}
               selectedDisplayName={selectedDisplayName}
               setSelectedSessionId={setSelectedSessionId}
+              existingSessions={sessions}
             />
           )}
         </MainGenerativeBox>

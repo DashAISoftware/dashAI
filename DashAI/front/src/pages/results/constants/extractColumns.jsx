@@ -1,7 +1,17 @@
 import { actionsColumns } from "./actionsColumns";
 import { initialColumns } from "./initialColumns";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import InfoIcon from "@mui/icons-material/Info";
 
-export const extractColumns = (rawMetrics, rawRuns, handleRunResultsOpen) => {
+export const extractColumns = (
+  rawMetrics,
+  rawRuns,
+  datasetId,
+  handleRunResultsOpen,
+  handlePrediction,
+  handleExplainer,
+) => {
   // extract metrics
   let metrics = [];
   for (const metric of rawMetrics) {
@@ -22,11 +32,30 @@ export const extractColumns = (rawMetrics, rawRuns, handleRunResultsOpen) => {
     return { field: name };
   });
 
+  const actions = actionsColumns([
+    {
+      title: "Details",
+      Icon: InfoIcon,
+      handleAction: handleRunResultsOpen,
+    },
+    {
+      title: "Predict",
+      Icon: TrendingUpIcon,
+      handleAction: (runId) => handlePrediction(runId, datasetId),
+    },
+    {
+      title: "Explain",
+      Icon: QueryStatsIcon,
+      handleAction: handleExplainer,
+    },
+  ]);
+
   // column grouping
   const columnGroupingModel = [
     { groupId: "Info", children: [...initialColumns] },
     { groupId: "Metrics", children: [...metrics] },
     { groupId: "Parameters", children: [...parameters] },
+    { groupId: "Actions", children: [...actions] },
   ];
 
   // column visibility
@@ -43,12 +72,7 @@ export const extractColumns = (rawMetrics, rawRuns, handleRunResultsOpen) => {
     columnVisibilityModel = { ...columnVisibilityModel, [col.field]: false };
   });
 
-  const columns = [
-    ...actionsColumns(handleRunResultsOpen),
-    ...initialColumns,
-    ...metrics,
-    ...parameters,
-  ];
+  const columns = [...initialColumns, ...metrics, ...parameters, ...actions];
 
   return { columns, columnGroupingModel, columnVisibilityModel };
 };

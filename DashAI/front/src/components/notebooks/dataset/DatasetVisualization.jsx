@@ -7,7 +7,6 @@ import {
   CircularProgress,
   Box,
   Chip,
-  Divider,
 } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { getDatasetFile, getDatasetInfo } from "../../../api/datasets";
@@ -16,11 +15,29 @@ import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
+import { useNavigate } from "react-router-dom";
+import { getDatasetStatus } from "../../../utils/datasetStatus";
 
-export default function DatasetVisualization({ dataset, onNotebookCreated }) {
+export default function DatasetVisualization({
+  dataset,
+  onNotebookCreated,
+  existingNotebooks = [],
+}) {
+  if (!dataset) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
+
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -42,12 +59,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   // Fetch dataset info when component mounts or dataset changes
   useEffect(() => {
     const fetchDatasetInfo = async () => {
-      if (
-        dataset.status === "processing" ||
-        dataset.id.toString().startsWith("temp_")
-      ) {
-        return;
-      }
+      if (isProcessing) return;
 
       try {
         const info = await getDatasetInfo(dataset.id);
@@ -64,12 +76,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       // Don't try to fetch data if it's a temporary/processing dataset
-      if (
-        dataset.status === "processing" ||
-        dataset.id.toString().startsWith("temp_")
-      ) {
-        return { rows: [], total: 0 };
-      }
+      if (isProcessing) return { rows: [], total: 0 };
 
       try {
         const data = await getDatasetFile(dataset.file_path, page, pageSize);
@@ -109,9 +116,8 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
     }
   };
 
-  const isProcessing =
-    dataset.status === "processing" ||
-    dataset.id.toString().startsWith("temp_");
+  const status = getDatasetStatus(dataset.status);
+  const isProcessing = !(status === "Finished" || status === "Error");
 
   return (
     <>
@@ -184,6 +190,19 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           <Grid item>
             <Button
               variant="contained"
+              disabled={isProcessing}
+              onClick={() => {
+                navigate("../app/experiments", {
+                  state: { dataset: dataset },
+                });
+              }}
+              endIcon={<AddIcon />}
+              sx={{ mr: 2 }}
+            >
+              New Experiment
+            </Button>
+            <Button
+              variant="contained"
               endIcon={<AddIcon />}
               disabled={isProcessing}
               onClick={(e) => {
@@ -218,10 +237,8 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
               gap: 2,
             }}
           >
-            <CircularProgress size={60} />
-            <Typography variant="h6" color="text.secondary">
-              Processing your dataset...
-            </Typography>
+            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"
               color="text.secondary"
@@ -237,6 +254,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           onClose={() => setShowCreateNotebookModal(false)}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}
+          existingNotebooks={existingNotebooks}
         />
       </Paper>
 

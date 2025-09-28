@@ -35,6 +35,11 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
+
+    status: Mapped[Enum] = mapped_column(
+        Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
+    )
+
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
     )
@@ -61,6 +66,33 @@ class Dataset(Base):
 
     def set_status_as_error(self) -> None:
         """Update the status of the dataset to error."""
+        self.status = DatasetStatus.ERROR
+
+    def set_status_as_delivered(self) -> None:
+        """
+        Update the status of the dataset to delivered and set last_modified to now.
+        """
+        self.status = DatasetStatus.DELIVERED
+        self.last_modified = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """
+        Update the status of the dataset to started and set created to now.
+        """
+        self.status = DatasetStatus.STARTED
+        self.created = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """
+        Update the status of the dataset to finished and set last_modified to now.
+        """
+        self.status = DatasetStatus.FINISHED
+        self.last_modified = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """
+        Update the status of the dataset to error.
+        """
         self.status = DatasetStatus.ERROR
 
 
@@ -427,6 +459,7 @@ class ConverterList(Base):
     notebook_id: Mapped[int] = mapped_column(
         ForeignKey("notebook.id", ondelete="CASCADE")
     )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     converter: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)

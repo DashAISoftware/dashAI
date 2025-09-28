@@ -1,82 +1,51 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
-import { Grid, Paper, Typography, TextField, Hidden } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { get_model_table } from "../../api/predict";
 import { formatDate } from "../../utils";
+import PredictionNameInput from "./PredictionNameInput";
 
 function SelectModelStep({
   setSelectedModelId,
   setNextEnabled,
   onPredictNameInput,
   setTrainDataset,
+  defaultPredictionName,
 }) {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
-  const [predictName, setPredictName] = useState("");
-  const [predictNameError, setPredictNameError] = useState(false);
   const [rowClicked, setRowClicked] = useState(false);
+  const [isNameValid, setIsNameValid] = useState(false);
 
-  const columns = React.useMemo(() => [
-    {
-      field: "id",
-      headerName: "ID",
-      minWidth: 10,
-      editable: false,
-    },
-
-    {
-      field: "run_name",
-      headerName: "Model Name",
-      minWidth: 300,
-      editable: false,
-    },
-    {
-      field: "model_name",
-      headerName: "Model",
-      minWidth: 300,
-      editable: false,
-    },
-    {
-      field: "task_name",
-      headerName: "Task",
-      minWidth: 200,
-      editable: false,
-    },
-    {
-      field: "dataset_name",
-      headerName: "Dataset Name",
-      minWidth: 200,
-      editable: false,
-    },
-    {
-      field: "created",
-      headerName: "Created",
-      minWidth: 170,
-      editable: false,
-      type: Date,
-      valueFormatter: (params) => formatDate(params.value),
-    },
-  ]);
+  const columns = useMemo(
+    () => [
+      { field: "id", headerName: "ID", minWidth: 10 },
+      { field: "run_name", headerName: "Model Name", minWidth: 300 },
+      { field: "model_name", headerName: "Model", minWidth: 300 },
+      { field: "task_name", headerName: "Task", minWidth: 200 },
+      { field: "dataset_name", headerName: "Dataset Name", minWidth: 200 },
+      {
+        field: "created",
+        headerName: "Created",
+        minWidth: 170,
+        type: Date,
+        valueFormatter: (params) => formatDate(params.value),
+      },
+    ],
+    [],
+  );
 
   const get_Models = async () => {
     setLoading(true);
-    setError(null);
     try {
       const models = await get_model_table();
       setModels(models);
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain the models table.");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -86,36 +55,12 @@ function SelectModelStep({
     setSelectedModelId(params.row.id);
     setTrainDataset(params.row.dataset_id);
     setRowClicked(true);
-    validateAndUpdateNextButton(predictName, true);
   };
 
-  const isValidPredictName = (name) => {
-    return name.length >= 4 && /^[a-zA-Z0-9_-]+$/.test(name);
-  };
-
-  const validateAndUpdateNextButton = useCallback(
-    (name, rowIsClicked) => {
-      const isValid = isValidPredictName(name);
-      setPredictNameError(!isValid && name.length > 0);
-      setNextEnabled(isValid && (rowIsClicked || rowClicked));
-      return isValid;
-    },
-    [rowClicked, setNextEnabled],
-  );
-
-  const handlePredictNameInput = useCallback(
-    (event) => {
-      const value = event.target.value;
-      setPredictName(value);
-      onPredictNameInput(value);
-      validateAndUpdateNextButton(value, rowClicked);
-    },
-    [rowClicked, onPredictNameInput],
-  );
-
+  // enable Next if both name is valid and a row is selected
   useEffect(() => {
-    setNextEnabled(false);
-  }, []);
+    setNextEnabled(isNameValid && rowClicked);
+  }, [isNameValid, rowClicked, setNextEnabled]);
 
   useEffect(() => {
     get_Models();
@@ -131,19 +76,13 @@ function SelectModelStep({
     >
       <Grid item xs={12}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Provide a prediction name to continue and select a model
+          Provide a prediction name and select a model
         </Typography>
 
-        <TextField
-          id="predict-name-input"
-          label="Enter a unique name"
-          value={predictName}
-          fullWidth
-          onChange={handlePredictNameInput}
-          autoComplete="off"
-          sx={{ mb: 4 }}
-          error={predictNameError}
-          helperText="The prediction name must have at least 4 alphanumeric characters."
+        <PredictionNameInput
+          defaultPredictionName={defaultPredictionName}
+          onValidChange={setIsNameValid}
+          onNameChange={onPredictNameInput}
         />
       </Grid>
 
@@ -178,6 +117,7 @@ SelectModelStep.propTypes = {
   setNextEnabled: PropTypes.func.isRequired,
   onPredictNameInput: PropTypes.func.isRequired,
   setTrainDataset: PropTypes.func.isRequired,
+  defaultPredictionName: PropTypes.string,
 };
 
 export default SelectModelStep;

@@ -24,7 +24,7 @@ from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 class CSVDataloaderSchema(BaseSchema):
     name: schema_field(
-        none_type(string_field()),
+        string_field(),
         "",
         (
             "Custom name to register your dataset. If no name is specified, "

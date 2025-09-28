@@ -7,7 +7,7 @@ export default function ScopeStepExplorer({
   notebook,
   tool,
   setScopeColumns,
-  setStep,
+  nextStep,
 }) {
   const [isSelectionValid, setIsSelectionValid] = useState(false);
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
@@ -54,9 +54,11 @@ export default function ScopeStepExplorer({
         }}
       >
         <FormSchemaButtonGroup
-          onFormSubmit={() => setStep((s) => s + 1)}
+          onFormSubmit={nextStep}
           error={!isSelectionValid}
-          saveButtonText="Next"
+          saveButtonText={
+            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
+          }
         />
       </Box>
     </Box>

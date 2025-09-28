@@ -53,26 +53,28 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
 };
 
 export const enqueueDatasetJob = async (
-  file: File,
-  name: string,
+  dataset_id: number,
+  file: File | null,
   url: string,
   params: object,
+  notebook_id: number | null = null,
 ): Promise<object> => {
   const formData = new FormData();
   const kwargs = {
-    name: name,
+    dataset_id: dataset_id,
+    notebook_id: notebook_id,
     url: url,
     params: params,
   };
 
   formData.append("job_type", "DatasetJob");
   formData.append("kwargs", JSON.stringify(kwargs));
-  formData.append("file", file);
+  if (file) formData.append("file", file);
 
   const response = await api.post<object>("/v1/job/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
-      filename: encodeURIComponent(file.name),
+      filename: file ? encodeURIComponent(file.name) : "",
     },
   });
   return response.data;
