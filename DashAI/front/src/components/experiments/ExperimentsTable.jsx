@@ -80,9 +80,9 @@ function ExperimentsTable({
         headerName: "Dataset",
         minWidth: 200,
         editable: false,
-        valueFormatter: (params) => {
-          const datasetName = datasetMap.get(params.value);
-          return datasetName || `Dataset ID: ${params.value}`;
+        valueGetter: (value) => {
+          const datasetName = datasetMap.get(value);
+          return datasetName || `Dataset ID: ${value}`;
         },
       },
       {
@@ -90,15 +90,15 @@ function ExperimentsTable({
         headerName: "Created",
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
         headerName: "Edited",
-        type: Date,
+        //type: Date,
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",

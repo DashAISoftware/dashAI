@@ -51,7 +51,7 @@ function TrainedModelsTable() {
       minWidth: 170,
       editable: false,
       type: Date,
-      valueFormatter: (params) => formatDate(params.value),
+      valueGetter: (value) => formatDate(value),
     },
     {
       field: "actions",
