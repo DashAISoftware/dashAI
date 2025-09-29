@@ -126,7 +126,7 @@ function SetNameAndExplainerStep({
 
       {/* Tasks Subcomponent */}
       <Grid size={{ xs: 12 }}>
-        <Grid container spacing={1}>
+        <Grid>
           {/* Tasks list and description */}
           {!loading ? (
             <ItemSelectorWithInfo
