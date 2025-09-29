@@ -42,8 +42,8 @@ export default function ExplorerList({
                 bgcolor: exploration.disabled
                   ? "#1a1a1a"
                   : hoveredTool === exploration.type
-                  ? "#444"
-                  : "#333",
+                    ? "#444"
+                    : "#333",
                 color: exploration.disabled ? "#666" : "white",
                 justifyContent: "flex-start",
                 textTransform: "none",
