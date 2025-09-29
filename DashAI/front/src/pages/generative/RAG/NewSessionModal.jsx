@@ -86,6 +86,7 @@ export default function NewSessionModal({
       if(session) {
         const sessionParameters = session.parameters || {};
         const sessionDocuments = sessionParameters.documents || [];
+        const sessionChunkingModel = sessionParameters.chunking_model || {};
         const sessionRetrieverModel = sessionParameters.retriever_model || {};
         const sessionGeneratorModel = sessionParameters.generator_model || {};
         setSessionData({
@@ -96,6 +97,9 @@ export default function NewSessionModal({
           displayName: session.displayName || "",
           parameters: {
             documents: [...sessionDocuments],
+            chunking_model: {
+              ...sessionChunkingModel,
+            },
             retriever_model: {
               ...sessionRetrieverModel, 
             },
@@ -143,6 +147,10 @@ export default function NewSessionModal({
       parameters: {
         ...sessionData.parameters,
         documents: sessionData.parameters.documents || [],
+        chunking_model: sessionData.parameters.chunking || {
+          name: "",
+          parameters: {},
+        },
         retriever_model: sessionData.parameters.retriever_model || {
           name: "",
           parameters: {},
@@ -240,17 +248,6 @@ export default function NewSessionModal({
             }))}
           />
         )}
-        {activeStep === 1 && (
-          <ChunkingConfigurationStep
-            chunkingModel={sessionData.parameters.chunking}
-            setChunkingModel={(model) => setSessionData(prev => ({
-              ...prev,
-              parameters: { ...prev.parameters, chunking: model }
-            }))}
-            setNextEnabled={(isValid) => handleStepValidation(1, isValid)}
-          />
-        )}
-
         {activeStep === 2 && (
           <RetrieverConfigurationStep
             retrieverModel={sessionData.parameters.retriever_model}
@@ -258,9 +255,20 @@ export default function NewSessionModal({
               ...prev,
               parameters: { ...prev.parameters, retriever_model: model }
             }))}
+            setNextEnabled={(isValid) => handleStepValidation(2, isValid)}
+          />
+        )}
+        {activeStep === 1 && (
+          <ChunkingConfigurationStep
+            chunkingModel={sessionData.parameters.chunking_model}
+            setChunkingModel={(model) => setSessionData(prev => ({
+              ...prev,
+              parameters: { ...prev.parameters, chunking_model: model }
+            }))}
             setNextEnabled={(isValid) => handleStepValidation(1, isValid)}
           />
         )}
+
         {activeStep === 3 && (
           <GeneratorConfigurationStep
             generatorModel={sessionData.parameters.generator_model}
@@ -268,7 +276,7 @@ export default function NewSessionModal({
               ...prev,
               parameters: { ...prev.parameters, generator_model: model }
             }))}
-            setNextEnabled={(isValid) => handleStepValidation(2, isValid)}
+            setNextEnabled={(isValid) => handleStepValidation(3, isValid)}
           />
         )}
       </DialogContent>

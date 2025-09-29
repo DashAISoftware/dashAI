@@ -85,7 +85,7 @@ export const useFormSchemaStore = () => {
     }
 
     return formValuesByProperties;
-  }, [JSON.stringify(formValues), properties]);
+  }, [formValues, properties]);
 
   const handleUpdateSchema = (values, onSubmit) => {
     if (!properties.length) {

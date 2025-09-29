@@ -22,8 +22,7 @@ from DashAI.back.models.RAG.prompts import (
 
 from DashAI.back.models.hugging_face import (
     DeepSeekModel,
-    QwenModel,
-    GemmaModel)
+    QwenModel)
 
 retriever_models = {
     "TFIDFRetriever": TFIDFRetriever,
@@ -33,7 +32,6 @@ retriever_models = {
 generation_models = {
     "DeepSeekModel": DeepSeekModel,
     "QwenModel": QwenModel,
-    "GemmaModel": GemmaModel,
 }
 
 class RAGPipelineSchema(BaseSchema):

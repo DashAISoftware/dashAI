@@ -149,7 +149,7 @@ function FormSchemaRenderFields({
     }
 
     return fields;
-  }, [JSON.stringify(formik.values), modelSchema, autoSave]);
+  }, [formik.values, modelSchema, autoSave]);
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }

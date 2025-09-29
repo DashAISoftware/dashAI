@@ -82,17 +82,21 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
   // Handle paradigm change
   const handleRetrievalParadigmChange = (event, newValue) => {
     setSelectedRetrievalParadigm(newValue);
+    console.log("Selected paradigm:", newValue);
     if (newValue === "SparseRetriever") {
       setSelectedRetriever(null);
     }
     else { 
       setRetrieverOptions([newValue]);
-      setSelectedRetriever(newValue); 
+      handleRetrieverSelectionChange(event, newValue);
+      setOpenConfig(true);
+      setNextEnabled(false);
     }
   };
 
   // Handle retriever change
   const handleRetrieverSelectionChange = (event, newValue) => {
+    console.log("Selected retriever:", newValue);
     setSelectedRetriever(newValue);
     setOpenConfig(true);
     setNextEnabled(false);
@@ -100,85 +104,77 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
   };
 
   // Handle config change
-  const handleRetrieverParametersChange = (newParams) => {
+  const handleRetrieverParametersSave = (newParams) => {
     setSelectedRetriever((prev) => ({
       ...prev,
       parameters: newParams,
     }));
     setNextEnabled(true);
+    setOpenConfig(false);
   };
 
   // Layout: two columns if retriever selected, else one column
   return (
-    <Box display="flex" height="100%" width="100%" flexDirection="row" overflow="auto">
-      {/* Left column: paradigm/model selection */}
-      <Box
-        flex={selectedRetriever ? 1 : 'auto'}
-        minWidth={selectedRetriever ? 350 : '100%'}
-        maxWidth={selectedRetriever ? 400 : '100%'}
-        p={2}
-        borderRight={selectedRetriever ? '1px solid #eee' : 'none'}
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-start"
-      >
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          Select retrieval paradigm
+    <Box
+      flex={selectedRetriever ? 1 : 'auto'}
+      minWidth={selectedRetriever ? 350 : '100%'}
+      maxWidth={selectedRetriever ? 400 : '100%'}
+      p={2}
+      borderRight={selectedRetriever ? '1px solid #eee' : 'none'}
+      display="flex"
+      flexDirection="column"
+      justifyContent="flex-start"
+    >
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Select retrieval paradigm
+      </Typography>
+      <Autocomplete
+        disablePortal
+        options={retrievalParadigms}
+        getOptionLabel={(option) => option.name}
+        value={selectedRetrievalParadigm}
+        onChange={handleRetrievalParadigmChange}
+        isOptionEqualToValue={(option, value) => option.name === value?.name}
+        renderInput={(params) => <TextField {...params} label="Retrieval paradigm" />}
+        sx={{ mb: 2 }}
+      />
+      {selectedRetrievalParadigm && selectedRetrievalParadigm.name === "SparseRetriever" && (
+        <>
+        <Typography variant="h5" sx={{ marginY: 2 }}>
+          Select retriever model
         </Typography>
         <Autocomplete
           disablePortal
-          options={retrievalParadigms}
+          options={retrieverOptions}
           getOptionLabel={(option) => option.name}
-          value={selectedRetrievalParadigm}
-          onChange={handleRetrievalParadigmChange}
+          value={selectedRetriever}
+          onChange={handleRetrieverSelectionChange}
           isOptionEqualToValue={(option, value) => option.name === value?.name}
-          renderInput={(params) => <TextField {...params} label="Retrieval paradigm" />}
-          sx={{ mb: 2 }}
-        />
-        {selectedRetrievalParadigm && selectedRetrievalParadigm.name === "SparseRetriever" && (
-          <>
-          <Typography variant="h5" sx={{ marginY: 2 }}>
-            Select retriever model
-          </Typography>
-          <Autocomplete
-            disablePortal
-            options={retrieverOptions}
-            getOptionLabel={(option) => option.name}
-            value={selectedRetriever}
-            onChange={handleRetrieverSelectionChange}
-            isOptionEqualToValue={(option, value) => option.name === value?.name}
-            renderInput={(params) => <TextField {...params} label="Retriever model" />}
-            />
-          </>
-        )}
-        {selectedRetriever && selectedRetriever.schema && !selectedRetriever.schema.properties && (
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            No parameters available for this retriever.
-          </Typography>
-        )}
-      </Box>
-
-      {/* Right column: configuration, only if retriever selected */}
-      {selectedRetriever && openConfig && (
-        <Box flex={2} minWidth={400} p={2} display="flex" flexDirection="column">
-          <FormSchemaDialog
-            modelToConfigure={selectedRetriever.name}
-            open={openConfig}
-            setOpen={setOpenConfig}
-            onFormSubmit={() => {
-              setNextEnabled(true)
-              setOpenConfig(false)
-            }}
-          >
-            <FormSchema
-              model={selectedRetriever.name}
-              initialValues={selectedRetriever.parameters}
-              onFormSubmit={handleRetrieverParametersChange}
-              onCancel={() => setOpenConfig(false)}
-            />
-          </FormSchemaDialog>
-        </Box>
+          renderInput={(params) => <TextField {...params} label="Retriever model" />}
+          />
+        </>
       )}
-    </Box>
-  );
+      {selectedRetriever && selectedRetriever.schema && !selectedRetriever.schema.properties && (
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          No parameters available for this retriever.
+        </Typography>
+      )}
+
+      {selectedRetriever && openConfig && (
+        <FormSchemaDialog
+          modelToConfigure={selectedRetriever.name}
+          open={openConfig}
+          setOpen={setOpenConfig}
+          onFormSubmit={handleRetrieverParametersSave}
+        >
+          <FormSchema
+            model={selectedRetriever.name}
+            initialValues={selectedRetriever.parameters}
+            onFormSubmit={handleRetrieverParametersSave}
+            onCancel={() => setOpenConfig(false)}
+          />
+        </FormSchemaDialog>
+      )}
+  </Box>
+);
 }

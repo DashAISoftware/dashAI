@@ -160,9 +160,9 @@ export const getValidator = (option) => {
     validator,
     option.minimum,
     option.maximum,
-    option.exclusiveMinimum
+    option.exclusiveMinimum && option.default !== undefined
       ? Math.min(option.exclusiveMinimum, option.default)
-      : undefined,
+      : option.exclusiveMinimum,
   );
   validator = applyRequired(validator, option.required);
 

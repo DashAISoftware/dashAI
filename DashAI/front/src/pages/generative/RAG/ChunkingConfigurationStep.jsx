@@ -1,14 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import useSchema from "../../../hooks/useSchema";
 import { getChunkingComponents } from "../../../api/rag";
-import FormSchemaContainer from "../../../components/shared/FormSchemaContainer";
-import FormSchema from "../../../components/shared/FormSchema";
+import FormSchemaEmbedded from "./FormSchemaEmbedded";
 
 export default function ChunkingConfigurationStep({ chunkingModel, setChunkingModel, setNextEnabled }) {
   const [chunkingOptions, setChunkingOptions] = useState([]);
   const [selectedChunking, setSelectedChunking] = useState(null);
   const { defaultValues } = useSchema({ modelName: selectedChunking?.name });
+
+  // Memoize the initial values to prevent unnecessary re-renders
+  const initialValues = useMemo(() => {
+    if (chunkingModel?.parameters && Object.keys(chunkingModel.parameters).length > 0) {
+      return chunkingModel.parameters;
+    }
+    return defaultValues || {};
+  }, [chunkingModel?.parameters, defaultValues]);
 
   useEffect(() => {
     const fetchChunkingModels = async () => {
@@ -22,9 +29,25 @@ export default function ChunkingConfigurationStep({ chunkingModel, setChunkingMo
     fetchChunkingModels();
   }, [chunkingModel?.name]);
 
+  const isNextEnabled = () => {
+    if (!selectedChunking) {
+      return false;
+    }
+    if (!chunkingModel || !chunkingModel.parameters) {
+      
+      return false; // Ensure parameters are required
+    }
+    
+    return Object.keys(chunkingModel.parameters).every(param => {
+      const value = chunkingModel.parameters[param];
+      return value !== undefined && value !== null && value !== "";
+    });
+  };
+
   useEffect(() => {
-    setNextEnabled(!!selectedChunking);
-  }, [selectedChunking, setNextEnabled]);
+    setNextEnabled(isNextEnabled());
+  }, [selectedChunking, chunkingModel, setNextEnabled]);
+
 
   const handleChunkingSelectionChange = (event, newValue) => {
     setSelectedChunking(newValue);
@@ -38,11 +61,14 @@ export default function ChunkingConfigurationStep({ chunkingModel, setChunkingMo
     }
   };
 
-  const handleParametersChange = (params) => {
+  const handleParametersSave = (params) => {
     setChunkingModel({
       name: selectedChunking.name,
       parameters: params,
     });
+    setNextEnabled(isNextEnabled());
+    console.log("Saved:", chunkingModel);
+    console.log("Next enabled:", isNextEnabled());
   };
 
   function getInitialParamsFromSchema(schemaProperties) {
@@ -71,14 +97,12 @@ export default function ChunkingConfigurationStep({ chunkingModel, setChunkingMo
         sx={{ mb: 3 }}
       />
       {selectedChunking && selectedChunking.schema && (
-        <FormSchemaContainer>
-          <FormSchema
+        <FormSchemaEmbedded
             model={selectedChunking.name}
-            initialValues={chunkingModel?.parameters || defaultValues}
-            onFormSubmit={handleParametersChange}
+            initialValues={initialValues}
+            onFormSubmit={handleParametersSave}
             onCancel={() => setSelectedChunking(null)}
           />
-        </FormSchemaContainer>
       )}
     </Box>
   );
