@@ -60,10 +60,6 @@ export const createLocalExplainer = async (
     fit_parameters: fitParameters,
     scope,
   };
-
-  console.log("data explainer");
-  console.log(data);
-
   const response = await api.post<IExplainer>("/v1/explainer/local", data);
   return response.data;
 };
