@@ -13,6 +13,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     select_columns,
     split_dataset,
+    to_dashai_dataset,
 )
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -110,6 +111,7 @@ class ExplainerJob(BaseJob):
         self,
         explainer: BaseLocalExplainer,
         dataset: Tuple[DatasetDict, DatasetDict],
+        splits: Dict[str, Any],
         task: BaseTask,
         config: Dict[str, Any] = lambda di: di["config"],
     ) -> None:
@@ -135,6 +137,33 @@ class ExplainerJob(BaseJob):
             prepared_instance = task.prepare_for_task(
                 loaded_instance, outputs_columns=self.output_columns
             )
+
+            split = self.explainer_db.scope.get("split")
+            if split not in ["train", "test", "val", "all"]:
+                raise JobError(f"{split} is not a valid split")
+
+            if split != "all":
+                prepared_instance = split_dataset(
+                    prepared_instance,
+                    train_indexes=splits["train_indexes"],
+                    test_indexes=splits["test_indexes"],
+                    val_indexes=splits["val_indexes"],
+                )[split]
+
+            prepared_instance = prepared_instance.select(
+                range(
+                    0,
+                    max(
+                        1,
+                        int(
+                            prepared_instance.num_rows
+                            * self.explainer_db.scope.get("percentage")
+                            / 100
+                        ),
+                    ),
+                )
+            )
+
             prepared_instance = DatasetDict({"train": prepared_instance})
             X, _ = select_columns(
                 prepared_instance,
@@ -323,6 +352,7 @@ class ExplainerJob(BaseJob):
                 self._generate_local_explanation(
                     explainer=explainer,
                     dataset=(data_x, data_y),
+                    splits=splits,
                     task=task,
                 )
             else:

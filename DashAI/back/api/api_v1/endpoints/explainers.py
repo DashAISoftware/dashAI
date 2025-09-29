@@ -520,6 +520,7 @@ async def upload_local_explainer(
                 dataset_id=params.dataset_id,
                 parameters=params.parameters,
                 fit_parameters=params.fit_parameters,
+                scope=params.scope,
             )
 
             db.add(explainer)

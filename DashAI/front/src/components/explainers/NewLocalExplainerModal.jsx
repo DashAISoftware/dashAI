@@ -63,6 +63,7 @@ export default function NewLocalExplainerModal({
     name: "",
     run_id: runId,
     explainer_name: null,
+    scope: { split: "test", percentage: 20 },
     dataset_id: null,
     parameters: null,
     fit_parameters: null,
@@ -120,6 +121,7 @@ export default function NewLocalExplainerModal({
         newLocalExpl.dataset_id,
         newLocalExpl.parameters,
         newLocalExpl.fit_parameters,
+        newLocalExpl.scope,
       );
       const explainerId = response.id;
       await enqueueLocalExplainerJob(explainerId);

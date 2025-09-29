@@ -16,6 +16,8 @@ import { Link as RouterLink } from "react-router-dom";
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 import { validateDataset as validateDatasetRequest } from "../../api/explainer";
 import { formatDate } from "../../utils";
+import { SplitSelector } from "./SplitSelector";
+import NoteBox from "../notebooks/NoteBox";
 
 const columns = [
   {
@@ -120,13 +122,16 @@ export default function SelectDatasetStep({
   }, [selectedDatasetId]);
 
   useEffect(() => {
-    if (isValidDataset) {
-      setNewExpl({ ...newExpl, dataset_id: selectedDatasetId });
+    if (isValidDataset && selectedDatasetId) {
+      setNewExpl((prevExpl) => ({
+        ...prevExpl,
+        dataset_id: selectedDatasetId,
+      }));
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
     }
-  }, [isValidDataset]);
+  }, [isValidDataset, selectedDatasetId]);
 
   return (
     <React.Fragment>
@@ -180,6 +185,21 @@ export default function SelectDatasetStep({
           hideFooterSelectedRowCount
         />
       </Paper>
+
+      {selectedDatasetId && isValidDataset && (
+        <>
+          <SplitSelector
+            onSelectionChange={(scope) => {
+              setNewExpl((prevExpl) => ({ ...prevExpl, scope }));
+            }}
+          />
+          <NoteBox
+            message={
+              "The dataset selected here will be used to compute the explanations. If you chose the same dataset that was used to train the model, you may want to use a sample of your test set instead. Keep in mind that some explainers can take a long time to generate explanations, depending on the number of instances selected."
+            }
+          />
+        </>
+      )}
     </React.Fragment>
   );
 }
