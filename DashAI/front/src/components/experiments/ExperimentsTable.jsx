@@ -95,7 +95,6 @@ function ExperimentsTable({
       {
         field: "last_modified",
         headerName: "Edited",
-        //type: Date,
         minWidth: 140,
         editable: false,
         valueGetter: (value) => formatDate(value),
