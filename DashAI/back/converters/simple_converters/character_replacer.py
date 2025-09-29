@@ -35,6 +35,7 @@ class CharacterReplacer(BaseConverter):
         "Replaces or removes specified characters/substrings "
         "in selected string columns."
     )
+    DISPLAY_NAME = "Character Replacer"
 
     def __init__(self, char_to_replace: str, replacement_char: str):
         super().__init__()

@@ -45,6 +45,7 @@ class RBFSampler(SklearnWrapper, RBFSamplerOperation):
         "Approximates the feature map of an RBF kernel by Monte Carlo "
         "approximation of its Fourier transform."
     )
+    DISPLAY_NAME = "RBF Sampler"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)
