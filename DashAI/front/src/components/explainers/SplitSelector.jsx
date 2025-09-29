@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 
 export function SplitSelector({
+  totalRows,
+  splits,
   onSelectionChange,
   initialSplit,
   initialPercentage,
@@ -114,7 +116,13 @@ export function SplitSelector({
       <Box mt={1}>
         <Typography variant="caption" color="text.secondary">
           Selected split: <strong>{selectedSplit}</strong> | Percentage:{" "}
-          {percentage}%
+          {percentage}% | Rows selected:{" "}
+          {percentage != 0
+            ? Math.round(
+                (percentage / 100) * (totalRows * splits[selectedSplit]),
+              )
+            : 1}{" "}
+          / {Math.round(totalRows * splits[selectedSplit])}
         </Typography>
       </Box>
     </Box>
