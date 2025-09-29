@@ -13,7 +13,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     select_columns,
     split_dataset,
-    to_dashai_dataset,
 )
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -152,7 +151,6 @@ class ExplainerJob(BaseJob):
 
             prepared_instance = prepared_instance.select(
                 range(
-                    0,
                     max(
                         1,
                         int(
