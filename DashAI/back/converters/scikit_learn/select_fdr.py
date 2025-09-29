@@ -20,3 +20,4 @@ class SelectFdr(SklearnWrapper, SelectFdrOperation):
     DESCRIPTION = "Filter: Select features according to a false discovery rate test."
     SUPERVISED = True
     metadata = {}
+    CATEGORY = "Feature Selection"

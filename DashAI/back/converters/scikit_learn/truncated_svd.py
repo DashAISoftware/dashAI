@@ -69,6 +69,7 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
     )
     SHORT_DESCRIPTION = "Dimensionality reduction using truncated SVD."
     metadata = {}
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

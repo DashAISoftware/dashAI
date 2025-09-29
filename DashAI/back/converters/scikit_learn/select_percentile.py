@@ -20,3 +20,4 @@ class SelectPercentile(SklearnWrapper, SelectPercentileOperation):
     DESCRIPTION = "Select features according to a percentile of the highest scores."
     SUPERVISED = True
     metadata = {}
+    CATEGORY = "Feature Selection"

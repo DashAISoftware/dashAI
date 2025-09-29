@@ -73,6 +73,7 @@ class Nystroem(SklearnWrapper, NystroemOperation):
         "Approximates the feature map of an RBF kernel by Monte Carlo "
         "approximation of its Fourier transform."
     )
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.kernel_params = kwargs.pop("kernel_params", None)

@@ -102,6 +102,7 @@ class PCA(SklearnWrapper, PCAOPERATION):
     DESCRIPTION = "Principal component analysis (PCA)."
     SHORT_DESCRIPTION = "Dimensionality reduction using PCA."
     metadata = {}
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

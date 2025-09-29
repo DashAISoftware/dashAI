@@ -49,3 +49,4 @@ class PolynomialFeatures(SklearnWrapper, PolynomialFeaturesOperation):
 
     SCHEMA = PolynomialFeaturesSchema
     DESCRIPTION = "Generate polynomial and interaction features."
+    CATEGORY = "Polynomial & Kernel Methods"

@@ -15,9 +15,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
     """Abstract class to define generic rules for sklearn transformers"""
 
     def __init__(self, **kwargs):
-        # Initialize sklearn operation with provided parameters
-        super(SklearnWrapper, self).__init__()  # Initialize BaseConverter
-        super(BaseConverter, self).__init__(**kwargs)  # Initialize sklearn operation
+        super().__init__(**kwargs)
 
         if hasattr(
             self, "set_output"
@@ -44,7 +42,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             raise ValueError("This transformer requires y for fitting")
 
         if requires_y:
-            super(BaseConverter, self).fit(x_pandas, y_pandas)
+            super().fit(x_pandas, y_pandas)
         else:
             super(BaseConverter, self).fit(x_pandas)
 

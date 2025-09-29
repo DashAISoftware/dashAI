@@ -31,7 +31,7 @@ class BaseConverter(ConfigObject, ABC):
     SHORT_DESCRIPTION: Final[str] = ""
     SUPERVISED: bool = False
     SCHEMA: BaseConverterSchema
-    metadata: Dict[str, Any] = {}
+    CATEGORY: Final[str] = "Other"
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -43,16 +43,12 @@ class BaseConverter(ConfigObject, ABC):
         Dict[str, Any]
             Dictionary with the metadata
         """
-        metadata = cls.metadata
-        metadata["display_name"] = (
-            cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
-        )
-        metadata["short_description"] = (
-            cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
-        )
-        metadata["supervised"] = cls.SUPERVISED
-
-        return metadata
+        meta: Dict[str, Any] = dict(getattr(cls, "METADATA_DEFAULTS", {}) or {})
+        meta["display_name"] = cls.DISPLAY_NAME or cls.__name__
+        meta["short_description"] = cls.SHORT_DESCRIPTION or ""
+        meta["supervised"] = cls.SUPERVISED
+        meta["category"] = cls.CATEGORY
+        return meta
 
     def changes_row_count(self) -> bool:
         """

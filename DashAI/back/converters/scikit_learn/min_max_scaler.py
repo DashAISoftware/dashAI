@@ -34,6 +34,7 @@ class MinMaxScaler(SklearnWrapper, MinMaxScalerOperation):
 
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = "Transform features by scaling each feature to a given range."
+    CATEGORY = "Scaling & Normalization"
 
     def __init__(self, **kwargs):
         self.min_range = kwargs.pop("min_range", 0)

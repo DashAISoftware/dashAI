@@ -34,3 +34,4 @@ class StandardScaler(SklearnWrapper, StandardScalerOperation):
     DESCRIPTION = (
         "Standardize features by removing the mean and scaling to unit variance."
     )
+    CATEGORY = "Scaling & Normalization"

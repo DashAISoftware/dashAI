@@ -90,6 +90,7 @@ class FastICA(SklearnWrapper, FastICAOperation):
 
     SCHEMA = FastICASchema
     DESCRIPTION = "FastICA: a fast algorithm for Independent Component Analysis."
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.fun_args = kwargs.pop("fun_args", None)

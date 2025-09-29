@@ -36,3 +36,4 @@ class GenericUnivariateSelect(SklearnWrapper, GenericUnivariateSelectOperation):
     DESCRIPTION = "Univariate feature selector with configurable strategy."
     SUPERVISED = True
     metadata = {}
+    CATEGORY = "Feature Selection"

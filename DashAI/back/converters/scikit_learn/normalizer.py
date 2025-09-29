@@ -24,3 +24,4 @@ class Normalizer(SklearnWrapper, NormalizerOperation):
 
     SCHEMA = NormalizerSchema
     DESCRIPTION = "Normalize samples individually to unit norm."
+    CATEGORY = "Scaling & Normalization"

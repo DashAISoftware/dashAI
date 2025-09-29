@@ -39,6 +39,7 @@ class MissingIndicatorSchema(BaseSchema):
 class MissingIndicator(SklearnWrapper, MissingIndicatorOperation):
     """Scikit-learn's MissingIndicator wrapper for DashAI."""
 
+    CATEGORY = "Basic Preprocessing"
     SCHEMA = MissingIndicatorSchema
     DESCRIPTION = "Binary indicators for missing values."
 

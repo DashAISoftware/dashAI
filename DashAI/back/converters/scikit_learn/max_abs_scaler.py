@@ -19,3 +19,4 @@ class MaxAbsScaler(SklearnWrapper, MaxAbsScalerOperation):
 
     SCHEMA = MaxAbsScalerSchema
     DESCRIPTION = "Scale each feature by its maximum absolute value."
+    CATEGORY = "Scaling & Normalization"

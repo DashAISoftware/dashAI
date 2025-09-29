@@ -189,19 +189,23 @@ class ComponentRegistry:
                 "object."
             )
 
+        _metadata = (
+            new_component.get_metadata()
+            if hasattr(new_component, "get_metadata")
+            else None
+        )
+
         new_register_component = {
             "name": new_component.__name__,
             "type": base_type,
             "class": new_component,
             "configurable_object": is_configurable_object,
             "schema": new_component.get_schema() if is_configurable_object else None,
-            "metadata": (
-                new_component.get_metadata()
-                if hasattr(new_component, "metadata")
-                else None
-            ),
+            "metadata": _metadata,
             "description": getattr(new_component, "DESCRIPTION", None),
-            "display_name": getattr(new_component, "DISPLAY_NAME", None),
+            "display_name": (_metadata or {}).get(
+                "display_name", getattr(new_component, "DISPLAY_NAME", None)
+            ),
         }
 
         if base_type not in self._registry:

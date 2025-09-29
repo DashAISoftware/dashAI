@@ -2,10 +2,7 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.scikit_learn.sklearn_like_converter import (
     SklearnLikeConverter,
 )
-from DashAI.back.core.schema_fields import (
-    int_field,
-    schema_field,
-)
+from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 
 
@@ -25,6 +22,7 @@ class ConverterChain(BaseConverter, SklearnLikeConverter):
         "data, passing the output of one converter to the next, with "
         "its scope defined by the first converter (the chain itself)."
     )
+    CATEGORY = "Advanced"
 
     SCHEMA = ConverterChainSchema
 

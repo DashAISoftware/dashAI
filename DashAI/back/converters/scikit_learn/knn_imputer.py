@@ -61,6 +61,7 @@ class KNNImputer(SklearnWrapper, KNNImputerOperation):
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
+    CATEGORY = "Basic Preprocessing"
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)

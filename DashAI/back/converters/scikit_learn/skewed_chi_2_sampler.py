@@ -48,6 +48,7 @@ class SkewedChi2Sampler(SklearnWrapper, SkewedChi2SamplerOperation):
         "Approximates the feature map of a chi-squared kernel by Monte "
         "Carlo approximation of its Fourier transform."
     )
+    CATEGORY = "Polynomial & Kernel Methods"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)
