@@ -195,6 +195,7 @@ def test_create_local_explainer(client: TestClient, dataset_id: int, run_id_1: i
                 "parameters": {
                     "link": "identity",
                 },
+                "scope": {"split": "test", "percentage": 20},
                 "fit_parameters": {
                     "sample_background_data": True,
                     "n_background_samples": 50,
@@ -296,6 +297,7 @@ def test_get_local_explainers_by_run_id(
                 "parameters": {
                     "link": "identity",
                 },
+                "scope": {"split": "test", "percentage": 20},
                 "fit_parameters": {
                     "sample_background_data": True,
                     "n_background_samples": 50,
@@ -377,6 +379,7 @@ def test_get_local_explanation(client: TestClient, dataset_id: int, run_id_1: in
                 "parameters": {
                     "link": "identity",
                 },
+                "scope": {"split": "test", "percentage": 20},
                 "fit_parameters": {
                     "sample_background_data": True,
                     "n_background_samples": 50,
@@ -432,6 +435,7 @@ def test_delete_local_explainer(client: TestClient, dataset_id: int, run_id_1: i
             "parameters": {
                 "link": "identity",
             },
+            "scope": {"split": "test", "percentage": 20},
             "fit_parameters": {
                 "sample_background_data": False,
                 "categorical_features": True,
