@@ -3,6 +3,7 @@ import os
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -17,6 +18,12 @@ from DashAI.back.tasks import BaseTask
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, dataset, output_columns):
         return dataset
@@ -288,4 +295,5 @@ def test_job_with_wrong_run(client: TestClient):
         "/api/v1/job/",
         data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": 31415})},
     )
+    assert response.status_code == 500, response.text
     assert response.status_code == 500, response.text
