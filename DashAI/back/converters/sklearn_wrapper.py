@@ -44,7 +44,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         if requires_y:
             super().fit(x_pandas, y_pandas)
         else:
-            super(BaseConverter, self).fit(x_pandas)
+            super().fit(x_pandas)
 
         return self
 
@@ -54,7 +54,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         """Generic transform method for sklearn transformers"""
 
         x_pandas = x.to_pandas()
-        x_new = super(BaseConverter, self).transform(x_pandas)
+        x_new = super().transform(x_pandas)
 
         if isinstance(x_new, np.ndarray):
             columns = x_pandas.columns if hasattr(x_pandas, "columns") else None

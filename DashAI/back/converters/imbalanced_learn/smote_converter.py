@@ -36,4 +36,4 @@ class SMOTEConverter(ImbalancedLearnWrapper, SMOTE):
     CATEGORY = "Resampling & Class Balancing"
 
     def __init__(self, **kwargs):
-        super(SMOTEConverter, self).__init__(**kwargs)
+        super().__init__(**kwargs)

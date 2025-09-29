@@ -36,4 +36,4 @@ class SMOTEENNConverter(ImbalancedLearnWrapper, SMOTEENN):
     CATEGORY = "Resampling & Class Balancing"
 
     def __init__(self, **kwargs):
-        super(SMOTEENNConverter, self).__init__(**kwargs)
+        super().__init__(**kwargs)

@@ -33,4 +33,4 @@ class RandomUnderSamplerConverter(ImbalancedLearnWrapper, RandomUnderSampler):
     CATEGORY = "Resampling & Class Balancing"
 
     def __init___(self, **kwargs):
-        super(RandomUnderSamplerConverter, self).__init__(**kwargs)
+        super().__init__(**kwargs)

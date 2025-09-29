@@ -18,9 +18,7 @@ import FormConverterSection from "./FormConverterSection";
  */
 function groupByCategory(converters) {
   const groups = converters.reduce((acc, c) => {
-    const cat =
-      c?.metadata?.category ||
-      "Other";
+    const cat = c?.metadata?.category || "Other";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(c);
     return acc;
@@ -45,7 +43,10 @@ function sortCategories(catNames) {
   const set = new Set(PREFERRED_ORDER);
   const preferred = catNames.filter((c) => set.has(c));
   const remaining = catNames.filter((c) => !set.has(c)).sort();
-  return [...PREFERRED_ORDER.filter((c) => preferred.includes(c)), ...remaining];
+  return [
+    ...PREFERRED_ORDER.filter((c) => preferred.includes(c)),
+    ...remaining,
+  ];
 }
 
 export default function ConverterList({
@@ -114,24 +115,23 @@ export default function ConverterList({
                 sx={{ bgcolor: "#2b2b2b", color: "text.secondary" }}
               />
             </AccordionSummary>
-            <AccordionDetails sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+            >
               {list
                 .slice()
-                .sort((a, b) =>
-                  (a.name).localeCompare(
-                    b.name,
-                  ),
-                )
+                .sort((a, b) => a.name.localeCompare(b.name))
                 .map((converter) => {
-                  const displayName =
-                    converter.name;
+                  const displayName = converter.name;
                   return (
                     <Button
                       key={converter.name}
                       variant="contained"
                       sx={{
                         bgcolor:
-                          hoveredTool?.name === converter.name ? "#444" : "#333",
+                          hoveredTool?.name === converter.name
+                            ? "#444"
+                            : "#333",
                         color: "white",
                         justifyContent: "flex-start",
                         textTransform: "none",
