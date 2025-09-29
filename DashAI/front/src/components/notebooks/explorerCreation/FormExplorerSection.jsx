@@ -65,14 +65,14 @@ export default function FormExplorerSection({
         startJobPolling(
           jobId,
           (result) => {
-            enqueueSnackbar(`Explorer ${tool.name} procesado correctamente`, {
+            enqueueSnackbar(`Explorer ${tool.name} processed successfully`, {
               variant: "success",
             });
           },
           (result) => {
             enqueueSnackbar(
-              `Error procesando explorer: ${
-                result.error || "Error desconocido"
+              `Error processing explorer: ${
+                result.error || "Unknown error"
               }`,
               { variant: "error" },
             );

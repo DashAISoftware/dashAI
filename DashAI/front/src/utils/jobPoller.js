@@ -67,7 +67,6 @@ async function pollJobs() {
       state.jobWatchers.size,
     );
 
-    // Si no hay suscriptores ni watchers, verificar si podemos detener el polling
     if (state.subscribers.size === 0 && state.jobWatchers.size === 0) {
       const isEmpty = await isQueueEmpty();
       console.log("[JobPoller] Queue empty?", isEmpty);
@@ -80,12 +79,10 @@ async function pollJobs() {
       }
     }
 
-    // Obtener cambios en los jobs desde el último cursor
     const changeData = await getJobChanges(state.lastCursor);
     state.lastCursor = changeData.cursor;
     state.lastFetchTime = new Date();
 
-    // Usar all_jobs que ya viene en la respuesta
     const jobsToProcess = changeData.all_jobs || [];
 
     console.log(
@@ -95,11 +92,9 @@ async function pollJobs() {
       changeData.recently_completed,
     );
 
-    // Verificar si hay jobs activos
     const activeJobsExist = hasActiveJobs(jobsToProcess);
     console.log("[JobPoller] Active jobs exist?", activeJobsExist);
 
-    // Notificar a los suscriptores globales
     for (const subscriber of state.subscribers) {
       try {
         subscriber(jobsToProcess);
@@ -108,9 +103,7 @@ async function pollJobs() {
       }
     }
 
-    // Verificar jobs específicos que se están siguiendo
     for (const [jobId, watcher] of state.jobWatchers.entries()) {
-      // Buscar el job en la lista
       console.log(`Looking for job with ID: ${jobId}`);
       const job = jobsToProcess.find((j) => j.id === jobId);
       console.log(`Found job? ${!!job}, status: ${job?.status}`);
@@ -126,7 +119,6 @@ async function pollJobs() {
       }
     }
 
-    // Verificar si hay completados recientemente
     if (changeData.recently_completed) {
       state.lastCompletionTime = Date.now();
       console.log(
@@ -134,13 +126,11 @@ async function pollJobs() {
       );
     }
 
-    // Calcular tiempo desde la última completación
-    const MIN_POLLING_AFTER_COMPLETION = 5000; // 5 segundos
+    const MIN_POLLING_AFTER_COMPLETION = 5000; // 5 seconds
     const timePassedSinceCompletion = state.lastCompletionTime
       ? Date.now() - state.lastCompletionTime
       : Infinity;
 
-    // Decidir si detener el polling
     if (
       !activeJobsExist &&
       state.jobWatchers.size === 0 &&

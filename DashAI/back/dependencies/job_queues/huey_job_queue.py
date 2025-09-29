@@ -419,7 +419,6 @@ class HueyJobQueue(BaseJobQueue):
                         log.exception(f"Error setting job status to error: {e}")
                     deleted_from_any = True
 
-                # Siempre eliminar del historial
                 cur.execute("DELETE FROM task_copy WHERE id = ?", (job_id,))
                 if cur.rowcount > 0:
                     deleted_from_any = True
