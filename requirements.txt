@@ -37,5 +37,3 @@ opencv-python
 protobuf
 imblearn
 huey
-numba==0.58.1
-llvmlite==0.41.1
