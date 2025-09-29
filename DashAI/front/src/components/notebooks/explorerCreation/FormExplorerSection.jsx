@@ -71,9 +71,7 @@ export default function FormExplorerSection({
           },
           (result) => {
             enqueueSnackbar(
-              `Error processing explorer: ${
-                result.error || "Unknown error"
-              }`,
+              `Error processing explorer: ${result.error || "Unknown error"}`,
               { variant: "error" },
             );
           },
