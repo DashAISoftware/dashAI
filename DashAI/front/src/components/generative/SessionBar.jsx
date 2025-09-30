@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
-import NewSessionButton from "./NewSessionButton";
 import SessionBarHeader from "./SessionBarHeader";
+import NewItemButton from "../threeSectionLayout/NewItemButton";
 
 export default function SessionBar({
   sessions,
@@ -102,10 +102,7 @@ export default function SessionBar({
 
         {/* Create new session button */}
         {selectedSessionId ? (
-          <NewSessionButton
-            onClick={handleNewSessionButton}
-            tooltipText="Create New Session"
-          />
+          <NewItemButton onClick={handleNewSessionButton} title="New Session" />
         ) : (
           <Box px={2} py={1}>
             <Typography variant="body1" color="textSecondary">
