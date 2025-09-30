@@ -51,7 +51,7 @@ export default function RAGSessionsTable({
       field: "",
       headerName: "Documents",
       flex: 0.4,
-      valueGetter: (params) => params.row.parameters.documents.length,
+      valueGetter: (params) => params.row.parameters.documents?.length,
     },
     {
       field: "actions",
