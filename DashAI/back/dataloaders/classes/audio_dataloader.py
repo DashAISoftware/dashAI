@@ -22,7 +22,7 @@ class AudioDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-        sample: bool = False,
+        n_sample: int | None = False,
     ) -> DashAIDataset:
         """Load and audio dataset into a DatasetDict.
 
@@ -36,8 +36,8 @@ class AudioDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - `separator` (str): The character that delimits the CSV data.
-        sample : bool
-            Flag to just load first 10 rows of the dataset.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -47,10 +47,10 @@ class AudioDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "dir":
             dataset = load_dataset(
-                "audiofolder", data_dir=prepared_path[0], streaming=sample
+                "audiofolder", data_dir=prepared_path[0], streaming=bool(n_sample)
             )
-            if sample:
-                dataset = Dataset.from_list(list(dataset.take(10)))
+            if n_sample:
+                dataset = Dataset.from_list(list(dataset.take(n_sample)))
 
             dataset.cast_column(
                 "audio",

@@ -73,7 +73,7 @@ class JSONDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-        sample: bool = False,
+        n_sample: int | None = False,
     ) -> DashAIDataset:
         """Load the uploaded JSON dataset into a DatasetDict.
 
@@ -87,8 +87,8 @@ class JSONDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - data_key (str): The key of the json where the data is contained.
-        sample : bool
-            Flag to just load first 10 rows of the dataset.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -101,13 +101,16 @@ class JSONDataLoader(BaseDataLoader):
 
         if prepared_path[1] == "file":
             dataset = load_dataset(
-                "json", data_files=prepared_path[0], field=field, streaming=sample
+                "json",
+                data_files=prepared_path[0],
+                field=field,
+                streaming=bool(n_sample),
             )
         else:
             dataset = load_dataset(
-                "json", data_dir=prepared_path[0], field=field, streaming=sample
+                "json", data_dir=prepared_path[0], field=field, streaming=bool(n_sample)
             )
             shutil.rmtree(prepared_path[0])
-        if sample:
-            dataset = Dataset.from_list(list(dataset.take(10)))
+        if n_sample:
+            dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)

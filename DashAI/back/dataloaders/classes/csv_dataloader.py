@@ -187,7 +187,7 @@ class CSVDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-        sample: bool = False,
+        n_sample: int | None = False,
     ) -> DashAIDataset:
         """Load the uploaded CSV files into a DatasetDict.
 
@@ -201,8 +201,8 @@ class CSVDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - `separator` (str): The character that delimits the CSV data.
-        sample : bool
-            Flag to just load first 10 rows of the dataset.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -215,13 +215,19 @@ class CSVDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
             dataset = load_dataset(
-                "csv", data_files=prepared_path[0], **clean_params, streaming=sample
+                "csv",
+                data_files=prepared_path[0],
+                **clean_params,
+                streaming=bool(n_sample),
             )
         else:
             dataset = load_dataset(
-                "csv", data_dir=prepared_path[0], **clean_params, streaming=sample
+                "csv",
+                data_dir=prepared_path[0],
+                **clean_params,
+                streaming=bool(n_sample),
             )
             shutil.rmtree(prepared_path[0])
-        if sample:
-            dataset = Dataset.from_list(list(dataset.take(10)))
+        if n_sample:
+            dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)
