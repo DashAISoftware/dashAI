@@ -68,7 +68,6 @@ from DashAI.back.job import (
     ModelJob,
     PipelineJob,
     PredictJob,
-    GenerativeJob
 )
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
@@ -93,26 +92,23 @@ from DashAI.back.models import (
     StableDiffusionV3Model,
     StableDiffusionXLV1ControlNet,
 )
-
 from DashAI.back.models.RAG import (
-    # Chunking Models
-    CharacterChunkModel,
-    TokenChunkModel,
-    # Encodings
-    DenseEmbedding,
-    FastTextEmbedding,
-    HuggingFaceEmbedding,
     # Prompts
     AugmentationPrompt,
+    # Chunking Models
+    CharacterChunkModel,
     ContextMergePrompt,
     # Retrievers
     DenseRetriever,
+    # Encodings
+    # DenseEmbedding,
+    FastTextEmbedding,
+    HuggingFaceEmbedding,
     SparseRetriever,
     TFIDFRetriever,
     TFIDFVectorizerModel,
+    TokenChunkModel,
 )
-
-
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.pipeline import (
     DataExploration,
@@ -125,13 +121,13 @@ from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
     ImageClassificationTask,
+    RAGTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
     TextToImageGenerationTask,
     TextToTextGenerationTask,
     TranslationTask,
-    RAGTask
 )
 
 logging.basicConfig(level=logging.DEBUG)
@@ -274,7 +270,6 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
-
         # RAG
         CharacterChunkModel,
         TokenChunkModel,
@@ -282,7 +277,6 @@ def get_initial_components():
         CharacterChunkModel,
         TokenChunkModel,
         # Encodings
-        DenseEmbedding,
         FastTextEmbedding,
         HuggingFaceEmbedding,
         # Prompts
@@ -293,7 +287,6 @@ def get_initial_components():
         SparseRetriever,
         TFIDFRetriever,
         TFIDFVectorizerModel,
-
     ]
 
     # Obtener plugins instalados
