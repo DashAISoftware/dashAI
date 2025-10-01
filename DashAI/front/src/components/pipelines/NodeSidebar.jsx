@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { getNodeHelp } from ".";
+import { getNodeHelp } from "./nodeHelp";
 
 function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
   return (

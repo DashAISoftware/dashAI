@@ -1,6 +1,6 @@
 import { DialogContentText, Paper, Stack } from "@mui/material";
 import PropTypes from "prop-types";
-import React, { useState } from "react";
+import { useState } from "react";
 import FormSchema from "../shared/FormSchema";
 import FormSchemaLayout from "../shared/FormSchemaLayout";
 /**
@@ -24,7 +24,7 @@ function DataloaderConfiguration({
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 4 }}>
+    <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
       <Stack spacing={3}>
         {/* Form title */}
 

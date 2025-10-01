@@ -2,19 +2,20 @@ import logging
 import os
 from pathlib import Path
 
-import llama_cpp
 from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 
+try:
+    import llama_cpp
+except ImportError:
+    llama_cpp = None
+
 
 def is_gpu_available_for_llama_cpp() -> bool:
-    """
-    Utility method to check if GPU offloading is supported for Llama models.
+    if llama_cpp is None:
+        return False
 
-    Returns:
-        bool: True if GPU offloading is supported, False otherwise or if fails.
-    """
     try:
         if Version(llama_cpp.__version__) > Version("0.3.0"):
             return __is_gpu_available_for_llama_cpp_v03()
@@ -23,7 +24,7 @@ def is_gpu_available_for_llama_cpp() -> bool:
 
     except Exception as e:
         logger.warning(
-            "Error checking GPU availability for llama_cpp. Will use CPU only. \n"
+            "Error checking GPU availability for llama_cpp. Will use CPU only.\n"
             f"Details: {e}"
         )
         return False

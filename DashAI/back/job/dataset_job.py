@@ -3,16 +3,17 @@ import json
 import logging
 import os
 import shutil
+import uuid
 from typing import Any, Dict
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dataloaders.classes.dashai_dataset import save_dataset
-from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
+from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -37,8 +38,23 @@ class DatasetJob(BaseJob):
     """
 
     def set_status_as_delivered(self) -> None:
-        """Set the job status as delivered in the database."""
-        log.debug("DatasetJob marked as delivered")
+        """Set the status of the dataset as delivered."""
+        dataset_id: int = self.kwargs["dataset_id"]
+        db: Session = self.kwargs["db"]
+
+        dataset: Dataset = db.get(Dataset, dataset_id)
+
+        if dataset is None:
+            raise JobError(f"Dataset with id {dataset_id} not found.")
+
+        try:
+            dataset.set_status_as_delivered()
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise JobError(
+                "Error while setting the status of the dataset as delivered."
+            ) from e
 
     @inject
     async def run(
@@ -49,15 +65,25 @@ class DatasetJob(BaseJob):
     ) -> None:
         log.debug("Starting dataset creation process.")
 
-        try:
-            params = self.kwargs.get("params", {})
-            file_path = self.kwargs.get("file_path")
-            temp_dir = self.kwargs.get("temp_dir")
-            url = self.kwargs.get("url", "")
+        dataset_id = self.kwargs.get("dataset_id")
+        notebook_id = self.kwargs.get("notebook_id", None)
+        params = self.kwargs.get("params", {})
+        file_path = self.kwargs.get("file_path")
+        temp_dir = self.kwargs.get("temp_dir")
+        url = self.kwargs.get("url", "")
 
-            parsed_params = parse_params(DatasetParams, json.dumps(params))
-            dataloader = component_registry[parsed_params.dataloader]["class"]()
-            folder_path = config["DATASETS_PATH"] / parsed_params.name
+        try:
+            with session_factory() as db:
+                dataset = db.get(Dataset, dataset_id)
+                if not dataset:
+                    raise JobError(f"Dataset with ID {dataset_id} not found.")
+
+                dataset.set_status_as_started()
+                db.commit()
+                db.refresh(dataset)
+
+            random_name = str(uuid.uuid4())
+            folder_path = config["DATASETS_PATH"] / random_name
 
             try:
                 log.debug("Trying to create a new dataset path: %s", folder_path)
@@ -65,16 +91,40 @@ class DatasetJob(BaseJob):
             except FileExistsError as e:
                 log.exception(e)
                 raise JobError(
-                    f"A dataset with the name {parsed_params.name} already exists."
+                    f"A dataset with the name {random_name} already exists."
                 ) from e
 
             try:
-                log.debug("Storing dataset in %s", folder_path)
-                new_dataset = dataloader.load_data(
-                    filepath_or_buffer=str(file_path) if file_path is not None else url,
-                    temp_path=str(temp_dir),
-                    params=parsed_params.model_dump(),
-                )
+                if notebook_id is not None:
+                    log.debug(f"Copying dataset from notebook id {notebook_id}.")
+                    with session_factory() as db:
+                        notebook_dataset = (
+                            db.query(Notebook)
+                            .filter(Notebook.id == notebook_id)
+                            .first()
+                        )
+                        if not notebook_dataset:
+                            msg = (
+                                "Notebook with ID "
+                                f"{notebook_id}"
+                                " has no associated dataset."
+                            )
+                            raise JobError(msg)
+                        new_dataset = load_dataset(
+                            os.path.join(notebook_dataset.file_path, "dataset")
+                        )
+
+                else:
+                    parsed_params = parse_params(DatasetParams, json.dumps(params))
+                    dataloader = component_registry[parsed_params.dataloader]["class"]()
+                    log.debug("Storing dataset in %s", folder_path)
+                    new_dataset = dataloader.load_data(
+                        filepath_or_buffer=(
+                            str(file_path) if file_path is not None else url
+                        ),
+                        temp_path=str(temp_dir),
+                        params=parsed_params.model_dump(),
+                    )
                 gc.collect()
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))
@@ -89,13 +139,11 @@ class DatasetJob(BaseJob):
                 log.debug("Storing dataset metadata in database.")
                 try:
                     folder_path = os.path.realpath(folder_path)
-                    new_dataset = Dataset(
-                        name=parsed_params.name,
-                        file_path=folder_path,
-                    )
-                    db.add(new_dataset)
+                    dataset = db.get(Dataset, dataset_id)
+                    dataset.file_path = folder_path
+                    dataset.set_status_as_finished()
                     db.commit()
-                    db.refresh(new_dataset)
+                    db.refresh(dataset)
 
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
@@ -103,6 +151,16 @@ class DatasetJob(BaseJob):
                     raise JobError("Internal database error") from e
 
             log.debug("Dataset creation successfully finished.")
+
+        except JobError as e:
+            log.error(f"Dataset creation failed: {e}")
+            with session_factory() as db:
+                dataset = db.get(Dataset, dataset_id)
+                if dataset:
+                    dataset.set_status_as_error()
+                    db.commit()
+                    db.refresh(dataset)
+            raise e
 
         finally:
             gc.collect()

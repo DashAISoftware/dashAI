@@ -12,10 +12,10 @@ function ResultsGraphsPlot({ selectedChart, chartData }) {
             selectedChart === "radar"
               ? chartData.radarValues
               : selectedChart === "bar"
-              ? chartData.barValues
-              : selectedChart === "pie"
-              ? chartData.pieValues
-              : []
+                ? chartData.barValues
+                : selectedChart === "pie"
+                  ? chartData.pieValues
+                  : []
           }
           layout={
             selectedChart === "pie"

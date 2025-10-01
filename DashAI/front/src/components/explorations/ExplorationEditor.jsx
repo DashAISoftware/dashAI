@@ -280,8 +280,8 @@ function ExplorationEditor({ open = true, handleCloseDialog = () => {} }) {
               activeStep === 0
                 ? TIMESTAMP_KEYS.exploration.configureExplorer
                 : activeStep === 1
-                ? TIMESTAMP_KEYS.exploration.submitExplorer
-                : null
+                  ? TIMESTAMP_KEYS.exploration.submitExplorer
+                  : null
             }
           >
             <Button

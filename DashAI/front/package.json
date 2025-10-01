@@ -23,6 +23,9 @@
     "react-router-dom": "^6.4.1",
     "react-scripts": "5.0.1",
     "react-uuid": "^1.0.3",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-virtuoso": "^4.14.0",
+    "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
@@ -32,7 +35,8 @@
     "build": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts test",
     "eject": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts eject",
-    "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001"
+    "json-server": "json-server sample-db.json --routes sample-routes.json --port 3001",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --config eslint.config.js"
   },
   "eslintConfig": {
     "extends": [

@@ -36,6 +36,8 @@ function NewPipeline() {
     availableNodes,
     nodeTypes,
     nodeIdCounter,
+    nameError,
+    nameErrorMessage,
 
     // Setters
     setNodes,
@@ -63,14 +65,24 @@ function NewPipeline() {
     onNodeMouseEnter,
     onNodeMouseLeave,
     onPaneClick,
+    handlePipelineNameChange,
   } = usePipelineState(pipelineId, location, navigate);
 
   const { getConnectedNodeData } = useConnectedNodeData(nodes, nodeData, edges);
 
   const renderNodeDialogContent = () => {
     if (!selectedNode) return null;
-    const { type, id } = selectedNode;
-    const NodeComponent = nodeRegistry[type];
+
+    const { type, id, data } = selectedNode;
+    const { configType, configSchema } = data;
+    let NodeComponent = null;
+
+    if (configType === "custom") {
+      NodeComponent = nodeRegistry[type];
+    } else if (configType === "generic") {
+      NodeComponent = nodeRegistry["Configurable"];
+    }
+
     if (!NodeComponent) return null;
 
     return (
@@ -80,6 +92,7 @@ function NewPipeline() {
         onSave={(data) => handleSaveNodeData(id, data)}
         savedConfig={nodeData[id]}
         prevNodes={getConnectedNodeData(selectedNode)}
+        configSchema={configSchema}
       />
     );
   };
@@ -110,6 +123,9 @@ function NewPipeline() {
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}
                   onRun={handleRun}
+                  nameError={nameError}
+                  nameErrorMessage={nameErrorMessage}
+                  handlePipelineNameChange={handlePipelineNameChange}
                 />
 
                 <PipelineDesigner
