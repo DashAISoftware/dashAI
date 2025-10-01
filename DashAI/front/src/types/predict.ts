@@ -7,6 +7,5 @@ export interface IPredict {
 }
 
 export interface IParamsFilter {
-  train_dataset_id: number;
-  datasets: string[];
+  run_id: number;
 }

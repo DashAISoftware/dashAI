@@ -240,6 +240,7 @@ function PredictionModal({
       <DialogContent dividers>
         {renderStep(
           steps[activeStep].name,
+          selectedModelId,
           preselectedModelId,
           setSelectedModelId,
           setSelectedDatasetId,
