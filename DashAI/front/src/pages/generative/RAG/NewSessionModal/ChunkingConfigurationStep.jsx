@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
-import useSchema from "../../../hooks/useSchema";
-import { getChunkingComponents } from "../../../api/rag";
-import FormSchemaEmbedded from "./FormSchemaEmbedded";
+import useSchema from "../../../../hooks/useSchema";
+import { getChunkingComponents } from "../../../../api/rag";
+import FormSchemaEmbedded from "../FormSchemaEmbedded";
 
 export default function ChunkingConfigurationStep({
   chunkingModel,

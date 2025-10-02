@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"; // Add useRef
 import PropTypes from "prop-types";
 import { Box, Typography, TextField } from "@mui/material";
-import DocumentSelector from "../../../components/generative/RAG/DocumentSelector";
+import DocumentSelector from "../../../../components/generative/RAG/DocumentSelector";
 
 export default function DocumentSelectionStep({
   documents: propDocumentIds, // Rename to reflect it's IDs
@@ -16,11 +16,14 @@ export default function DocumentSelectionStep({
   const initialLoadRef = useRef(true); // Ref to track initial render
 
   useEffect(() => {
-    if (initialLoadRef.current && propDocumentIds && propDocumentIds.length > 0) {
+    if (
+      initialLoadRef.current &&
+      propDocumentIds &&
+      propDocumentIds.length > 0
+    ) {
       initialLoadRef.current = false;
     }
   }, [propDocumentIds]);
-
 
   useEffect(() => {
     const documentIdsSelected = selectedDocuments.length > 0;
@@ -29,12 +32,14 @@ export default function DocumentSelectionStep({
   }, [selectedDocuments, sessionName, setNextEnabled]);
 
   useEffect(() => {
-    const currentSelectedIds = selectedDocuments.map(doc => doc.id);
-    if (JSON.stringify(currentSelectedIds.sort()) !== JSON.stringify(propDocumentIds.sort())) {
-        setDocuments(currentSelectedIds);
+    const currentSelectedIds = selectedDocuments.map((doc) => doc.id);
+    if (
+      JSON.stringify(currentSelectedIds.sort()) !==
+      JSON.stringify(propDocumentIds.sort())
+    ) {
+      setDocuments(currentSelectedIds);
     }
   }, [selectedDocuments, setDocuments, propDocumentIds]);
-
 
   const handleSessionNameChange = (event) => {
     setSesssionName(event.target.value);
@@ -51,7 +56,9 @@ export default function DocumentSelectionStep({
   return (
     <Box display="flex" flexDirection="column" height="100%" width="100%">
       <Box mb={3}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>Session Name</Typography>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Session Name
+        </Typography>
         <TextField
           fullWidth
           variant="outlined"
@@ -61,10 +68,14 @@ export default function DocumentSelectionStep({
           inputProps={{ maxLength: 256 }}
           margin="normal"
           error={sessionName.trim() === ""}
-          helperText={sessionName.trim() === "" ? "Session name cannot be empty" : ""}
+          helperText={
+            sessionName.trim() === "" ? "Session name cannot be empty" : ""
+          }
         />
 
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>Session Description</Typography>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Session Description
+        </Typography>
         <TextField
           fullWidth
           variant="outlined"

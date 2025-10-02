@@ -151,6 +151,9 @@ export const useFormSchemaStore = () => {
   const getModelFromCurrentProperty = (property) => {
     if (formValues === null) return null;
 
+    console.log("formValues", formValues);
+    console.log("properties", properties);
+
     if (properties.length === 0)
       return getModelFromSubform(formValues[property]);
 

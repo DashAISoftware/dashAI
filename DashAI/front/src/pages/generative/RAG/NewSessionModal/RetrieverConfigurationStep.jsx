@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 
-import { getRetrieverComponents, getRetrievalParadigm } from "../../../api/rag";
+import {
+  getRetrieverComponents,
+  getRetrievalParadigm,
+} from "../../../../api/rag";
 import { useSnackbar } from "notistack";
-import useSchema from "../../../hooks/useSchema";
+import useSchema from "../../../../hooks/useSchema";
 
-import FormSchema from "../../../components/shared/FormSchema";
-
-import FormSchemaDialog from "../../../components/shared/FormSchemaDialog";
+import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
+import FormSchemaDialog from "../../../../components/shared/FormSchemaDialog";
+import { Form } from "formik";
 
 export default function RetrieverConfigurationStep({ setNextEnabled }) {
   const { enqueueSnackbar } = useSnackbar();
