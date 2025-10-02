@@ -5,7 +5,7 @@ import numpy as np
 from DashAI.back.core.schema_fields import enum_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.schema_fields.schema_field import schema_field
-from DashAI.back.models.RAG.embeddings.dense_encoding import DenseEmbedding
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 import fasttext
 from huggingface_hub import hf_hub_download

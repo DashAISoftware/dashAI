@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
 
-from DashAI.back.models.RAG.embeddings.dense_encoding import DenseEmbedding
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 from DashAI.back.core.schema_fields import (
     enum_field,
     int_field,

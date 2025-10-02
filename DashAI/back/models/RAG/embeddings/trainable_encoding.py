@@ -4,7 +4,7 @@ from typing import Any, List
 import numpy as np
 
 from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
-from DashAI.back.models.RAG.embeddings.dense_encoding import DenseEmbedding
+from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 class TrainableEncoding(DenseEmbedding):
     """
