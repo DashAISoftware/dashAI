@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -12,5 +10,4 @@ class RenameRequest(BaseModel):
 
 
 class FilterDatasetParams(BaseModel):
-    train_dataset_id: int
-    datasets: List[str]
+    run_id: int
