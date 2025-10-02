@@ -72,13 +72,13 @@ function PipelinesTable({
         field: "created",
         headerName: "Created",
         minWidth: 150,
-        valueGetter: (value, row) => formatDate(value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
         headerName: "Edited",
         minWidth: 150,
-        valueGetter: (value, row) => formatDate(value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
