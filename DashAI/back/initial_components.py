@@ -95,6 +95,7 @@ from DashAI.back.models import (
 )
 
 from DashAI.back.models.RAG import (
+    RAGPipeline,
     # Chunking Models
     CharacterChunkModel,
     TokenChunkModel,
@@ -276,6 +277,7 @@ def get_initial_components():
         RandomUnderSamplerConverter,
 
         # RAG
+        RAGPipeline,
         CharacterChunkModel,
         TokenChunkModel,
         # Chunking Models

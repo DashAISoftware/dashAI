@@ -27,7 +27,7 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
-base_url = "/api/v1/documents"
+base_url = "/api/v1/document"
 @router.get("/", response_model=List[DocumentResponse])
 async def get_all_documents(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
