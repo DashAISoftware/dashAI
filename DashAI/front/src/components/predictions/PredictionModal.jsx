@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -18,30 +18,57 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
+import { renderStep } from "./renderStep";
 
-import SelectModelStep from "./SelectModelStep";
-import SelectDatasetStep from "./SelectDatasetStep";
 import { enqueuePredictionJob, startJobQueue } from "../../api/job";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
-function PredictionModal({ open, onClose, updatePredictions }) {
+function PredictionModal({
+  open,
+  onClose,
+  updatePredictions,
+  preselectedModelId,
+  setPreselectedModelId,
+  preselectedTrainedDatasetId,
+  setPreselectedTrainedDatasetId,
+  existingPredictions = [],
+}) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
   const { enqueueSnackbar } = useSnackbar();
 
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedModelId, setSelectedModelId] = useState(null);
+  const [selectedModelId, setSelectedModelId] = useState(preselectedModelId);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [predictName, setPredictName] = useState("");
-  const [trainDataset, setTrainDataset] = useState(null);
+  const [trainDataset, setTrainDataset] = useState(preselectedTrainedDatasetId);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const steps = ["Select Model", "Select Dataset"];
+  const { defaultName } = useMemo(
+    () =>
+      generateSequentialName({
+        base: "Prediction",
+        items: existingPredictions,
+        getName: (prediction) => prediction.pred_name,
+        allowExtension: true,
+      }),
+    [existingPredictions],
+  );
+
+  const steps = [
+    ...(preselectedModelId
+      ? []
+      : [{ name: "selectModel", label: "Select Model" }]),
+    { name: "selectDataset", label: "Select Dataset" },
+  ];
 
   const resetModal = () => {
     setActiveStep(0);
     setSelectedModelId(null);
+    setPreselectedModelId(null);
+    setPreselectedTrainedDatasetId(null);
     setSelectedDatasetId(null);
     setNextEnabled(false);
     setPredictName("");
@@ -93,10 +120,14 @@ function PredictionModal({ open, onClose, updatePredictions }) {
 
       handleCloseDialog();
 
+      // Use generated name if user didn't provide one
+      const finalPredictionName =
+        predictName.trim() === "" ? defaultName : predictName.trim();
+
       const response = await enqueuePredictionJob(
         selectedModelId,
         selectedDatasetId,
-        predictName,
+        finalPredictionName,
       );
 
       console.log("Prediction job response:", response);
@@ -149,20 +180,22 @@ function PredictionModal({ open, onClose, updatePredictions }) {
       aria-labelledby="new-predict-dialog-title"
       aria-describedby="new-predict-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       <DialogTitle>
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -172,7 +205,7 @@ function PredictionModal({ open, onClose, updatePredictions }) {
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -184,7 +217,7 @@ function PredictionModal({ open, onClose, updatePredictions }) {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -192,12 +225,12 @@ function PredictionModal({ open, onClose, updatePredictions }) {
             >
               {steps.map((step, index) => (
                 <Step
-                  key={`${step}`}
+                  key={`${step.name}`}
                   completed={activeStep > index}
                   disabled={activeStep < index}
                 >
                   <StepButton color="inherit" onClick={handleStepButton(index)}>
-                    {step}
+                    {step.label}
                   </StepButton>
                 </Step>
               ))}
@@ -205,25 +238,21 @@ function PredictionModal({ open, onClose, updatePredictions }) {
           </Grid>
         </Grid>
       </DialogTitle>
-
       <DialogContent dividers>
-        {activeStep === 0 && (
-          <SelectModelStep
-            setSelectedModelId={setSelectedModelId}
-            setNextEnabled={setNextEnabled}
-            onPredictNameInput={handlePredictNameInput}
-            setTrainDataset={setTrainDataset}
-          />
-        )}
-        {activeStep === 1 && (
-          <SelectDatasetStep
-            setSelectedDatasetId={setSelectedDatasetId}
-            setNextEnabled={setNextEnabled}
-            trainDataset={trainDataset}
-          />
+        {renderStep(
+          steps[activeStep].name,
+          selectedModelId,
+          preselectedModelId,
+          setSelectedModelId,
+          setSelectedDatasetId,
+          setNextEnabled,
+          handlePredictNameInput,
+          setTrainDataset,
+          trainDataset,
+          predictName,
+          defaultName,
         )}
       </DialogContent>
-
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>
@@ -252,6 +281,7 @@ PredictionModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   updatePredictions: PropTypes.func.isRequired,
+  existingPredictions: PropTypes.array,
 };
 
 export default PredictionModal;

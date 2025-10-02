@@ -1,25 +1,25 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import SelectDataloaderStep from "./SelectDataloaderStep";
-import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
+import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import CustomLayout from "../../custom/CustomLayout";
 
-const defaultNewDataset = {
-  dataloader: "",
-  file: null,
-  url: "",
-  params: {},
-};
-
-export default function UploadDatasetSteps({ backHome, handleDatasetCreated }) {
-  const [step, setStep] = React.useState(0);
+export default function UploadDatasetSteps({
+  backHome,
+  handleDatasetCreated,
+  existingDatasets = [],
+}) {
+  const [step, setStep] = useState(0);
   const [selectedDataloader, setSelectedDataloader] = useState({});
-  const [newDataset, setNewDataset] = useState(defaultNewDataset);
 
   const goToNextStep = () => {
     setStep((prevStep) => prevStep + 1);
   };
 
   const goToPrevStep = () => {
+    if (step === 0) {
+      backHome();
+      return;
+    }
     setStep((prevStep) => prevStep - 1);
   };
 
@@ -35,35 +35,19 @@ export default function UploadDatasetSteps({ backHome, handleDatasetCreated }) {
     >
       {step === 0 && (
         <SelectDataloaderStep
-          newDataset={newDataset}
-          setNewDataset={setNewDataset}
           goToNextStep={goToNextStep}
-          goToPrevStep={() => {
-            goToPrevStep(null);
-            backHome();
-          }}
+          goToPrevStep={goToPrevStep}
           selectedDataloader={selectedDataloader}
           setSelectedDataloader={setSelectedDataloader}
         />
       )}
       {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
-        <ConfigureAndUploadDataset
-          newDataset={newDataset}
-          setNewDataset={setNewDataset}
-          goToNextStep={() => {
-            setStep(0);
-            setSelectedDataloader({});
-            setNewDataset(defaultNewDataset);
-          }}
-          goToPrevStep={() => {
-            goToPrevStep();
-            setNewDataset(defaultNewDataset);
-            setSelectedDataloader({});
-          }}
-          selectedDataloader={selectedDataloader}
-          setSelectedDataloader={setSelectedDataloader}
+        <ConfigureAndUploadDatasetStep
+          goToPrevStep={goToPrevStep}
+          selectedDataloader={selectedDataloader.name}
           backHome={backHome}
           handleDatasetCreated={handleDatasetCreated}
+          existingDatasets={existingDatasets}
         />
       )}
     </CustomLayout>

@@ -5,7 +5,7 @@ import ResultsTabParametersDisplayList from "./ResultsTabParametersDisplayList";
 
 function ResultsTabParametersDisplay({ displayMode, runData }) {
   return (
-    <Grid item>
+    <Grid>
       {displayMode === "nested-list" && (
         <ResultsTabParametersDisplayList
           name="Parameters"

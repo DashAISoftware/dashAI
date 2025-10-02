@@ -82,8 +82,8 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
     switch (state) {
       case EMPTY:
         return (
-          <>
-            <Grid item>
+          <React.Fragment>
+            <Grid>
               <input
                 type="file"
                 ref={inputRef}
@@ -93,19 +93,19 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
               />
             </Grid>
             {dragActive ? (
-              <Grid item>
+              <Grid>
                 <Typography variant="subtitle1">
                   Drop the file{multiple ? "s" : ""} here.
                 </Typography>
               </Grid>
             ) : (
-              <>
-                <Grid item>
+              <React.Fragment>
+                <Grid>
                   <Typography variant="subtitle1">
                     Drag and drop {multiple ? "your files" : "a file"} here, or
                   </Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Button variant="contained">Upload a file</Button>
                 </Grid>
               </>
@@ -144,7 +144,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
     <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
       <Grid container direction="column" rowSpacing={3}>
         {/* state text */}
-        <Grid item sx={{ textAlign: "center" }}>
+        <Grid sx={{ textAlign: "center" }}>
           <DialogContentText>
             {datasetState === LOADING && "Loading..."}
             {datasetState === LOADED && "Loaded"}
@@ -154,7 +154,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
         </Grid>
 
         {/* Drag and drop */}
-        <Grid item>
+        <Grid>
           <Box
             sx={{
               border: 1,
@@ -184,7 +184,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
             >
               {/* delete uploaded dataset button */}
               {datasetState === LOADED && (
-                <Grid item sx={{ position: "absolute", right: 0, top: 0 }}>
+                <Grid sx={{ position: "absolute", right: 0, top: 0 }}>
                   <IconButton onClick={handleDeleteDataset}>
                     <ClearIcon />
                   </IconButton>

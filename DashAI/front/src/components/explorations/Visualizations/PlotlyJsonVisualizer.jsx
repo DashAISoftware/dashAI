@@ -147,8 +147,10 @@ function PlotlyJsonVisualizer({ data }) {
             open={expanded}
             fullScreen
             onClose={() => setExpanded(false)}
-            PaperProps={{
-              sx: { bgcolor: "white" },
+            slotProps={{
+              paper: {
+                sx: { bgcolor: "white" },
+              },
             }}
           >
             <Plot

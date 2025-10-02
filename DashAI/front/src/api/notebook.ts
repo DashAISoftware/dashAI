@@ -43,17 +43,6 @@ export const deleteNotebook = async (id: number): Promise<void> => {
   await api.delete(`${notebookEndpoint}/${id}`);
 };
 
-export const createDatasetFromNotebook = async (
-  notebookId: string,
-  name: string,
-): Promise<IDataset> => {
-  const response = await api.post(`${notebookEndpoint}/${notebookId}/dataset`, {
-    name: name,
-  });
-
-  return response.data;
-};
-
 export const updateNotebook = async (
   id: number,
   formData: object,

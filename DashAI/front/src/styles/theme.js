@@ -57,13 +57,30 @@ const theme = {
         ::-webkit-scrollbar-thumb {
             -webkit-border-radius: 10px;
             border-radius: 10px;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.8);
             -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
         ::-webkit-scrollbar-thumb:window-inactive {
                 background: rgba(0,0,0,0.4);
         }
       `,
+    },
+
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          "--DataGrid-containerBackground": "transparent",
+          "& .MuiDataGrid-columnSeparator": {
+            visibility: "hidden",
+          },
+          "& .MuiDataGrid-columnHeader:hover .MuiDataGrid-columnSeparator": {
+            visibility: "visible",
+          },
+        },
+        columnHeader: {
+          backgroundColor: "transparent",
+        },
+      },
     },
   },
 };

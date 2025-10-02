@@ -256,6 +256,7 @@ class LocalExplainer(Base):
     plots_path: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     fit_parameters: Mapped[JSON] = mapped_column(JSON)
+    scope: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
         Enum(ExplainerStatus), nullable=False, default=ExplainerStatus.NOT_STARTED

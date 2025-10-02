@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
     enum_field,
-    int_field,
+    float_field,
     schema_field,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
@@ -35,18 +35,18 @@ class KernelShapSchema(BaseSchema):
 
     fit_parameter_sample_background_data: schema_field(
         bool_field(),
-        placeholder=False,
+        placeholder=True,
         description="Parameter to fit the explainer. 'true' if the background "
         "data must be sampled, otherwise the entire train data set is used. "
         "Smaller datasets speed up the algorithm run time.",
     )  # type: ignore
 
-    fit_parameter_n_background_samples: schema_field(
-        int_field(ge=1),
-        placeholder=1,
+    fit_parameter_background_fraction: schema_field(
+        float_field(ge=0, le=1),
+        placeholder=0.2,
         description="Parameter to fit the explainer. If the parameter "
-        "'sample_background_data' is 'true', the number of background "
-        "data samples to be drawn.",
+        "'sample_background_data' is 'true', the proportion of background "
+        "data samples to be drawn from the training data set.",
     )  # type: ignore
 
     fit_parameter_sampling_method: schema_field(
@@ -91,7 +91,7 @@ class KernelShap(BaseLocalExplainer):
     def _sample_background_data(
         self,
         background_data: np.array,
-        n_background_samples: int,
+        background_fraction: float,
         sampling_method: str = "shuffle",
         categorical_features: bool = False,
     ):
@@ -103,8 +103,8 @@ class KernelShap(BaseLocalExplainer):
         background_data: np.array
             Data used to estimate feature attributions and establish a baseline for
             the calculation of SHAP values.
-        n_background_samples: int
-            Number of background data samples used to estimate of SHAP values. By
+        background_fraction: float
+            Proportion of background data samples used to estimate of SHAP values. By
             default, the entire train dataset is used, but this option limits the
             samples to reduce run times.
         sampling_method: str
@@ -124,6 +124,8 @@ class KernelShap(BaseLocalExplainer):
 
         samplers = {"shuffle": shap.sample, "kmeans": shap.kmeans}
 
+        n_background_samples = int(background_fraction * background_data.shape[0])
+
         if categorical_features:
             data = samplers["shuffle"](background_data, n_background_samples)
         else:
@@ -135,7 +137,7 @@ class KernelShap(BaseLocalExplainer):
         self,
         background_dataset: Tuple[DatasetDict, DatasetDict],
         sample_background_data: str = "false",
-        n_background_samples: Union[int, None] = None,
+        background_fraction: Union[float, None] = None,
         sampling_method: Union[str, None] = None,
     ):
         """Method to train the KernelShap explainer.
@@ -149,9 +151,9 @@ class KernelShap(BaseLocalExplainer):
         sample_background_data: bool
             True if the background data must be sampled. Smaller data sets speed up
             the algorithm run time. False by default.
-        n_background_samples: int
-            Number of background data samples used to estimate of SHAP values if
-            ``sample_background_data=True``.
+        background_fraction: float
+            Proportion of background data from the training samples used to estimate
+            SHAP values if ``sample_background_data=True``.
         sampling_method: str
             Sampling method used to select the background samples if
             ``sample_background_data=True``. Options are 'shuffle' to select random
@@ -178,7 +180,7 @@ class KernelShap(BaseLocalExplainer):
         if sample_background_data:
             background_data = self._sample_background_data(
                 background_data.to_numpy(),
-                n_background_samples,
+                background_fraction,
                 sampling_method,
                 categorical_features,
             )

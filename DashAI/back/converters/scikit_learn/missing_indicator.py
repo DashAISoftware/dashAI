@@ -41,6 +41,7 @@ class MissingIndicator(SklearnWrapper, MissingIndicatorOperation):
 
     SCHEMA = MissingIndicatorSchema
     DESCRIPTION = "Binary indicators for missing values."
+    DISPLAY_NAME = "Missing Indicator"
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)

@@ -5,11 +5,7 @@ from datasets import Dataset, concatenate_datasets
 from transformers import AutoModel, AutoTokenizer
 
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
-from DashAI.back.core.schema_fields import (
-    enum_field,
-    int_field,
-    schema_field,
-)
+from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -64,7 +60,8 @@ class Embedding(HuggingFaceWrapper):
 
     SCHEMA = EmbeddingSchema
     DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
-    
+    DISPLAY_NAME = "Embedding"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.pooling_strategy = kwargs.get("pooling_strategy", "mean")
