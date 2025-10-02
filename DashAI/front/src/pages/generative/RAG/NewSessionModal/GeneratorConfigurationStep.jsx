@@ -9,13 +9,33 @@ import {
 } from "@mui/material";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../../../../components/shared/FormSchemaRenderFields";
+import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
+import FormSchemaDialog from "../../../../components/shared/FormSchemaDialog";
+import FormSchema from "../../../../components/shared/FormSchema";
 import { getGeneratorComponents } from "../../../../api/rag";
 import {
   preprocessSchema,
   buildYupSchema,
 } from "../../../../components/generative/utils";
+import { useFormSchemaStore } from "../../../../contexts/schema";
 
 export default function GeneratorConfigurationStep({
+  generatorModel,
+  setGeneratorModel,
+  setNextEnabled,
+}) {
+  return (
+    <FormSchemaContainer>
+      <GeneratorConfigurationContent
+        generatorModel={generatorModel}
+        setGeneratorModel={setGeneratorModel}
+        setNextEnabled={setNextEnabled}
+      />
+    </FormSchemaContainer>
+  );
+}
+
+function GeneratorConfigurationContent({
   generatorModel,
   setGeneratorModel,
   setNextEnabled,
@@ -24,6 +44,21 @@ export default function GeneratorConfigurationStep({
   const [currentSelectedGeneratorOption, setCurrentSelectedGeneratorOption] =
     useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
+  const [openConfigModal, setOpenConfigModal] = useState(false);
+  const [subModelToConfig, setSubModelToConfig] = useState(null);
+
+  const { properties } = useFormSchemaStore();
+
+  // Watch for property changes to open configuration modal
+  useEffect(() => {
+    console.log("Properties changed:", properties);
+    if (properties.length > 0) {
+      const lastProperty = properties[properties.length - 1];
+      console.log("Opening modal for property:", lastProperty);
+      setSubModelToConfig(lastProperty.label);
+      setOpenConfigModal(true);
+    }
+  }, [properties]);
 
   const getInitialParamsFromSchema = useCallback((schemaProperties) => {
     if (!schemaProperties) return {};
@@ -188,6 +223,47 @@ export default function GeneratorConfigurationStep({
             </Box>
           </form>
         )}
+
+      {/* Configuration Modal for sub-models */}
+      {openConfigModal && subModelToConfig && (
+        <>
+          {console.log("Rendering modal with:", {
+            openConfigModal,
+            subModelToConfig,
+          })}
+          <FormSchemaDialog
+            modelToConfigure={subModelToConfig}
+            open={openConfigModal}
+            setOpen={setOpenConfigModal}
+            onFormSubmit={(values) => {
+              console.log("Sub-model configuration submitted:", values);
+              setOpenConfigModal(false);
+            }}
+          >
+            <FormSchema
+              model={subModelToConfig}
+              initialValues={{}}
+              onFormSubmit={(values) => {
+                console.log("Sub-model configuration submitted:", values);
+                setOpenConfigModal(false);
+              }}
+              onCancel={() => setOpenConfigModal(false)}
+            />
+          </FormSchemaDialog>
+        </>
+      )}
     </Box>
   );
 }
+
+GeneratorConfigurationContent.propTypes = {
+  generatorModel: PropTypes.object,
+  setGeneratorModel: PropTypes.func.isRequired,
+  setNextEnabled: PropTypes.func.isRequired,
+};
+
+GeneratorConfigurationStep.propTypes = {
+  generatorModel: PropTypes.object,
+  setGeneratorModel: PropTypes.func.isRequired,
+  setNextEnabled: PropTypes.func.isRequired,
+};

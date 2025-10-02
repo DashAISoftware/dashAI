@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 
 import {
@@ -11,7 +12,6 @@ import useSchema from "../../../../hooks/useSchema";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import FormSchemaDialog from "../../../../components/shared/FormSchemaDialog";
-import { Form } from "formik";
 
 export default function RetrieverConfigurationStep({ setNextEnabled }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -73,20 +73,16 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
   // Handle paradigm change
   const handleRetrievalParadigmChange = (event, newValue) => {
     setSelectedRetrievalParadigm(newValue);
-    console.log("Selected paradigm:", newValue);
     if (newValue === "SparseRetriever") {
       setSelectedRetriever(null);
     } else {
       setRetrieverOptions([newValue]);
       handleRetrieverSelectionChange(event, newValue);
-      setOpenConfig(true);
-      setNextEnabled(false);
     }
   };
 
   // Handle retriever change
   const handleRetrieverSelectionChange = (event, newValue) => {
-    console.log("Selected retriever:", newValue);
     setSelectedRetriever(newValue);
     setOpenConfig(true);
     setNextEnabled(false);
@@ -162,12 +158,14 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
           setOpen={setOpenConfig}
           onFormSubmit={handleRetrieverParametersSave}
         >
-          <FormSchema
-            model={selectedRetriever.name}
-            initialValues={selectedRetriever.parameters}
-            onFormSubmit={handleRetrieverParametersSave}
-            onCancel={() => setOpenConfig(false)}
-          />
+          <FormSchemaContainer>
+            <FormSchema
+              model={selectedRetriever.name}
+              initialValues={selectedRetriever.parameters}
+              onFormSubmit={handleRetrieverParametersSave}
+              onCancel={() => setOpenConfig(false)}
+            />
+          </FormSchemaContainer>
         </FormSchemaDialog>
       )}
     </Box>
