@@ -13,9 +13,16 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 
-import { getDatasets as getDatasetsRequest } from "../../api/datasets";
+import {
+  getDatasets as getDatasetsRequest,
+  getDatasetInfo,
+} from "../../api/datasets";
 import { validateDataset as validateDatasetRequest } from "../../api/explainer";
+import { getRunById } from "../../api/run";
+import { getExperimentById } from "../../api/experiment";
 import { formatDate } from "../../utils";
+import { SplitSelector } from "./SplitSelector";
+import NoteBox from "../notebooks/NoteBox";
 
 const columns = [
   {
@@ -55,6 +62,13 @@ export default function SelectDatasetStep({
   const [selectedDatasetId, setSelectedDatasetId] = useState(false);
   const [isValidDataset, setIsValidDataset] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [totalRows, setTotalRows] = useState(0);
+  const [splits, setSplits] = useState({
+    train: 0,
+    test: 0,
+    validation: 0,
+    all: 1,
+  });
 
   const getDatasets = async () => {
     setLoading(true);
@@ -98,10 +112,47 @@ export default function SelectDatasetStep({
     }
   };
 
+  const getTotalRows = async () => {
+    if (selectedDatasetId) {
+      try {
+        const datasetInfo = await getDatasetInfo(selectedDatasetId);
+        setTotalRows(datasetInfo.total_rows);
+      } catch {
+        console.error(`Error fetching dataset info for ${selectedDatasetId}`);
+      }
+    }
+  };
+
   // fetch datasets when the component is mounting
   useEffect(() => {
     getDatasets();
   }, []);
+
+  useEffect(() => {
+    getTotalRows();
+  }, [selectedDatasetId]);
+
+  const getRuninfo = async () => {
+    if (newExpl.run_id) {
+      try {
+        const run = await getRunById(newExpl.run_id);
+        const experiment = await getExperimentById(run.experiment_id);
+        const splitsExperiment = JSON.parse(experiment.splits);
+        setSplits((prev) => ({
+          ...prev,
+          train: splitsExperiment["train"],
+          test: splitsExperiment["test"],
+          validation: splitsExperiment["validation"],
+        }));
+      } catch {
+        console.error(`Error fetching run info for ${newExpl.run_id}`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    getRuninfo();
+  }, [newExpl.run_id]);
 
   useEffect(() => {
     if (rowSelectedDataset.length > 0) {
@@ -120,13 +171,16 @@ export default function SelectDatasetStep({
   }, [selectedDatasetId]);
 
   useEffect(() => {
-    if (isValidDataset) {
-      setNewExpl({ ...newExpl, dataset_id: selectedDatasetId });
+    if (isValidDataset && selectedDatasetId) {
+      setNewExpl((prevExpl) => ({
+        ...prevExpl,
+        dataset_id: selectedDatasetId,
+      }));
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
     }
-  }, [isValidDataset]);
+  }, [isValidDataset, selectedDatasetId]);
 
   return (
     <React.Fragment>
@@ -180,6 +234,23 @@ export default function SelectDatasetStep({
           hideFooterSelectedRowCount
         />
       </Paper>
+
+      {selectedDatasetId && isValidDataset && (
+        <>
+          <SplitSelector
+            totalRows={totalRows}
+            splits={splits}
+            onSelectionChange={(scope) => {
+              setNewExpl((prevExpl) => ({ ...prevExpl, scope }));
+            }}
+          />
+          <NoteBox
+            message={
+              "The dataset selected here will be used to compute the explanations. If you chose the same dataset that was used to train the model, you may want to use a sample of your test set instead. Keep in mind that some explainers can take a long time to generate explanations, depending on the number of instances selected."
+            }
+          />
+        </>
+      )}
     </React.Fragment>
   );
 }
