@@ -13,7 +13,11 @@ import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import FormSchemaDialog from "../../../../components/shared/FormSchemaDialog";
 
-export default function RetrieverConfigurationStep({ setNextEnabled }) {
+export default function RetrieverConfigurationStep({
+  retrieverModel,
+  setRetrieverModel,
+  setNextEnabled,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const [retrievalParadigms, setRetrievalParadigms] = useState([]);
   const [selectedRetrievalParadigm, setSelectedRetrievalParadigm] =
@@ -91,10 +95,18 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
 
   // Handle config change
   const handleRetrieverParametersSave = (newParams) => {
-    setSelectedRetriever((prev) => ({
-      ...prev,
+    const updatedRetriever = {
+      ...selectedRetriever,
       parameters: newParams,
-    }));
+    };
+    setSelectedRetriever(updatedRetriever);
+
+    // Update the parent component with proper structure
+    setRetrieverModel({
+      component: selectedRetriever.name,
+      params: newParams,
+    });
+
     setNextEnabled(true);
     setOpenConfig(false);
   };
@@ -171,3 +183,9 @@ export default function RetrieverConfigurationStep({ setNextEnabled }) {
     </Box>
   );
 }
+
+RetrieverConfigurationStep.propTypes = {
+  retrieverModel: PropTypes.object,
+  setRetrieverModel: PropTypes.func.isRequired,
+  setNextEnabled: PropTypes.func.isRequired,
+};

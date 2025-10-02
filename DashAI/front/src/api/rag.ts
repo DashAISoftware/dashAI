@@ -5,123 +5,131 @@ import { IDocumentResponse } from "../types/documentResponse";
 import { IComponent } from "../types/component";
 import { getChildComponents } from "./component";
 
-
 // Fetch all RAG sessions
 export const getRAGSessions = async (): Promise<ISession[]> => {
-
   const response = await api.get<ISession[]>("/v1/generative-session/");
   if (response.status !== 200) {
     throw new Error(`Failed to fetch RAG sessions: ${response.statusText}`);
   }
 
   return response.data;
-}
+};
 
 export const getRAGSession = async (sessionId: number): Promise<ISession> => {
-
-  const response = await api.get<ISession>(`/v1/generative-session/${sessionId}`);
+  const response = await api.get<ISession>(
+    `/v1/generative-session/${sessionId}`,
+  );
   if (response.status !== 200) {
     throw new Error(`Failed to fetch RAG session: ${response.statusText}`);
   }
 
   return response.data;
-}
+};
 
 export const createRAGSession = async (
-  sessionData: Omit<ISession, "id" | "created" | "last_modified">
+  sessionData: Omit<ISession, "id" | "created" | "last_modified">,
 ): Promise<ISession> => {
-  console.log("Original RAG session input:", sessionData);
-
   const params = sessionData.parameters as {
-  documents: string[];
-  retriever_model: {
-    name: string;
-    parameters: Record<string, any>;
-  };
-  generator_model: {
-    name: string;
-    parameters: Record<string, any>;
-  };
+    documents: number[];
+    chunking_model: {
+      component: string;
+      params: Record<string, any>;
+    };
+    retriever_model: {
+      component: string;
+      params: Record<string, any>;
+    };
+    generation_model: {
+      component: string;
+      params: Record<string, any>;
+    };
   };
 
-  const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> = {
-    name: sessionData.name,
-    description: sessionData.description,
-    task_name: "RAGTask",
-    model_name: "RAGPipeline",
-    display_name: "",
-    parameters: {
-      documents: params.documents,
-      retriever_model: {
-        component: params.retriever_model.name,
-        params: params.retriever_model.parameters,
+  const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
+    {
+      name: sessionData.name,
+      description: sessionData.description,
+      task_name: "RAGTask",
+      model_name: "RAGPipeline",
+      display_name: "",
+      parameters: {
+        documents: params.documents,
+        chunking_model: {
+          component: params.chunking_model.component,
+          params: params.chunking_model.params,
+        },
+        retriever_model: {
+          component: params.retriever_model.component,
+          params: params.retriever_model.params,
+        },
+        generation_model: {
+          component: params.generation_model.component,
+          params: params.generation_model.params,
+        },
       },
-      generation_model: {
-        component: params.generator_model.name,
-        params: params.generator_model.parameters,
-      },
-    },
-  };
+    };
 
-
-  
-  console.log("Sending RAG session as:", transformedSession);
-
-  const response = await api.post<ISession>("/v1/generative-session/", transformedSession);
+  const response = await api.post<ISession>(
+    "/v1/generative-session/",
+    transformedSession,
+  );
 
   if (response.status !== 201) {
     throw new Error(`Failed to create RAG session: ${response.statusText}`);
   }
 
-  console.log("RAG session created successfully:", response.data);
   return response.data;
 };
 
-export const updateRAGSession = async (sessionId: number, sessionData: Partial<ISession>): Promise<ISession> => {
-
-  const response = await api.put<ISession>(`/v1/generative-session/${sessionId}`, sessionData);
+export const updateRAGSession = async (
+  sessionId: number,
+  sessionData: Partial<ISession>,
+): Promise<ISession> => {
+  const response = await api.put<ISession>(
+    `/v1/generative-session/${sessionId}`,
+    sessionData,
+  );
   if (response.status !== 200) {
     throw new Error(`Failed to update RAG session: ${response.statusText}`);
   }
 
   return response.data;
-}
+};
 
 export const deleteRAGSession = async (sessionId: number): Promise<void> => {
   const response = await api.delete(`/v1/generative-session/${sessionId}`);
   if (response.status !== 204) {
     throw new Error(`Failed to delete RAG session: ${response.statusText}`);
   }
-
-}
+};
 
 export const updateGenerativeSessionParams = async (
   sessionId: number,
   newParams: Record<string, any>,
 ): Promise<ISession> => {
-
   const response = await api.put<ISession>(
     `/v1/generative-session/${sessionId}/parameters`,
     newParams,
   );
   if (response.status !== 200) {
-    throw new Error(`Failed to update RAG session parameters: ${response.statusText}`);
+    throw new Error(
+      `Failed to update RAG session parameters: ${response.statusText}`,
+    );
   }
   return response.data;
-}
+};
 
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
-
-  const response = getChildComponents('RetrieverModel', false);
+  const response = getChildComponents("RetrieverModel", false);
   if (!response) {
     throw new Error(`Failed to fetch retrieval options`);
   }
   return response;
-}
+};
 
-
-export const getRetrieverComponents = async (retrievalParadigm: string): Promise<IComponent[]> => {
-
+export const getRetrieverComponents = async (
+  retrievalParadigm: string,
+): Promise<IComponent[]> => {
   const response = getChildComponents(retrievalParadigm, false);
 
   if (!response) {
@@ -129,37 +137,35 @@ export const getRetrieverComponents = async (retrievalParadigm: string): Promise
   }
 
   return response;
-
-}
+};
 
 export const getGeneratorComponents = async (): Promise<IGenerativeTask[]> => {
-
   const response = await api.get(
-    `/v1/component/?related_component=TextToTextGenerationTask`
+    `/v1/component/?related_component=TextToTextGenerationTask`,
   );
 
   if (response.status !== 200) {
-    throw new Error(`Failed to fetch generator components: ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch generator components: ${response.statusText}`,
+    );
   }
 
   return response.data;
-
-}
+};
 
 export const getChunkingComponents = async (): Promise<IComponent[]> => {
-  const response = await getChildComponents('BaseChunkingModel', false);
+  const response = await getChildComponents("BaseChunkingModel", false);
   if (!response) {
     throw new Error(`Failed to fetch chunking components`);
   }
   return response;
-}
+};
 
 export const loadDocuments = async (): Promise<IDocumentResponse[]> => {
   const response = await api.get<IDocumentResponse[]>("/v1/document/");
   if (response.status !== 200) {
     throw new Error(`Failed to load documents: ${response.statusText}`);
   }
-  console.log("Loaded documents:", response.data);
   return response.data;
 };
 
@@ -170,15 +176,15 @@ export const deleteDocument = async (documentId: number): Promise<void> => {
   }
 };
 
-export const addDocument = async ({ file, optional_metadata }: {
-  file: File,
-  optional_metadata?: Record<string, any>,
+export const addDocument = async ({
+  file,
+  optional_metadata,
+}: {
+  file: File;
+  optional_metadata?: Record<string, any>;
 }): Promise<IDocumentResponse> => {
-
-  console.log("Adding document:", file, optional_metadata);
-  
   if (optional_metadata) {
-    optional_metadata.last_modified = file.lastModified 
+    optional_metadata.last_modified = file.lastModified;
   }
   const metadata = {
     file_name: file.name,
@@ -190,9 +196,13 @@ export const addDocument = async ({ file, optional_metadata }: {
   formData.append("file", file);
   formData.append("metadata", JSON.stringify(metadata));
 
-  const response = await api.post<IDocumentResponse>("/v1/document/", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const response = await api.post<IDocumentResponse>(
+    "/v1/document/",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
 
   if (response.status !== 201) {
     throw new Error(`Failed to upload document: ${response.statusText}`);

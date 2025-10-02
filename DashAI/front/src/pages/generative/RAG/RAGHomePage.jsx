@@ -55,14 +55,16 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
   const handleCreateOrUpdateSession = async (sessionData) => {
     try {
       const savedSession = await createRAGSession(sessionData);
-      console.log("RAGHomePage: New/Updated RAG session saved:", savedSession);
 
       await loadSessions();
-      onSessionCreated(savedSession);
+      if (onSessionCreated) {
+        onSessionCreated(savedSession);
+      }
       setShowModal(false);
 
       return savedSession;
     } catch (error) {
+      console.error("RAGHomePage: Error saving session:", error);
       throw error;
     }
   };

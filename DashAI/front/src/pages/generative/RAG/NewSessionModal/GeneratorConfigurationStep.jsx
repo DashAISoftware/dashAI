@@ -51,10 +51,8 @@ function GeneratorConfigurationContent({
 
   // Watch for property changes to open configuration modal
   useEffect(() => {
-    console.log("Properties changed:", properties);
     if (properties.length > 0) {
       const lastProperty = properties[properties.length - 1];
-      console.log("Opening modal for property:", lastProperty);
       setSubModelToConfig(lastProperty.label);
       setOpenConfigModal(true);
     }
@@ -134,12 +132,13 @@ function GeneratorConfigurationContent({
       const initialParameters = getInitialParamsFromSchema(
         newValue.schema?.properties,
       );
-      setGeneratorModel({
-        name: newValue.name,
-        parameters: initialParameters,
-      });
+      const modelData = {
+        component: newValue.name,
+        params: initialParameters,
+      };
+      setGeneratorModel(modelData);
     } else {
-      setGeneratorModel({ name: "", parameters: {} });
+      setGeneratorModel({ component: "", params: {} });
     }
   };
 
@@ -149,13 +148,14 @@ function GeneratorConfigurationContent({
       ...updatedValues,
     }));
 
-    setGeneratorModel({
-      name: currentSelectedGeneratorOption.name,
-      parameters: {
+    const modelData = {
+      component: currentSelectedGeneratorOption.name,
+      params: {
         ...formik.values,
         ...updatedValues,
       },
-    });
+    };
+    setGeneratorModel(modelData);
   };
 
   const processedProperties = currentSelectedGeneratorOption?.schema?.properties
@@ -226,31 +226,23 @@ function GeneratorConfigurationContent({
 
       {/* Configuration Modal for sub-models */}
       {openConfigModal && subModelToConfig && (
-        <>
-          {console.log("Rendering modal with:", {
-            openConfigModal,
-            subModelToConfig,
-          })}
-          <FormSchemaDialog
-            modelToConfigure={subModelToConfig}
-            open={openConfigModal}
-            setOpen={setOpenConfigModal}
+        <FormSchemaDialog
+          modelToConfigure={subModelToConfig}
+          open={openConfigModal}
+          setOpen={setOpenConfigModal}
+          onFormSubmit={(values) => {
+            setOpenConfigModal(false);
+          }}
+        >
+          <FormSchema
+            model={subModelToConfig}
+            initialValues={{}}
             onFormSubmit={(values) => {
-              console.log("Sub-model configuration submitted:", values);
               setOpenConfigModal(false);
             }}
-          >
-            <FormSchema
-              model={subModelToConfig}
-              initialValues={{}}
-              onFormSubmit={(values) => {
-                console.log("Sub-model configuration submitted:", values);
-                setOpenConfigModal(false);
-              }}
-              onCancel={() => setOpenConfigModal(false)}
-            />
-          </FormSchemaDialog>
-        </>
+            onCancel={() => setOpenConfigModal(false)}
+          />
+        </FormSchemaDialog>
       )}
     </Box>
   );

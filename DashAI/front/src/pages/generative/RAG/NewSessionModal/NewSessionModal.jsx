@@ -51,16 +51,17 @@ const defaultNewSession = {
   displayName: "",
   parameters: {
     documents: [],
-    chunking: {
-      parameters: {},
+    chunking_model: {
+      component: "",
+      params: {},
     },
     retriever_model: {
-      name: "",
-      parameters: {},
+      component: "",
+      params: {},
     },
     generator_model: {
-      name: "",
-      parameters: {},
+      component: "",
+      params: {},
     },
   },
 };
@@ -144,29 +145,24 @@ export default function NewSessionModal({
         ...sessionData,
         name: sessionData.name.trim(),
         description: sessionData.description.trim() || "",
+        model_name: "RAGPipeline",
         task_name: "RAGTask",
         parameters: {
-          ...sessionData.parameters,
           documents: sessionData.parameters.documents || [],
-          chunking_model: sessionData.parameters.chunking || {
-            name: "",
-            parameters: {},
+          chunking_model: sessionData.parameters.chunking_model || {
+            component: "",
+            params: {},
           },
           retriever_model: sessionData.parameters.retriever_model || {
-            name: "",
-            parameters: {},
+            component: "",
+            params: {},
           },
-          generator_model: sessionData.parameters.generator_model || {
-            name: "",
-            parameters: {},
+          generation_model: sessionData.parameters.generator_model || {
+            component: "",
+            params: {},
           },
         },
       };
-
-      console.log(
-        "NewSessionModal: Final session data to save:",
-        finalSessionData,
-      );
 
       const savedSession = await onSessionSaved(finalSessionData);
 

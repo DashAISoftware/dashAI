@@ -40,42 +40,53 @@ export default function ChunkingConfigurationStep({
     if (!selectedChunking) {
       return false;
     }
-    if (!chunkingModel || !chunkingModel.parameters) {
-      return false; // Ensure parameters are required
+    if (!chunkingModel || !chunkingModel.params) {
+      return false; // Ensure params are required
     }
 
-    return Object.keys(chunkingModel.parameters).every((param) => {
-      const value = chunkingModel.parameters[param];
+    return Object.keys(chunkingModel.params).every((param) => {
+      const value = chunkingModel.params[param];
       return value !== undefined && value !== null && value !== "";
     });
   };
 
   useEffect(() => {
-    setNextEnabled(isNextEnabled());
+    const enabled = isNextEnabled();
+    setNextEnabled(enabled);
   }, [selectedChunking, chunkingModel, setNextEnabled]);
 
   const handleChunkingSelectionChange = (event, newValue) => {
     setSelectedChunking(newValue);
     if (newValue) {
-      setChunkingModel({
-        name: newValue.name,
-        parameters: newValue.schema?.properties
+      const modelData = {
+        component: newValue.name,
+        params: newValue.schema?.properties
           ? getInitialParamsFromSchema(newValue.schema.properties)
           : {},
-      });
+      };
+      setChunkingModel(modelData);
     } else {
-      setChunkingModel({ name: "", parameters: {} });
+      setChunkingModel({ component: "", params: {} });
     }
   };
 
   const handleParametersSave = (params) => {
-    setChunkingModel({
-      name: selectedChunking.name,
-      parameters: params,
-    });
-    setNextEnabled(isNextEnabled());
-    console.log("Saved:", chunkingModel);
-    console.log("Next enabled:", isNextEnabled());
+    const modelData = {
+      component: selectedChunking.name,
+      params: params,
+    };
+    setChunkingModel(modelData);
+
+    // Validate with the new model data
+    const isValid =
+      selectedChunking &&
+      params &&
+      Object.keys(params).every((param) => {
+        const value = params[param];
+        return value !== undefined && value !== null && value !== "";
+      });
+
+    setNextEnabled(isValid);
   };
 
   function getInitialParamsFromSchema(schemaProperties) {
