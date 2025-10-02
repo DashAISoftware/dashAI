@@ -73,7 +73,7 @@ export default function ConfigureToolModal({
         }}
       >
         <Typography variant="h6" fontWeight="600" sx={{ whiteSpace: "nowrap" }}>
-          Configure {tool.type}: {tool.name}
+          Configure {tool.type}: {tool.display_name}
         </Typography>
 
         {/* Stepper */}

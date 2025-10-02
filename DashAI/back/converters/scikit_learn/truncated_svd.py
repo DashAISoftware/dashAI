@@ -68,6 +68,7 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
         "This means it can work with sparse matrices efficiently."
     )
     SHORT_DESCRIPTION = "Dimensionality reduction using truncated SVD."
+    DISPLAY_NAME = "Truncated SVD"
     metadata = {}
 
     def __init__(self, **kwargs):

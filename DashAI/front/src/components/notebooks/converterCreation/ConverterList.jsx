@@ -48,7 +48,7 @@ export default function ConverterList({
             onMouseLeave={() => setHoveredTool(null)}
             onClick={() => handleConverterClick(converter)}
           >
-            {converter.name}
+            {converter.display_name}
           </Button>
         ))
       )}

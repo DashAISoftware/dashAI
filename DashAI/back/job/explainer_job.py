@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
+    prepare_for_experiment,
     select_columns,
     split_dataset,
 )
@@ -110,7 +111,9 @@ class ExplainerJob(BaseJob):
         self,
         explainer: BaseLocalExplainer,
         dataset: Tuple[DatasetDict, DatasetDict],
+        splits: Dict[str, Any],
         task: BaseTask,
+        same_dataset: bool,
         config: Dict[str, Any] = lambda di: di["config"],
     ) -> None:
         explainer_id: int = self.kwargs["explainer_id"]
@@ -135,6 +138,39 @@ class ExplainerJob(BaseJob):
             prepared_instance = task.prepare_for_task(
                 loaded_instance, outputs_columns=self.output_columns
             )
+
+            split = self.explainer_db.scope.get("split")
+            if split not in ["train", "test", "val", "all"]:
+                raise JobError(f"{split} is not a valid split")
+
+            if split != "all":
+                if not same_dataset:
+                    prepared_instance, splits = prepare_for_experiment(
+                        dataset=prepared_instance,
+                        splits=splits,
+                        output_columns=self.output_columns,
+                    )
+
+                prepared_instance = split_dataset(
+                    prepared_instance,
+                    train_indexes=splits["train_indexes"],
+                    test_indexes=splits["test_indexes"],
+                    val_indexes=splits["val_indexes"],
+                )[split]
+
+            prepared_instance = prepared_instance.select(
+                range(
+                    max(
+                        1,
+                        int(
+                            prepared_instance.num_rows
+                            * self.explainer_db.scope.get("percentage")
+                            / 100
+                        ),
+                    ),
+                )
+            )
+
             prepared_instance = DatasetDict({"train": prepared_instance})
             X, _ = select_columns(
                 prepared_instance,
@@ -320,10 +356,16 @@ class ExplainerJob(BaseJob):
                 )
 
             elif explainer_scope == "local":
+                same_dataset = experiment.dataset_id == self.explainer_db.dataset_id
+                if not same_dataset:
+                    splits = experiment.splits
+
                 self._generate_local_explanation(
                     explainer=explainer,
                     dataset=(data_x, data_y),
+                    splits=splits,
                     task=task,
+                    same_dataset=same_dataset,
                 )
             else:
                 raise JobError(f"{explainer_scope} is an invalid explainer type")

@@ -59,6 +59,7 @@ class OrdinalEncoder(SklearnWrapper, OrdinalEncoderOperation):
 
     SCHEMA = OrdinalEncoderSchema
     DESCRIPTION = "Encode categorical features as an integer array."
+    DISPLAY_NAME = "Ordinal Encoder"
 
     def __init__(self, **kwargs):
         self.dtype = kwargs.pop("dtype", "np.float64")

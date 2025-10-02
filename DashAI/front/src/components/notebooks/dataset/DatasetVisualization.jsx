@@ -200,7 +200,7 @@ export default function DatasetVisualization({
           <Typography variant="h5" component="h2">
             {dataset.name}
           </Typography>
-          <Grid>
+          <Grid sx={{ height: "35px" }}>
             <Button
               variant="contained"
               disabled={isProcessing}
@@ -210,7 +210,7 @@ export default function DatasetVisualization({
                 });
               }}
               endIcon={<AddIcon />}
-              sx={{ mr: 2 }}
+              sx={{ mr: 2, height: "100%" }}
             >
               New Experiment
             </Button>
@@ -222,6 +222,7 @@ export default function DatasetVisualization({
                 e.stopPropagation();
                 setShowCreateNotebookModal(true);
               }}
+              sx={{ height: "100%" }}
             >
               New Notebook
             </Button>
