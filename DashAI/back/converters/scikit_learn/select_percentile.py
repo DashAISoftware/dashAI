@@ -19,4 +19,5 @@ class SelectPercentile(SklearnWrapper, SelectPercentileOperation):
     SCHEMA = SelectPercentileSchema
     DESCRIPTION = "Select features according to a percentile of the highest scores."
     SUPERVISED = True
+    DISPLAY_NAME = "Select Percentile"
     metadata = {}

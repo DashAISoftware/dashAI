@@ -89,7 +89,9 @@ export default function ConverterBox({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{converter.converter}</Typography>
+            <Typography variant="h6">
+              {converterComponent.display_name}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
