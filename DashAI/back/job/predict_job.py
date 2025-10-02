@@ -26,20 +26,6 @@ class PredictJob(BaseJob):
 
     def set_status_as_delivered(self) -> None:
         """Set the status of the job as delivered."""
-        run_id: int = self.kwargs["run_id"]
-        db: Session = self.kwargs["db"]
-
-        run: Run = db.get(Run, run_id)
-        if not run:
-            raise JobError(f"Run {run_id} does not exist in DB.")
-        try:
-            run.set_status_as_delivered()
-            db.commit()
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise JobError(
-                "Internal database error",
-            ) from e
 
     @inject
     async def run(
