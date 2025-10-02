@@ -104,6 +104,8 @@ from DashAI.back.models.RAG import (
     # DenseEmbedding,
     FastTextEmbedding,
     HuggingFaceEmbedding,
+    # Pipeline
+    RAGPipeline,
     SparseRetriever,
     TFIDFRetriever,
     TFIDFVectorizerModel,
@@ -164,6 +166,7 @@ def get_initial_components():
         HistGradientBoostingClassifier,
         KNeighborsClassifier,
         QwenModel,
+        RAGPipeline,
         StableDiffusionV2Model,
         StableDiffusionV3Model,
         StableDiffusionXLV1ControlNet,
