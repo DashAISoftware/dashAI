@@ -51,19 +51,21 @@ export default function ExplorerDetailsModal({
     <Dialog
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: 1400,
-          height: 700,
-          maxWidth: "none",
-          m: "auto",
-        },
-      }}
       sx={{
         "& .MuiDialog-container": {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+        },
+      }}
+      slotProps={{
+        paper: {
+          sx: {
+            width: 1400,
+            height: 700,
+            maxWidth: "none",
+            m: "auto",
+          },
         },
       }}
     >
@@ -76,9 +78,7 @@ export default function ExplorerDetailsModal({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <Divider />
-
       <DialogContent sx={{ p: 0 }}>
         <Box sx={{ mt: 0 }} elevation={0}>
           <Tabs

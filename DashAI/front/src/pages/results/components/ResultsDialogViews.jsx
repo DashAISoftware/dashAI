@@ -7,14 +7,14 @@ import { TIMESTAMP_KEYS } from "../../../constants/timestamp";
 function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
   return (
     <Grid container direction="column" alignItems="center">
-      <Grid item container justifyContent="flex-start" sx={{ mt: 2, mb: 1 }}>
-        <Grid item sx={{ ml: 2 }}>
+      <Grid container justifyContent="flex-start" sx={{ mt: 2, mb: 1 }}>
+        <Grid sx={{ ml: 2 }}>
           <Typography variant="body1">
             View results as columns or graphs
           </Typography>
         </Grid>
       </Grid>
-      <Grid item sx={{ my: 1 }}>
+      <Grid sx={{ my: 1 }}>
         <Grid container justifyContent="center">
           <TimestampWrapper eventName={TIMESTAMP_KEYS.experiments.viewGraphs}>
             <Button

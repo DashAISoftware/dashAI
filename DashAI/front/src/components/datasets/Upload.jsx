@@ -79,7 +79,7 @@ function Upload({ onFileUpload }) {
       case EMPTY:
         return (
           <React.Fragment>
-            <Grid item>
+            <Grid>
               <input
                 type="file"
                 ref={inputRef}
@@ -88,19 +88,19 @@ function Upload({ onFileUpload }) {
               />
             </Grid>
             {dragActive ? (
-              <Grid item>
+              <Grid>
                 <Typography variant="subtitle1">
                   Drop the files here ...
                 </Typography>
               </Grid>
             ) : (
               <React.Fragment>
-                <Grid item>
+                <Grid>
                   <Typography variant="subtitle1">
                     Drag and drop a file here, or
                   </Typography>
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Button variant="contained">Upload a file</Button>
                 </Grid>
               </React.Fragment>
@@ -127,7 +127,7 @@ function Upload({ onFileUpload }) {
     <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
       <Grid container direction="column" rowSpacing={3}>
         {/* state text */}
-        <Grid item sx={{ textAlign: "center" }}>
+        <Grid sx={{ textAlign: "center" }}>
           <DialogContentText>
             {datasetState === EMPTY && "Upload your dataset"}
             {datasetState === LOADING && "Loading..."}
@@ -141,7 +141,7 @@ function Upload({ onFileUpload }) {
         </Grid>
 
         {/* Drag and drop */}
-        <Grid item>
+        <Grid>
           <Box
             sx={{
               border: 1,
@@ -171,7 +171,7 @@ function Upload({ onFileUpload }) {
             >
               {/* delete uploaded dataset button */}
               {datasetState === LOADED && (
-                <Grid item sx={{ position: "absolute", right: 0, top: 0 }}>
+                <Grid sx={{ position: "absolute", right: 0, top: 0 }}>
                   <IconButton onClick={handleDeleteDataset}>
                     <ClearIcon />
                   </IconButton>

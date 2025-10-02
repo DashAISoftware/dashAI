@@ -72,14 +72,19 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
             onChange={handleSearchFieldChange}
             size="small"
             sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end" onClick={handleClearSearchField}>
-                  <IconButton>
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment
+                    position="end"
+                    onClick={handleClearSearchField}
+                  >
+                    <IconButton>
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
             }}
           />
         </ListItem>

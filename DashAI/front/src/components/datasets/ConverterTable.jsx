@@ -141,7 +141,7 @@ const ConverterTable = ({
         renderCell: ({ row }) => {
           return (
             <Grid container>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography>{row.name}</Typography>
               </Grid>
             </Grid>

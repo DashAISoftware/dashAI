@@ -142,9 +142,9 @@ function PredictionTable({
         <Typography variant="h5" component="h2">
           Current predicted datasets
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={handleNewPredict}
@@ -153,7 +153,7 @@ function PredictionTable({
                 New Prediction
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={() => setUpdateTableFlag(true)}

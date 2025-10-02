@@ -33,25 +33,27 @@ function PluginsToolbar({
 }) {
   return (
     <Grid container justifyContent={"space-between"} paddingBottom={2}>
-      <Grid item container xs={8} spacing={2}>
-        <Grid item xs={8}>
+      <Grid container size={{ xs: 8 }} spacing={2}>
+        <Grid size={{ xs: 8 }}>
           <TextField
             id="input-with-icon-textfield"
             label="Search"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
             variant="outlined"
             value={searchField}
             onChange={handleSearchFieldChange}
             fullWidth
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
         </Grid>
-        <Grid item>
+        <Grid>
           <FormControl variant="outlined" sx={{ minWidth: 120 }}>
             <InputLabel id="select-type-label">Tags</InputLabel>
             <Select
@@ -73,17 +75,15 @@ function PluginsToolbar({
           </FormControl>
         </Grid>
       </Grid>
-
       <Grid
-        item
         container
-        xs={4}
+        size={{ xs: 4 }}
         spacing={2}
         display={"flex"}
         alignItems={"center"}
         justifyContent={"flex-end"}
       >
-        <Grid item>
+        <Grid>
           <ToggleButtonGroup
             value={cardView}
             exclusive
@@ -99,7 +99,7 @@ function PluginsToolbar({
           </ToggleButtonGroup>
         </Grid>
 
-        <Grid item>
+        <Grid>
           <FormControl variant="outlined" sx={{ minWidth: 120 }}>
             <InputLabel id="select-sort-by-label">Sort by</InputLabel>
             <Select

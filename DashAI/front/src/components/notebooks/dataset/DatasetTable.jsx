@@ -104,8 +104,8 @@ export default function DatasetTable({
       .map((field) => ({
         field,
         headerName: field,
-        flex: 1,
         minWidth: 120,
+        width: Math.max(120, field.length * 8 + 40),
         renderHeader: () => (
           <div
             style={{
@@ -212,8 +212,10 @@ export default function DatasetTable({
           anchorEl={anchorEl}
           open={open}
           onClose={handleClose}
-          MenuListProps={{
-            "aria-labelledby": "export-button",
+          slotProps={{
+            list: {
+              "aria-labelledby": "export-button",
+            },
           }}
         >
           <MenuItem onClick={handleExportCsv}>

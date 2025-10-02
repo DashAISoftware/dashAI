@@ -73,7 +73,6 @@ function PluginsCard({
               spacing={1}
             >
               <Grid
-                item
                 sx={{
                   width: cardView ? "100%" : "auto",
                   textOverflow: "ellipsis",
@@ -84,12 +83,12 @@ function PluginsCard({
                   {plugin.name.replace("dashai-", "")}
                 </Typography>
               </Grid>
-              <Grid item>
+              <Grid>
                 <Typography variant="body2">
                   Version: {plugin.installed_version}
                 </Typography>
               </Grid>
-              <Grid item>
+              <Grid>
                 <PluginTags tags={plugin.tags} />
               </Grid>
             </Grid>

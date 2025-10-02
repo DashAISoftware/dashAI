@@ -11,22 +11,26 @@ export function FullscreenImageChat({ open, onClose, imageData }) {
       onClose={onClose}
       maxWidth="xl"
       fullWidth
-      TransitionComponent={Fade}
       transitionDuration={{
         enter: theme.transitions.duration.enteringScreen,
         exit: theme.transitions.duration.leavingScreen,
       }}
-      PaperProps={{
-        sx: {
-          backgroundColor: "rgba(0, 0, 0, 0.9)",
-          boxShadow: "none",
-          position: "relative",
-          m: 0,
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+      slots={{
+        transition: Fade,
+      }}
+      slotProps={{
+        paper: {
+          sx: {
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            boxShadow: "none",
+            position: "relative",
+            m: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
         },
       }}
     >
@@ -48,7 +52,6 @@ export function FullscreenImageChat({ open, onClose, imageData }) {
       >
         <CloseIcon />
       </IconButton>
-
       <Zoom in={open}>
         <Box
           component="img"
