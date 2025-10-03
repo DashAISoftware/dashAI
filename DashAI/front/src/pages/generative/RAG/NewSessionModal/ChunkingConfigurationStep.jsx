@@ -15,33 +15,33 @@ export default function ChunkingConfigurationStep({
 
   // Memoize the initial values to prevent unnecessary re-renders
   const initialValues = useMemo(() => {
-    if (
-      chunkingModel?.parameters &&
-      Object.keys(chunkingModel.parameters).length > 0
-    ) {
-      return chunkingModel.parameters;
+    if (chunkingModel?.params && Object.keys(chunkingModel.params).length > 0) {
+      return chunkingModel.params;
     }
     return defaultValues || {};
-  }, [chunkingModel?.parameters, defaultValues]);
+  }, [chunkingModel?.params, defaultValues]);
 
   useEffect(() => {
     const fetchChunkingModels = async () => {
       const data = await getChunkingComponents();
       setChunkingOptions(data);
-      if (chunkingModel?.name) {
-        const existing = data.find((c) => c.name === chunkingModel.name);
-        if (existing) setSelectedChunking(existing);
+
+      if (chunkingModel?.component) {
+        const existing = data.find((c) => c.name === chunkingModel.component);
+        if (existing) {
+          setSelectedChunking(existing);
+        }
       }
     };
     fetchChunkingModels();
-  }, [chunkingModel?.name]);
+  }, [chunkingModel?.component]);
 
   const isNextEnabled = () => {
     if (!selectedChunking) {
       return false;
     }
     if (!chunkingModel || !chunkingModel.params) {
-      return false; // Ensure params are required
+      return false;
     }
 
     return Object.keys(chunkingModel.params).every((param) => {
@@ -58,11 +58,16 @@ export default function ChunkingConfigurationStep({
   const handleChunkingSelectionChange = (event, newValue) => {
     setSelectedChunking(newValue);
     if (newValue) {
+      const isDifferentModel =
+        !chunkingModel?.component || chunkingModel.component !== newValue.name;
+
       const modelData = {
         component: newValue.name,
-        params: newValue.schema?.properties
-          ? getInitialParamsFromSchema(newValue.schema.properties)
-          : {},
+        params: isDifferentModel
+          ? newValue.schema?.properties
+            ? getInitialParamsFromSchema(newValue.schema.properties)
+            : {}
+          : chunkingModel?.params || {},
       };
       setChunkingModel(modelData);
     } else {
@@ -77,7 +82,6 @@ export default function ChunkingConfigurationStep({
     };
     setChunkingModel(modelData);
 
-    // Validate with the new model data
     const isValid =
       selectedChunking &&
       params &&
