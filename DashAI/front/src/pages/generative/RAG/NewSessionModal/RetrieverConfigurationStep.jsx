@@ -101,15 +101,12 @@ export default function RetrieverConfigurationStep({
     };
     setSelectedRetriever(updatedRetriever);
 
-    // Update the parent component with proper structure
     setRetrieverModel({
       component: selectedRetriever.name,
       params: newParams,
     });
 
     setNextEnabled(true);
-    // Don't close config automatically - let user continue configuring
-    // setOpenConfig(false);
   };
 
   // Layout: two columns if retriever selected, else one column
