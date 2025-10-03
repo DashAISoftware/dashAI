@@ -49,7 +49,6 @@ function GeneratorConfigurationContent({
 
   const { properties } = useFormSchemaStore();
 
-  // Watch for property changes to open configuration modal
   useEffect(() => {
     if (properties.length > 0) {
       const lastProperty = properties[properties.length - 1];
@@ -74,20 +73,23 @@ function GeneratorConfigurationContent({
       const data = await getGeneratorComponents();
       setGenerators(data);
 
-      if (generatorModel?.name) {
+      if (generatorModel?.component) {
         const existingGenerator = data.find(
-          (r) => r.name === generatorModel.name,
+          (r) => r.name === generatorModel.component,
         );
         if (existingGenerator) {
           setCurrentSelectedGeneratorOption(existingGenerator);
+          if (generatorModel.params) {
+            formik.setValues(generatorModel.params);
+          }
         }
       }
     };
     loadAndSetGenerator();
-  }, [generatorModel?.name]);
+  }, [generatorModel?.component]);
 
   const formik = useFormik({
-    initialValues: generatorModel?.parameters || {},
+    initialValues: generatorModel?.params || {},
     validationSchema: validationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {},
@@ -104,8 +106,8 @@ function GeneratorConfigurationContent({
       const initialFormValues = Object.keys(processedProps).reduce(
         (acc, key) => {
           acc[key] =
-            generatorModel?.parameters?.[key] !== undefined
-              ? generatorModel.parameters[key]
+            generatorModel?.params?.[key] !== undefined
+              ? generatorModel.params[key]
               : processedProps[key].placeholder !== undefined
                 ? processedProps[key].placeholder
                 : "";
@@ -118,7 +120,7 @@ function GeneratorConfigurationContent({
       setValidationSchema(null);
       formik.setValues({});
     }
-  }, [currentSelectedGeneratorOption, generatorModel?.parameters]);
+  }, [currentSelectedGeneratorOption, generatorModel?.params]);
 
   useEffect(() => {
     const isValid = !!currentSelectedGeneratorOption && formik.isValid;
