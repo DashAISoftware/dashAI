@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react"; // Add useRef
+import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, TextField } from "@mui/material";
 import DocumentSelector from "../../../../components/generative/RAG/DocumentSelector";
 
 export default function DocumentSelectionStep({
-  documents: propDocumentIds, // Rename to reflect it's IDs
+  documents: propDocumentIds,
   setDocuments,
   setNextEnabled,
   sessionName,
@@ -12,34 +12,16 @@ export default function DocumentSelectionStep({
   sessionDescription,
   setSessionDescription,
 }) {
-  const [selectedDocuments, setSelectedDocuments] = useState([]);
-  const initialLoadRef = useRef(true); // Ref to track initial render
-
   useEffect(() => {
-    if (
-      initialLoadRef.current &&
-      propDocumentIds &&
-      propDocumentIds.length > 0
-    ) {
-      initialLoadRef.current = false;
-    }
-  }, [propDocumentIds]);
-
-  useEffect(() => {
-    const documentIdsSelected = selectedDocuments.length > 0;
+    const hasSelectedDocuments = propDocumentIds && propDocumentIds.length > 0;
     const validSessionName = sessionName.trim() !== "";
-    setNextEnabled(documentIdsSelected && validSessionName);
-  }, [selectedDocuments, sessionName, setNextEnabled]);
+    setNextEnabled(hasSelectedDocuments && validSessionName);
+  }, [propDocumentIds, sessionName, setNextEnabled]);
 
-  useEffect(() => {
-    const currentSelectedIds = selectedDocuments.map((doc) => doc.id);
-    if (
-      JSON.stringify(currentSelectedIds.sort()) !==
-      JSON.stringify(propDocumentIds.sort())
-    ) {
-      setDocuments(currentSelectedIds);
-    }
-  }, [selectedDocuments, setDocuments, propDocumentIds]);
+  const handleDocumentSelectionChange = (selectedDocs) => {
+    const selectedIds = selectedDocs.map((doc) => doc.id);
+    setDocuments(selectedIds);
+  };
 
   const handleSessionNameChange = (event) => {
     setSesssionName(event.target.value);
@@ -47,10 +29,6 @@ export default function DocumentSelectionStep({
 
   const handleSessionDescriptionChange = (event) => {
     setSessionDescription(event.target.value);
-  };
-
-  const handleDocumentSelectionChange = (selectedDocs) => {
-    setSelectedDocuments(selectedDocs);
   };
 
   return (
@@ -96,6 +74,7 @@ export default function DocumentSelectionStep({
 
       <Box flexGrow={1}>
         <DocumentSelector
+          key={`doc-selector-${JSON.stringify(propDocumentIds || [])}`}
           selectedIds={propDocumentIds || []}
           onSelect={handleDocumentSelectionChange}
         />
@@ -105,7 +84,7 @@ export default function DocumentSelectionStep({
 }
 
 DocumentSelectionStep.propTypes = {
-  documents: PropTypes.arrayOf(PropTypes.string).isRequired,
+  documents: PropTypes.arrayOf(PropTypes.number).isRequired,
   setDocuments: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   sessionName: PropTypes.string.isRequired,
