@@ -16,6 +16,7 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks import BaseTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -80,12 +81,29 @@ class PredictJob(BaseJob):
             raise JobError(f"Model {run.model_name} not found in the registry") from e
 
         try:
+            train_dataset: DashAIDataset = load_dataset(
+                str(Path(f"{exp.dataset.file_path}/dataset/"))
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                "Can not load dataset from path {exp.dataset.file_path}/dataset/"
+            ) from e
+        try:
+            task: BaseTask = component_registry[exp.task_name]["class"]()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Task {exp.task_name} not found in the registry",
+            ) from e
+
+        try:
             prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
             y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-            if isinstance(y_pred_proba[0], str):
-                y_pred = y_pred_proba
-            else:
-                y_pred = np.argmax(y_pred_proba, axis=1)
+
+            y_pred = task.process_predictions(
+                train_dataset, y_pred_proba, exp.output_columns[0]
+            )
 
         except ValueError as ve:
             log.error(f"Validation Error: {ve}")
