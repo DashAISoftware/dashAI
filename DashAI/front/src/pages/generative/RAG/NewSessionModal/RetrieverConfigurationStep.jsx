@@ -11,7 +11,6 @@ import useSchema from "../../../../hooks/useSchema";
 
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import FormSchemaDialog from "../../../../components/shared/FormSchemaDialog";
 
 export default function RetrieverConfigurationStep({
   retrieverModel,
@@ -109,26 +108,34 @@ export default function RetrieverConfigurationStep({
     fetchRetrievers();
   }, [selectedRetrievalParadigm, fetchRetrievers]);
 
-  // Handle paradigm change
   const handleRetrievalParadigmChange = (event, newValue) => {
     setSelectedRetrievalParadigm(newValue);
-    if (newValue === "SparseRetriever") {
+    if (newValue?.name === "SparseRetriever") {
       setSelectedRetriever(null);
-    } else {
+      setOpenConfig(false);
+      setNextEnabled(false);
+    } else if (newValue) {
       setRetrieverOptions([newValue]);
       handleRetrieverSelectionChange(event, newValue);
+    } else {
+      setSelectedRetriever(null);
+      setOpenConfig(false);
+      setNextEnabled(false);
     }
   };
 
   // Handle retriever change
   const handleRetrieverSelectionChange = (event, newValue) => {
     setSelectedRetriever(newValue);
-    setOpenConfig(true);
-    setNextEnabled(false);
-    // Optionally reset config if needed
+    if (newValue) {
+      setOpenConfig(true);
+      setNextEnabled(true);
+    } else {
+      setOpenConfig(false);
+      setNextEnabled(false);
+    }
   };
 
-  // Handle config change
   const handleRetrieverParametersSave = (newParams) => {
     const updatedRetriever = {
       ...selectedRetriever,
@@ -144,7 +151,6 @@ export default function RetrieverConfigurationStep({
     setNextEnabled(true);
   };
 
-  // Layout: two columns if retriever selected, else one column
   return (
     <Box
       p={2}
@@ -183,7 +189,7 @@ export default function RetrieverConfigurationStep({
                 option.name === value?.name
               }
               renderInput={(params) => (
-                <TextField {...params} label="Retriever model" />
+                <TextField sx={{ mb: 3 }} {...params} label="Retriever model" />
               )}
             />
           </>
