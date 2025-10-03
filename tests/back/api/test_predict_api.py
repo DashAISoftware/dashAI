@@ -17,6 +17,7 @@ from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
 from DashAI.back.optimizers import OptunaOptimizer
 from DashAI.back.tasks import BaseTask
+from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 
 
 class DummyTask(BaseTask):
@@ -64,6 +65,7 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             JSONDataLoader,
             ModelJob,
             OptunaOptimizer,
+            TabularClassificationTask,
         ]
     )
 
