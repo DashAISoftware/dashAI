@@ -6,16 +6,14 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.classification_task import ClassificationTask
 
 
-class ImageClassificationTask(BaseTask):
+class ImageClassificationTask(ClassificationTask):
     """Base class for image classification tasks.
 
     Here you can change the methods provided by class Task.
     """
-
-    COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
 
     metadata: dict = {
         "inputs_types": [Image],
