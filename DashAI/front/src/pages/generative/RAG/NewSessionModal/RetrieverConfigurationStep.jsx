@@ -30,12 +30,33 @@ export default function RetrieverConfigurationStep({
   const { defaultValues: retrieverInitialParameters } = useSchema({
     modelName: selectedRetriever?.name,
   });
-
-  // Fetch paradigms
   const fetchRetrievalParadigms = async () => {
     try {
       const data = await getRetrievalParadigm();
       setRetrievalParadigms(data);
+
+      if (retrieverModel?.component) {
+        const directParadigm = data.find(
+          (paradigm) => paradigm.name === retrieverModel.component,
+        );
+        if (directParadigm) {
+          setSelectedRetrievalParadigm(directParadigm);
+          // For DenseRetriever, set it as both paradigm and retriever
+          if (directParadigm.name !== "SparseRetriever") {
+            setSelectedRetriever(directParadigm);
+            setOpenConfig(true);
+            setNextEnabled(true);
+          }
+        } else {
+          const sparseParadigm = data.find(
+            (paradigm) => paradigm.name === "SparseRetriever",
+          );
+          if (sparseParadigm) {
+            setSelectedRetrievalParadigm(sparseParadigm);
+          }
+        }
+      }
+
       enqueueSnackbar("Retrieval paradigms loaded successfully!", {
         variant: "success",
       });
@@ -49,7 +70,7 @@ export default function RetrieverConfigurationStep({
 
   useEffect(() => {
     fetchRetrievalParadigms();
-  }, []);
+  }, [retrieverModel?.component]);
 
   // Fetch retrievers when paradigm changes
   const fetchRetrievers = useCallback(async () => {
@@ -63,12 +84,26 @@ export default function RetrieverConfigurationStep({
         selectedRetrievalParadigm.name,
       );
       setRetrieverOptions(retrievers);
-      setSelectedRetriever(null);
+
+      if (retrieverModel?.component) {
+        const existingRetriever = retrievers.find(
+          (r) => r.name === retrieverModel.component,
+        );
+        if (existingRetriever) {
+          setSelectedRetriever(existingRetriever);
+          setOpenConfig(true);
+          setNextEnabled(true);
+        } else {
+          setSelectedRetriever(null);
+        }
+      } else {
+        setSelectedRetriever(null);
+      }
     } else {
       setRetrieverOptions([selectedRetrievalParadigm]);
       setSelectedRetriever(selectedRetrievalParadigm);
     }
-  }, [selectedRetrievalParadigm]);
+  }, [selectedRetrievalParadigm, retrieverModel?.component]);
 
   useEffect(() => {
     fetchRetrievers();
@@ -165,7 +200,10 @@ export default function RetrieverConfigurationStep({
         <FormSchemaContainer>
           <FormSchema
             model={selectedRetriever.name}
-            initialValues={selectedRetriever.parameters}
+            initialValues={{
+              ...selectedRetriever.parameters,
+              ...(retrieverModel?.params || {}),
+            }}
             autoSave={true}
             onFormSubmit={handleRetrieverParametersSave}
           />
