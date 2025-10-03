@@ -108,7 +108,8 @@ export default function RetrieverConfigurationStep({
     });
 
     setNextEnabled(true);
-    setOpenConfig(false);
+    // Don't close config automatically - let user continue configuring
+    // setOpenConfig(false);
   };
 
   // Layout: two columns if retriever selected, else one column
@@ -164,21 +165,14 @@ export default function RetrieverConfigurationStep({
         )}
 
       {selectedRetriever && openConfig && (
-        <FormSchemaDialog
-          modelToConfigure={selectedRetriever.name}
-          open={openConfig}
-          setOpen={setOpenConfig}
-          onFormSubmit={handleRetrieverParametersSave}
-        >
-          <FormSchemaContainer>
-            <FormSchema
-              model={selectedRetriever.name}
-              initialValues={selectedRetriever.parameters}
-              onFormSubmit={handleRetrieverParametersSave}
-              onCancel={() => setOpenConfig(false)}
-            />
-          </FormSchemaContainer>
-        </FormSchemaDialog>
+        <FormSchemaContainer>
+          <FormSchema
+            model={selectedRetriever.name}
+            initialValues={selectedRetriever.parameters}
+            autoSave={true}
+            onFormSubmit={handleRetrieverParametersSave}
+          />
+        </FormSchemaContainer>
       )}
     </Box>
   );
