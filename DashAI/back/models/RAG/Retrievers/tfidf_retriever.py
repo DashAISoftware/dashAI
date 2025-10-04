@@ -19,10 +19,7 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.models.base_model import BaseModel
-from DashAI.back.models.RAG.documents import (
-    PDFDocument,
-    TxtDocument,
-)
+from DashAI.back.models.RAG.documents import PDFDocument, TxtDocument
 from DashAI.back.models.RAG.Retrievers.sparse_retriever import SparseRetriever
 
 similarities = {"cosine": cosine_similarity, "euclidean": euclidean_distances}
@@ -33,7 +30,7 @@ class TFIDFVectorizerSchema(BaseSchema):
         enum_field(
             enum=["ascii", "unicode", None],
         ),
-        placeholder="ascii",
+        placeholder=None,
         description="Whether to strip accents from the text.",
     )  # type: ignore
 
@@ -49,10 +46,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         ),
         placeholder="word",
         description=(
-            "Whether the feature should be made of word or character "
-            "n-grams. Option 'char_wb' creates character n-grams only "
-            "from text inside word boundaries; n-grams at the edges of "
-            "words are padded with space."
+            "Whether the feature should be made of word or character n-grams. "
+            "Option 'char_wb' creates character n-grams only from text inside "
+            "word boundaries; n-grams at the edges of words are padded with space."
         ),
     )  # type: ignore
 
@@ -85,8 +81,8 @@ class TFIDFVectorizerSchema(BaseSchema):
         ),
         placeholder=1.0,
         description=(
-            "When building the vocabulary ignore terms that have a "
-            "document frequency strictly higher than the given threshold "
+            "When building the vocabulary ignore terms that have a document "
+            "frequency strictly higher than the given threshold "
             "(corpus-specific stop words)."
         ),
     )  # type: ignore
@@ -98,8 +94,8 @@ class TFIDFVectorizerSchema(BaseSchema):
         ),
         placeholder=1.0,
         description=(
-            "When building the vocabulary ignore terms that have a "
-            "document frequency strictly lower than the given threshold "
+            "When building the vocabulary ignore terms that have a document "
+            "frequency strictly lower than the given threshold "
             "(corpus-specific stop words)."
         ),
     )  # type: ignore
