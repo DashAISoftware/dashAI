@@ -196,17 +196,20 @@ async def enqueue_job(
         file_target = FileTarget(file_path, validator=MaxSizeValidator(MAX_FILE_SIZE))
         job_type_target = ValueTarget()
         kwargs_target = ValueTarget()
+        n_sample_target = ValueTarget()
 
         parser = StreamingFormDataParser(headers=request.headers)
         parser.register("file", file_target)
         parser.register("job_type", job_type_target)
         parser.register("kwargs", kwargs_target)
+        parser.register("n_sample", n_sample_target)
 
         async for chunk in request.stream():
             parser.data_received(chunk)
 
         job_type = job_type_target.value.decode() if job_type_target.value else None
         kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
+        n_sample = int(kwargs_target.value.decode()) if kwargs_target.value else None
 
         if not job_type or not kwargs_str:
             raise HTTPException(
@@ -218,6 +221,7 @@ async def enqueue_job(
         kwargs["file_path"] = file_path
         kwargs["temp_dir"] = temp_dir
         kwargs["filename"] = filename
+        kwargs["n_sample"] = n_sample
 
         return await _enqueue_job_logic(
             job_type, kwargs, session_factory, component_registry, job_queue

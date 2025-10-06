@@ -68,6 +68,7 @@ class DatasetJob(BaseJob):
         dataset_id = self.kwargs.get("dataset_id")
         notebook_id = self.kwargs.get("notebook_id", None)
         params = self.kwargs.get("params", {})
+        n_sample = self.kwargs.get("n_sample", None)
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
         url = self.kwargs.get("url", "")
@@ -124,6 +125,7 @@ class DatasetJob(BaseJob):
                         ),
                         temp_path=str(temp_dir),
                         params=parsed_params.model_dump(),
+                        n_sample=n_sample,
                     )
                 gc.collect()
                 dataset_save_path = folder_path / "dataset"
