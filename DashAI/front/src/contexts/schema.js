@@ -76,11 +76,19 @@ export const useFormSchemaStore = () => {
     let formValuesByProperties = { ...formValues };
 
     for (const property of properties) {
+      if (!formValuesByProperties) {
+        return null;
+      }
+
       if (property.key in formValuesByProperties) {
         formValuesByProperties = formValuesByProperties[property.key];
       } else {
-        formValuesByProperties =
-          formValuesByProperties.properties.params.comp.params[property.key];
+        if (formValuesByProperties.properties?.params?.comp?.params) {
+          formValuesByProperties =
+            formValuesByProperties.properties.params.comp.params[property.key];
+        } else {
+          return null;
+        }
       }
     }
 
@@ -149,21 +157,33 @@ export const useFormSchemaStore = () => {
   };
 
   const getModelFromCurrentProperty = (property) => {
-    if (formValues === null) return null;
+    if (formValues === null || !property) return null;
 
-    if (properties.length === 0)
-      return getModelFromSubform(formValues[property]);
+    console.log("formValues", formValues);
+    console.log("properties", properties);
+
+    if (properties.length === 0) {
+      return formValues[property]
+        ? getModelFromSubform(formValues[property])
+        : null;
+    }
 
     let params = null;
     for (const prop of properties) {
       if (params === null) {
         params = formValues[prop.key];
+        if (!params) return null;
         continue;
       }
 
-      params = getParamsFromSubform(params)[prop.key];
+      const propParams = getParamsFromSubform(params);
+      if (!propParams || !propParams[prop.key]) return null;
+      params = propParams[prop.key];
     }
-    return getModelFromSubform(params[property]);
+
+    return params && params[property]
+      ? getModelFromSubform(params[property])
+      : null;
   };
 
   const propertyData = useMemo(() => {
@@ -190,6 +210,7 @@ export const useFormSchemaStore = () => {
 
   return {
     formValues,
+    setFormValues,
     properties,
     propertyData,
     valuesByProperties,

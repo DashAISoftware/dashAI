@@ -11,7 +11,15 @@ function FormSchemaButtonGroup({
   backButtonText = "Back",
 }) {
   return (
-    <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
+    <ButtonGroup
+      size="large"
+      sx={{
+        justifyContent: "flex-end",
+        width: "100%",
+        display: "flex",
+        mt: 3,
+      }}
+    >
       {onCancel && (
         <Button variant="outlined" onClick={onCancel}>
           {backButtonText}

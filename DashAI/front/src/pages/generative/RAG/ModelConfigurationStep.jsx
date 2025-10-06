@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
-import FormSchemaWithSelectedModel from "../../../components/shared/FormSchemaWithSelectedModel";
+import FormSchemaWithSelectedModel from "../../../../components/shared/FormSchemaWithSelectedModel";
 
 function ModelConfigurationStep({
   taskName,
   initialParameters = {},
   onConfigurationChange,
-  setNextEnabled
+  setNextEnabled,
 }) {
   const [parameters, setParameters] = useState(initialParameters);
   const [isConfigured, setIsConfigured] = useState(false);

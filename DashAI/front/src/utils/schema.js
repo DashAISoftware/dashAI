@@ -258,21 +258,35 @@ export const checkIfHaveOptimazers = (values) => {
 };
 
 export const getParamsFromSubform = (subform) => {
-  if (!subform) {
+  if (!subform || !subform.properties) {
     return null;
   }
-  if (subform.properties.params.comp) {
+  if (
+    subform.properties.params &&
+    subform.properties.params.comp &&
+    subform.properties.params.comp.params
+  ) {
     return subform.properties.params.comp.params;
   }
-  return subform.properties.params;
+  if (subform.properties.params) {
+    return subform.properties.params;
+  }
+  return null;
 };
 
 export const getModelFromSubform = (subform) => {
-  if (!subform) {
+  if (!subform || !subform.properties) {
     return null;
   }
-  if (subform.properties.params.comp) {
+  if (
+    subform.properties.params &&
+    subform.properties.params.comp &&
+    subform.properties.params.comp.component
+  ) {
     return subform.properties.params.comp.component;
   }
-  return subform.properties.component;
+  if (subform.properties.component) {
+    return subform.properties.component;
+  }
+  return null;
 };

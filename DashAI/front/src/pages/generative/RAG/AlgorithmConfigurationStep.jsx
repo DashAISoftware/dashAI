@@ -1,21 +1,21 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
-import ComponentSelector from "../../../components/generative/RAG/ComponentSelector";
-import { getGeneratorComponents } from "../../../api/rag";
+import ComponentSelector from "../../../../components/generative/RAG/ComponentSelector";
+import { getGeneratorComponents } from "../../../../api/rag";
 
-function AlgorithmConfigurationStep({ 
+function AlgorithmConfigurationStep({
   newSession,
   setNewSession,
-  setNextEnabled
+  setNextEnabled,
 }) {
   const handleConfigurationChange = (generatorConfig) => {
-    setNewSession(prev => ({
+    setNewSession((prev) => ({
       ...prev,
       RAGParameters: {
         ...prev.RAGParameters,
-        generation: generatorConfig
-      }
+        generation: generatorConfig,
+      },
     }));
   };
 

@@ -50,17 +50,18 @@ const defaultNewSession = {
   description: "",
   displayName: "",
   parameters: {
-    "documents": [],
-    "chunking": {
-       "parameters": {},
-     },
-    "retriever_model": {
-      "name": "",
-      "parameters": {},
+    documents: [],
+    chunking_model: {
+      component: "",
+      params: {},
     },
-    "generator_model": { 
-      "name": "",
-      "parameters": {},
+    retriever_model: {
+      component: "",
+      params: {},
+    },
+    generator_model: {
+      component: "",
+      params: {},
     },
   },
 };
@@ -70,20 +71,21 @@ export default function NewSessionModal({
   onClose,
   onSessionSaved,
   onSessionSelect,
-  session
+  session,
 }) {
   const theme = useTheme();
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
-  
-  const [activeStep, setActiveStep] = useState(0);
-  const [stepValidity, setStepValidity] = useState(new Array(steps.length).fill(false));
-  const [sessionData, setSessionData] = useState(session || defaultNewSession);
 
+  const [activeStep, setActiveStep] = useState(0);
+  const [stepValidity, setStepValidity] = useState(
+    new Array(steps.length).fill(false),
+  );
+  const [sessionData, setSessionData] = useState(session || defaultNewSession);
 
   useEffect(() => {
     if (open) {
       setActiveStep(0);
-      if(session) {
+      if (session) {
         const sessionParameters = session.parameters || {};
         const sessionDocuments = sessionParameters.documents || [];
         const sessionChunkingModel = sessionParameters.chunking_model || {};
@@ -101,71 +103,68 @@ export default function NewSessionModal({
               ...sessionChunkingModel,
             },
             retriever_model: {
-              ...sessionRetrieverModel, 
+              ...sessionRetrieverModel,
             },
             generator_model: {
               ...sessionGeneratorModel,
             },
           },
-        })
+        });
       } else {
-        setSessionData(defaultNewSession); 
+        setSessionData(defaultNewSession);
       }
       setStepValidity(new Array(steps.length).fill(false));
     }
   }, [open, session]);
 
   const handleStepValidation = useCallback((stepIndex, isValid) => {
-    setStepValidity(prev => {
+    setStepValidity((prev) => {
       const newValidity = [...prev];
       newValidity[stepIndex] = isValid;
       return newValidity;
     });
-  }, [])
+  }, []);
 
   const isNextOrFinishEnabled = () => {
     if (!stepValidity[activeStep]) {
       return false;
     }
     if (activeStep === steps.length - 1) {
-      return stepValidity.every(isValid => isValid);
+      return stepValidity.every((isValid) => isValid);
     }
     return true;
   };
 
   const handleFinish = async () => {
-    if (!stepValidity.every(isValid => isValid)) {
+    if (!stepValidity.every((isValid) => isValid)) {
       return;
     }
 
     try {
       const finalSessionData = {
-      ...sessionData,
-      name: sessionData.name.trim(),
-      description: sessionData.description.trim() || "",
-      task_name: "RAGTask",
-      parameters: {
-        ...sessionData.parameters,
-        documents: sessionData.parameters.documents || [],
-        chunking_model: sessionData.parameters.chunking || {
-          name: "",
-          parameters: {},
+        ...sessionData,
+        name: sessionData.name.trim(),
+        description: sessionData.description.trim() || "",
+        model_name: "RAGPipeline",
+        task_name: "RAGTask",
+        parameters: {
+          documents: sessionData.parameters.documents || [],
+          chunking_model: sessionData.parameters.chunking_model || {
+            component: "",
+            params: {},
+          },
+          retriever_model: sessionData.parameters.retriever_model || {
+            component: "",
+            params: {},
+          },
+          generation_model: sessionData.parameters.generator_model || {
+            component: "",
+            params: {},
+          },
         },
-        retriever_model: sessionData.parameters.retriever_model || {
-          name: "",
-          parameters: {},
-        },
-        generator_model: sessionData.parameters.generator_model || {
-          name: "",
-          parameters: {},
-        },
-      },
-    };
-
-      console.log("NewSessionModal: Final session data to save:", finalSessionData);
+      };
 
       const savedSession = await onSessionSaved(finalSessionData);
-
 
       if (onSessionSelect) {
         onSessionSelect(savedSession.id);
@@ -208,13 +207,21 @@ export default function NewSessionModal({
             </Grid>
           </Grid>
           <Grid item xs={12} md={9}>
-            <Stepper nonLinear activeStep={activeStep} sx={{ maxWidth: "100%" }}>
+            <Stepper
+              nonLinear
+              activeStep={activeStep}
+              sx={{ maxWidth: "100%" }}
+            >
               {steps.map((step, index) => (
                 <Step
                   key={step.name}
                   completed={stepValidity[index] && activeStep > index}
-                  disabled={activeStep < index}>
-                  <StepButton color="inherit" onClick={() => setActiveStep(index)}>
+                  disabled={activeStep < index}
+                >
+                  <StepButton
+                    color="inherit"
+                    onClick={() => setActiveStep(index)}
+                  >
                     {step.label}
                   </StepButton>
                 </Step>
@@ -227,44 +234,51 @@ export default function NewSessionModal({
       <DialogContent dividers>
         {activeStep === 0 && (
           <DocumentSelectionStep
-            
             documents={sessionData.parameters.documents}
-            setDocuments={
-              (docs) => setSessionData(prev => ({
+            setDocuments={(docs) =>
+              setSessionData((prev) => ({
                 ...prev,
-                parameters: { ...prev.parameters, documents: docs }
+                parameters: { ...prev.parameters, documents: docs },
               }))
             }
             setNextEnabled={(isValid) => handleStepValidation(0, isValid)}
             sessionName={sessionData.name}
-            setSesssionName={(name) => setSessionData(prev => ({
-              ...prev,
-              name: name
-            }))}
+            setSesssionName={(name) =>
+              setSessionData((prev) => ({
+                ...prev,
+                name: name,
+              }))
+            }
             sessionDescription={sessionData.description}
-            setSessionDescription={(description) => setSessionData(prev => ({
-              ...prev,
-              description: description
-            }))}
+            setSessionDescription={(description) =>
+              setSessionData((prev) => ({
+                ...prev,
+                description: description,
+              }))
+            }
           />
         )}
         {activeStep === 2 && (
           <RetrieverConfigurationStep
             retrieverModel={sessionData.parameters.retriever_model}
-            setRetrieverModel={(model) => setSessionData(prev => ({
-              ...prev,
-              parameters: { ...prev.parameters, retriever_model: model }
-            }))}
+            setRetrieverModel={(model) =>
+              setSessionData((prev) => ({
+                ...prev,
+                parameters: { ...prev.parameters, retriever_model: model },
+              }))
+            }
             setNextEnabled={(isValid) => handleStepValidation(2, isValid)}
           />
         )}
         {activeStep === 1 && (
           <ChunkingConfigurationStep
             chunkingModel={sessionData.parameters.chunking_model}
-            setChunkingModel={(model) => setSessionData(prev => ({
-              ...prev,
-              parameters: { ...prev.parameters, chunking_model: model }
-            }))}
+            setChunkingModel={(model) =>
+              setSessionData((prev) => ({
+                ...prev,
+                parameters: { ...prev.parameters, chunking_model: model },
+              }))
+            }
             setNextEnabled={(isValid) => handleStepValidation(1, isValid)}
           />
         )}
@@ -272,24 +286,32 @@ export default function NewSessionModal({
         {activeStep === 3 && (
           <GeneratorConfigurationStep
             generatorModel={sessionData.parameters.generator_model}
-            setGeneratorModel={(model) => setSessionData(prev => ({
-              ...prev,
-              parameters: { ...prev.parameters, generator_model: model }
-            }))}
+            setGeneratorModel={(model) =>
+              setSessionData((prev) => ({
+                ...prev,
+                parameters: { ...prev.parameters, generator_model: model },
+              }))
+            }
             setNextEnabled={(isValid) => handleStepValidation(3, isValid)}
           />
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={() => {
-          activeStep === 0 ? onClose() : setActiveStep(prev => prev - 1);
-        }}>
+        <Button
+          onClick={() => {
+            activeStep === 0 ? onClose() : setActiveStep((prev) => prev - 1);
+          }}
+        >
           {activeStep === 0 ? "Cancel" : "Back"}
         </Button>
         <Button
           variant="contained"
-          onClick={() => activeStep === steps.length - 1 ? handleFinish() : setActiveStep(prev => prev + 1)}
+          onClick={() =>
+            activeStep === steps.length - 1
+              ? handleFinish()
+              : setActiveStep((prev) => prev + 1)
+          }
           disabled={!isNextOrFinishEnabled()}
         >
           {activeStep === steps.length - 1 ? "Finish" : "Next"}

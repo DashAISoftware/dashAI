@@ -33,29 +33,40 @@ export default function DocumentSelector({
   }, []);
 
   useEffect(() => {
-    if (JSON.stringify(selectedIds.sort()) !== JSON.stringify(initialSelectedIds.sort())) {
-        setSelectedIds(initialSelectedIds);
+    // Sync selectedIds with incoming initialSelectedIds only if they're different
+    if (
+      JSON.stringify(selectedIds.sort()) !==
+      JSON.stringify(initialSelectedIds.sort())
+    ) {
+      setSelectedIds(initialSelectedIds);
     }
   }, [initialSelectedIds]);
 
-
   useEffect(() => {
-    if (JSON.stringify(selectedIds.sort()) !== JSON.stringify(previousSelectedIdsRef.current.sort())) {
-        const selectedDocs = documents.filter(doc => selectedIds.includes(doc.id));
-        onSelect(selectedDocs);
-        previousSelectedIdsRef.current = selectedIds; 
+    // Only notify parent when selectedIds actually change
+    if (
+      JSON.stringify(selectedIds.sort()) !==
+      JSON.stringify(previousSelectedIdsRef.current.sort())
+    ) {
+      const selectedDocs = documents.filter((doc) =>
+        selectedIds.includes(doc.id),
+      );
+      onSelect(selectedDocs);
+      previousSelectedIdsRef.current = [...selectedIds]; // Create a new array
     }
-  }, [selectedIds, documents, onSelect]); 
+  }, [selectedIds, documents, onSelect]);
 
   const handleToggleSelection = useCallback((id) => {
-    setSelectedIds(prev => {
-      const newSelected = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    setSelectedIds((prev) => {
+      const newSelected = prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id];
       return newSelected;
     });
   }, []);
 
   const handleSelectAll = useCallback(() => {
-    setSelectedIds(documents.map(doc => doc.id));
+    setSelectedIds(documents.map((doc) => doc.id));
   }, [documents]);
 
   const handleDeselectAll = useCallback(() => {
@@ -65,9 +76,9 @@ export default function DocumentSelector({
   const handleAddDocument = useCallback(async (newDoc) => {
     try {
       const savedDoc = await addDocument(newDoc);
-      setDocuments(prev => [savedDoc, ...prev]);
-      setSelectedIds(prev => [...prev, savedDoc.id]);
-      setUploadKey(prev => prev + 1);
+      setDocuments((prev) => [savedDoc, ...prev]);
+      setSelectedIds((prev) => [...prev, savedDoc.id]);
+      setUploadKey((prev) => prev + 1);
       return savedDoc;
     } catch (error) {
       console.error("Failed to add document:", error);
@@ -78,31 +89,34 @@ export default function DocumentSelector({
   const handleRemoveDocument = useCallback(async (id) => {
     try {
       await deleteDocument(id);
-      setDocuments(prev => prev.filter(doc => doc.id !== id));
-      setSelectedIds(prev => prev.filter(x => x !== id));
+      setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+      setSelectedIds((prev) => prev.filter((x) => x !== id));
     } catch (error) {
       console.error("Failed to delete document:", error);
     }
   }, []);
 
-  const handleFileUpload = useCallback(async (files, url) => {
-    if (!files) return;
+  const handleFileUpload = useCallback(
+    async (files, url) => {
+      if (!files) return;
 
-    console.log("Files to upload at handleFileUpload:", files);
+      console.log("Files to upload at handleFileUpload:", files);
 
-    const fileList = Array.isArray(files) ? files : [files];
+      const fileList = Array.isArray(files) ? files : [files];
 
-    for (const file of fileList) {
-      const docToAdd = {
-        file,
-        optional_metadata: {
-          name: file.name,
-          source: url || 'local_upload',
-        }
-      };
-      await handleAddDocument(docToAdd);
-    }
-  }, [handleAddDocument]);
+      for (const file of fileList) {
+        const docToAdd = {
+          file,
+          optional_metadata: {
+            name: file.name,
+            source: url || "local_upload",
+          },
+        };
+        await handleAddDocument(docToAdd);
+      }
+    },
+    [handleAddDocument],
+  );
 
   return (
     <Box display="flex" gap={2} height="100%">
