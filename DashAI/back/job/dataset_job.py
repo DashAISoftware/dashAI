@@ -83,17 +83,20 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
-            random_name = str(uuid.uuid4())
-            folder_path = config["DATASETS_PATH"] / random_name
+            if n_sample and dataset.file_path != "":
+                folder_path = dataset.file_path
+            else:
+                random_name = str(uuid.uuid4())
+                folder_path = config["DATASETS_PATH"] / random_name
 
-            try:
-                log.debug("Trying to create a new dataset path: %s", folder_path)
-                folder_path.mkdir(parents=True)
-            except FileExistsError as e:
-                log.exception(e)
-                raise JobError(
-                    f"A dataset with the name {random_name} already exists."
-                ) from e
+                try:
+                    log.debug("Trying to create a new dataset path: %s", folder_path)
+                    folder_path.mkdir(parents=True)
+                except FileExistsError as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"A dataset with the name {random_name} already exists."
+                    ) from e
 
             try:
                 if notebook_id is not None:
