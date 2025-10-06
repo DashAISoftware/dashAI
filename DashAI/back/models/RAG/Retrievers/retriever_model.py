@@ -154,3 +154,19 @@ class RetrieverModel(BaseModel):
             List[BaseDocument]: A list of retrieved documents.
         """
         raise NotImplementedError("This method should be implemented by subclasses.")
+
+    def validate_documents_in_folder(self, documents: List[BaseDocument]) -> bool:
+        """
+        Validate that the provided documents exist in their specified paths.
+
+        Args:
+            documents (List[BaseDocument]): A list of documents to validate.
+
+        Returns:
+            bool: True if all specified documents are present in the folder, False otherwise.
+        """
+        for doc in documents:
+            if not os.path.exists(doc.file_path):
+                print(f"Document {doc.file_path} is missing.")
+                return False
+        return True

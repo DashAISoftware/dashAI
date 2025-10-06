@@ -2,16 +2,18 @@ from typing import List, Tuple, Any
 
 from DashAI.back.models.RAG.prompts.prompt import Prompt
 
-class AugmentationPrompt(Prompt):
+class DefaultAugmentationPrompt(Prompt):
     """
     AugmentationPrompt class for generating augmented retrieval prompts,
     it uses the language model to generate keywords or phrases that can be used to augment the input.
     """
+
+
     @staticmethod
     def format(
-            input: str, 
-            history:List[Tuple[str, str]],
-            n_seach_terms: int = 5,
+            input: str,
+            history: List[Tuple[str, str]],
+            n_search_terms: int = 5,
             **kwargs: Any
         ) -> str:
         """
@@ -32,7 +34,7 @@ class AugmentationPrompt(Prompt):
             formatted_history = ""
 
         keyword_dict = "{'keywords': [" 
-        for i in range(n_seach_terms):
+        for i in range(n_search_terms):
             keyword_dict += f"'keyword_{i+1}', "
         keyword_dict = keyword_dict[:-2] + "]}"
         return f"""
@@ -43,8 +45,8 @@ class AugmentationPrompt(Prompt):
         {input}
         The chat history is: 
         {formatted_history}
-        The number of keywords or phrases to generate is {n_seach_terms}.
-        Please generate {n_seach_terms} keywords or phrases that can be used to search for relevant information.
+        The number of keywords or phrases to generate is {n_search_terms}.
+        Please generate {n_search_terms} keywords or phrases that can be used to search for relevant information.
         The keywords or phrases should be concise and to the point. You must fill the following template:
         {keyword_dict}
         """

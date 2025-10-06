@@ -136,7 +136,6 @@ async def upload_document(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in metadata")
 
-    print(f"Metadata received: {metadata_dict}")
     file_name = metadata_dict.get("file_name")
     last_modified = metadata_dict.get("last_modified")
 
@@ -189,6 +188,8 @@ async def upload_document(
                     file_path=str(file_path),
                     file_hash=hash256,
                     optional_metadata=optional_metadata or None,
+                    sessions_related=[],
+                    pipelines_related=[],
                 )
                 db.add(doc)
                 db.commit()
@@ -207,6 +208,29 @@ async def upload_document(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
                 ) from e
+
+@router.get("/sessions-related/{document_id}", response_model=List[int])
+async def get_document_sessions_related(
+    document_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get all session IDs related to a specific document."""
+    with session_factory() as db:
+        try:
+            document = db.get(Document, document_id)
+            if not document:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Document {document_id} does not exist in DB.",
+                )
+            session_ids = [session.id for session in document.sessions_related]
+            return session_ids
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,16 +1,31 @@
 from typing import Any, List, Tuple
-from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.models.RAG.prompts.context_merge.context_merge_prompt import ContextMergePrompt
 
-class ContextMergePrompt(Prompt):
+class DefaultContextMergePrompt(ContextMergePrompt):
     """
-    ContextMergePrompt class for generating prompts that merge the use input, the retrieved 
+    Default ContextMergePrompt for generating prompts that merge the use input, the retrieved
     documents and the chat history into a single context for the language model.
     """
+
+    @classmethod
+    def validate_template(cls, template: str) -> bool:
+        """
+        Validate that the template contains all required placeholders.
+        Args:
+            template (str): The prompt template to be validated.
+        Returns:
+            bool: True if the template is valid, False otherwise.
+        """
+        for placeholder in cls.required_placeholders:
+            if placeholder not in template:
+                return False
+        return True
+
     @staticmethod
     def format(
             input: str, 
             history:List[Tuple[str, str]],
-            documents: str,
+            chunks: List[str],
             **kwargs: Any
         ) -> str:
         """
@@ -30,7 +45,7 @@ class ContextMergePrompt(Prompt):
         The user input is:
         {input}
         The retrieved documents are:
-        {documents}
+        {chunks}
         The chat history is:
         {history}
         Please generate a response that takes into account the input, the retrieved documents and the chat history, you

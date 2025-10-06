@@ -3,6 +3,7 @@ from typing import Any, Tuple, List, Dict
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
+    int_field,
     schema_field,
     list_field,
     string_field
@@ -10,36 +11,65 @@ from DashAI.back.core.schema_fields import (
 
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
+
+from DashAI.back.models.RAG.chunking_models import (
+    CharacterChunkModel,
+    TokenChunkModel,
+    BaseChunkingModel)
+
+chunking_models: Dict[str, BaseChunkingModel] = {
+    "CharacterChunkModel": CharacterChunkModel,
+    "TokenChunkModel": TokenChunkModel,
+}
+
 from DashAI.back.models.RAG.Retrievers import (
     TFIDFRetriever,
     DenseRetriever,
     RetrieverModel)
 
+retriever_models: Dict[str, RetrieverModel] = {
+    "TFIDFRetriever": TFIDFRetriever,
+    "DenseRetriever": DenseRetriever,
+}
+
 from DashAI.back.models.RAG.prompts import (
     ContextMergePrompt,
-    AugmentationPrompt
+    DefaultContextMergePrompt,
+    CustomAugmentationPrompt,
+    AugmentationPrompt,
+    DefaultAugmentationPrompt,
+    CustomAugmentationPrompt
 )
+prompts = {
+    "DefaultContextMergePrompt": DefaultContextMergePrompt,
+    "CustomContextMergePrompt": ContextMergePrompt,
+    "DefaultAugmentationPrompt": DefaultAugmentationPrompt,
+    "CustomAugmentationPrompt": CustomAugmentationPrompt,
+}
 
 from DashAI.back.models.hugging_face import (
     DeepSeekModel,
     QwenModel)
 
-retriever_models = {
-    "TFIDFRetriever": TFIDFRetriever,
-    "DenseRetriever": DenseRetriever,
-}
 
 generation_models = {
     "DeepSeekModel": DeepSeekModel,
     "QwenModel": QwenModel,
 }
 
+class RAGPipelineParametersError(Exception):
+    """Custom exception for invalid RAG pipeline parameters."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class RAGPipelineSchema(BaseSchema):
     """Schema for RAG pipeline."""
     # Document collection parameters
     documents: schema_field(
         list_field(
-            string_field(),
+            int_field(),
             min_items=1,
         ),
         placeholder=None,
@@ -69,6 +99,7 @@ class RAGPipelineSchema(BaseSchema):
         description="Text generation model used in the RAG pipeline."
     ) # type: ignore
 
+
 class RAGPipeline(BaseGenerativeModel):
     """Retrieval-Augmented Generation (RAG) pipeline."""
     
@@ -87,13 +118,22 @@ class RAGPipeline(BaseGenerativeModel):
             max_distance (float): The maximum distance allowed for retrieved documents.
         """
         print("Initializing RAG pipeline")
+        self.validate_params(kwargs)
+        
         try:
-            documents_paths = kwargs['documents']
+            documents = kwargs['documents']
+            chunking_args = kwargs['chunking_model']
             retriever_args = kwargs['retriever_model']
             generation_model_args = kwargs['generation_model']
         except KeyError as e:
             raise ValueError(f"Missing required RAG pipeline parameter: {e}")
         
+        try:
+            chunking_model_class = chunking_models[chunking_args["component"]]
+            chunking_params = chunking_args["params"]
+        except KeyError as e:
+            raise ValueError(f"Invalid chunking model specified: {e}")
+
         try:
             retriever_model_class = retriever_models[retriever_args["component"]]
             retriever_params = retriever_args['params']
@@ -111,7 +151,7 @@ class RAGPipeline(BaseGenerativeModel):
         for path in documents_paths:
             assert isinstance(path, str), f"Each document path must be a string, got {type(path)}"
 
-        print("Initializing LLM model")
+        print(f"Initializing LLM model {generation_model_args['component']}")
         self.llm_model: TextToTextGenerationTaskModel = generation_model_class(**generation_params)
 
 
@@ -121,12 +161,32 @@ class RAGPipeline(BaseGenerativeModel):
         for key, value in retriever_params.items():
             new_retriever_args[key] = value
 
-        print("Initializing retriever model")
+        print(f"Initializing retriever model {retriever_args['component']}")
         self.retriever: RetrieverModel = retriever_model_class(**new_retriever_args)
 
         self.retrieval_algorithm = "SINGLE_INTERACTION"
         print("RAG pipeline initialized")
 
+    def validate_params(
+            self, 
+            params: dict):
+        """Validate RAG pipeline parameters."""
+        required_keys = ["documents", "chunking_model", "retriever_model", "generation_model", "prompt"]
+        for key in required_keys:
+            if key not in params:
+                raise RAGPipelineParametersError(f"Missing required parameter: {key}")
+        if not isinstance(params["documents"], list) or len(params["documents"]) == 0:
+            raise RAGPipelineParametersError("Documents must be a non-empty list.")
+        for model in ["chunking_model", "retriever_model", "generation_model"]:
+            if "component" not in params[model]:
+                raise RAGPipelineParametersError(f"Missing 'component' in {model}.")
+            if "params" not in params[model]:
+                raise RAGPipelineParametersError(f"Missing 'params' in {model}.")
+        if "documents_ids" in any(params["chunking_model"], params["retriever_model"], params["generation_model"]):
+            raise RAGPipelineParametersError("Models should not contain 'documents_ids'; it is specified globally.")
+        if not params["prompt"]["type"]:
+            raise RAGPipelineParametersError("Missing 'type' in prompt.")
+        if not params["prompt"]["template"]:
 
     def single_interaction(self, input: str, history: List[Tuple[str, str]] = None) -> List[Tuple[str, str, int]]:
         """

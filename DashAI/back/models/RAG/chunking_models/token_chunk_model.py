@@ -39,7 +39,7 @@ class TokenChunkModel(BaseChunkingModel):
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
 
 
-    def chunk(self, document:BaseDocument):
+    def chunk_document(self, document:BaseDocument):
         text = document.get_text()
 
         tokens = self.tokenizer.tokenize(text)

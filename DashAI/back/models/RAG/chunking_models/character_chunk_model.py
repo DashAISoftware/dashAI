@@ -39,7 +39,7 @@ class CharacterChunkModel(BaseChunkingModel):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
-    def chunk(self, document: BaseDocument) -> List[str]:
+    def chunk_document(self, document: BaseDocument) -> List[str]:
         """
         Split the document into chunks based on character count.
         

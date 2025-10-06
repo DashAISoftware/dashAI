@@ -1,9 +1,9 @@
 import logging
 import pathlib
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint, ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -374,23 +374,7 @@ class ProcessData(Base):
     process = relationship(
         "GenerativeProcess", foreign_keys=[process_id], overlaps="input,output"
     )
-
-
-class Document(Base):
-    __tablename__ = "RAG_document"
-    """
-    Table to store all the information about a document in the RAG system.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    file_name: Mapped[str] = mapped_column(String, nullable=False)
-    file_path: Mapped[str] = mapped_column(String, nullable=False)
-    file_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-    optional_metadata: Mapped[JSON] = mapped_column(JSON, nullable=True)
-
-    def __repr__(self) -> str:
-        return f"<Document(id={self.id}, file_name={self.filename}, created={self.created})>"
-    
+   
 
 class GenerativeSession(Base):
     __tablename__ = "generative_session"
@@ -622,3 +606,245 @@ class Explorer(Base):
             self.delivery_time = None
             self.start_time = None
             self.end_time = None
+
+
+class Document(Base):
+    __tablename__ = "RAG_document"
+    """
+    Table to store all the information about a document in the RAG system.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    file_name: Mapped[str] = mapped_column(String, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    file_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    optional_metadata: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    sessions_related: Mapped[Optional[List["GenerativeSession"]]] = relationship(
+        "GenerativeSession", backref="RAG_document"
+    )
+    pipelines_related: Mapped[Optional[List["RAGPipeline"]]] = relationship(
+        "RAGPipeline", backref="RAG_document"
+    )
+
+    __table_args__ = (
+        UniqueConstraint('file_name', 'file_hash', name='_file_name_hash_uc'),
+        UniqueConstraint('file_path', 'file_hash', name='_file_path_hash_uc'),
+        UniqueConstraint('file_name', 'file_path', name='_file_name_path_uc'),
+    )
+    def __repr__(self) -> str:
+        return f"<Document(id={self.id}, file_name={self.file_name}, created={self.created}, RAG_sessions={self.sessions_related})>"
+
+
+class RAGPipeline(Base):
+    __tablename__ = "RAG_pipeline"
+    """
+    Table to store the RAG pipelines created by the user.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    session: Mapped[int] = mapped_column(
+        ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False
+    )
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    documents: Mapped[List["Document"]] = relationship(
+        "Document", backref="RAG_pipeline"
+    )
+    chunking_model_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_chunking_model.id", ondelete="CASCADE"), nullable=False
+    )
+    chunks: Mapped[List["RAGChunk"]] = relationship(
+        "RAGChunk", backref="RAG_pipeline", cascade="all, delete-orphan"
+    )
+    retriever_model_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_retriever_model.id", ondelete="CASCADE"), nullable=False
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    __table_args__ = (
+        UniqueConstraint('id', 'session', name='_id_session_uc'),
+    )
+
+
+class RAGChunkingModel(Base):
+    __tablename__ = "RAG_chunking_model"
+    """
+    Table to store all the chunking models used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    sessions_related: Mapped[List["GenerativeSession"]] = relationship(
+        "GenerativeSession", backref="RAG_chunking_model"
+    )
+    pipelines_related: Mapped[List["RAGPipeline"]] = relationship(
+        "RAGPipeline", backref="RAG_chunking_model"
+    )
+    chunks: Mapped[List["RAGChunk"]] = relationship(
+        "RAGChunk", backref="RAG_chunking_model", cascade="all, delete-orphan"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+
+class RAGChunk(Base):
+    __tablename__ = "RAG_chunk"
+    """
+    Table to store all the chunks of documents used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    chunk_text: Mapped[str] = mapped_column(String, nullable=False)
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_document.id", ondelete="CASCADE"), nullable=False
+    )
+    chunking_model_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_chunking_model.id", ondelete="CASCADE"), nullable=False
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        UniqueConstraint('chunk_text', 'document_id', name='_chunk_document_uc'),
+    )
+
+    def __repr__(self) -> str:
+        return f"<RAGChunk(id={self.id}, document_id={self.document_id}, created={self.created})>"
+
+
+class RAGRetrieverModel(Base):
+    __tablename__ = "RAG_retriever_model"
+    """
+    Table to store all the retriever models used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    paradigm: Mapped[str] = mapped_column(String, nullable=False)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    chunks_ids: Mapped[List[int]] = mapped_column(ARRAY(Integer), nullable=True)
+    
+    chunks: Mapped[List["RAGChunk"]] = relationship(
+        "RAGChunk", backref="RAG_retriever_model", cascade="all, delete-orphan"
+    )
+    
+    sessions_related: Mapped[List["GenerativeSession"]] = relationship(
+        "GenerativeSession", backref="RAG_retriever_model"
+    )
+    pipelines_related: Mapped[List["RAGPipeline"]] = relationship(
+        "RAGPipeline", backref="RAG_retriever_model"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+class RAGRetriever(Base):
+    __tablename__ = "RAG_retriever"
+    """
+    Abstract base class for RAG retrievers.
+    """
+    
+
+
+class RAGDenseRetriever(Base):
+    __tablename__ = "RAG_dense_retriever"
+    """
+    Table to store all the dense retriever models used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    retriever_model_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_retriever_model.id", ondelete="CASCADE"), nullable=False
+    )
+    embedding_model_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_embedding_model.id", ondelete="CASCADE"), nullable=False
+    )
+    chunks_embeddings: Mapped[List["RAGChunkEmbedding"]] = relationship(
+        "RAGChunkEmbedding", backref="RAG_dense_retriever", cascade="all, delete-orphan"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+
+class RAGSparseRetriever(Base):
+    __tablename__ = "RAG_sparse_retriever"
+    """
+    Table to store all the sparse retriever models used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    retriever_model_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_retriever_model.id", ondelete="CASCADE"), nullable=False
+    )
+    storage_folder: Mapped[str] = mapped_column(String, nullable=False)
+    stored_files: Mapped[List[str]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+
+class RAGEmbeddingModel(Base):
+    __tablename__ = "RAG_embedding_model"
+    """
+    Table to store all the embedding models used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    sessions_related: Mapped[List["GenerativeSession"]] = relationship(
+        "GenerativeSession", backref="RAG_embedding_model"
+    )
+    dense_retrievers: Mapped[List["RAGDenseRetriever"]] = relationship(
+        "RAGDenseRetriever", backref="RAG_embedding_model", cascade="all, delete-orphan"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+
+class RAGChunkEmbedding(Base):
+    __tablename__ = "RAG_chunk_embedding"
+    """
+    Table to store all the chunk embeddings used in RAG pipelines.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    chunk_id: Mapped[int] = mapped_column(
+        ForeignKey("RAG_chunk.id", ondelete="CASCADE"), nullable=False
+    )
+    dimension: Mapped[int] = mapped_column(nullable=False)
+    embedding_vector: Mapped[List[float]] = mapped_column(JSON, nullable=False)
+    model: Mapped[int] = mapped_column(
+        ForeignKey("RAG_embedding_model.id", ondelete="CASCADE"), nullable=False
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    sessions_related: Mapped[List["GenerativeSession"]] = relationship(
+        "GenerativeSession", backref="RAG_chunk_embedding"
+    )
+    retrievers_related: Mapped[List["RAGDenseRetriever"]] = relationship(
+        "RAGDenseRetriever", backref="RAG_chunk_embedding"
+    )
+    
+
+    __table_args__ = (
+        UniqueConstraint('chunk_id', 'model', name='_chunk_model_uc'),
+    )
