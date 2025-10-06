@@ -99,34 +99,9 @@ function ColumnSelector({
     };
   }, [file_path]);
 
-  // Handle automatic column selection based on cardinality
   useEffect(() => {
-    // Auto-select only once at start if no initial selection provided
     if (rows.length > 0 && rowSelectionModel.length === 0) {
-      const validIds = getValidColumnIds();
-      let autoSelection = [];
-
-      if (inputCardinality.exact && validIds.length >= inputCardinality.exact) {
-        autoSelection = validIds.slice(0, inputCardinality.exact);
-      } else if (inputCardinality.max && validIds.length > 0) {
-        autoSelection = validIds.slice(
-          0,
-          Math.min(validIds.length, inputCardinality.max),
-        );
-      } else if (
-        inputCardinality.min &&
-        validIds.length >= inputCardinality.min
-      ) {
-        autoSelection = inputCardinality.max
-          ? validIds.slice(0, inputCardinality.min)
-          : validIds;
-      } else {
-        autoSelection = validIds;
-      }
-
-      if (autoSelection.length > 0) {
-        setRowSelectionModel(autoSelection);
-      }
+      setRowSelectionModel([]);
     }
   }, [rows.length]);
 
