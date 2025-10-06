@@ -94,10 +94,13 @@ from DashAI.back.models import (
 )
 from DashAI.back.models.RAG import (
     # Prompts
-    AugmentationPrompt,
+    DefaultGenerationPrompt,
+    CustomGenerationPrompt,
+    DefaultQnAGenerationPrompt,
+    DefaultAugmentationPrompt,
+    CustomAugmentationPrompt,
     # Chunking Models
     CharacterChunkModel,
-    ContextMergePrompt,
     # Retrievers
     DenseRetriever,
     # Encodings
@@ -283,8 +286,11 @@ def get_initial_components():
         FastTextEmbedding,
         HuggingFaceEmbedding,
         # Prompts
-        AugmentationPrompt,
-        ContextMergePrompt,
+        DefaultGenerationPrompt,
+        CustomGenerationPrompt,
+        DefaultQnAGenerationPrompt,
+        DefaultAugmentationPrompt,
+        CustomAugmentationPrompt,
         # Retrievers
         DenseRetriever,
         SparseRetriever,

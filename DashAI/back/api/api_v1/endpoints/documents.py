@@ -136,7 +136,6 @@ async def upload_document(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON in metadata")
 
-    print(f"Metadata received: {metadata_dict}")
     file_name = metadata_dict.get("file_name")
     last_modified = metadata_dict.get("last_modified")
 

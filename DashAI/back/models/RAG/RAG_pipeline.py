@@ -16,8 +16,8 @@ from DashAI.back.models.RAG.Retrievers import (
     RetrieverModel)
 
 from DashAI.back.models.RAG.prompts import (
-    ContextMergePrompt,
-    AugmentationPrompt
+    DefaultGenerationPrompt,
+    DefaultAugmentationPrompt
 )
 
 from DashAI.back.models.hugging_face import (
@@ -150,14 +150,14 @@ class RAGPipeline(BaseGenerativeModel):
         Returns:
             str: The generated response.
         """
-        augmentation_prompt = AugmentationPrompt.format(
+        augmentation_prompt = DefaultAugmentationPrompt.format(
             input=input,
             history=history,
-            n_seach_terms=5
+            n_search_terms=5
         )
-        augementation_response = self.llm_model.generate(augmentation_prompt)[0]
-        print(f"Augmentation response: {augementation_response}")
-        search_terms = augementation_response.split("keywords:")[1].strip()
+        augmentation_response = self.llm_model.generate(augmentation_prompt)[0]
+        print(f"Augmentation response: {augmentation_response}")
+        search_terms = augmentation_response.split("keywords:")[1].strip()
         search_terms = search_terms.split(",")
         if len(search_terms) > 5:
             search_terms = search_terms[:5]
@@ -186,7 +186,7 @@ class RAGPipeline(BaseGenerativeModel):
             doc_name = doc_file.split("/")[-1]
             documents_str += f"Document '{doc_name}' in chunk: {chunk}:\n{doc_content}\n\n"
 
-        prompt = ContextMergePrompt.format(
+        prompt = DefaultGenerationPrompt.format(
             input=message,
             history=None,
             documents=documents_str
