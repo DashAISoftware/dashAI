@@ -99,15 +99,13 @@ function ColumnSelector({
     };
   }, [file_path]);
 
-  useEffect(() => {
-    if (rows.length > 0 && rowSelectionModel.length === 0) {
-      setRowSelectionModel([]);
-    }
-  }, [rows.length]);
-
   // Validate current selection
   const isValidSelection = useCallback(
     (selection) => {
+      if (selection.length === 0) {
+        return false;
+      }
+
       if (
         inputCardinality.exact &&
         selection.length !== inputCardinality.exact
