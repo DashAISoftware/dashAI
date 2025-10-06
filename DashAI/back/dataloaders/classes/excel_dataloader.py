@@ -176,7 +176,7 @@ class ExcelDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-        n_sample: int | None = False,
+        n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load the uploaded Excel files into a DatasetDict.
 

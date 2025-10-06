@@ -22,7 +22,7 @@ class AudioDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
-        n_sample: int | None = False,
+        n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load and audio dataset into a DatasetDict.
 
