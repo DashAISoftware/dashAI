@@ -1,12 +1,25 @@
 from typing import List, Tuple, Any
 
-from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.models.RAG.prompts.augmentation import AugmentationPrompt
 
-class CustomAugmentationPrompt(Prompt):
+class CustomAugmentationPrompt(AugmentationPrompt):
     """
     User-defined augmentation prompt template for generating augmented retrieval prompts.
     It uses the language model to generate keywords or phrases that can be used to augment the input
     """
+
+    metadata = {
+        "name": "Custom Augmentation Prompt",
+        "description": "User-defined prompt template for generating augmented retrieval prompts.",
+        "type": "augmentation",
+        "required_placeholders": AugmentationPrompt.required_placeholders,
+        "optional_placeholders": AugmentationPrompt.optional_placeholders,
+        "placeholder_descriptions": {
+            "{input}": "The user input message.",
+            "{history}": "The chat history (optional) to be included in the context.",
+            "{n_search_terms}": "The number of search terms to generate."
+        }
+    }
 
 
     def __init__(self, template: str):
@@ -18,8 +31,8 @@ class CustomAugmentationPrompt(Prompt):
     def format(
             self,
             input: str, 
-            history:List[Tuple[str, str]],
-            n_search_terms: int = 5,
+            n_search_terms: int,
+            history: List[Tuple[str, str]] = None,
             **kwargs: Any
         ) -> str:
         """

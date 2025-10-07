@@ -1,19 +1,49 @@
 from typing import List, Tuple, Any
 
-from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.models.RAG.prompts.augmentation.augmentation_prompt import AugmentationPrompt
 
-class DefaultAugmentationPrompt(Prompt):
+template = """
+You are a intelligent and insightful assistant. Your task is to generate keywords or phrases to search for
+relevant information based on the input provided. The keywords or phrases should be relevant to the input
+and should help in retrieving useful information to improve the precision of the response.
+The user input is:
+{input}
+The chat history is: 
+{history}
+The number of keywords or phrases to generate is {n_search_terms}.
+Please generate {n_search_terms} keywords or phrases that can be used to search for relevant information.
+The keywords or phrases should be concise and to the point. You must fill the following template:
+{
+'keywords': ['keyword_1', 'keyword_2', ..., 'keyword_n']}
+}
+"""
+
+class DefaultAugmentationPrompt(AugmentationPrompt):
     """
     AugmentationPrompt class for generating augmented retrieval prompts,
     it uses the language model to generate keywords or phrases that can be used to augment the input.
     """
+    metadata = {
+        "name": "Default Augmentation Prompt",
+        "description": "Default prompt template for generating augmented retrieval prompts.",
+        "type": "augmentation",
+        "required_placeholders": AugmentationPrompt.required_placeholders,
+        "optional_placeholders": AugmentationPrompt.optional_placeholders,
+        "placeholder_descriptions": {
+            "{input}": "The user input message.",
+            "{history}": "The chat history (optional) to be included in the context.",
+            "{n_search_terms}": "The number of search terms to generate."
+        },
+        "template": template
+    }
 
+    template = template
 
     @staticmethod
     def format(
             input: str,
-            history: List[Tuple[str, str]],
-            n_search_terms: int = 5,
+            n_search_terms: int,
+            history: List[Tuple[str, str]] = None,
             **kwargs: Any
         ) -> str:
         """
@@ -26,28 +56,13 @@ class DefaultAugmentationPrompt(Prompt):
         Returns:
             str: The formatted prompt.
         """
+        buffer = template
+        buffer = buffer.replace("{input}", input)
         if history:
-            formatted_history = "\n".join(
+            buffer = buffer.replace("{history}", "\n".join(
                 [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
-            )
+            ))
         else:
-            formatted_history = ""
-
-        keyword_dict = "{'keywords': [" 
-        for i in range(n_search_terms):
-            keyword_dict += f"'keyword_{i+1}', "
-        keyword_dict = keyword_dict[:-2] + "]}"
-        return f"""
-        You are a intelligent and insightful assistant. Your task is to generate keywords or phrases to search for
-        relevant information based on the input provided. The keywords or phrases should be relevant to the input
-        and should help in retrieving useful information to improve the precision of the response.
-        The user input is:
-        {input}
-        The chat history is: 
-        {formatted_history}
-        The number of keywords or phrases to generate is {n_search_terms}.
-        Please generate {n_search_terms} keywords or phrases that can be used to search for relevant information.
-        The keywords or phrases should be concise and to the point. You must fill the following template:
-        {keyword_dict}
-        """
-    
+            buffer = buffer.replace("{history}", "No previous conversation.")
+        buffer = buffer.replace("{n_search_terms}", str(n_search_terms))
+        return buffer

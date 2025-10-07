@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
-import NewSessionModal from "./NewSessionModal";
+import { useState, useEffect, useCallback } from "react";
+import { Box, CircularProgress, Typography } from "@mui/material";
+import NewSessionModal from "./NewSessionModal/NewSessionModal";
 import RAGSessionsTable from "./RAGSessionsTable";
-import { getRAGSessions, createRAGSession, loadDocuments, deleteDocument } from "../../../api/rag";
+import {
+  getRAGSessions,
+  createRAGSession,
+  loadDocuments,
+  deleteDocument,
+} from "../../../api/rag";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
-
 
 function RAGHomePage({ onSessionCreated, onSessionSelect }) {
   const [showModal, setShowModal] = useState(false);
@@ -51,26 +55,31 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
   const handleCreateOrUpdateSession = async (sessionData) => {
     try {
       const savedSession = await createRAGSession(sessionData);
-      console.log("RAGHomePage: New/Updated RAG session saved:", savedSession);
 
       await loadSessions();
-      onSessionCreated(savedSession);
+      if (onSessionCreated) {
+        onSessionCreated(savedSession);
+      }
       setShowModal(false);
 
       return savedSession;
     } catch (error) {
+      console.error("RAGHomePage: Error saving session:", error);
       throw error;
     }
   };
 
-  const handleRemoveDocumentFromTable = useCallback(async (id) => {
-    try {
-      await deleteDocument(id);
-      await fetchAllDocuments();
-    } catch (error) {
-      console.error("RAGHomePage: Failed to delete document:", error);
-    }
-  }, [fetchAllDocuments]);
+  const handleRemoveDocumentFromTable = useCallback(
+    async (id) => {
+      try {
+        await deleteDocument(id);
+        await fetchAllDocuments();
+      } catch (error) {
+        console.error("RAGHomePage: Failed to delete document:", error);
+      }
+    },
+    [fetchAllDocuments],
+  );
 
   return (
     <Box

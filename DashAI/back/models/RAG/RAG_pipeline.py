@@ -9,6 +9,10 @@ from DashAI.back.core.schema_fields import (
     string_field
 )
 
+from DashAI.back.dependencies.registry import component_registry
+from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
+from DashAI.back.models.RAG.chunking_models.character_chunk_model import CharacterChunkModel
+from DashAI.back.models.RAG.chunking_models.token_chunk_model import TokenChunkModel
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
 
@@ -33,24 +37,31 @@ retriever_models: Dict[str, RetrieverModel] = {
 }
 
 from DashAI.back.models.RAG.prompts import (
-    ContextMergePrompt,
-    DefaultContextMergePrompt,
-    CustomAugmentationPrompt,
-    AugmentationPrompt,
+    DefaultGenerationPrompt,
     DefaultAugmentationPrompt,
+    CustomGenerationPrompt,
     CustomAugmentationPrompt
 )
 prompts = {
-    "DefaultContextMergePrompt": DefaultContextMergePrompt,
-    "CustomContextMergePrompt": ContextMergePrompt,
+    "DefaultGenerationPrompt": DefaultGenerationPrompt,
     "DefaultAugmentationPrompt": DefaultAugmentationPrompt,
-    "CustomAugmentationPrompt": CustomAugmentationPrompt,
+    "CustomGenerationPrompt": CustomGenerationPrompt,
+    "CustomAugmentationPrompt": CustomAugmentationPrompt
 }
 
 from DashAI.back.models.hugging_face import (
     DeepSeekModel,
     QwenModel)
 
+chunking_models = {
+    "CharacterChunkModel": CharacterChunkModel,
+    "TokenChunkModel": TokenChunkModel,
+}
+
+retriever_models = {
+    "TFIDFRetriever": TFIDFRetriever,
+    "DenseRetriever": DenseRetriever,
+}
 
 generation_models = {
     "DeepSeekModel": DeepSeekModel,
@@ -121,22 +132,34 @@ class RAGPipeline(BaseGenerativeModel):
         self.validate_params(kwargs)
         
         try:
-            documents = kwargs['documents']
-            chunking_args = kwargs['chunking_model']
-            retriever_args = kwargs['retriever_model']
+            documents_paths = kwargs['documents']
+            chunking_model_args = kwargs['chunking_model']
+            retriever_model_args = kwargs['retriever_model']
             generation_model_args = kwargs['generation_model']
         except KeyError as e:
             raise ValueError(f"Missing required RAG pipeline parameter: {e}")
         
+        for model in ['chunking_model', 'retriever_model', 'generation_model']:
+            assert kwargs[model]['component'], f"{model} component must be specified."
+            assert isinstance(kwargs[model]['params'], dict), f"{model} params must be a dictionary."
+            # Check they are not empty
+            assert kwargs[model]['params'] is not None, f"{model} params must be provided."
+            assert len(kwargs[model]['params']) > 0, f"{model} params cannot be empty."
+            
+            
+        
         try:
-            chunking_model_class = chunking_models[chunking_args["component"]]
-            chunking_params = chunking_args["params"]
+            chunking_model_class = chunking_models[chunking_model_args["component"]]
+            chunking_model_params = chunking_model_args['params']
+            self.chunking_model: BaseChunkingModel = chunking_model_class(**chunking_model_params)
         except KeyError as e:
             raise ValueError(f"Invalid chunking model specified: {e}")
-
+        except Exception as e:
+            raise ValueError(f"Error initializing chunking model: {e}")
+        
         try:
-            retriever_model_class = retriever_models[retriever_args["component"]]
-            retriever_params = retriever_args['params']
+            retriever_model_class = retriever_models[retriever_model_args["component"]]
+            retriever_params = retriever_model_args['params']
         except KeyError as e:
             raise ValueError(f"Invalid retriever model specified: {e}")
         
@@ -161,7 +184,11 @@ class RAGPipeline(BaseGenerativeModel):
         for key, value in retriever_params.items():
             new_retriever_args[key] = value
 
-        print(f"Initializing retriever model {retriever_args['component']}")
+        new_retriever_args['chunking_model'] = self.chunking_model
+        # Rename TFIDFVectorizer to TFIDFVectorizer_parameters
+        if retriever_model_class == TFIDFRetriever:
+            new_retriever_args['TFIDFVectorizer_parameters'] = new_retriever_args.pop('TFIDFVectorizer')
+        print("Initializing retriever model")
         self.retriever: RetrieverModel = retriever_model_class(**new_retriever_args)
 
         self.retrieval_algorithm = "SINGLE_INTERACTION"
@@ -187,6 +214,8 @@ class RAGPipeline(BaseGenerativeModel):
         if not params["prompt"]["type"]:
             raise RAGPipelineParametersError("Missing 'type' in prompt.")
         if not params["prompt"]["template"]:
+            raise RAGPipelineParametersError("Missing 'template' in prompt.")
+        
 
     def single_interaction(self, input: str, history: List[Tuple[str, str]] = None) -> List[Tuple[str, str, int]]:
         """
@@ -210,14 +239,14 @@ class RAGPipeline(BaseGenerativeModel):
         Returns:
             str: The generated response.
         """
-        augmentation_prompt = AugmentationPrompt.format(
+        augmentation_prompt = DefaultAugmentationPrompt.format(
             input=input,
             history=history,
-            n_seach_terms=5
+            n_search_terms=5
         )
-        augementation_response = self.llm_model.generate(augmentation_prompt)[0]
-        print(f"Augmentation response: {augementation_response}")
-        search_terms = augementation_response.split("keywords:")[1].strip()
+        augmentation_response = self.llm_model.generate(augmentation_prompt)[0]
+        print(f"Augmentation response: {augmentation_response}")
+        search_terms = augmentation_response.split("keywords:")[1].strip()
         search_terms = search_terms.split(",")
         if len(search_terms) > 5:
             search_terms = search_terms[:5]
@@ -240,22 +269,22 @@ class RAGPipeline(BaseGenerativeModel):
         """
         message = input
 
-        documents = self.single_interaction(message)
-        documents_str = "RETRIEVED INFORMATION:\n\n"
-        for doc_content, doc_file, chunk in documents:
+        chunks = self.single_interaction(message)
+        chunks_str = "RETRIEVED INFORMATION:\n\n"
+        for doc_content, doc_file, chunk in chunks:
             doc_name = doc_file.split("/")[-1]
-            documents_str += f"Document '{doc_name}' in chunk: {chunk}:\n{doc_content}\n\n"
+            chunks_str += f"Document '{doc_name}' in chunk: {chunk}:\n{doc_content}\n\n"
 
-        prompt = ContextMergePrompt.format(
+        prompt = DefaultGenerationPrompt.format(
             input=message,
             history=None,
-            documents=documents_str
+            chunks=chunks_str
         )
 
         print(f"Prompt: {prompt}")
 
         response = self.llm_model.generate(prompt)
 
-        response = f"{response[0]}\n\nSources:{documents_str}"
+        response = f"{response[0]}\n\nSources:{chunks_str}"
 
         return [response]

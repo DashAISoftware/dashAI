@@ -1,6 +1,16 @@
-from typing import Any, List
+from typing import Any, Dict, List
 
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.core.schema_fields import BaseSchema, schema_field, string_field
+
+class PromptSchema(BaseSchema):
+
+    template: str = schema_field(
+        string_field(),
+        "",
+        "The prompt template with placeholders.",
+    )
+
 
 class Prompt(BaseModel):
     """
@@ -8,6 +18,23 @@ class Prompt(BaseModel):
     This class defines the interface for creating and formatting prompts.
     """
 
+    SCHEMA = PromptSchema
+
+    def __load__(self, **kwargs: Any) -> None:
+        pass
+
+    def __save__(self) -> None:
+        pass
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        if hasattr(cls, 'metadata'):
+            metadata = cls.metadata
+        else:
+            metadata = {}
+        return metadata
+
+        
 
     @classmethod
     def get_required_placeholders(cls) -> List[str]:
@@ -16,7 +43,17 @@ class Prompt(BaseModel):
         Returns:
             List[str]: List of required placeholders.
         """
+        assert hasattr(cls, 'required_placeholders'), "Subclasses must define 'required_placeholders' class attribute."
         return cls.required_placeholders
+    
+    def get_optional_placeholders(self) -> List[str]:
+        """
+        Get the list of optional placeholders for the prompt template.
+        Returns:
+            List[str]: List of optional placeholders.
+        """
+        assert hasattr(self, 'optional_placeholders'), "Subclasses must define 'optional_placeholders' class attribute."
+        return self.optional_placeholders
 
 
     @classmethod

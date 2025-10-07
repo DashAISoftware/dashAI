@@ -102,7 +102,7 @@ export default function RAGSessionsTable({
   ];
 
   return (
-    <Paper sx={{ py: 4, px: 4}}>
+    <Paper sx={{ py: 4, px: 4 }}>
       {showTableTitle && (
         <Grid
           container
@@ -113,6 +113,23 @@ export default function RAGSessionsTable({
           <Typography variant="h5" component="h2">
             RAG Sessions
           </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onOpenNewSessionModal}
+            startIcon={<AddIcon />}
+          >
+            New RAG Session
+          </Button>
+        </Grid>
+      )}
+      {!showTableTitle && (
+        <Grid
+          container
+          justifyContent="flex-end"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
           <Button
             variant="contained"
             color="primary"
@@ -142,16 +159,6 @@ export default function RAGSessionsTable({
           minHeight: 300,
         }}
       />
-      {!showTableTitle && (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={onOpenNewSessionModal}
-          startIcon={<AddIcon />}
-        >
-          New RAG Session
-        </Button>
-      )}
     </Paper>
   );
 }

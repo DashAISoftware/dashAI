@@ -87,17 +87,7 @@ async def get_components(
     HTTPException
         If task_name does not exist in the registry
     """
-    flag = " ".join(str(param) for param in [select_types, ignore_types, related_component, component_parent, has_related_of_type])
-    if "etriever" in flag or "RAG" in flag or "rag" in flag:
-        "stop here"
-    print("select_types", str(select_types))
-    print("ignore_types", str(ignore_types))
-    print("related_component", str(related_component))
-    print("component_parent", str(component_parent))
-    print("has_related_of_type", str(has_related_of_type))
-    print("get_components api ")
     # when select_type is not none, check if it exists in the registry.
-
     if select_types is not None:
         for select_type in select_types:
             if select_type not in component_registry._registry:
@@ -108,8 +98,6 @@ async def get_components(
                         f"Available types: {list(component_registry._registry.keys())}."
                     ),
                 )
-
-    print("get_components api 2")
 
     # when ignore_type is not none, check if it exists in the registry.
     if ignore_types is not None:
@@ -123,8 +111,6 @@ async def get_components(
                     ),
                 )
 
-    print("get_components api 3")
-
     # when task_name is not none, check if it exists in the registry.
     if related_component is not None and related_component not in component_registry:
         raise HTTPException(
@@ -134,8 +120,6 @@ async def get_components(
             ),
         )
 
-    print("get_components api 4")
-    
     # When has_related_type is not none, check if it exists in the registry.
     if (
         has_related_of_type is not None
@@ -149,8 +133,6 @@ async def get_components(
             ),
         )
 
-    print("get_components api 5")
-
     # 1. obtain all components from the selected registry/registries
     # if none, get_components_by_type returns all components.
     selected_components = {
@@ -160,16 +142,12 @@ async def get_components(
         )
     }
 
-    print("get_components api 6")
-
     # 2. ignore the requested types
     if ignore_types is not None:
         selected_components = _intersect_component_lists(
             selected_components,
             component_registry.get_components_by_types(ignore=ignore_types),
         )
-
-    print("get_components api 7")
 
     # 3. select only the components related to "related_component"
     if related_component is not None:
@@ -178,16 +156,12 @@ async def get_components(
             component_registry.get_related_components(related_component),
         )
 
-    print("get_components api 8")
-
     # 4. filter if component parent was specified.
     if component_parent is not None:
         selected_components = _intersect_component_lists(
             selected_components,
             component_registry.get_child_components(component_parent, recursive=True),
         )
-
-    print("get_components api 9")
 
     # 5. filter if "has_related_of_type" was specified.
     if has_related_of_type is not None:
@@ -201,12 +175,9 @@ async def get_components(
             components_with_related_type,
         )
 
-    print("get_components api 10")
     out = [
         _delete_class(component_dict) for component_dict in selected_components.values()
     ]
-
-    print(out)
 
     return out
 
@@ -300,9 +271,7 @@ async def get_child_components(
         List[Dict[str, Any]]: A list of child component dictionaries.
     """
     children_list = component_registry.get_child_components(component_name, recursive=recursive)
-    print("children_list", children_list)
     # Remove "class" key from each child component
     cleaned_children = [_delete_class(child) for child in children_list]
-    print("cleaned_children", cleaned_children)
 
     return cleaned_children

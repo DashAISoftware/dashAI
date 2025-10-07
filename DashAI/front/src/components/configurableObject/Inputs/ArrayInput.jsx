@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import InputWithDebounce from "../../shared/InputWithDebounce";
 import { FormControl } from "@mui/material";
@@ -14,7 +14,15 @@ function ArrayInput({
   itemType,
   ...props
 }) {
-  const [inputValue, setInputValue] = useState(value.join(","));
+  // Ensure value is an array before using join
+  const safeValue = Array.isArray(value) ? value : [];
+  const [inputValue, setInputValue] = useState(safeValue.join(","));
+
+  // Update inputValue when value prop changes
+  useEffect(() => {
+    const newSafeValue = Array.isArray(value) ? value : [];
+    setInputValue(newSafeValue.join(","));
+  }, [value]);
 
   const convertValue = (val) => {
     switch (itemType) {

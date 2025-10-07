@@ -1,9 +1,6 @@
 import os
-from DashAI.back.converters.hugging_face import embedding
-from DashAI.back.models.RAG.documents import BaseDocument, PDFDocument, TxtDocument
 from typing import List, Dict, Any, Tuple
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 import numpy as np
 import hashlib
 import pickle

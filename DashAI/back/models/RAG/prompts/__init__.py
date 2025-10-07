@@ -4,8 +4,9 @@ from DashAI.back.models.RAG.prompts.augmentation import (
     DefaultAugmentationPrompt,
     CustomAugmentationPrompt
 )
-from DashAI.back.models.RAG.prompts.context_merge import (
-    ContextMergePrompt,
-    DefaultContextMergePrompt,
-    CustomContextMergePrompt
+from DashAI.back.models.RAG.prompts.generation import (
+    GenerationPrompt,
+    CustomGenerationPrompt,
+    DefaultGenerationPrompt,
+    DefaultQnAGenerationPrompt
 )

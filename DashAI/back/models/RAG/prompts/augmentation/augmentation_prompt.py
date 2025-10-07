@@ -8,13 +8,14 @@ class AugmentationPrompt(Prompt):
     it uses the language model to generate keywords or phrases that can be used to augment the input.
     """
 
-    required_placeholders = ["{input}", "{history}", "{n_search_terms}"]
+    required_placeholders = ["{input}", "{n_search_terms}"]
+    optional_placeholders = ["{history}"]
 
     def format(
             self,
             input: str,
-            history: List[Tuple[str, str]],
-            n_search_terms: int = 5,
+            n_search_terms: int,
+            history: List[Tuple[str, str]] = None,
             **kwargs: Any
         ) -> str:
         """
