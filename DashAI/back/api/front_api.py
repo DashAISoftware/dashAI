@@ -3,9 +3,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from kink import di, inject
-from starlette.responses import FileResponse
 
 router = APIRouter()
 
@@ -18,7 +17,12 @@ async def read_index(
 ):
     front_build_path = config["FRONT_BUILD_PATH"]
     index_path = Path(f"{front_build_path}/index.html").absolute()
-    return FileResponse(index_path)
+    # Avoids caching of index.html (forces reload of front on every request)
+    response = FileResponse(index_path)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 # Serving static files
@@ -33,8 +37,7 @@ async def serve_files(
         if file == "":
             return RedirectResponse(url="/app/")
         path = Path(f"{front_build_path}/{file}").absolute()
-
-        os.stat(path)  # This checks if the file exists
-        return FileResponse(path)  # You can't catch the exception here
+        os.stat(path)
+        return FileResponse(path)
     except FileNotFoundError:
         return RedirectResponse(url="/app/")
