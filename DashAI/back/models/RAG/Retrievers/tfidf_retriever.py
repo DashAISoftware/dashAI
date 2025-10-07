@@ -1,7 +1,7 @@
 import hashlib
 import os
 import pickle
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -18,6 +18,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
+from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
+from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import PDFDocument, TxtDocument
 from DashAI.back.models.RAG.Retrievers.sparse_retriever import SparseRetriever
@@ -28,9 +30,9 @@ similarities = {"cosine": cosine_similarity, "euclidean": euclidean_distances}
 class TFIDFVectorizerSchema(BaseSchema):
     strip_accents: schema_field(
         enum_field(
-            enum=["ascii", "unicode", None],
+            enum=["ascii", "unicode", "None"],
         ),
-        placeholder=None,
+        placeholder="None",
         description="Whether to strip accents from the text.",
     )  # type: ignore
 
@@ -55,9 +57,9 @@ class TFIDFVectorizerSchema(BaseSchema):
     stop_words: schema_field(
         list_field(
             string_field(),
-            min_items=1,
+            min_items=0,
         ),
-        placeholder=None,
+        placeholder=[],
         description="List of stop words to be used in the TF-IDF vectorization.",
     )  # type: ignore
 
@@ -102,18 +104,18 @@ class TFIDFVectorizerSchema(BaseSchema):
 
     max_features: schema_field(
         int_field(
-            ge=1,
+            ge=0,
         ),
-        placeholder=None,
+        placeholder=0,
         description=(
-            "If not None, build a vocabulary that only consider the top "
+            "If not 0, build a vocabulary that only consider the top "
             "max_features ordered by term frequency across the corpus."
         ),
     )  # type: ignore
 
     norm: schema_field(
         enum_field(
-            enum=["l1", "l2", None],
+            enum=["l1", "l2", "None"],
         ),
         placeholder="l2",
         description=(
@@ -187,6 +189,12 @@ class TFIDFRetrieverSchema(BaseSchema):
         int_field(ge=1), placeholder=5, description="Number of documents to retrieve."
     )  # type: ignore
 
+    use_similarity_threshold: schema_field(
+        bool_field(),
+        placeholder=False,
+        description="Whether to use a similarity threshold for filtering retrieved documents.",
+    )  # type: ignore
+
     similarity_threshold: schema_field(
         float_field(),
         placeholder=0.5,
@@ -207,11 +215,12 @@ class TFIDFRetriever(SparseRetriever):
     def __init__(
         self,
         documents_paths: List[str],
+        TFIDFVectorizer_parameters: Dict[str, any],
         similarity_function: str,
         n_docs: int,
+        use_similarity_threshold: bool,
         similarity_threshold: float,
-        chunk_size: int,
-        chunk_overlap: int,
+        chunking_model: BaseChunkingModel,
     ):
         """
         Initialize the TFIDFRetriever with the given parameters.
@@ -236,11 +245,6 @@ class TFIDFRetriever(SparseRetriever):
         )
         assert n_docs > 0, "Number of documents to retrieve must be greater than 0."
         assert similarity_threshold >= 0, "Similarity threshold must be non-negative."
-        assert chunk_size > 0, "Chunk size must be greater than 0."
-        assert chunk_overlap >= 0, "Chunk overlap must be non-negative."
-        assert chunk_size > chunk_overlap, (
-            "Chunk size must be greater than chunk overlap."
-        )
         BASE_DOC_PATH = (
             "THIS IS A PLACEHOLDER, should be unnecesary after implementing "
             "the document persistence storage in the database"
@@ -251,28 +255,27 @@ class TFIDFRetriever(SparseRetriever):
             new_documents_paths.append(new_path)
         documents_paths = new_documents_paths
         self._documents_paths = sorted(documents_paths)  # Sort for consistent hashing
+        self.documents = self.load_documents(self._documents_paths)
         self.similarity_function_name = similarity_function
         self.similarity_function = similarities[similarity_function]
         self.n_docs = n_docs
+        self.use_similarity_threshold = use_similarity_threshold
         self.similarity_threshold = similarity_threshold
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+        self.chunking_model = chunking_model
 
         self.params = {
-            "similarity_function_name": self.similarity_function_name,
-            "similarity_function": self.similarity_function,
+            "vectorizer_params": TFIDFVectorizer_parameters,
+            "similarity_function": similarity_function,
             "n_docs": n_docs,
             "similarity_threshold": similarity_threshold,
-            "chunk_size": chunk_size,
-            "chunk_overlap": chunk_overlap,
+
         }
+
 
         # Generate a unique hash for the current set of documents and
         # chunking parameters
         self._cache_hash = self._generate_cache_hash()
-        self._vectorizer_path, self._tf_idf_matrix, self.chunk_to_doc_path = (
-            self._get_cache_paths()
-        )
+        self._vectorizer_path, self._tf_idf_matrix_path, self.chunk_to_doc_path = self._get_cache_paths()
 
         # Attempt to load from cache
         if self._load_state():
@@ -285,10 +288,49 @@ class TFIDFRetriever(SparseRetriever):
             self._fit()
             self._save_state()
 
+    def load(self) -> None:
+        pass
+
+    def save(self) -> None:
+        pass
+
+    def load_documents(self, documents_paths: List[str]) -> List[BaseDocument]:
+        documents = []
+        for i, doc_path in enumerate(documents_paths):
+            with open(doc_path, "rb") as doc_file:
+                file_bytes = doc_file.read()
+                file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+            file_name = os.path.basename(doc_path)
+            file_path = doc_path
+            if doc_path.endswith(".pdf"):
+                doc = PDFDocument(
+                        id = i,
+                        file_name=file_name,
+                        file_path=file_path,
+                        file_hash=file_hash
+                    )
+            elif doc_path.endswith(".txt"):
+                doc = TxtDocument(
+                        id = i,
+                        file_name=file_name,
+                        file_path=file_path,
+                        file_hash=file_hash
+                    )
+            else:
+                raise ValueError(f"Unsupported document type: {doc_path}")
+            documents.append(doc)
+        return documents
+
+    def get_signature_parameters(self) -> Dict[str, any]:
+        return {
+            "TFIDFVectorizer_parameters": self.params["vectorizer_params"],
+        }
+
     def _get_cache_paths(self) -> tuple[str, str, str]:
         """
         Returns the file paths for the cached vectorizer, tfidf_matrix,
-        and chunk_to_doc_id_map.
+        and chunk_to_doc_id_map.    
         """
         os.makedirs(self.RETRIEVERS_PATH, exist_ok=True)  # Use BaseRetriever's constant
         base_name = os.path.join(self.RETRIEVERS_PATH, self._cache_hash)
@@ -298,26 +340,11 @@ class TFIDFRetriever(SparseRetriever):
         map_path = os.path.join(base_name, "chunk_to_doc_id_map")
         return vectorizer_path, tfidf_matrix_path, map_path
 
-    def get_signature_parameters(self):
-        return {
-            "chunk_size": self.chunk_size,
-            "chunk_overlap": self.chunk_overlap,
-        }
-
     def _generate_cache_hash(self) -> str:
         hashable_params = self.get_signature_parameters()
-        text = f"{self._documents_paths}{hashable_params}"
+        text = f"{hashable_params}"
         params_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        docs_hashes = []
-        for doc_path in self._documents_paths:
-            if doc_path.endswith(".pdf"):
-                doc = PDFDocument(doc_path)
-            elif doc_path.endswith(".txt"):
-                doc = TxtDocument(doc_path)
-            else:
-                raise ValueError(f"Unsupported document type: {doc_path}")
-
-            docs_hashes.append(doc.get_hash())
+        docs_hashes = [doc.file_hash for doc in self.documents]
         docs_hash = hashlib.sha256("".join(docs_hashes).encode("utf-8")).hexdigest()
         return f"tfidf_retriever_{params_hash}_{docs_hash}"
 
@@ -330,7 +357,7 @@ class TFIDFRetriever(SparseRetriever):
         """
         if not os.path.exists(self._vectorizer_path):
             return False
-        if not os.path.exists(self._tf_idf_matrix):
+        if not os.path.exists(self._tf_idf_matrix_path):
             return False
         if not os.path.exists(self.chunk_to_doc_path):
             return False
@@ -338,7 +365,7 @@ class TFIDFRetriever(SparseRetriever):
         try:
             with open(self._vectorizer_path, "rb") as f:
                 self._vectorizer = pickle.load(f)
-            with open(self._tf_idf_matrix, "rb") as f:
+            with open(self._tf_idf_matrix_path, "rb") as f:
                 self._tf_idf_matrix = pickle.load(f)
             with open(self.chunk_to_doc_path, "rb") as f:
                 self.chunk_to_doc_map = pickle.load(f)
@@ -354,12 +381,25 @@ class TFIDFRetriever(SparseRetriever):
         try:
             with open(self._vectorizer_path, "wb") as f:
                 pickle.dump(self._vectorizer, f)
-            with open(self._tf_idf_matrix, "wb") as f:
+            with open(self._tf_idf_matrix_path, "wb") as f:
                 pickle.dump(self._tf_idf_matrix, f)
             with open(self.chunk_to_doc_path, "wb") as f:
                 pickle.dump(self.chunk_to_doc_map, f)
         except Exception as e:
             print(f"Error saving state: {e}")
+
+    def get_documents_chunks(self) -> Dict[str, List[str]]:
+        """
+        Load and chunk the documents using the specified chunking model.
+        Returns:
+            Dict[str, List[str]]: A dictionary mapping document paths to lists of chunks.
+        """
+        documents_chunks = {}
+        for doc in self.documents:
+            chunks = self.chunking_model.chunk(doc)
+            doc_id = doc.id
+            documents_chunks[doc_id] = chunks
+        return documents_chunks
 
     def _fit(self):
         """
@@ -372,10 +412,10 @@ class TFIDFRetriever(SparseRetriever):
         current_chunk_idx = 0
         self.chunk_to_doc_map = {}
 
-        for doc_path, doc_chunks in chunks.items():
+        for doc_id, doc_chunks in chunks.items():
             for i, chunk_text in enumerate(doc_chunks):
                 chunk_texts.append(chunk_text)
-                self.chunk_to_doc_map[current_chunk_idx] = (chunk_text, doc_path, i)
+                self.chunk_to_doc_map[current_chunk_idx] = (chunk_text, doc_id, i)
                 current_chunk_idx += 1
 
         # Create the TF-IDF vectorizer and fit it to the chunks
@@ -407,11 +447,13 @@ class TFIDFRetriever(SparseRetriever):
 
         # Determine sorting order based on similarity_function
         if self.similarity_function == cosine_similarity:
-            filtered_indices = np.where(similarities >= self.similarity_threshold)[0]
+            if self.use_similarity_threshold:
+                filtered_indices = np.where(similarities >= self.similarity_threshold)[0]
             ranked_indices = np.argsort(-similarities[filtered_indices])[: self.n_docs]
 
         elif self.similarity_function == euclidean_distances:
-            filtered_indices = np.where(similarities <= self.similarity_threshold)[0]
+            if self.use_similarity_threshold:
+                filtered_indices = np.where(similarities <= self.similarity_threshold)[0]
             ranked_indices = np.argsort(similarities[filtered_indices])[: self.n_docs]
 
         else:
