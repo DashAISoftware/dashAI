@@ -158,7 +158,11 @@ class DatasetJob(BaseJob):
                         temp_path=str(temp_dir),
                         params=parsed_params.model_dump(),
                     )
+
+                # Calculate nan per column
+                new_dataset.nan_per_column()
                 gc.collect()
+
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))
                 save_dataset(new_dataset, dataset_save_path)

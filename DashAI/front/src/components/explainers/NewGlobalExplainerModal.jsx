@@ -191,21 +191,23 @@ export default function NewGlobalExplainerModal({
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-global-explainer-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -215,7 +217,7 @@ export default function NewGlobalExplainerModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -227,7 +229,7 @@ export default function NewGlobalExplainerModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -248,7 +250,6 @@ export default function NewGlobalExplainerModal({
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {activeStep === 0 && (
@@ -271,7 +272,6 @@ export default function NewGlobalExplainerModal({
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

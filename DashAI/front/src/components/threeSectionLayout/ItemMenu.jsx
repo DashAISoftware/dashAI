@@ -70,10 +70,6 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "dataset-menu-button",
-          dense: true,
-        }}
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "right",
@@ -83,6 +79,12 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
           horizontal: "right",
         }}
         onClick={(e) => e.stopPropagation()}
+        slotProps={{
+          list: {
+            "aria-labelledby": "dataset-menu-button",
+            dense: true,
+          },
+        }}
       >
         <Box
           sx={{
@@ -130,7 +132,6 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
           <ListItemText>Delete</ListItemText>
         </DeleteMenuItem>
       </Menu>
-
       {/* Confirmation Modal */}
       <DeleteConfirmationModal
         open={deleteModalOpen}

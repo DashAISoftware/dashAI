@@ -4,7 +4,7 @@ import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 function ResultsTabMetricsToggle({ displaySet, setDisplaySet }) {
   return (
-    <Grid item>
+    <Grid>
       <ToggleButtonGroup
         value={displaySet}
         exclusive

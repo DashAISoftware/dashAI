@@ -331,20 +331,19 @@ def test_predict_summary(client: TestClient, prediction_name: str):
 
 
 def test_filter_datasets_endpoint(
-    client: TestClient, dataset: Dataset, dataset_2: Dataset
+    client: TestClient, trained_run_id: int, dataset: Dataset, dataset_2: Dataset
 ):
-    list_datasets = [dataset["file_path"], dataset_2["file_path"]]
-    params = {
-        "train_dataset_id": 1,
-        "datasets": list_datasets,
-    }
-    response = client.post("/api/v1/predict/filter_datasets", json=params)
+    response = client.get(
+        "/api/v1/predict/filter_datasets",
+        params={"run_id": trained_run_id},
+    )
     assert response.status_code == 200, response.text
-    filtered_datasets = response.json()
-    assert len(filtered_datasets) == 1
-    assert (
-        filtered_datasets[0]["id"] == 1
-    )  # only the first dataset is used to train the model
+    datasets = response.json()
+    assert isinstance(datasets, list)
+    assert len(datasets) == 1
+    dataset_names = [ds["name"] for ds in datasets]
+    assert dataset["name"] in dataset_names
+    assert dataset_2["name"] not in dataset_names
 
 
 @pytest.fixture(name="json_data")

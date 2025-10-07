@@ -88,7 +88,7 @@ function PredictionSummaryModal({ predictName }) {
             spacing={2}
             onClick={(event) => event.stopPropagation()}
           >
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               {summary.data_type !== "string" && (
                 <Tabs
                   value={activeTab}

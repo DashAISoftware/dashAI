@@ -46,7 +46,7 @@ export default function SelectOptionMenu({
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
           {filteredOptions.map((option, index) => (
-            <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+            <Grid size={{ xl: 4, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
               <OptionBox
                 optionName={option.display_name}
                 description={option.description}

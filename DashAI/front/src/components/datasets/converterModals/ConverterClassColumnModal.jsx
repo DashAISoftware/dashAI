@@ -126,12 +126,14 @@ const ConverterClassColumnModal = ({
         <Dialog
           open={open}
           onClose={() => setOpen(false)}
-          PaperProps={{
-            sx: {
-              width: { md: 820, lg: 1000 },
-              maxHeight: { lg: 700, xl: "auto" },
-              maxWidth: 2000,
-              transition: "width 0.3s ease, height 0.3s ease",
+          slotProps={{
+            paper: {
+              sx: {
+                width: { md: 820, lg: 1000 },
+                maxHeight: { lg: 700, xl: "auto" },
+                maxWidth: 2000,
+                transition: "width 0.3s ease, height 0.3s ease",
+              },
             },
           }}
         >

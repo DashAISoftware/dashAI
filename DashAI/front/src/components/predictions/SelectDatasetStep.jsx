@@ -45,6 +45,7 @@ const columns = [
 ];
 
 function SelectDatasetStep({
+  selectedModelId,
   preselectedModelId,
   setSelectedDatasetId,
   setNextEnabled,
@@ -58,21 +59,14 @@ function SelectDatasetStep({
   const [loading, setLoading] = useState(true);
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
-  const [datasetPaths, setDatasetPaths] = useState([]);
   const [isNameValid, setIsNameValid] = useState(false);
 
   const getDatasets = async () => {
     setLoading(true);
     try {
-      const datasets = await getDatasetsRequest();
-      const paths = datasets.map((dataset) => dataset.file_path);
-      setDatasetPaths(paths);
-
       const requestData = {
-        train_dataset_id: Number(trainDataset),
-        datasets: paths,
+        run_id: preselectedModelId ?? selectedModelId,
       };
-
       const filteredDatasets = await filterDatasetsRequest(requestData);
       setDatasets(filteredDatasets);
     } catch (error) {

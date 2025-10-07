@@ -26,3 +26,4 @@ class Binarizer(SklearnWrapper, BinarizerOperation):
     DESCRIPTION = (
         "Binarize data (set feature values to 0 or 1) according to a threshold."
     )
+    DISPLAY_NAME = "Binarizer"

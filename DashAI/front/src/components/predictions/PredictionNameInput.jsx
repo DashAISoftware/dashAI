@@ -81,7 +81,9 @@ function PredictionNameInput({
             ? "The prediction name must have at least 4 alphanumeric characters."
             : ""
       }
-      InputLabelProps={{ shrink: true }}
+      slotProps={{
+        inputLabel: { shrink: true },
+      }}
     />
   );
 }

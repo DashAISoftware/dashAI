@@ -47,14 +47,16 @@ export default function ConfigureToolModal({
     <Dialog
       open={open}
       onClose={handleClose}
-      PaperProps={{
-        sx: {
-          width: { xs: "95%", sm: "1200px" },
-          maxWidth: "100%",
-          borderRadius: 2,
-          height: "90vh", // fixed modal height
-          display: "flex",
-          flexDirection: "column",
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: "95%", sm: "1200px" },
+            maxWidth: "100%",
+            borderRadius: 2,
+            height: "90vh", // fixed modal height
+            display: "flex",
+            flexDirection: "column",
+          },
         },
       }}
     >
@@ -71,7 +73,7 @@ export default function ConfigureToolModal({
         }}
       >
         <Typography variant="h6" fontWeight="600" sx={{ whiteSpace: "nowrap" }}>
-          Configure {tool.type}: {tool.name}
+          Configure {tool.type}: {tool.display_name}
         </Typography>
 
         {/* Stepper */}
@@ -89,7 +91,6 @@ export default function ConfigureToolModal({
           <Close />
         </IconButton>
       </Box>
-
       {/* TABS */}
       <Tabs
         value={activeTab}
@@ -117,7 +118,6 @@ export default function ConfigureToolModal({
           label="Dataset"
         />
       </Tabs>
-
       {/* CONTENT AREA */}
       <Box
         sx={{

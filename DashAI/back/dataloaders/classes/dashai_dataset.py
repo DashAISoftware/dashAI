@@ -140,6 +140,26 @@ class DashAIDataset(Dataset):
         dataset = self.cast(new_features)
         return dataset
 
+    def nan_per_column(self) -> "DashAIDataset":
+        """Calculate the number of NaN values per column in the dataset and
+        add it to the metadata under the 'nan' key.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset with the updated metadata.
+        """
+        dataset_df = self.to_pandas()
+        # Calculate the number of NaN values per column
+        nan_count = dataset_df.isna().sum().to_dict()
+        self.splits.update({"nan": nan_count})
+
+        return self
+
     @beartype
     def remove_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
         """Remove one or several column(s) in the dataset and the features
@@ -790,6 +810,7 @@ def get_dataset_info(dataset_path: str) -> object:
         "total_rows": total_rows,
         "total_columns": len(column_names),
         "column_names": column_names,
+        "nan": splits_data.get("nan", {}),
         "train_size": len(train_indices),
         "test_size": len(test_indices),
         "val_size": len(val_indices),

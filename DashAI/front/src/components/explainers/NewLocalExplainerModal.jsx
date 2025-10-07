@@ -64,6 +64,7 @@ export default function NewLocalExplainerModal({
     name: "",
     run_id: runId,
     explainer_name: null,
+    scope: { split: "test", percentage: 20 },
     dataset_id: null,
     parameters: null,
     fit_parameters: null,
@@ -147,6 +148,7 @@ export default function NewLocalExplainerModal({
         newLocalExpl.dataset_id,
         newLocalExpl.parameters,
         newLocalExpl.fit_parameters,
+        newLocalExpl.scope,
       );
       const explainerId = response.id;
       await enqueueLocalExplainerJob(explainerId);
@@ -198,21 +200,23 @@ export default function NewLocalExplainerModal({
       aria-labelledby="new-local-explainer-dialog-title"
       aria-describedby="new-local-explainer-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-local-explainer-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -222,7 +226,7 @@ export default function NewLocalExplainerModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -234,7 +238,7 @@ export default function NewLocalExplainerModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -255,7 +259,6 @@ export default function NewLocalExplainerModal({
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {activeStep === 0 && (
@@ -285,7 +288,6 @@ export default function NewLocalExplainerModal({
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

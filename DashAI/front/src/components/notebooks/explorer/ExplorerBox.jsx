@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import {
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
+import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
 
 export default function ExplorerBox({
@@ -19,6 +20,21 @@ export default function ExplorerBox({
   handleExplorerDeleteClick,
   onStatusChange,
 }) {
+  const [explorerComponent, setExplorerComponent] = useState({});
+
+  useEffect(() => {
+    const fetchConverterComponent = async () => {
+      try {
+        const component = await getComponentById(explorer.exploration_type);
+        setExplorerComponent(component);
+      } catch (error) {
+        console.error("Failed to fetch converter component:", error);
+      }
+    };
+
+    fetchConverterComponent();
+  }, [explorer.exploration_type]);
+
   useEffect(() => {
     let intervalId;
 
@@ -74,7 +90,9 @@ export default function ExplorerBox({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{explorer.exploration_type}</Typography>
+            <Typography variant="h6">
+              {explorerComponent.display_name}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip

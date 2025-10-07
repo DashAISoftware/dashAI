@@ -45,8 +45,8 @@ export default function ExplainersPlot({ explainer, scope }) {
   }, []);
 
   return (
-    <Grid item container flexDirection={"row"} justifyContent={"space-between"}>
-      <Grid item xs={8}>
+    <Grid container flexDirection={"row"} justifyContent={"space-between"}>
+      <Grid size={{ xs: 8 }}>
         {!loading && isLocal && (
           <FormControl variant="outlined" sx={{ minWidth: "200px" }}>
             <InputLabel id="select-type-label">Select an instance</InputLabel>
@@ -66,7 +66,7 @@ export default function ExplainersPlot({ explainer, scope }) {
           </FormControl>
         )}
       </Grid>
-      <Grid item xs={8}>
+      <Grid size={{ xs: 8 }}>
         {!loading && (
           <Plot
             data={explainersPlots[currentPlot].data}

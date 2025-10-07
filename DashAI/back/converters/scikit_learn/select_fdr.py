@@ -19,4 +19,5 @@ class SelectFdr(SklearnWrapper, SelectFdrOperation):
     SCHEMA = SelectFdrSchema
     DESCRIPTION = "Filter: Select features according to a false discovery rate test."
     SUPERVISED = True
+    DISPLAY_NAME = "Select FDR"
     metadata = {}

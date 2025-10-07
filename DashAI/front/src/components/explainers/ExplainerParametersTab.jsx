@@ -17,7 +17,7 @@ function ExplainerParametersTab({ explainerData }) {
   return (
     <Grid container direction="column">
       {/* Toggle to select the mode of displaying the JSON object. */}
-      <Grid item>
+      <Grid>
         <ToggleButtonGroup
           value={displayMode}
           exclusive
@@ -34,7 +34,7 @@ function ExplainerParametersTab({ explainerData }) {
       </Grid>
 
       {/* JSON object display */}
-      <Grid item>
+      <Grid>
         {displayMode === "nested-list" && (
           <ParameterListItem
             name="Parameters"
