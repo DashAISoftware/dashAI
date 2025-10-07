@@ -39,4 +39,4 @@ imblearn
 huey
 numba==0.58.1
 llvmlite==0.41.1
-typing-extensions>=4.14.1
+typing-extensions>=4.15
