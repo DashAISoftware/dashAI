@@ -5,9 +5,14 @@ command line.
 """
 
 import logging
+import os
 import pathlib
+import signal
+import subprocess
+import sys
 import threading
 import webbrowser
+from contextlib import suppress
 
 import typer
 import uvicorn
@@ -57,6 +62,28 @@ def main(
     logger = logging.getLogger(__name__)
 
     logger.info("Starting DashAI application.")
+    huey_process = None
+
+    resolved_local = pathlib.Path(local_path).expanduser().absolute()
+    os.environ["DASHAI_LOCAL_PATH"] = str(resolved_local)
+    os.environ["DASHAI_LOGGING_LEVEL"] = logging_level.value
+    child_env = os.environ.copy()
+
+    logger.info("Starting Huey consumer process.")
+    huey_cmd = [
+        sys.executable,
+        "-m",
+        "huey.bin.huey_consumer",
+        "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
+        "--delay",
+        "0.1",
+        "--backoff",
+        "1",
+    ]
+
+    huey_process = subprocess.Popen(huey_cmd, env=child_env)
+    logger.info(f"Started Huey consumer with PID: {huey_process.pid}")
+
     if not no_browser:
         logger.info("Opening browser.")
         timer = threading.Timer(interval=1, function=open_browser)
@@ -64,15 +91,24 @@ def main(
     else:
         logger.info("Browser auto-open disabled (--no-browser/-nb).")
 
-    logger.info("Starting Uvicorn server application.")
-    uvicorn.run(
-        app=create_app(
-            local_path=local_path,
-            logging_level=logging_level.value,
-        ),
-        host="127.0.0.1",
-        port=8000,
-    )
+    try:
+        logger.info("Starting Uvicorn server application.")
+        uvicorn.run(
+            app=create_app(
+                local_path=resolved_local,
+                logging_level=logging_level.value,
+            ),
+            host="127.0.0.1",
+            port=8000,
+        )
+    finally:
+        if huey_process:
+            logger.info(f"Terminating Huey consumer (PID: {huey_process.pid})")
+            with suppress(Exception):
+                huey_process.send_signal(signal.SIGTERM)
+                huey_process.wait(timeout=5)
+                if huey_process.poll() is None:
+                    huey_process.terminate()
 
 
 def run():
