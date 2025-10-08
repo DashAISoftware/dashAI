@@ -11,6 +11,8 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas.predict_params import RenameRequest
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.classification_task import ClassificationTask
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -181,14 +183,18 @@ async def get_model_table(
 @router.get("/predict_summary")
 @inject
 async def get_predict_summary(
-    pred_name: str, config: dict = Depends(lambda: di["config"])
+    pred_name: str,
+    config: dict = Depends(lambda: di["config"]),
+    component_registry: dict = Depends(lambda: di["component_registry"]),
 ):
     path = Path(f"{config['DATASETS_PATH']}/predictions/{pred_name}")
     summary = {}
     try:
         with open(path, "r") as f:
             try:
-                data = json.load(f)["prediction"]
+                json_file = json.load(f)
+                data = json_file["prediction"]
+                metadata = json_file["metadata"]
             except json.JSONDecodeError as e:
                 raise HTTPException(
                     status_code=400, detail="Invalid JSON format"
@@ -196,11 +202,14 @@ async def get_predict_summary(
 
             summary["total_data_points"] = len(data)
 
-            # Verificar si los datos son strings
-            if isinstance(data[0], str):
-                summary["data_type"] = "string"
-            else:
-                summary["data_type"] = "numeric"
+            task: BaseTask = component_registry[metadata["task_name"]]["class"]
+            if not task:
+                raise HTTPException(
+                    status_code=400, detail="Task not found in component registry"
+                )
+            summary["data_type"] = str(task().get_metadata().get("outputs_types")[0])
+            # Only for classification tasks
+            if issubclass(task, ClassificationTask):
                 class_set = set(data)
                 classes = [str(item) for item in class_set]
                 summary["Unique_classes"] = len(classes)
@@ -208,7 +217,7 @@ async def get_predict_summary(
                 id = 1
                 for class_name in classes:
                     try:
-                        occurrences = data.count(int(class_name))
+                        occurrences = data.count(str(class_name))
                     except ValueError as e:
                         raise HTTPException(
                             status_code=400, detail=f"Invalid class value: {class_name}"
