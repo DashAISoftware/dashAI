@@ -3,15 +3,12 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.predict_params import (
-    FilterDatasetParams,
-    RenameRequest,
-)
+from DashAI.back.api.api_v1.schemas.predict_params import RenameRequest
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 
@@ -237,9 +234,9 @@ async def get_predict_summary(
     return summary
 
 
-@router.post("/filter_datasets")
+@router.get("/filter_datasets")
 async def filter_datasets_endpoint(
-    params: FilterDatasetParams,
+    run_id: int = Query(..., description="The ID of the trained model/run"),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """
@@ -247,10 +244,8 @@ async def filter_datasets_endpoint(
 
     Parameters
     ----------
-    train_dataset_id : int
-        The ID of the train dataset.
-    datasets : List[str]
-        List of datasets paths to filter.
+    run_id : int
+        The ID of the trained model/run.
 
     Returns
     -------
@@ -259,26 +254,30 @@ async def filter_datasets_endpoint(
     """
     try:
         with session_factory() as db:
-            train_dataset_id = params.train_dataset_id
-            datasets_paths = params.datasets
-            filtered_list = []
-            file_path = Path(db.get(Dataset, train_dataset_id).file_path, "dataset")
-            if not file_path:
+            run: Run = db.get(Run, run_id)
+            if not run:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Dataset not found",
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
-            train_dataset_spec = get_columns_spec(str(file_path))
-            for dataset_path in datasets_paths:
-                dataset_spec = get_columns_spec(str(Path(dataset_path, "dataset")))
-                if train_dataset_spec == dataset_spec:
-                    dataset = (
-                        db.query(Dataset)
-                        .filter(Dataset.file_path == dataset_path)
-                        .first()
-                    )
-                    filtered_list.append(dataset)
-            return filtered_list
+
+            exp: Experiment = db.get(Experiment, run.experiment_id)
+            if not exp:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Experiment not found"
+                )
+            input_columns = list(exp.input_columns)
+
+            datasets = db.query(Dataset).all()
+            datasets_filtered = []
+            for dataset in datasets:
+                dataset_path = Path(f"{dataset.file_path}/dataset/")
+                if dataset_path.exists():
+                    columns_spec = get_columns_spec(str(dataset_path))
+                    if all(col in columns_spec for col in input_columns):
+                        datasets_filtered.append(dataset)
+                else:
+                    logger.warning("Dataset path does not exist: %s", dataset_path)
+            return datasets_filtered
     except Exception as e:
         logger.exception("Error filtering datasets: %s", str(e))
         raise HTTPException(

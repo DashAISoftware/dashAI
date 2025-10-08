@@ -16,7 +16,7 @@ import { getDisplaySetName } from "../constants/getDisplaySetName";
 
 function ResultsTabMetricsRuns({ runData, displaySet }) {
   return (
-    <Grid item>
+    <Grid>
       <Paper sx={{ borderRadius: 4 }}>
         <Grid container direction="column" rowSpacing={2} sx={{ mt: 1 }}>
           {runData[displaySet] === null ? (
@@ -48,7 +48,7 @@ function ResultsTabMetricsRuns({ runData, displaySet }) {
             </Alert>
           ) : (
             Object.keys(runData[displaySet]).map((metric) => (
-              <Grid item key={metric} sx={{ px: 5, py: 1, width: "100%" }}>
+              <Grid key={metric} sx={{ px: 5, py: 1, width: "100%" }}>
                 <Typography variant="p">{metric}</Typography>
                 <Typography variant="p" sx={{ float: "right" }}>
                   {runData[displaySet][metric].toFixed(2)}

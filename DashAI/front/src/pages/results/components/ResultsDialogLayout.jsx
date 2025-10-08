@@ -36,11 +36,13 @@ function ResultsDialogLayout({
       fullWidth
       maxWidth={"lg"}
       onClose={handleOnClose}
-      PaperProps={{
-        sx: {
-          minHeight: "90vh",
-          overflow: "auto",
-          maxHeight: "90vh",
+      slotProps={{
+        paper: {
+          sx: {
+            minHeight: "90vh",
+            overflow: "auto",
+            maxHeight: "90vh",
+          },
         },
       }}
     >
@@ -52,7 +54,7 @@ function ResultsDialogLayout({
         handleShowGraphs={handleShowGraphs}
       />
       <Divider />
-      <Grid item xs={10}>
+      <Grid size={{ xs: 10 }}>
         <CustomLayout>
           {showTable ? (
             <ResultsTable experimentId={experiment.id.toString()} />

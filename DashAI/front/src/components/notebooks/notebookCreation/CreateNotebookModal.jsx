@@ -176,10 +176,12 @@ export function CreateNotebookModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
-            InputLabelProps={{ shrink: true }}
             error={Boolean(nameError)}
             helperText={nameError}
             sx={{ mb: 2 }}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
           />
           {/* Notebook description */}
           <TextField

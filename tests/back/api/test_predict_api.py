@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 from pathlib import Path
@@ -103,7 +102,7 @@ def create_dataset(client: TestClient):
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(json_dataset_entry)
 
@@ -150,7 +149,7 @@ def create_dataset_2(client: TestClient):
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(csv_dataset_entry)
 
@@ -244,8 +243,9 @@ def create_trained_run(client: TestClient, run_id: int):
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Model job failed: {job_status}"
 
     return run_id
 
@@ -266,8 +266,9 @@ def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset)
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Predict job failed: {job_status}"
 
     return kwargs["json_filename"] + ".json"
 
@@ -330,20 +331,19 @@ def test_predict_summary(client: TestClient, prediction_name: str):
 
 
 def test_filter_datasets_endpoint(
-    client: TestClient, dataset: Dataset, dataset_2: Dataset
+    client: TestClient, trained_run_id: int, dataset: Dataset, dataset_2: Dataset
 ):
-    list_datasets = [dataset["file_path"], dataset_2["file_path"]]
-    params = {
-        "train_dataset_id": 1,
-        "datasets": list_datasets,
-    }
-    response = client.post("/api/v1/predict/filter_datasets", json=params)
+    response = client.get(
+        "/api/v1/predict/filter_datasets",
+        params={"run_id": trained_run_id},
+    )
     assert response.status_code == 200, response.text
-    filtered_datasets = response.json()
-    assert len(filtered_datasets) == 1
-    assert (
-        filtered_datasets[0]["id"] == 1
-    )  # only the first dataset is used to train the model
+    datasets = response.json()
+    assert isinstance(datasets, list)
+    assert len(datasets) == 1
+    dataset_names = [ds["name"] for ds in datasets]
+    assert dataset["name"] in dataset_names
+    assert dataset_2["name"] not in dataset_names
 
 
 @pytest.fixture(name="json_data")

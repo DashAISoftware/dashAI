@@ -93,8 +93,10 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
       fullScreen={fullScreen}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       <DialogTitle>
@@ -111,13 +113,11 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent dividers>
         <Box mt={2}>
           <ConfigureExplorersStep onValidation={setValid} />
         </Box>
       </DialogContent>
-
       <DialogActions>
         <Button onClick={handleSave} variant="contained" disabled={!valid}>
           Save

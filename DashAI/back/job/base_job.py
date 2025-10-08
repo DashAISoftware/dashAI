@@ -26,7 +26,17 @@ class BaseJob(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    async def run() -> None:
+    def set_status_as_error(self) -> None:
+        """Set the status of the job as error."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def run() -> None:
         """Run the job."""
         raise NotImplementedError
 

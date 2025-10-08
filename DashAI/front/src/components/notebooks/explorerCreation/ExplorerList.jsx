@@ -68,7 +68,7 @@ export default function ExplorerList({
                 !exploration.disabled && handleExplorerClick(exploration)
               }
             >
-              {exploration.name}
+              {exploration.display_name}
             </Button>
           );
 

@@ -7,6 +7,7 @@ import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { getSessions, removeSession } from "../../api/session";
+import JobQueueWidget from "../../components/jobs/JobQueueWidget";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);

@@ -44,7 +44,7 @@ function NameExplorationStep({ onValidation = () => {} }) {
       spacing={2}
     >
       {/* Set Name subcomponent */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
           Enter a name and description for the new exploration
         </Typography>
@@ -67,7 +67,7 @@ function NameExplorationStep({ onValidation = () => {} }) {
         />
       </Grid>
 
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <TextField
           label="Description"
           value={description}

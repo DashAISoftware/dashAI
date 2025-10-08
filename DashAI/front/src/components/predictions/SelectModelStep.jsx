@@ -74,7 +74,7 @@ function SelectModelStep({
       alignItems="stretch"
       spacing={2}
     >
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
           Provide a prediction name and select a model
         </Typography>
@@ -85,8 +85,7 @@ function SelectModelStep({
           onNameChange={onPredictNameInput}
         />
       </Grid>
-
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Paper sx={{ height: 400, width: "100%" }}>
           <Typography variant="h6" component="h2" sx={{ pl: 2, pt: 1 }}>
             Select a Model

@@ -40,7 +40,7 @@ export function FormRenderer(objName, paramJsonSchema, formik, defaultValues) {
       return (
         <Grid container key={objName} direction="column">
           {Object.keys(properties).map((parameter) => (
-            <Grid item key={`layout-container-${parameter}`}>
+            <Grid key={`layout-container-${parameter}`}>
               {FormRenderer(
                 parameter,
                 properties[parameter].anyOf[0],

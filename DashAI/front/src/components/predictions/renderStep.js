@@ -4,6 +4,7 @@ import SelectDatasetStep from "./SelectDatasetStep";
 
 export function renderStep(
   stepName,
+  selectedModelId,
   preselectedModelId,
   setSelectedModelId,
   setSelectedDatasetId,
@@ -28,6 +29,7 @@ export function renderStep(
     case "selectDataset":
       return (
         <SelectDatasetStep
+          selectedModelId={selectedModelId}
           preselectedModelId={preselectedModelId}
           handlePredictNameInput={handlePredictNameInput}
           setSelectedDatasetId={setSelectedDatasetId}

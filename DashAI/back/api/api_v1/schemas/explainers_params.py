@@ -15,6 +15,7 @@ class LocalExplainerParams(BaseModel):
     dataset_id: int
     parameters: dict
     fit_parameters: dict
+    scope: dict
 
 
 class ValidateDatasetParams(BaseModel):
