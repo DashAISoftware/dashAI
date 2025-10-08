@@ -72,6 +72,7 @@ PTYPE_TO_DASHAI = {
     "date-non-std": {"type": "Date", "dtype": "date32"},
     "date-non-std-subtype": {"type": "Date", "dtype": "date32"},
     "time": {"type": "Time", "dtype": "time32(s)"},
+    "float_comma": {"type": "Float", "dtype": "float64"}
 }
 
 value_types = [
@@ -212,10 +213,11 @@ def get_types_from_arrow_metadata(
                     dashai_types[column] = DashAIImage(dtype=info.get("dtype"))
             else:
                 dtype = info.get("dtype")
+                print("Dtype:", dtype)
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
     except KeyError:
         # If the key is not found, we can log it or handle it as needed
-        print("KeyError: dtype not found in dtype_arrow_map")
+        print(f"KeyError: dtype not found in dtype_arrow_map")
         dashai_types = {}
 
     return dashai_types
@@ -315,3 +317,17 @@ def is_image_path(value: Any) -> bool:
 
     match = re.search(r"(\.[a-z0-9]+)$", value.lower())
     return bool(match) and match.group(1) in IMAGE_EXTENSIONS
+
+#This function should be improved to detect complex situations
+#Like "1.234,56" or "1,234.56"
+#So it doesn't overwrite already good floats
+def comma_float_to_float(array: pa.Array) -> pa.Array:
+    """Convert a PyArrow array of float strings with commas to a PyArrow float64 array."""
+    # Remove commas and convert to float
+    try: 
+        if pa.types.is_floating(array.type):
+            return array
+        else:
+            return pa.array(array.to_pandas().str.replace(",", ".").astype(float), type=pa.float64())
+    except Exception as e:
+        print("Unable to convert array to float:", e)

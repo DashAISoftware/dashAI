@@ -827,3 +827,20 @@ class Time(Machine):
 
 class ComplexText(Machine):
     pass
+
+class FloatComma(Machine):
+    def __init__(self):
+        super().__init__()
+        self.STOP_P = 4 * 1e-5
+        self.pfsm_from_fsm(
+            r"[\-+]?(?:(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d*)?|(?:,\d+))(?:[eE][\-+]?\d+)?"
+        )
+        self.create_T_new()
+        self.copy_to_z()
+
+    def probability(self, word):
+        if word == ",":
+            return LOG_EPS
+        return super().probability(word)
+    
+

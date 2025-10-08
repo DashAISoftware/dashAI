@@ -11,14 +11,14 @@ class Categorical(DashAIDataType):
 
     Attributes
     ----------
-    categories : list
-        List of unique category values (can be strings or numbers).
+    categories : pa.Array
+        Array of unique category values (can be strings or numbers).
     converted : bool
         Indicates whether the categorical variable has
         experimented changes via converters(e.g., encoded).
     """
 
-    # List of unique category values. Maybe could be a list.
+    # Array of unique category values. Maybe could be a list.
     # I think I overcomplicated it by using pa.Array
     # But should't be hard to change if needed.
     categories: pa.Array

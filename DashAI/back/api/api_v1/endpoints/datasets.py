@@ -480,10 +480,12 @@ async def load_preview(file: UploadFile = File(...), params: str = Form(None)):
         Included the first 10 rows and column types.
     """
     try:
+        parsed_params = json.loads(params)
         if file.filename.endswith(".csv"):
-            loaded_dataset = pd.read_csv(file.file, nrows=10)
+            sep = parsed_params.get("separator", ",")
+            print(f"sep: {sep}")
+            loaded_dataset = pd.read_csv(file.file, sep=sep, nrows=10000)
         elif file.filename.endswith(".xlsx"):
-            parsed_params = json.loads(params)
             sheet = parsed_params.get("sheet", 0)
             header = parsed_params.get("header", 0)
             usecols = parsed_params.get("usecols", None)
@@ -491,7 +493,6 @@ async def load_preview(file: UploadFile = File(...), params: str = Form(None)):
                 file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10
             )
         elif file.filename.endswith(".json"):
-            parsed_params = json.loads(params)
             data_key = parsed_params.get("data_key", None)
             items = ijson.items(file.file, f"{data_key}.item")
             limited_items = list(
@@ -542,7 +543,8 @@ async def infer_datatypes(file: UploadFile = File(...), params: str = Form(None)
     try:
         parsed_params = json.loads(params) if params else {}
         if file.filename.endswith(".csv"):
-            loaded_dataset = pd.read_csv(file.file, nrows=10000)
+            sep = parsed_params.get("separator", ",")
+            loaded_dataset = pd.read_csv(file.file, sep=sep, nrows=10000)
         elif file.filename.endswith(".xlsx"):
             sheet = parsed_params.get("sheet", 0)
             header = parsed_params.get("header", 0)

@@ -9,7 +9,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.ipc as ipc
 from beartype import beartype
-from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
+from datasets import Dataset, DatasetDict, concatenate_datasets
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 
@@ -20,7 +20,9 @@ from DashAI.back.types.utils import (
     get_types_from_arrow_metadata,
     save_types_in_arrow_metadata,
     to_arrow_types,
+    comma_float_to_float
 )
+
 
 log = logging.getLogger(__name__)
 
@@ -369,12 +371,18 @@ def transform_dataset_with_schema(
                 # Can modify classes in value_types.py
                 # if want to use PyArrow date, time or timestamp types.
                 dashai_types[column_name] = arrow_to_dashai_types(
-                    pa_type=_type, format=dtype
+                    arrow_type=_type, format=dtype
                 )
                 pa_type = to_arrow_types("string")
+                dai_table[column_name] = table.column(column_name)
+
+            elif _type == "Float":
+                dashai_types[column_name] = arrow_to_dashai_types(pa_type)
+                dai_table[column_name] = comma_float_to_float(table.column(column_name))
+
             else:
                 dashai_types[column_name] = arrow_to_dashai_types(pa_type)
-            dai_table[column_name] = table.column(column_name)
+                dai_table[column_name] = table.column(column_name)
 
         my_schema = my_schema.append(pa.field(column_name, pa_type))
 
@@ -774,80 +782,6 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     return column_types
 
 
-# NAO NAO NO SE USA, PERO SE AÑADE CUANDO PERMITA CAMBIAR LA COSA EN EL FRONT
-@beartype
-def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
-    """Update the column specification of some dataset on secondary memory.
-
-    If the column type isn't a Value or ClassLabel, the function will
-    not change the type of the column.
-
-    Parameters
-    ----------
-    dataset_path : str
-        Path where the dataset is stored.
-    columns : Dict
-        Dict with columns and types to change
-
-    Returns
-    -------
-    Dict
-        Dict with the columns and types
-    """
-    if not isinstance(columns, dict):
-        raise TypeError(f"types should be a dict, got {type(columns)}")
-
-    # load the dataset from where its stored
-    dataset = load_dataset(dataset_path)
-    # copy the features with the columns ans types
-    new_features = dataset.features
-    for column in columns:
-        if columns[column].type == "ClassLabel":
-            names = list(set(dataset[column]))
-            new_features[column] = ClassLabel(names=names)
-        elif columns[column].type == "Value":
-            new_features[column] = Value(columns[column].dtype)
-
-        # cast the column types with the changes
-        try:
-            dataset = dataset.cast(new_features)
-
-        except ValueError as e:
-            raise ValueError("Error while trying to cast the columns") from e
-    return dataset
-
-
-# Esto se borra pq el schema quedó descartado
-@beartype
-def export_dataset_schema(dataset_path: str) -> DashAIDataset:
-    """
-    Exports the schema (data types) of a dataset to a JSON file.
-
-    This function loads a dataset from the specified path, extracts its data type
-    information, and saves this schema to a JSON file named 'dashai_schema.json'
-    in the same directory. This is useful for preserving type information that
-    can be later used for data validation or documentation.
-
-    Parameters
-    ----------
-    dataset_path : str
-        Path to the directory where the dataset is stored. The function expects
-        to find the standard DashAI dataset files in this directory.
-
-    Returns
-    -------
-    DashAIDataset
-        The loaded dataset instance, unchanged.
-    """
-
-    dataset = load_dataset(dataset_path)
-    types_path = os.path.join(dataset_path, "dashai_schema.json")
-    with open(types_path, "w", encoding="utf-8") as f:
-        json.dump(dataset.types, f, indent=2)
-
-    return dataset
-
-
 def get_dataset_info(dataset_path: str) -> object:
     """Return the info of the dataset with the number of rows,
     number of columns and splits size.
@@ -895,6 +829,48 @@ def get_dataset_info(dataset_path: str) -> object:
         "test_indices": test_indices,
         "val_indices": val_indices,
     }
+
+#Not currently used
+@beartype
+def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
+    """Update the column specification of some dataset on secondary memory.
+
+    If the column type isn't a Value or ClassLabel, the function will
+    not change the type of the column.
+
+    Parameters
+    ----------
+    dataset_path : str
+        Path where the dataset is stored.
+    columns : Dict
+        Dict with columns and types to change
+
+    Returns
+    -------
+    Dict
+        Dict with the columns and types
+    """
+    if not isinstance(columns, dict):
+        raise TypeError(f"types should be a dict, got {type(columns)}")
+
+    # load the dataset from where its stored
+    dataset = load_dataset(dataset_path)
+    # copy the features with the columns ans types
+    new_features = dataset.features
+    for column in columns:
+        if columns[column].type == "ClassLabel":
+            pass
+        elif columns[column].type == "Value":
+            pass
+
+        # cast the column types with the changes
+        try:
+            dataset = dataset.cast(new_features)
+
+        except ValueError as e:
+            raise ValueError("Error while trying to cast the columns") from e
+    return dataset
+
 
 
 @beartype
