@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 
@@ -6,18 +6,47 @@ import {
   getRetrieverComponents,
   getRetrievalParadigm,
 } from "../../../../api/rag";
-import { useSnackbar } from "notistack";
-import useSchema from "../../../../hooks/useSchema";
 
 import FormSchema from "../../../../components/shared/FormSchema";
-import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
+import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
+import { FormSchemaProvider } from "../../../../contexts/schema";
+
+function AutoSaveFormSchema({
+  selectedRetriever,
+  retrieverModel,
+  onParametersChange,
+  currentFormValuesRef,
+}) {
+  const formikRef = useRef(null);
+
+  useEffect(() => {
+    if (formikRef.current && formikRef.current.values && currentFormValuesRef) {
+      currentFormValuesRef.current = formikRef.current.values;
+    }
+  });
+
+  return (
+    <FormSchemaLayout>
+      <FormSchema
+        model={selectedRetriever.name}
+        initialValues={{
+          ...selectedRetriever.parameters,
+          ...(retrieverModel?.params || {}),
+        }}
+        autoSave={true}
+        onFormSubmit={onParametersChange}
+        onCancel={undefined}
+        formSubmitRef={formikRef}
+      />
+    </FormSchemaLayout>
+  );
+}
 
 export default function RetrieverConfigurationStep({
   retrieverModel,
   setRetrieverModel,
   setNextEnabled,
 }) {
-  const { enqueueSnackbar } = useSnackbar();
   const [retrievalParadigms, setRetrievalParadigms] = useState([]);
   const [selectedRetrievalParadigm, setSelectedRetrievalParadigm] =
     useState(null);
@@ -25,10 +54,8 @@ export default function RetrieverConfigurationStep({
   const [retrieverOptions, setRetrieverOptions] = useState([]);
   const [selectedRetriever, setSelectedRetriever] = useState(null);
   const [openConfig, setOpenConfig] = useState(false);
+  const currentFormValuesRef = useRef(null); // Para guardar los valores actuales
 
-  const { defaultValues: retrieverInitialParameters } = useSchema({
-    modelName: selectedRetriever?.name,
-  });
   const fetchRetrievalParadigms = async () => {
     try {
       const data = await getRetrievalParadigm();
@@ -40,7 +67,6 @@ export default function RetrieverConfigurationStep({
         );
         if (directParadigm) {
           setSelectedRetrievalParadigm(directParadigm);
-          // For DenseRetriever, set it as both paradigm and retriever
           if (directParadigm.name !== "SparseRetriever") {
             setSelectedRetriever(directParadigm);
             setOpenConfig(true);
@@ -55,15 +81,8 @@ export default function RetrieverConfigurationStep({
           }
         }
       }
-
-      enqueueSnackbar("Retrieval paradigms loaded successfully!", {
-        variant: "success",
-      });
     } catch (error) {
       console.error("Error fetching retrieval paradigms:", error);
-      enqueueSnackbar("Failed to load retrieval paradigms.", {
-        variant: "error",
-      });
     }
   };
 
@@ -108,6 +127,14 @@ export default function RetrieverConfigurationStep({
     fetchRetrievers();
   }, [selectedRetrievalParadigm, fetchRetrievers]);
 
+  useEffect(() => {
+    return () => {
+      if (currentFormValuesRef.current && selectedRetriever) {
+        handleRetrieverParametersSave(currentFormValuesRef.current);
+      }
+    };
+  }, [selectedRetriever]);
+
   const handleRetrievalParadigmChange = (event, newValue) => {
     setSelectedRetrievalParadigm(newValue);
     if (newValue?.name === "SparseRetriever") {
@@ -130,6 +157,11 @@ export default function RetrieverConfigurationStep({
     if (newValue) {
       setOpenConfig(true);
       setNextEnabled(true);
+
+      setRetrieverModel({
+        component: newValue.name,
+        params: retrieverModel?.params || {},
+      });
     } else {
       setOpenConfig(false);
       setNextEnabled(false);
@@ -143,11 +175,12 @@ export default function RetrieverConfigurationStep({
     };
     setSelectedRetriever(updatedRetriever);
 
-    setRetrieverModel({
-      component: selectedRetriever.name,
+    const newRetrieverModel = {
+      component: selectedRetriever?.name || "",
       params: newParams,
-    });
+    };
 
+    setRetrieverModel(newRetrieverModel);
     setNextEnabled(true);
   };
 
@@ -203,17 +236,14 @@ export default function RetrieverConfigurationStep({
         )}
 
       {selectedRetriever && openConfig && (
-        <FormSchemaContainer>
-          <FormSchema
-            model={selectedRetriever.name}
-            initialValues={{
-              ...selectedRetriever.parameters,
-              ...(retrieverModel?.params || {}),
-            }}
-            autoSave={true}
-            onFormSubmit={handleRetrieverParametersSave}
+        <FormSchemaProvider>
+          <AutoSaveFormSchema
+            selectedRetriever={selectedRetriever}
+            retrieverModel={retrieverModel}
+            onParametersChange={handleRetrieverParametersSave}
+            currentFormValuesRef={currentFormValuesRef}
           />
-        </FormSchemaContainer>
+        </FormSchemaProvider>
       )}
     </Box>
   );
