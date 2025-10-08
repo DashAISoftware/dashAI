@@ -24,6 +24,7 @@ export default function ScopeStepConverter({
 }) {
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const [isColumnSelectionValid, setIsColumnSelectionValid] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -100,7 +101,7 @@ export default function ScopeStepConverter({
             }));
             setColumns(processedColumns);
           }}
-          onValidationChange={() => {}}
+          onValidationChange={(isValid) => setIsColumnSelectionValid(isValid)}
         />
         <Typography variant="body2" color="text.secondary">
           Here you will configure which rows to apply the converter to.
@@ -153,7 +154,9 @@ export default function ScopeStepConverter({
 
         <FormSchemaButtonGroup
           onFormSubmit={nextStep}
-          error={supervised ? !targetColumn : false}
+          error={
+            !isColumnSelectionValid || (supervised ? !targetColumn : false)
+          }
           saveButtonText={
             Object.values(tool.schema.properties).length > 0
               ? "Next"

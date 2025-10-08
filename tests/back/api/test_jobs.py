@@ -147,7 +147,7 @@ def create_run(client: TestClient, experiment_id: int):
             },
             "goal_metric": "Accuracy",
             "description": "This is a test run",
-            "plot_history_path": "path/to/history.png",  # Missing fields
+            "plot_history_path": "path/to/history.png",
             "plot_slice_path": "path/to/slice.png",
             "plot_contour_path": "path/to/contour.png",
             "plot_importance_path": "path/to/importance.png",
@@ -197,30 +197,38 @@ def test_enqueue_jobs(client: TestClient, run_id: int):
 
     response = client.post("/api/v1/job/", data=form_data)
     assert response.status_code == 201, response.text
-    created_job = response.json()
-    assert created_job["kwargs"]["job_type"] == "ModelJob"
-    assert created_job["kwargs"]["run_id"] == run_id
+    job_id = response.json()["id"]
 
-    response = client.get(f"/api/v1/job/{created_job['id']}")
+    response = client.get(f"/api/v1/job/status/{job_id}")
     assert response.status_code == 200, response.text
-    gotten_job = response.json()
-    assert gotten_job["id"] == created_job["id"]
-    assert gotten_job["kwargs"] == created_job["kwargs"]
-    assert gotten_job["kwargs"]["job_type"] == created_job["kwargs"]["job_type"]
+    job_status = response.json()
+
+    assert job_status["status"] in [
+        "finished",
+        "error",
+    ], f"Job status should be finished or error, got {job_status['status']}"
+    if job_status["status"] == "error":
+        assert "error" in job_status, "Error jobs should have an error message"
 
     response = client.post(
         "/api/v1/job/",
         data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
     )
     assert response.status_code == 201, response.text
-    created_job_2 = response.json()
-    assert created_job_2["id"] != created_job["id"]
+    job_id_2 = response.json()["id"]
+    assert job_id_2 != job_id, "Job IDs should be different"
+
+    response = client.get(f"/api/v1/job/status/{job_id_2}")
+    assert response.status_code == 200, response.text
+    job_status_2 = response.json()
+    assert job_status_2["status"] in ["finished", "error"]
 
     response = client.get("/api/v1/job")
     assert response.status_code == 200, response.text
-    gotten_jobs = response.json()
-    assert gotten_jobs[0]["id"] == created_job["id"]
-    assert gotten_jobs[1]["id"] == created_job_2["id"]
+    job_list = response.json()
+    job_ids = [job["id"] for job in job_list]
+    assert job_id in job_ids, f"Job ID {job_id} not found in job list"
+    assert job_id_2 in job_ids, f"Job ID {job_id_2} not found in job list"
 
 
 def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
@@ -229,23 +237,28 @@ def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
         data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
     )
     assert response.status_code == 201, response.text
+    job_id = response.json()["id"]
 
     response = client.post(
         "/api/v1/job/",
         data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": failed_run_id})},
     )
     assert response.status_code == 201, response.text
+    failed_job_id = response.json()["id"]
 
     response = client.get("/api/v1/run")
     data = response.json()
     for run in data:
-        assert run["status"] == 1
+        assert run["status"] in [1, 3, 4]
         assert run["delivery_time"] is not None
-        assert run["start_time"] is None
-        assert run["end_time"] is None
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    response = client.get(f"/api/v1/job/status/{job_id}")
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "finished"
+
+    response = client.get(f"/api/v1/job/status/{failed_job_id}")
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "error"
 
     response = client.get(f"/api/v1/run/{run_id}")
     data = response.json()

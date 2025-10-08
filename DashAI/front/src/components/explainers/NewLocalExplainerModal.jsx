@@ -22,9 +22,9 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { createLocalExplainer as createLocalExplainerRequest } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
-import { startJobQueue as startJobQueueRequest } from "../../api/job";
 import { getExplainers } from "../../api/explainer";
 
+import { startJobPolling } from "../../utils/jobPoller";
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
 import SelectDatasetStep from "./SelectDatasetStep";
 import SetNameAndExplainerStep from "./SetNameAndExplainerStep";
@@ -98,34 +98,43 @@ export default function NewLocalExplainerModal({
 
   const enqueueLocalExplainerJob = async (explainerId) => {
     try {
-      await enqueueExplainerJobRequest(explainerId, "local");
+      const response = await enqueueExplainerJobRequest(explainerId, "local");
       enqueueSnackbar("Local explainer job successfully created.", {
         variant: "success",
       });
+
+      // Start tracking this job
+      if (response && response.id) {
+        console.log("Starting to track local explainer job:", response.id);
+
+        startJobPolling(
+          response.id,
+          (result) => {
+            console.log("Local explainer job completed successfully:", result);
+            enqueueSnackbar(
+              `Explainer "${newLocalExpl.name}" completed successfully`,
+              {
+                variant: "success",
+              },
+            );
+            updateExplainers();
+          },
+          (result) => {
+            console.error("Local explainer job failed:", result);
+            enqueueSnackbar(
+              `Error processing explainer: ${result.error || "Unknown error"}`,
+              { variant: "error" },
+            );
+            updateExplainers();
+          },
+        );
+      }
+
+      return response;
     } catch (error) {
       enqueueSnackbar("Error while trying to enqueue Local explainer job");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    }
-  };
-
-  const startJobQueue = async () => {
-    try {
-      await startJobQueueRequest();
-    } catch (error) {
-      enqueueSnackbar("Error while trying to start job queue");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error details:", error);
+      throw error;
     }
   };
 
@@ -143,25 +152,10 @@ export default function NewLocalExplainerModal({
       );
       const explainerId = response.id;
       await enqueueLocalExplainerJob(explainerId);
-      enqueueSnackbar("Local explainer successfully created.", {
-        variant: "success",
-      });
-      await startJobQueue();
-      enqueueSnackbar("Running explainer jobs.", {
-        variant: "success",
-      });
-      updateExplainers();
       await loadExistingExplainers();
     } catch (error) {
       enqueueSnackbar("Error while trying to create a new explainer");
-
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error details:", error);
     } finally {
       setIsLoading(false);
     }

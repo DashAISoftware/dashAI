@@ -38,3 +38,4 @@ protobuf
 imblearn
 numba
 llvmlite
+huey
