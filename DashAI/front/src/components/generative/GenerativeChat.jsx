@@ -17,6 +17,7 @@ import InfoSessionModal from "./InfoSessionModal";
 import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
+import JobQueueWidget from "../jobs/JobQueueWidget";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
@@ -317,6 +318,8 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
+
+      <JobQueueWidget />
     </Box>
   );
 }
