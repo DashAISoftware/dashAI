@@ -19,8 +19,7 @@ async def read_index(
     index_path = Path(f"{front_build_path}/index.html").absolute()
     # Avoids caching of index.html (forces reload of front on every request)
     response = FileResponse(index_path)
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
+    response.headers["Cache-Control"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
 
