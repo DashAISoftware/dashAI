@@ -1,9 +1,6 @@
 name: Build and Test
 on:
   push:
-    branches:
-      - main
-      - develop
   pull_request:
 
 jobs:
@@ -38,7 +35,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # --- Cambia según si es push o PR ---
         python-version: ${{ github.event_name == 'pull_request' && fromJson('["3.10", "3.11", "3.12", "3.13"]') || fromJson('["3.10"]') }}
         os: [ubuntu-latest, windows-latest, macos-latest]
 
