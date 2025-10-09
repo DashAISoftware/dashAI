@@ -1,8 +1,8 @@
-"""Initial Migrations
+"""initial migrations
 
-Revision ID: e2f6087aabf7
+Revision ID: 7965d75eb37a
 Revises:
-Create Date: 2025-09-22 20:40:46.643772
+Create Date: 2025-10-09 02:11:39.245181
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e2f6087aabf7'
+revision: str = '7965d75eb37a'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,6 +23,7 @@ def upgrade() -> None:
     op.create_table('dataset',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('huey_id', sa.String(), nullable=True),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('last_modified', sa.DateTime(), nullable=False),
     sa.Column('file_path', sa.String(), nullable=False),
@@ -45,6 +46,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('run_id', sa.Integer(), nullable=False),
+    sa.Column('huey_id', sa.String(), nullable=True),
     sa.Column('explainer_name', sa.String(), nullable=False),
     sa.Column('explanation_path', sa.String(), nullable=True),
     sa.Column('plot_path', sa.String(), nullable=True),
@@ -58,12 +60,14 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('run_id', sa.Integer(), nullable=False),
+    sa.Column('huey_id', sa.String(), nullable=True),
     sa.Column('explainer_name', sa.String(), nullable=False),
     sa.Column('dataset_id', sa.Integer(), nullable=False),
     sa.Column('explanation_path', sa.String(), nullable=True),
     sa.Column('plots_path', sa.String(), nullable=True),
     sa.Column('parameters', sa.JSON(), nullable=False),
     sa.Column('fit_parameters', sa.JSON(), nullable=False),
+    sa.Column('scope', sa.JSON(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('status', sa.Enum('NOT_STARTED', 'DELIVERED', 'STARTED', 'FINISHED', 'ERROR', name='explainerstatus'), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -149,6 +153,7 @@ def upgrade() -> None:
     op.create_table('converter_list',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('notebook_id', sa.Integer(), nullable=False),
+    sa.Column('huey_id', sa.String(), nullable=True),
     sa.Column('converter', sa.String(), nullable=False),
     sa.Column('parameters', sa.JSON(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
@@ -163,6 +168,7 @@ def upgrade() -> None:
     op.create_table('explorer',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('notebook_id', sa.Integer(), nullable=False),
+    sa.Column('huey_id', sa.String(), nullable=True),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('last_modified', sa.DateTime(), nullable=False),
     sa.Column('columns', sa.JSON(), nullable=False),
@@ -189,6 +195,7 @@ def upgrade() -> None:
     op.create_table('run',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('experiment_id', sa.Integer(), nullable=False),
+    sa.Column('huey_id', sa.String(), nullable=True),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('last_modified', sa.DateTime(), nullable=False),
     sa.Column('model_name', sa.String(), nullable=False),
