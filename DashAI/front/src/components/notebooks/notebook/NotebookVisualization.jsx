@@ -3,9 +3,6 @@ import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
-import { TourProvider } from "../../../components/tour/TourProvider";
-import { TourButton } from "../../../components/tour/TourButton";
-import { TOUR_KEYS } from "../../../constants/tours";
 
 export default function NotebookVisualization({
   notebook,

@@ -209,7 +209,7 @@ export function CreateNotebookModal({
               formik={{ errors: nameError ? { name: nameError } : {} }}
               saveButtonText="Create Notebook"
               backButtonText="Cancel"
-              className="create-notebook"
+              dataTour="create-notebook-button"
             />
           </Box>
         </Box>

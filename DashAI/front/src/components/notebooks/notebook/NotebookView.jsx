@@ -108,7 +108,6 @@ export default function NotebookView({ notebook }) {
 
       if (converterIndex === -1) return [];
 
-      // Todos los items desde el converter en adelante (incluyendo el converter)
       return explorersAndConverters.slice(converterIndex);
     },
     [explorersAndConverters],
@@ -225,6 +224,7 @@ export default function NotebookView({ notebook }) {
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        overflow: "auto",
       }}
 
     >

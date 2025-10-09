@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Box, Button, Typography, Tooltip } from "@mui/material";
 import ConfigureToolModal from "../ConfigureToolModal";
 import FormExplorerSection from "./FormExplorerSection";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function ExplorerList({
   explorers,
@@ -10,10 +11,18 @@ export default function ExplorerList({
 }) {
   const [open, setOpen] = useState(false);
   const [selectedExplorer, setSelectedExplorer] = useState(null);
+  const tourContext = useTourContext();
 
   const handleExplorerClick = (explorer) => {
     setSelectedExplorer(explorer);
     setOpen(true);
+
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+
   };
 
   return (
@@ -31,14 +40,24 @@ export default function ExplorerList({
         </Typography>
       ) : (
         explorers.map((exploration) => {
+          const getTourAttribute = () => {
+            if (exploration.name === "HistogramPlotExplorer") {
+              return "histogram-explorer";
+            }
+            return null;
+          };
+
+          const tourAttr = getTourAttribute();
+
           const ButtonComponent = (
             <Button
               key={exploration.name}
               variant="contained"
               disabled={exploration.disabled}
+              data-tour={tourAttr || undefined}
               sx={{
                 width: "100%",
-                minHeight: 48, // Ensure consistent height
+                minHeight: 48,
                 bgcolor: exploration.disabled
                   ? "#1a1a1a"
                   : hoveredTool === exploration.type
@@ -49,7 +68,7 @@ export default function ExplorerList({
                 textTransform: "none",
                 fontWeight: "normal",
                 py: 1.5,
-                px: 2, // Ensure consistent padding
+                px: 2,
                 cursor: exploration.disabled ? "not-allowed" : "pointer",
                 "&:hover": {
                   bgcolor: exploration.disabled ? "#1a1a1a" : "#444",
@@ -57,7 +76,7 @@ export default function ExplorerList({
                 "&.Mui-disabled": {
                   color: "#666",
                   bgcolor: "#1a1a1a",
-                  minHeight: 48, // Ensure consistent height when disabled
+                  minHeight: 48,
                 },
               }}
               onMouseEnter={() =>
@@ -72,7 +91,6 @@ export default function ExplorerList({
             </Button>
           );
 
-          // Wrap with tooltip if explorer is disabled
           if (exploration.disabled && exploration.tooltip) {
             return (
               <Tooltip

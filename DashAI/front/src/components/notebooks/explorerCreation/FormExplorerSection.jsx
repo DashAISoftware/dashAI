@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
-
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
 import ParameterStepExplorer from "./ParameterStepExplorer";
@@ -38,10 +37,8 @@ export default function FormExplorerSection({
 
   const handleSaveExplorer = async (params) => {
     try {
-      // Build columns as expected by backend (list of objects with at least columnName)
       const selectedColumns = scopeColumns.map((c) => ({
         columnName: c.columnName,
-        // keep any available metadata if present
         ...(c.valueType ? { valueType: c.valueType } : {}),
         ...(c.dataType ? { dataType: c.dataType } : {}),
         ...(c.id !== undefined ? { id: c.id } : {}),
@@ -93,16 +90,18 @@ export default function FormExplorerSection({
     setFormValues(copyValues);
   }, [classColumnInitialValue, scopeColumns]);
 
+  const needsScroll = step === 1;
+
   return (
     <Box
       sx={{
-        overflow: "auto",
+        overflow: needsScroll ? "scroll" : "hidden",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
+        maxHeight: "100%",
       }}
     >
-      {/* Step content */}
       {step === 0 && (
         <ScopeStepExplorer
           classColumnInitialValue={classColumnInitialValue}

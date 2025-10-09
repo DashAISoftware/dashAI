@@ -31,39 +31,198 @@ export const notebookTourSteps = [
     placement: 'bottom',
     disableBeacon: true,
   },
- {
-    target: '.explorer-converter-box',
+  {
+    target: '.right-bar-container',
     content: (
       <div>
-        <h3>Explorers and Converters</h3>
+        <h3>Explorers and Converters Panel</h3>
         <p>
-          In the notebook area below the dataset preview, you can add:
+          On the right side, you'll find the tools to analyze and transform your data.
         </p>
         <p>
-          <strong>Explorers</strong> - Visualizations like charts and statistics to understand your data
+          <strong>Explorers</strong> help you visualize data through charts and statistics.
         </p>
         <p>
-          <strong>Converters</strong> - Transformations to clean, filter, or modify your data
+          <strong>Converters</strong> allow you to transform, clean, and prepare your data.
+        </p>
+        <p>
+          The Explorers tab is already selected. Let's create a histogram!
         </p>
       </div>
     ),
-    placement: 'right',
+    placement: 'left',
     disableBeacon: true,
   },
   {
-    target: '.save-dataset-button',
+    target: '[data-tour="histogram-explorer"]',
     content: (
       <div>
-        <h3>Save as New Dataset</h3>
+        <h3>Histogram Plot Explorer</h3>
         <p>
-          When you're satisfied with your data transformations, you can save the result as a new dataset.
+          The Histogram Plot shows the distribution of values in your dataset.
         </p>
         <p>
-          This creates a snapshot of your data at its current state, which you can use for modeling or further analysis.
+          Click on "Histogram Plot" to add it to your notebook.
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+  {
+    target: '[data-tour="column-selector-explorer-container"]',
+    content: (
+      <div>
+        <h3>Select Columns</h3>
+        <p>
+          Select which column(s) from your dataset you want to visualize in the histogram.
+        </p>
+        <p>
+          For this example, you can select any numeric column. Try selecting one column from the list.
+        </p>
+        <p>
+          <strong>Click "Next" when you've selected a column.</strong>
         </p>
       </div>
     ),
     placement: 'top',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+  {
+    target: '[data-tour="explorer-parameters"]',
+    content: (
+      <div>
+        <h3>Configure Parameters</h3>
+        <p>
+          Here you can customize the explorer's parameters, such as the number of bins for the histogram.
+        </p>
+        <p>
+          For now, we'll use the default settings. These work well for most cases!
+        </p>
+      </div>
+    ),
+    placement: 'top',
+    disableBeacon: true,
+    spotlightClicks: true,
+  },
+ {
+    target: '[data-tour="create-explorer-button"]',
+    content: (
+      <div>
+        <h3>Create the Explorer</h3>
+        <p>
+          Now click the "Create Explorer" button to generate the histogram visualization.
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+    spotlightClicks: true,
+    disableOverlayClose: true,
+    disableOverlay: true,
+    hideFooter: true,
+  },
+  {
+    target: '.explorer-box',
+    content: (
+      <div>
+        <h3>Explorer Created!</h3>
+        <p>
+          Great! Your histogram explorer is now processing. 
+        </p>
+        <p>
+          Once it's finished, you'll see the visualization here. Explorers help you understand your data's patterns and distributions.
+        </p>
+        <p>
+          <strong>Now let's add a data transformation!</strong>
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="converters-tab"]',
+    content: (
+      <div>
+        <h3>Converters Tab</h3>
+        <p>
+          Click on the "Converters" tab to see available transformation tools.
+        </p>
+        <p>
+          We'll use a Label Encoder to convert categorical data into numerical values.
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+  {
+    target: '[data-tour="label-encoder-converter"]',
+    content: (
+      <div>
+        <h3>Label Encoder Converter</h3>
+        <p>
+          Label Encoder transforms categorical text values into numerical codes.
+        </p>
+        <p>
+          This is useful for preparing data for machine learning models!
+        </p>
+        <p>
+          Click on "Label Encoder" to add it.
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+  {
+    target: '[data-tour="column-selector-converter-container"]',
+    content: (
+      <div>
+        <h3>Select Columns to Encode</h3>
+        <p>
+          Select the categorical columns you want to convert into numerical values.
+        </p>
+        <p>
+          For this example, try selecting columns like:
+        </p>
+        <ul>
+          <li><strong>stage_fear</strong></li>
+          <li><strong>drained_after_socializing</strong></li>
+        </ul>
+        <p>
+          <strong>Click "Save"  to apply the Label Encoder transformation.</strong> 
+        </p>
+      </div>
+    ),
+    placement: 'top',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+  {
+    target: '.converter-box',
+    content: (
+      <div>
+        <h3>Converter Applied!</h3>
+        <p>
+          Excellent! Your Label Encoder is now processing the selected columns.
+        </p>
+        <p>
+          Once finished, you'll see the transformation details here. All subsequent explorers and converters will use this transformed data.
+        </p>
+      </div>
+    ),
+    placement: 'left',
     disableBeacon: true,
   },
 ];

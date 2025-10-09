@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box } from "@mui/material";
-
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
@@ -108,16 +107,18 @@ export default function FormConverterSection({
       });
   };
 
+  const needsScroll = step === 1;
+
   return (
     <Box
       sx={{
-        overflow: "auto",
+        overflow: needsScroll ? "scroll" : "auto",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
+        maxHeight: "100%",
       }}
     >
-      {/* Step content */}
       {step === 0 && (
         <ScopeStepConverter
           supervised={tool.metadata.supervised}

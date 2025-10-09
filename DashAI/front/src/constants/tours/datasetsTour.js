@@ -72,7 +72,7 @@ export const datasetsTourSteps = [
           The Personality dataset is now available in your Datasets list.
         </p>
         <p>
-          You can find all your uploaded datasets in this sidebar.
+          You can find all your uploaded datasets and notebooks in this sidebar.
         </p>
       </div>
     ),
@@ -115,7 +115,7 @@ export const datasetsTourSteps = [
     disableCloseOnEsc: true,
   },
   {
-    target: '.create-notebook-button',
+    target: '[data-tour="create-notebook-button"]',
     content: (
       <div>
         <h3>Finish the Process</h3>

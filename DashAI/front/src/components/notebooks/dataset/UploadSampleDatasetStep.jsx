@@ -54,7 +54,7 @@ export default function UploadSampleDatasetStep({
             waitForElement('.datasets-list', () => {
               setTimeout(() => {
                 tourContext.nextStep();
-              }, 500);
+              }, 1000);
             });
           }
         } catch (jobError) {
@@ -70,7 +70,7 @@ export default function UploadSampleDatasetStep({
     };
     
     uploadSampleDataset();
-  }, [handleDatasetCreated, enqueueSnackbar, backHome, tourContext]);
+  }, [handleDatasetCreated, enqueueSnackbar, backHome]);
 
   const waitForElement = (selector, callback, timeout = 10000) => {
     const startTime = Date.now();

@@ -15,6 +15,7 @@ import DatasetIcon from "@mui/icons-material/Dataset";
 
 import DatasetTable from "./dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
+import { useTourContext } from "../tour/TourProvider";
 
 import { getDatasetFile } from "../../api/datasets";
 
@@ -29,6 +30,8 @@ export default function ConfigureToolModal({
 
   const [activeTab, setActiveTab] = useState(0);
   const [step, setStep] = useState(0);
+  const tourContext = useTourContext();
+  const isTourActive = tourContext?.run;
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
