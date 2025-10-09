@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
+from DashAI.back.dependencies.database.migrate import _resolve_db_url
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,9 +34,7 @@ def setup_sqlite_db(config: Dict[str, str]) -> Tuple[Engine, sessionmaker]:
                 for creating database sessions.
     """
 
-    if not str(config["SQLITE_DB_PATH"]).startswith("sqlite:///"):
-        db_url = "sqlite:///" + str(config["SQLITE_DB_PATH"])
-
+    db_url = _resolve_db_url(config["SQLITE_DB_PATH"])
     logger.info("Using %s as SQLite path.", db_url)
 
     engine: Engine = create_engine(
