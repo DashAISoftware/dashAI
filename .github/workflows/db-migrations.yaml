@@ -59,7 +59,13 @@ jobs:
       # Checks that no new migrations are needed
       - name: Check for pending autogenerate (no-op)
         run: |
-          OUT=$(alembic -x url="$DATABASE_URL" revision --autogenerate --sql -m "ci-check" || true)
+          OUT=$(alembic -x url="$DATABASE_URL" revision --autogenerate --sql -m "ci-check" 2>&1)
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Alembic command failed with exit code $EXIT_CODE"
+            echo "$OUT"
+            exit $EXIT_CODE
+          fi
           if echo "$OUT" | grep -Eiq "(CREATE TABLE|ALTER TABLE|DROP TABLE|ADD COLUMN|DROP COLUMN|CREATE INDEX|DROP INDEX)"; then
             echo "Detected schema drift! Autogenerate produced SQL:"
             echo "$OUT"
