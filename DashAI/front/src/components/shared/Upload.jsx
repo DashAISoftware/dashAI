@@ -108,9 +108,9 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
                 <Grid>
                   <Button variant="contained">Upload a file</Button>
                 </Grid>
-              </>
+              </React.Fragment>
             )}
-          </>
+          </React.Fragment>
         );
 
       case LOADING:

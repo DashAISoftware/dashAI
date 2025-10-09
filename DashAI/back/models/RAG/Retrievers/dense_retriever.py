@@ -7,15 +7,6 @@ from DashAI.back.core.schema_fields import (
 
 from .retriever_model import RetrieverModel
 
-""" chunking_model: schema_field(
-    component_field(
-        parent="ChunkingModel"
-        ),
-    placeholder={"component": "Perico", "params": {}},
-    description="Chunking model to split documents into smaller parts."
-)# type: ignore """
-
-
 class DenseRetrieverSchema(BaseSchema):
     """Schema for Dense Retriever."""
 

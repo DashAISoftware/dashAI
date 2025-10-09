@@ -1,4 +1,5 @@
 from typing import Any, Tuple, List, Dict
+from sqlalchemy.orm import Session
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -136,6 +137,7 @@ class RAGPipeline(BaseGenerativeModel):
             chunking_model_args = kwargs['chunking_model']
             retriever_model_args = kwargs['retriever_model']
             generation_model_args = kwargs['generation_model']
+            db:Session = kwargs['db']
         except KeyError as e:
             raise ValueError(f"Missing required RAG pipeline parameter: {e}")
         
