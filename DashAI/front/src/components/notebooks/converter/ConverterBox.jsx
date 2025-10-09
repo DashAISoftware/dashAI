@@ -69,6 +69,7 @@ export default function ConverterBox({
   return (
     <Card
       key={converter.id}
+      className="converter-box"
       sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
     >
       <CardContent

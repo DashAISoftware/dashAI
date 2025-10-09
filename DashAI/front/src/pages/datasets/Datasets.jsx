@@ -6,6 +6,7 @@ import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
+import UploadSampleDatasetStep from "../../components/notebooks/dataset/UploadSampleDatasetStep";
 import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
 import {
@@ -21,6 +22,9 @@ import {
   deleteNotebook,
   updateNotebook,
 } from "../../api/notebook";
+import { TourProvider } from "../../components/tour/TourProvider";
+import { TourButton } from "../../components/tour/TourButton";
+import { TOUR_KEYS } from "../../constants/tours";
 
 import { enqueueDatasetJob } from "../../api/job";
 import { useSnackbar } from "notistack";
@@ -34,6 +38,7 @@ export default function DatasetsPage() {
   const [selectedNotebookId, setSelectedNotebookId] = useState(0);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const goToNextStep = (option = selectedOption) => {
@@ -359,92 +364,116 @@ export default function DatasetsPage() {
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
-
-  return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="22%" mr={1}>
-        <LeftBar
-          datasets={datasets}
-          notebooks={notebooks}
-          selectedDatasetId={selectedDatasetId}
-          selectedNotebookId={selectedNotebookId}
-          onDatasetClick={handleDatasetClick}
-          onDatasetDelete={handleDatasetDelete}
-          onDatasetEdit={handleEditDataset}
-          onNotebookClick={handleNotebookClick}
-          onNotebookDelete={handleNotebookDelete}
-          onNotebookEdit={handleEditNotebook}
-          handleNewSessionButton={handleNewSessionButton}
-        />
+return (
+    <TourProvider tourKey={TOUR_KEYS.DATASETS}>
+      <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
+        <Box width="22%" mr={1} className="datasets-list">
+          <LeftBar
+            datasets={datasets}
+            notebooks={notebooks}
+            selectedDatasetId={selectedDatasetId}
+            selectedNotebookId={selectedNotebookId}
+            onDatasetClick={handleDatasetClick}
+            onDatasetDelete={handleDatasetDelete}
+            onDatasetEdit={handleEditDataset}
+            onNotebookClick={handleNotebookClick}
+            onNotebookDelete={handleNotebookDelete}
+            onNotebookEdit={handleEditNotebook}
+            handleNewSessionButton={handleNewSessionButton}
+          />
+        </Box>
+        <ExplorersAndConvertersProvider>
+          <Box width="56%" mr={1}>
+            <CenterBox>
+              {selectedDatasetId ? (
+                <DatasetVisualization
+                  dataset={selectedDataset}
+                  onNotebookCreated={handleNotebookCreated}
+                  existingNotebooks={notebooks}
+                />
+              ) : selectedNotebookId ? (
+                <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
+                  <NotebookVisualization
+                    notebook={selectedNotebook}
+                    handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+                    existingDatasets={datasets}
+                  />
+                  <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
+                </TourProvider>
+              ) : step === 0 ? (
+                <SelectOptionMenu
+                  title="Dataset Module"
+                  subtitle="Upload your datasets: Explore, analyze, and transform your
+                 data with advanced exploratory analysis tools. Create interactive notebooks,
+                 generate visualizations, and apply data transformations intuitively."
+                  options={[
+                    {
+                      name: "dataset",
+                      display_name: "Upload Dataset",
+                      description:
+                        "Import your data from various sources and formats.",
+                      Icon: null,
+                      "data-tour": "dataset-option",
+                    },
+                    {
+                      name: "notebook",
+                      display_name: "Create a New Notebook",
+                      description:
+                        "Start a new analysis session with an existing dataset.",
+                      Icon: null,
+                      "data-tour": "notebook-option",
+                    },
+                    {
+                      name: "sample",
+                      display_name: "Upload Sample Dataset",
+                      description:
+                        "Load the Iris dataset as a quick example to get started.",
+                      Icon: null,
+                      "data-tour": "sample-option",
+                    }
+                  ]}
+                  searchBar={false}
+                  goToNextStep={goToNextStep}
+                />
+              ) : step === 1 && selectedOption === "dataset" ? (
+                <UploadDatasetSteps
+                  backHome={() => {
+                    setStep(0);
+                    setSelectedOption(null);
+                    fetchDatasets();
+                  }}
+                  handleDatasetCreated={handleDatasetCreated}
+                  existingDatasets={datasets}
+                />
+              ) : step === 1 && selectedOption === "notebook" ? (
+                <UploadNotebookSteps
+                  backHome={() => {
+                    setStep(0);
+                    setSelectedOption(null);
+                    fetchNotebooks();
+                  }}
+                  datasets={datasets}
+                  handleNotebookCreated={handleNotebookCreated}
+                  existingNotebooks={notebooks}
+                />
+              ) : step === 1 && selectedOption === "sample" ? (
+                <UploadSampleDatasetStep
+                  handleDatasetCreated={handleDatasetCreated}
+                  backHome={() => {
+                    setStep(0);
+                    setSelectedOption(null);
+                    fetchDatasets();
+                  }}
+                />
+              ) : null}
+            </CenterBox>
+          </Box>
+          <Box width="22%">
+            <RightBar notebook={selectedNotebook} />
+          </Box>
+        </ExplorersAndConvertersProvider>
       </Box>
-      <ExplorersAndConvertersProvider>
-        <Box width="56%" mr={1}>
-          <CenterBox>
-            {selectedDatasetId ? (
-              <DatasetVisualization
-                dataset={selectedDataset}
-                onNotebookCreated={handleNotebookCreated}
-                existingNotebooks={notebooks}
-              />
-            ) : selectedNotebookId ? (
-              <NotebookVisualization
-                notebook={selectedNotebook}
-                handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
-                existingDatasets={datasets}
-              />
-            ) : step === 0 ? (
-              <SelectOptionMenu
-                title="Dataset Module"
-                subtitle="Upload your datasets: Explore, analyze, and transform your
-               data with advanced exploratory analysis tools. Create interactive notebooks,
-               generate visualizations, and apply data transformations intuitively."
-                options={[
-                  {
-                    name: "dataset",
-                    display_name: "Upload Dataset",
-                    description:
-                      "Import your data from various sources and formats.",
-                    Icon: null,
-                  },
-                  {
-                    name: "notebook",
-                    display_name: "Create a New Notebook",
-                    description:
-                      "Start a new analysis session with an existing dataset.",
-                    Icon: null,
-                  },
-                ]}
-                searchBar={false}
-                goToNextStep={goToNextStep}
-              />
-            ) : step === 1 && selectedOption === "dataset" ? (
-              <UploadDatasetSteps
-                backHome={() => {
-                  setStep(0);
-                  setSelectedOption(null);
-                  fetchDatasets();
-                }}
-                handleDatasetCreated={handleDatasetCreated}
-                existingDatasets={datasets}
-              />
-            ) : step === 1 && selectedOption === "notebook" ? (
-              <UploadNotebookSteps
-                backHome={() => {
-                  setStep(0);
-                  setSelectedOption(null);
-                  fetchNotebooks();
-                }}
-                datasets={datasets}
-                handleNotebookCreated={handleNotebookCreated}
-                existingNotebooks={notebooks}
-              />
-            ) : null}
-          </CenterBox>
-        </Box>
-        <Box width="22%">
-          <RightBar notebook={selectedNotebook} />
-        </Box>
-      </ExplorersAndConvertersProvider>
-    </Box>
+    {!selectedNotebookId && <TourButton tourKey={TOUR_KEYS.DATASETS} />}
+    </TourProvider>
   );
 }

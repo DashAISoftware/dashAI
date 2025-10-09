@@ -208,8 +208,10 @@ export default function RightBar({ notebook }) {
             >
               <Tab
                 label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box 
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
+
                     Explore
                   </Box>
                 }
@@ -231,6 +233,7 @@ export default function RightBar({ notebook }) {
                 flexDirection: "column",
                 overflow: "hidden",
               }}
+              className="explorer-converter-box"
             >
               {/* Search bar */}
               <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>

@@ -31,6 +31,14 @@ export const useTour = (tourKey) => {
     setRun(false);
   }, []);
 
+  const goToStep = useCallback((step) => {
+    setStepIndex(step);
+  }, []);
+
+  const nextStep = useCallback(() => {
+    setStepIndex(prevIndex => prevIndex + 1);
+  }, []);
+
   const markTourAsCompleted = useCallback(() => {
     const completedTours = JSON.parse(
       localStorage.getItem(TOUR_STORAGE_KEY) || '{}'
@@ -74,5 +82,7 @@ export const useTour = (tourKey) => {
     resetTour,
     resetAllTours,
     handleJoyrideCallback,
+    goToStep,
+    nextStep,
   };
 };

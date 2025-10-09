@@ -7,6 +7,7 @@ import {
   Typography,
   Button,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
@@ -18,10 +19,12 @@ import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
+
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
   existingDatasets = [],
+  className="",
 }) {
   if (!notebook) {
     return (
@@ -94,6 +97,7 @@ export default function DatasetPreviewNotebook({
       sx={{
         mb: 2,
       }}
+      className = {`dataset-preview-section ${className}`}
     >
       <Accordion
         width="100%"
@@ -134,6 +138,7 @@ export default function DatasetPreviewNotebook({
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
+              className="save-dataset-button"
             >
               Save as new Dataset
             </Button>

@@ -8,6 +8,7 @@ function FormSchemaButtonGroup({
   error,
   saveButtonText = "Save",
   backButtonText = "Back",
+  className = "",
 }) {
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
@@ -21,6 +22,7 @@ function FormSchemaButtonGroup({
           variant="contained"
           onClick={onFormSubmit}
           disabled={Object.keys(formik?.errors ?? {}).length > 0 || error}
+          className={`${className}-save create-notebook-button`}
         >
           {saveButtonText}
         </Button>

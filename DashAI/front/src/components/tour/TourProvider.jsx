@@ -11,14 +11,14 @@ export const TourProvider = ({ tourKey, children }) => {
   const {
     run, stepIndex,
     startTour, stopTour, resetTour, resetAllTours,
-    handleJoyrideCallback,
+    handleJoyrideCallback, goToStep, nextStep,
   } = useTour(tourKey);
 
   const tourData = tours[tourKey];
   if (!tourData) return children;
 
   return (
-    <TourContext.Provider value={{ run, stepIndex, startTour, stopTour, resetTour, resetAllTours }}>
+    <TourContext.Provider value={{ run, stepIndex, startTour, stopTour, resetTour, resetAllTours, goToStep, nextStep }}>
       <Joyride
         steps={tourData.steps}
         run={run}

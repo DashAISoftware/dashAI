@@ -3,7 +3,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useTourContext } from './TourProvider';
 
-export const TourButton = () => {
+export const TourButton = ( {tourKey}) => {
   const { resetTour, startTour } = useTourContext();
   return (
     <Tooltip title="Start Tour" placement="left">

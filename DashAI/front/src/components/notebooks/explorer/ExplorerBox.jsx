@@ -71,6 +71,7 @@ export default function ExplorerBox({
     <Card
       key={explorer.id}
       sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      className="explorer-box"
     >
       <CardContent
         sx={{
