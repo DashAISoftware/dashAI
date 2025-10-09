@@ -72,5 +72,12 @@ def migrate_on_startup(sqlite_file_path: Path) -> None:
             )
         )
         db_url = _resolve_db_url(sqlite_file_path)
-        backup_and_recreate_db(db_url=db_url, sqlite_file_path=sqlite_file_path)
-        raise
+        try:
+            backup_and_recreate_db(db_url=db_url, sqlite_file_path=sqlite_file_path)
+        except Exception as backup_exc:
+            logger.error(
+                f"Error during backup and recreate: {backup_exc}. "
+                f"Original migration error: {exc}."
+            )
+            raise backup_exc from exc
+        raise exc
