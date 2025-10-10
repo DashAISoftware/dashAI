@@ -640,6 +640,13 @@ class Document(Base):
     file_type: Mapped[str] = mapped_column(String, nullable=False)
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     file_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    optional_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
 
     # Create a relationship for the related sessions and related chunks
     pipeline_links: Mapped[List["RAGDocumentPipelineSessionLink"]] = relationship(
@@ -665,6 +672,11 @@ class Document(Base):
     def pipelines_related(self) -> List["RAGPipeline"]:
         """Return a list of pipelines related to the document."""
         return [link.pipeline for link in self.pipeline_links]
+        
+    @property
+    def related_sessions_ids(self) -> List["GenerativeSession"]:
+        """Return a list of sessions related to the document."""
+        return [link.session for link in self.pipeline_links]
 
 
 class RAGChunk(Base):
@@ -685,6 +697,22 @@ class RAGChunk(Base):
     )
 
 
+class RAGPrompt(Base):
+    __tablename__ = "rag_prompt"
+    """
+    Table to store all the information about a RAG prompt.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    
+    # Relationship with RAGPipeline
+    pipelines: Mapped[List["RAGPipeline"]] = relationship(
+        back_populates="prompt",
+        cascade="all, delete-orphan"
+    )
+
+
 class RAGPipeline(Base):
     __tablename__ = "rag_pipeline"
     """
@@ -701,10 +729,14 @@ class RAGPipeline(Base):
     retriever_id: Mapped[int] = mapped_column(
         ForeignKey("rag_retriever.id", ondelete="CASCADE"), nullable=False
     )
+    prompt_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_prompt.id", ondelete="CASCADE"), nullable=False
+    )
     
     # Relationships
     chunking_model: Mapped["RAGChunkingModel"] = relationship(back_populates="pipelines")
     retriever: Mapped["RAGRetriever"] = relationship(back_populates="pipelines")
+    prompt: Mapped["RAGPrompt"] = relationship(back_populates="pipelines")
     pipeline_links: Mapped[List["RAGDocumentPipelineSessionLink"]] = relationship(
         cascade="all, delete-orphan",
         back_populates="pipeline"

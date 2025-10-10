@@ -14,6 +14,7 @@ from DashAI.back.dependencies.registry import component_registry
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
 from DashAI.back.models.RAG.chunking_models.character_chunk_model import CharacterChunkModel
 from DashAI.back.models.RAG.chunking_models.token_chunk_model import TokenChunkModel
+from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
 
@@ -81,11 +82,10 @@ class RAGPipelineSchema(BaseSchema):
     # Document collection parameters
     documents: schema_field(
         list_field(
-            int_field(),
-            min_items=1,
+            int_field(gt=0)
         ),
         placeholder=None,
-        description="List of documents to be used in the RAG pipeline."
+        description="List of documents ids to be used in the RAG pipeline."
     ) # type: ignore
 
     chunking_model: schema_field(
@@ -109,6 +109,12 @@ class RAGPipelineSchema(BaseSchema):
         component_field(parent="TextToTextGenerationTaskModel"),
         placeholder={"component": "DeepSeek", "params": {}},
         description="Text generation model used in the RAG pipeline."
+    ) # type: ignore
+
+    prompt_model: schema_field(
+        component_field(parent="Prompt"),
+        placeholder={"component": "DefaultGenerationPrompt", "params": {}},
+        description="Prompt template used to format the input for the generation model."
     ) # type: ignore
 
 

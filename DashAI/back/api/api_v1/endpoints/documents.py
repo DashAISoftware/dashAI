@@ -44,8 +44,10 @@ async def get_all_documents(
                     DocumentResponse(
                         id=doc.id,
                         file_name=doc.file_name,
+                        file_type=doc.file_type,
                         file_hash=doc.file_hash,
                         created=doc.created,
+                        last_modified=doc.last_modified,
                         optional_metadata=doc.optional_metadata,
                         related_sessions=[session.id for session in doc.related_sessions_ids] if doc.related_sessions_ids else None,
                         file_url=f"{base_url}/{doc.id}/download",
@@ -175,8 +177,10 @@ async def upload_document(
             return DocumentResponse(
                 id=existing_doc.id,
                 file_name=existing_doc.file_name,
+                file_type=existing_doc.file_type,
                 file_hash=existing_doc.file_hash,
                 created=existing_doc.created,
+                last_modified=existing_doc.last_modified,
                 related_sessions=[session.id for session in existing_doc.related_sessions_ids],
                 optional_metadata=existing_doc.optional_metadata,
                 file_url=f"{base_url}/{existing_doc.id}/download"
@@ -191,8 +195,12 @@ async def upload_document(
                 with open(file_path, "wb") as f:
                     f.write(content_bytes)
 
+                # Get file type from file extension
+                file_type = os.path.splitext(file_name)[1].lstrip('.') or 'unknown'
+                
                 doc = Document(
                     file_name=file_name,
+                    file_type=file_type,
                     file_path=str(file_path),
                     file_hash=hash256,
                     optional_metadata=optional_metadata or None,
@@ -204,12 +212,13 @@ async def upload_document(
                 return DocumentResponse(
                     id=doc.id,
                     file_name=doc.file_name,
+                    file_type=doc.file_type,
                     file_hash=doc.file_hash,
                     created=doc.created,
+                    last_modified=doc.last_modified,
                     related_sessions=None,
                     optional_metadata=doc.optional_metadata,
                     file_url=f"{base_url}/{doc.id}/download",
-
                 )
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -305,6 +314,8 @@ async def update_document_metadata(
             # Update fields that are allowed to be modified
             if "file_name" in metadata_dict:
                 document.file_name = metadata_dict["file_name"]
+                # Update file_type when file_name changes
+                document.file_type = os.path.splitext(metadata_dict["file_name"])[1].lstrip('.') or 'unknown'
             
             if "optional_metadata" in metadata_dict:
                 optional_metadata = metadata_dict["optional_metadata"]
