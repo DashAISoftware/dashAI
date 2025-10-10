@@ -13,17 +13,21 @@ from DashAI.back.core.schema_fields import (
     float_field,
     int_field,
     bool_field,
-    string_field
+    string_field,
+    union_type,
+    none_type
 )
 
 class BM25EncodingSchema(BaseSchema):
 
     strip_accents: schema_field(
-        enum_field(
-            enum=["ascii", "unicode", None],
+        none_type(
+            enum_field(
+                enum=["ascii", "unicode"],
+            )
         ),
         placeholder=None,
-        description="Whether to strip accents from the text.",
+        description="""Remove accents and perform other character normalization during the preprocessing step. ‘ascii’ is a fast method that only works on characters that have a direct ASCII mapping. ‘unicode’ is a slightly slower method that works on any characters. None (default) means no character normalization is performed.""",
     ) # type: ignore
 
     lowercase: schema_field(
@@ -32,6 +36,8 @@ class BM25EncodingSchema(BaseSchema):
         description="Whether to convert all characters to lowercase.",
 
     ) # type: ignore
+
+
 
     stop_words: schema_field(
         list_field(
@@ -61,6 +67,7 @@ class BM25EncodingSchema(BaseSchema):
     ) # type: ignore
 
     max_features: schema_field(
+
         int_field(
             ge=1,
         ),
