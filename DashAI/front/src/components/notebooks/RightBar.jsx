@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import SideBar from "../threeSectionLayout/SideBar";
-import { Box, Typography, Tabs, Tab } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  ToggleButtonGroup,
+  ToggleButton,
+} from "@mui/material";
+import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -14,12 +22,12 @@ import { useSnackbar } from "notistack";
 export default function RightBar({ notebook }) {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredTool, setHoveredTool] = useState(null);
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -241,6 +249,48 @@ export default function RightBar({ notebook }) {
                   placeholder="Search explorers/converters"
                 />
               </Box>
+              {/* View Mode Toggle */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderBottom: "1px solid #333",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "rgb(161, 161, 170)" }}
+                >
+                  View mode
+                </Typography>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, newMode) => newMode && setViewMode(newMode)}
+                  size="small"
+                  sx={{
+                    "& .MuiToggleButton-root": {
+                      color: "rgb(161, 161, 170)",
+                      border: "1px solid rgb(39, 39, 42)",
+                      "&.Mui-selected": {
+                        bgcolor: "rgb(39, 39, 42)",
+                        color: "rgb(6, 182, 212)",
+                      },
+                    },
+                  }}
+                >
+                  <ToggleButton value="list">
+                    <ViewList sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <ToggleButton value="grid">
+                    <ViewModule sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
 
               {/* Tool list and description */}
               <Box
@@ -254,24 +304,18 @@ export default function RightBar({ notebook }) {
                 {/* Tool list */}
                 <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
                   {activeTab === 0 && (
-                    <ExplorerList
-                      explorers={filteredExplorers}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                    />
+                    <ExplorerList explorers={filteredExplorers} />
                   )}
                   {activeTab === 1 && (
                     <ConverterList
                       converters={filteredConverters}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
                       notebook={notebook}
                     />
                   )}
                 </Box>
 
                 {/* Description panel - Fixed height */}
-                <DescriptionPanel hoveredTool={hoveredTool} />
+                <DescriptionPanel />
               </Box>
             </Box>
           </>

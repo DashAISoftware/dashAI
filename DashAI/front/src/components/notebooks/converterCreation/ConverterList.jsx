@@ -2,13 +2,9 @@ import React, { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import ConfigureToolModal from "../ConfigureToolModal";
 import FormConverterSection from "./FormConverterSection";
+import ToolListItem from "../explorerCreation/ToolListItem";
 
-export default function ConverterList({
-  converters,
-  hoveredTool,
-  setHoveredTool,
-  notebook,
-}) {
+export default function ConverterList({ converters, notebook }) {
   const handleConverterClick = (converter) => {
     setSelectedConverter(converter);
     setOpen(true);
@@ -18,7 +14,7 @@ export default function ConverterList({
   const [selectedConverter, setSelectedConverter] = useState(null);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       {converters.length === 0 ? (
         <Typography
           variant="body2"
@@ -32,24 +28,11 @@ export default function ConverterList({
         </Typography>
       ) : (
         converters.map((converter) => (
-          <Button
+          <ToolListItem
             key={converter.name}
-            variant="contained"
-            sx={{
-              bgcolor: hoveredTool === converter.type ? "#444" : "#333",
-              color: "white",
-              justifyContent: "flex-start",
-              textTransform: "none",
-              fontWeight: "normal",
-              py: 1.5,
-              "&:hover": { bgcolor: "#444" },
-            }}
-            onMouseEnter={() => setHoveredTool(converter)}
-            onMouseLeave={() => setHoveredTool(null)}
+            tool={converter}
             onClick={() => handleConverterClick(converter)}
-          >
-            {converter.display_name}
-          </Button>
+          />
         ))
       )}
       {selectedConverter && (
