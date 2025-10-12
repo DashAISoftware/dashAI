@@ -12,7 +12,6 @@ from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -82,7 +81,7 @@ class CovarianceMatrixExplorer(BaseExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, explorer_info: Explorer
     ) -> Union[pd.DataFrame, go.Figure]:
-        result = dashai_to_pandas(dataset).cov(
+        result = dataset.to_pandas().cov(
             min_periods=self.min_periods,
             ddof=self.ddof,
             numeric_only=self.numeric_only,

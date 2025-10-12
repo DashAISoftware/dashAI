@@ -14,7 +14,6 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -113,7 +112,7 @@ class DescribeExplorer(BaseExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, __explorer_info__: Explorer
     ) -> pd.DataFrame:
-        return dashai_to_pandas(dataset).describe(
+        return dataset.to_pandas().describe(
             percentiles=self.percentiles, include=self.include, exclude=self.exclude
         )
 

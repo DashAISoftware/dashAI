@@ -15,9 +15,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    dashai_to_pandas,
-)
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models import BaseModel
 from DashAI.back.types.categorical import Categorical
@@ -173,7 +170,7 @@ class KernelShap(BaseLocalExplainer):
         x["train"] = self.model.prepare_dataset(x["train"])
         y["train"] = self.model.prepare_dataset(y["train"])
 
-        background_data = dashai_to_pandas(x["train"])
+        background_data = x["train"].to_pandas()
         features = x["train"].column_names
         types = x["train"].types
         feature_names = list(features)
@@ -225,7 +222,7 @@ class KernelShap(BaseLocalExplainer):
         """
 
         dataset_dashai = to_dashai_dataset(instances)
-        X = dashai_to_pandas(self.model.prepare_dataset(dataset_dashai))
+        X = self.model.prepare_dataset(dataset_dashai).to_pandas()
 
         predictions = self.model.predict(x_pred=X)
 

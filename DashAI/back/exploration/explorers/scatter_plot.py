@@ -16,7 +16,6 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -109,7 +108,7 @@ class ScatterPlotExplorer(BaseExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
-        _df = dashai_to_pandas(dataset)
+        _df = dataset.to_pandas()
         cols = [col["columnName"] for col in explorer_info.columns]
 
         colorColumn = self.color_column if self.color_column in _df.columns else None

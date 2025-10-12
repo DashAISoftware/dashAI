@@ -14,9 +14,6 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
-    dashai_to_pandas,
-)
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
 
@@ -134,8 +131,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         # TODO: binary and multi-label scorer
         pfi = permutation_importance(
             estimator=self.model,
-            X=dashai_to_pandas(x_test),
-            y=dashai_to_pandas(y_test),
+            X=x_test.to_pandas(),
+            y=y_test.to_pandas(),
             scoring=make_scorer(patched_metric),
             n_repeats=self.n_repeats,
             random_state=self.random_state,

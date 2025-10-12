@@ -7,7 +7,6 @@ import pyarrow as pa
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.job.base_job import JobError
 
 
@@ -34,8 +33,8 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
                 "Imbalanced-learn samplers require a non-empty target dataset (y)."
             )
 
-        X_df = dashai_to_pandas(x)
-        y_series = dashai_to_pandas(y).iloc[:, 0]
+        X_df = x.to_pandas()
+        y_series = y.to_pandas().iloc[:, 0]
 
         self.original_target_column_name_ = y.column_names[0]
         self.original_X_column_names_ = list(x.column_names)

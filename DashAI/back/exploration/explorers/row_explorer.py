@@ -9,7 +9,6 @@ from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -62,7 +61,7 @@ class RowExplorer(BaseExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, __explorer_info__: Explorer):
-        _df = dashai_to_pandas(dataset)
+        _df = dataset.to_pandas()
 
         # Shuffle rows
         if self.shuffle:

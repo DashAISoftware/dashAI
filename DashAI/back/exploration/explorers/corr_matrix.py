@@ -18,7 +18,6 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset_utils import dashai_to_pandas
 from DashAI.back.dependencies.database.models import Exploration, Explorer
 from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
 
@@ -95,7 +94,7 @@ class CorrelationMatrixExplorer(BaseExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, explorer_info: Explorer
     ) -> Union[pd.DataFrame, go.Figure]:
-        result = dashai_to_pandas(dataset).corr(
+        result = dataset.to_pandas().corr(
             method=self.method,
             min_periods=(
                 self.min_periods
