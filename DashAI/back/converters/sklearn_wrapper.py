@@ -3,12 +3,15 @@ from typing import Type, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.converters.converter_types import SKLEARN_CONVERTERS_TYPES
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
+from DashAI.back.types.categorical import Categorical
 
 
 class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -62,4 +65,31 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             columns = x_pandas.columns if hasattr(x_pandas, "columns") else None
             x_new = pd.DataFrame(x_new, columns=columns)
 
-        return to_dashai_dataset(x_new)
+        converted_dataset = to_dashai_dataset(x_new)
+
+        converter_name = self.__class__.__name__
+        dashai_type = SKLEARN_CONVERTERS_TYPES.get(converter_name, None)
+
+        for col in converted_dataset.column_names:
+            if dashai_type is not None:
+                # Exclusive for categorical values,
+                # since it's not that easy to initialize them.
+                if isinstance(dashai_type, Categorical):
+                    if hasattr(self, "classes_"):
+                        values = pa.array(self.classes_.tolist())
+                        encoding = {v: i for i, v in enumerate(self.classes_)}
+                        converted_dataset.types[col] = Categorical(
+                            values=values, encoding=encoding, converted=True
+                        )
+
+                else:
+                    converted_dataset.types[col] = dashai_type
+            else:
+                print(
+                    "Converter type not found for",
+                    converter_name,
+                    ". This could be on purpose depending on the converter used. "
+                    "Check the dictionary in converter_types.py",
+                )
+
+        return converted_dataset

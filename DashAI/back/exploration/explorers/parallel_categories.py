@@ -44,8 +44,8 @@ class ParallelCategoriesExplorer(BaseExplorer):
 
     SCHEMA = ParallelCategoriesSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Text", "Categorical"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 2},
     }
 

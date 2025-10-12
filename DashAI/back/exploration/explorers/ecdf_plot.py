@@ -67,8 +67,8 @@ class ECDFPlotExplorer(BaseExplorer):
 
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["float64", "float32"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Float", "Integer", "Decimal"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 

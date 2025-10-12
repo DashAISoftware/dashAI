@@ -61,10 +61,11 @@ class BaseTask:
         allowed_output_types = tuple(metadata["outputs_types"])
         inputs_cardinality = metadata["inputs_cardinality"]
         outputs_cardinality = metadata["outputs_cardinality"]
-
+        types = dataset._types
         # Check input types
         for input_col in input_columns:
-            input_col_type = dataset.features[input_col]
+            input_col_type = types[input_col]
+
             if not isinstance(input_col_type, allowed_input_types):
                 raise TypeError(
                     f"{input_col_type} is not an allowed type for input columns."
@@ -72,7 +73,8 @@ class BaseTask:
 
         # Check output types
         for output_col in output_columns:
-            output_col_type = dataset.features[output_col]
+            output_col_type = types[output_col]
+
             if not isinstance(output_col_type, allowed_output_types):
                 raise TypeError(
                     f"{output_col_type} is not an allowed type for output columns."
@@ -93,6 +95,11 @@ class BaseTask:
                 f"match task cardinality ({outputs_cardinality})"
             )
 
+    # This method should be eliminated since we are using DashAITypes now,
+    # so correct types are already set and further transformations
+    # should be handled by the model as needed.
+    # Could still be used on Image since DashAIImageType and its handlers
+    # haven't been implemented yet.
     @abstractmethod
     def prepare_for_task(
         self, dataset: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
@@ -108,27 +115,5 @@ class BaseTask:
         -------
         DashAIDataset
             Dataset with the new types
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def process_predictions(
-        self, dataset: DashAIDataset, predictions: Any, target_column: str
-    ) -> Any:
-        """Process the predictions to suit the task requirements.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset to be changed
-        predictions : Any
-            Predictions to be processed
-        target_column : str
-            Target column for the task
-
-        Returns
-        -------
-        Any
-            Processed predictions
         """
         raise NotImplementedError

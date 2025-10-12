@@ -66,8 +66,8 @@ class DescribeExplorer(BaseExplorer):
 
     SCHEMA = DescribeExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["*"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 

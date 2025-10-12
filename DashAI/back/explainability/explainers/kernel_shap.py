@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models import BaseModel
-
+from DashAI.back.types.categorical import Categorical
 
 class KernelShapSchema(BaseSchema):
     """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
@@ -168,13 +168,17 @@ class KernelShap(BaseLocalExplainer):
 
         x, y = background_dataset
 
+        x["train"] = self.model.prepare_dataset(x["train"])
+        y["train"] = self.model.prepare_dataset(y["train"])
+
         background_data = x["train"].to_pandas()
-        features = x["train"].features
+        features = x["train"].column_names
+        types = x["train"].types
         feature_names = list(features)
 
         categorical_features = False
         for feature in features:
-            if features[feature]._type == "ClassLabel":
+            if isinstance(types[feature], Categorical):
                 categorical_features = True
 
         if sample_background_data:
@@ -194,8 +198,8 @@ class KernelShap(BaseLocalExplainer):
         )
 
         # Metadata
-        output_column = list(y["train"].features)[0]
-        target_names = y["train"].features[output_column].names
+        output_column = y["train"].column_names[0]
+        target_names = y["train"].types[output_column].categories
         self.metadata = {"feature_names": feature_names, "target_names": target_names}
 
         return self
@@ -219,7 +223,7 @@ class KernelShap(BaseLocalExplainer):
         """
 
         dataset_dashai = to_dashai_dataset(instances)
-        X = dataset_dashai.to_pandas()
+        X = self.model.prepare_dataset(dataset_dashai).to_pandas()
 
         predictions = self.model.predict(x_pred=X)
 

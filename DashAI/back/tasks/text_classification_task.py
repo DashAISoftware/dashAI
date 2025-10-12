@@ -1,20 +1,22 @@
 from typing import List, Union
 
-from datasets import ClassLabel, DatasetDict, Value
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
 from DashAI.back.tasks.classification_task import ClassificationTask
+from DashAI.back.types.value_types import Text
+from DashAI.back.types.categorical import Categorical
 
 
 class TextClassificationTask(ClassificationTask):
     """Base class for Text Classification Task."""
 
     metadata: dict = {
-        "inputs_types": [Value],
-        "outputs_types": [ClassLabel],
+        "inputs_types": [Text],
+        "outputs_types": [Categorical],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
@@ -29,7 +31,7 @@ class TextClassificationTask(ClassificationTask):
     def prepare_for_task(
         self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
     ) -> DashAIDataset:
-        """Change the column types to suit the text classification task.
+        """Change the column types to suit the tabular classification task.
 
         A copy of the dataset is created.
 
@@ -40,10 +42,7 @@ class TextClassificationTask(ClassificationTask):
 
         Returns
         -------
-        DatasetDict
+        DashAIDataset
             Dataset with the new types
         """
-        types = dict.fromkeys(outputs_columns, "Categorical")
-        datasetdict = to_dashai_dataset(datasetdict)
-        dataset = datasetdict.change_columns_type(types)
-        return dataset
+        return to_dashai_dataset(datasetdict)

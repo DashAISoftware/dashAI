@@ -9,7 +9,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.tasks.base_task import BaseTask
-
+from DashAI.back.types.value_types import Text
 
 class TranslationTask(BaseTask):
     """Base class for translation task."""
@@ -17,12 +17,11 @@ class TranslationTask(BaseTask):
     COMPATIBLE_COMPONENTS = ["Bleu", "Ter"]
 
     metadata: dict = {
-        "inputs_types": [Value, Sequence],
-        "outputs_types": [Value, Sequence],
+        "inputs_types": [Text],
+        "outputs_types": [Text],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
-
     DESCRIPTION: str = """
     The translation task is natural language processing (NLP) task that involves
     converting text or speech from one language into another language while

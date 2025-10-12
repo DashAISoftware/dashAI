@@ -52,10 +52,11 @@ class ScatterPlotExplorer(BaseExplorer):
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Integer", "Float", "Decimal"],
+        "restricted_value_types": [],
         "input_cardinality": {"exact": 2},
     }
+
 
     def __init__(self, **kwargs) -> None:
         self.color_column = kwargs.get("color_group")

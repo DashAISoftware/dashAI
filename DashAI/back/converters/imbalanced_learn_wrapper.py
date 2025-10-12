@@ -13,9 +13,6 @@ from DashAI.back.job.base_job import JobError
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     """Generic wrapper for imbalanced-learn samplers (e.g., SMOTE, ADASYN)."""
 
-    SUPERVISED = True
-    metadata = {}
-
     def __init__(self, **kwargs):
         super(ImbalancedLearnWrapper, self).__init__(**kwargs)
         self.fitted = False
@@ -103,8 +100,14 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         if self._resampled_table is None:
             raise RuntimeError("Resampled PyArrow Table not available. Call fit first.")
 
+        ds_types = x.types.copy()
+        if y is not None:
+            y_types = y.types.copy()
+            ds_types.update(y_types)
         try:
-            return DashAIDataset(table=self._resampled_table, splits={})
+            dataset = DashAIDataset(self._resampled_table, types=ds_types, splits={})
+            return dataset
+
         except Exception as e:
             raise JobError(
                 f"Failed to create DashAIDataset from resampled data: {e}"

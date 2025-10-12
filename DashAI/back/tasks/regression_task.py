@@ -7,6 +7,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.dashai_value import DashAIValue
 
 
 class RegressionTask(BaseTask):
@@ -21,8 +22,8 @@ class RegressionTask(BaseTask):
     Models are trained to learn patterns and relationships in the data,
     enabling accurate prediction of new instances."""
     metadata: dict = {
-        "inputs_types": [Value],
-        "outputs_types": [Value],
+        "inputs_types": [DashAIValue],
+        "outputs_types": [DashAIValue],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
     }
@@ -46,6 +47,7 @@ class RegressionTask(BaseTask):
         """
         return to_dashai_dataset(datasetdict)
 
+    #Categorical already do this.
     def process_predictions(self, dataset, predictions, output_column):
         """Process the predictions
 

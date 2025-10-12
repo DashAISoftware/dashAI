@@ -52,8 +52,8 @@ class WordcloudExplorer(BaseExplorer):
 
     SCHEMA = WordcloudSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["string"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Text"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 1},
     }
 

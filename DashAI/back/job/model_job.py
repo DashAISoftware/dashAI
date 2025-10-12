@@ -13,7 +13,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
     prepare_for_experiment,
-    select_columns,
+    divide_columns,
     split_dataset,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
@@ -181,6 +181,10 @@ class ModelJob(BaseJob):
                         "TabularClassificationTask",
                         "ImageClassificationTask",
                     ]:
+                        #All that prepare_for_task stuff could be deleted
+                        #Categorical type stores num of categories, their names and their encoding
+                        #Don't want to break anything so I don't delete it
+                        #I just modify it so it does nothing
                         all_classes = prepared_dataset.unique(
                             experiment.output_columns[0]
                         )
@@ -201,7 +205,7 @@ class ModelJob(BaseJob):
                         }
                     )
 
-                    x, y = select_columns(
+                    x, y = divide_columns(
                         prepared_dataset,
                         experiment.input_columns,
                         experiment.output_columns,

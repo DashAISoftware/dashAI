@@ -1,5 +1,6 @@
 """DashAI CSV Dataloader."""
 
+import pandas as pd
 import shutil
 from typing import Any, Dict
 
@@ -225,3 +226,42 @@ class CSVDataLoader(BaseDataLoader):
             shutil.rmtree(prepared_path[0])
 
         return to_dashai_dataset(dataset)
+
+
+    def load_preview(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 5,
+    ) -> pd.DataFrame:
+        """Load a preview of the dataset.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            An URL where the dataset is located or a FastAPI/Uvicorn uploaded file
+            object.
+        params : Dict[str, Any]
+            Dict with the dataloader parameters. The options are:
+            - `separator` (str): The character that delimits the CSV data.
+        n_rows : int, optional
+            The number of rows to preview. Default is 5.
+        """
+        self._check_params(params)
+        separator = params["separator"]
+        prepared_path = self.prepare_files(filepath_or_buffer, None)
+
+        if prepared_path[1] == "file":
+            loaded_dataset = pd.read_csv(
+                prepared_path[0],
+                sep=separator,
+                nrows=n_rows,
+            )
+        else:
+            loaded_dataset = pd.read_csv(
+                prepared_path[0],
+                sep=separator,
+                nrows=n_rows,
+            )
+            shutil.rmtree(prepared_path[0])
+        return loaded_dataset

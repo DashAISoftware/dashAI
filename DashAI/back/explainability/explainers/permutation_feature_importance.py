@@ -119,17 +119,11 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         x, y = dataset
 
         # Select split
-        x_test = x["test"]
-        y_test = y["test"]
+        x_test = self.model.prepare_dataset(x["test"])
 
-        input_columns = list(x_test.features)
-        output_columns = list(y_test.features)
+        y_test = self.model.prepare_dataset(y["test"])
 
-        input_columns = list(x_test.features)
-        output_columns = list(y_test.features)
-
-        types = dict.fromkeys(output_columns, "Categorical")
-        y_test = y_test.change_columns_type(types)
+        input_columns = x_test.column_names
 
         def patched_metric(y_true, y_pred_probas):
             return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))

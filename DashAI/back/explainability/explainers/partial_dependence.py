@@ -15,6 +15,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
+from DashAI.back.types.categorical import Categorical
 
 
 class PartialDependenceSchema(BaseSchema):
@@ -75,9 +76,9 @@ class PartialDependence(BaseGlobalExplainer):
             feature. Defaults to 100.
         """
 
-        assert upper_percentile > lower_percentile, (
-            "upper_percentile value must be greater than lower_percentile"
-        )
+        assert (
+            upper_percentile > lower_percentile
+        ), "upper_percentile value must be greater than lower_percentile"
 
         super().__init__(model)
 
@@ -100,33 +101,39 @@ class PartialDependence(BaseGlobalExplainer):
         """
         x, y = dataset
 
+        x["test"] = self.model.prepare_dataset(x["test"])
+        y["test"] = self.model.prepare_dataset(y["test"])
+
         x_test = x["test"].to_pandas()
-        features = x["test"].features
-        features_names = list(features)
+
+        types = x["train"].types
+
+        features_names = x["test"].column_names
 
         categorical_features = [
-            1 if features[feature]._type == "ClassLabel" else 0 for feature in features
+            1 if isinstance(types[feature], Categorical) else 0
+            for feature in features_names
         ]
 
-        output_column = list(y["test"].features.keys())[0]
-        target_names = y["test"].features[output_column].names
+        output_column = list(y["test"].column_names)[0]
+        target_names = y["test"].types[output_column].categories
 
         explanation = {"metadata": {"target_names": target_names}}
 
-        for idx in range(len(features)):
+        for idx in range(len(features_names)):
             pd = partial_dependence(
                 estimator=self.model,
                 X=x_test,
                 features=idx,
                 categorical_features=categorical_features,
-                feature_names=features,
+                feature_names=features_names,
                 percentiles=self.percentiles,
                 grid_resolution=self.grid_resolution,
                 kind="average",
             )
 
             explanation[features_names[idx]] = {
-                "grid_values": np.round(pd["grid_values"][0], 3).tolist(),
+                "grid_values": np.round(pd["values"][0], 3).tolist(),
                 "average": np.round(pd["average"], 3).tolist(),
             }
 
@@ -233,3 +240,4 @@ class PartialDependence(BaseGlobalExplainer):
                 dfs.append(data)
 
         return self._create_plot(dfs)
+

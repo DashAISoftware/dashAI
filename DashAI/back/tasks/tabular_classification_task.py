@@ -7,6 +7,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
 )
 from DashAI.back.tasks.classification_task import ClassificationTask
+from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
 
 
 class TabularClassificationTask(ClassificationTask):
@@ -27,6 +30,7 @@ class TabularClassificationTask(ClassificationTask):
         "outputs_cardinality": 1,
     }
 
+    #Now, categorical encoding is a responsability of the model if needed
     def prepare_for_task(
         self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
     ) -> DashAIDataset:
@@ -44,7 +48,5 @@ class TabularClassificationTask(ClassificationTask):
         DashAIDataset
             Dataset with the new types
         """
-        types = dict.fromkeys(outputs_columns, "Categorical")
-        datasetdict = to_dashai_dataset(datasetdict)
-        dataset = datasetdict.change_columns_type(types)
-        return dataset
+
+        return to_dashai_dataset(datasetdict)

@@ -50,11 +50,10 @@ class ScatterMatrixExplorer(BaseExplorer):
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
-        "restricted_dtypes": [],
+        "allowed_value_types": ["Integer", "Float", "Decimal"],
+        "restricted_value_types": [],
         "input_cardinality": {"min": 2},
     }
-
     def __init__(self, **kwargs) -> None:
         self.color_column = kwargs.get("color_group")
         self.simbol_column = kwargs.get("simbol_group")

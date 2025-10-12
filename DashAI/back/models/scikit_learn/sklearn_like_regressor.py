@@ -20,4 +20,5 @@ class SklearnLikeRegressor(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
-        return super().predict(x_pred.to_pandas())
+        x_pred = self.prepare_dataset(x_pred).to_pandas()
+        return super().predict(x_pred)

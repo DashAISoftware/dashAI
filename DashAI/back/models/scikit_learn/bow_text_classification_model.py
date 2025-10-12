@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 import joblib
 import numpy as np
+import pyarrow as pa
 from datasets import Dataset
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -12,9 +13,14 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.text_classification_model import TextClassificationModel
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float
 
 
 class BagOfWordsTextClassificationModelSchema(BaseSchema):
@@ -200,20 +206,12 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         return _vectorize
 
     def fit(self, x: Dataset, y: Dataset):
-        input_column = x.column_names[0]
-        self.vectorizer.fit(x[input_column])
-        tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
-        tokenized_dataset = to_dashai_dataset(tokenized_dataset)
-
+        tokenized_dataset = self.prepare_dataset(x, is_fit=True)
+        # y encoding will be done on the prepare_dataset on self.classifier.fit
         self.classifier.fit(tokenized_dataset, y)
 
     def predict(self, x: Dataset):
-        input_column = x.column_names[0]
-
-        tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
-        tokenized_dataset = to_dashai_dataset(tokenized_dataset)
+        tokenized_dataset = self.prepare_dataset(x, is_fit=False)
 
         return self.classifier.predict(tokenized_dataset)
 
@@ -226,3 +224,48 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         """Load the model of the specified path."""
         model = joblib.load(filename)
         return model
+
+    def prepare_dataset(self, dataset: DashAIDataset, is_fit=False):
+        """Apply the model transformations to the dataset.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be transformed.
+        is_fit : bool, optional
+            If True, the method will apply transformations needed for fitting the model.
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
+        """
+        try:
+            input_column = dataset.column_names[0]
+            input_type = dataset.types[input_column]
+
+            if isinstance(input_type, Categorical):
+                if is_fit:
+                    dataset = super().prepare_dataset(dataset, is_fit=True)
+                    return dataset
+                else:
+                    dataset = super().prepare_dataset(dataset, is_fit=False)
+                    return dataset
+
+            if is_fit:
+                self.vectorizer.fit(dataset[input_column])
+
+            tokenizer_func = self.get_vectorizer(input_column)
+            dataset = dataset.map(tokenizer_func, remove_columns=input_column)
+            dataset = to_dashai_dataset(dataset)
+
+            dataset.types = {
+                col: Float(arrow_type=pa.float32())
+                for col in dataset.column_names
+                if col.startswith(input_column)
+            }
+
+            return dataset
+        except Exception as e:
+            print(f"Couldn't apply transformations to the dataset for the model: {e}")
