@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from beartype.typing import Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
