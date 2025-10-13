@@ -209,7 +209,9 @@ async def enqueue_job(
 
         job_type = job_type_target.value.decode() if job_type_target.value else None
         kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
-        n_sample = int(kwargs_target.value.decode()) if kwargs_target.value else None
+        n_sample = (
+            int(n_sample_target.value.decode()) if n_sample_target.value else None
+        )
 
         if not job_type or not kwargs_str:
             raise HTTPException(

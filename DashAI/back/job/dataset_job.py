@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import uuid
+from pathlib import Path
 from typing import Any, Dict
 
 from kink import inject
@@ -84,10 +85,10 @@ class DatasetJob(BaseJob):
                 db.refresh(dataset)
 
             if n_sample and dataset.file_path != "":
-                folder_path = dataset.file_path
+                folder_path = Path(dataset.file_path)
             else:
                 random_name = str(uuid.uuid4())
-                folder_path = config["DATASETS_PATH"] / random_name
+                folder_path: Path = config["DATASETS_PATH"] / random_name
 
                 try:
                     log.debug("Trying to create a new dataset path: %s", folder_path)
