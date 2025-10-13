@@ -52,8 +52,15 @@ export const useTour = (tourKey) => {
   }, []);
 
   const handleJoyrideCallback = useCallback((data) => {
-    const { action, status, index, type } = data;
-    console.log(data);
+    const { action, status, index, type, error } = data;
+
+    if (error) {
+      console.warn('[useTour] Error in Joyride callback:', error);
+      if (error.message && error.message.includes('null')) {
+        setTimeout(() => setStepIndex(index + 1), 100);
+      }
+      return;
+    }
 
     if (status === 'finished' || status === 'skipped') {
       markTourAsCompleted();
@@ -69,9 +76,8 @@ export const useTour = (tourKey) => {
       } else if (action === "close") {
         setRun(false);
         markTourAsCompleted();
+      }
     }
-  }
-
   }, [markTourAsCompleted]);
 
   return {

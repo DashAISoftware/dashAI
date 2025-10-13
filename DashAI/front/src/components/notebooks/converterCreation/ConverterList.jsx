@@ -15,9 +15,6 @@ export default function ConverterList({
   const tourContext = useTourContext();
 
   const handleConverterClick = (converter) => {
-    console.log("handleConverterClick called with:", converter);
-    console.log("Tour context:", tourContext);
-    
     setSelectedConverter(converter);
     setOpen(true);
 

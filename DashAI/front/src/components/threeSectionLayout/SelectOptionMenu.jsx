@@ -3,6 +3,7 @@ import { Box, Grid, Button } from "@mui/material";
 import SearchBar from "./SearchBar";
 import CustomLayout from "../custom/CustomLayout";
 import OptionBox from "./OptionBox";
+import { useTourContext } from "../tour/TourProvider";
 
 export default function SelectOptionMenu({
   goToNextStep,
@@ -13,10 +14,32 @@ export default function SelectOptionMenu({
   searchBar = false,
 }) {
   const [search, setSearch] = useState("");
+  const tourContext = useTourContext();
 
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+const handleOptionClick = (optionName) => {
+  const selectedOption = options.find(option => option.name === optionName);
+  if (selectedOption?.disabled) {
+    return;
+  }
+  
+  if (optionName === "sample" && tourContext?.run) {
+    try {
+      tourContext.nextStep();
+      setTimeout(() => {
+        goToNextStep(optionName);
+      }, 100);
+    } catch (error) {
+      console.error('[SelectOptionMenu] Error advancing tour:', error);
+      goToNextStep(optionName);
+    }
+  } else {
+    goToNextStep(optionName);
+  }
+}; 
 
   return (
     <CustomLayout title={title} subtitle={subtitle} padding={0}>
@@ -45,8 +68,7 @@ export default function SelectOptionMenu({
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-
-         {filteredOptions.map((option, index) => {
+          {filteredOptions.map((option, index) => {
             const { name, display_name, description, Icon, ...otherProps } = option;
             
             return (
@@ -54,7 +76,7 @@ export default function SelectOptionMenu({
                 <OptionBox
                   optionName={display_name}
                   description={description}
-                  onClick={() => goToNextStep(name)}
+                  onClick={() => handleOptionClick(name)}
                   Icon={Icon}
                   {...otherProps}
                 />

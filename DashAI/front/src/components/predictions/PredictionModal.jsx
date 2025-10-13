@@ -130,9 +130,6 @@ function PredictionModal({
         finalPredictionName,
       );
 
-      console.log("Prediction job response:", response);
-      console.log("Prediction job id:", response.id);
-
       if (response?.id) {
         startJobPolling(
           response.id,

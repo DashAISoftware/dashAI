@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import Joyride from 'react-joyride';
 import { useTour } from '../../hooks/useTour';
 import { tours } from '../../constants/tours';
@@ -15,10 +15,24 @@ export const TourProvider = ({ tourKey, children }) => {
   } = useTour(tourKey);
 
   const tourData = tours[tourKey];
-  if (!tourData) return children;
+  if (!tourData) {
+    return children;
+  }
+
+  const contextValue = {
+    run,
+    stepIndex,
+    steps: tourData.steps, 
+    startTour,
+    stopTour,
+    resetTour,
+    resetAllTours,
+    goToStep,
+    nextStep,
+  };
 
   return (
-    <TourContext.Provider value={{ run, stepIndex, startTour, stopTour, resetTour, resetAllTours, goToStep, nextStep }}>
+    <TourContext.Provider value={contextValue}>
       <Joyride
         steps={tourData.steps}
         run={run}

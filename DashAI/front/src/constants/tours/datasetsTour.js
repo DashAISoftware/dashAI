@@ -51,10 +51,11 @@ export const datasetsTourSteps = [
       <div>
         <h3>Load Sample Dataset</h3>
         <p>
-          If you don't have any data yet, you can quickly start by loading DashAI's sample dataset.
+          If you don't have any data yet, you can quickly start by loading DashAI's 
+          sample dataset. If you already uploaded it, click "View Sample Dataset" to see it.
         </p>
         <div style={{ marginTop: '10px', fontWeight: 'bold', color: '#1976d2' }}>
-          Click "Upload Sample Dataset" to continue!
+          Click "Upload Sample Dataset" or "View Sample Dataset" to continue!
         </div>
       </div>
     ),
@@ -63,6 +64,29 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     hideFooter:true,
   },
+  {
+    target: 'body',
+    content: (
+      <div>
+        <h3>Loading Sample Dataset</h3>
+        <p>
+          The sample dataset is being processed...
+        </p>
+      </div>
+    ),
+    placement: 'center',
+    disableBeacon: true,
+    disableOverlay: true,
+    hideBackButton: true,
+    hideCloseButton: true,
+    hideFooter:true,
+    spotlightClicks: false,
+    styles: {
+      options: { zIndex: 10000 },
+      spotlight: { backgroundColor: 'transparent' }
+    }
+  },
+  
   {
     target: '.datasets-list',
     content: (

@@ -112,7 +112,6 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         startJobPolling(
           response.id,
           (result) => {
-            console.log(`Run job ${response.id} completed successfully`);
             getRuns({ showLoading: false });
           },
           // Error callback

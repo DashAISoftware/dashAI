@@ -82,18 +82,9 @@ export default function ScopeStepConverter({
       height: "100%",
       gap: 1,
     }}
-    data-tour="column-selector-converter-container"
   >
     {/* Content */}
-    <Box
-      sx={{
-        flexGrow: 1,
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-      }}
-    >
+      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
       <Typography variant="subtitle2" gutterBottom>
         Step 1: Select Scope
       </Typography>
@@ -168,7 +159,7 @@ export default function ScopeStepConverter({
         saveButtonText={
           Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
         }
-        dataTour="converter-scope-next-button"
+        data-tour="converter-scope-next-button"
       />
     </Box>
   </Box>

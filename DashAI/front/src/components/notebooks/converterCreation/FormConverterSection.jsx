@@ -48,13 +48,10 @@ export default function FormConverterSection({
         enqueueConverterJob(data.id)
           .then((jobResponse) => {
             if (jobResponse && jobResponse.id) {
-              console.log(`Starting to track converter job: ${jobResponse.id}`);
-
               startJobPolling(
                 jobResponse.id,
 
                 (result) => {
-                  console.log("Converter job completed successfully:", result);
                   enqueueSnackbar(
                     `Converter ${tool.name} processed successfully`,
                     {
@@ -118,6 +115,7 @@ export default function FormConverterSection({
         flexGrow: 1,
         maxHeight: "100%",
       }}
+      data-tour="column-selector-converter-container"
     >
       {step === 0 && (
         <ScopeStepConverter

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { createDataset } from "../../../api/datasets";
@@ -12,6 +12,46 @@ export default function UploadSampleDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const [loadingStatus, setLoadingStatus] = useState("Preparing sample dataset...");
   const tourContext = useTourContext();
+  const observerRef = useRef(null);
+  
+  const safelyAdvanceTour = () => {
+    if (!tourContext?.run) return;
+    
+    const element = document.querySelector('.datasets-list');
+    if (!element) {
+      return;
+    }
+    
+    try {
+      tourContext.nextStep();
+    } catch (error) {
+      console.error('[UploadSampleDatasetStep] Error advancing tour:', error);
+    }
+  };
+  
+  const waitForElement = (selector, callback) => {
+    const existingElement = document.querySelector(selector);
+    if (existingElement) {
+      callback();
+      return;
+    }
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    
+    observerRef.current = new MutationObserver((mutations, obs) => {
+      const element = document.querySelector(selector);
+      if (element) {
+        obs.disconnect();
+        setTimeout(callback, 300);
+      }
+    });
+    
+    observerRef.current.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  };
 
   useEffect(() => {
     const uploadSampleDataset = async () => {
@@ -50,13 +90,15 @@ export default function UploadSampleDatasetStep({
           
           handleDatasetCreated(newDataset, job);
           
-          if (tourContext && tourContext.run) {
-            waitForElement('.datasets-list', () => {
-              setTimeout(() => {
-                tourContext.nextStep();
-              }, 1000);
-            });
+          if (tourContext?.run) {
+            const currentStepTarget = tourContext.steps[tourContext.stepIndex]?.target;
+            if (currentStepTarget === 'body') {
+              waitForElement('.datasets-list', () => {
+                setTimeout(safelyAdvanceTour, 1000);
+              });
+            }
           }
+          
         } catch (jobError) {
           console.error("Error enqueuing dataset job:", jobError);
           enqueueSnackbar("Error when trying to enqueue the dataset job.", {
@@ -65,37 +107,20 @@ export default function UploadSampleDatasetStep({
           backHome();
         }
       } catch (error) {
+        console.error("Error uploading sample dataset:", error);
         backHome();
       }
     };
     
     uploadSampleDataset();
-  }, [handleDatasetCreated, enqueueSnackbar, backHome]);
-
-  const waitForElement = (selector, callback, timeout = 10000) => {
-    const startTime = Date.now();
     
-    const existingElement = document.querySelector(selector);
-    if (existingElement) {
-      callback();
-      return;
-    }
-    const observer = new MutationObserver((mutations, obs) => {
-      const element = document.querySelector(selector);
-      if (element) {
-        obs.disconnect();
-        callback();
-      } else if (Date.now() - startTime > timeout) {
-        obs.disconnect();
-        console.warn(`Timeout waiting for element: ${selector}`);
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
-    });
-    
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  };
+    };
+  }, [handleDatasetCreated, enqueueSnackbar, backHome, tourContext]);
 
   return (
     <Box 
