@@ -18,6 +18,7 @@ import { getDatasetFile } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import { useTourContext } from "../../tour/TourProvider";
 
 
 export default function DatasetPreviewNotebook({
@@ -46,6 +47,7 @@ export default function DatasetPreviewNotebook({
     useState(false);
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
+  const tourContext = useTourContext();
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -129,6 +131,11 @@ export default function DatasetPreviewNotebook({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSaveDatasetModal(true);
+                if (tourContext && tourContext.run) {
+                  setTimeout(() => {
+                    tourContext.nextStep();
+                  }, 500);
+                }
               }}
               disabled={false}
               sx={{

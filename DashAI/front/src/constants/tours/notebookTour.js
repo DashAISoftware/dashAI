@@ -15,7 +15,7 @@ export const notebookTourSteps = [
     placement: 'center',
     disableBeacon: true,
   },
-  {
+{
     target: '.dataset-preview-section',
     content: (
       <div>
@@ -224,6 +224,124 @@ export const notebookTourSteps = [
     ),
     placement: 'left',
     disableBeacon: true,
+  },
+ {
+    target: '[data-tour="nan-remover-converter"]',
+    content: (
+      <div>
+        <h3>NaN Remover Converter</h3>
+        <p>
+          The NaN Remover helps clean your dataset by removing missing or invalid values.
+        </p>
+        <p>
+          This is an essential step in data preparation!
+        </p>
+        <p>
+          Click on "NaN Remover" to add it.
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+  {
+    target: '[data-tour="column-selector-converter-container"]',
+    content: (
+      <div>
+        <h3>Select Columns to Clean</h3>
+        <p>
+          Select all the columns to remove all the missing values (NaN).
+        </p>
+        <p>
+          <strong>Click "Save" to apply the NaN Remover.</strong>
+        </p>
+      </div>
+    ),
+    placement: 'top',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+
+ {
+    target: '.save-dataset-button',
+    content: (
+      <div>
+        <h3>Save Processed Dataset</h3>
+        <p>
+          After applying transformations, you can save your processed data as a new dataset.
+        </p>
+        <p>
+          This creates a permanent copy with all your transformations applied, which you can use in the Experiments module.
+        </p>
+        <p>
+          <strong>Click "Save as new Dataset" to continue.</strong>
+        </p>
+      </div>
+    ),
+    placement: 'bottom',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+ {
+    target: '[data-tour="save-dataset-modal-notebook"]',
+    content: (
+      <div>
+        <h3>🎉 Final Step: Save Your Work</h3>
+        <p>
+          This modal shows all the transformations you've applied to your dataset.
+        </p>
+        <p>
+          Give your new dataset a meaningful name and click "Save Dataset" to finish.
+        </p>
+        <hr style={{ margin: '15px 0', borderTop: '1px solid #ddd' }} />
+        <h4>Congratulations! Tour Complete!</h4>
+        <p>
+          You've learned how to:
+        </p>
+        <ul style={{ marginBottom: '15px' }}>
+          <li>✓ Explore and visualize your data</li>
+          <li>✓ Transform and clean datasets</li>
+          <li>✓ Save processed datasets for model training</li>
+        </ul>
+        <div style={{ 
+          backgroundColor: '#f0f9ff', 
+          border: '1px solid #bae6fd',
+          borderRadius: '4px',
+          padding: '8px 12px',
+          marginTop: '15px'
+        }}>
+          <p style={{ margin: '0', fontWeight: 'bold' }}>
+            Next: Head to the Experiments module to train models with your prepared data! 🚀
+          </p>
+        </div>
+      </div>
+    ),
+    placement: 'auto',
+    disableBeacon: true,
+    spotlightClicks: true,
+    disableScrolling: true,
+    disableOverlayClose: true,
+    showSkipButton: false,
+    hideBackButton: false,
+    styles: {
+      options: {
+        zIndex: 2000,
+      },
+      buttonNext: {
+        backgroundColor: '#1976d2',
+      },
+      buttonBack: {
+        color: '#1976d2',
+      },
+    },
+    locale: {
+      last: 'Finish Tour',
+      next: 'Finish Tour',
+    },
   },
 ];
 

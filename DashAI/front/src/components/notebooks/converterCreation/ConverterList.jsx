@@ -18,12 +18,15 @@ export default function ConverterList({
     setSelectedConverter(converter);
     setOpen(true);
 
-    if (tourContext && tourContext.run && converter.name === "LabelEncoder") {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 500);
+    if (tourContext && tourContext.run) {
+      if (converter.name === "LabelEncoder" || converter.name === "NanRemover") {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 500);
+      }
     }
   };
+
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -43,6 +46,9 @@ export default function ConverterList({
           const getTourAttribute = () => {
             if (converter.name === "LabelEncoder") {
               return "label-encoder-converter";
+            }
+            if (converter.name === "NanRemover") {
+              return "nan-remover-converter";
             }
             return null;
           };

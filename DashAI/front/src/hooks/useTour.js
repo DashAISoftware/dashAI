@@ -57,9 +57,16 @@ export const useTour = (tourKey) => {
     if (error) {
       console.warn('[useTour] Error in Joyride callback:', error);
       if (error.message && error.message.includes('null')) {
-        setTimeout(() => setStepIndex(index + 1), 100);
+        console.log('[useTour] Element not found, but keeping tour running');
+        // NO detener el tour, solo avanzar al siguiente paso después de un delay
+        setTimeout(() => {
+          console.log('[useTour] Attempting to advance to next step after error');
+          setStepIndex(index + 1);
+          // Asegurar que el tour siga corriendo
+          setRun(true);
+        }, 300);
       }
-      return;
+      return; // No procesar más este callback
     }
 
     if (status === 'finished' || status === 'skipped') {

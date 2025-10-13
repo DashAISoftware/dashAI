@@ -200,6 +200,7 @@ export default function DatasetVisualization({
               }}
               endIcon={<AddIcon />}
               sx={{ mr: 2, height: "100%" }}
+              data-tour="new-experiment-button-notebook"
             >
               New Experiment
             </Button>
