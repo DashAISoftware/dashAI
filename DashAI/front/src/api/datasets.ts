@@ -105,3 +105,16 @@ export const exportDatasetCsvByPath = async (path: string): Promise<Blob> => {
   });
   return response.data;
 };
+
+export const loadPreview = async (formData: FormData): Promise<object> => {
+  const response = await api.post(`${datasetEndpoint}/load_preview`, formData);
+  return response.data;
+};
+
+export const inferDataTypes = async (formData: FormData): Promise<object> => {
+  const response = await api.post(
+    `${datasetEndpoint}/infer_datatypes`,
+    formData,
+  );
+  return response.data;
+};
