@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import Dataset, load_dataset
+from datasets import Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -229,5 +229,7 @@ class CSVDataLoader(BaseDataLoader):
             )
             shutil.rmtree(prepared_path[0])
         if n_sample:
+            if type(dataset) is IterableDatasetDict:
+                dataset = dataset["train"]
             dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)

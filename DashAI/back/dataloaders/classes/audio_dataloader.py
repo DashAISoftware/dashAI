@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import Audio, Dataset, load_dataset
+from datasets import Audio, Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -50,6 +50,8 @@ class AudioDataLoader(BaseDataLoader):
                 "audiofolder", data_dir=prepared_path[0], streaming=bool(n_sample)
             )
             if n_sample:
+                if type(dataset) is IterableDatasetDict:
+                    dataset = dataset["train"]
                 dataset = Dataset.from_list(list(dataset.take(n_sample)))
 
             dataset.cast_column(
