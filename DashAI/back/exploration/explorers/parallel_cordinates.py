@@ -17,7 +17,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 
 
 class ParallelCordinatesSchema(BaseExplorerSchema):
@@ -28,7 +29,7 @@ class ParallelCordinatesSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class ParallelCordinatesExplorer(BaseExplorer):
+class ParallelCordinatesExplorer(MultidimensionalExplorer):
     """
     Parallel Cordinates Explorer is a class that generates a parallel cordinates plot
     for a given dataset.

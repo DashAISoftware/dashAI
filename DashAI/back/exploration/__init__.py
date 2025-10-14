@@ -1,4 +1,5 @@
 # flake8: noqa
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
 from DashAI.back.exploration.explorers.corr_matrix import CorrelationMatrixExplorer
 from DashAI.back.exploration.explorers.cov_matrix import CovarianceMatrixExplorer
@@ -17,3 +18,9 @@ from DashAI.back.exploration.explorers.row_explorer import RowExplorer
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+from DashAI.back.exploration.preview_inspection_explorer import (
+    PreviewInspectionExplorer,
+)
+from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
+from DashAI.back.exploration.statistical_explorer import StatisticalExplorer

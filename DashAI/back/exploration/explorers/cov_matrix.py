@@ -13,7 +13,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 
 
 class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
@@ -48,7 +49,7 @@ class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class CovarianceMatrixExplorer(BaseExplorer):
+class CovarianceMatrixExplorer(StatisticalExplorer):
     """
     CovarianceExplorer is an explorer that returns the covariance matrix of the dataset.
 

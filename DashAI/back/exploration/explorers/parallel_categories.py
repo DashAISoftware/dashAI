@@ -17,7 +17,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 
 
 class ParallelCategoriesSchema(BaseExplorerSchema):
@@ -28,7 +29,7 @@ class ParallelCategoriesSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class ParallelCategoriesExplorer(BaseExplorer):
+class ParallelCategoriesExplorer(MultidimensionalExplorer):
     """
     Parallel Categories Explorer is a class that generates a parallel categories plot
     for a given dataset.

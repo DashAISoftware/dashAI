@@ -10,7 +10,10 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.preview_inspection_explorer import (
+    PreviewInspectionExplorer,
+)
 
 
 class RowExplorerSchema(BaseExplorerSchema):
@@ -33,7 +36,7 @@ class RowExplorerSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class RowExplorer(BaseExplorer):
+class RowExplorer(PreviewInspectionExplorer):
     """
     RowExplorer is an explorer that takes a number of rows from the dataset to
     display them on tabular format. It can take the rows from the top or the

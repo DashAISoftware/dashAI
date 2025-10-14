@@ -16,7 +16,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class WordcloudSchema(BaseExplorerSchema):
@@ -35,7 +36,7 @@ class WordcloudSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class WordcloudExplorer(BaseExplorer):
+class WordcloudExplorer(DistributionExplorer):
     """
     WordcloudExplorer is an explorer that generates a wordcloud
     from the concatenated strings of all selected columns in the dataset.
