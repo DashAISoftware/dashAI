@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Box, Typography, Popover, Chip } from "@mui/material";
+import api from "../../../api/api";
 
 export default function HoverToolInfo({
   anchorEl,
@@ -48,7 +49,7 @@ export default function HoverToolInfo({
             }}
           >
             <img
-              src={hoveredTool.preview || "/placeholder.svg"}
+              src={`${api.defaults.baseURL}/v1/component/image/${hoveredTool.name}`}
               alt={hoveredTool.display_name}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

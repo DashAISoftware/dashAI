@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 import HoverToolInfo from "./HoverToolInfo";
+import api from "../../../api/api";
 
 export default function ToolListItem({ tool, disabled = false, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -29,13 +30,13 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
           alignItems: "center",
           gap: 1.5,
           p: 1.5,
-          bgcolor: "rgb(20, 20, 24)",
+          bgcolor: "rgb(44, 44, 44)",
           border: "1px solid rgb(39, 39, 42)",
-          borderRadius: 1.5,
+          borderRadius: 1,
           cursor: disabled ? "not-allowed" : "pointer",
           transition: "all 0.2s",
           "&:hover": {
-            bgcolor: disabled ? "rgb(20, 20, 24)" : "rgb(30, 30, 34)",
+            bgcolor: disabled ? "rgb(44, 44, 44)" : "rgb(60, 60, 60)",
             borderColor: disabled ? "rgb(39, 39, 42)" : "rgb(63, 63, 70)",
             transform: disabled ? "none" : "translateX(4px)",
           },
@@ -60,7 +61,14 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
 
         {/* Content */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 0.5,
+            }}
+          >
             <Typography
               variant="body2"
               sx={{
@@ -68,6 +76,8 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
                 fontWeight: 500,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                width: 0,
+                flexGrow: 1,
                 whiteSpace: "nowrap",
               }}
             >
@@ -75,7 +85,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
-            {tool.categoryLabel}
+            {tool.categoryLabel ?? "Other"}
           </Typography>
         </Box>
 
@@ -91,19 +101,11 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
             flexShrink: 0,
           }}
         >
-          {tool.preview ? (
-            <img
-              src={tool.preview}
-              alt={tool.display_name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <img
-              src="/placeholder.svg"
-              alt={tool.display_name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          )}
+          <img
+            src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+            alt={tool.display_name}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
         </Box>
       </Box>
       <HoverToolInfo

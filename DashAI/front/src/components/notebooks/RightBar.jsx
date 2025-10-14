@@ -13,8 +13,10 @@ import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import DescriptionPanel from "./DescriptionPanel";
-import ExplorerList from "./explorerCreation/ExplorerList";
-import ConverterList from "./converterCreation/ConverterList";
+import ToolList from "./tool/ToolList";
+import ToolGrid from "./tool/ToolGrid";
+import FormExplorerSection from "./explorerCreation/FormExplorerSection";
+import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
@@ -199,6 +201,7 @@ export default function RightBar({ notebook }) {
           flexDirection: "column",
           overflow: "hidden",
           height: "100%",
+          width: "100%",
         }}
       >
         <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
@@ -299,20 +302,53 @@ export default function RightBar({ notebook }) {
                   flexDirection: "column",
                   flex: 1,
                   overflow: "hidden",
+                  minWidth: 0,
                 }}
               >
-                {/* Tool list */}
-                <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                  {activeTab === 0 && (
-                    <ExplorerList explorers={filteredExplorers} />
-                  )}
-                  {activeTab === 1 && (
-                    <ConverterList
-                      converters={filteredConverters}
-                      notebook={notebook}
-                    />
-                  )}
-                </Box>
+                {/* Tool list - grid */}
+                {viewMode === "list" ? (
+                  <Box
+                    sx={{
+                      flex: 1,
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      p: 2,
+                      minWidth: 0,
+                    }}
+                  >
+                    {activeTab === 0 && (
+                      <ToolList
+                        tools={filteredExplorers}
+                        notebook={notebook}
+                        FormComponent={FormExplorerSection}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ToolList
+                        tools={filteredConverters}
+                        notebook={notebook}
+                        FormComponent={FormConverterSection}
+                      />
+                    )}
+                  </Box>
+                ) : (
+                  <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+                    {activeTab === 0 && (
+                      <ToolGrid
+                        tools={filteredExplorers}
+                        notebook={notebook}
+                        FormComponent={FormExplorerSection}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ToolGrid
+                        tools={filteredConverters}
+                        notebook={notebook}
+                        FormComponent={FormConverterSection}
+                      />
+                    )}
+                  </Box>
+                )}
 
                 {/* Description panel - Fixed height */}
                 <DescriptionPanel />

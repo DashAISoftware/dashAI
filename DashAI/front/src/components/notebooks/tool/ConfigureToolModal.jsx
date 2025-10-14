@@ -13,10 +13,10 @@ import {
 import { Close } from "@mui/icons-material";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
-import DatasetTable from "./dataset/DatasetTable";
+import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
 
-import { getDatasetFile } from "../../api/datasets";
+import { getDatasetFile } from "../../../api/datasets";
 
 export default function ConfigureToolModal({
   tool,
