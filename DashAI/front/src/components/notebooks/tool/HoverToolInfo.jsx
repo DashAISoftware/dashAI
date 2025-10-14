@@ -73,11 +73,11 @@ export default function HoverToolInfo({
 
           {/* Category Badge */}
           <Chip
-            label={hoveredTool.categoryLabel}
+            label={hoveredTool.metadata.category ?? "Other"}
             size="small"
             sx={{
-              bgcolor: "rgb(39, 39, 42)",
-              color: "rgb(161, 161, 170)",
+              bgcolor: hoveredTool.metadata.color,
+              color: "rgba(255, 255, 255, 1)",
               border: `1px solid rgb(63, 63, 70)`,
               fontWeight: 500,
             }}

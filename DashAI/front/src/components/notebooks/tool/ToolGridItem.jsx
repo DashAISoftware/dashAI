@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
+import { CategoryIcon } from "./CategoryIcon";
 
 export default function ToolGridItem({ tool, disabled, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -34,7 +35,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           transition: "all 0.2s",
           "&:hover": {
             bgcolor: disabled ? "rgb(44, 44, 44)" : "rgb(60, 60, 60)",
-            borderColor: disabled ? "rgb(39, 39, 42)" : "rgb(63, 63, 70)",
+            borderColor: disabled ? "rgb(39, 39, 42)" : tool.metadata.color,
             transform: disabled ? "none" : "translateY(-4px)",
             boxShadow: `0 8px 16px ${
               disabled ? "transparent" : "rgba(0, 0, 0, 0.2)"
@@ -75,7 +76,10 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                 flexShrink: 0,
               }}
             >
-              {tool.icon}
+              <CategoryIcon
+                category={tool.metadata.category}
+                color={tool.metadata.color}
+              />
             </Box>
           </Box>
 
@@ -100,7 +104,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
 
           {/* Category */}
           <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
-            {tool.categoryLabel ?? "Other"}
+            {tool.metadata.category ?? "Other"}
           </Typography>
         </Box>
       </Box>

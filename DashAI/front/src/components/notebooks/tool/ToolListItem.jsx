@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
+import { CategoryIcon } from "./CategoryIcon";
 
 export default function ToolListItem({ tool, disabled = false, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -37,7 +38,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
           transition: "all 0.2s",
           "&:hover": {
             bgcolor: disabled ? "rgb(44, 44, 44)" : "rgb(60, 60, 60)",
-            borderColor: disabled ? "rgb(39, 39, 42)" : "rgb(63, 63, 70)",
+            borderColor: disabled ? "rgb(39, 39, 42)" : tool.metadata.color,
             transform: disabled ? "none" : "translateX(4px)",
           },
         }}
@@ -56,7 +57,10 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
             flexShrink: 0,
           }}
         >
-          {tool.icon}
+          <CategoryIcon
+            category={tool.metadata.category}
+            color={tool.metadata.color}
+          />
         </Box>
 
         {/* Content */}
@@ -85,7 +89,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
             </Typography>
           </Box>
           <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
-            {tool.categoryLabel ?? "Other"}
+            {tool.metadata.category ?? "Other"}
           </Typography>
         </Box>
 
