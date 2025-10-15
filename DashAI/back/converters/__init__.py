@@ -1,6 +1,22 @@
 # flake8: noqa
 
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.converters.category.advanced_preprocessing import (
+    AdvancedPreprocessingConverter,
+)
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
+from DashAI.back.converters.category.encoding import EncodingConverter
+from DashAI.back.converters.category.feature_selection import FeatureSelectionConverter
+from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
+from DashAI.back.converters.category.sampling import SamplingConverter
+from DashAI.back.converters.category.scaling_and_normalization import (
+    ScalingAndNormalizationConverter,
+)
 
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
