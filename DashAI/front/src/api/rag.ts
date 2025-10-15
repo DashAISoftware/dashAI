@@ -12,7 +12,10 @@ export const getRAGSessions = async (): Promise<ISession[]> => {
     throw new Error(`Failed to fetch RAG sessions: ${response.statusText}`);
   }
 
-  return response.data;
+  const ragSessions = response.data.filter(
+    (session) => session.task_name === "RAGTask",
+  );
+  return ragSessions;
 };
 
 export const getRAGSession = async (sessionId: number): Promise<ISession> => {
