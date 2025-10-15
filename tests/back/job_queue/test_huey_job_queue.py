@@ -124,5 +124,3 @@ def test_peek_and_get_nonexistent(test_job_queue: HueyJobQueue):
 
     with pytest.raises(JobQueueError):
         test_job_queue.get(job_id)
-        test_job_queue.get(job_id)
-        test_job_queue.get(job_id)
