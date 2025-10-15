@@ -39,12 +39,6 @@ function App() {
           />
         </Route>
         <Route path="/app/generative" element={<Generative />} />
-        <Route path="/app/pipelines" element={<PipelinesPage />} />
-        <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
-        <Route
-          path="/app/pipelines/:pipelineId"
-          element={<NewPipelineWrapper />}
-        />
         <Route path="/app/plugins">
           <Route index element={<PluginsPage />} />
           <Route path=":category">

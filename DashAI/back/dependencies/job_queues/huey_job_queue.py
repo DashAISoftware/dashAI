@@ -168,6 +168,7 @@ class HueyJobQueue(BaseJobQueue):
 
         @self.huey.signal(SIGNAL_ERROR)
         def on_error(signal, task, exc):
+            log.exception(f"Huey task {task.id} ({task.fn.__name__}) failed with exception:", exc_info=exc)
             exec_sql(
                 (
                     "UPDATE task_copy SET status = ?, "
