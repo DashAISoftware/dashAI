@@ -48,7 +48,7 @@ class BaseExplorer(ConfigObject, ABC):
     SHORT_DESCRIPTION: Final[str] = ""
     IMAGE_PREVIEW: Final[str] = ""
     CATEGORY: Final[str] = "Other"
-    COLOR: Final[str] = "primary"
+    COLOR: Final[str] = "rgb(255, 255, 255)"
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
 
@@ -75,7 +75,7 @@ class BaseExplorer(ConfigObject, ABC):
         )
         metadata["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
         metadata["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
-        metadata["color"] = cls.COLOR if cls.COLOR else "primary"
+        metadata["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented
         if metadata.get("allowed_value_types", None) is None:
