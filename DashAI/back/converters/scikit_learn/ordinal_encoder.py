@@ -1,6 +1,7 @@
 from sklearn.preprocessing import OrdinalEncoder as OrdinalEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type
+from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -54,7 +55,7 @@ class OrdinalEncoderSchema(BaseSchema):
     )  # type: ignore
 
 
-class OrdinalEncoder(SklearnWrapper, OrdinalEncoderOperation):
+class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation):
     """Scikit-learn's OrdinalEncoder wrapper for DashAI."""
 
     SCHEMA = OrdinalEncoderSchema

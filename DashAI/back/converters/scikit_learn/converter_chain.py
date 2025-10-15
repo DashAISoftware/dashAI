@@ -1,4 +1,7 @@
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.converters.category.advanced_preprocessing import (
+    AdvancedPreprocessingConverter,
+)
 from DashAI.back.converters.scikit_learn.sklearn_like_converter import (
     SklearnLikeConverter,
 )
@@ -14,7 +17,9 @@ class ConverterChainSchema(BaseSchema):
     )  # type: ignore
 
 
-class ConverterChain(BaseConverter, SklearnLikeConverter):
+class ConverterChain(
+    AdvancedPreprocessingConverter, BaseConverter, SklearnLikeConverter
+):
     """Chain of converters."""
 
     DESCRIPTION = (

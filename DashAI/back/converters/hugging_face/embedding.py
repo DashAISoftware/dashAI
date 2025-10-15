@@ -2,6 +2,9 @@ import torch
 from datasets import Dataset, concatenate_datasets
 from transformers import AutoModel, AutoTokenizer
 
+from DashAI.back.converters.category.advanced_preprocessing import (
+    AdvancedPreprocessingConverter,
+)
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -53,7 +56,7 @@ class EmbeddingSchema(BaseSchema):
     )  # type: ignore
 
 
-class Embedding(HuggingFaceWrapper):
+class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """HuggingFace embedding converter."""
 
     SCHEMA = EmbeddingSchema

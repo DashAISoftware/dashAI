@@ -1,5 +1,6 @@
 from sklearn.preprocessing import PolynomialFeatures as PolynomialFeaturesOperation
 
+from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -44,7 +45,9 @@ class PolynomialFeaturesSchema(BaseSchema):
     )  # type: ignore
 
 
-class PolynomialFeatures(SklearnWrapper, PolynomialFeaturesOperation):
+class PolynomialFeatures(
+    PolynomialKernelConverter, SklearnWrapper, PolynomialFeaturesOperation
+):
     """Scikit-learn's PolynomialFeatures wrapper for DashAI."""
 
     SCHEMA = PolynomialFeaturesSchema

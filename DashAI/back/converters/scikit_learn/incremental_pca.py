@@ -1,5 +1,8 @@
 from sklearn.decomposition import IncrementalPCA as IncrementalPCAOperation
 
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -43,7 +46,9 @@ class IncrementalPCASchema(BaseSchema):
     )  # type: ignore
 
 
-class IncrementalPCA(SklearnWrapper, IncrementalPCAOperation):
+class IncrementalPCA(
+    DimensionalityReductionConverter, SklearnWrapper, IncrementalPCAOperation
+):
     """Scikit-learn's IncrementalPCA wrapper for DashAI."""
 
     SCHEMA = IncrementalPCASchema

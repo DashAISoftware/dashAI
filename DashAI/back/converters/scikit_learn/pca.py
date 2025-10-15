@@ -1,6 +1,9 @@
 from sklearn.decomposition import PCA as PCAOPERATION
 
 from DashAI.back.api.utils import create_random_state
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -95,7 +98,7 @@ class PCASchema(BaseSchema):
     )  # type: ignore
 
 
-class PCA(SklearnWrapper, PCAOPERATION):
+class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     """Scikit-learn's PCA wrapper for DashAI."""
 
     SCHEMA = PCASchema

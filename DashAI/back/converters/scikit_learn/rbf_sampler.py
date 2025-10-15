@@ -1,6 +1,7 @@
 from sklearn.kernel_approximation import RBFSampler as RBFSamplerOperation
 
 from DashAI.back.api.utils import create_random_state
+from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -37,7 +38,7 @@ class RBFSamplerSchema(BaseSchema):
     )  # type: ignore
 
 
-class RBFSampler(SklearnWrapper, RBFSamplerOperation):
+class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation):
     """Scikit-learn's RBFSampler wrapper for DashAI."""
 
     SCHEMA = RBFSamplerSchema

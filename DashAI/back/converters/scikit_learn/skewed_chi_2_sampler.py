@@ -1,6 +1,7 @@
 from sklearn.kernel_approximation import SkewedChi2Sampler as SkewedChi2SamplerOperation
 
 from DashAI.back.api.utils import create_random_state
+from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -40,7 +41,9 @@ class SkewedChi2SamplerSchema(BaseSchema):
     )  # type: ignore
 
 
-class SkewedChi2Sampler(SklearnWrapper, SkewedChi2SamplerOperation):
+class SkewedChi2Sampler(
+    PolynomialKernelConverter, SklearnWrapper, SkewedChi2SamplerOperation
+):
     """Scikit-learn's SkewedChi2Sampler wrapper for DashAI."""
 
     SCHEMA = SkewedChi2SamplerSchema

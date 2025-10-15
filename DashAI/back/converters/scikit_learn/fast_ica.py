@@ -5,6 +5,9 @@ from DashAI.back.api.utils import (
     parse_string_to_dict,
     parse_string_to_list,
 )
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -85,7 +88,7 @@ class FastICASchema(BaseSchema):
     )  # type: ignore
 
 
-class FastICA(SklearnWrapper, FastICAOperation):
+class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation):
     """Scikit-learn's FastICA wrapper for DashAI."""
 
     SCHEMA = FastICASchema

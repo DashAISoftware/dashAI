@@ -1,6 +1,9 @@
 from sklearn.impute import SimpleImputer as SimpleImputerOperation
 
 from DashAI.back.api.utils import cast_string_to_type
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -49,7 +52,9 @@ class SimpleImputerSchema(BaseSchema):
     )  # type: ignore
 
 
-class SimpleImputer(SklearnWrapper, SimpleImputerOperation):
+class SimpleImputer(
+    BasicPreprocessingConverter, SklearnWrapper, SimpleImputerOperation
+):
     """SciKit-Learn's SimpleImputer wrapper for DashAI."""
 
     SCHEMA = SimpleImputerSchema

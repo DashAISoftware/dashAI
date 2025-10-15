@@ -1,5 +1,6 @@
 from sklearn.feature_selection import SelectPercentile as SelectPercentileOperation
 
+from DashAI.back.converters.category.feature_selection import FeatureSelectionConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -13,7 +14,9 @@ class SelectPercentileSchema(BaseSchema):
     )  # type: ignore
 
 
-class SelectPercentile(SklearnWrapper, SelectPercentileOperation):
+class SelectPercentile(
+    FeatureSelectionConverter, SklearnWrapper, SelectPercentileOperation
+):
     """SciKit-Learn's SelectPercentile wrapper for DashAI."""
 
     SCHEMA = SelectPercentileSchema

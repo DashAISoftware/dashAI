@@ -1,5 +1,6 @@
 from imblearn.combine import SMOTEENN
 
+from DashAI.back.converters.category.sampling import SamplingConverter
 from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -30,7 +31,7 @@ class SMOTEENNSchema(BaseSchema):
     )  # type: ignore
 
 
-class SMOTEENNConverter(ImbalancedLearnWrapper, SMOTEENN):
+class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     SCHEMA = SMOTEENNSchema
     DESCRIPTION = "SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."
     DISPLAY_NAME = "SMOTE-ENN (Hybrid Sampling)"

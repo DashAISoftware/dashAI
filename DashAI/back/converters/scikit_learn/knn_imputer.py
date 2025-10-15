@@ -1,6 +1,9 @@
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
 from DashAI.back.api.utils import cast_string_to_type
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -56,7 +59,7 @@ class KNNImputerSchema(BaseSchema):
     )  # type: ignore
 
 
-class KNNImputer(SklearnWrapper, KNNImputerOperation):
+class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperation):
     """Scikit-learn's KNNImputer wrapper for DashAI."""
 
     SCHEMA = KNNImputerSchema
