@@ -1,9 +1,6 @@
 from typing import List
 
-try:
-    from llama_cpp import Llama
-except ImportError:
-    Llama = None
+from llama_cpp import Llama
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -17,7 +14,7 @@ from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 
-if Llama is not None and is_gpu_available_for_llama_cpp():
+if is_gpu_available_for_llama_cpp():
     DEVICE_ENUM = ["gpu", "cpu"]
     DEVICE_PLACEHOLDER = "gpu"
 else:
@@ -86,11 +83,6 @@ class QwenModel(TextToTextGenerationTaskModel):
     SCHEMA = QwenSchema
 
     def __init__(self, **kwargs):
-        if Llama is None:
-            raise RuntimeError(
-                "llama-cpp-python is not installed. Please install it to use QwenModel."
-            )
-
         kwargs = self.validate_and_transform(kwargs)
         self.model_name = kwargs.get("model_name", "Qwen/Qwen2.5-1.5B-Instruct-GGUF")
         self.max_tokens = kwargs.pop("max_tokens", 100)
@@ -115,4 +107,6 @@ class QwenModel(TextToTextGenerationTaskModel):
             temperature=self.temperature,
             frequency_penalty=self.frequency_penalty,
         )
-        return [output["choices"][0]["message"]["content"]]
+
+        generated_text = output["choices"][0]["message"]["content"]
+        return [generated_text]
