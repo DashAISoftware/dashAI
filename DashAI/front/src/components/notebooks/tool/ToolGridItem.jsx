@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import { Box, Typography, Chip } from "@mui/material";
 import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
@@ -10,8 +9,10 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
   const [hoveredTool, setHoveredTool] = useState(null);
 
   const handleMouseEnter = (event, tool) => {
-    setAnchorEl(event.currentTarget);
-    setHoveredTool(tool);
+    if (!disabled) {
+      setAnchorEl(event.currentTarget);
+      setHoveredTool(tool);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -25,22 +26,35 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
         key={tool.id}
         onMouseEnter={(e) => handleMouseEnter(e, tool)}
         onMouseLeave={handleMouseLeave}
+        onClick={disabled ? null : onClick}
         sx={{
           position: "relative",
-          bgcolor: "rgb(44, 44, 44)",
+          bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(44, 44, 44)",
           border: "1px solid rgb(39, 39, 42)",
           borderRadius: 1.5,
           overflow: "hidden",
-          cursor: "pointer",
+          cursor: disabled ? "not-allowed" : "pointer",
           transition: "all 0.2s",
+          opacity: disabled ? 0.5 : 1,
+          filter: disabled ? "grayscale(0.6)" : "none",
           "&:hover": {
-            bgcolor: disabled ? "rgb(44, 44, 44)" : "rgb(60, 60, 60)",
+            bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(60, 60, 60)",
             borderColor: disabled ? "rgb(39, 39, 42)" : tool.metadata.color,
             transform: disabled ? "none" : "translateY(-4px)",
-            boxShadow: `0 8px 16px ${
-              disabled ? "transparent" : "rgba(0, 0, 0, 0.2)"
-            }`,
+            boxShadow: disabled ? "none" : `0 8px 16px rgba(0, 0, 0, 0.2)`,
           },
+          "&::after": disabled
+            ? {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                borderRadius: 1.5,
+                pointerEvents: "none",
+                background:
+                  "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.1) 10px, rgba(0, 0, 0, 0.1) 20px)",
+                zIndex: 2,
+              }
+            : {},
         }}
       >
         {/* Preview Image */}
@@ -48,14 +62,19 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           sx={{
             width: "100%",
             height: 100,
-            bgcolor: "rgb(39, 39, 42)",
+            bgcolor: disabled ? "rgb(30, 30, 30)" : "rgb(39, 39, 42)",
             borderBottom: "1px solid rgb(39, 39, 42)",
           }}
         >
           <img
             src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
             alt={tool.display_name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: disabled ? 0.4 : 1,
+            }}
           />
         </Box>
 
@@ -71,15 +90,15 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                 width: 28,
                 height: 28,
                 borderRadius: 0.75,
-                bgcolor: "rgb(63, 63, 70)",
-                color: "rgb(250, 250, 250)",
+                bgcolor: disabled ? "rgb(50, 50, 50)" : "rgb(63, 63, 70)",
+                color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
                 flexShrink: 0,
               }}
             >
               <CategoryIcon
                 name={tool.type}
                 category={tool.metadata.category}
-                color={tool.metadata.color}
+                color={disabled ? "rgb(100, 100, 100)" : tool.metadata.color}
               />
             </Box>
           </Box>
@@ -88,7 +107,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           <Typography
             variant="body2"
             sx={{
-              color: "rgb(250, 250, 250)",
+              color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
               fontWeight: 500,
               mb: 0.5,
               overflow: "hidden",
@@ -104,16 +123,23 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           </Typography>
 
           {/* Category */}
-          <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: disabled ? "rgb(90, 90, 90)" : "rgb(113, 113, 122)",
+            }}
+          >
             {tool.metadata.category ?? "Other"}
           </Typography>
         </Box>
       </Box>
-      <HoverToolInfo
-        anchorEl={anchorEl}
-        hoveredTool={hoveredTool}
-        handleMouseLeave={handleMouseLeave}
-      />
+      {!disabled && (
+        <HoverToolInfo
+          anchorEl={anchorEl}
+          hoveredTool={hoveredTool}
+          handleMouseLeave={handleMouseLeave}
+        />
+      )}
     </>
   );
 }
