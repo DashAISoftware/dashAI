@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 
@@ -19,6 +19,20 @@ function AutoSaveFormSchema({
 }) {
   const formikRef = useRef(null);
 
+  const initialValues = useMemo(() => {
+    const baseValues = selectedRetriever.parameters || {};
+
+    // Merge with retrieverModel params (which contains user changes)
+    return {
+      ...baseValues,
+      ...(retrieverModel?.params || {}),
+    };
+  }, [
+    selectedRetriever.name,
+    selectedRetriever.parameters,
+    retrieverModel?.params,
+  ]);
+
   useEffect(() => {
     if (formikRef.current && formikRef.current.values && currentFormValuesRef) {
       currentFormValuesRef.current = formikRef.current.values;
@@ -29,10 +43,7 @@ function AutoSaveFormSchema({
     <FormSchemaLayout>
       <FormSchema
         model={selectedRetriever.name}
-        initialValues={{
-          ...selectedRetriever.parameters,
-          ...(retrieverModel?.params || {}),
-        }}
+        initialValues={initialValues}
         autoSave={true}
         onFormSubmit={onParametersChange}
         onCancel={undefined}
@@ -168,21 +179,18 @@ export default function RetrieverConfigurationStep({
     }
   };
 
-  const handleRetrieverParametersSave = (newParams) => {
-    const updatedRetriever = {
-      ...selectedRetriever,
-      parameters: newParams,
-    };
-    setSelectedRetriever(updatedRetriever);
+  const handleRetrieverParametersSave = useCallback(
+    (newParams) => {
+      const newRetrieverModel = {
+        component: selectedRetriever?.name || "",
+        params: newParams,
+      };
 
-    const newRetrieverModel = {
-      component: selectedRetriever?.name || "",
-      params: newParams,
-    };
-
-    setRetrieverModel(newRetrieverModel);
-    setNextEnabled(true);
-  };
+      setRetrieverModel(newRetrieverModel);
+      setNextEnabled(true);
+    },
+    [selectedRetriever?.name, setRetrieverModel, setNextEnabled],
+  );
 
   return (
     <Box
