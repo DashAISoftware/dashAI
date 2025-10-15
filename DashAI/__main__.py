@@ -72,6 +72,7 @@ def main(
     logger.info("Starting Huey consumer process.")
     huey_cmd = [
         sys.executable,
+        "-u",
         "-m",
         "huey.bin.huey_consumer",
         "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
@@ -79,10 +80,19 @@ def main(
         "0.1",
         "--backoff",
         "1",
+        "-v",
     ]
+    huey_log = open(os.path.join(resolved_local, "huey.log"), "a")
 
-    huey_process = subprocess.Popen(huey_cmd, env=child_env)
+    huey_process = subprocess.Popen(
+        huey_cmd,
+        env=child_env,
+        stdout=huey_log,
+        stderr=subprocess.STDOUT,
+    )
+
     logger.info(f"Started Huey consumer with PID: {huey_process.pid}")
+    logger.info(f"Huey logs are being written to: {huey_log.name}")
 
     if not no_browser:
         logger.info("Opening browser.")
