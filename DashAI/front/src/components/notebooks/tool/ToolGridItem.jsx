@@ -77,6 +77,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
               }}
             >
               <CategoryIcon
+                name={tool.type}
                 category={tool.metadata.category}
                 color={tool.metadata.color}
               />

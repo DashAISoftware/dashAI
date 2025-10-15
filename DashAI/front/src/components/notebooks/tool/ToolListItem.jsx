@@ -58,6 +58,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
           }}
         >
           <CategoryIcon
+            name={tool.type}
             category={tool.metadata.category}
             color={tool.metadata.color}
           />
