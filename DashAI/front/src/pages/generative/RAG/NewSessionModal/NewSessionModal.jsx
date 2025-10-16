@@ -66,7 +66,8 @@ const defaultNewSession = {
     prompt_model: {
       component: "CustomGenerationPrompt",
       params: {
-        template: "Answer to this message: {input}, with the following information: {chunks}",
+        template:
+          "Answer to this message: {input}, with the following information: {chunks}",
       },
     },
   },
@@ -213,8 +214,9 @@ export default function NewSessionModal({
           prompt_model: sessionData.parameters.prompt_model || {
             component: "CustomGenerationPrompt",
             params: {
-              template: "Answer to this message: {input}, with the following information: {chunks}",
-            }
+              template:
+                "Answer to this message: {input}, with the following information: {chunks}",
+            },
           },
         },
       };
@@ -334,7 +336,12 @@ export default function NewSessionModal({
         <Button
           variant="contained"
           onClick={() => {
+            console.log("=== NEXT BUTTON CLICKED ===");
+            console.log("activeStep:", activeStep);
+            console.log("retrieverStepRef.current:", retrieverStepRef.current);
+
             if (activeStep === 2 && retrieverStepRef.current) {
+              console.log("Calling saveFormValues on retriever step");
               retrieverStepRef.current.saveFormValues();
             }
 

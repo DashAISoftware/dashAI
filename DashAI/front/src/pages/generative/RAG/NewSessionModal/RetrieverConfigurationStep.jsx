@@ -17,7 +17,29 @@ import {
 
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
-import { FormSchemaProvider } from "../../../../contexts/schema";
+import {
+  FormSchemaProvider,
+  useFormSchemaStore,
+} from "../../../../contexts/schema";
+
+// Componente que intercepta valores del contexto de FormSchema
+function FormSchemaInterceptor({ currentFormValuesRef }) {
+  const store = useFormSchemaStore();
+
+  useEffect(() => {
+    if (store && store.formValues && currentFormValuesRef) {
+      console.log("=== FORM SCHEMA STORE VALUES ===");
+      console.log("Store formValues:", store.formValues);
+
+      if (Object.keys(store.formValues).length > 0) {
+        currentFormValuesRef.current = { ...store.formValues };
+        console.log("Successfully captured from store:", store.formValues);
+      }
+    }
+  }, [store?.formValues, currentFormValuesRef]);
+
+  return null; // Este componente no renderiza nada
+}
 
 function AutoSaveFormSchema({
   selectedRetriever,
@@ -39,31 +61,16 @@ function AutoSaveFormSchema({
     retrieverModel?.params,
   ]);
 
-  // Capture form values whenever formik values change
-  useEffect(() => {
-    if (formikRef.current && currentFormValuesRef) {
-      const formikValues = formikRef.current.values;
-      if (formikValues) {
-        currentFormValuesRef.current = formikValues;
-      }
-    }
-  });
-
+  // Enhanced form submit handler
   const handleFormSubmit = useCallback(
     (values) => {
-      if (currentFormValuesRef) {
-        currentFormValuesRef.current = values;
-      }
-      onParametersChange(values);
-    },
-    [onParametersChange, currentFormValuesRef],
-  );
+      console.log("=== FORM SUBMIT HANDLER ===");
+      console.log("Submitted values:", values);
 
-  const handleParametersChange = useCallback(
-    (values) => {
       if (currentFormValuesRef) {
         currentFormValuesRef.current = values;
       }
+
       onParametersChange(values);
     },
     [onParametersChange, currentFormValuesRef],
@@ -71,12 +78,12 @@ function AutoSaveFormSchema({
 
   return (
     <FormSchemaLayout>
+      <FormSchemaInterceptor currentFormValuesRef={currentFormValuesRef} />
       <FormSchema
         model={selectedRetriever.name}
         initialValues={initialValues}
         autoSave={true}
         onFormSubmit={handleFormSubmit}
-        onParametersChange={handleParametersChange}
         onCancel={undefined}
         formSubmitRef={formikRef}
       />
@@ -99,13 +106,118 @@ const RetrieverConfigurationStep = forwardRef(
     const currentFormValuesRef = useRef(null);
 
     const saveCurrentFormValues = useCallback(() => {
-      if (currentFormValuesRef.current && selectedRetriever) {
+      console.log("=== SAVE CURRENT FORM VALUES CALLED ===");
+      console.log("selectedRetriever:", selectedRetriever?.name);
+      console.log(
+        "currentFormValuesRef.current:",
+        currentFormValuesRef.current,
+      );
+
+      let valuesToSave = currentFormValuesRef.current;
+
+      // Si no tenemos valores en la ref, intentar capturar directamente del formik
+      if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
+        console.log("No values in ref, trying to capture from formikRef...");
+        const formSchemaElement =
+          document.querySelector('[data-testid="form-schema"]') ||
+          document.querySelector("form");
+        if (formSchemaElement) {
+          console.log("Found form element, attempting to extract values");
+        }
+
+        // Último recurso: construir valores desde el DOM
+        if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
+          console.log("Attempting to extract values from DOM...");
+          const formData = extractFormDataFromDOM();
+          if (formData && Object.keys(formData).length > 0) {
+            valuesToSave = formData;
+            currentFormValuesRef.current = formData;
+            console.log("Successfully extracted from DOM:", formData);
+          }
+        }
+      }
+
+      if (
+        valuesToSave &&
+        Object.keys(valuesToSave).length > 0 &&
+        selectedRetriever
+      ) {
+        console.log("Saving parameters:", valuesToSave);
         setRetrieverModel({
           component: selectedRetriever.name,
-          params: currentFormValuesRef.current,
+          params: valuesToSave,
         });
+        console.log("Parameters saved successfully");
+      } else {
+        console.warn("Cannot save - missing values or retriever");
+        console.log("valuesToSave:", valuesToSave);
+        console.log("selectedRetriever:", selectedRetriever);
       }
     }, [selectedRetriever, setRetrieverModel]);
+
+    // Función helper para extraer datos del DOM como último recurso
+    const extractFormDataFromDOM = () => {
+      try {
+        // Buscar todos los inputs y selects en el formulario
+        const allInputs = document.querySelectorAll("input, select, textarea");
+        const formData = {};
+
+        allInputs.forEach((input) => {
+          const name = input.name || input.id || "";
+          const value = input.value;
+
+          if (name && value) {
+            // Similarity metric
+            if (
+              name.includes("similarity_metric") ||
+              name.includes("similarity")
+            ) {
+              formData.similarity_metric = value;
+            }
+            // Top K
+            else if (name.includes("top_k") || name.includes("topk")) {
+              formData.top_k = parseInt(value) || 5;
+            }
+            // Model name for embeddings
+            else if (name.includes("model_name")) {
+              if (!formData.encoding_model) {
+                formData.encoding_model = {
+                  properties: {
+                    component: "DenseEmbedding",
+                    params: {
+                      comp: { component: "FastTextEmbedding", params: {} },
+                    },
+                  },
+                };
+              }
+              formData.encoding_model.properties.params.comp.params.model_name =
+                value;
+            }
+            // Pooling strategy
+            else if (name.includes("pooling_strategy")) {
+              if (!formData.encoding_model) {
+                formData.encoding_model = {
+                  properties: {
+                    component: "DenseEmbedding",
+                    params: {
+                      comp: { component: "FastTextEmbedding", params: {} },
+                    },
+                  },
+                };
+              }
+              formData.encoding_model.properties.params.comp.params.pooling_strategy =
+                value;
+            }
+          }
+        });
+
+        console.log("Extracted form data from DOM:", formData);
+        return Object.keys(formData).length > 0 ? formData : null;
+      } catch (error) {
+        console.error("Error extracting form data from DOM:", error);
+        return null;
+      }
+    };
     useEffect(() => {
       return () => {
         saveCurrentFormValues();
