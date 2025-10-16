@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Button,
   Dialog,
@@ -87,6 +87,7 @@ export default function NewSessionModal({
     new Array(steps.length).fill(false),
   );
   const [sessionData, setSessionData] = useState(session || defaultNewSession);
+  const retrieverStepRef = useRef(null); // Ref para el paso de retriever
 
   useEffect(() => {
     if (open) {
@@ -299,6 +300,7 @@ export default function NewSessionModal({
         )}
         {activeStep === 2 && (
           <RetrieverConfigurationStep
+            ref={retrieverStepRef}
             retrieverModel={sessionData.parameters.retriever_model}
             setRetrieverModel={updateRetrieverModel}
             setNextEnabled={(isValid) => handleStepValidation(2, isValid)}
@@ -331,11 +333,17 @@ export default function NewSessionModal({
         </Button>
         <Button
           variant="contained"
-          onClick={() =>
-            activeStep === steps.length - 1
-              ? handleFinish()
-              : setActiveStep((prev) => prev + 1)
-          }
+          onClick={() => {
+            if (activeStep === 2 && retrieverStepRef.current) {
+              retrieverStepRef.current.saveFormValues();
+            }
+
+            if (activeStep === steps.length - 1) {
+              handleFinish();
+            } else {
+              setActiveStep((prev) => prev + 1);
+            }
+          }}
           disabled={!isNextOrFinishEnabled()}
         >
           {activeStep === steps.length - 1 ? "Finish" : "Next"}
