@@ -63,6 +63,12 @@ const defaultNewSession = {
       component: "",
       params: {},
     },
+    prompt_model: {
+      component: "CustomGenerationPrompt",
+      params: {
+        template: "Answer to this message: {input}, with the following information: {chunks}",
+      },
+    },
   },
 };
 
@@ -202,6 +208,12 @@ export default function NewSessionModal({
           generation_model: sessionData.parameters.generator_model || {
             component: "",
             params: {},
+          },
+          prompt_model: sessionData.parameters.prompt_model || {
+            component: "CustomGenerationPrompt",
+            params: {
+              template: "Answer to this message: {input}, with the following information: {chunks}",
+            }
           },
         },
       };

@@ -81,15 +81,17 @@ class DenseRetriever(RetrieverModel):
     def __init__(self, **kwargs):
         # RetrieverModel class fetches retriever_db_model if exists
         super().__init__(**kwargs)
-        
 
-        self.embedding_model: DenseEmbedding = self.params["encoding_model"]
-        self.embedding_class_name = self.embedding_model.__class__.__name__
-        self.embedding_params = self.embedding_model.params
-        self.params["encoding_model"] = {
-            "component": self.embedding_class_name,
-            "params": self.embedding_params
-        }
+        embedding_args = self.params["encoding_model"]["properties"]["params"]["comp"]
+        self.embedding_class_name = embedding_args["component"]
+        self.embedding_params = embedding_args.get("params", {})
+        embedding_class = self.component_registry[self.embedding_class_name]["class"]
+        self.embedding_model: DenseEmbedding = embedding_class(**self.embedding_params)
+
+        #self.embedding_model: DenseEmbedding = self.params["encoding_model"]
+        #self.embedding_class_name = self.embedding_model.__class__.__name__
+        #self.embedding_params = self.embedding_model.params
+       
         self.fetch_db_models()
         self.similarity_metric = self.params["similarity_metric"]
         self.top_k = self.params["top_k"]

@@ -56,6 +56,9 @@ class FastTextEmbedding(DenseEmbedding):
         model_path = hf_hub_download(repo_id=self.model_name, filename=f"{model_name}.bin")
         self.model = fasttext.load_model(model_path)
 
+    def save(self):
+        pass
+
     def encode(self, text: str) -> np.ndarray:
         """Encode text into an embedding."""
         token_embeddings = [self.model.get_word_vector(word) for word in text.split()]

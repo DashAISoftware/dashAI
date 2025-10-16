@@ -21,7 +21,9 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import DocumentResponse
-from DashAI.back.dependencies.database.models import Document
+from DashAI.back.dependencies.database.models import (
+    Document as DocumentDBModel,
+)
 from DashAI.back.models.RAG.utils import hash_function
 
 router = APIRouter()
@@ -36,7 +38,7 @@ async def get_all_documents(
     """Get all documents with file_url included."""
     with session_factory() as db:
         try:
-            documents = db.query(Document).all()
+            documents: List[DocumentDBModel] = db.query(DocumentDBModel).all()
 
             documents_responses = []
 
@@ -50,7 +52,7 @@ async def get_all_documents(
                         created=doc.created,
                         last_modified=doc.last_modified,
                         optional_metadata=doc.optional_metadata,
-                        related_sessions=[session.id for session in doc.related_sessions_ids] if doc.related_sessions_ids else None,
+                        related_sessions=doc.get_related_sessions,
                         file_url=f"{base_url}/{doc.id}/download",
                     )
                 )
@@ -72,7 +74,7 @@ async def get_document(
     """Get metadata of a document by its ID."""
     with session_factory() as db:
         try:
-            document = db.get(Document, document_id)
+            document = db.get(DocumentDBModel, document_id)
             if not document:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -102,7 +104,7 @@ async def download_document(
 ):
     """Download the actual file content of a document."""
     with session_factory() as db:
-        document = db.get(Document, document_id)
+        document = db.query(DocumentDBModel).filter_by(id=document_id).first()
         if not document:
             raise HTTPException(
                 status_code=404,
@@ -162,7 +164,7 @@ async def upload_document(
 
     file_content_hash = hash_function(content_bytes)
     with session_factory() as db:
-        existing_doc = db.query(Document).filter_by(file_hash=file_content_hash).first()
+        existing_doc: DocumentDBModel = db.query(DocumentDBModel).filter_by(file_hash=file_content_hash).first()
         if existing_doc:
             # Update existing document's information
             existing_doc.file_name = file_name
@@ -176,16 +178,14 @@ async def upload_document(
                 file_hash=existing_doc.file_hash,
                 created=existing_doc.created,
                 last_modified=existing_doc.last_modified,
-                related_sessions=[session.id for session in existing_doc.related_sessions_ids],
+                related_sessions=existing_doc.get_related_sessions,
                 optional_metadata=existing_doc.optional_metadata,
                 file_url=f"{base_url}/{existing_doc.id}/download"
             )
         else:
             # Create a new document entry
             try:
-                max_id = db.query(Document.id).order_by(Document.id.desc()).first()
-                new_id = (max_id[0] + 1) if max_id else 1
-                file_path = os.path.join(docs_folder_path, f"{new_id}__{file_name}")
+                file_path = os.path.join(docs_folder_path, f"{file_name}_{file_content_hash}")
 
                 with open(file_path, "wb") as f:
                     f.write(content_bytes)
@@ -193,7 +193,7 @@ async def upload_document(
                 # Get file type from file extension
                 file_type = os.path.splitext(file_name)[1].lstrip('.') or 'unknown'
                 
-                doc = Document(
+                doc = DocumentDBModel(
                     file_name=file_name,
                     file_type=file_type,
                     file_path=str(file_path),
@@ -211,7 +211,7 @@ async def upload_document(
                     file_hash=doc.file_hash,
                     created=doc.created,
                     last_modified=doc.last_modified,
-                    related_sessions=None,
+                    related_sessions=doc.get_related_sessions,
                     optional_metadata=doc.optional_metadata,
                     file_url=f"{base_url}/{doc.id}/download",
                 )
@@ -230,7 +230,7 @@ async def get_related_sessions(
     """Get all generative session IDs related to a specific document."""
     with session_factory() as db:
         try:
-            document = db.get(Document, document_id)
+            document = db.query(DocumentDBModel).filter_by(id=document_id).first()
             if not document:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -255,7 +255,7 @@ async def delete_document(
     """Delete a document from the RAG system by its ID."""
     with session_factory() as db:
         try:
-            document = db.get(Document, document_id)
+            document = db.query(DocumentDBModel).filter_by(id=document_id).first()
             if not document:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -294,7 +294,7 @@ async def update_document_metadata(
     """Update a document's metadata."""
     with session_factory() as db:
         try:
-            document = db.get(Document, document_id)
+            document = db.query(DocumentDBModel).filter_by(id=document_id).first()
             if not document:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,

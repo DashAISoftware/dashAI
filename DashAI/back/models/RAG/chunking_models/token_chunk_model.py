@@ -39,24 +39,22 @@ class TokenChunkModel(BaseChunkingModel):
     SCHEMA = TokenChunkModelSchema
 
     def __init__(self, **kwargs):
-        pipeline_id = self.params.pop("pipeline_id")
-        
-        self.db_model = self.init_model_in_db(pipeline_id)
-
-        self.params = self.validate_and_transform(kwargs)
-
-        self.chunk_size = self.params["chunk_size"]
-        self.chunk_overlap = self.params["chunk_overlap"]
-        self.tokenizer_name = self.params["tokenizer_name"]
+        self.parameters = kwargs
+        self.chunk_size = self.parameters["chunk_size"]
+        self.chunk_overlap = self.parameters["chunk_overlap"]
+        self.tokenizer_name = self.parameters["tokenizer_name"]
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
+        super().__init__(**kwargs)        
+
     
-    def chunk_text(self, text: str) -> List[List[str]]:
+    def chunk_text(self, text: str) -> List[str]:
 
         tokens = self.tokenizer.tokenize(text)
 
-        chunks = []
-        for i in range(0, len(tokens), self.chunk_size):
-            chunk = tokens[i : i + self.chunk_size]
-            chunks.append(chunk)
+        token_chunks = []
+        while len(tokens) > 0:
+            chunk = tokens[: self.chunk_size]
+            token_chunks.append(self.tokenizer.convert_tokens_to_string(chunk))
+            tokens = tokens[self.chunk_size - self.chunk_overlap :]
 
-        return chunks
+        return token_chunks

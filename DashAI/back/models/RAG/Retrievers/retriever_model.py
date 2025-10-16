@@ -44,7 +44,7 @@ class RetrieverModel(BaseModel):
         self.chunks: Dict[int, Dict[int, Chunk]] = self.params.pop("chunks")
         self.chunking_model_id: int = self.params.pop("chunking_model_id")
         self.validate_chunks()
-        self.params = self.validate_and_transform(self.params)
+        #self.params = self.validate_and_transform(self.params)
 
 
         if self.pipeline_id is not None:

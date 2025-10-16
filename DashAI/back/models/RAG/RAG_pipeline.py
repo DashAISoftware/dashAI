@@ -430,6 +430,9 @@ class RAGPipeline(BaseGenerativeModel):
         try:
             model_instance = model_class(**model_params)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
+            
             raise RAGPipelineInitializationError(f"Failed to initialize {model_class_name}: {str(e)}")
         return model_instance
     

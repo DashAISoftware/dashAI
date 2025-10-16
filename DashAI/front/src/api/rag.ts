@@ -46,6 +46,10 @@ export const createRAGSession = async (
       component: string;
       params: Record<string, any>;
     };
+    prompt_model: {
+      component: string;
+      params: Record<string, any>;
+    };
   };
 
   const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
@@ -68,6 +72,10 @@ export const createRAGSession = async (
         generation_model: {
           component: params.generation_model.component,
           params: params.generation_model.params,
+        },
+        prompt_model: {
+          component: params.prompt_model.component,
+          params: params.prompt_model.params,
         },
       },
     };
