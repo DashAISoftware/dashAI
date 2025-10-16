@@ -1,4 +1,3 @@
-import hashlib
 import os
 import pickle
 from typing import Dict, List, Tuple
@@ -19,10 +18,11 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
-from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
+from DashAI.back.models.RAG.documents.base_document import BaseDocument
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import PDFDocument, TxtDocument
 from DashAI.back.models.RAG.Retrievers.sparse_retriever import SparseRetriever
+from DashAI.back.models.RAG.utils import hash_function
 
 similarities = {"cosine": cosine_similarity, "euclidean": euclidean_distances}
 
@@ -214,13 +214,7 @@ class TFIDFRetriever(SparseRetriever):
 
     def __init__(
         self,
-        documents_paths: List[str],
-        TFIDFVectorizer_parameters: Dict[str, any],
-        similarity_function: str,
-        n_docs: int,
-        use_similarity_threshold: bool,
-        similarity_threshold: float,
-        chunking_model: BaseChunkingModel,
+        **kwargs,
     ):
         """
         Initialize the TFIDFRetriever with the given parameters.
@@ -236,38 +230,30 @@ class TFIDFRetriever(SparseRetriever):
             chunk_overlap (int): The overlap between chunks.
         """
 
-        assert isinstance(documents_paths, list), "Documents must be a list."
-        assert all(isinstance(doc, str) for doc in documents_paths), (
-            "All documents must be strings."
-        )
-        assert similarity_function in similarities, (
-            f"similarity_function must be one of {list(similarities.keys())}."
-        )
-        assert n_docs > 0, "Number of documents to retrieve must be greater than 0."
-        assert similarity_threshold >= 0, "Similarity threshold must be non-negative."
-        BASE_DOC_PATH = (
-            "THIS IS A PLACEHOLDER, should be unnecesary after implementing "
-            "the document persistence storage in the database"
-        )
-        new_documents_paths = []
-        for doc_path in documents_paths:
-            new_path = os.path.join(BASE_DOC_PATH, doc_path)
-            new_documents_paths.append(new_path)
-        documents_paths = new_documents_paths
-        self._documents_paths = sorted(documents_paths)  # Sort for consistent hashing
-        self.documents = self.load_documents(self._documents_paths)
-        self.similarity_function_name = similarity_function
-        self.similarity_function = similarities[similarity_function]
-        self.n_docs = n_docs
-        self.use_similarity_threshold = use_similarity_threshold
-        self.similarity_threshold = similarity_threshold
+        documents = kwargs.pop("documents")
+        assert isinstance(documents, list) and all(
+            isinstance(doc, BaseDocument) for doc in documents
+        ), "Documents must be a list of BaseDocument instances."
+        self.documents: List[BaseDocument] = documents
+
+        chunking_model = kwargs.pop("chunking_model")
+        assert isinstance(chunking_model, BaseChunkingModel), "Chunking model must be a BaseChunkingModel instance."
         self.chunking_model = chunking_model
+
+        TFIDFVectorizer_parameters = kwargs.pop("TFIDFVectorizer")
+        self.validate_and_transform(kwargs)
+        vectorizer = TFIDFVectorizerModel(**TFIDFVectorizer_parameters)  # Validate parameters
+        self.similarity_function_name = kwargs.pop("similarity_function", "cosine")
+        self.similarity_function = similarities[self.similarity_function_name]
+        self.n_docs = kwargs.pop("n_docs")
+        self.use_similarity_threshold = kwargs.pop("use_similarity_threshold", False)
+        self.similarity_threshold = kwargs.pop("similarity_threshold", 0.5)
 
         self.params = {
             "vectorizer_params": TFIDFVectorizer_parameters,
-            "similarity_function": similarity_function,
-            "n_docs": n_docs,
-            "similarity_threshold": similarity_threshold,
+            "similarity_function": self.similarity_function,
+            "n_docs": self.n_docs,
+            "similarity_threshold": self.similarity_threshold,
 
         }
 
@@ -288,7 +274,7 @@ class TFIDFRetriever(SparseRetriever):
             self._fit()
             self._save_state()
 
-    def load(self) -> None:
+    def load(self, db) -> None:
         pass
 
     def save(self) -> None:
@@ -299,7 +285,7 @@ class TFIDFRetriever(SparseRetriever):
         for i, doc_path in enumerate(documents_paths):
             with open(doc_path, "rb") as doc_file:
                 file_bytes = doc_file.read()
-                file_hash = hashlib.sha256(file_bytes).hexdigest()
+                file_hash = hash_function(file_bytes)
 
             file_name = os.path.basename(doc_path)
             file_path = doc_path
@@ -312,7 +298,7 @@ class TFIDFRetriever(SparseRetriever):
                     )
             elif doc_path.endswith(".txt"):
                 doc = TxtDocument(
-                        id = i,
+                        db_id = i,
                         file_name=file_name,
                         file_path=file_path,
                         file_hash=file_hash
@@ -343,9 +329,9 @@ class TFIDFRetriever(SparseRetriever):
     def _generate_cache_hash(self) -> str:
         hashable_params = self.get_signature_parameters()
         text = f"{hashable_params}"
-        params_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        params_hash = hash_function(text.encode("utf-8"))
         docs_hashes = [doc.file_hash for doc in self.documents]
-        docs_hash = hashlib.sha256("".join(docs_hashes).encode("utf-8")).hexdigest()
+        docs_hash = hash_function("".join(docs_hashes).encode("utf-8"))
         return f"tfidf_retriever_{params_hash}_{docs_hash}"
 
     def _load_state(self) -> bool:

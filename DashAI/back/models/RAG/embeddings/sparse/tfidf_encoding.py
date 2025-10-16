@@ -16,17 +16,21 @@ from DashAI.back.core.schema_fields import (
     float_field,
     int_field,
     bool_field,
-    string_field
+    string_field,
+    none_type,
+    union_type,
 )
 
 class TFIDFEncodingSchema(BaseSchema):
 
     strip_accents: schema_field(
-        enum_field(
-            enum=["ascii", "unicode", None],
+        none_type(
+            enum_field(
+                enum=["ascii", "unicode"],
+            )
         ),
         placeholder=None,
-        description="Whether to strip accents from the text.",
+        description="""Remove accents and perform other character normalization during the preprocessing step. ‘ascii’ is a fast method that only works on characters that have a direct ASCII mapping. ‘unicode’ is a slightly slower method that works on any characters. None (default) means no character normalization is performed.""",
     ) # type: ignore
 
     lowercase: schema_field(
@@ -45,12 +49,17 @@ class TFIDFEncodingSchema(BaseSchema):
     ) # type: ignore
 
     stop_words: schema_field(
-        list_field(
-            string_field(),
-            min_items=1,
+        none_type(
+            list_field(
+                string_field(),
+                min_items=1,
+            )
         ),
         placeholder=None,
-        description="List of stop words to be used in the TF-IDF vectorization.",
+        description="""
+List of stop words to be used in the TF-IDF vectorization.
+If None, no stop words will be used. In this case, setting max_df to a higher value, such as in the range (0.7, 1.0), can automatically detect and filter stop words based on intra corpus document frequency of terms.
+""",
     ) # type: ignore
 
     ngram_range: schema_field(
@@ -82,8 +91,10 @@ class TFIDFEncodingSchema(BaseSchema):
     ) # type: ignore
 
     max_features: schema_field(
-        int_field(
-            ge=1,
+        none_type(
+            int_field(
+                ge=1,
+            )
         ),
         placeholder=None,
         description="If not None, build a vocabulary that only consider the top max_features ordered by term frequency across the corpus.",

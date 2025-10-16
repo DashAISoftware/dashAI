@@ -56,6 +56,7 @@ class SimpleImputer(SklearnWrapper, SimpleImputerOperation):
     DESCRIPTION = (
         "Univariate imputer for completing missing values with simple strategies."
     )
+    DISPLAY_NAME = "Simple Imputer"
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)

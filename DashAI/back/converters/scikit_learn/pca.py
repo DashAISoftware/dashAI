@@ -101,6 +101,7 @@ class PCA(SklearnWrapper, PCAOPERATION):
     SCHEMA = PCASchema
     DESCRIPTION = "Principal component analysis (PCA)."
     SHORT_DESCRIPTION = "Dimensionality reduction using PCA."
+    DISPLAY_NAME = "Principal Component Analysis (PCA)"
     metadata = {}
 
     def __init__(self, **kwargs):

@@ -18,6 +18,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models import BaseGenerativeModel
+from DashAI.back.models.RAG import PDFDocument, TxtDocument, BaseDocument
 from DashAI.back.tasks import BaseGenerativeTask
 
 from DashAI.back.tasks.RAG_task import RAGTask
@@ -76,17 +77,17 @@ async def upload_generative_session(
                         detail="RAG Task requires a non-empty list of document IDs.",
                     )
                 
-                documents_paths = []
+                documents_ids = []
                 for doc_id in params.parameters["documents"]:
-                    doc = db.get(Document, doc_id)
-                    if not doc:
+                    document = db.get(Document, doc_id)
+                    if not document:
                         raise HTTPException(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Document with ID {doc_id} not found.",
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Document with ID {doc_id} does not exist.",
                         )
-                    documents_paths.append(doc.file_path)
+                    documents_ids.append(document.id)
 
-                params.parameters["documents"] = documents_paths
+                params.parameters["documents"] = documents_ids
             # Continue with the session creation
 
             # Validate the model parameters

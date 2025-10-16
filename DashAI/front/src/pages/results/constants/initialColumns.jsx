@@ -20,7 +20,7 @@ export const initialColumns = [
   {
     field: "model_name",
     headerName: "Model",
-    minWidth: 250,
+    minWidth: 200,
     renderCell: (params) => {
       let color;
       switch (params.value) {
@@ -52,7 +52,7 @@ export const initialColumns = [
   {
     field: "status",
     headerName: "Status",
-    minWidth: 160,
+    minWidth: 100,
     renderCell: (params) => {
       let color;
       switch (params.value) {

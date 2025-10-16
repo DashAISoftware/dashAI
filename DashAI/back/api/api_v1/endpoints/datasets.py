@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from kink import di, inject
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 from sqlalchemy.orm.session import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import datasets_params as schemas
@@ -621,19 +621,45 @@ async def update_dataset(
         A dictionary containing the updated dataset record.
     """
     with session_factory() as db:
+        dataset = db.get(Dataset, dataset_id)
+        if dataset is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+
+        if not params.name or not params.name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Name cannot be empty",
+            )
+
+        new_name = params.name.strip()
+
+        if new_name == dataset.name:
+            return dataset
+
+        exists = db.execute(
+            select(Dataset.id).where(Dataset.name == new_name, Dataset.id != dataset_id)
+        ).scalar()
+        if exists:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Dataset name already exists",
+            )
+
+        dataset.name = new_name
         try:
-            dataset = db.get(Dataset, dataset_id)
-            if params.name and params.name != dataset.name:
-                setattr(dataset, "name", params.name)
-                db.commit()
-                db.refresh(dataset)
-                return dataset
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_304_NOT_MODIFIED,
-                    detail="Record not modified",
-                )
+            db.commit()
+            db.refresh(dataset)
+            return dataset
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Dataset name already exists",
+            ) from e
         except exc.SQLAlchemyError as e:
+            db.rollback()
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

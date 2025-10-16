@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import FormSchemaField from "./FormSchemaField";
 import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";

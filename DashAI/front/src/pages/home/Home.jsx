@@ -30,7 +30,7 @@ function Home() {
         alignItems="center"
         sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
       >
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Datasets"
             description="Create and manage the datasets registered in the application."
@@ -38,7 +38,7 @@ function Home() {
             Icon={FileUploadIcon}
           />
         </Grid>
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Experiments"
             description="Create and manage and view the status of your experiments."
@@ -46,7 +46,7 @@ function Home() {
             Icon={ScienceIcon}
           />
         </Grid>
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Predictions"
             description="Make predictions using your trained models."
@@ -54,7 +54,7 @@ function Home() {
             Icon={TimelineIcon}
           />
         </Grid>
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Explainers"
             description="Explore and understand the decision-making process behind your models."
@@ -63,7 +63,7 @@ function Home() {
           />
         </Grid>
         {/* Pipelines button */}
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Pipelines"
             description="Create and manage pipelines."
@@ -82,7 +82,7 @@ function Home() {
         alignItems="center"
         sx={{ mt: 4, mx: 0, maxWidth: "100%" }}
       >
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Generative"
             description={"Interact with AI models to infere."}
@@ -90,7 +90,7 @@ function Home() {
             Icon={AutoAwesomeIcon}
           />
         </Grid>
-        <Grid item md={4} sm={6} xs={12}>
+        <Grid size={{ md: 4, sm: 6, xs: 12 }}>
           <HomeButton
             title="Plugins"
             description={"Browse and manage plugins."}

@@ -1,3 +1,4 @@
+from typing import List
 from transformers import AutoTokenizer
 
 from DashAI.back.core.schema_fields import (
@@ -7,7 +8,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
-from DashAI.back.models.RAG.documents import BaseDocument
 
 
 class TokenChunkModelSchema(BaseSchema):
@@ -39,18 +39,18 @@ class TokenChunkModel(BaseChunkingModel):
     SCHEMA = TokenChunkModelSchema
 
     def __init__(self, **kwargs):
-        kwargs = self.validate_and_transform(kwargs)
+        pipeline_id = self.params.pop("pipeline_id")
+        
+        self.db_model = self.init_model_in_db(pipeline_id)
 
-        self.chunk_size = kwargs.get("chunk_size", 200)
-        self.chunk_overlap = kwargs.get("chunk_overlap", 20)
+        self.params = self.validate_and_transform(kwargs)
 
-        self.tokenizer_name = kwargs.get(
-            "tokenizer_name", "intfloat/e5-mistral-7b-instruct"
-        )
+        self.chunk_size = self.params["chunk_size"]
+        self.chunk_overlap = self.params["chunk_overlap"]
+        self.tokenizer_name = self.params["tokenizer_name"]
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
-
-    def chunk(self, document: BaseDocument):
-        text = document.get_text()
+    
+    def chunk_text(self, text: str) -> List[List[str]]:
 
         tokens = self.tokenizer.tokenize(text)
 

@@ -109,7 +109,7 @@ function PluginsDetails() {
       </Button>
       {loading && (
         <Paper sx={{ p: 2, mt: 2, minHeight: "75vh" }}>
-          <Grid item xs={12} height={"218px"}>
+          <Grid size={{ xs: 12 }} height={"218px"}>
             <Card
               sx={{
                 height: "100%",
@@ -135,17 +135,13 @@ function PluginsDetails() {
           >
             <CardHeader
               title={plugin.name.replace("dashai-", "")}
-              titleTypographyProps={{
-                variant: "h4",
-                noWrap: true,
-              }}
               sx={{
                 pb: 0,
                 width: "100%",
               }}
               subheader={
                 <Grid container direction={"column"} rowGap={1}>
-                  <Grid item>
+                  <Grid>
                     {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
                       plugin.status,
                     ) ? (
@@ -159,12 +155,18 @@ function PluginsDetails() {
                       </Typography>
                     )}
                   </Grid>
-                  <Grid item>
+                  <Grid>
                     <PluginTags tags={plugin.tags} />
                   </Grid>
-                  <Grid item> {plugin.summary} </Grid>
+                  <Grid> {plugin.summary} </Grid>
                 </Grid>
               }
+              slotProps={{
+                title: {
+                  variant: "h4",
+                  noWrap: true,
+                },
+              }}
             />
             <CardContent sx={{ pb: 0 }}>
               {PluginsActions(plugin.status === PluginStatus.INSTALLED)}

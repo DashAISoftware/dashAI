@@ -25,8 +25,10 @@ export default function DeleteConfirmationModal({
       open={open}
       onClose={onClose}
       aria-labelledby="delete-confirmation-dialog-title"
-      TransitionProps={{ onExited }}
       keepMounted={false}
+      slotProps={{
+        transition: { onExited },
+      }}
     >
       <DialogTitle id="delete-confirmation-dialog-title">
         Confirm Deletion

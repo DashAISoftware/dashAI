@@ -2,13 +2,15 @@ from typing import Any, Dict, List
 
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.core.schema_fields import BaseSchema, schema_field, string_field
+from DashAI.back.dependencies.database.models import (
+    RAGPrompt as PromptDBModel)
 
 class PromptSchema(BaseSchema):
 
     template: str = schema_field(
         string_field(),
-        "",
-        "The prompt template with placeholders.",
+        placeholder="",
+        description="The prompt template with placeholders.",
     )
 
 
@@ -19,11 +21,38 @@ class Prompt(BaseModel):
     """
 
     SCHEMA = PromptSchema
+    REQUIRED_EXTRA_KWARGS = ["db"]
+    id: int
 
-    def __load__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs):
+        self.db = kwargs.pop("db")
+        kwargs = self.validate_and_transform(kwargs)
+        self.template = kwargs.get("template")
+        assert self.validate_template(self.template), "The template is missing required placeholders."
+        self.class_name = self.__class__.__name__
+        self.params = kwargs
+
+        stored_model = self.db.query(PromptDBModel).filter_by(
+            class_name = self.class_name,
+            parameters = self.params
+        ).first()
+        if stored_model:
+            self.id = stored_model.id
+        else:
+            new_model = PromptDBModel(
+                class_name=self.class_name,
+                parameters=self.params
+            )
+            self.db.add(new_model)
+            self.db.commit()
+            self.id = new_model.id
+
+
+        
+    def load(self, **kwargs: Any) -> None:
         pass
 
-    def __save__(self) -> None:
+    def save(self) -> None:
         pass
 
     @classmethod

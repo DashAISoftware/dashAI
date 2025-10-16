@@ -17,6 +17,7 @@ from DashAI.back.converters import (
     MaxAbsScaler,
     MinMaxScaler,
     MissingIndicator,
+    NanRemover,
     Normalizer,
     Nystroem,
     OneHotEncoder,
@@ -93,6 +94,7 @@ from DashAI.back.models import (
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.models.RAG import (
+    RAGPipeline,
     # Prompts
     DefaultGenerationPrompt,
     CustomGenerationPrompt,
@@ -101,6 +103,7 @@ from DashAI.back.models.RAG import (
     CustomAugmentationPrompt,
     # Chunking Models
     CharacterChunkModel,
+    TokenChunkModel,
     # Retrievers
     DenseRetriever,
     # Encodings
@@ -229,6 +232,7 @@ def get_initial_components():
         ParallelCordinatesExplorer,
         # Converters
         ColumnRemover,
+        NanRemover,
         CharacterReplacer,
         FastICA,
         IncrementalPCA,
@@ -277,8 +281,7 @@ def get_initial_components():
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
         # RAG
-        CharacterChunkModel,
-        TokenChunkModel,
+        RAGPipeline,
         # Chunking Models
         CharacterChunkModel,
         TokenChunkModel,

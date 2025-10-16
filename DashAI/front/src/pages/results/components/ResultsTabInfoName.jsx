@@ -6,7 +6,7 @@ import { runNameInfo } from "../constants/runNameInfo";
 
 function ResultsTabInfoName({ runData }) {
   return (
-    <Grid item>
+    <Grid>
       <Grid
         container
         direction="row"
@@ -15,7 +15,7 @@ function ResultsTabInfoName({ runData }) {
         columnSpacing={15}
       >
         {runNameInfo.map((param) => (
-          <Grid item key={param.key}>
+          <Grid key={param.key}>
             <Typography variant="subtitle1">{param.label}</Typography>
             <Typography variant="p" sx={{ color: "gray" }}>
               {runData[param.key] ?? "-"}

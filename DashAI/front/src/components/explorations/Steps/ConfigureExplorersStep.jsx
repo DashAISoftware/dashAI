@@ -302,16 +302,16 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
       alignItems="stretch"
       spacing={2}
     >
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
           Add explorers to your exploration
         </Typography>
       </Grid>
 
       {/* Form to add a single explorer to the exploration */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
-          <Grid item xs={4} md={12}>
+          <Grid size={{ xs: 4, md: 12 }}>
             <TextField
               label="Name (optional)"
               value={explorerData.name}
@@ -322,7 +322,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
             />
           </Grid>
 
-          <Grid item xs={4} md={12}>
+          <Grid size={{ xs: 4, md: 12 }}>
             <Autocomplete
               loading={loading}
               disablePortal
@@ -343,7 +343,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
             />
           </Grid>
 
-          <Grid item xs={1} md={2}>
+          <Grid size={{ xs: 1, md: 2 }}>
             <Button
               variant="outlined"
               disabled={!value || value.disabled}
@@ -358,7 +358,7 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
       </Grid>
 
       {/* Explorers table */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         {loading && (
           <Box
             sx={{

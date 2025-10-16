@@ -15,16 +15,14 @@ class CustomGenerationPrompt(GenerationPrompt):
         "placeholder_descriptions": {
             "{input}": "The user input message.",
             "{history}": "The chat history (optional) to be included in the context.",
-            "{documents}": "The document chunks to be included in the context."
+            "{chunks}": "The document chunks to be included in the context."
         }
     }
     
 
-    def __init__(self, template: str):
-        if not self.validate_template(template):
-            raise ValueError("The template is missing required placeholders.")
-        self.template = template
-
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
+        
     def format(
             self,
             input: str,

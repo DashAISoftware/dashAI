@@ -40,16 +40,17 @@ class FastTextEmbedding(DenseEmbedding):
     DESCRIPTION = "Convert text to embeddings using FastText."
 
     def __init__(self, **kwargs):
-        self.validate_and_transform(**kwargs)
-        self.model_name = kwargs.get("model_name")
-        self.pooling_strategy = kwargs.get("pooling_strategy")
+        self.params = self.validate_and_transform(kwargs)
+        self.model_name = self.params["model_name"]
+        self.pooling_strategy = self.params["pooling_strategy"]
         pooling_functions = {
             "mean": np.mean,
             "max": np.max
         }
         self.pooling_function = pooling_functions[self.pooling_strategy]
+        self.load()
 
-    def _load_model(self):
+    def load(self):
         """Load the FastText model."""
         model_name = self.model_name.split("/")[-1]
         model_path = hf_hub_download(repo_id=self.model_name, filename=f"{model_name}.bin")
@@ -59,4 +60,12 @@ class FastTextEmbedding(DenseEmbedding):
         """Encode text into an embedding."""
         token_embeddings = [self.model.get_word_vector(word) for word in text.split()]
         return self.pooling_function(np.array(token_embeddings), axis=0)
+    
+    def batch_encode(self, texts: List[str]) -> np.ndarray:
+        """Encode a batch of texts into embeddings."""
+        all_embeddings = []
+        for text in texts:
+            embedding = self.encode(text)
+            all_embeddings.append(embedding)
+        return np.array(all_embeddings)
     

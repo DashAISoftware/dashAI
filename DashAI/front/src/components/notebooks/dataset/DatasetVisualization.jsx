@@ -14,9 +14,14 @@ import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
 
-export default function DatasetVisualization({ dataset, onNotebookCreated }) {
+export default function DatasetVisualization({
+  dataset,
+  onNotebookCreated,
+  existingNotebooks = [],
+}) {
   if (!dataset) {
     return (
       <Box
@@ -31,6 +36,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -194,7 +200,20 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           <Typography variant="h5" component="h2">
             {dataset.name}
           </Typography>
-          <Grid item>
+          <Grid sx={{ height: "35px" }}>
+            <Button
+              variant="contained"
+              disabled={isProcessing}
+              onClick={() => {
+                navigate("../app/experiments", {
+                  state: { dataset: dataset },
+                });
+              }}
+              endIcon={<AddIcon />}
+              sx={{ mr: 2, height: "100%" }}
+            >
+              New Experiment
+            </Button>
             <Button
               variant="contained"
               endIcon={<AddIcon />}
@@ -203,6 +222,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
                 e.stopPropagation();
                 setShowCreateNotebookModal(true);
               }}
+              sx={{ height: "100%" }}
             >
               New Notebook
             </Button>
@@ -248,6 +268,7 @@ export default function DatasetVisualization({ dataset, onNotebookCreated }) {
           onClose={() => setShowCreateNotebookModal(false)}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}
+          existingNotebooks={existingNotebooks}
         />
       </Paper>
     </>

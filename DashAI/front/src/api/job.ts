@@ -23,25 +23,27 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
 
 export const enqueueDatasetJob = async (
   dataset_id: number,
-  file: File,
+  file: File | null,
   url: string,
   params: object,
+  notebook_id: number | null = null,
 ): Promise<object> => {
   const formData = new FormData();
   const kwargs = {
     dataset_id: dataset_id,
+    notebook_id: notebook_id,
     url: url,
     params: params,
   };
 
   formData.append("job_type", "DatasetJob");
   formData.append("kwargs", JSON.stringify(kwargs));
-  formData.append("file", file);
+  if (file) formData.append("file", file);
 
   const response = await api.post<object>("/v1/job/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
-      filename: encodeURIComponent(file.name),
+      filename: file ? encodeURIComponent(file.name) : "",
     },
   });
   return response.data;
@@ -129,6 +131,24 @@ export const enqueueGenerativeProcessJob = async (
   });
   return response.data;
 };
+
+export const enqueueRAGProcessJob = async (
+  processId: number,
+): Promise<object> => {
+  const data = {
+    job_type: "RAGJob",
+    kwargs: { rag_process_id: processId },
+  };
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}
 
 export const enqueueConverterJob = async (
   converterListId: number,

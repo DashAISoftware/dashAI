@@ -15,7 +15,7 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import { LoadingButton } from "@mui/material";
 import DatasetSummaryTable from "./DatasetSummaryTable";
 import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";
@@ -226,7 +226,7 @@ function ConvertDatasetModal({ datasetId }) {
               onClick={(event) => event.stopPropagation()}
             >
               {/* Dataset summary table */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle1" component="h3" mb={1}>
                   Dataset summary
                 </Typography>
@@ -234,8 +234,13 @@ function ConvertDatasetModal({ datasetId }) {
               <DatasetSummaryTable datasetId={datasetIdToModify} />
 
               {/* Converter selector */}
-              <Grid item xs={12} display={"flex"} alignItems={"center"} gap={2}>
-                <Grid item xs={6} display={"flex"} alignItems={"center"}>
+              <Grid
+                size={{ xs: 12 }}
+                display={"flex"}
+                alignItems={"center"}
+                gap={2}
+              >
+                <Grid size={{ xs: 6 }} display={"flex"} alignItems={"center"}>
                   <Typography variant="subtitle1" component="h3" mb={1}>
                     List of converters
                   </Typography>
@@ -252,7 +257,7 @@ function ConvertDatasetModal({ datasetId }) {
                     setConvertersToApply={setConvertersToApply}
                   />
                 </Grid>
-                <Grid item xs={6} display={"flex"} alignItems={"center"}>
+                <Grid size={{ xs: 6 }} display={"flex"} alignItems={"center"}>
                   <Typography variant="subtitle2" component="h3" mb={1}>
                     Class/Target column index
                   </Typography>

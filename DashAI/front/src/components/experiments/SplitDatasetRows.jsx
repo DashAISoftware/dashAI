@@ -194,7 +194,7 @@ function SplitDatasetRows({
   return (
     <React.Fragment>
       <Grid container spacing={1}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
             Select how to divide the dataset into training, validation and test
             subsets.
@@ -219,7 +219,7 @@ function SplitDatasetRows({
         />
         {splitType === SPLIT_TYPES.PREDEFINED && (
           <Grid container direction="row" spacing={4}>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <TextField
                 id="train"
                 label="Train"
@@ -231,7 +231,7 @@ function SplitDatasetRows({
                 sx={disabledTextFieldStyle}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <TextField
                 id="val"
                 label="Validation"
@@ -243,7 +243,7 @@ function SplitDatasetRows({
                 sx={disabledTextFieldStyle}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid size={{ xs: 4 }}>
               <TextField
                 id="test"
                 label="Test"
@@ -266,7 +266,7 @@ function SplitDatasetRows({
         <React.Fragment>
           {splitType === SPLIT_TYPES.RANDOM && (
             <Grid container direction="row" spacing={4}>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4 }}>
                 <TextField
                   id="train"
                   label="Train"
@@ -278,7 +278,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4 }}>
                 <TextField
                   id="validation"
                   label="Validation"
@@ -290,7 +290,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4 }}>
                 <TextField
                   id="test"
                   label="Test"
@@ -302,7 +302,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item xs={12} sx={{ ml: 3 }}>
+              <Grid size={{ xs: 12 }} sx={{ ml: 3 }}>
                 <BooleanInput
                   name="shuffle"
                   value={shuffle}
@@ -346,7 +346,7 @@ function SplitDatasetRows({
         <React.Fragment>
           {splitType === SPLIT_TYPES.MANUAL && (
             <Grid container direction="row" spacing={4}>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4 }}>
                 <TextField
                   id="train"
                   label="Train"
@@ -356,7 +356,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4 }}>
                 <TextField
                   id="validation"
                   label="Validation"
@@ -366,7 +366,7 @@ function SplitDatasetRows({
                   onChange={handleRowsChange}
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid size={{ xs: 4 }}>
                 <TextField
                   id="test"
                   label="Test"

@@ -37,12 +37,14 @@ class DefaultGenerationPrompt(GenerationPrompt):
         "template": template
     }
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     @staticmethod
     def format(
             input: str, 
             history:List[Tuple[str, str]],
-            chunks: List[str],
+            chunks: str,
             **kwargs: Any
         ) -> str:
         """
@@ -61,5 +63,5 @@ class DefaultGenerationPrompt(GenerationPrompt):
                 [f"User message: {h_input}\nResponse: {h_output}" for h_input, h_output in history]
             ))
         buffer = buffer.replace("{input}", input)
-        buffer = buffer.replace("{chunks}", "\n".join(chunks))
+        buffer = buffer.replace("{chunks}", chunks)
         return buffer

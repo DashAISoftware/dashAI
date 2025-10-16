@@ -1,5 +1,4 @@
-import { Button, ButtonGroup, Typography } from "@mui/material";
-import React from "react";
+import { Button, ButtonGroup } from "@mui/material";
 
 function FormSchemaButtonGroup({
   onCancel,

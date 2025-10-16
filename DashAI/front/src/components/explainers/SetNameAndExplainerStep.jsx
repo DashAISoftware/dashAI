@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getComponents as getComponentsRequest } from "../../api/component";
+import { generateSequentialName } from "../../utils/nameGenerator";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 
 function SetNameAndExplainerStep({
@@ -17,7 +18,7 @@ function SetNameAndExplainerStep({
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
 
-  // explainer name state
+  // Explainer name state
   const [nModifications, setNModifications] = useState(0);
   const [explNameOk, setExplNameOk] = useState(false);
   const [explNameError, setExplNameError] = useState(false);
@@ -105,7 +106,7 @@ function SetNameAndExplainerStep({
       spacing={2}
     >
       {/* Set Name subcomponent */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
           Select a {scope.toLowerCase()} explainer and anter a name
         </Typography>
@@ -124,8 +125,8 @@ function SetNameAndExplainerStep({
       </Grid>
 
       {/* Tasks Subcomponent */}
-      <Grid item xs={12}>
-        <Grid container spacing={1}>
+      <Grid size={{ xs: 12 }}>
+        <Grid>
           {/* Tasks list and description */}
           {!loading ? (
             <ItemSelectorWithInfo

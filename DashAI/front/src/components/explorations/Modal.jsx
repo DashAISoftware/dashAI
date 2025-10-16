@@ -47,11 +47,13 @@ function ExplorationsModal({
       disableEscapeKeyDown
       maxWidth="lg"
       scroll="paper"
-      PaperProps={{
-        sx: {
-          minHeight: "80vh",
-          overflow: "auto",
-          maxHeight: "90vh",
+      slotProps={{
+        paper: {
+          sx: {
+            minHeight: "80vh",
+            overflow: "auto",
+            maxHeight: "90vh",
+          },
         },
       }}
     >
@@ -64,7 +66,7 @@ function ExplorationsModal({
             alignItems={"center"}
           >
             {explorationMode.modalTitle && (
-              <Grid item>
+              <Grid>
                 {explorationMode.modalTitle}{" "}
                 <Typography variant="caption" color="textSecondary">
                   (Dataset ID: {datasetId}
@@ -74,7 +76,7 @@ function ExplorationsModal({
               </Grid>
             )}
 
-            <Grid item>
+            <Grid>
               <IconButton onClick={onClose} color="error">
                 <CloseIcon />
               </IconButton>

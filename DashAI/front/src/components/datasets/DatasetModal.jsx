@@ -121,14 +121,16 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       fullWidth
       maxWidth={"lg"}
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Typography
               variant="h6"
               component={"h3"}
@@ -137,7 +139,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               New dataset
             </Typography>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -158,7 +160,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {/* Step 1: select dataloader */}
@@ -179,7 +180,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

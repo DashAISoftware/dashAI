@@ -44,12 +44,12 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
               alignItems={"center"}
               justifyContent={"space-between"}
             >
-              <Grid item>
+              <Grid>
                 <Typography variant="h4" py={2}>
                   {label} Plugins
                 </Typography>
               </Grid>
-              <Grid item>
+              <Grid>
                 <Button
                   variant="contained"
                   onClick={async () => {

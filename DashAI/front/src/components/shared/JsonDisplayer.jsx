@@ -14,7 +14,7 @@ import NestedListDisplayer from "./NestedListDisplayer";
  */
 function JsonDisplayer({ displayMode = "nested-list", name, data }) {
   return (
-    <Grid item>
+    <Grid>
       {displayMode === "nested-list" && (
         <NestedListDisplayer
           name={name}

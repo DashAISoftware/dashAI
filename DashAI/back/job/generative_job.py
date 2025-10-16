@@ -16,6 +16,7 @@ from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks import BaseGenerativeTask
+from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -86,6 +87,11 @@ class GenerativeJob(BaseJob):
             try:
                 model_class = component_registry[generative_session.model_name]["class"]
                 params = generative_session.parameters
+                if model_class == RAGPipeline:
+                    params["db"] = db
+                    params["component_registry"] = component_registry
+                    params["session_id"] = generative_session.id
+                    params["env_rag_path"] = config["RAG_PATH"]
                 model: BaseGenerativeModel = model_class(**params)
             except Exception as e:
                 log.exception(e)

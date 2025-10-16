@@ -37,10 +37,9 @@ export const rename_prediction = async (
 };
 
 export const filter_datasets = async (requestData: IParamsFilter) => {
-  const response = await api.post(
-    `${predictEndpoint}/filter_datasets/`,
-    requestData,
-  );
+  const response = await api.get(`${predictEndpoint}/filter_datasets`, {
+    params: requestData,
+  });
   return response.data;
 };
 
