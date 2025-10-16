@@ -42,6 +42,7 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         "Each vertical line represents one data point, and the lines are connected "
         "by a series of horizontal lines. "
     )
+    IMAGE_PREVIEW = "parallel_categories.png"
 
     SCHEMA = ParallelCategoriesSchema
     metadata: Dict[str, Any] = {

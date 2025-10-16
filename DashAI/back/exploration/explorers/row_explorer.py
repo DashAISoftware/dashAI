@@ -51,6 +51,7 @@ class RowExplorer(PreviewInspectionExplorer):
     )
 
     SHORT_DESCRIPTION = "Display a sample of rows from the dataset."
+    IMAGE_PREVIEW = "row_explorer.png"
 
     SCHEMA = RowExplorerSchema
     metadata: Dict[str, Any] = {

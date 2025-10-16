@@ -55,6 +55,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         "plot of multiple columns of a dataset in a single axis. "
         "The other axis is selected through the opposite_axis parameter."
     )
+    IMAGE_PREVIEW = "multi_column_box_plot.png"
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {

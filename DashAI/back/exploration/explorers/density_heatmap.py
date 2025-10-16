@@ -12,7 +12,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
-from DashAI.back.exploration.distribution_explorer import DistributionExplorer
+from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
 
 
 class DensityHeatmapSchema(BaseExplorerSchema):
@@ -28,7 +28,7 @@ class DensityHeatmapSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class DensityHeatmapExplorer(DistributionExplorer):
+class DensityHeatmapExplorer(RelationshipExplorer):
     """
     DensityHeatmapExplorer is an explorer that returns a density heatmap
     of selected columns of a dataset.
@@ -39,6 +39,7 @@ class DensityHeatmapExplorer(DistributionExplorer):
         "DensityHeatmapExplorer is an explorer that returns a density heatmap "
         "of selected columns of a dataset."
     )
+    IMAGE_PREVIEW = "density_heatmap.png"
 
     SCHEMA = DensityHeatmapSchema
     metadata: Dict[str, Any] = {

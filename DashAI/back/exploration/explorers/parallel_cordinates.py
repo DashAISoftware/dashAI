@@ -42,6 +42,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
         "Each vertical line represents one data point, and the lines are connected "
         "by a series of horizontal lines. "
     )
+    IMAGE_PREVIEW = "parallel_cordinates.png"
 
     SCHEMA = ParallelCordinatesSchema
     metadata: Dict[str, Any] = {

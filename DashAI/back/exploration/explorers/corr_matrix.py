@@ -77,6 +77,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         "Its result is a heatmap by default, "
         "but can also be returned as a tabular result."
     )
+    IMAGE_PREVIEW = "correlation_matrix.png"
 
     SCHEMA = CorrelationMatrixExplorerSchema
     metadata: Dict[str, Any] = {

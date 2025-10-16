@@ -39,6 +39,7 @@ class BoxPlotExplorer(DistributionExplorer):
         "BoxPlotExplorer is an explorer that returns a box plot "
         "of selected columns of a dataset."
     )
+    IMAGE_PREVIEW = "box_plot.png"
 
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {

@@ -50,6 +50,7 @@ class WordcloudExplorer(DistributionExplorer):
         "This explorer generates a wordcloud from the concatenated "
         "strings of all selected columns in the dataset."
     )
+    IMAGE_PREVIEW = "wordcloud.png"
 
     SCHEMA = WordcloudSchema
     metadata: Dict[str, Any] = {

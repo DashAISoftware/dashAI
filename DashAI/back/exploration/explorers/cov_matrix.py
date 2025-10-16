@@ -64,6 +64,7 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
         "Its result is a heatmap by default, "
         "but can also be returned as a tabular result."
     )
+    IMAGE_PREVIEW = "covariance_matrix.png"
 
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {

@@ -46,6 +46,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
         "of selected columns of a dataset. Multiple scatter plots are generated "
         "for each pair of columns. The diagonal plots are histograms of the columns. "
     )
+    IMAGE_PREVIEW = "scatter_matrix.png"
 
     SHORT_DESCRIPTION = "Display a scatter matrix plot of selected columns."
 

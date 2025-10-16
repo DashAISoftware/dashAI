@@ -50,6 +50,7 @@ class ScatterPlotExplorer(RelationshipExplorer):
         "ScatterPlotExplorer is an explorer that returns a scatter plot "
         "of selected columns of a dataset."
     )
+    IMAGE_PREVIEW = "scatter_plot.png"
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {

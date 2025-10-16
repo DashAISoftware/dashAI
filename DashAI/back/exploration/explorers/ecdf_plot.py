@@ -65,6 +65,7 @@ class ECDFPlotExplorer(DistributionExplorer):
         "variable. It shows the proportion or count of observations falling below "
         "each unique value in the dataset."
     )
+    IMAGE_PREVIEW = "ecdf_plot.png"
 
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {

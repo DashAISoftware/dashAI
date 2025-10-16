@@ -78,6 +78,7 @@ class HistogramPlotExplorer(DistributionExplorer):
         "HistogramPlotExplorer is an explorer that returns a density heatmap "
         "of a selected column of a dataset."
     )
+    IMAGE_PREVIEW = "histogram_plot.png"
 
     SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {
