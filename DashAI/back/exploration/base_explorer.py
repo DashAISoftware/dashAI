@@ -5,7 +5,7 @@ from beartype.typing import Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, divide_columns
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, select_columns
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 
 

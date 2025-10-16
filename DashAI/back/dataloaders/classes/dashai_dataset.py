@@ -859,9 +859,9 @@ def get_column_names_from_indexes(
         col_names.append(dataset_features[index - 1])
     return col_names
 
-#Was called select columns before, changed to divide_columns for clarity
+
 @beartype
-def divide_columns(
+def select_columns(
     dataset: Union[DatasetDict, DashAIDataset],
     input_columns: List[str],
     output_columns: List[str],

@@ -247,8 +247,8 @@ class CSVDataLoader(BaseDataLoader):
         n_rows : int, optional
             The number of rows to preview. Default is 5.
         """
-        self._check_params(params)
-        separator = params["separator"]
+        clean_params = self._check_params(params)
+        separator = clean_params["delimiter", ""]
         prepared_path = self.prepare_files(filepath_or_buffer, None)
 
         if prepared_path[1] == "file":

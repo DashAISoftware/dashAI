@@ -12,6 +12,8 @@ import {
   Grid,
   Typography,
   StepButton,
+  Box,
+  Tooltip,
 } from "@mui/material";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
@@ -109,6 +111,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       });
 
       setColumnsSpec(initialColumnsSpec);
+      setNextEnabled(true);
     } catch (error) {
       enqueueSnackbar(
         "Error while trying to obtain preview of the uploaded file",

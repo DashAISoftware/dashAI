@@ -13,8 +13,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     split_dataset,
     prepare_for_experiment,
-    divide_columns
-)
+    select_columns,
+    )
 from DashAI.back.dependencies.database.models import (
     Dataset,
     Experiment,
@@ -239,7 +239,7 @@ class ExplainerJob(BaseJob):
                 )
 
                 prepared_instance = DatasetDict({"train": prepared_instance})
-                X, _ = divide_columns(
+                X, _ = select_columns(
                     prepared_instance,
                     self.input_columns,
                     self.output_columns,
@@ -398,7 +398,7 @@ class ExplainerJob(BaseJob):
                         datasetdict=loaded_dataset,
                         outputs_columns=self.output_columns,
                     )
-                    data = divide_columns(
+                    data = select_columns(
                         prepared_dataset,
                         self.input_columns,
                         self.output_columns,
