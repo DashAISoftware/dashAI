@@ -1,6 +1,6 @@
-from .BaseDocument import BaseDocument
+from DashAI.back.models.RAG.documents.base_document import BaseDocument
+from DashAI.back.models.RAG.utils import hash_function
 from typing import Dict, Any, Optional
-import os
 
 class TxtDocument(BaseDocument):
     """
@@ -12,7 +12,6 @@ class TxtDocument(BaseDocument):
             id: int,
             file_name: str,
             file_path: str,
-            file_hash: str,
             created: Optional[str] = None,
             optional_metadata: Optional[Dict[str, Any]] = None
     ):
@@ -26,6 +25,7 @@ class TxtDocument(BaseDocument):
             created (Optional[str]): The creation date of the document.
             optional_metadata (Optional[Dict[str, Any]]): Additional metadata for the document.
         """
+        file_hash = hash_function(file_path)
         super().__init__(
             id=id,
             file_name=file_name,

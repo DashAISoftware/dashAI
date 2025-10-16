@@ -1,6 +1,3 @@
-from transformers import AutoModel
-
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     schema_field,
@@ -72,24 +69,26 @@ class HuggingFaceEmbedding(DenseEmbedding):
     DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
     
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.pooling_strategy = kwargs.get("pooling_strategy", "mean")
-        self.model_name = kwargs.get(
-            "model_name", "sentence-transformers/all-MiniLM-L6-v2"
-        )
-        self.device = kwargs.get("device", "cpu")
-        self.max_length = kwargs.get("max_length", 512)
-        self.batch_size = kwargs.get("batch_size", 32)
+        self.params = self.validate_and_transform(kwargs)
+        self.pooling_strategy = self.params["pooling_strategy"]
+        self.model_name = self.params["model_name"]
+        self.device = self.params["device"]
+        self.max_length = self.params["max_length"]
+        self.batch_size = self.params["batch_size"]
         self.model = None
         self.tokenizer = None
+        self.load()
+        
+    def save(self):
+        pass
 
-    def _load_model(self):
+    def load(self):
         """Load the embedding model and tokenizer."""
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
-        self.model.eval()
+        self.embedding_dim = self.model.config.hidden_size
 
-    def _encode_texts(self, texts:List[str])-> List[np.ndarray]:
+    def batch_encode(self, texts:List[str])-> List[np.ndarray]:
         """Encode a list of texts into embeddings."""
         # Tokenize
         encoded = self.tokenizer(
@@ -121,5 +120,5 @@ class HuggingFaceEmbedding(DenseEmbedding):
 
     def encode(self, text: str) -> np.ndarray:
         """Encode a single text into an embedding."""
-        embeddings = self._encode_texts([text])
-        return embeddings[0] if embeddings else np.array([])
+        embeddings = self.batch_encode([text])
+        return embeddings.squeeze()

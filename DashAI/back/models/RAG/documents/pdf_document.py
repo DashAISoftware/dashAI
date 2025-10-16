@@ -1,7 +1,7 @@
-from .BaseDocument import BaseDocument
-import os
+from DashAI.back.models.RAG.documents.base_document import BaseDocument
 from PyPDF2 import PdfReader
 from typing import Optional, Dict, Any
+from DashAI.back.models.RAG.utils import hash_function
 
 class PDFDocument(BaseDocument):
     """
@@ -13,7 +13,6 @@ class PDFDocument(BaseDocument):
             id: int,
             file_name: str,
             file_path: str,
-            file_hash: str,
             created: Optional[str] = None,
             optional_metadata: Optional[Dict[str, Any]] = None
     ):
@@ -23,10 +22,10 @@ class PDFDocument(BaseDocument):
             id (int): The unique identifier of the document.
             file_name (str): The name of the file.
             file_path (str): The path to the file.
-            file_hash (str): A hash of the file content.
             created (Optional[str]): The creation date of the document.
             optional_metadata (Optional[Dict[str, Any]]): Additional metadata for the document.
         """
+        file_hash = hash_function(file_path)
         super().__init__(
             id=id,
             file_name=file_name,

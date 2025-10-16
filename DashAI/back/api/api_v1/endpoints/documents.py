@@ -22,6 +22,7 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import DocumentResponse
 from DashAI.back.dependencies.database.models import Document
+from DashAI.back.models.RAG.utils import hash_function
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -130,14 +131,12 @@ async def upload_document(
     Upload a new document to the RAG system with file content and metadata.
     The metadata should be a JSON string with required fields and an 'optional_metadata' dict.
     """
-    print("A")
     docs_folder_path = config["DOCUMENTS_PATH"]
     if not docs_folder_path.exists():
         raise HTTPException(
             status_code=500,
             detail=f"Documents folder {docs_folder_path} does not exist.",
         )
-    print("B")
     try:
         metadata_dict = json.loads(metadata)
     except json.JSONDecodeError:
@@ -145,29 +144,25 @@ async def upload_document(
 
     file_name = metadata_dict.get("file_name")
     last_modified = metadata_dict.get("last_modified")
-    print("C")
     if not file_name or not last_modified:
         raise HTTPException(
             status_code=400,
             detail="Missing required metadata fields: 'filename' and 'last_modified'",
         )
-    print("D")
     optional_metadata = metadata_dict.get("optional_metadata", {})
     if not isinstance(optional_metadata, dict):
         raise HTTPException(
             status_code=400,
             detail="'optional_metadata' must be a dictionary",
         )
-    print("E")
     try:
         content_bytes = await file.read()
     except Exception:
         raise HTTPException(status_code=400, detail="Failed to read file content")
 
-    hash256 = hashlib.sha256(content_bytes).hexdigest()
-    print("F")
+    file_content_hash = hash_function(content_bytes)
     with session_factory() as db:
-        existing_doc = db.query(Document).filter_by(file_hash=hash256).first()
+        existing_doc = db.query(Document).filter_by(file_hash=file_content_hash).first()
         if existing_doc:
             # Update existing document's information
             existing_doc.file_name = file_name
@@ -202,7 +197,7 @@ async def upload_document(
                     file_name=file_name,
                     file_type=file_type,
                     file_path=str(file_path),
-                    file_hash=hash256,
+                    file_hash=file_content_hash,
                     optional_metadata=optional_metadata or None,
                 )
                 db.add(doc)
@@ -347,3 +342,4 @@ async def update_document_metadata(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+        

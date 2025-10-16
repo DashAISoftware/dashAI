@@ -5,3 +5,5 @@ class TextToTextGenerationTaskModel(BaseGenerativeModel):
     """Class for models associated to TextToTextGenerationTask."""
 
     COMPATIBLE_COMPONENTS = ["TextToTextGenerationTask", "RAGTask"]
+
+    REQUIRED_EXTRA_KWARGS = []

@@ -21,4 +21,5 @@ class DefaultSettings(BaseSettings):
     EXPLANATIONS_PATH: str = "explanations"
     EXPLORATIONS_PATH: str = "explorations"
     DOCUMENTS_PATH: str = "documents"
+    RAG_PATH: str = "rag"
     NOTEBOOK_PATH: str = "notebook"

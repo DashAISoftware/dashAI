@@ -103,6 +103,7 @@ from DashAI.back.models.RAG import (
     CustomAugmentationPrompt,
     # Chunking Models
     CharacterChunkModel,
+    TokenChunkModel,
     # Retrievers
     DenseRetriever,
     # Encodings
@@ -281,8 +282,6 @@ def get_initial_components():
         RandomUnderSamplerConverter,
         # RAG
         RAGPipeline,
-        CharacterChunkModel,
-        TokenChunkModel,
         # Chunking Models
         CharacterChunkModel,
         TokenChunkModel,

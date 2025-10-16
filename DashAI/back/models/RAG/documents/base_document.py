@@ -7,6 +7,8 @@ class BaseDocument(ABC):
     Base class for documents.
     """
 
+    SUPPORTED_FILE_TYPES = ['pdf', 'txt']
+
     def __init__(
             self, 
             id: int,
@@ -103,8 +105,8 @@ class BaseDocument(ABC):
         Returns:
             Optional[str]: The filetype of the document, or None if not applicable.
         """
-        return self.file_path.split('.')[-1] 
+        return self.file_path.split('.')[-1].lower() if self.file_path else None
     
     def __repr__(self):
-        return f"BaseDocument(filename='{self.get_file_name()}', content='{self.get_text()[:50]}...', metadata={self.get_metadata()})"
+        return f"BaseDocument(id={self.id}, filename='{self.get_file_name()}', content='{self.get_text()[:50]}...', metadata={self.get_metadata()})"
 

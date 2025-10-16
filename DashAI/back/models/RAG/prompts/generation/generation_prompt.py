@@ -1,5 +1,8 @@
 from typing import Any, List, Tuple
 from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.dependencies.database.models import (
+    RAGPrompt as PromptDBModel,
+)
 
 class GenerationPrompt(Prompt):
     """
@@ -7,6 +10,7 @@ class GenerationPrompt(Prompt):
     """
     required_placeholders = ["{input}", "{chunks}"]
     optional_placeholders = ["{history}"]
+    
 
     @staticmethod
     def format(

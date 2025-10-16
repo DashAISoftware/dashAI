@@ -6,7 +6,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
-from DashAI.back.models.RAG.documents.BaseDocument import BaseDocument
+from DashAI.back.models.RAG.documents.base_document import BaseDocument
+from DashAI.back.models.RAG.documents.chunk import Chunk
 
 
 class CharacterChunkModelSchema(BaseSchema):
@@ -33,31 +34,39 @@ class CharacterChunkModel(BaseChunkingModel):
 
     SCHEMA = CharacterChunkModelSchema
 
-    def __init__(self, chunk_size: int = 200, chunk_overlap: int = 20):
+    def __init__(self, **kwargs):
         """
         Initialize the character chunking model with the specified chunk size and
         overlap.
 
-        :param chunk_size: Size of each chunk in characters.
-        :param chunk_overlap: Number of characters to overlap between chunks.
+        Args:
+            chunk_size (int): Size of each chunk in characters.
+            chunk_overlap (int): Number of characters to overlap between chunks.
         """
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+        self.chunk_size = kwargs["chunk_size"]
+        self.chunk_overlap = kwargs["chunk_overlap"]
+        super().__init__(**kwargs)
 
-    def chunk_document(self, document: BaseDocument) -> List[str]:
+    def chunk_text(self, text: str) -> List[str]:
         """
-        Split the document into chunks based on character count.
+        Chunk the input text into smaller segments based on character count.
 
-        :param document: The input document to be chunked.
-        :return: A list of text chunks.
+        Args:
+            text (str): The input text to be chunked.
+        
+        Returns:
+            List[str]: A list of text chunks.
         """
-        text = document.get_text()
         chunks = []
         start = 0
+        text_length = len(text)
 
-        while start < len(text):
-            end = min(start + self.chunk_size, len(text))
-            chunks.append(text[start:end])
+        while start < text_length:
+            end = min(start + self.chunk_size, text_length)
+            chunk = text[start:end]
+            chunks.append(chunk)
+            if end == text_length:
+                break
             start += self.chunk_size - self.chunk_overlap
 
         return chunks

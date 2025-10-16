@@ -22,10 +22,8 @@ class CustomAugmentationPrompt(AugmentationPrompt):
     }
 
 
-    def __init__(self, template: str):
-        if not self.validate_template(template):
-            raise ValueError("The template is missing required placeholders.")
-        self.template = template
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
     def format(
