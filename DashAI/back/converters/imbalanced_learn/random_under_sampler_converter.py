@@ -34,6 +34,7 @@ class RandomUnderSamplerConverter(
         "Randomly remove samples from the majority class to balance the dataset."
     )
     DISPLAY_NAME = "Random Under-Sampler"
+    IMAGE_PREVIEW = "random_under_sampler.png"
 
     def __init___(self, **kwargs):
         super(RandomUnderSamplerConverter, self).__init__(**kwargs)

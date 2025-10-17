@@ -21,4 +21,5 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
     DESCRIPTION = "Filter: Select features according to a false positive rate test."
     SUPERVISED = True
     DISPLAY_NAME = "Select FPR"
+    IMAGE_PREVIEW = "select_fpr.png"
     metadata = {}

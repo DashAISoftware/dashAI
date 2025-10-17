@@ -21,4 +21,5 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     DESCRIPTION = "Filter: Select features according to a family-wise error rate test."
     SUPERVISED = True
     DISPLAY_NAME = "Select FWE"
+    IMAGE_PREVIEW = "select_fwe.png"
     metadata = {}

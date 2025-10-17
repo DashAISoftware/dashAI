@@ -23,4 +23,5 @@ class SelectPercentile(
     DESCRIPTION = "Select features according to a percentile of the highest scores."
     SUPERVISED = True
     DISPLAY_NAME = "Select Percentile"
+    IMAGE_PREVIEW = "select_percentile.png"
     metadata = {}

@@ -35,6 +35,7 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
     SCHEMA = SMOTESchema
     DESCRIPTION = "SMOTE: Synthetic Minority Over-sampling Technique."
     DISPLAY_NAME = "SMOTE (Oversampling)"
+    IMAGE_PREVIEW = "smote.png"
 
     def __init__(self, **kwargs):
         super(SMOTEConverter, self).__init__(**kwargs)

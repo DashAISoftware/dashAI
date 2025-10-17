@@ -73,10 +73,12 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
 
     SCHEMA = NystroemSchema
     DESCRIPTION = (
-        "Approximates the feature map of an RBF kernel by Monte Carlo "
-        "approximation of its Fourier transform."
+        "Approximate a kernel map using a subset of the training data. "
+        "Constructs an approximate feature map for an arbitrary kernel "
+        "using a subset of the data as basis."
     )
     DISPLAY_NAME = "Nystroem Approximation"
+    IMAGE_PREVIEW = "nystroem.png"
 
     def __init__(self, **kwargs):
         self.kernel_params = kwargs.pop("kernel_params", None)

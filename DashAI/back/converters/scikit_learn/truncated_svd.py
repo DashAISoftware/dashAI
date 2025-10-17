@@ -74,6 +74,7 @@ class TruncatedSVD(
     )
     SHORT_DESCRIPTION = "Dimensionality reduction using truncated SVD."
     DISPLAY_NAME = "Truncated SVD"
+    IMAGE_PREVIEW = "truncated_svd.png"
     metadata = {}
 
     def __init__(self, **kwargs):

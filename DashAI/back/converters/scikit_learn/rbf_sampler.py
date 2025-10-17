@@ -47,6 +47,7 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
         "approximation of its Fourier transform."
     )
     DISPLAY_NAME = "RBF Sampler"
+    IMAGE_PREVIEW = "rbf_sampler.png"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

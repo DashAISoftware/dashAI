@@ -52,6 +52,7 @@ class SkewedChi2Sampler(
         "Carlo approximation of its Fourier transform."
     )
     DISPLAY_NAME = "Skewed Chi² Sampler"
+    IMAGE_PREVIEW = "skewed_chi2_sampler.png"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

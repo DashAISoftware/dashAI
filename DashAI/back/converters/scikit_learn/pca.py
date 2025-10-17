@@ -102,9 +102,14 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     """Scikit-learn's PCA wrapper for DashAI."""
 
     SCHEMA = PCASchema
-    DESCRIPTION = "Principal component analysis (PCA)."
+    DESCRIPTION = (
+        "Principal Component Analysis (PCA) is a dimensionality "
+        "reduction technique used to simplify complex datasets while "
+        "retaining as much variability (information) as possible."
+    )
     SHORT_DESCRIPTION = "Dimensionality reduction using PCA."
     DISPLAY_NAME = "Principal Component Analysis (PCA)"
+    IMAGE_PREVIEW = "pca.png"
     metadata = {}
 
     def __init__(self, **kwargs):

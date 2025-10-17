@@ -40,3 +40,4 @@ class StandardScaler(
         "Standardize features by removing the mean and scaling to unit variance."
     )
     DISPLAY_NAME = "Standard Scaler"
+    IMAGE_PREVIEW = "standard_scaler.png"

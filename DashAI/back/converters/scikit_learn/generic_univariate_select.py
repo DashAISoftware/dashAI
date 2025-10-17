@@ -39,4 +39,5 @@ class GenericUnivariateSelect(
     DESCRIPTION = "Univariate feature selector with configurable strategy."
     SUPERVISED = True
     DISPLAY_NAME = "Generic Univariate Select"
+    IMAGE_PREVIEW = "generic_univariate_select.png"
     metadata = {}

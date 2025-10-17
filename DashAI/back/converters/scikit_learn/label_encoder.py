@@ -22,6 +22,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     DESCRIPTION = "Encode target labels with value between 0 and n_classes-1."
     SHORT_DESCRIPTION = "Convert categorical labels to numeric values"
     DISPLAY_NAME = "Label Encoder"
+    IMAGE_PREVIEW = "label_encoder.png"
 
     def __init__(self, **kwargs):
         super().__init__()

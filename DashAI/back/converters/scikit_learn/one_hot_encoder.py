@@ -70,6 +70,7 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     SCHEMA = OneHotEncoderSchema
     DESCRIPTION = "Encode categorical integer features as a one-hot numeric array."
     DISPLAY_NAME = "One-Hot Encoder"
+    IMAGE_PREVIEW = "one_hot_encoder.png"
 
     def __init__(self, **kwargs):
         self.categories = kwargs.pop("categories", "auto")

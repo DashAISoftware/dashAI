@@ -26,4 +26,5 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     DESCRIPTION = "Select features according to the k highest scores."
     SUPERVISED = True
     DISPLAY_NAME = "Select K Best"
+    IMAGE_PREVIEW = "select_k_best.png"
     metadata = {}

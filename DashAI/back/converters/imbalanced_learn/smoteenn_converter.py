@@ -35,6 +35,7 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     SCHEMA = SMOTEENNSchema
     DESCRIPTION = "SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."
     DISPLAY_NAME = "SMOTE-ENN (Hybrid Sampling)"
+    IMAGE_PREVIEW = "smoteenn.png"
 
     def __init__(self, **kwargs):
         super(SMOTEENNConverter, self).__init__(**kwargs)

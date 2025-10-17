@@ -39,6 +39,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         "in selected string columns."
     )
     DISPLAY_NAME = "Character Replacer"
+    IMAGE_PREVIEW = "character_replacer.png"
 
     def __init__(self, char_to_replace: str, replacement_char: str):
         super().__init__()

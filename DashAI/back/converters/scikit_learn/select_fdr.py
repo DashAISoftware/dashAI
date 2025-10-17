@@ -21,4 +21,5 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     DESCRIPTION = "Filter: Select features according to a false discovery rate test."
     SUPERVISED = True
     DISPLAY_NAME = "Select FDR"
+    IMAGE_PREVIEW = "select_fdr.png"
     metadata = {}

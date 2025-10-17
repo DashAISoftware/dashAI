@@ -59,9 +59,14 @@ class SimpleImputer(
 
     SCHEMA = SimpleImputerSchema
     DESCRIPTION = (
-        "Univariate imputer for completing missing values with simple strategies."
+        "Univariate imputer for completing missing "
+        "values with simple strategies. "
+        "Replace missing values using a descriptive statistic "
+        "(e.g. mean, median, or most frequent) "
+        "along each column, or using a constant value."
     )
     DISPLAY_NAME = "Simple Imputer"
+    IMAGE_PREVIEW = "simple_imputer.png"
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)

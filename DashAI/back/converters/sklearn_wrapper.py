@@ -16,6 +16,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
     def __init__(self, **kwargs):
         # Initialize sklearn operation with provided parameters
+        print(kwargs)
         super(SklearnWrapper, self).__init__()  # Initialize BaseConverter
         super(BaseConverter, self).__init__(**kwargs)  # Initialize sklearn operation
 

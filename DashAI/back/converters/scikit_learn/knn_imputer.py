@@ -65,6 +65,7 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     SCHEMA = KNNImputerSchema
     DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
     DISPLAY_NAME = "KNN Imputer"
+    IMAGE_PREVIEW = "knn_imputer.png"
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)

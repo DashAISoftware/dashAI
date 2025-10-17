@@ -24,3 +24,4 @@ class VarianceThreshold(
     SCHEMA = VarianceThresholdSchema
     DESCRIPTION = "Feature selector that removes all low-variance features."
     DISPLAY_NAME = "Variance Threshold"
+    IMAGE_PREVIEW = "variance_threshold.png"

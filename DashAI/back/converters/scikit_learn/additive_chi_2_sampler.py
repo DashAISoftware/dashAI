@@ -37,3 +37,4 @@ class AdditiveChi2Sampler(
         "at regular intervals."
     )
     DISPLAY_NAME = "Additive Chi² Sampler"
+    IMAGE_PREVIEW = "additive_chi2_sampler.png"

@@ -94,6 +94,7 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     SCHEMA = FastICASchema
     DESCRIPTION = "FastICA: a fast algorithm for Independent Component Analysis."
     DISPLAY_NAME = "Fast ICA"
+    IMAGE_PREVIEW = "fast_ica.png"
 
     def __init__(self, **kwargs):
         self.fun_args = kwargs.pop("fun_args", None)

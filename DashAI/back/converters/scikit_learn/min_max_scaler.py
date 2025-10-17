@@ -40,6 +40,7 @@ class MinMaxScaler(
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = "Transform features by scaling each feature to a given range."
     DISPLAY_NAME = "Min-Max Scaler"
+    IMAGE_PREVIEW = "min_max_scaler.png"
 
     def __init__(self, **kwargs):
         self.min_range = kwargs.pop("min_range", 0)
