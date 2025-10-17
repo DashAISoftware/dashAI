@@ -137,8 +137,9 @@ class RAGPipeline(BaseGenerativeModel):
             RAGPipelineInitializationError: If any component fails to initialize
         """
         print("Initializing RAG pipeline")
-        self.session_id = kwargs.pop("session_id")
+        self.session_id: int = kwargs.pop("session_id")
         self.db: Session = kwargs.pop("db")
+        self.component_registry: ComponentRegistry = kwargs.pop("component_registry")
         self.env_rag_path: str = kwargs.pop("env_rag_path")
 
         pipeline_db_model: DBPipeline = self.db.query(DBPipeline).filter_by(session_id=self.session_id).first()
@@ -148,7 +149,6 @@ class RAGPipeline(BaseGenerativeModel):
         else:
             self.pipeline_db_model = None
             self.pipeline_id = None
-        self.component_registry: ComponentRegistry = kwargs.pop("component_registry")
         self.documents_ids: List[int] = kwargs.pop("documents")
         self.documents = self.load_documents_from_db(documents_ids=self.documents_ids)
         self.validate_params(kwargs)

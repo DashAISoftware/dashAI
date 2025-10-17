@@ -149,6 +149,11 @@ class GenerativeJob(BaseJob):
                         "class"
                     ]
                     params = generative_session.parameters
+                    if model_class is RAGPipeline:
+                        params["db"] = db
+                        params["component_registry"] = component_registry
+                        params["session_id"] = generative_session.id
+                        params["env_rag_path"] = config["RAG_PATH"]
                     model: BaseGenerativeModel = model_class(**params)
                 except Exception as e:
                     log.exception(e)

@@ -2,20 +2,12 @@ from typing import Any, List, Tuple
 from DashAI.back.models.RAG.prompts.generation.generation_prompt import GenerationPrompt
 
 template = """
-You are a intelligent and insightful assistant. 
-Your task is to generate a response to the user message. To do this, you will be provided with the user input,
-documents retrieved from a database that can be useful for the response, and the chat history.
-The user input is:
+Answer to this question
 {input}
-The retrieved documents are:
+Using the following documents as context:
 {chunks}
 The chat history is:
 {history}
-Please generate a response that takes into account the input, the retrieved documents and the chat history, you
-must respond in a conversational manner. 
-Use the information from the retrieved documents to provide a more accurate and relevant response to the user,
-if the information is not relevant to the user input, you can ignore it.
-Your response should be clear, concise and relevant to the input provided, using natural language.
 """
 
 class DefaultGenerationPrompt(GenerationPrompt):

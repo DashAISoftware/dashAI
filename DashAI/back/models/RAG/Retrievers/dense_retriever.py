@@ -1,7 +1,8 @@
-import os
-from typing import Dict, List
 import numpy as np
+import os
 from sqlalchemy.orm import Session
+from typing import Dict, List
+
 from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.schema_fields import (
@@ -13,16 +14,15 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.dependencies.database.models import (
+    RAGDenseRetriever as DenseRetrieverDBModel,
     RAGEmbeddingMatrix as EmbeddingMatrixDBModel,
     RAGEmbeddingModel as EmbeddingDBModel,
-    RAGDenseRetriever as DenseRetrieverDBModel,
-    RAGRetriever as RetrieverDBModel,
     RAGPipeline as PipelineDBModel,
+    RAGRetriever as RetrieverDBModel,
 )
 from DashAI.back.models.RAG.documents import BaseDocument, Chunk
+from DashAI.back.models.RAG.embeddings import DenseEmbedding
 from DashAI.back.models.RAG.Retrievers.retriever_model import RetrieverModel
-from DashAI.back.models.RAG.embeddings.dense import FastTextEmbedding, HuggingFaceEmbedding
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 class DenseRetrieverSchema(BaseSchema):
     """Schema for Dense Retriever."""
@@ -80,18 +80,18 @@ class DenseRetriever(RetrieverModel):
 
     def __init__(self, **kwargs):
         # RetrieverModel class fetches retriever_db_model if exists
+        self.embedding_class_name = kwargs["encoding_model"]["properties"]["params"]["comp"]["component"]
+        self.embedding_params = kwargs["encoding_model"]["properties"]["params"]["comp"]["params"]
+        kwargs["encoding_model"] = kwargs["encoding_model"]["properties"]["params"]["comp"]
+    
         super().__init__(**kwargs)
 
-        embedding_args = self.params["encoding_model"]["properties"]["params"]["comp"]
-        self.embedding_class_name = embedding_args["component"]
-        self.embedding_params = embedding_args.get("params", {})
-        embedding_class = self.component_registry[self.embedding_class_name]["class"]
-        self.embedding_model: DenseEmbedding = embedding_class(**self.embedding_params)
-
-        #self.embedding_model: DenseEmbedding = self.params["encoding_model"]
-        #self.embedding_class_name = self.embedding_model.__class__.__name__
-        #self.embedding_params = self.embedding_model.params
-       
+        self.embedding_model: DenseEmbedding = self.params.pop("encoding_model")
+        self.params["encoding_model"] = {
+            "class_name": self.embedding_class_name,
+            "parameters": self.embedding_params
+        }
+   
         self.fetch_db_models()
         self.similarity_metric = self.params["similarity_metric"]
         self.top_k = self.params["top_k"]
