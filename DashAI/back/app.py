@@ -1,9 +1,7 @@
 """FastAPI Application module."""
 
-import asyncio
 import logging
 import pathlib
-from contextlib import asynccontextmanager, suppress
 from typing import Literal, Union
 
 import datasets
@@ -16,7 +14,6 @@ from DashAI.back.api.front_api import router as app_router
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.models import Base
-from DashAI.back.dependencies.job_queues.job_queue import job_queue_loop
 
 logger = logging.getLogger(__name__)
 
@@ -29,24 +26,6 @@ def _create_path_if_not_exists(new_path: pathlib.Path) -> None:
 
     else:
         logger.debug("Using existant path: %s.", str(new_path))
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifecycle handler for the FastAPI app.
-
-    Starts a persistent background task that runs the job queue loop and
-    ensures it is properly cancelled on application shutdown.
-    """
-    # Startup
-    app.state.job_loop = asyncio.create_task(
-        job_queue_loop(stop_when_queue_empties=False)
-    )
-    yield
-    # Shutdown
-    app.state.job_loop.cancel()
-    with suppress(asyncio.CancelledError):
-        await app.state.job_loop
 
 
 def create_app(
@@ -91,9 +70,6 @@ def create_app(
     logger.debug("App parameters: %s.", str(config))
     logger.debug("Logging level set to %s.", config["LOGGING_LEVEL"])
 
-    logger.debug("3. Creating app container and setting up dependency injection.")
-    container = build_container(config=config)
-
     logger.debug("Creating local paths.")
     _create_path_if_not_exists(config["LOCAL_PATH"])
     _create_path_if_not_exists(config["DATASETS_PATH"])
@@ -103,11 +79,14 @@ def create_app(
     _create_path_if_not_exists(config["RUNS_PATH"])
     _create_path_if_not_exists(config["DOCUMENTS_PATH"])
 
+    logger.debug("3. Creating app container and setting up dependency injection.")
+    container = build_container(config=config)
+
     logger.debug("5. Creating database.")
     Base.metadata.create_all(bind=container["engine"])
 
     logger.debug("6. Initializing FastAPI application.")
-    app = FastAPI(title="DashAI", lifespan=lifespan)
+    app = FastAPI(title="DashAI")
     api_v0 = FastAPI(title="DashAI API v0")
     api_v1 = FastAPI(title="DashAI API v1")
 

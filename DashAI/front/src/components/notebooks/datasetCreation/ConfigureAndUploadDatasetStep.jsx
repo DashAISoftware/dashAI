@@ -43,33 +43,25 @@ export default function ConfigureAndUploadDatasetStep({
     params["name"] = name;
     params["dataloader"] = selectedDataloader;
 
-    createDataset(name)
-      .then((data) => {
-        enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-          variant: "success",
-        });
-        enqueueDatasetRequest(
+    createDataset(name).then(async (data) => {
+      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
+        variant: "success",
+      });
+      try {
+        const job = await enqueueDatasetRequest(
           data.id,
           datasetFileToUpload.file,
           datasetFileToUpload.url,
           params,
-        )
-          .then(() => {
-            startJobQueue();
-          })
-          .catch(() => {
-            enqueueSnackbar("Error when trying to enqueue the dataset job.", {
-              variant: "error",
-            });
-          });
-        handleDatasetCreated(data);
-      })
-      .catch(() => {
-        enqueueSnackbar("Error when trying to create the dataset.", {
+        );
+        handleDatasetCreated(data, job);
+      } catch {
+        enqueueSnackbar("Error when trying to enqueue the dataset job.", {
           variant: "error",
         });
         backHome();
-      });
+      }
+    });
   }, [
     backHome,
     selectedDataloader,

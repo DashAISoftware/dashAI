@@ -10,6 +10,7 @@ import ParamsBar from "../../components/generative/ParamsBar";
 import RAGHomePage from "./RAG/RAGHomePage";
 
 import { getSessions, removeSession } from "../../api/session";
+import JobQueueWidget from "../../components/jobs/JobQueueWidget";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);

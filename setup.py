@@ -50,8 +50,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "dashai = DashAI:run",
-            "DashAI = DashAI:run",
+            "dashai = DashAI.runner:main",
+            "DashAI = DashAI.runner:main",
         ]
     },
 )

@@ -171,6 +171,7 @@ user_datasets
 user_runs
 user_models
 user_explainers
+job_queue.db
 __pycache__
 dvclive
 
@@ -184,5 +185,8 @@ dvclive
 
 *.ipynb
 *.pkl
+job_queue.db-shm
+job_queue.db-wal
+
 db.sqlite
 trained_models/

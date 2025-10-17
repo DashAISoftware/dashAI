@@ -160,8 +160,16 @@ export default function RightBar({ notebook }) {
 
   useEffect(() => {
     const filteredAndValidatedExplorers = explorers
-      .filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      .filter(
+        (item) =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.metadata.short_description
+            ? item.metadata.short_description
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            : item.description
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())),
       )
       .map((explorer) => {
         const validation = validateExplorer(explorer);
@@ -176,11 +184,17 @@ export default function RightBar({ notebook }) {
 
     setFilteredExplorers(filteredAndValidatedExplorers);
 
-    setFilteredConverters(
-      converters.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
+    const filteredConverters = converters.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.metadata.short_description
+          ? item.metadata.short_description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())
+          : item.description.toLowerCase().includes(searchQuery.toLowerCase())),
     );
+
+    setFilteredConverters(filteredConverters);
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
   return (
