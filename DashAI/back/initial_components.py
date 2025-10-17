@@ -37,6 +37,7 @@ from DashAI.back.converters import (
     StandardScaler,
     TruncatedSVD,
     VarianceThreshold,
+    TimeSeriesWindowConverter
 )
 from DashAI.back.dataloaders import CSVDataLoader, ExcelDataLoader, JSONDataLoader
 from DashAI.back.explainability import (
@@ -253,6 +254,7 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
+        TimeSeriesWindowConverter,
     ]
 
     # Obtener plugins instalados

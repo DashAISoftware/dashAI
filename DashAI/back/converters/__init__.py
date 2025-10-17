@@ -64,3 +64,6 @@ from DashAI.back.converters.simple_converters.character_replacer import (
 )
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.time_series_window_converter import (
+    TimeSeriesWindowConverter,
+)
