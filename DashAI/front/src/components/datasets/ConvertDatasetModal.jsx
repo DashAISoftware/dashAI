@@ -21,7 +21,6 @@ import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";
 import { useSnackbar } from "notistack";
 import { enqueueConverterJob as enqueueConverterJobRequest } from "../../api/job";
-import { startJobQueue as startJobQueueRequest } from "../../api/job";
 import {
   saveConverterList,
   getDatasetConverterList,
@@ -70,21 +69,6 @@ function ConvertDatasetModal({ datasetId }) {
     }
   };
 
-  const startJobQueue = async () => {
-    try {
-      await startJobQueueRequest();
-    } catch (error) {
-      enqueueSnackbar("Error while trying to start job queue");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    }
-  };
-
   const saveAndEnqueueConverterList = async (id) => {
     try {
       // Save the list of converters to apply
@@ -108,8 +92,6 @@ function ConvertDatasetModal({ datasetId }) {
 
       // Enqueue the converter job using the id of the saved list
       await enqueueConverterJob(converterListId);
-
-      await startJobQueue();
 
       setRunning(true);
       enqueueSnackbar("Running converter jobs.", {

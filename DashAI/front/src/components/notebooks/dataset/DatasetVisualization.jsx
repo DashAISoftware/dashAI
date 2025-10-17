@@ -14,6 +14,7 @@ import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
 import { useSnackbar } from "notistack";
+import JobQueueWidget from "../../jobs/JobQueueWidget";
 import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
 
@@ -58,13 +59,7 @@ export default function DatasetVisualization({
   // Fetch dataset info when component mounts or dataset changes
   useEffect(() => {
     const fetchDatasetInfo = async () => {
-      if (
-        getDatasetStatus(dataset.status) === "Delivered" ||
-        getDatasetStatus(dataset.status) === "Not Started" ||
-        getDatasetStatus(dataset.status) === "Started"
-      ) {
-        return;
-      }
+      if (isProcessing) return;
 
       try {
         const info = await getDatasetInfo(dataset.id);
@@ -81,13 +76,7 @@ export default function DatasetVisualization({
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       // Don't try to fetch data if it's a temporary/processing dataset
-      if (
-        getDatasetStatus(dataset.status) === "Delivered" ||
-        getDatasetStatus(dataset.status) === "Not Started" ||
-        getDatasetStatus(dataset.status) === "Started"
-      ) {
-        return { rows: [], total: 0 };
-      }
+      if (isProcessing) return { rows: [], total: 0 };
 
       try {
         const data = await getDatasetFile(dataset.file_path, page, pageSize);
@@ -127,10 +116,8 @@ export default function DatasetVisualization({
     }
   };
 
-  const isProcessing =
-    getDatasetStatus(dataset.status) === "Delivered" ||
-    getDatasetStatus(dataset.status) === "Not Started" ||
-    getDatasetStatus(dataset.status) === "Started";
+  const status = getDatasetStatus(dataset.status);
+  const isProcessing = !(status === "Finished" || status === "Error");
 
   return (
     <>
@@ -271,6 +258,8 @@ export default function DatasetVisualization({
           existingNotebooks={existingNotebooks}
         />
       </Paper>
+
+      <JobQueueWidget />
     </>
   );
 }

@@ -18,9 +18,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
+import { startJobPolling } from "../../utils/jobPoller";
+import { enqueuePredictionJob } from "../../api/job";
 import { renderStep } from "./renderStep";
-
-import { enqueuePredictionJob, startJobQueue } from "../../api/job";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
 function PredictionModal({
@@ -131,7 +131,31 @@ function PredictionModal({
       );
 
       console.log("Prediction job response:", response);
+      console.log("Prediction job id:", response.id);
+
       if (response?.id) {
+        startJobPolling(
+          response.id,
+          (result) => {
+            console.log("Prediction job completed successfully:", result);
+            enqueueSnackbar(
+              `Prediction "${predictName}" completed successfully`,
+              {
+                variant: "success",
+              },
+            );
+            updatePredictions();
+          },
+          (result) => {
+            console.error("Prediction job failed:", result);
+            enqueueSnackbar(
+              `Error processing prediction: ${result.error || "Unknown error"}`,
+              { variant: "error" },
+            );
+            updatePredictions();
+          },
+        );
+
         enqueueSnackbar("Prediction job enqueued successfully", {
           autoHideDuration: 2000,
           variant: "success",
@@ -144,8 +168,6 @@ function PredictionModal({
       }
 
       updatePredictions();
-
-      await startJobQueue();
     } catch (error) {
       console.error("Error submitting prediction job:", error);
       if (error.response) {
