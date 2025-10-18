@@ -35,9 +35,9 @@ from DashAI.back.converters import (
     SMOTEConverter,
     SMOTEENNConverter,
     StandardScaler,
+    TimeSeriesWindowConverter,
     TruncatedSVD,
     VarianceThreshold,
-    TimeSeriesWindowConverter
 )
 from DashAI.back.dataloaders import CSVDataLoader, ExcelDataLoader, JSONDataLoader
 from DashAI.back.explainability import (
@@ -85,6 +85,7 @@ from DashAI.back.models import (
     LinearSVR,
     LogisticRegression,
     MLPRegression,
+    MultiOutputRegression,
     OpusMtEnESTransformer,
     QwenModel,
     RandomForestClassifier,
@@ -106,6 +107,7 @@ from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
     ImageClassificationTask,
+    MultiOutputRegressionTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
@@ -136,6 +138,7 @@ def get_initial_components():
         TranslationTask,
         ImageClassificationTask,
         RegressionTask,
+        MultiOutputRegressionTask,
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
@@ -152,6 +155,7 @@ def get_initial_components():
         StableDiffusionXLV1ControlNet,
         LogisticRegression,
         MLPRegression,
+        MultiOutputRegression,
         RandomForestClassifier,
         RandomForestRegression,
         DistilBertTransformer,

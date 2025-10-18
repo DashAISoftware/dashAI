@@ -240,6 +240,8 @@ class ModelJob(BaseJob):
                     "TextClassificationTask",
                     "TabularClassificationTask",
                     "RegressionTask",
+                    # Add support for multi-output regression
+                    "MultiOutputRegressionTask",
                 ]:
                     try:
                         # Optimizer configuration

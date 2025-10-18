@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "error_msg": "The parameters for MultiOutputRegression must include one or more of ['fit_intercept', 'copy_X', 'n_jobs', 'positive'].",
+  "description": "MultiOutputRegression trains an independent regressor for each output. By default, it uses LinearRegression for each output.",
+  "properties": {
+    "fit_intercept": {
+      "oneOf": [
+        {
+          "error_msg": "The 'fit_intercept' parameter must be of type boolean.",
+          "description": "Determines whether to calculate the intercept for this model.",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "copy_X": {
+      "oneOf": [
+        {
+          "error_msg": "The 'copy_X' parameter must be of type boolean.",
+          "description": "Determines whether to copy the input matrix X.",
+          "type": "boolean",
+          "default": true
+        }
+      ]
+    },
+    "n_jobs": {
+      "oneOf": [
+        {
+          "error_msg": "The 'n_jobs' parameter must be an integer or null.",
+          "description": "The number of jobs to use for computation. -1 means using all processors.",
+          "type": ["integer", "null"],
+          "default": null,
+          "minimum": -1
+        }
+      ]
+    },
+    "positive": {
+      "oneOf": [
+        {
+          "error_msg": "The 'positive' parameter must be of type boolean.",
+          "description": "When set to True, forces the coefficients to be positive.",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    }
+  },
+  "type": "object"
+}
