@@ -23,7 +23,7 @@ export default function ParameterStepConverter({
   };
 
   useEffect(() => {
-    if (tourContext?.run && tourContext?.stepIndex === 12) {
+    if (tourContext?.run) {
       const timeout = setTimeout(() => {
         const button = document.querySelector('[data-tour="create-converter-button"]');
         if (button) {

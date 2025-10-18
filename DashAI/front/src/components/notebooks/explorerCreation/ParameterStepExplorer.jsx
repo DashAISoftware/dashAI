@@ -14,7 +14,6 @@ export default function ParameterStepExplorer({
 
   const handleSave = async (params) => {
     await handleSaveExplorer(params);
-    
     if (tourContext && tourContext.run) {
       setTimeout(() => {
         tourContext.nextStep();
@@ -23,7 +22,7 @@ export default function ParameterStepExplorer({
   };
 
   useEffect(() => {
-    if (tourContext?.run && tourContext?.stepIndex === 6) { 
+    if (tourContext?.run) { 
       const timeout = setTimeout(() => {
         const button = document.querySelector('[data-tour="create-explorer-button"]');
         if (button) {

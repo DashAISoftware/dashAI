@@ -6,7 +6,6 @@ import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
-import UploadSampleDatasetStep from "../../components/notebooks/dataset/UploadSampleDatasetStep";
 import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
 import {
@@ -40,10 +39,6 @@ export default function DatasetsPage() {
   const [notebooks, setNotebooks] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const tourContext = useTourContext();
-  const personalityDatasetExists = datasets.some(d => d.name === "Personality Dataset");
-  const personalityDataset = datasets.find(
-    dataset => dataset.name === "Personality Dataset"
-  );
   const { enqueueSnackbar } = useSnackbar();
 
   const menuOptions = [
@@ -61,45 +56,24 @@ export default function DatasetsPage() {
       Icon: null,
       "data-tour": "notebook-option",
     },
-    {
-      name: personalityDatasetExists ? "view-sample" : "sample",
-      display_name: personalityDatasetExists ? "View Sample Dataset" : "Upload Sample Dataset",
-      description: personalityDatasetExists 
-        ? "Open the pre-loaded Personality dataset." 
-        : "Load the Personality dataset as a quick example to get started.",
-      Icon: null,
-      "data-tour": "sample-option",
-    }
   ];
 
-    const goToNextStep = (option) => {
-    if (option === "view-sample" && personalityDataset) {
-        if (tourContext?.run) {
-        tourContext.nextStep();
-      
-        setTimeout(() => {
-            setSelectedDatasetId(personalityDataset.id);
-            setSelectedOption("dataset");
-            setSelectedNotebookId(null);
-        
-            setTimeout(() => {
-            if (tourContext?.run) {
-                tourContext.nextStep(); 
-            }
-            }, 500);
-        }, 100);
-        } else {
-        setSelectedDatasetId(personalityDataset.id);
-        setSelectedOption("dataset");
-        setSelectedNotebookId(null);
-        }
+  const goToNextStep = (option) => {
+    if (option === "dataset" && tourContext?.run) {
+      setStep((prevStep) => prevStep + 1);
+      setSelectedOption(option);
+      setSelectedNotebookId(null);
+      setSelectedDatasetId(null);
+      setTimeout(() => {
+      tourContext.nextStep();
+      }, 300);
     } else {
-        setStep((prevStep) => prevStep + 1);
-        setSelectedOption(option);
-        setSelectedNotebookId(null);
-        setSelectedDatasetId(null);
+      setStep((prevStep) => prevStep + 1);
+      setSelectedOption(option);
+      setSelectedNotebookId(null);
+      setSelectedDatasetId(null);
     }
-    };
+  };
 
   const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
     const enrichedDatasets = await Promise.all(
@@ -493,16 +467,7 @@ return (
                     handleNotebookCreated={handleNotebookCreated}
                     existingNotebooks={notebooks}
                   />
-                ) : step === 1 && selectedOption === "sample" ? (
-                  <UploadSampleDatasetStep
-                    handleDatasetCreated={handleDatasetCreated}
-                    backHome={() => {
-                      setStep(0);
-                      setSelectedOption(null);
-                      fetchDatasets();
-                    }}
-                  />
-                ) : null}
+                )  : null}
               </CenterBox>
             </Box>
             <Box width="22%">

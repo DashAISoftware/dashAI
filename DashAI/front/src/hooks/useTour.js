@@ -36,8 +36,12 @@ export const useTour = (tourKey) => {
   }, []);
 
   const nextStep = useCallback(() => {
-    setStepIndex(prevIndex => prevIndex + 1);
-  }, []);
+    console.log('[useTour] nextStep called, current index:', stepIndex);
+    setStepIndex(prevIndex => {
+      console.log('[useTour] Setting step from', prevIndex, 'to', prevIndex + 1);
+      return prevIndex + 1;
+    });
+  }, [stepIndex]);
 
   const markTourAsCompleted = useCallback(() => {
     const completedTours = JSON.parse(
@@ -53,20 +57,20 @@ export const useTour = (tourKey) => {
 
   const handleJoyrideCallback = useCallback((data) => {
     const { action, status, index, type, error } = data;
+  
+    console.log('[useTour] Joyride callback:', { action, status, index, type });
 
     if (error) {
       console.warn('[useTour] Error in Joyride callback:', error);
       if (error.message && error.message.includes('null')) {
         console.log('[useTour] Element not found, but keeping tour running');
-        // NO detener el tour, solo avanzar al siguiente paso después de un delay
         setTimeout(() => {
           console.log('[useTour] Attempting to advance to next step after error');
           setStepIndex(index + 1);
-          // Asegurar que el tour siga corriendo
           setRun(true);
         }, 300);
       }
-      return; // No procesar más este callback
+      return;
     }
 
     if (status === 'finished' || status === 'skipped') {

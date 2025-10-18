@@ -45,46 +45,171 @@ export const datasetsTourSteps = [
     ),
     placement: 'bottom',
   },
+{
+  target: 'body',
+  content: (
+    <div>
+      <h3>Download Sample Dataset</h3>
+      <p>
+        To get started quickly, let's download a sample dataset.
+      </p>
+      <p>
+        <a 
+          href="/samples/personality_dataset.csv" 
+          download="personality_dataset.csv"
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#1976d2',
+            color: 'white',
+            padding: '10px 20px',
+            textDecoration: 'none',
+            borderRadius: '4px',
+            fontWeight: 'bold',
+            marginTop: '10px'
+          }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#1565c0'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#1976d2'}
+        >
+          Download Personality_Dataset.csv
+        </a>
+      </p>
+     <p style={{ fontSize: '0.9em', color: '#666' }}>
+          💡 <strong>Tip:</strong> The file will be saved to your Downloads folder by default.
+        </p>
+        <p style={{ marginTop: '10px' }}>
+          Once downloaded, click "Next" to learn how to upload it!
+        </p>
+    </div>
+  ),
+  placement: 'center',
+  disableBeacon: true,
+  spotlightClicks: true,
+  hideFooter: false,
+  },
   {
-    target: '[data-tour="sample-option"]',
+    target: '[data-tour="dataset-option"]',
     content: (
       <div>
-        <h3>Load Sample Dataset</h3>
+        <h3>Now Let's Upload It</h3>
         <p>
-          If you don't have any data yet, you can quickly start by loading DashAI's 
-          sample dataset. If you already uploaded it, click "View Sample Dataset" to see it.
+          Now that you've downloaded the sample dataset, let's upload it to DashAI.
         </p>
-        <div style={{ marginTop: '10px', fontWeight: 'bold', color: '#1976d2' }}>
-          Click "Upload Sample Dataset" or "View Sample Dataset" to continue!
-        </div>
+        <p>
+          <strong>Click "Upload Dataset" to begin the upload process.</strong>
+        </p>
       </div>
     ),
     placement: 'bottom',
-    spotlightClicks: true,
     disableBeacon: true,
-    hideFooter:true,
+    spotlightClicks: true,
+    hideFooter: true,
+    disableOverlayClose: true,
   },
   {
-    target: 'body',
+    target: '[data-tour="csv-dataloader-option"]',
     content: (
       <div>
-        <h3>Loading Sample Dataset</h3>
+        <h3>Select CSV DataLoader</h3>
         <p>
-          The sample dataset is being processed...
+          Since our sample dataset is a CSV file, we need to select the <strong>CSVDataLoader</strong>.
+        </p>
+        <p>
+          DataLoaders are tools that help DashAI understand and process different file formats.
+        </p>
+        <p>
+          <strong>Click on "CSVDataLoader" to select it.</strong>
         </p>
       </div>
     ),
-    placement: 'center',
+    placement: 'right',
     disableBeacon: true,
-    disableOverlay: true,
-    hideBackButton: true,
-    hideCloseButton: true,
-    hideFooter:true,
-    spotlightClicks: false,
-    styles: {
-      options: { zIndex: 10000 },
-      spotlight: { backgroundColor: 'transparent' }
-    }
+    spotlightClicks: true,
+  },
+  {
+    target: '[data-tour="dataloader-step-next-button"]',
+    content: (
+      <div>
+        <h3>Continue to Upload</h3>
+        <p>
+          With the CSVDataLoader selected, click "Next" to proceed to the upload configuration.
+        </p>
+      </div>
+    ),
+    placement: 'top',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
+  },
+
+  {
+    target: '[data-tour="upload-area"]',
+    content: (
+      <div>
+        <h3>Upload Your File</h3>
+        <p>
+          Now it's time to upload the file you just downloaded!
+        </p>
+        <p>
+          You can either:
+        </p>
+        <ul>
+          <li><strong>Drag and drop</strong> the file here</li>
+          <li>Or click <strong>"Upload a file"</strong> to browse for it</li>
+        </ul>
+        <p style={{ fontSize: '0.9em', color: '#666', marginTop: '10px' }}>
+          💡 Look for "personality_dataset.csv" in your Downloads folder.
+        </p>
+      </div>
+    ),
+    placement: 'left',
+    disableBeacon: true,
+    spotlightClicks: true,
+  },
+  {
+    target: '[data-tour="dataloader-config"]',
+    content: (
+      <div>
+        <h3>DataLoader Configuration</h3>
+        <p>
+          Here you can configure how the dataset should be loaded:
+        </p>
+        <ul>
+          <li><strong>Name:</strong> Give your dataset a meaningful name</li>
+          <li><strong>Separator:</strong> The character that separates values (comma for CSV)</li>
+          <li><strong>Other options:</strong> Advanced settings for specific needs</li>
+        </ul>
+        <p style={{ 
+          backgroundColor: '#e8f5e9', 
+          padding: '8px', 
+          borderRadius: '4px',
+          marginTop: '10px' 
+        }}>
+          💡 <strong>Pro tip:</strong> The default settings work well for most CSV files, 
+          so you can usually leave them as they are!
+        </p>
+      </div>
+    ),
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="dataset-step-upload-button"]',
+    content: (
+      <div>
+        <h3>Complete the Upload</h3>
+        <p>
+          Once you've uploaded the file and reviewed the configuration, 
+          click <strong>"Upload"</strong> to process your dataset.
+        </p>
+        <p>
+          DashAI will analyze the file structure and prepare it for exploration and analysis.
+        </p>
+      </div>
+    ),
+    placement: 'top',
+    disableBeacon: true,
+    spotlightClicks: true,
+    hideFooter: true,
   },
   
   {

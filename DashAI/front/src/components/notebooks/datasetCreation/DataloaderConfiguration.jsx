@@ -28,7 +28,9 @@ function DataloaderConfiguration({
   );
 
   return (
-    <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
+    <Paper sx={{ p: 4, height: "100%" }} 
+    borderRadius={2} 
+    data-tour="dataloader-config">
       <Stack spacing={3}>
         {/* Form title */}
         <DialogContentText sx={{ alignSelf: "center" }}>

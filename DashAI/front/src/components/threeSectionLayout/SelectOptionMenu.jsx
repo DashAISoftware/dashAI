@@ -14,32 +14,11 @@ export default function SelectOptionMenu({
   searchBar = false,
 }) {
   const [search, setSearch] = useState("");
-  const tourContext = useTourContext();
 
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-const handleOptionClick = (optionName) => {
-  const selectedOption = options.find(option => option.name === optionName);
-  if (selectedOption?.disabled) {
-    return;
-  }
-  
-  if (optionName === "sample" && tourContext?.run) {
-    try {
-      tourContext.nextStep();
-      setTimeout(() => {
-        goToNextStep(optionName);
-      }, 100);
-    } catch (error) {
-      console.error('[SelectOptionMenu] Error advancing tour:', error);
-      goToNextStep(optionName);
-    }
-  } else {
-    goToNextStep(optionName);
-  }
-}; 
 
   return (
     <CustomLayout title={title} subtitle={subtitle} padding={0}>
@@ -76,7 +55,7 @@ const handleOptionClick = (optionName) => {
                 <OptionBox
                   optionName={display_name}
                   description={description}
-                  onClick={() => handleOptionClick(name)}
+                  onClick={() => goToNextStep(option.name)}
                   Icon={Icon}
                   {...otherProps}
                 />
