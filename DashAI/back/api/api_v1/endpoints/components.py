@@ -298,7 +298,7 @@ async def get_component_image(
 
     # If it is a URL, we obtain the image from the URL
     if image_path.startswith(("http://", "https://")):
-        response = requests.get(image_path)
+        response = requests.get(image_path, timeout=5)
         if response.status_code == 200:
             return StreamingResponse(
                 io.BytesIO(response.content), media_type="image/png"
