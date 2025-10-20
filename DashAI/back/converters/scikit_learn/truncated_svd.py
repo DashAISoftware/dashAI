@@ -76,3 +76,4 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
         kwargs["random_state"] = self.random_state
+        super().__init__(**kwargs)
