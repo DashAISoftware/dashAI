@@ -108,6 +108,7 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
         onSessionSaved={handleCreateOrUpdateSession}
         onSessionSelect={onSessionSelect}
         session={editingSession}
+        existingSessions={sessions}
       />
 
       {loading ? (

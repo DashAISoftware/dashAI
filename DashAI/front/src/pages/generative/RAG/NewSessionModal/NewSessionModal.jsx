@@ -20,6 +20,7 @@ import DocumentSelectionStep from "./DocumentSelectionStep";
 import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
 import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
+import { generateSequentialName } from "../../../../utils/nameGenerator";
 
 const steps = [
   {
@@ -79,6 +80,7 @@ export default function NewSessionModal({
   onSessionSaved,
   onSessionSelect,
   session,
+  existingSessions = [],
 }) {
   const theme = useTheme();
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
@@ -119,11 +121,21 @@ export default function NewSessionModal({
           },
         });
       } else {
-        setSessionData(defaultNewSession);
+        const { defaultName } = generateSequentialName({
+          base: "RAG_Session",
+          items: existingSessions,
+          getName: (session) => session.name,
+          filter: (session) => session.task_name === "RAGTask",
+        });
+
+        setSessionData({
+          ...defaultNewSession,
+          name: defaultName || "",
+        });
       }
       setStepValidity(new Array(steps.length).fill(false));
     }
-  }, [open, session]);
+  }, [open, session, existingSessions]);
 
   const handleStepValidation = useCallback((stepIndex, isValid) => {
     setStepValidity((prev) => {
