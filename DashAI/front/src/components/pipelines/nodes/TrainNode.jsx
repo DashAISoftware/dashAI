@@ -279,10 +279,6 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   return (
     <>
       <DialogContent>
-        <Typography variant="h5" gutterBottom>
-          Select Train Parameters
-        </Typography>
-
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <Typography variant="body1">Split Data:</Typography>
@@ -481,6 +477,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
           </Button>
         </Box>
       </DialogContent>
+
       <ParamsSettings
         open={openSettings}
         modelSchema={modelSchema}

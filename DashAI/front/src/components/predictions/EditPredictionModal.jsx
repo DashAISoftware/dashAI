@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Button,
   Dialog,
@@ -11,6 +12,8 @@ import {
   Grid,
   TextField,
   Typography,
+  IconButton,
+  Box,
 } from "@mui/material";
 import { rename_prediction as renamePredictionRequest } from "../../api/predict";
 import { useSnackbar } from "notistack";
@@ -64,7 +67,25 @@ function EditPredictionModal({ predictName, updatePredictions }) {
         fullWidth
         maxWidth={"md"}
       >
-        <DialogTitle>Edit prediction</DialogTitle>
+        <DialogTitle>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            Edit prediction
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Grid
             container
