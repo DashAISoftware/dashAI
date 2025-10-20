@@ -722,6 +722,9 @@ async def get_dataset_file(
                     col: sliced_batch[col][j].as_py()
                     for col in sliced_batch.schema.names
                 }
+                # Use jsonable_encoder to handle Timestamp and other
+                # non-JSON-serializable types
+                row = jsonable_encoder(row)
                 rows.append(row)
                 rows_collected += 1
                 if rows_collected >= page_size:
