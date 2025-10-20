@@ -5,4 +5,4 @@ from DashAI.back.converters.base_converter import BaseConverter
 
 class AdvancedPreprocessingConverter(BaseConverter):
     CATEGORY: Final[str] = "Advanced Preprocessing"
-    COLOR: Final[str] = "rgb(60, 179, 113)"
+    COLOR: Final[str] = "rgb(70, 130, 180)"
