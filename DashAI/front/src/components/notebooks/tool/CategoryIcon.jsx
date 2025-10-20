@@ -49,7 +49,6 @@ const DEFAULT_ICON = ExtensionIcon;
  *
  * @remarks
  * - Falls back to DEFAULT_ICON if the category key is not found in the selected map.
- * - Logs name, category, and color to the console as a side effect.
  * - Depends on CONVERTER_CATEGORY_ICONS, EXPLORER_CATEGORY_ICONS, and DEFAULT_ICON being defined in scope.
  */
 export function CategoryIcon({ name, category, color }) {
