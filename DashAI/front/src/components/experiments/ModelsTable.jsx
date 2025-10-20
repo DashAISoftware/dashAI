@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-import { Grid, Paper, Typography } from "@mui/material";
+import { Grid, Paper, TextField, Typography } from "@mui/material";
 import DeleteItemModal from "../custom//DeleteItemModal";
 import EditModelDialog from "./EditModelDialog";
 import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
+import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -106,17 +107,38 @@ function ModelsTable({ newExp, setNewExp }) {
     },
     {
       field: "metric",
-      headerName: "Optimization Metric (Optional)",
+      headerName: "Optimization Metric",
       flex: 1,
-      renderCell: (params) => (
-        <ModelsTableSelectMetric
-          taskName={newExp.task_name}
-          metricName={selectedMetric[params.row.id]}
-          handleSelectedMetric={(metricName) =>
-            handleSelectedMetric(metricName, params.row.id)
-          }
-        />
-      ),
+      renderCell: (params) => {
+        // Check if this specific row has optimizers
+        const rowHasOptimizers = checkIfHaveOptimazers(params.row);
+
+        // Only render the metric selector if the row has optimizers
+        if (!rowHasOptimizers) {
+          return (
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                fontStyle: "italic",
+              }}
+            >
+              No hyperparameter optimization
+            </Typography>
+          );
+        }
+
+        return (
+          <ModelsTableSelectMetric
+            taskName={newExp.task_name}
+            metricName={params.row.goal_metric}
+            handleSelectedMetric={(metricName) =>
+              handleSelectedMetric(metricName, params.row.id)
+            }
+            required
+          />
+        );
+      },
     },
   ];
 
@@ -144,6 +166,12 @@ function ModelsTable({ newExp, setNewExp }) {
             paginationModel: {
               pageSize: 5,
             },
+          },
+        }}
+        sx={{
+          "& .MuiDataGrid-cell": {
+            display: "flex",
+            alignItems: "center",
           },
         }}
         pageSizeOptions={[5]}
