@@ -71,7 +71,18 @@ from DashAI.back.job import (
     PipelineJob,
     PredictJob,
 )
-from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
+from DashAI.back.metrics import (
+    F1,
+    MAE,
+    MAPE,
+    RMSE,
+    Accuracy,
+    Bleu,
+    Precision,
+    Recall,
+    Ter,
+    sMAPE,
+)
 from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
@@ -87,6 +98,7 @@ from DashAI.back.models import (
     MLPRegression,
     MultiOutputRegression,
     OpusMtEnESTransformer,
+    ProphetModel,
     QwenModel,
     RandomForestClassifier,
     RandomForestRegression,
@@ -106,6 +118,7 @@ from DashAI.back.pipeline import (
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
+    ForecastingTask,
     ImageClassificationTask,
     MultiOutputRegressionTask,
     RegressionTask,
@@ -139,6 +152,7 @@ def get_initial_components():
         ImageClassificationTask,
         RegressionTask,
         MultiOutputRegressionTask,
+        ForecastingTask,
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
@@ -156,6 +170,7 @@ def get_initial_components():
         LogisticRegression,
         MLPRegression,
         MultiOutputRegression,
+        ProphetModel,
         RandomForestClassifier,
         RandomForestRegression,
         DistilBertTransformer,
@@ -177,6 +192,8 @@ def get_initial_components():
         Ter,
         MAE,
         RMSE,
+        MAPE,
+        sMAPE,
         # Optimizers
         OptunaOptimizer,
         HyperOptOptimizer,

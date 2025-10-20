@@ -2,9 +2,9 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, List
 
 import numpy as np
+import pandas as pd
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from kink import inject
@@ -64,10 +64,154 @@ class PredictJob(BaseJob):
 
         return f"Prediction (Run:{run_id}, Dataset:{dataset_id})"
 
+    def _validate_forecasting_dataset(
+        self,
+        dataset: DashAIDataset,
+        exp: Experiment,
+        trained_model: BaseModel,
+    ) -> None:
+        """Validate dataset for forecasting predictions.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset to validate
+        exp : Experiment
+            Experiment containing training metadata
+        trained_model : BaseModel
+            Trained forecasting model
+
+        Raises
+        ------
+        HTTPException
+            If dataset is invalid for forecasting
+        """
+        pred_df = dataset.to_pandas()
+
+        # 1. Check 'ds' column exists
+        if "ds" not in pred_df.columns:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Forecasting prediction requires a 'ds' (timestamp) "
+                f"column. Available columns: {list(pred_df.columns)}",
+            )  # 2. Parse and validate timestamps
+        try:
+            ds_series = pd.to_datetime(pred_df["ds"])
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Cannot parse 'ds' column as datetime: {str(e)}",
+            ) from e
+
+        # 3. Check for duplicates
+        if ds_series.duplicated().any():
+            duplicates = ds_series[ds_series.duplicated()].unique()[:5].tolist()
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Duplicate timestamps found in 'ds' column: {duplicates}",
+            )
+
+        # 4. Check monotonicity (strictly increasing)
+        if not ds_series.is_monotonic_increasing:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Timestamps in 'ds' column must be strictly increasing "
+                "(sorted).",
+            )
+
+        # 5. Get training metadata from model
+        train_frequency = getattr(trained_model, "frequency", None)
+        train_last_ds = getattr(trained_model, "last_ds", None)
+        exog_cols = getattr(trained_model, "exog_cols", [])
+
+        log.info(
+            f"Training metadata - frequency: {train_frequency}, "
+            f"last_ds: {train_last_ds}, exog_cols: {exog_cols}"
+        )
+
+        # 6. Validate frequency consistency (if available)
+        if train_frequency and len(ds_series) >= 2:
+            # Infer frequency from prediction dataset
+            try:
+                inferred_freq = pd.infer_freq(ds_series)
+                if inferred_freq and inferred_freq != train_frequency:
+                    log.warning(
+                        f"Frequency mismatch: training={train_frequency}, "
+                        f"prediction={inferred_freq}"
+                    )
+            except Exception:
+                log.warning("Could not infer frequency from prediction dataset")
+
+        # 7. Check for backcasting (dates before training start)
+        if train_last_ds:
+            # Get training start from experiment splits if available
+            try:
+                split_indexes = (
+                    json.loads(exp.split_indexes) if exp.split_indexes else {}
+                )
+                train_indexes = split_indexes.get("train_indexes", [])
+
+                if train_indexes:
+                    # Load training dataset to get the actual start date
+                    train_dataset_path = Path(f"{exp.dataset.file_path}/dataset/")
+                    if train_dataset_path.exists():
+                        train_ds = load_dataset(str(train_dataset_path))
+                        train_df = train_ds.to_pandas()
+
+                        if "ds" in train_df.columns:
+                            train_ds_series = pd.to_datetime(train_df["ds"])
+                            train_start = train_ds_series.iloc[train_indexes[0]]
+
+                            # Check if any prediction timestamp is before start
+                            min_pred_ds = ds_series.min()
+                            if min_pred_ds < train_start:
+                                raise HTTPException(
+                                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                                    detail=(
+                                        f"Requested timestamps precede the training "
+                                        f"window start (train_start = {train_start}). "
+                                        f"Retrain the model including those dates or "
+                                        f"submit only in-sample/future dates."
+                                    ),
+                                )
+            except HTTPException:
+                raise
+            except Exception as e:
+                log.warning(f"Could not validate backcasting: {e}")
+
+        # 8. Validate exogenous regressors
+        if exog_cols:
+            missing_exog = [col for col in exog_cols if col not in pred_df.columns]
+            if missing_exog:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=(
+                        f"Missing required exogenous columns for prediction: "
+                        f"{missing_exog}. The model was trained with these "
+                        f"regressors and requires values for all prediction "
+                        f"timestamps."
+                    ),
+                )
+
+            # Check for NaN values in exogenous columns
+            for col in exog_cols:
+                if pred_df[col].isna().any():
+                    nan_count = pred_df[col].isna().sum()
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=(
+                            f"Exogenous column '{col}' contains {nan_count} "
+                            f"missing values. All exogenous regressors must have "
+                            f"values for every timestamp."
+                        ),
+                    )
+
+        log.info(f"✅ Forecasting validation passed for {len(ds_series)} timestamps")
+
     @inject
     def run(
         self,
-    ) -> List[Any]:
+    ) -> None:
         from kink import di
 
         component_registry = di["component_registry"]
@@ -77,6 +221,7 @@ class PredictJob(BaseJob):
         run_id: int = self.kwargs["run_id"]
         id: int = self.kwargs["id"]
         json_filename: str = self.kwargs["json_filename"]
+
         with session_factory() as db:
             try:
                 run: Run = db.get(Run, run_id)
@@ -111,11 +256,11 @@ class PredictJob(BaseJob):
             except Exception as e:
                 log.exception(e)
                 raise JobError(
-                    "Can not load dataset from path {dataset.file_path}/dataset/"
+                    f"Cannot load dataset from path {dataset.file_path}/dataset/"
                 ) from e
+
             try:
-                model = component_registry[run.model_name]["class"]
-                trained_model: BaseModel = model.load(run.run_path)
+                model_class = component_registry[run.model_name]["class"]
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -123,33 +268,14 @@ class PredictJob(BaseJob):
                 ) from e
 
             try:
-                prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
-                y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-                if isinstance(y_pred_proba[0], str):
-                    y_pred = y_pred_proba
-                else:
-                    y_pred = np.argmax(y_pred_proba, axis=1)
-
-            except ValueError as ve:
-                log.error(f"Validation Error: {ve}")
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid columns selected: {str(ve)}",
-                ) from ve
-            except Exception as e:
-                log.error(e)
-                raise JobError(
-                    "Model prediction failed",
-                ) from e
-            try:
-                train_dataset: DashAIDataset = load_dataset(
-                    str(Path(f"{exp.dataset.file_path}/dataset/"))
-                )
+                # Instantiate model with parameters first
+                model: BaseModel = model_class(**run.parameters)
+                # Then load the trained weights
+                trained_model: BaseModel = model.load(run.run_path)
             except Exception as e:
                 log.exception(e)
-                raise JobError(
-                    "Can not load dataset from path {exp.dataset.file_path}/dataset/"
-                ) from e
+                raise JobError(f"Cannot load model from path {run.run_path}") from e
+
             try:
                 task: BaseTask = component_registry[exp.task_name]["class"]()
             except Exception as e:
@@ -158,18 +284,116 @@ class PredictJob(BaseJob):
                     f"Task {exp.task_name} not found in the registry",
                 ) from e
 
-            try:
-                prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
-                y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+            # ============ FORECASTING-SPECIFIC LOGIC ============
+            is_forecasting = exp.task_name == "ForecastingTask"
 
-                y_pred = task.process_predictions(
-                    train_dataset, y_pred_proba, exp.output_columns[0]
+            if is_forecasting:
+                log.info(
+                    f"🔮 Running forecasting prediction for "
+                    f"{len(loaded_dataset)} timestamps"
                 )
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    "Processing predictions failed",
-                ) from e
+
+                # Validate forecasting dataset
+                self._validate_forecasting_dataset(loaded_dataset, exp, trained_model)
+
+                # Prepare dataset for forecasting (ignore 'y' if present)
+                pred_df = loaded_dataset.to_pandas()
+
+                # Build future_df with ds + exog columns (ignore 'y')
+                exog_cols = getattr(trained_model, "exog_cols", [])
+                future_cols = ["ds"] + exog_cols
+                available_cols = [col for col in future_cols if col in pred_df.columns]
+
+                if "ds" not in available_cols:
+                    raise JobError(
+                        "Forecasting prediction requires 'ds' column in dataset"
+                    )
+
+                future_df = pred_df[available_cols].copy()
+                future_df["ds"] = pd.to_datetime(future_df["ds"])
+
+                log.info(
+                    f"Predicting on {len(future_df)} timestamps with "
+                    f"columns: {available_cols}"
+                )
+
+                # Call model.predict with the future_df
+                try:
+                    predictions = trained_model.predict(future_df)
+
+                    # Handle different prediction formats
+                    if hasattr(predictions, "yhat"):
+                        # Prophet-style DataFrame with yhat, yhat_lower, yhat_upper
+                        y_pred = predictions["yhat"].to_numpy()
+
+                        # Store full forecast for metadata
+                        forecast_metadata = {
+                            "ds": predictions["ds"]
+                            .dt.strftime("%Y-%m-%d %H:%M:%S")
+                            .tolist(),
+                            "yhat": predictions["yhat"].tolist(),
+                        }
+                        if "yhat_lower" in predictions.columns:
+                            forecast_metadata["yhat_lower"] = predictions[
+                                "yhat_lower"
+                            ].tolist()
+                        if "yhat_upper" in predictions.columns:
+                            forecast_metadata["yhat_upper"] = predictions[
+                                "yhat_upper"
+                            ].tolist()
+                    elif isinstance(predictions, np.ndarray):
+                        y_pred = predictions
+                        forecast_metadata = None
+                    else:
+                        y_pred = np.array(predictions)
+                        forecast_metadata = None
+
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Forecasting model prediction failed: {str(e)}"
+                    ) from e
+
+            else:
+                # ============ STANDARD PREDICTION LOGIC ============
+                try:
+                    prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
+                    y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+
+                    if isinstance(y_pred_proba[0], str):
+                        y_pred = y_pred_proba
+                    else:
+                        y_pred = np.argmax(y_pred_proba, axis=1)
+
+                except ValueError as ve:
+                    log.error(f"Validation Error: {ve}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid columns selected: {str(ve)}",
+                    ) from ve
+                except Exception as e:
+                    log.error(e)
+                    raise JobError(
+                        "Model prediction failed",
+                    ) from e
+
+                try:
+                    train_dataset: DashAIDataset = load_dataset(
+                        str(Path(f"{exp.dataset.file_path}/dataset/"))
+                    )
+
+                    y_pred = task.process_predictions(
+                        train_dataset, y_pred_proba, exp.output_columns[0]
+                    )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        "Processing predictions failed",
+                    ) from e
+
+                forecast_metadata = None
+
+            # ============ SAVE PREDICTIONS ============
             try:
                 path = str(Path(f"{config['DATASETS_PATH']}/predictions/"))
                 os.makedirs(path, exist_ok=True)
@@ -197,10 +421,17 @@ class PredictJob(BaseJob):
                     "prediction": y_pred.tolist(),
                 }
 
+                # Add forecast-specific metadata if available
+                if forecast_metadata:
+                    json_data["forecast"] = forecast_metadata
+
                 with open(os.path.join(path, json_name), "w") as json_file:
                     json.dump(json_data, json_file, indent=4)
+
+                log.info(f"✅ Prediction saved to {json_name}")
+
             except Exception as e:
                 log.exception(e)
                 raise JobError(
-                    "Can not save prediction to json file",
+                    "Cannot save prediction to json file",
                 ) from e

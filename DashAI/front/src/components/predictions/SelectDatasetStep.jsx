@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import {
   Alert,
   AlertTitle,
+  Box,
   Grid,
   Link,
   Paper,
@@ -13,6 +14,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import PredictionNameInput from "./PredictionNameInput";
+import InfoIcon from "@mui/icons-material/Info";
 
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 
@@ -52,6 +54,7 @@ function SelectDatasetStep({
   trainDataset,
   defaultPredictionName,
   onPredictNameInput,
+  selectedTaskName,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -60,6 +63,8 @@ function SelectDatasetStep({
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
   const [isNameValid, setIsNameValid] = useState(false);
+
+  const isForecastingTask = selectedTaskName === "ForecastingTask";
 
   const getDatasets = async () => {
     setLoading(true);
@@ -118,6 +123,36 @@ function SelectDatasetStep({
           />
         </Grid>
       )}
+
+      {isForecastingTask && (
+        <Grid item xs={12} sx={{ mb: 2 }}>
+          <Alert severity="info" icon={<InfoIcon />}>
+            <AlertTitle>Forecast Requirements</AlertTitle>
+            <Typography variant="body2" component="div">
+              <strong>For forecasting predictions:</strong>
+              <ul style={{ marginTop: 8, marginBottom: 0, paddingLeft: 20 }}>
+                <li>
+                  Dataset must include a <strong>ds</strong> (timestamp) column
+                  with dates to predict (past, present, or future)
+                </li>
+                <li>
+                  Timestamps must be <strong>strictly increasing</strong> and
+                  match the training frequency
+                </li>
+                <li>
+                  If the model used exogenous regressors during training,
+                  include those columns with values for all timestamps
+                </li>
+                <li>
+                  Any <strong>y</strong> (target) column will be ignored during
+                  prediction
+                </li>
+              </ul>
+            </Typography>
+          </Alert>
+        </Grid>
+      )}
+
       <Grid
         container
         direction="row"
@@ -173,6 +208,7 @@ SelectDatasetStep.propTypes = {
   setNextEnabled: PropTypes.func.isRequired,
   trainDataset: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
     .isRequired,
+  selectedTaskName: PropTypes.string,
 };
 
 export default SelectDatasetStep;

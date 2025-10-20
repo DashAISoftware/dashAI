@@ -20,6 +20,8 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../utils/jobPoller";
 import { enqueuePredictionJob } from "../../api/job";
+import { getRunById } from "../../api/run";
+import { getExperimentById } from "../../api/experiment";
 import { renderStep } from "./renderStep";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
@@ -45,6 +47,7 @@ function PredictionModal({
   const [predictName, setPredictName] = useState("");
   const [trainDataset, setTrainDataset] = useState(preselectedTrainedDatasetId);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTaskName, setSelectedTaskName] = useState("");
 
   const { defaultName } = useMemo(
     () =>
@@ -64,6 +67,25 @@ function PredictionModal({
     { name: "selectDataset", label: "Select Dataset" },
   ];
 
+  // Fetch task_name when modal opens with preselected model
+  useEffect(() => {
+    const fetchTaskName = async () => {
+      if (preselectedModelId && !selectedTaskName) {
+        try {
+          const run = await getRunById(preselectedModelId.toString());
+          const experiment = await getExperimentById(
+            run.experiment_id.toString(),
+          );
+          setSelectedTaskName(experiment.task_name);
+        } catch (error) {
+          console.error("Error fetching task name:", error);
+        }
+      }
+    };
+
+    fetchTaskName();
+  }, [preselectedModelId, selectedTaskName]);
+
   const resetModal = () => {
     setActiveStep(0);
     setSelectedModelId(null);
@@ -74,6 +96,7 @@ function PredictionModal({
     setPredictName("");
     setTrainDataset(null);
     setIsSubmitting(false);
+    setSelectedTaskName("");
   };
 
   const handleCloseDialog = () => {
@@ -273,6 +296,8 @@ function PredictionModal({
           trainDataset,
           predictName,
           defaultName,
+          selectedTaskName,
+          setSelectedTaskName,
         )}
       </DialogContent>
       <DialogActions>

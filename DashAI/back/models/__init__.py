@@ -1,6 +1,7 @@
 # flake8: noqa
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.forecasting.prophet_model import ProphetModel
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
@@ -33,6 +34,7 @@ from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
 from DashAI.back.models.scikit_learn.logistic_regression import LogisticRegression
 from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
+from DashAI.back.models.scikit_learn.multi_output_regression import MultiOutputRegression
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
@@ -46,4 +48,3 @@ from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 from DashAI.back.models.scikit_learn.svc import SVC
-from DashAI.back.models.scikit_learn.multi_output_regression import MultiOutputRegression

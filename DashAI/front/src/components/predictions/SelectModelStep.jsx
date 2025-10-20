@@ -13,6 +13,7 @@ function SelectModelStep({
   onPredictNameInput,
   setTrainDataset,
   defaultPredictionName,
+  setSelectedTaskName,
 }) {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,7 @@ function SelectModelStep({
   const handleRowClick = (params) => {
     setSelectedModelId(params.row.id);
     setTrainDataset(params.row.dataset_id);
+    setSelectedTaskName(params.row.task_name);
     setRowClicked(true);
   };
 
@@ -117,6 +119,7 @@ SelectModelStep.propTypes = {
   onPredictNameInput: PropTypes.func.isRequired,
   setTrainDataset: PropTypes.func.isRequired,
   defaultPredictionName: PropTypes.string,
+  setSelectedTaskName: PropTypes.func.isRequired,
 };
 
 export default SelectModelStep;

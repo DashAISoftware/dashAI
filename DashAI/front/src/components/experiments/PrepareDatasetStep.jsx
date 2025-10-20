@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { Grid, CircularProgress, Box, Alert, AlertTitle } from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
+import SplitDatasetTemporal from "./SplitDatasetTemporal";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../api/experiment";
@@ -37,6 +38,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState();
+  const [gap, setGap] = useState(0);
 
   const defaultParitionsIndex = {
     train: [],
@@ -61,6 +63,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     RANDOM: "random",
     MANUAL: "manual",
     PREDEFINED: "predefined",
+    TEMPORAL: "temporal",
   };
   const [splitType, setSplitType] = useState("");
 
@@ -278,6 +281,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         ...datasetPartitionsIndex,
         splitType: splitType,
       };
+    } else if (splitType === SPLIT_TYPES.TEMPORAL) {
+      updatedExpData.splits = {
+        ...rowsPartitionsPercentage,
+        gap: gap,
+        splitType: splitType,
+      };
     }
     setNewExp(updatedExpData);
   };
@@ -325,6 +334,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     shuffle,
     stratify,
     seed,
+    gap,
     inputColumnNames,
     outputColumnNames,
   ]);
@@ -333,6 +343,22 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     getDatasetInfo();
     getTaskRequirements();
   }, []);
+
+  // Check if current task is ForecastingTask
+  const isForecastingTask = taskRequirements.name === "ForecastingTask";
+
+  // Set split type to TEMPORAL for forecasting tasks
+  useEffect(() => {
+    if (isForecastingTask && splitType === "") {
+      setSplitType(SPLIT_TYPES.TEMPORAL);
+      setRowsPartitionsPercentage({
+        train: 0.7,
+        validation: 0.15,
+        test: 0.15,
+      });
+      // Note: splitsReady will be set by SplitDatasetTemporal component
+    }
+  }, [isForecastingTask, taskRequirements]);
 
   const parseListOfStrings = (stringsList) => {
     if (!stringsList || stringsList.length === 0) return "any";
@@ -403,23 +429,34 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             }
           />
 
-          <SplitDatasetRows
-            datasetInfo={datasetInfo}
-            rowsPartitionsIndex={rowsPartitionsIndex}
-            setRowsPartitionsIndex={setRowsPartitionsIndex}
-            rowsPartitionsPercentage={rowsPartitionsPercentage}
-            setRowsPartitionsPercentage={setRowsPartitionsPercentage}
-            setSplitsReady={setSplitsReady}
-            splitType={splitType}
-            setSplitType={setSplitType}
-            SPLIT_TYPES={SPLIT_TYPES}
-            shuffle={shuffle}
-            setShuffle={setShuffle}
-            stratify={stratify}
-            setStratify={setStratify}
-            seed={seed}
-            setSeed={setSeed}
-          />
+          {isForecastingTask ? (
+            <SplitDatasetTemporal
+              datasetInfo={datasetInfo}
+              rowsPartitionsPercentage={rowsPartitionsPercentage}
+              setRowsPartitionsPercentage={setRowsPartitionsPercentage}
+              setSplitsReady={setSplitsReady}
+              gap={gap}
+              setGap={setGap}
+            />
+          ) : (
+            <SplitDatasetRows
+              datasetInfo={datasetInfo}
+              rowsPartitionsIndex={rowsPartitionsIndex}
+              setRowsPartitionsIndex={setRowsPartitionsIndex}
+              rowsPartitionsPercentage={rowsPartitionsPercentage}
+              setRowsPartitionsPercentage={setRowsPartitionsPercentage}
+              setSplitsReady={setSplitsReady}
+              splitType={splitType}
+              setSplitType={setSplitType}
+              SPLIT_TYPES={SPLIT_TYPES}
+              shuffle={shuffle}
+              setShuffle={setShuffle}
+              stratify={stratify}
+              setStratify={setStratify}
+              seed={seed}
+              setSeed={setSeed}
+            />
+          )}
         </Grid>
       ) : (
         <Box sx={{ display: "flex", justifyContent: "center" }}>

@@ -7,6 +7,7 @@ import uuid
 from typing import Dict, List, Literal, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pyarrow.ipc as ipc
 from beartype import beartype
@@ -938,6 +939,234 @@ def prepare_for_experiment(
             test_indexes=test_indexes,
             val_indexes=val_indexes,
         )
+    return prepared_dataset, {
+        "train_indexes": train_indexes,
+        "test_indexes": test_indexes,
+        "val_indexes": val_indexes,
+    }
+
+
+@beartype
+def split_dataset_temporal(
+    dataset: DashAIDataset,
+    train_size: Union[int, float] = 0.7,
+    val_size: Union[int, float] = 0.15,
+    test_size: Union[int, float] = 0.15,
+    gap: int = 0,
+    timestamp_col: str = "ds",
+    min_train_size: int = 50,
+    min_val_size: int = 10,
+    min_test_size: int = 10,
+) -> DatasetDict:
+    """Time-aware data splitting for forecasting tasks.
+
+    Unlike random splitting, this maintains temporal order:
+    - Training data comes first chronologically
+    - Validation data follows training data
+    - Test data comes last
+    - No data leakage from future to past
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Dataset to split (must be sorted by timestamp)
+    train_size : Union[int, float]
+        Size of training set. If float, interpreted as proportion.
+    val_size : Union[int, float]
+        Size of validation set. If float, interpreted as proportion.
+    test_size : Union[int, float]
+        Size of test set. If float, interpreted as proportion.
+    gap : int
+        Number of periods to skip between splits to avoid data leakage.
+    timestamp_col : str
+        Name of timestamp column for ordering
+    min_train_size : int
+        Minimum number of training samples required
+    min_val_size : int
+        Minimum number of validation samples required
+    min_test_size : int
+        Minimum number of test samples required
+
+    Returns
+    -------
+    DatasetDict
+        Dictionary with 'train', 'validation', 'test' splits
+
+    Raises
+    ------
+    ValueError
+        If insufficient data for splits or validation fails
+    """
+    n_samples = dataset.num_rows
+
+    # Calculate actual split sizes from proportions or absolute values
+    if isinstance(train_size, float):
+        train_size = int(n_samples * train_size)
+    if isinstance(val_size, float):
+        val_size = int(n_samples * val_size)
+    if isinstance(test_size, float):
+        test_size = int(n_samples * test_size)
+
+    # Adjust for gaps
+    total_with_gaps = train_size + val_size + test_size + (2 * gap)
+
+    if total_with_gaps > n_samples:
+        # Proportionally reduce sizes to fit
+        available = n_samples - (2 * gap)
+        scale_factor = available / (train_size + val_size + test_size)
+
+        train_size = max(min_train_size, int(train_size * scale_factor))
+        val_size = max(min_val_size, int(val_size * scale_factor))
+        test_size = max(min_test_size, int(test_size * scale_factor))
+
+    # Validate minimum sizes
+    if train_size < min_train_size:
+        raise ValueError(
+            f"Training set too small: {train_size} < {min_train_size}. "
+            f"Need more data or smaller validation/test sets."
+        )
+
+    if val_size < min_val_size:
+        raise ValueError(
+            f"Validation set too small: {val_size} < {min_val_size}. "
+            f"Need more data or smaller test set."
+        )
+
+    if test_size < min_test_size:
+        raise ValueError(
+            f"Test set too small: {test_size} < {min_test_size}. Need more data."
+        )
+
+    # Ensure dataset is sorted by timestamp
+    df_raw = dataset.to_pandas()
+    if isinstance(df_raw, pd.DataFrame):
+        dataset_df = df_raw
+    else:
+        # Handle iterator case
+        dataset_df = pd.concat(df_raw, ignore_index=True)
+
+    if timestamp_col in dataset_df.columns:
+        dataset_df = dataset_df.sort_values(timestamp_col).reset_index(drop=True)
+
+    # Calculate split indices with gaps
+    train_end = train_size
+    val_start = train_end + gap
+    val_end = val_start + val_size
+    test_start = val_end + gap
+    test_end = test_start + test_size
+
+    if test_end > n_samples:
+        raise ValueError(
+            f"Not enough data for splits with gaps. Need {test_end} samples, "
+            f"have {n_samples}. Try reducing gap or split sizes."
+        )
+
+    # Create splits
+    # Split the dataset
+    train_df = dataset_df.iloc[:train_end]
+    val_df = dataset_df.iloc[val_start:val_end]
+    test_df = dataset_df.iloc[test_start:test_end]
+
+    # Convert back to DashAI datasets
+    train_dataset = to_dashai_dataset(Dataset.from_pandas(train_df))
+    val_dataset = to_dashai_dataset(Dataset.from_pandas(val_df))
+    test_dataset = to_dashai_dataset(Dataset.from_pandas(test_df))
+
+    # Log split information
+    if timestamp_col in dataset_df.columns:
+        log.info("✅ Temporal split completed:")
+        log.info(
+            f"   Train: {len(train_df)} samples "
+            f"({dataset_df[timestamp_col].iloc[0]} to "
+            f"{dataset_df[timestamp_col].iloc[train_end - 1]})"
+        )
+        log.info(
+            f"   Validation: {len(val_df)} samples "
+            f"({dataset_df[timestamp_col].iloc[val_start]} to "
+            f"{dataset_df[timestamp_col].iloc[val_end - 1]})"
+        )
+        log.info(
+            f"   Test: {len(test_df)} samples "
+            f"({dataset_df[timestamp_col].iloc[test_start]} to "
+            f"{dataset_df[timestamp_col].iloc[test_end - 1]})"
+        )
+        if gap > 0:
+            log.info(f"   Gap: {gap} periods between splits")
+    else:
+        log.info(
+            f"✅ Temporal split completed: "
+            f"Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}"
+        )
+
+    return DatasetDict(
+        {"train": train_dataset, "validation": val_dataset, "test": test_dataset}
+    )
+
+
+@beartype
+def prepare_for_forecasting_experiment(
+    dataset: DashAIDataset,
+    splits: dict,
+    timestamp_col: str = "ds",
+    output_columns: List[str] = None,
+) -> Tuple[DatasetDict, Dict]:
+    """Prepare dataset for forecasting experiment with temporal splits.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Dataset to prepare for forecasting
+    splits : dict
+        Split configuration from frontend
+    timestamp_col : str
+        Name of timestamp column
+    output_columns : List[str]
+        Output columns (for compatibility)
+
+    Returns
+    -------
+    Tuple[DatasetDict, Dict]
+        Prepared dataset and split indices
+    """
+    splitType = splits.get("splitType")
+
+    if splitType == "temporal":
+        # Use temporal splitting
+        train_size = splits.get("train", 0.7)
+        val_size = splits.get("validation", 0.15)
+        test_size = splits.get("test", 0.15)
+        gap = splits.get("gap", 0)
+
+        prepared_dataset = split_dataset_temporal(
+            dataset,
+            train_size=train_size,
+            val_size=val_size,
+            test_size=test_size,
+            gap=gap,
+            timestamp_col=timestamp_col,
+        )
+
+        # Get indices for compatibility with existing system
+        n = len(dataset)
+        train_end = int(n * train_size)
+        val_start = train_end + gap
+        val_end = val_start + int(n * val_size)
+        test_start = val_end + gap
+        test_end = test_start + int(n * test_size)
+
+        train_indexes = list(range(train_end))
+        val_indexes = list(range(val_start, val_end))
+        test_indexes = list(range(test_start, test_end))
+
+    else:
+        # Fallback to existing logic for non-temporal splits
+        prepared_dataset, split_indices = prepare_for_experiment(
+            dataset, splits, output_columns or []
+        )
+        train_indexes = split_indices["train_indexes"]
+        test_indexes = split_indices["test_indexes"]
+        val_indexes = split_indices["val_indexes"]
+
     return prepared_dataset, {
         "train_indexes": train_indexes,
         "test_indexes": test_indexes,
