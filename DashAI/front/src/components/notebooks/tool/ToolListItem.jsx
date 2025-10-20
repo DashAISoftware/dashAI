@@ -31,6 +31,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
             sx: {
               bgcolor: "rgb(33, 33, 33)",
               color: "rgb(255, 255, 255)",
+              display: disabled ? "block" : "none",
               border: "1px solid rgb(63, 63, 70)",
               fontSize: "0.75rem",
               maxWidth: 300,

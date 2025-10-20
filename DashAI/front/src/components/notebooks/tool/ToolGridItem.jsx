@@ -30,6 +30,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           tooltip: {
             sx: {
               bgcolor: "rgb(33, 33, 33)",
+              display: disabled ? "block" : "none",
               color: "rgb(255, 255, 255)",
               border: "1px solid rgb(63, 63, 70)",
               fontSize: "0.75rem",
