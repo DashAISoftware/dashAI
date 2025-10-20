@@ -1,6 +1,5 @@
 import logging
 import re
-from importlib import import_module
 from pathlib import Path
 from typing import Dict, List
 
@@ -195,23 +194,16 @@ class ConverterListJob(BaseJob):
         from kink import di
 
         session_factory = di["session_factory"]
+        component_registry = di["component_registry"]
 
         def instantiate_converters(
             converter_name: str,
             converter_params: ConverterParams,
-            camel_to_snake: re.Pattern,
-            converter_submodule_inverse_index: Dict,
         ) -> object:
-            # Get converter constructor and parameters
-            converter_filename = camel_to_snake.sub("_", converter_name).lower()
-            submodule = converter_submodule_inverse_index[converter_filename]
-            module_path = f"DashAI.back.converters.{submodule}.{converter_filename}"
-
             # Import the converter
             try:
-                module = import_module(module_path)
-                converter_constructor = getattr(module, converter_name)
-            except ImportError as e:
+                converter_constructor = component_registry[converter_name]["class"]
+            except KeyError as e:
                 log.exception(e)
                 raise JobError(
                     f"Error importing converter {converter_name}: {e}"
@@ -335,8 +327,6 @@ class ConverterListJob(BaseJob):
                     converter_instance = instantiate_converters(
                         converter_name,
                         converter_params,
-                        camel_to_snake,
-                        converter_submodule_inverse_index,
                     )
 
                     # Get scope or use default

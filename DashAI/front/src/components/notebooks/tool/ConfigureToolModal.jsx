@@ -47,14 +47,14 @@ export default function ConfigureToolModal({
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={() => {}}
       slotProps={{
         paper: {
           sx: {
             width: { xs: "95%", sm: "1200px" },
             maxWidth: "100%",
             borderRadius: 2,
-            height: "90vh", // fixed modal height
+            height: "90vh",
             display: "flex",
             flexDirection: "column",
           },

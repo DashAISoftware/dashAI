@@ -214,7 +214,8 @@ export default function NewExperimentModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}} // No cerrar automáticamente
+      disableEscapeKeyDown // Evitar cierre con Escape
       aria-labelledby="new-experiment-dialog-title"
       aria-describedby="new-experiment-dialog-description"
       scroll="paper"
@@ -276,6 +277,19 @@ export default function NewExperimentModal({
             </Stepper>
           </Grid>
         </Grid>
+        {/* Close button for larger screens */}
+        <IconButton
+          onClick={handleCloseDialog}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+            display: { xs: "none", sm: "flex" },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
       {/* Main content - steps */}
       <DialogContent dividers>

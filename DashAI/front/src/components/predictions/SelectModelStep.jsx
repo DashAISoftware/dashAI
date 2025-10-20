@@ -32,7 +32,7 @@ function SelectModelStep({
         headerName: "Created",
         minWidth: 170,
         type: Date,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
     ],
     [],

@@ -17,7 +17,7 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 class RBFSamplerSchema(BaseSchema):
     gamma: schema_field(
         union_type(enum_field(["scale"]), float_field(gt=0)),
-        1.0,
+        "scale",
         "Parameter of the RBF kernel.",
     )  # type: ignore
     n_components: schema_field(
@@ -29,7 +29,7 @@ class RBFSamplerSchema(BaseSchema):
         none_type(
             union_type(int_field(), enum_field(["RandomState"]))
         ),  # int, RandomState instance or None
-        None,
+        0,
         (
             "Pseudo-random number generator to control the generation of the "
             "random weights and random offset when fitting the training data. "
