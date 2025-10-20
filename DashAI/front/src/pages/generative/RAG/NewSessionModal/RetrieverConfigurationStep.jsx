@@ -22,23 +22,18 @@ import {
   useFormSchemaStore,
 } from "../../../../contexts/schema";
 
-// Componente que intercepta valores del contexto de FormSchema
 function FormSchemaInterceptor({ currentFormValuesRef }) {
   const store = useFormSchemaStore();
 
   useEffect(() => {
     if (store && store.formValues && currentFormValuesRef) {
-      console.log("=== FORM SCHEMA STORE VALUES ===");
-      console.log("Store formValues:", store.formValues);
-
       if (Object.keys(store.formValues).length > 0) {
         currentFormValuesRef.current = { ...store.formValues };
-        console.log("Successfully captured from store:", store.formValues);
       }
     }
   }, [store?.formValues, currentFormValuesRef]);
 
-  return null; // Este componente no renderiza nada
+  return null;
 }
 
 function AutoSaveFormSchema({
@@ -61,12 +56,8 @@ function AutoSaveFormSchema({
     retrieverModel?.params,
   ]);
 
-  // Enhanced form submit handler
   const handleFormSubmit = useCallback(
     (values) => {
-      console.log("=== FORM SUBMIT HANDLER ===");
-      console.log("Submitted values:", values);
-
       if (currentFormValuesRef) {
         currentFormValuesRef.current = values;
       }
@@ -106,33 +97,18 @@ const RetrieverConfigurationStep = forwardRef(
     const currentFormValuesRef = useRef(null);
 
     const saveCurrentFormValues = useCallback(() => {
-      console.log("=== SAVE CURRENT FORM VALUES CALLED ===");
-      console.log("selectedRetriever:", selectedRetriever?.name);
-      console.log(
-        "currentFormValuesRef.current:",
-        currentFormValuesRef.current,
-      );
-
       let valuesToSave = currentFormValuesRef.current;
 
-      // Si no tenemos valores en la ref, intentar capturar directamente del formik
       if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
-        console.log("No values in ref, trying to capture from formikRef...");
         const formSchemaElement =
           document.querySelector('[data-testid="form-schema"]') ||
           document.querySelector("form");
-        if (formSchemaElement) {
-          console.log("Found form element, attempting to extract values");
-        }
 
-        // Último recurso: construir valores desde el DOM
         if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
-          console.log("Attempting to extract values from DOM...");
           const formData = extractFormDataFromDOM();
           if (formData && Object.keys(formData).length > 0) {
             valuesToSave = formData;
             currentFormValuesRef.current = formData;
-            console.log("Successfully extracted from DOM:", formData);
           }
         }
       }
@@ -142,23 +118,15 @@ const RetrieverConfigurationStep = forwardRef(
         Object.keys(valuesToSave).length > 0 &&
         selectedRetriever
       ) {
-        console.log("Saving parameters:", valuesToSave);
         setRetrieverModel({
           component: selectedRetriever.name,
           params: valuesToSave,
         });
-        console.log("Parameters saved successfully");
-      } else {
-        console.warn("Cannot save - missing values or retriever");
-        console.log("valuesToSave:", valuesToSave);
-        console.log("selectedRetriever:", selectedRetriever);
       }
     }, [selectedRetriever, setRetrieverModel]);
 
-    // Función helper para extraer datos del DOM como último recurso
     const extractFormDataFromDOM = () => {
       try {
-        // Buscar todos los inputs y selects en el formulario
         const allInputs = document.querySelectorAll("input, select, textarea");
         const formData = {};
 
@@ -167,19 +135,14 @@ const RetrieverConfigurationStep = forwardRef(
           const value = input.value;
 
           if (name && value) {
-            // Similarity metric
             if (
               name.includes("similarity_metric") ||
               name.includes("similarity")
             ) {
               formData.similarity_metric = value;
-            }
-            // Top K
-            else if (name.includes("top_k") || name.includes("topk")) {
+            } else if (name.includes("top_k") || name.includes("topk")) {
               formData.top_k = parseInt(value) || 5;
-            }
-            // Model name for embeddings
-            else if (name.includes("model_name")) {
+            } else if (name.includes("model_name")) {
               if (!formData.encoding_model) {
                 formData.encoding_model = {
                   properties: {
@@ -192,9 +155,7 @@ const RetrieverConfigurationStep = forwardRef(
               }
               formData.encoding_model.properties.params.comp.params.model_name =
                 value;
-            }
-            // Pooling strategy
-            else if (name.includes("pooling_strategy")) {
+            } else if (name.includes("pooling_strategy")) {
               if (!formData.encoding_model) {
                 formData.encoding_model = {
                   properties: {
@@ -211,10 +172,8 @@ const RetrieverConfigurationStep = forwardRef(
           }
         });
 
-        console.log("Extracted form data from DOM:", formData);
         return Object.keys(formData).length > 0 ? formData : null;
       } catch (error) {
-        console.error("Error extracting form data from DOM:", error);
         return null;
       }
     };
@@ -266,7 +225,6 @@ const RetrieverConfigurationStep = forwardRef(
       fetchRetrievalParadigms();
     }, [retrieverModel?.component]);
 
-    // Fetch retrievers when paradigm changes
     const fetchRetrievers = useCallback(async () => {
       if (!selectedRetrievalParadigm) {
         setRetrieverOptions([]);
@@ -327,7 +285,6 @@ const RetrieverConfigurationStep = forwardRef(
       }
     };
 
-    // Handle retriever change
     const handleRetrieverSelectionChange = (event, newValue) => {
       setSelectedRetriever(newValue);
       if (newValue) {

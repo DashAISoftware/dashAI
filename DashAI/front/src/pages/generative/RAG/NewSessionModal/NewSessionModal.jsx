@@ -88,7 +88,7 @@ export default function NewSessionModal({
     new Array(steps.length).fill(false),
   );
   const [sessionData, setSessionData] = useState(session || defaultNewSession);
-  const retrieverStepRef = useRef(null); // Ref para el paso de retriever
+  const retrieverStepRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -336,12 +336,7 @@ export default function NewSessionModal({
         <Button
           variant="contained"
           onClick={() => {
-            console.log("=== NEXT BUTTON CLICKED ===");
-            console.log("activeStep:", activeStep);
-            console.log("retrieverStepRef.current:", retrieverStepRef.current);
-
             if (activeStep === 2 && retrieverStepRef.current) {
-              console.log("Calling saveFormValues on retriever step");
               retrieverStepRef.current.saveFormValues();
             }
 
