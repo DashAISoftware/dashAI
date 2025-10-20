@@ -159,6 +159,7 @@ def save_types_in_arrow_metadata(
     # We add the serialized metadata to the Arrow table
     new_metadata = dict(metadata)
     new_metadata[b"dashai_types"] = metadata_serialized
+    #print("new metadata is", new_metadata)
     return pa_table.replace_schema_metadata(new_metadata)
 
 
@@ -184,16 +185,12 @@ def get_types_from_arrow_metadata(
         If the metadata does not contain DashAI types.
     """
 
-    if isinstance(pa_table, Schema):
-        metadata = pa_table.metadata or {}
-    else:
-        metadata = pa_table.schema.metadata or {}
+    metadata = (pa_table.schema.metadata if isinstance(pa_table, Schema)
+                else pa_table.schema.metadata) or {}
+    types_serialized = metadata.get(b"dashai_types", b"{}").decode("utf-8")
 
-    # Deserialize the metadata
     try:
-        types_serialized = metadata[b"dashai_types"].decode("utf-8")
         types = json.loads(types_serialized)
-
         dashai_types = {}
         for column, info in types.items():
             _type = info.get("type")
@@ -204,20 +201,20 @@ def get_types_from_arrow_metadata(
                 dashai_types[column] = Categorical(
                     values=cats, encoding=encoding, converted=converted
                 )
-            elif _type == "Image":
-                if info.get("base_path"):
-                    dashai_types[column] = DashAIImage(
-                        dtype=info.get("dtype"), base_path=info.get("base_path")
-                    )
-                else:
-                    dashai_types[column] = DashAIImage(dtype=info.get("dtype"))
+            #Future implementation for images, modify as needed
+            # elif _type == "Image":
+            #     if info.get("base_path"):
+            #         dashai_types[column] = DashAIImage(
+            #             dtype=info.get("dtype"), base_path=info.get("base_path")
+            #         )
+            #     else:
+            #         dashai_types[column] = DashAIImage(dtype=info.get("dtype"))
             else:
                 dtype = info.get("dtype")
-                print("Dtype:", dtype)
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
-    except KeyError:
+    except KeyError as e:
         # If the key is not found, we can log it or handle it as needed
-        print(f"KeyError: dtype not found in dtype_arrow_map")
+        print(f"KeyError: dtype {e} not found in dtype_arrow_map")
         dashai_types = {}
 
     return dashai_types

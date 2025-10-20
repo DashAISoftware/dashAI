@@ -207,9 +207,9 @@ class CSVDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
-        print("parameters are", params)
+        #print("parameters are", params)
         clean_params = self._check_params(params)
-        print("cleaned parameters are", clean_params)
+        #print("cleaned parameters are", clean_params)
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
             dataset = load_dataset(

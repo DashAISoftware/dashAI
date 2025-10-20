@@ -190,12 +190,21 @@ def test_schema_change(client: TestClient):
     modified_schema = payload["schema"].copy()
     modified_schema["Species"] = {"type": "Categorical", "dtype": "string"}
 
+    create_ds_resp = client.post(
+        "/api/v1/dataset/",
+        json={"name": "iris_testing_schema"},
+    )
+    assert create_ds_resp.status_code == 201, create_ds_resp.text
+    dataset_id = create_ds_resp.json()["id"]
+
     f = path.open("rb")
     try:
         files = {"file": ("iris.csv", f, "text/csv")}
         kwargs = {
+            "dataset_id": dataset_id,
             "name": "iris_testing_schema",
             "url": "",
+            "file_path": str(path),
             "params": {
                 "dataloader": "CSVDataLoader",
                 "name": "iris_testing_schema",
@@ -214,20 +223,13 @@ def test_schema_change(client: TestClient):
     finally:
         f.close()
     
-    start_resp = client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-    assert start_resp.status_code in (200, 202), start_resp.text
+    from DashAI.back.job.dataset_job import DatasetJob
 
-    ds = None
-    for _ in range(60):  
-        r = client.get("/api/v1/dataset/")
-        assert r.status_code == 200, r.text
-        ds = next((d for d in r.json() if d["name"] == "iris_testing_schema"), None)
-        if ds:
-            break
-        time.sleep(0.2)
-    assert ds is not None, "Dataset was not created in time"
+    job = DatasetJob(**kwargs)
+    job.run()
+    
 
-    types_resp = client.get(f"/api/v1/dataset/{ds['id']}/types/")
+    types_resp = client.get(f"/api/v1/dataset/{dataset_id}/types/")
     assert types_resp.status_code == 200, types_resp.text
     types = types_resp.json()
 

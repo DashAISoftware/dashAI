@@ -65,6 +65,8 @@ class DummyModel(BaseModel):
 
     def fit(self, x, y):
         return
+    def prepare_dataset(self, dataset, is_fit = False):
+        return
 
 
 class DummyGlobalExplainer(BaseGlobalExplainer):

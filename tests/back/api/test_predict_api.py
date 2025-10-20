@@ -41,6 +41,9 @@ class DummyModel(BaseModel):
     def fit(self, x, y):
         return
 
+    def prepare_dataset(self, dataset, is_fit = False):
+        return
+
 
 class DummyMetric(BaseMetric):
     COMPATIBLE_COMPONENTS = ["DummyTask"]
@@ -100,6 +103,12 @@ def create_dataset(client: TestClient):
                 "dataloader": "JSONDataLoader",
                 "name": json_dataset_entry.name,
                 "data_key": "data",
+                "schema": {"feature_0": {"type": "Float", "dtype": "float64"},
+                           "feature_1": {"type": "Float", "dtype": "float64"},
+                           "feature_2": {"type": "Float", "dtype": "float64"},
+                           "feature_3": {"type": "Float", "dtype": "float64"},
+                           "class": {"type": "Categorical", "dtype": "string"},
+                }
             },
             "file_path": abs_file_path,
         }
@@ -147,6 +156,12 @@ def create_dataset_2(client: TestClient):
                 "dataloader": "CSVDataLoader",
                 "separator": ",",
                 "name": csv_dataset_entry.name,
+                "schema": {"SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                            "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                            "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                            "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                            "Species": {"type": "Categorical", "dtype": "string"},
+                           }
             },
             "file_path": abs_file_path,
         }

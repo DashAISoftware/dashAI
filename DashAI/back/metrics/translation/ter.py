@@ -37,7 +37,7 @@ class Ter(TranslationMetric):
         """
         metric = evaluate.load("ter")
         source_sentences, target_sentences = prepare_to_metric(
-            source_sentences, target_sentences
+            source_sentences, target_sentences, "Ter"
         )
         return metric.compute(
             references=source_sentences, predictions=target_sentences

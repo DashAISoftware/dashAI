@@ -521,7 +521,6 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
             splits = json.load(f)
     else:
         splits = {}
-
     return DashAIDataset(data, splits=splits)
 
 #Use it only for Image classification 
@@ -1059,12 +1058,17 @@ def prepare_for_experiment(
         labels = None
         if splits.get("stratify", False) and output_columns:
             output_column = output_columns[0]
+            print("Stratifying by column:", output_column)
             column_type = dataset.types[output_column]
+            print("Column type:", column_type)
             try:
                 column_values = dataset[output_column]
                 # Check column type and convert to numerical indices if needed
                 if isinstance(column_type, Categorical):
-                    labels = [column_type.str2int(v) for v in column_values]
+                    try:
+                        labels = [column_type.str2int(v) for v in column_values] if column_values else []
+                    except:
+                        pass
                 else:
                     labels = [
                         int(x) if not isinstance(x, (list, tuple)) else int(x[0])

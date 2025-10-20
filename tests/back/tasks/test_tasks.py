@@ -10,6 +10,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_dataset,
     split_indexes,
     to_dashai_dataset,
+    transform_dataset_with_schema,
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.database.models import ProcessData
@@ -21,7 +22,7 @@ from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationT
 from DashAI.back.tasks.translation_task import TranslationTask
 
 
-def load_csv_into_datasetdict(file_name):
+def load_csv_into_datasetdict_iris(file_name):
     test_dataset_path = f"tests/back/tasks/{file_name}"
     csv_dataloader = CSVDataLoader()
 
@@ -30,11 +31,39 @@ def load_csv_into_datasetdict(file_name):
         temp_path="tests/back/tasks",
         params={"separator": ","},
     )
+    schema = {
+        "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+        "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+        "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+        "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+        "Species": {"type": "Categorical", "dtype": "string"},
+    }
+    datasetdict = transform_dataset_with_schema(datasetdict, schema)
+    return datasetdict
+
+def load_csv_into_datasetdict_iris_extra(file_name):
+    test_dataset_path = f"tests/back/tasks/{file_name}"
+    csv_dataloader = CSVDataLoader()
+
+    datasetdict = csv_dataloader.load_data(
+        filepath_or_buffer=test_dataset_path,
+        temp_path="tests/back/tasks",
+        params={"separator": ","},
+    )
+    schema = {
+        "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+        "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+        "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+        "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+        "Species": {"type": "Categorical", "dtype": "string"},
+        "StemCm": {"type": "Float", "dtype": "float64"},
+    }
+    datasetdict = transform_dataset_with_schema(datasetdict, schema)
     return datasetdict
 
 
 def test_validate_tabular_task():
-    dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
+    dataset = to_dashai_dataset(load_csv_into_datasetdict_iris("iris.csv"))
 
     dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
     tabular_task = TabularClassificationTask()
@@ -57,9 +86,8 @@ def test_validate_tabular_task():
 
 
 def test_wrong_type_task():
-    dataset = to_dashai_dataset(load_csv_into_datasetdict("iris_extra_feature.csv"))
+    dataset = to_dashai_dataset(load_csv_into_datasetdict_iris_extra("iris_extra_feature.csv"))
 
-    dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
 
     tabular_task = TabularClassificationTask()
 
@@ -80,7 +108,7 @@ def test_wrong_type_task():
 
 
 def test_prepare_task():
-    dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
+    dataset = to_dashai_dataset(load_csv_into_datasetdict_iris("iris.csv"))
     tabular_task = TabularClassificationTask()
     inputs_columns = [
         "SepalLengthCm",
@@ -100,25 +128,26 @@ def test_prepare_task():
     except Exception as e:
         pytest.fail(f"Unexpected error in test_prepare_task: {repr(e)}")
 
+#Since the main objective is to stop using prepare_for_task before validate, this test is no longer needed.
+#DashAI types doesn't require some weird preparation cast step anymore.
+# def test_not_prepared_task():
+#     dataset = to_dashai_dataset(load_csv_into_datasetdict_iris("iris.csv"))
+#     tabular_task = TabularClassificationTask()
+#     inputs_columns = [
+#         "SepalLengthCm",
+#         "SepalWidthCm",
+#         "PetalLengthCm",
+#         "PetalWidthCm",
+#     ]
+#     outputs_columns = ["Species"]
 
-def test_not_prepared_task():
-    dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
-    tabular_task = TabularClassificationTask()
-    inputs_columns = [
-        "SepalLengthCm",
-        "SepalWidthCm",
-        "PetalLengthCm",
-        "PetalWidthCm",
-    ]
-    outputs_columns = ["Species"]
-
-    with pytest.raises(TypeError):
-        tabular_task.validate_dataset_for_task(
-            dataset=dataset,
-            dataset_name="Iris",
-            input_columns=inputs_columns,
-            output_columns=outputs_columns,
-        )
+#     with pytest.raises(TypeError):
+#         tabular_task.validate_dataset_for_task(
+#             dataset=dataset,
+#             dataset_name="Iris",
+#             input_columns=inputs_columns,
+#             output_columns=outputs_columns,
+#         )
 
 
 def test_get_tabular_class_task_metadata():
@@ -126,8 +155,8 @@ def test_get_tabular_class_task_metadata():
     metadata = tabular_class_task.get_metadata()
 
     assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["ClassLabel", "Value"]
-    assert metadata["outputs_types"] == ["ClassLabel"]
+    assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
+    assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
     assert metadata["outputs_cardinality"] == 1
 
@@ -140,10 +169,13 @@ def text_classification_dataset_fixture():
     dataset = json_dataloader.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/tasks",
-        params={"data_key": "data"},
+        params={"data_key": "data",},
     )
-
-    dashai_dataset = to_dashai_dataset(dataset)
+    schema = {
+        "text": {"type": "Text", "dtype": "string"},
+        "class": {"type": "Categorical", "dtype": "int32"},
+    }
+    dashai_dataset = transform_dataset_with_schema(dataset, schema)
 
     total_rows = dashai_dataset.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
@@ -182,8 +214,8 @@ def test_get_text_class_task_metadata():
     metadata = text_class_task.get_metadata()
 
     assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Value"]
-    assert metadata["outputs_types"] == ["ClassLabel"]
+    assert metadata["inputs_types"] == ["Text"]
+    assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == 1
     assert metadata["outputs_cardinality"] == 1
 
@@ -198,6 +230,12 @@ def translation_dataset_fixture():
         temp_path="tests/back/tasks",
         params={"data_key": "data"},
     )
+
+    schema = {
+        "text": {"type": "Text", "dtype": "string"},
+        "class": {"type": "Text", "dtype": "string"},
+    }
+    dataset = transform_dataset_with_schema(dataset, schema)
 
     dataset = to_dashai_dataset(dataset)
 
@@ -235,8 +273,8 @@ def test_get_translation_task_metadata():
     metadata = translation_task.get_metadata()
 
     assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Value", "Sequence"]
-    assert metadata["outputs_types"] == ["Value", "Sequence"]
+    assert metadata["inputs_types"] == ["Text"]
+    assert metadata["outputs_types"] == ["Text"]
     assert metadata["inputs_cardinality"] == 1
     assert metadata["outputs_cardinality"] == 1
 

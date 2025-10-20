@@ -37,7 +37,7 @@ class Bleu(TranslationMetric):
         """
         metric = evaluate.load("bleu")
         source_sentences, target_sentences = prepare_to_metric(
-            source_sentences, target_sentences
+            source_sentences, target_sentences, "Bleu"
         )
         return metric.compute(
             references=source_sentences, predictions=target_sentences

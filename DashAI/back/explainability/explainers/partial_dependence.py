@@ -133,7 +133,7 @@ class PartialDependence(BaseGlobalExplainer):
             )
 
             explanation[features_names[idx]] = {
-                "grid_values": np.round(pd["values"][0], 3).tolist(),
+                "grid_values": np.round(pd["grid_values"][0], 3).tolist(),
                 "average": np.round(pd["average"], 3).tolist(),
             }
 
