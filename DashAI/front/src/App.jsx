@@ -17,6 +17,7 @@ import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import PredictionPage from "./pages/predictions/PredictionPage";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
+import SystemStats from "./components/shared/SystemStats";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <SystemStats />
     </BrowserRouter>
   );
 }
