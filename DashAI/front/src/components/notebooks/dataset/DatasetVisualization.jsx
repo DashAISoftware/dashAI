@@ -184,9 +184,7 @@ export default function DatasetVisualization({
           alignItems="center"
           sx={{ mb: 4 }}
         >
-          <Typography variant="h5" component="h2">
-            {dataset.name}
-          </Typography>
+          <Typography variant="h6">{dataset.name}</Typography>
           <Grid sx={{ height: "35px" }}>
             <Button
               variant="contained"

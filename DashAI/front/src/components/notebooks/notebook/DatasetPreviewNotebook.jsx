@@ -44,6 +44,15 @@ export default function DatasetPreviewNotebook({
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
 
+  // Find the associated dataset name
+  const getDatasetName = () => {
+    if (!notebook.dataset_id || !existingDatasets.length) {
+      return "Dataset";
+    }
+    const dataset = existingDatasets.find((d) => d.id === notebook.dataset_id);
+    return dataset ? dataset.name : "Dataset";
+  };
+
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       const data = await getDatasetFile(notebook.file_path, page, pageSize);
@@ -115,7 +124,9 @@ export default function DatasetPreviewNotebook({
             },
           }}
         >
-          <Typography variant="h6">Dataset Preview</Typography>
+          <Typography variant="h6">
+            Notebook: {getDatasetName()} Preview
+          </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {/* Save Dataset Button */}
             <Button
