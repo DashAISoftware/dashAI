@@ -22,7 +22,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
     >
       {tools.map((item) => (
         <ToolListItem
-          key={item.id}
+          key={item.name}
           tool={item}
           disabled={item.disabled}
           onClick={() => handleToolClick(item)}

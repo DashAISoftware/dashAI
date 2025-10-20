@@ -21,7 +21,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
     >
       {tools.map((item) => (
         <ToolGridItem
-          key={item.id}
+          key={item.name}
           tool={item}
           disabled={item.disabled}
           onClick={() => handleToolClick(item)}
