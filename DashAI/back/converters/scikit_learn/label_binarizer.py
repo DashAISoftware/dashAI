@@ -26,3 +26,4 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
     SCHEMA = LabelBinarizerSchema
     DESCRIPTION = "Binarize labels in a one-vs-all fashion."
     DISPLAY_NAME = "Label Binarizer"
+    IMAGE_PREVIEW = "label_binarizer.png"
