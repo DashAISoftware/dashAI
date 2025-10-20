@@ -76,12 +76,12 @@ from DashAI.back.metrics import (
     MAE,
     MAPE,
     RMSE,
+    SMAPE,
     Accuracy,
     Bleu,
     Precision,
     Recall,
     Ter,
-    sMAPE,
 )
 from DashAI.back.models import (
     SVC,
@@ -193,7 +193,7 @@ def get_initial_components():
         MAE,
         RMSE,
         MAPE,
-        sMAPE,
+        SMAPE,
         # Optimizers
         OptunaOptimizer,
         HyperOptOptimizer,
