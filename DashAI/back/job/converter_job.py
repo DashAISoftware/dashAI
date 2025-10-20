@@ -12,7 +12,6 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
-from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
@@ -223,24 +222,6 @@ class ConverterListJob(BaseJob):
 
             return converter_constructor(**converter_parameters)
 
-        def instantiate_chain(
-            steps: List,
-            camel_to_snake: re.Pattern,
-            converter_submodule_inverse_index: Dict,
-        ) -> ConverterChain:
-            converter_instances = []
-
-            for converter_name, converter_params in steps:
-                converter_instance = instantiate_converters(
-                    converter_name,
-                    converter_params,
-                    camel_to_snake,
-                    converter_submodule_inverse_index,
-                )
-                converter_instances.append(converter_instance)
-
-            return ConverterChain(steps=converter_instances)
-
         # Extract job parameters
         converter_list_id = self.kwargs["converter_list_id"]
         with session_factory() as db:
@@ -350,66 +331,26 @@ class ConverterListJob(BaseJob):
                 while i < len(converters_sorted_list):
                     converter_name = converters_sorted_list[i][0]
                     converter_params = converters_sorted_list[i][1]
-                    # Check if it's a chain of converters
-                    if converter_name == "ConverterChain":
-                        try:
-                            n_steps = int(converter_params["params"]["steps"])
+                    # Regular converter
+                    converter_instance = instantiate_converters(
+                        converter_name,
+                        converter_params,
+                        camel_to_snake,
+                        converter_submodule_inverse_index,
+                    )
 
-                            # Get the steps
-                            chain_steps = converters_sorted_list[
-                                i + 1 : i + n_steps + 1
-                            ]
+                    # Get scope or use default
+                    scope = converter_params.get("scope", {"columns": [], "rows": []})
 
-                            # Instantiate chain of converters
-                            chain_instance = instantiate_chain(
-                                chain_steps,
-                                camel_to_snake,
-                                converter_submodule_inverse_index,
-                            )
-
-                            # Get scope or use default
-                            scope = converter_params.get(
-                                "scope", {"columns": [], "rows": []}
-                            )
-
-                            # Add converter chain to instances
-                            converter_instances.append(
-                                {
-                                    "name": "ConverterChain",
-                                    "instance": chain_instance,
-                                    "scope": scope,
-                                }
-                            )
-                            i += n_steps + 1
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                f"Error instantiating converter chain: {e}"
-                            ) from e
-
-                    else:
-                        # Regular converter
-                        converter_instance = instantiate_converters(
-                            converter_name,
-                            converter_params,
-                            camel_to_snake,
-                            converter_submodule_inverse_index,
-                        )
-
-                        # Get scope or use default
-                        scope = converter_params.get(
-                            "scope", {"columns": [], "rows": []}
-                        )
-
-                        # Add to instances
-                        converter_instances.append(
-                            {
-                                "name": converter_name,
-                                "instance": converter_instance,
-                                "scope": scope,
-                            }
-                        )
-                        i += 1
+                    # Add to instances
+                    converter_instances.append(
+                        {
+                            "name": converter_name,
+                            "instance": converter_instance,
+                            "scope": scope,
+                        }
+                    )
+                    i += 1
 
                 # Apply each converter in sequence
                 for converter_info in converter_instances:

@@ -37,9 +37,6 @@ from DashAI.back.converters.scikit_learn.additive_chi_2_sampler import (
 # Preprocessing module
 from DashAI.back.converters.scikit_learn.binarizer import Binarizer
 
-# Chain of converters utility
-from DashAI.back.converters.scikit_learn.converter_chain import ConverterChain
-
 # Decomposition module
 from DashAI.back.converters.scikit_learn.fast_ica import FastICA
 
