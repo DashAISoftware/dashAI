@@ -110,3 +110,25 @@ class BaseTask:
             Dataset with the new types
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def process_predictions(
+        self, dataset: DashAIDataset, predictions: Any, target_column: str
+    ) -> Any:
+        """Process the predictions to suit the task requirements.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset to be changed
+        predictions : Any
+            Predictions to be processed
+        target_column : str
+            Target column for the task
+
+        Returns
+        -------
+        Any
+            Processed predictions
+        """
+        raise NotImplementedError

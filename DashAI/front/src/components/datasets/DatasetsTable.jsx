@@ -103,7 +103,7 @@ function DatasetsTable({
         headerName: "Created",
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
@@ -111,7 +111,7 @@ function DatasetsTable({
         type: Date,
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
@@ -155,9 +155,9 @@ function DatasetsTable({
         <Typography variant="h5" component="h2">
           Current datasets
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={handleNewDataset}
@@ -166,7 +166,7 @@ function DatasetsTable({
                 New Dataset
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={() => setUpdateTableFlag(true)}

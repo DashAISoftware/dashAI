@@ -24,6 +24,9 @@ function ModelsTableSelectMetric({
         value={selectedMetric || ""}
         onChange={handleChange}
         fullWidth
+        sx={{
+          marginTop: "-8px",
+        }}
       >
         {compatibleMetrics.map((metric) => (
           <MenuItem key={metric.name} value={metric.name}>

@@ -70,7 +70,7 @@ function SelectDataloaderStep({ newDataset, setNewDataset, setNextEnabled }) {
       spacing={2}
     >
       {/* Title */}
-      <Grid item>
+      <Grid>
         <Typography
           sx={{ mb: 3 }}
         >{`Select a way to upload your data`}</Typography>
@@ -89,7 +89,7 @@ function SelectDataloaderStep({ newDataset, setNewDataset, setNextEnabled }) {
         </Typography>
       </Grid>
       {/* List of dataloaders */}
-      <Grid item>
+      <Grid>
         {!loading && (
           <ItemSelectorWithInfo
             itemsList={dataloaders}

@@ -1,4 +1,3 @@
-import asyncio
 import shutil
 import time
 from pathlib import Path
@@ -8,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.app import create_app
 from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 from DashAI.back.job.dataset_job import DatasetJob
 
 
@@ -31,7 +31,15 @@ def client(test_path: Path):
         logging_level="ERROR",
     )
 
-    yield TestClient(app)
+    job_queue = app.container._services.get("job_queue")
+    if job_queue and isinstance(job_queue, HueyJobQueue):
+        job_queue.set_test_mode(True)
+
+    test_client = TestClient(app)
+    yield test_client
+
+    if job_queue and isinstance(job_queue, HueyJobQueue):
+        job_queue.set_test_mode(False)
 
     app.container._services["engine"].dispose()
     remove_dir_with_retry(app.container._services["config"]["LOCAL_PATH"])
@@ -66,7 +74,7 @@ def create_dataset_1(client) -> Dataset:
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(iris_dataset_entry)
     return iris_dataset_entry

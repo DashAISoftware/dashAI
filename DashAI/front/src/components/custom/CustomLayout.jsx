@@ -2,7 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import Container from "@mui/material/Container";
 import { useMediaQuery, Typography, Box } from "@mui/material";
-import { useTheme } from "@emotion/react";
+import JobQueueWidget from "../jobs/JobQueueWidget";
+import { useTheme } from "@mui/material/styles";
 
 /**
  * This component renders a layout that allows you to choose whether to use the Container component or not.
@@ -13,40 +14,58 @@ function CustomLayout({
   title,
   subtitle,
   children,
-  disableContainer,
+  disableContainer = false,
   padding = 2,
 }) {
   const xxl = 1600;
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up(xxl));
 
+  const jobQueueWidgetElement = (
+    <Box
+      sx={{
+        position: "fixed",
+        bottom: "20px",
+        right: "20px",
+        zIndex: 1000,
+      }}
+    >
+      <JobQueueWidget />
+    </Box>
+  );
+
   if (disableContainer) {
-    return <React.Fragment>{children}</React.Fragment>;
+    return (
+      <React.Fragment>
+        {children}
+        {jobQueueWidgetElement}
+      </React.Fragment>
+    );
   }
+
   return (
-    <Container maxWidth={matches ? "xl" : "lg"} sx={{ my: 5, mb: 4 }}>
-      {title && (
-        <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-          {title}
-        </Typography>
-      )}
-      {subtitle && (
-        <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-          {subtitle}
-        </Typography>
-      )}
-      <Box sx={{ p: padding }}>{children}</Box>
-    </Container>
+    <React.Fragment>
+      <Container maxWidth={matches ? "xl" : "lg"} sx={{ my: 5, mb: 4 }}>
+        {title && (
+          <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
+            {title}
+          </Typography>
+        )}
+        {subtitle && (
+          <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+            {subtitle}
+          </Typography>
+        )}
+        <Box sx={{ p: padding }}>{children}</Box>
+      </Container>
+      {jobQueueWidgetElement}
+    </React.Fragment>
   );
 }
 
 CustomLayout.propTypes = {
   children: PropTypes.node.isRequired,
   disableContainer: PropTypes.bool,
-};
-
-CustomLayout.defaultProps = {
-  disableContainer: false,
 };
 
 export default CustomLayout;

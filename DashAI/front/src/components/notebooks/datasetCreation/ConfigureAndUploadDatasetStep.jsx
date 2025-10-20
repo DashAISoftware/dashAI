@@ -43,33 +43,25 @@ export default function ConfigureAndUploadDatasetStep({
     params["name"] = name;
     params["dataloader"] = selectedDataloader;
 
-    createDataset(name)
-      .then((data) => {
-        enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-          variant: "success",
-        });
-        enqueueDatasetRequest(
+    createDataset(name).then(async (data) => {
+      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
+        variant: "success",
+      });
+      try {
+        const job = await enqueueDatasetRequest(
           data.id,
           datasetFileToUpload.file,
           datasetFileToUpload.url,
           params,
-        )
-          .then(() => {
-            startJobQueue();
-          })
-          .catch(() => {
-            enqueueSnackbar("Error when trying to enqueue the dataset job.", {
-              variant: "error",
-            });
-          });
-        handleDatasetCreated(data);
-      })
-      .catch(() => {
-        enqueueSnackbar("Error when trying to create the dataset.", {
+        );
+        handleDatasetCreated(data, job);
+      } catch {
+        enqueueSnackbar("Error when trying to enqueue the dataset job.", {
           variant: "error",
         });
         backHome();
-      });
+      }
+    });
   }, [
     backHome,
     selectedDataloader,
@@ -101,12 +93,12 @@ export default function ConfigureAndUploadDatasetStep({
         spacing={3}
       >
         {/* Upload file */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Upload onFileUpload={handleFileUpload} />
         </Grid>
 
         {/* Configure dataloader parameters */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <DataloaderConfiguration
             selectedDataloader={selectedDataloader}
             formSubmitRef={formSubmitRef}
@@ -117,7 +109,7 @@ export default function ConfigureAndUploadDatasetStep({
       </Grid>
 
       {/* Form buttons */}
-      <Grid item sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={goToPrevStep}
           onFormSubmit={submitNewDataset}

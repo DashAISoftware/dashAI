@@ -45,3 +45,21 @@ class RegressionTask(BaseTask):
             Dataset with the new types
         """
         return to_dashai_dataset(datasetdict)
+
+    def process_predictions(self, dataset, predictions, output_column):
+        """Process the predictions
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        predictions : np.ndarray
+            Predictions from the model
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        Processed predictions
+        """
+        return predictions

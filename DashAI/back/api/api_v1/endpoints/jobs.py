@@ -1,24 +1,22 @@
-import asyncio
 import json
 import logging
 import os
 import tempfile
-from urllib.parse import unquote
+from datetime import datetime, timezone
+from urllib.parse import unquote_plus  # NOTE: plus -> space
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy.orm import sessionmaker
 from streaming_form_data import StreamingFormDataParser
 from streaming_form_data.targets import FileTarget, ValueTarget
 from streaming_form_data.validators import MaxSizeValidator
 
-from DashAI.back.api.api_v1.schemas.job_params import JobParams
+from DashAI.back.dependencies.database.utils import find_entity_by_huey_id
 from DashAI.back.dependencies.job_queues import BaseJobQueue
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
-from DashAI.back.dependencies.job_queues.job_queue import job_queue_loop
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.job.base_job import JobError
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -26,75 +24,99 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def _enqueue_job_logic(
-    job_type: str,
-    kwargs: dict,
-    session_factory: sessionmaker,
-    component_registry: ComponentRegistry,
-    job_queue: BaseJobQueue,
-) -> BaseJob:
-    """Core logic to create a job and enqueue it."""
-    with session_factory() as db:
-        params = JobParams(job_type=job_type, kwargs=kwargs, db=db)
-        job: BaseJob = component_registry[params.job_type]["class"](
-            **params.model_dump()
-        )
-
-        try:
-            job.set_status_as_delivered()
-        except JobError as e:
-            logger.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Job not delivered",
-            ) from e
-
-        try:
-            job_queue.put(job)
-        except JobQueueError as e:
-            logger.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Job not enqueued",
-            ) from e
-
-    return job
-
-
-@router.post("/start/")
-async def start_job_queue(
-    request: Request,
-    stop_when_queue_empties: bool = False,
+@router.get("/is_empty")
+@inject
+async def is_queue_empty(
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
-    """Start the asynchronous job queue loop.
-
-    This endpoint starts a persistent background loop that executes pending jobs
-    from the job queue. If the loop is already running, no new loop will be started.
-
-    Parameters
-    ----------
-    request : Request
-        FastAPI request object, used to access app state.
-    stop_when_queue_empties : bool, optional
-        If True, the loop stops once the queue is empty (useful for one-off job runs).
-        If False, the loop waits indefinitely for new jobs.
-
-    Returns
-    -------
-    Response
-        HTTP 202 if loop was started (or already running).
     """
-    app = request.app
-    # Start the loop only if it's not already running or was cancelled
-    if not hasattr(app.state, "job_loop") or app.state.job_loop.done():
-        app.state.job_loop = asyncio.create_task(
-            job_queue_loop(stop_when_queue_empties)
-        )
-        logger.info("Started job queue loop.")
-    else:
-        logger.debug("Job queue loop is already running.")
+    Check if the job queue is empty.
+    """
+    try:
+        logger.debug("Checking if job queue is empty")
+        is_empty = job_queue.is_empty()
+        logger.debug(f"Queue empty status: {is_empty}")
+        return {"is_empty": is_empty}
+    except Exception as e:
+        logger.exception(f"Error checking if queue is empty: {e}")
+        return {"is_empty": True, "error": str(e)}
 
-    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+@router.get("/changes")
+@inject
+async def get_job_changes(
+    since: str = Query(
+        default="1970-01-01 00:00:00.000000",
+        description="UTC ISO8601 or 'YYYY-MM-DD HH:MM:SS[.ffffff]'",
+    ),
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """
+    Get jobs that have changed since the given timestamp (UTC).
+    """
+    try:
+        since_decoded = unquote_plus(since)
+
+        jobs = job_queue.changes_since(since_decoded)
+        all_jobs = job_queue.to_list()
+
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+
+        is_queue_empty = job_queue.is_empty()
+        recently_completed = any(j.get("status") in ("finished", "error") for j in jobs)
+
+        return {
+            "jobs": jobs,
+            "cursor": current_time,
+            "server_now": current_time,
+            "queue_empty": is_queue_empty,
+            "recently_completed": recently_completed,
+            "all_jobs": all_jobs,
+        }
+    except Exception as e:
+        logger.exception(f"Error retrieving job changes: {e}")
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+        return {
+            "jobs": [],
+            "cursor": current_time,
+            "server_now": current_time,
+            "queue_empty": True,
+            "recently_completed": False,
+            "all_jobs": [],
+            "error": str(e),
+        }
+
+
+@router.get("/status/{task_id}")
+@inject
+async def get_job_status(
+    task_id: str,
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """Get status of a specific job."""
+    try:
+        return job_queue.status(task_id)
+    except JobQueueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
+
+
+@router.get("/{job_id}")
+@inject
+async def get_job(
+    job_id: str,
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """Return the selected job from the job queue."""
+    try:
+        return job_queue.peek(job_id)
+    except JobQueueError as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        ) from e
 
 
 @router.get("/")
@@ -102,195 +124,184 @@ async def start_job_queue(
 async def get_jobs(
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
-    """Return all the jobs in the job queue.
-
-    Parameters
-    ----------
-    job_queue : BaseJobQueue
-        The current app job queue.
-
-    Returns
-    ----------
-    List[dict]
-        A list of dict containing the Jobs.
     """
-    all_jobs = job_queue.to_list()
-    return all_jobs
-
-
-@router.get("/{job_id}")
-@inject
-async def get_job(
-    job_id: int,
-    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
-):
-    """Return the selected job from the job queue
-
-    Parameters
-    ----------
-    job_id: int
-        id of the Job to get.
-    job_queue : BaseJobQueue
-        The current app job queue.
-
-    Returns
-    ----------
-    dict
-        A dict containing the Job information.
-
-    Raises
-    ----------
-    HTTPException
-        If is not posible to get the job from the job queue.
+    Get all jobs from the queue.
     """
     try:
-        job = job_queue.peek(job_id)
-    except JobQueueError as e:
-        logger.exception(e)
+        return job_queue.to_list()
+    except Exception as e:
+        logger.exception(f"Error retrieving jobs: {e}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve jobs: {str(e)}",
         ) from e
-    return job
+
+
+@router.get("/{job_id}/details")
+@inject
+async def get_job_details(
+    job_id: str, job_queue: BaseJobQueue = Depends(lambda: di["job_queue"])
+):
+    """
+    Get detailed information about a job, including its associated entity.
+    """
+    try:
+        entity_info = find_entity_by_huey_id(job_id)
+        if not entity_info:
+            return {"id": job_id, "no_entity": True}
+
+        task_info = job_queue.status(job_id)
+        entity_info.update(task_info)
+
+        return entity_info
+    except JobQueueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving job details: {str(e)}",
+        ) from e
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def enqueue_job(
     request: Request,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
-    """Create a runner job and put it in the job queue.
+    """Create a runner job and put it in the job queue."""
+    try:
+        logger.debug("Starting job enqueue process")
+        MAX_FILE_SIZE = 4 * 1024**3  # 4GB
+        content_type = request.headers.get("content-type", "")
+        logger.debug(f"Request content type: {content_type}")
 
-    This endpoint can handle both regular form data and form data with files.
+        # parse multipart/form-data with file
+        if "multipart/form-data" in content_type and "filename" in request.headers:
+            filename = request.headers.get("filename", "uploaded_file")
+            temp_dir = tempfile.mkdtemp()
+            file_path = os.path.join(temp_dir, filename)
 
-    Parameters
-    ----------
-    request : Request
-        The request object containing the form data.
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy session.
-        The generated session can be used to access and query the database.
-    component_registry : ComponentRegistry
-        Registry containing the current app available components.
-    job_queue : BaseJobQueue
-        The current app job queue.
-
-    Returns
-    -------
-    dict
-        dict with the new job on the database
-    """
-    MAX_FILE_SIZE = 1024 * 1024 * 1024 * 4  # 4GB
-
-    content_type = request.headers.get("content-type", "")
-    if "multipart/form-data" in content_type and "filename" in request.headers:
-        filename = unquote(request.headers.get("filename", "uploaded_file"))
-
-        temp_dir = tempfile.mkdtemp()
-
-        file_path = os.path.join(temp_dir, filename)
-
-        file_target = FileTarget(file_path, validator=MaxSizeValidator(MAX_FILE_SIZE))
-        job_type_target = ValueTarget()
-        kwargs_target = ValueTarget()
-        n_sample_target = ValueTarget()
-
-        parser = StreamingFormDataParser(headers=request.headers)
-        parser.register("file", file_target)
-        parser.register("job_type", job_type_target)
-        parser.register("kwargs", kwargs_target)
-        parser.register("n_sample", n_sample_target)
-
-        async for chunk in request.stream():
-            parser.data_received(chunk)
-
-        job_type = job_type_target.value.decode() if job_type_target.value else None
-        kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
-        n_sample = (
-            int(n_sample_target.value.decode()) if n_sample_target.value else None
-        )
-
-        if not job_type or not kwargs_str:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Missing job_type or kwargs",
+            parser = StreamingFormDataParser(headers=request.headers)
+            parser.register(
+                "file", FileTarget(file_path, validator=MaxSizeValidator(MAX_FILE_SIZE))
             )
+            job_type_target = ValueTarget()
+            kwargs_target = ValueTarget()
+            n_sample_target = ValueTarget()
+            parser.register("job_type", job_type_target)
+            parser.register("kwargs", kwargs_target)
+            parser.register("n_sample", n_sample_target)
+            
+            async for chunk in request.stream():
+                parser.data_received(chunk)
 
-        kwargs = json.loads(kwargs_str)
-        kwargs["file_path"] = file_path
-        kwargs["temp_dir"] = temp_dir
-        kwargs["filename"] = filename
-        kwargs["n_sample"] = n_sample
-
-        return await _enqueue_job_logic(
-            job_type, kwargs, session_factory, component_registry, job_queue
-        )
-
-    else:
-        form = await request.form()
-        job_type = form.get("job_type")
-        kwargs_str = form.get("kwargs")
-
-        if not job_type or not kwargs_str:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Missing job_type or kwargs",
+            job_type = job_type_target.value.decode() if job_type_target.value else None
+            kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
+            n_sample = (
+              int(n_sample_target.value.decode()) if if n_sample_target.value else None
             )
+            
+            if not job_type or not kwargs_str:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Missing job_type or kwargs",
+                )
 
-        kwargs = json.loads(kwargs_str)
-        return await _enqueue_job_logic(
-            job_type, kwargs, session_factory, component_registry, job_queue
-        )
+            kwargs = json.loads(kwargs_str)
+            kwargs.update(file_path=file_path, temp_dir=temp_dir, filename=filename, n_sample=n_sample)
+
+        # parse regular form data
+        else:
+            form = await request.form()
+            job_type = form.get("job_type")
+            kwargs_str = form.get("kwargs")
+
+            if not job_type or not kwargs_str:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Missing job_type or kwargs",
+                )
+
+            kwargs = json.loads(kwargs_str)
+
+        # instantiate job with only primitive args
+        JobClass = component_registry[job_type]["class"]
+        job = JobClass(**kwargs)
+
+        # mark delivered
+        try:
+            job.set_status_as_delivered()
+        except JobError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Job not delivered",
+            ) from e
+
+        # enqueue
+        try:
+            job_id = job_queue.put(job).id
+            return {"id": job_id}
+        except JobQueueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Job not enqueued: {str(e)}",
+            ) from e
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unexpected error: {str(e)}",
+            ) from e
+    except Exception as e:
+        logging.exception(f"Uncaught error in enqueue_job: {e}")
+        raise
 
 
-@router.delete("/")
+@router.delete("/all")
 @inject
-async def cancel_job(
-    job_id: int,
+async def cancel_all_jobs(
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
-    """Delete the job with id job_id from the job queue.
-
-    Parameters
-    ----------
-    job_id : int
-        id of the job to delete.
-    job_queue : BaseJobQueue
-        The current app job queue.
-
-    Returns
-    -------
-    Response
-        response with code 204 NO_CONTENT
-
-    Raises
-    ----------
-    HTTPException
-        If is not posible to get the job from the job queue.
-    """
+    """Delete all jobs from the job queue."""
     try:
-        job_queue.get(job_id)
-    except JobQueueError as e:
-        logger.exception(e)
+        # Usar una función en HueyJobQueue para eliminar todos los jobs
+        count = job_queue.delete_all_jobs()
+        return {"deleted": count}
+    except Exception as e:
+        logging.exception(e)
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error canceling all jobs: {str(e)}",
         ) from e
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/{job_id}")
+@inject
+async def cancel_job(
+    job_id: str,
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
+):
+    """Delete the job with id job_id from the job queue."""
+    try:
+        success = job_queue.delete_from_db(job_id)
+        if success:
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+            )
+    except Exception as e:
+        logging.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error canceling job: {str(e)}",
+        ) from e
 
 
 @router.patch("/")
 async def update_job():
-    """Placeholder for job update.
-
-    Raises
-    ------
-    HTTPException
-        Always raises exception as it was intentionally not implemented.
-    """
+    """Placeholder for job update."""
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Method not implemented"
     )

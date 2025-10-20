@@ -151,7 +151,7 @@ function SetNameAndTaskStep({
       spacing={2}
     >
       {/* Set Name subcomponent */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
           Enter a name and select the task for the new experiment
         </Typography>
@@ -162,16 +162,17 @@ function SetNameAndTaskStep({
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}
-          InputLabelProps={{ shrink: true }}
           sx={{ mb: 2 }}
           error={Boolean(nameError)}
           helperText={nameError}
+          slotProps={{
+            inputLabel: { shrink: true },
+          }}
         />
       </Grid>
-
       {/* Tasks Subcomponent */}
-      <Grid item xs={12}>
-        <Grid container spacing={1}>
+      <Grid size={{ xs: 12 }}>
+        <Grid>
           {/* Tasks list and description */}
           {!loading ? (
             <ItemSelectorWithInfo

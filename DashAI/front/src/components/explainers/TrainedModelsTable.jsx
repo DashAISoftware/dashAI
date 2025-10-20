@@ -51,7 +51,7 @@ function TrainedModelsTable() {
       minWidth: 170,
       editable: false,
       type: Date,
-      valueFormatter: (params) => formatDate(params.value),
+      valueGetter: (value) => formatDate(value),
     },
     {
       field: "actions",
@@ -171,13 +171,13 @@ function TrainedModelsTable() {
   return (
     <Paper sx={{ py: 4, px: 6 }}>
       <Grid container spacing={2}>
-        <Grid item xs={4}>
+        <Grid size={{ xs: 4 }}>
           <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
             Models
           </Typography>
         </Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}>
+        <Grid size={{ xs: 4 }}></Grid>
+        <Grid size={{ xs: 4 }}>
           <TextField
             sx={{ mb: 1, mt: -1 }}
             select

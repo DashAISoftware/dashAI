@@ -43,7 +43,7 @@ function Info({
   return (
     <Grid container direction="column">
       {/* name related info */}
-      <Grid item>
+      <Grid>
         <Grid
           container
           direction="row"
@@ -52,7 +52,7 @@ function Info({
           columnSpacing={15}
         >
           {nameRelatedInfo.map((param) => (
-            <Grid item key={param.key}>
+            <Grid key={param.key}>
               <Typography variant="subtitle1">{param.label}</Typography>
               <Typography variant="p" sx={{ color: "gray" }}>
                 {dataToString(data[param.key])}
@@ -65,7 +65,7 @@ function Info({
       <Divider sx={{ mt: 3, mb: 3 }} />
 
       {/* Run Date related info */}
-      <Grid item>
+      <Grid>
         <Grid
           container
           direction="row"
@@ -74,7 +74,7 @@ function Info({
           columnSpacing={15}
         >
           {dateRelatedInfo.map((param) => (
-            <Grid item key={param.key}>
+            <Grid key={param.key}>
               <Typography variant="subtitle1">{param.label}</Typography>
               <Typography variant="p" sx={{ color: "gray" }}>
                 {data[param.key] ? formatDate(data[param.key]) : "-"}

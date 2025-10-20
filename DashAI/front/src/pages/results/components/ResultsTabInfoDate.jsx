@@ -7,7 +7,7 @@ import { formatDate } from "../constants/formatDate";
 
 function ResultsTabInfoDate({ runData }) {
   return (
-    <Grid item>
+    <Grid>
       <Grid
         container
         direction="row"
@@ -16,7 +16,7 @@ function ResultsTabInfoDate({ runData }) {
         columnSpacing={15}
       >
         {runDateInfo.map((param) => (
-          <Grid item key={param.key}>
+          <Grid key={param.key}>
             <Typography variant="subtitle1">{param.label}</Typography>
             <Typography variant="p" sx={{ color: "gray" }}>
               {formatDate(runData[param.key] ?? "-")}

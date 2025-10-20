@@ -54,12 +54,14 @@ export default function SessionHistoryModal({
         open={open}
         onClose={handleClose}
         fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: "background.paper",
-            color: "text.primary",
-            maxHeight: "80vh",
-            maxWidth: 600,
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "background.paper",
+              color: "text.primary",
+              maxHeight: "80vh",
+              maxWidth: 600,
+            },
           },
         }}
       >

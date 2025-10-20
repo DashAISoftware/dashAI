@@ -48,7 +48,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
           {filteredTasks.map((task, index) => (
-            <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+            <Grid size={{ xl: 4, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
               <TaskBox
                 taskName={task.display_name}
                 description={task.description}

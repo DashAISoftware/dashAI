@@ -1,5 +1,12 @@
 import React, { useRef } from "react";
-import { Box, Typography, Dialog } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { ReactFlowProvider } from "reactflow";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { Results as PipelineResults } from "../../components/pipelines";
@@ -154,7 +161,34 @@ function NewPipeline() {
               </Box>
 
               {renderNodeDialogContent() && (
-                <Dialog open={true} onClose={handleCloseDialog}>
+                <Dialog
+                  open={true}
+                  onClose={() => {}}
+                  disableEscapeKeyDown
+                  maxWidth="md"
+                  fullWidth
+                >
+                  <DialogTitle>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Typography variant="h6">
+                        {selectedNode?.type === "Train"
+                          ? "Select Train Parameters"
+                          : selectedNode?.type === "Exploration"
+                            ? "Exploration Configuration"
+                            : `Configure ${selectedNode?.type || "Node"}`}
+                      </Typography>
+                      <IconButton
+                        onClick={handleCloseDialog}
+                        sx={{ position: "absolute", right: 8, top: 8 }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    </Box>
+                  </DialogTitle>
                   {renderNodeDialogContent()}
                 </Dialog>
               )}

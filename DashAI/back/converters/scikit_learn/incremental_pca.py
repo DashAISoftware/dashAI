@@ -48,3 +48,4 @@ class IncrementalPCA(SklearnWrapper, IncrementalPCAOperation):
 
     SCHEMA = IncrementalPCASchema
     DESCRIPTION = "Incremental principal components analysis (IPCA)."
+    DISPLAY_NAME = "Incremental PCA"

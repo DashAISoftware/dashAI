@@ -68,6 +68,7 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
         "This means it can work with sparse matrices efficiently."
     )
     SHORT_DESCRIPTION = "Dimensionality reduction using truncated SVD."
+    DISPLAY_NAME = "Truncated SVD"
     metadata = {}
 
     def __init__(self, **kwargs):
@@ -75,3 +76,4 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
         kwargs["random_state"] = self.random_state
+        super().__init__(**kwargs)

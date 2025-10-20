@@ -33,3 +33,4 @@ class AdditiveChi2Sampler(SklearnWrapper, AdditiveChi2SamplerOperation):
         "Uses sampling the fourier transform of the kernel characteristic "
         "at regular intervals."
     )
+    DISPLAY_NAME = "Additive Chi² Sampler"

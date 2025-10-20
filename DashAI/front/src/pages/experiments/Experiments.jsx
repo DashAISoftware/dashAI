@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 
 import NewExperimentModal from "../../components/experiments/NewExperimentModal";
@@ -72,7 +72,6 @@ function ExperimentsPage() {
         />
       )}
 
-      {/* Experiment table */}
       <ExperimentsTable
         handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
         updateTableFlag={updateTableFlag}

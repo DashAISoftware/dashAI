@@ -29,13 +29,13 @@ function HyperparameterOptimizationStep({ newExp, setNewExp, setNextEnabled }) {
       alignItems="stretch"
       spacing={2}
     >
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
           Add optimizers to your experiment
         </Typography>
       </Grid>
       {/* Hyperparameter Optimization table */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <OptimizationTable newExp={newExp} setNewExp={setNewExp} />
       </Grid>
     </Grid>

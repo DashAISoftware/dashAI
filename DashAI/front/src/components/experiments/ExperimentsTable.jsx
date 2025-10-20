@@ -80,9 +80,9 @@ function ExperimentsTable({
         headerName: "Dataset",
         minWidth: 200,
         editable: false,
-        valueFormatter: (params) => {
-          const datasetName = datasetMap.get(params.value);
-          return datasetName || `Dataset ID: ${params.value}`;
+        valueGetter: (value) => {
+          const datasetName = datasetMap.get(value);
+          return datasetName || `Dataset ID: ${value}`;
         },
       },
       {
@@ -90,15 +90,14 @@ function ExperimentsTable({
         headerName: "Created",
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
         headerName: "Edited",
-        type: Date,
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
@@ -135,9 +134,9 @@ function ExperimentsTable({
         <Typography variant="h5" component="h2">
           Current experiments
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={handleOpenNewExperimentModal}
@@ -146,7 +145,7 @@ function ExperimentsTable({
                 New Experiment
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={onUpdateExperiments}
