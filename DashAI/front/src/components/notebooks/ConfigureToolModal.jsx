@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -29,6 +29,44 @@ export default function ConfigureToolModal({
 
   const [activeTab, setActiveTab] = useState(0);
   const [step, setStep] = useState(0);
+  const containerRef = useRef(null);
+  const [topHeight, setTopHeight] = useState(100);
+  const isResizingRef = useRef(false);
+
+  const handleMouseDown = () => {
+    isResizingRef.current = true;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isResizingRef.current || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+
+    // Limit min/max
+    const minHeight = 100;
+    const maxHeight = rect.height - 150;
+    const newHeight = Math.max(minHeight, Math.min(maxHeight, offsetY));
+
+    setTopHeight(newHeight);
+  };
+
+  const handleMouseUp = () => {
+    isResizingRef.current = false;
+    document.body.style.cursor = "default";
+    document.body.style.userSelect = "auto";
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -120,15 +158,24 @@ export default function ConfigureToolModal({
       </Tabs>
       {/* CONTENT AREA */}
       <Box
+        ref={containerRef}
         sx={{
           flex: 1,
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          position: "relative",
         }}
       >
         {/* Tab Panels */}
-        <Box sx={{ flex: 1, overflow: "auto", p: 2, height: "35%" }}>
+        <Box
+          sx={{
+            height: `${topHeight}px`,
+            overflow: "auto",
+            p: 2,
+            flexShrink: 0,
+          }}
+        >
           {activeTab === 0 && (
             <Typography
               variant="body2"
@@ -154,16 +201,26 @@ export default function ConfigureToolModal({
           )}
         </Box>
 
-        {/* FORM at the bottom */}
+        {/* Divider for resizing */}
+        <Box
+          onMouseDown={handleMouseDown}
+          sx={{
+            height: "6px",
+            cursor: "row-resize",
+            backgroundColor: "divider",
+            "&:hover": { backgroundColor: "action.hover" },
+            zIndex: 2,
+          }}
+        />
+
+        {/* Bottom section (form) */}
         <Box
           sx={{
+            flex: 1,
+            overflow: "auto",
             p: 2,
             borderTop: "1px solid",
             borderColor: "divider",
-            height: "65%",
-            overflow: "auto",
-            display: "flex",
-            flexDirection: "column",
           }}
         >
           <Typography
