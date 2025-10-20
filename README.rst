@@ -199,6 +199,21 @@ You can check all available options through the command:
     $ python -m DashAI --help
 
 
+Database Migrations
+==========
+Migrations are managed through `Alembic <https://alembic.sqlalchemy.org/en/latest/>`_.
+They are automatically run when starting DashAI. However, if you want to
+run them manually, you can do it through the command (inside the `DashAI/` folder):
+
+.. code:: bash
+    $ alembic upgrade head
+To create a new migration after modifying the database models, run:
+.. code:: bash
+    $ alembic revision --autogenerate -m "<<Your message here>>"
+Where <<Your message here>> is a very brief description of the changes made.
+Migrations are located in `alembic/versions`. Should be committed to the repository.
+
+
 Testing
 =======
 
