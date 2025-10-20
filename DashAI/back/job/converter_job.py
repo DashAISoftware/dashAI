@@ -1,7 +1,6 @@
 import logging
-import re
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 import pyarrow as pa
 from datasets.arrow_dataset import update_metadata_with_features
@@ -277,11 +276,6 @@ class ConverterListJob(BaseJob):
                 raise JobError(f"Cannot load dataset from {dataset_path}") from e
 
             try:
-                # Regex to convert camel case to snake case
-                camel_to_snake = re.compile(
-                    r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])"
-                )
-
                 # Get the absolute path to the converters directory
                 current_file = Path(__file__)
                 project_root = (
@@ -293,18 +287,6 @@ class ConverterListJob(BaseJob):
                     raise JobError(
                         f"Converters directory not found at {converters_base_path}"
                     )
-
-                # Build converter name to submodule mapping using a
-                # more functional approach
-                converter_submodule_inverse_index = {
-                    file.stem: submodule.name
-                    for submodule in converters_base_path.iterdir()
-                    if submodule.is_dir()
-                    for file in submodule.glob("*.py")
-                    if not file.name.startswith(
-                        "_"
-                    )  # Skip __init__.py and other special files
-                }
 
                 # Get stored converter configurations
                 converters_stored_info = {
