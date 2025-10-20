@@ -8,6 +8,7 @@ from DashAI.back.converters import (
     ColumnRemover,
     ConverterChain,
     Embedding,
+    ExtendTimeSeriesConverter,
     FastICA,
     GenericUnivariateSelect,
     IncrementalPCA,
@@ -276,6 +277,7 @@ def get_initial_components():
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
         TimeSeriesWindowConverter,
+        ExtendTimeSeriesConverter,
     ]
 
     # Obtener plugins instalados
