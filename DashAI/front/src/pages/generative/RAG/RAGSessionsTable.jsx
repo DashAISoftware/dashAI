@@ -13,6 +13,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 
 import { deleteRAGSession } from "../../../api/rag";
+import { formatDate } from "../../../utils";
 
 export default function RAGSessionsTable({
   sessions,
@@ -21,85 +22,96 @@ export default function RAGSessionsTable({
   onOpenNewSessionModal,
   showTableTitle = false,
 }) {
-  const columns = [
-    {
-      field: "name",
-      headerName: "Session Name",
-      flex: 0.8,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          onClick={() => onSelect(params.row.id, params.row.task_name)}
-          sx={{
-            textTransform: "none",
-            justifyContent: "flex-start",
-            padding: 0,
-            color: "white",
-          }}
-        >
-          {params.value}
-        </Button>
-      ),
-    },
-    {
-      field: "created",
-      headerName: "Created At",
-      flex: 0.4,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: "",
-      headerName: "Documents",
-      flex: 0.4,
-      valueGetter: (params) => params.row.parameters.documents?.length,
-    },
-    {
-      field: "actions",
-      headerName: "Actions",
-      flex: 0.9,
-      renderCell: (params) => (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            width: "100%",
-            gap: "auto",
-          }}
-        >
+  const columns = React.useMemo(
+    () => [
+      {
+        field: "name",
+        headerName: "Session Name",
+        flex: 0.8,
+        renderCell: (params) => (
           <Button
             size="small"
-            variant="outlined"
             onClick={() => onSelect(params.row.id, params.row.task_name)}
-          >
-            Open
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            color="warning"
-            onClick={() => onEdit(params.row)}
-          >
-            <EditIcon />
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            color="error"
-            onClick={async () => {
-              try {
-                await deleteRAGSession(params.row.id);
-              } catch (error) {
-                console.error("Error deleting session:", error);
-              }
+            sx={{
+              textTransform: "none",
+              justifyContent: "flex-start",
+              padding: 0,
+              color: "white",
             }}
           >
-            <DeleteIcon />
+            {params.value}
           </Button>
-        </div>
-      ),
-    },
-  ];
+        ),
+      },
+      {
+        field: "created",
+        headerName: "Created At",
+        flex: 0.4,
+        valueGetter: (value) => {
+          if (!value) return "";
+          return formatDate(value);
+        },
+      },
+      {
+        field: "documents",
+        headerName: "Documents",
+        flex: 0.4,
+        valueGetter: (value, row) => {
+          if (!row || !row.parameters || !row.parameters.documents) {
+            return 0;
+          }
+          return row.parameters.documents.length || 0;
+        },
+      },
+      {
+        field: "actions",
+        headerName: "Actions",
+        flex: 0.9,
+        renderCell: (params) => (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: "100%",
+              gap: "auto",
+            }}
+          >
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => onSelect(params.row.id, params.row.task_name)}
+            >
+              Open
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="warning"
+              onClick={() => onEdit(params.row)}
+            >
+              <EditIcon />
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="error"
+              onClick={async () => {
+                try {
+                  await deleteRAGSession(params.row.id);
+                } catch (error) {
+                  console.error("Error deleting session:", error);
+                }
+              }}
+            >
+              <DeleteIcon />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [onSelect, onEdit],
+  );
 
   return (
     <Paper sx={{ py: 4, px: 4 }}>
