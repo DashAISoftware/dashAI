@@ -10,17 +10,16 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
 from DashAI.back.dependencies.database.models import (
+    Document,
     GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
     ProcessData,
-    Document
+    RAGPrompt,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.models import BaseGenerativeModel
-from DashAI.back.models.RAG import PDFDocument, TxtDocument, BaseDocument
 from DashAI.back.tasks import BaseGenerativeTask
-
 from DashAI.back.tasks.RAG_task import RAGTask
 
 router = APIRouter()
@@ -61,22 +60,23 @@ async def upload_generative_session(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Task {params.task_name} is not registered.",
                 ) from e
-            
+
             # RAG Task specific handling
-            # Frontend will send the ids of the documents to be used in the RAG session
-            # but RAG pipeline expects the documents paths of the backend-stored documents
+            # Frontend will send the ids of the documents to be used in the
+            # RAG session but RAG pipeline expects the documents paths of the
+            # backend-stored documents
             if task_class == RAGTask:
                 try:
                     assert params.parameters["documents"]
                     assert isinstance(params.parameters["documents"], list)
-                    assert len(params.parameters["documents"]) > 0 
+                    assert len(params.parameters["documents"]) > 0
 
-                except (AssertionError, KeyError):
+                except (AssertionError, KeyError) as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="RAG Task requires a non-empty list of document IDs.",
-                    )
-                
+                    ) from e
+
                 documents_ids = []
                 for doc_id in params.parameters["documents"]:
                     document = db.get(Document, doc_id)
@@ -136,6 +136,51 @@ async def upload_generative_session(
                 "last_modified": session.last_modified,
                 "display_name": component_registry[session.task_name]["display_name"],
             }
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get("/prompts", status_code=status.HTTP_200_OK)
+async def get_all_prompts(
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get all available RAG prompts.
+
+    Parameters
+    ----------
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    list
+        A list of dictionaries with all prompts on the database.
+
+    Raises
+    ------
+    HTTPException
+        If there's an internal database error.
+    """
+    with session_factory() as db:
+        try:
+            prompts = db.query(RAGPrompt).all()
+
+            prompt_responses = []
+            for prompt in prompts:
+                prompt_responses.append(
+                    {
+                        "id": prompt.id,
+                        "class_name": prompt.class_name,
+                        "parameters": prompt.parameters,
+                    }
+                )
+
+            return prompt_responses
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
