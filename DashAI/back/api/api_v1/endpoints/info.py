@@ -3,7 +3,7 @@ import logging
 
 import GPUtil
 import psutil
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -54,5 +54,8 @@ async def system_stats_ws(websocket: WebSocket):
             stats = get_system_usage()
             await websocket.send_json(stats)
             await asyncio.sleep(1)  # update every second
-    except Exception:
+    except WebSocketDisconnect:
+        log.info("WebSocket disconnected")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
         await websocket.close()
