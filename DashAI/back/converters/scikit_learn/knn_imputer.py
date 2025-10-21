@@ -20,7 +20,7 @@ class KNNImputerSchema(BaseSchema):
         none_type(
             union_type(int_field(), union_type(float_field(), string_field()))
         ),  # int, float, str, np.nan or None
-        None,  # np.nan,
+        "np.nan",
         "The placeholder for the missing values.",
     )  # type: ignore
     n_neighbors: schema_field(
