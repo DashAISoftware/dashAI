@@ -64,10 +64,15 @@ def _rebuild_dataset_with_transformed_columns(
     original_without_scope = base.remove_columns(scope_column_names)
 
     transformed_cols = transformed.column_names
-    replacement_cols = transformed_cols[: len(scope_column_indexes)]
-    new_cols = transformed_cols[len(scope_column_indexes) :]
 
-    index_to_replacement = dict(zip(scope_column_indexes, replacement_cols))
+    index_to_replacement = dict(zip(scope_column_indexes, scope_column_names))
+    index_to_replacement = {
+        key: value
+        for key, value in index_to_replacement.items()
+        if value in transformed_cols and value in original_columns
+    }
+    new_cols = [col for col in transformed_cols if col not in scope_column_names]
+
     new_columns_order = []
     for i, col in enumerate(original_columns):
         if i in index_to_replacement:
