@@ -11,10 +11,12 @@ import {
   Tooltip,
   Button,
   CircularProgress,
+  TablePagination,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PropTypes from "prop-types";
+import { useState } from "react";
 
 export default function DocumentSelectionTable({
   documents,
@@ -25,6 +27,24 @@ export default function DocumentSelectionTable({
   onRemove,
   isLoading = false,
 }) {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Calculate paginated documents
+  const paginatedDocuments = documents.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   // Format the date to a more readable format
   const formatDate = (dateString) => {
     try {
@@ -44,13 +64,25 @@ export default function DocumentSelectionTable({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-      }}>
+      }}
+    >
       {isLoading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="100%"
+        >
           <CircularProgress />
         </Box>
       ) : documents.length === 0 ? (
-        <Typography variant="body1" color="warning.main" textAlign="center" mt={16} mx={"auto "}>
+        <Typography
+          variant="body1"
+          color="warning.main"
+          textAlign="center"
+          mt={16}
+          mx={"auto "}
+        >
           No documents available.
         </Typography>
       ) : (
@@ -60,8 +92,14 @@ export default function DocumentSelectionTable({
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    indeterminate={selectedIds.length > 0 && selectedIds.length < documents.length}
-                    checked={selectedIds.length === documents.length && documents.length > 0}
+                    indeterminate={
+                      selectedIds.length > 0 &&
+                      selectedIds.length < documents.length
+                    }
+                    checked={
+                      selectedIds.length === documents.length &&
+                      documents.length > 0
+                    }
                     onChange={(event) => {
                       if (event.target.checked) {
                         onSelectAll();
@@ -79,13 +117,15 @@ export default function DocumentSelectionTable({
               </TableRow>
             </TableHead>
             <TableBody>
-              {documents.map((doc) => (
+              {paginatedDocuments.map((doc) => (
                 <TableRow
                   key={doc.id}
                   selected={selectedIds.includes(doc.id)}
                   sx={{
                     transition: "background-color 0.3s",
-                    backgroundColor: selectedIds.includes(doc.id) ? "action.hover" : "inherit",
+                    backgroundColor: selectedIds.includes(doc.id)
+                      ? "action.hover"
+                      : "inherit",
                   }}
                 >
                   <TableCell padding="checkbox">
@@ -97,19 +137,36 @@ export default function DocumentSelectionTable({
                   <TableCell>{doc.id}</TableCell>
                   <TableCell>{doc.file_name}</TableCell>
                   <TableCell>{formatDate(doc.created)}</TableCell>
-                  <TableCell>{doc.optional_metadata?.last_modified ? formatDate(doc.optional_metadata.last_modified) : "N/A"}</TableCell>
+                  <TableCell>
+                    {doc.optional_metadata?.last_modified
+                      ? formatDate(doc.optional_metadata.last_modified)
+                      : "N/A"}
+                  </TableCell>
                   <TableCell align="right">
-                    <Box display="flex" flexDirection="row" justifyContent="flex-end">
+                    <Box
+                      display="flex"
+                      flexDirection="row"
+                      justifyContent="flex-end"
+                    >
                       <Tooltip title="Preview">
-                        <IconButton size="small" onClick={() => {
-                          if (doc.preview) window.open(doc.preview, '_blank');
-                          else console.warn("No preview URL available for this document.");
-                        }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (doc.preview) window.open(doc.preview, "_blank");
+                            else
+                              console.warn(
+                                "No preview URL available for this document.",
+                              );
+                          }}
+                        >
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Remove">
-                        <IconButton size="small" onClick={() => onRemove(doc.id)}>
+                        <IconButton
+                          size="small"
+                          onClick={() => onRemove(doc.id)}
+                        >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -119,19 +176,15 @@ export default function DocumentSelectionTable({
               ))}
             </TableBody>
           </Table>
-          <Box
-            display="flex"
-            mb={0}
-            mt="auto"
-            alignItems="center"
-            justifyContent="flex-end"
-            gap={1}
-            p={1}
-            borderTop="1px solid #e0e0e0"
-          >
-            <Button size="small" onClick={onDeselectAll}>Deselect All</Button>
-            <Button size="small" onClick={onSelectAll}>Select All</Button>
-          </Box>
+          <TablePagination
+            component="div"
+            count={documents.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25, 50]}
+          />
         </>
       )}
     </Box>
@@ -139,12 +192,14 @@ export default function DocumentSelectionTable({
 }
 
 DocumentSelectionTable.propTypes = {
-  documents: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    createdAt: PropTypes.string.isRequired,
-    preview: PropTypes.string,
-  })).isRequired,
+  documents: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      createdAt: PropTypes.string.isRequired,
+      preview: PropTypes.string,
+    }),
+  ).isRequired,
   selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   onToggle: PropTypes.func.isRequired,
   onSelectAll: PropTypes.func.isRequired,
