@@ -2,9 +2,9 @@ import React from "react";
 import { Box, IconButton, Tooltip, LinearProgress } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import DeleteIcon from "@mui/icons-material/Delete";
 import PropTypes from "prop-types";
 import { formatDate } from "../../../utils";
+import DeleteItemModal from "../../custom/DeleteItemModal";
 
 export default function DocumentSelectionTable({
   documents,
@@ -90,15 +90,11 @@ export default function DocumentSelectionTable({
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>,
-          <Tooltip title="Remove" key="remove">
-            <IconButton
-              size="small"
-              onClick={() => onRemove(params.row.id)}
-              sx={{ color: "error.main" }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>,
+          <DeleteItemModal
+            key="delete-button"
+            deleteFromTable={() => onRemove(params.row.id)}
+            item="document"
+          />,
         ],
       },
     ],
