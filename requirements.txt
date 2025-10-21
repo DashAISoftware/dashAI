@@ -39,3 +39,4 @@ imblearn
 numba
 llvmlite
 huey
+gputil
