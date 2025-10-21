@@ -341,6 +341,14 @@ export default function NewSessionModal({
             setNextEnabled={(isValid) => handleStepValidation(3, isValid)}
           />
         )}
+
+        {activeStep === 4 && (
+          <PromptConfigurationStep
+            sessionData={sessionData}
+            setSessionData={setSessionData}
+            setNextEnabled={(isValid) => handleStepValidation(4, isValid)}
+          />
+        )}
       </DialogContent>
 
       <DialogActions>
