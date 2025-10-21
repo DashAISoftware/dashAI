@@ -91,7 +91,11 @@ export default function DocumentSelectionTable({
             </IconButton>
           </Tooltip>,
           <Tooltip title="Remove" key="remove">
-            <IconButton size="small" onClick={() => onRemove(params.row.id)}>
+            <IconButton
+              size="small"
+              onClick={() => onRemove(params.row.id)}
+              sx={{ color: "error.main" }}
+            >
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>,
