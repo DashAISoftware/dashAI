@@ -7,8 +7,12 @@ const SystemStats = () => {
   const [stats, setStats] = useState(null);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({
-    x: window.innerWidth - 70,
+    x: 20,
     y: 20,
+  });
+  const [relative, setRelative] = useState({
+    x: 20 / window.innerWidth,
+    y: 20 / window.innerHeight,
   });
   const dragRef = useRef(null);
   const offset = useRef({ x: 0, y: 0 });
@@ -36,6 +40,17 @@ const SystemStats = () => {
     return () => ws.close();
   }, [open]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition({
+        x: relative.x * window.innerWidth,
+        y: relative.y * window.innerHeight,
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [relative]);
+
   const handleMouseDown = (e) => {
     draggingRef.current = false;
     offset.current = { x: e.clientX - position.x, y: e.clientY - position.y };
@@ -45,9 +60,13 @@ const SystemStats = () => {
 
   const handleMouseMove = (e) => {
     draggingRef.current = true;
-    setPosition({
-      x: e.clientX - offset.current.x,
-      y: e.clientY - offset.current.y,
+    const newX = e.clientX - offset.current.x;
+    const newY = e.clientY - offset.current.y;
+
+    setPosition({ x: newX, y: newY });
+    setRelative({
+      x: newX / window.innerWidth,
+      y: newY / window.innerHeight,
     });
   };
 
