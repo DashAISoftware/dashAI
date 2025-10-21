@@ -3,6 +3,7 @@ import { ISession } from "../types/session";
 import { IGenerativeTask } from "../types/generativeTask";
 import { IDocumentResponse } from "../types/documentResponse";
 import { IComponent } from "../types/component";
+import { IRAGPrompt } from "../types/ragPrompt";
 import { getChildComponents } from "./component";
 
 // Fetch all RAG sessions
@@ -219,5 +220,15 @@ export const addDocument = async ({
     throw new Error(`Failed to upload document: ${response.statusText}`);
   }
 
+  return response.data;
+};
+
+export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
+  const response = await api.get<IRAGPrompt[]>(
+    "/v1/generative-session/prompts",
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch RAG prompts: ${response.statusText}`);
+  }
   return response.data;
 };
