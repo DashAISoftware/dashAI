@@ -20,6 +20,7 @@ import DocumentSelectionStep from "./DocumentSelectionStep";
 import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
 import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
+import PromptConfigurationStep from "./PromptConfigurationStep";
 import { generateSequentialName } from "../../../../utils/nameGenerator";
 
 const steps = [
@@ -42,6 +43,11 @@ const steps = [
     name: "configure-generator",
     label: "Configure Language Model",
     component: GeneratorConfigurationStep,
+  },
+  {
+    name: "configure-prompt",
+    label: "Configure Prompt",
+    component: PromptConfigurationStep,
   },
 ];
 
