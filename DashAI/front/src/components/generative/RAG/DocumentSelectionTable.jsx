@@ -1,22 +1,10 @@
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Checkbox,
-  Typography,
-  IconButton,
-  Tooltip,
-  Button,
-  CircularProgress,
-  TablePagination,
-} from "@mui/material";
+import React from "react";
+import { Box, IconButton, Tooltip, LinearProgress } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { formatDate } from "../../../utils";
 
 export default function DocumentSelectionTable({
   documents,
@@ -27,166 +15,125 @@ export default function DocumentSelectionTable({
   onRemove,
   isLoading = false,
 }) {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const handleSelectionChange = (newSelection) => {
+    // Get currently selected IDs
+    const currentSet = new Set(selectedIds);
+    const newSet = new Set(newSelection);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+    // Find what was added
+    const added = newSelection.filter((id) => !currentSet.has(id));
+    // Find what was removed
+    const removed = selectedIds.filter((id) => !newSet.has(id));
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  // Calculate paginated documents
-  const paginatedDocuments = documents.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
-
-  // Format the date to a more readable format
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString();
-    } catch (e) {
-      return dateString;
+    if (added.length > 0) {
+      added.forEach((id) => onToggle(id));
+    }
+    if (removed.length > 0) {
+      removed.forEach((id) => onToggle(id));
     }
   };
+
+  const columns = React.useMemo(
+    () => [
+      {
+        field: "id",
+        headerName: "ID",
+        minWidth: 50,
+        flex: 0.5,
+        editable: false,
+      },
+      {
+        field: "file_name",
+        headerName: "Name",
+        minWidth: 250,
+        flex: 1,
+        editable: false,
+      },
+      {
+        field: "created",
+        headerName: "Added On",
+        minWidth: 140,
+        flex: 0.5,
+        editable: false,
+        valueGetter: (value) => formatDate(value),
+      },
+      {
+        field: "last_modified",
+        headerName: "Last Modified",
+        minWidth: 140,
+        flex: 0.5,
+        editable: false,
+        valueGetter: (value, row) => {
+          return row.optional_metadata?.last_modified
+            ? formatDate(row.optional_metadata.last_modified)
+            : "N/A";
+        },
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Actions",
+        minWidth: 100,
+        flex: 0.3,
+        getActions: (params) => [
+          <Tooltip title="Preview" key="preview">
+            <IconButton
+              size="small"
+              onClick={() => {
+                if (params.row.preview) {
+                  window.open(params.row.preview, "_blank");
+                } else {
+                  console.warn("No preview URL available for this document.");
+                }
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>,
+          <Tooltip title="Remove" key="remove">
+            <IconButton size="small" onClick={() => onRemove(params.row.id)}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>,
+        ],
+      },
+    ],
+    [onRemove],
+  );
 
   return (
     <Box
       sx={{
-        backgroundColor: "background.paper",
-        borderRadius: 2,
-        p: 2,
         height: "100%",
-        display: "flex",
-        flexDirection: "column",
+        width: "100%",
       }}
     >
-      {isLoading ? (
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          height="100%"
-        >
-          <CircularProgress />
-        </Box>
-      ) : documents.length === 0 ? (
-        <Typography
-          variant="body1"
-          color="warning.main"
-          textAlign="center"
-          mt={16}
-          mx={"auto "}
-        >
-          No documents available.
-        </Typography>
-      ) : (
-        <>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    indeterminate={
-                      selectedIds.length > 0 &&
-                      selectedIds.length < documents.length
-                    }
-                    checked={
-                      selectedIds.length === documents.length &&
-                      documents.length > 0
-                    }
-                    onChange={(event) => {
-                      if (event.target.checked) {
-                        onSelectAll();
-                      } else {
-                        onDeselectAll();
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell>Id</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Added On</TableCell>
-                <TableCell>Last Modified</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedDocuments.map((doc) => (
-                <TableRow
-                  key={doc.id}
-                  selected={selectedIds.includes(doc.id)}
-                  sx={{
-                    transition: "background-color 0.3s",
-                    backgroundColor: selectedIds.includes(doc.id)
-                      ? "action.hover"
-                      : "inherit",
-                  }}
-                >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectedIds.includes(doc.id)}
-                      onChange={() => onToggle(doc.id)}
-                    />
-                  </TableCell>
-                  <TableCell>{doc.id}</TableCell>
-                  <TableCell>{doc.file_name}</TableCell>
-                  <TableCell>{formatDate(doc.created)}</TableCell>
-                  <TableCell>
-                    {doc.optional_metadata?.last_modified
-                      ? formatDate(doc.optional_metadata.last_modified)
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box
-                      display="flex"
-                      flexDirection="row"
-                      justifyContent="flex-end"
-                    >
-                      <Tooltip title="Preview">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            if (doc.preview) window.open(doc.preview, "_blank");
-                            else
-                              console.warn(
-                                "No preview URL available for this document.",
-                              );
-                          }}
-                        >
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Remove">
-                        <IconButton
-                          size="small"
-                          onClick={() => onRemove(doc.id)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <TablePagination
-            component="div"
-            count={documents.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[5, 10, 25, 50]}
-          />
-        </>
-      )}
+      <DataGrid
+        rows={documents}
+        columns={columns}
+        checkboxSelection
+        disableRowSelectionOnClick
+        rowSelectionModel={selectedIds}
+        onRowSelectionModelChange={handleSelectionChange}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 5,
+            },
+          },
+        }}
+        pageSizeOptions={[5, 10, 25, 50]}
+        loading={isLoading}
+        slots={{
+          loadingOverlay: LinearProgress,
+        }}
+        sx={{
+          "& .MuiDataGrid-cell:focus": { outline: "none" },
+          "& .MuiDataGrid-row.Mui-selected": {
+            backgroundColor: "action.hover",
+          },
+        }}
+      />
     </Box>
   );
 }
