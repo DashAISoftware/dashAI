@@ -45,7 +45,7 @@ export default function DocumentSelectionTable({
       {
         field: "file_name",
         headerName: "Name",
-        minWidth: 250,
+        minWidth: 220,
         flex: 1,
         editable: false,
       },
@@ -104,6 +104,9 @@ export default function DocumentSelectionTable({
   return (
     <Box
       sx={{
+        backgroundColor: "background.paper",
+        borderRadius: 2,
+        p: 2,
         height: "100%",
         width: "100%",
       }}
@@ -128,10 +131,30 @@ export default function DocumentSelectionTable({
           loadingOverlay: LinearProgress,
         }}
         sx={{
-          "& .MuiDataGrid-cell:focus": { outline: "none" },
           "& .MuiDataGrid-row.Mui-selected": {
             backgroundColor: "action.hover",
           },
+          "& .MuiDataGrid-virtualScroller": {
+            "&::-webkit-scrollbar": {
+              width: "10px",
+              height: "10px",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "#252836",
+              borderRadius: "5px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#374151",
+              borderRadius: "5px",
+              border: "2px solid #252836",
+              "&:hover": {
+                backgroundColor: "#4a5568",
+              },
+            },
+          },
+          // Scrollbar styles for Firefox
+          scrollbarWidth: "thin",
+          scrollbarColor: "#374151 #252836",
         }}
       />
     </Box>
