@@ -48,7 +48,7 @@ class NystroemSchema(BaseSchema):
     )  # type: ignore
     n_components: schema_field(
         int_field(ge=1),
-        100,
+        2,
         "The number of features to construct.",
     )  # type: ignore
     random_state: schema_field(
