@@ -235,7 +235,7 @@ class ModelJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        "Metric is not compatible with the Task",
+                        f"Metric is not compatible with the Task. {e}",
                     ) from e
                 try:
                     # Optimizer configuration
