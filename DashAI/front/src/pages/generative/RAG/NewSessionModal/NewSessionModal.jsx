@@ -73,6 +73,7 @@ const defaultNewSession = {
     prompt_model: {
       component: "CustomGenerationPrompt",
       params: {
+        name: "Default Prompt",
         template:
           "Answer to this message: {input}, with the following information: {chunks}",
       },

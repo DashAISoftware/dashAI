@@ -736,6 +736,7 @@ class RAGPrompt(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     class_name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(

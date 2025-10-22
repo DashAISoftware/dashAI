@@ -1,16 +1,18 @@
 from typing import Any, Dict, List
 
-from DashAI.back.models.base_model import BaseModel
 from DashAI.back.core.schema_fields import BaseSchema, schema_field, string_field
-from DashAI.back.dependencies.database.models import (
-    RAGPrompt as PromptDBModel)
+from DashAI.back.dependencies.database.models import RAGPrompt as PromptDBModel
+from DashAI.back.models.base_model import BaseModel
+
 
 class PromptSchema(BaseSchema):
-
     template: str = schema_field(
         string_field(),
         placeholder="",
         description="The prompt template with placeholders.",
+    )
+    name: str = schema_field(
+        string_field(), placeholder="", description="Optional name for the prompt."
     )
 
 
@@ -23,32 +25,35 @@ class Prompt(BaseModel):
     SCHEMA = PromptSchema
     REQUIRED_EXTRA_KWARGS = ["db"]
     id: int
+    name: str
 
     def __init__(self, **kwargs):
         self.db = kwargs.pop("db")
         kwargs = self.validate_and_transform(kwargs)
         self.template = kwargs.get("template")
-        assert self.validate_template(self.template), "The template is missing required placeholders."
+        self.name = kwargs.get("name")
+        assert self.validate_template(self.template), (
+            "The template is missing required placeholders."
+        )
         self.class_name = self.__class__.__name__
         self.params = kwargs
-
-        stored_model = self.db.query(PromptDBModel).filter_by(
-            class_name = self.class_name,
-            parameters = self.params
-        ).first()
+        stored_model = (
+            self.db.query(PromptDBModel)
+            .filter_by(
+                class_name=self.class_name, name=self.name, parameters=self.params
+            )
+            .first()
+        )
         if stored_model:
             self.id = stored_model.id
         else:
             new_model = PromptDBModel(
-                class_name=self.class_name,
-                parameters=self.params
+                class_name=self.class_name, name=self.name, parameters=self.params
             )
             self.db.add(new_model)
             self.db.commit()
             self.id = new_model.id
 
-
-        
     def load(self, **kwargs: Any) -> None:
         pass
 
@@ -57,13 +62,8 @@ class Prompt(BaseModel):
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        if hasattr(cls, 'metadata'):
-            metadata = cls.metadata
-        else:
-            metadata = {}
+        metadata = cls.metadata if hasattr(cls, "metadata") else {}
         return metadata
-
-        
 
     @classmethod
     def get_required_placeholders(cls) -> List[str]:
@@ -72,18 +72,21 @@ class Prompt(BaseModel):
         Returns:
             List[str]: List of required placeholders.
         """
-        assert hasattr(cls, 'required_placeholders'), "Subclasses must define 'required_placeholders' class attribute."
+        assert hasattr(cls, "required_placeholders"), (
+            "Subclasses must define 'required_placeholders' class attribute."
+        )
         return cls.required_placeholders
-    
+
     def get_optional_placeholders(self) -> List[str]:
         """
         Get the list of optional placeholders for the prompt template.
         Returns:
             List[str]: List of optional placeholders.
         """
-        assert hasattr(self, 'optional_placeholders'), "Subclasses must define 'optional_placeholders' class attribute."
+        assert hasattr(self, "optional_placeholders"), (
+            "Subclasses must define 'optional_placeholders' class attribute."
+        )
         return self.optional_placeholders
-
 
     @classmethod
     def validate_template(cls, template: str) -> bool:
@@ -94,11 +97,7 @@ class Prompt(BaseModel):
         Returns:
             bool: True if the template is valid, False otherwise.
         """
-        for placeholder in cls.required_placeholders:
-            if placeholder not in template:
-                return False
-        return True
-   
+        return all(placeholder in template for placeholder in cls.required_placeholders)
 
     @staticmethod
     def format(input: str, **kwargs: Any) -> str:
@@ -111,4 +110,3 @@ class Prompt(BaseModel):
             str: The formatted prompt.
         """
         raise NotImplementedError("Subclasses must implement this method.")
-    
