@@ -175,16 +175,9 @@ class ModelJob(BaseJob):
                     prepared_dataset = task.prepare_for_task(
                         loaded_dataset, experiment.output_columns
                     )
-                    n_labels = None
-                    if experiment.task_name in [
-                        "TextClassificationTask",
-                        "TabularClassificationTask",
-                        "ImageClassificationTask",
-                    ]:
-                        all_classes = prepared_dataset.unique(
-                            experiment.output_columns[0]
-                        )
-                        n_labels = len(all_classes)
+                    n_labels = task.num_labels(
+                        prepared_dataset, experiment.output_columns[0]
+                    )
 
                     splits = json.loads(experiment.splits)
                     prepared_dataset, splits = prepare_for_experiment(
@@ -236,42 +229,28 @@ class ModelJob(BaseJob):
                     raise JobError(
                         f"Unable to instantiate model using run {run_id}",
                     ) from e
-                if experiment.task_name in [
-                    "TextClassificationTask",
-                    "TabularClassificationTask",
-                    "RegressionTask",
-                ]:
-                    try:
-                        # Optimizer configuration
+                try:
+                    if len(run.goal_metric) > 0:
+                        goal_metric = selected_metrics[run.goal_metric]
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        "Metric is not compatible with the Task",
+                    ) from e
+                try:
+                    # Optimizer configuration
+                    if len(run.optimizer_name) > 0:
                         run_optimizer_class = component_registry[run.optimizer_name][
                             "class"
                         ]
-                    except Exception as e:
-                        log.exception(e)
-                        raise JobError(
-                            f"Unable to find Model with name {run.optimizer_name} in "
-                            "registry.",
-                        ) from e
-                    if run.goal_metric != "":
-                        try:
-                            goal_metric = selected_metrics[run.goal_metric]
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                "Metric is not compatible with the Task",
-                            ) from e
-                        try:
-                            optimizer: BaseOptimizer = run_optimizer_class(
-                                **run.optimizer_parameters
-                            )
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                (
-                                    "Optimizer parameters not compatible "
-                                    "with the optimizer"
-                                ),
-                            ) from e
+                        optimizer: BaseOptimizer = run_optimizer_class(
+                            **run.optimizer_parameters
+                        )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error instantiating optimizer {run.optimizer_name}, {e}",
+                    ) from e
                 try:
                     run.set_status_as_started()
                     db.commit()
@@ -282,6 +261,7 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     # Hyperparameter Tunning
+                    plot_paths = []
                     if not run_optimizable_parameters:
                         model.fit(x["train"], y["train"])
                     else:
@@ -291,7 +271,7 @@ class ModelJob(BaseJob):
                             y,
                             run_optimizable_parameters,
                             goal_metric,
-                            experiment.task_name,
+                            task,
                         )
                         model = optimizer.get_model()
                         # Generate hyperparameter plot
@@ -299,7 +279,6 @@ class ModelJob(BaseJob):
                         plot_filenames, plots = optimizer.create_plots(
                             trials, run_id, n_params=len(run_optimizable_parameters)
                         )
-                        plot_paths = []
                         for filename, plot in zip(plot_filenames, plots):
                             plot_path = os.path.join(config["RUNS_PATH"], filename)
                             with open(plot_path, "wb") as file:
@@ -308,31 +287,22 @@ class ModelJob(BaseJob):
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        "Model training failed",
+                        f"Model training failed {e}",
                     ) from e
-                if run_optimizable_parameters != {}:
-                    if len(run_optimizable_parameters) >= 2:
-                        try:
-                            run.plot_history_path = plot_paths[0]
-                            run.plot_slice_path = plot_paths[1]
-                            run.plot_contour_path = plot_paths[2]
-                            run.plot_importance_path = plot_paths[3]
-                            db.commit()
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                "Hyperparameter plot path saving failed",
-                            ) from e
-                    else:
-                        try:
-                            run.plot_history_path = plot_paths[0]
-                            run.plot_slice_path = plot_paths[1]
-                            db.commit()
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                "Hyperparameter plot path saving failed",
-                            ) from e
+                try:
+                    paths = plot_paths + [None] * (4 - len(plot_paths))
+                    (
+                        run.plot_history_path,
+                        run.plot_slice_path,
+                        run.plot_contour_path,
+                        run.plot_importance_path,
+                    ) = paths[:4]
+                    db.commit()
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Hyperparameter plot path saving failed {e}",
+                    ) from e
                 try:
                     run.set_status_as_finished()
                     db.commit()
