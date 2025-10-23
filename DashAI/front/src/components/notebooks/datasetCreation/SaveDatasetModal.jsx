@@ -77,7 +77,7 @@ export function SaveDatasetModal({
   const nameError = getNameError();
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={() => {}} maxWidth="sm" fullWidth>
       <DialogTitle>
         Save Processed Dataset
         <IconButton

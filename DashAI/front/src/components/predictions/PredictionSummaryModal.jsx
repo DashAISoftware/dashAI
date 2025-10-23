@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search } from "@mui/icons-material";
+import { Search, Close } from "@mui/icons-material";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import {
   Dialog,
@@ -9,6 +9,8 @@ import {
   Typography,
   Tabs,
   Tab,
+  IconButton,
+  Box,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import PredictionSummaryTab from "./PredictionSummaryTab";
@@ -74,11 +76,25 @@ function PredictionSummaryModal({ predictName }) {
         maxWidth={"md"}
       >
         <DialogTitle>
-          <Grid container direction="row" justifyContent="space-between">
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Typography variant="h5" component="h2">
               Prediction Summary
             </Typography>
-          </Grid>
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <Close />
+            </IconButton>
+          </Box>
         </DialogTitle>
         <DialogContent>
           <Grid
