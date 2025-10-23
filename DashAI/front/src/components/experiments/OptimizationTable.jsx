@@ -22,7 +22,8 @@ function OptimizationTable({ newExp, setNewExp }) {
           if (run.id === id) {
             return {
               ...run,
-              optimizer_name: selectedOptimizer[id],
+              optimizer_name: newExp.runs.find((r) => r.id === id)
+                .optimizer_name,
               optimizer_parameters: newValues,
             };
           }
@@ -85,7 +86,7 @@ function OptimizationTable({ newExp, setNewExp }) {
       renderCell: (params) => (
         <OptimizationTableSelectOptimizer
           taskName={newExp.task_name}
-          optimizerName={selectedOptimizer[params.row.id]}
+          optimizerName={params.row.optimizer_name}
           handleSelectedOptimizer={(optimizerName, defaultValues) =>
             handleSelectedOptimizer(optimizerName, defaultValues, params.row.id)
           }
@@ -97,14 +98,14 @@ function OptimizationTable({ newExp, setNewExp }) {
       type: "actions",
       minWidth: 100,
       getActions: (params) => {
-        if (!selectedOptimizer[params.row.id]) {
+        if (!params.row.optimizer_name) {
           return [];
         }
 
         return [
           <EditOptimizerDialog
             key="edit-component"
-            optimizerToConfigure={selectedOptimizer[params.row.id]}
+            optimizerToConfigure={params.row.optimizer_name}
             updateParameters={handleUpdateParameters(params.row.id)}
             paramsInitialValues={params.row.optimizer_parameters}
           />,
