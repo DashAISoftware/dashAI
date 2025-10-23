@@ -257,6 +257,32 @@ export const checkIfHaveOptimazers = (values) => {
   return false;
 };
 
+export const checkHowManyOptimazers = (values) => {
+  let count = 0;
+
+  if (!values?.params) {
+    return count;
+  }
+
+  for (let key in values.params) {
+    const param = values.params[key];
+    if (!param) continue;
+
+    if (param.optimize) {
+      count += 1;
+    }
+
+    if (
+      param.properties &&
+      checkIfHaveOptimazers(param.properties.params.comp.params)
+    ) {
+      count += checkHowManyOptimazers(param.properties.params.comp.params);
+    }
+  }
+
+  return count;
+};
+
 export const getParamsFromSubform = (subform) => {
   if (!subform) {
     return null;
