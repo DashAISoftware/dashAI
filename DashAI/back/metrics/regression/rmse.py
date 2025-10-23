@@ -28,4 +28,4 @@ class RMSE(RegressionMetric):
             RMSE score between true values and predicted values
         """
         true_values, pred_values = prepare_to_metric(true_values, predicted_values)
-        return mean_squared_error(true_values, pred_values, squared=False)
+        return mean_squared_error(true_values, pred_values)
