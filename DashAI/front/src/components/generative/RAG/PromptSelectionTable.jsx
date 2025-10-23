@@ -112,6 +112,9 @@ export default function PromptSelectionTable({
     const updatedPrompts = await getRAGPrompts();
     updatedPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));
     setPromptRows(updatedPrompts);
+    if (updatedPrompts.length > 0 && onRowSelectionModelChange) {
+      onRowSelectionModelChange([updatedPrompts[0].id]);
+    }
     setNewPromptModalOpen(false);
   };
 

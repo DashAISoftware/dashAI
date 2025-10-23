@@ -19,7 +19,7 @@ export default function PromptConfigurationStep({
   }, []);
 
   useEffect(() => {
-    setNextEnabled(true);
+    setNextEnabled(selectedPromptId.length > 0);
     if (selectedPromptId.length > 0) {
       const prompt = prompts.find((p) => p.id === selectedPromptId[0]);
       if (prompt) {
