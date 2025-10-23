@@ -208,6 +208,35 @@ export default function NewExperimentModal({
     setNextEnabled(false);
   };
 
+  useEffect(() => {
+    if (steps[activeStep].name === "configureModels") {
+      const allModelsHaveMetric = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.goal_metric;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveMetric) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+    if (steps[activeStep].name === "configureOptimizer") {
+      const allModelsHaveOptimizers = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.optimizer_name;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveOptimizers) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+  }, [open, newExp.runs]);
+
   return (
     <Dialog
       open={open}

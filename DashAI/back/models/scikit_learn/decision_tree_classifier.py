@@ -58,7 +58,7 @@ class DecisionTreeClassifierSchema(BaseSchema):
     )  # type: ignore
     max_features: schema_field(
         enum_field(enum=["auto", "sqrt", "log2"]),
-        placeholder=None,
+        placeholder="auto",
         description="The number of features to consider when looking for the best "
         "split.",
     )  # type: ignore

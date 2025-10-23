@@ -13,10 +13,11 @@ import {
 import { Close } from "@mui/icons-material";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
-import DatasetTable from "./dataset/DatasetTable";
+import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
+import api from "../../../api/api";
 
-import { getDatasetFile } from "../../api/datasets";
+import { getDatasetFile } from "../../../api/datasets";
 
 export default function ConfigureToolModal({
   tool,
@@ -177,14 +178,47 @@ export default function ConfigureToolModal({
           }}
         >
           {activeTab === 0 && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              gutterBottom
-              //textAlign="center"
-            >
-              {tool.description || "No description available."}
-            </Typography>
+            <>
+              {/* Tool Description */}
+              <Box
+                sx={{
+                  bgcolor: "rgb(44, 44, 44)",
+                  border: "1px solid rgb(39, 39, 42)",
+                  borderRadius: 1.5,
+                  p: 2,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 1,
+                    display: "block",
+                  }}
+                >
+                  Description
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    lineHeight: 1.6,
+                    mb: 2,
+                  }}
+                >
+                  {tool.description || "No description available."}
+                </Typography>
+                <img
+                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                  alt={tool.display_name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                />
+              </Box>
+            </>
           )}
           {activeTab === 1 && (
             <DatasetTable
