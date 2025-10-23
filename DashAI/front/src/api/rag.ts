@@ -6,7 +6,18 @@ import { IComponent } from "../types/component";
 import { IRAGPrompt } from "../types/ragPrompt";
 import { getChildComponents } from "./component";
 
-// Fetch all RAG sessions
+export const createRAGPrompt = async (prompt: {
+  class_name: string;
+  name: string;
+  parameters?: Record<string, any>;
+}): Promise<{ id: number }> => {
+  const response = await api.post("/v1/generative-session/prompts", prompt);
+  if (response.status !== 201) {
+    throw new Error(`Failed to create RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
 export const getRAGSessions = async (): Promise<ISession[]> => {
   const response = await api.get<ISession[]>("/v1/generative-session/");
   if (response.status !== 200) {
