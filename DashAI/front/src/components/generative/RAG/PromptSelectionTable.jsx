@@ -1,13 +1,30 @@
 import React, { useState } from "react";
-import { Box, Paper, Tooltip, IconButton } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Tooltip,
+  IconButton,
+  Button,
+  Grid,
+  Typography,
+} from "@mui/material";
+import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DataGrid } from "@mui/x-data-grid";
 import { formatDate } from "../../../utils";
 import TemplateModal from "../../custom/TemplateModal";
+import NewPromptModal from "./NewPromptModal";
 
-export default function PromptSelectionTable({ prompts = [] }) {
+export default function PromptSelectionTable({
+  prompts = [],
+  loading = false,
+  rowSelectionModel = [],
+  onRowSelectionModelChange,
+  showTableTitle = false,
+}) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [newPromptModalOpen, setNewPromptModalOpen] = useState(false);
 
   const handleViewTemplate = (template) => {
     setSelectedTemplate(template);
@@ -82,8 +99,45 @@ export default function PromptSelectionTable({ prompts = [] }) {
   );
 
   return (
-    <Paper sx={{ py: 2, px: 3 }}>
-      <Box sx={{ height: 400, width: "100%" }}>
+    <Paper sx={{ py: 4, px: 4 }}>
+      {showTableTitle && (
+        <Grid
+          container
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Typography variant="h5" component="h2">
+            Prompts
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setNewPromptModalOpen(true)}
+            startIcon={<AddIcon />}
+          >
+            New Prompt
+          </Button>
+        </Grid>
+      )}
+      {!showTableTitle && (
+        <Grid
+          container
+          justifyContent="flex-end"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setNewPromptModalOpen(true)}
+            startIcon={<AddIcon />}
+          >
+            New Prompt
+          </Button>
+        </Grid>
+      )}
+      <Box sx={{ height: "100%" }}>
         <DataGrid
           rows={prompts}
           columns={columns}
@@ -95,13 +149,19 @@ export default function PromptSelectionTable({ prompts = [] }) {
             },
           }}
           pageSizeOptions={[5, 10, 25, 50]}
-          disableRowSelectionOnClick
           autoHeight
+          loading={loading}
+          rowSelectionModel={rowSelectionModel}
+          onRowSelectionModelChange={onRowSelectionModelChange}
         />
         <TemplateModal
           open={modalOpen}
           handleClose={handleCloseModal}
           template={selectedTemplate}
+        />
+        <NewPromptModal
+          open={newPromptModalOpen}
+          handleClose={() => setNewPromptModalOpen(false)}
         />
       </Box>
     </Paper>
