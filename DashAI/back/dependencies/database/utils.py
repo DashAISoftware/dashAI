@@ -60,7 +60,7 @@ def add_plugin_to_db(
                     name=raw_plugin.name,
                     author=raw_plugin.author,
                     installed_version=raw_plugin.installed_version,
-                    lastest_version=raw_plugin.lastest_version,
+                    latest_version=raw_plugin.lastest_version,
                     summary=raw_plugin.summary,
                     description=raw_plugin.description,
                     description_content_type=raw_plugin.description_content_type,

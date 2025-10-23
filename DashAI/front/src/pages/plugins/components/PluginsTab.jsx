@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import usePluginsTab from "../hooks/usePluginsTab";
 import { Update as UpdateIcon } from "@mui/icons-material";
 import { updatePluginsDBFromPypi as updatePluginsFromPypi } from "../../../api/plugins";
-
+import { enqueueSnackbar } from "notistack";
 /**
  * component to display plugins main tabs
  * @param {boolean} refreshPluginsFlag

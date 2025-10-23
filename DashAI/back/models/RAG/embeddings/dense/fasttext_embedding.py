@@ -52,8 +52,7 @@ class FastTextEmbedding(DenseEmbedding):
 
     def load(self):
         """Load the FastText model."""
-        model_name = self.model_name.split("/")[-1]
-        model_path = hf_hub_download(repo_id=self.model_name, filename=f"{model_name}.bin")
+        model_path = hf_hub_download(repo_id=self.model_name, filename="model.bin")
         self.model = fasttext.load_model(model_path)
 
     def save(self):
