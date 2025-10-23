@@ -87,6 +87,14 @@ async def upload_generative_session(
                         )
                     documents_ids.append(document.id)
 
+                if "prompt_model" not in params.parameters:
+                    params.parameters["prompt_model"] = {
+                        'component': 'CustomGenerationPrompt',
+                        'params': {
+                            'template': """Answer to this question\n{input}\nUsing the following documents as context:\n{chunks}\nThe chat history is:\n{history}"""
+                        }
+                    }
+
                 params.parameters["documents"] = documents_ids
             # Continue with the session creation
 
