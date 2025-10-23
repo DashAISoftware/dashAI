@@ -21,7 +21,13 @@ export default function DocumentSelector({
       setIsLoading(true);
       try {
         const docs = await loadDocuments();
-        setDocuments(docs);
+        // Sort documents by creation date, newest first
+        const sortedDocs = docs.sort((a, b) => {
+          const dateA = new Date(a.created);
+          const dateB = new Date(b.created);
+          return dateB - dateA; // Descending order (newest first)
+        });
+        setDocuments(sortedDocs);
       } catch (error) {
         console.error("Failed to load documents:", error);
       } finally {

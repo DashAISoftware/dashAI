@@ -1,20 +1,10 @@
-import {
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Checkbox,
-  Typography,
-  IconButton,
-  Tooltip,
-  Button,
-  CircularProgress,
-} from "@mui/material";
+import React from "react";
+import { Box, IconButton, Tooltip, LinearProgress } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import DeleteIcon from "@mui/icons-material/Delete";
 import PropTypes from "prop-types";
+import { formatDate } from "../../../utils";
+import DeleteItemModal from "../../custom/DeleteItemModal";
 
 export default function DocumentSelectionTable({
   documents,
@@ -25,15 +15,91 @@ export default function DocumentSelectionTable({
   onRemove,
   isLoading = false,
 }) {
-  // Format the date to a more readable format
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString();
-    } catch (e) {
-      return dateString;
+  const handleSelectionChange = (newSelection) => {
+    // Get currently selected IDs
+    const currentSet = new Set(selectedIds);
+    const newSet = new Set(newSelection);
+
+    // Find what was added
+    const added = newSelection.filter((id) => !currentSet.has(id));
+    // Find what was removed
+    const removed = selectedIds.filter((id) => !newSet.has(id));
+
+    if (added.length > 0) {
+      added.forEach((id) => onToggle(id));
+    }
+    if (removed.length > 0) {
+      removed.forEach((id) => onToggle(id));
     }
   };
+
+  const columns = React.useMemo(
+    () => [
+      {
+        field: "id",
+        headerName: "ID",
+        minWidth: 50,
+        flex: 0.5,
+        editable: false,
+      },
+      {
+        field: "file_name",
+        headerName: "Name",
+        minWidth: 220,
+        flex: 1,
+        editable: false,
+      },
+      {
+        field: "created",
+        headerName: "Added On",
+        minWidth: 140,
+        flex: 0.5,
+        editable: false,
+        valueGetter: (value) => formatDate(value),
+      },
+      {
+        field: "last_modified",
+        headerName: "Last Modified",
+        minWidth: 140,
+        flex: 0.5,
+        editable: false,
+        valueGetter: (value, row) => {
+          return row?.optional_metadata?.last_modified
+            ? formatDate(row.optional_metadata.last_modified)
+            : "N/A";
+        },
+      },
+      {
+        field: "actions",
+        type: "actions",
+        headerName: "Actions",
+        minWidth: 100,
+        flex: 0.3,
+        getActions: (params) => [
+          <Tooltip title="Preview" key="preview">
+            <IconButton
+              size="small"
+              onClick={() => {
+                if (params.row.preview) {
+                  window.open(params.row.preview, "_blank");
+                } else {
+                  console.warn("No preview URL available for this document.");
+                }
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>,
+          <DeleteItemModal
+            key="delete-button"
+            deleteFromTable={() => onRemove(params.row.id)}
+            item="document"
+          />,
+        ],
+      },
+    ],
+    [onRemove],
+  );
 
   return (
     <Box
@@ -42,109 +108,68 @@ export default function DocumentSelectionTable({
         borderRadius: 2,
         p: 2,
         height: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}>
-      {isLoading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-          <CircularProgress />
-        </Box>
-      ) : documents.length === 0 ? (
-        <Typography variant="body1" color="warning.main" textAlign="center" mt={16} mx={"auto "}>
-          No documents available.
-        </Typography>
-      ) : (
-        <>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    indeterminate={selectedIds.length > 0 && selectedIds.length < documents.length}
-                    checked={selectedIds.length === documents.length && documents.length > 0}
-                    onChange={(event) => {
-                      if (event.target.checked) {
-                        onSelectAll();
-                      } else {
-                        onDeselectAll();
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell>Id</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Added On</TableCell>
-                <TableCell>Last Modified</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {documents.map((doc) => (
-                <TableRow
-                  key={doc.id}
-                  selected={selectedIds.includes(doc.id)}
-                  sx={{
-                    transition: "background-color 0.3s",
-                    backgroundColor: selectedIds.includes(doc.id) ? "action.hover" : "inherit",
-                  }}
-                >
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectedIds.includes(doc.id)}
-                      onChange={() => onToggle(doc.id)}
-                    />
-                  </TableCell>
-                  <TableCell>{doc.id}</TableCell>
-                  <TableCell>{doc.file_name}</TableCell>
-                  <TableCell>{formatDate(doc.created)}</TableCell>
-                  <TableCell>{doc.optional_metadata?.last_modified ? formatDate(doc.optional_metadata.last_modified) : "N/A"}</TableCell>
-                  <TableCell align="right">
-                    <Box display="flex" flexDirection="row" justifyContent="flex-end">
-                      <Tooltip title="Preview">
-                        <IconButton size="small" onClick={() => {
-                          if (doc.preview) window.open(doc.preview, '_blank');
-                          else console.warn("No preview URL available for this document.");
-                        }}>
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Remove">
-                        <IconButton size="small" onClick={() => onRemove(doc.id)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Box
-            display="flex"
-            mb={0}
-            mt="auto"
-            alignItems="center"
-            justifyContent="flex-end"
-            gap={1}
-            p={1}
-            borderTop="1px solid #e0e0e0"
-          >
-            <Button size="small" onClick={onDeselectAll}>Deselect All</Button>
-            <Button size="small" onClick={onSelectAll}>Select All</Button>
-          </Box>
-        </>
-      )}
+        width: "100%",
+      }}
+    >
+      <DataGrid
+        rows={documents}
+        columns={columns}
+        checkboxSelection
+        disableRowSelectionOnClick
+        rowSelectionModel={selectedIds}
+        onRowSelectionModelChange={handleSelectionChange}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 5,
+            },
+          },
+        }}
+        pageSizeOptions={[5, 10, 25, 50]}
+        loading={isLoading}
+        slots={{
+          loadingOverlay: LinearProgress,
+        }}
+        sx={{
+          "& .MuiDataGrid-row.Mui-selected": {
+            backgroundColor: "action.hover",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            "&::-webkit-scrollbar": {
+              width: "10px",
+              height: "10px",
+            },
+            "&::-webkit-scrollbar-track": {
+              backgroundColor: "#252836",
+              borderRadius: "5px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#374151",
+              borderRadius: "5px",
+              border: "2px solid #252836",
+              "&:hover": {
+                backgroundColor: "#4a5568",
+              },
+            },
+          },
+          // Scrollbar styles for Firefox
+          scrollbarWidth: "thin",
+          scrollbarColor: "#374151 #252836",
+        }}
+      />
     </Box>
   );
 }
 
 DocumentSelectionTable.propTypes = {
-  documents: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    createdAt: PropTypes.string.isRequired,
-    preview: PropTypes.string,
-  })).isRequired,
+  documents: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      createdAt: PropTypes.string.isRequired,
+      preview: PropTypes.string,
+    }),
+  ).isRequired,
   selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   onToggle: PropTypes.func.isRequired,
   onSelectAll: PropTypes.func.isRequired,

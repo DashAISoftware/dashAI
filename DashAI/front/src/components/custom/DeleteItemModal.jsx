@@ -16,7 +16,7 @@ import TooltipedCellItem from "../shared/TooltipedCellItem";
  * @param {Object} props
  * @param {Function} props.deleteFromTable - Function to delete the item from the table
  */
-function DeleteItemModal({ deleteFromTable }) {
+function DeleteItemModal({ deleteFromTable, item = "item" }) {
   const [open, setOpen] = React.useState(false);
   const handleDelete = () => {
     deleteFromTable();
@@ -28,7 +28,7 @@ function DeleteItemModal({ deleteFromTable }) {
         key="delete-button"
         icon={<DeleteIcon />}
         label="Delete"
-        tooltip="Delete item"
+        tooltip={`Delete ${item}`}
         onClick={() => setOpen(true)}
         sx={{ color: "error.main" }}
       />
@@ -36,7 +36,7 @@ function DeleteItemModal({ deleteFromTable }) {
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this item?
+            Are you sure you want to delete this {item}?
           </DialogContentText>
         </DialogContent>
         <DialogActions>

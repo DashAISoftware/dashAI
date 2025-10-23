@@ -30,7 +30,8 @@ class DefaultGenerationPrompt(GenerationPrompt):
     }
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        self.template = kwargs.pop("template")
+
 
     @staticmethod
     def format(

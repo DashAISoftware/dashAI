@@ -23,7 +23,7 @@ class CustomAugmentationPrompt(AugmentationPrompt):
 
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        self.template = kwargs.pop("template")
 
 
     def format(

@@ -3,9 +3,21 @@ import { ISession } from "../types/session";
 import { IGenerativeTask } from "../types/generativeTask";
 import { IDocumentResponse } from "../types/documentResponse";
 import { IComponent } from "../types/component";
+import { IRAGPrompt } from "../types/ragPrompt";
 import { getChildComponents } from "./component";
 
-// Fetch all RAG sessions
+export const createRAGPrompt = async (prompt: {
+  class_name: string;
+  name: string;
+  parameters?: Record<string, any>;
+}): Promise<{ id: number }> => {
+  const response = await api.post("/v1/generative-session/prompts", prompt);
+  if (response.status !== 201) {
+    throw new Error(`Failed to create RAG prompt: ${response.statusText}`);
+  }
+  return response.data;
+};
+
 export const getRAGSessions = async (): Promise<ISession[]> => {
   const response = await api.get<ISession[]>("/v1/generative-session/");
   if (response.status !== 200) {
@@ -32,6 +44,7 @@ export const getRAGSession = async (sessionId: number): Promise<ISession> => {
 export const createRAGSession = async (
   sessionData: Omit<ISession, "id" | "created" | "last_modified">,
 ): Promise<ISession> => {
+  console.log("Creating RAG session with data:", sessionData);
   const params = sessionData.parameters as {
     documents: number[];
     chunking_model: {
@@ -46,10 +59,7 @@ export const createRAGSession = async (
       component: string;
       params: Record<string, any>;
     };
-    prompt_model: {
-      component: string;
-      params: Record<string, any>;
-    };
+    prompt_id: number;
   };
 
   const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
@@ -73,10 +83,7 @@ export const createRAGSession = async (
           component: params.generation_model.component,
           params: params.generation_model.params,
         },
-        prompt_model: {
-          component: params.prompt_model.component,
-          params: params.prompt_model.params,
-        },
+        prompt_id: params.prompt_id,
       },
     };
 
@@ -219,5 +226,30 @@ export const addDocument = async ({
     throw new Error(`Failed to upload document: ${response.statusText}`);
   }
 
+  return response.data;
+};
+
+export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
+  const response = await api.get<IRAGPrompt[]>(
+    "/v1/generative-session/prompts",
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch RAG prompts: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+export const getGenerationPromptChildren = async (): Promise<IComponent[]> => {
+  const response = await api.get<IComponent[]>(
+    "/v1/component/GenerationPrompt/children",
+    {
+      params: { recursive: false },
+    },
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch GenerationPrompt children: ${response.statusText}`,
+    );
+  }
   return response.data;
 };

@@ -21,7 +21,7 @@ class CustomGenerationPrompt(GenerationPrompt):
     
 
     def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
+        self.template = kwargs.pop("template")
         
     def format(
             self,
