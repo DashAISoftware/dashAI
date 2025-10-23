@@ -23,36 +23,9 @@ class Prompt(BaseModel):
     """
 
     SCHEMA = PromptSchema
-    REQUIRED_EXTRA_KWARGS = ["db"]
     id: int
     name: str
-
-    def __init__(self, **kwargs):
-        self.db = kwargs.pop("db")
-        kwargs = self.validate_and_transform(kwargs)
-        self.template = kwargs.get("template")
-        self.name = kwargs.get("name")
-        assert self.validate_template(self.template), (
-            "The template is missing required placeholders."
-        )
-        self.class_name = self.__class__.__name__
-        self.params = kwargs
-        stored_model = (
-            self.db.query(PromptDBModel)
-            .filter_by(
-                class_name=self.class_name, name=self.name, parameters=self.params
-            )
-            .first()
-        )
-        if stored_model:
-            self.id = stored_model.id
-        else:
-            new_model = PromptDBModel(
-                class_name=self.class_name, name=self.name, parameters=self.params
-            )
-            self.db.add(new_model)
-            self.db.commit()
-            self.id = new_model.id
+    REQUIRED_EXTRA_KWARGS = []
 
     def load(self, **kwargs: Any) -> None:
         pass

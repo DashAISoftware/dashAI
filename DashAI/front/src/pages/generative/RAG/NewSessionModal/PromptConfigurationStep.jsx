@@ -27,10 +27,7 @@ export default function PromptConfigurationStep({
           ...prev,
           parameters: {
             ...prev.parameters,
-            prompt_model: {
-              component: prompt.class_name,
-              params: prompt.parameters,
-            },
+            prompt_id: prompt.id,
           },
         }));
       }

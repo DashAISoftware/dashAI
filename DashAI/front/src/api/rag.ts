@@ -44,6 +44,7 @@ export const getRAGSession = async (sessionId: number): Promise<ISession> => {
 export const createRAGSession = async (
   sessionData: Omit<ISession, "id" | "created" | "last_modified">,
 ): Promise<ISession> => {
+  console.log("Creating RAG session with data:", sessionData);
   const params = sessionData.parameters as {
     documents: number[];
     chunking_model: {
@@ -58,10 +59,7 @@ export const createRAGSession = async (
       component: string;
       params: Record<string, any>;
     };
-    prompt_model: {
-      component: string;
-      params: Record<string, any>;
-    };
+    prompt_id: number;
   };
 
   const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
@@ -85,10 +83,7 @@ export const createRAGSession = async (
           component: params.generation_model.component,
           params: params.generation_model.params,
         },
-        prompt_model: {
-          component: params.prompt_model.component,
-          params: params.prompt_model.params,
-        },
+        prompt_id: params.prompt_id,
       },
     };
 

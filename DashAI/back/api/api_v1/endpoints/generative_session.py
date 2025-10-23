@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
+from DashAI.back.models.RAG import DefaultGenerationPrompt, DefaultQnAGenerationPrompt, DefaultAugmentationPrompt
 from DashAI.back.api.api_v1.schemas.rag_prompt import RAGPromptSchema
 from DashAI.back.dependencies.database.models import (
     Document,
@@ -19,7 +20,8 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models import BaseGenerativeModel
+from DashAI.back.models.RAG import Prompt
+from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks import BaseGenerativeTask
 from DashAI.back.tasks.RAG_task import RAGTask
 
@@ -30,10 +32,30 @@ log = logging.getLogger(__name__)
 @router.post("/prompts", status_code=status.HTTP_201_CREATED)
 async def create_rag_prompt(
     prompt: RAGPromptSchema,
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Create a new RAGPrompt entry in the database."""
     with session_factory() as db:
+        prompt_class_name = prompt.class_name
+        if not prompt_class_name in component_registry:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Component {prompt_class_name} is not registered.",
+            )
+        prompt_component = component_registry[prompt_class_name]
+        prompt_class: Prompt = prompt_component["class"]
+        if not issubclass(prompt_class, Prompt):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Component {prompt_class_name} is not a valid Prompt subclass.",
+            )
+        template_validation = prompt_class.validate_template(prompt.parameters["template"])
+        if not template_validation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid template for prompt {prompt.class_name}. Required tokens are: {prompt_class.get_required_placeholders()}",
+            )
         new_prompt = RAGPrompt(
             class_name=prompt.class_name,
             name=prompt.name,
@@ -188,6 +210,34 @@ async def get_all_prompts(
     with session_factory() as db:
         try:
             prompts = db.query(RAGPrompt).all()
+
+            if len(prompts) == 0:
+                default_generation_prompt = RAGPrompt(
+                    class_name=DefaultGenerationPrompt.__name__,
+                    name="Default Generation Prompt",
+                    parameters={
+                        'template': DefaultAugmentationPrompt.template
+                    },
+                )
+                default_qa_prompt = RAGPrompt(
+                    class_name=DefaultQnAGenerationPrompt.__name__,
+                    name="Default QnA Prompt",
+                    parameters={
+                        'template': DefaultQnAGenerationPrompt.template
+                    },
+                )
+                default_augmentation_prompt = RAGPrompt(
+                    class_name=DefaultAugmentationPrompt.__name__,
+                    name="Default Augmentation Prompt",
+                    parameters={
+                        'template': DefaultAugmentationPrompt.template
+                    },
+                )
+                db.add(default_generation_prompt)
+                db.add(default_qa_prompt)
+                db.add(default_augmentation_prompt)
+                db.commit()
+                prompts = db.query(RAGPrompt).all()
 
             prompt_responses = []
             for prompt in prompts:

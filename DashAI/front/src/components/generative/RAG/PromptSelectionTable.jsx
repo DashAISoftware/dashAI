@@ -75,7 +75,7 @@ export default function PromptSelectionTable({
         minWidth: 140,
         flex: 1,
         editable: false,
-        valueGetter: (value) => formatDate(value),
+        valueFormatter: (value) => formatDate(value.value),
       },
       {
         field: "last_modified",
@@ -83,7 +83,7 @@ export default function PromptSelectionTable({
         minWidth: 140,
         flex: 1,
         editable: false,
-        valueGetter: (value) => formatDate(value),
+        valueFormatter: (value) => formatDate(value.value),
       },
       {
         field: "actions",

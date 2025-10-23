@@ -70,14 +70,7 @@ const defaultNewSession = {
       component: "",
       params: {},
     },
-    prompt_model: {
-      component: "CustomGenerationPrompt",
-      params: {
-        name: "Default Prompt",
-        template:
-          "Answer to this message: {input}, with the following information: {chunks}",
-      },
-    },
+    prompt_id: null,
   },
 };
 
@@ -125,8 +118,10 @@ export default function NewSessionModal({
             generator_model: {
               ...sessionGeneratorModel,
             },
-          },
-        });
+            prompt_id: sessionParameters.prompt_id
+          }
+        }
+      );
       } else {
         const { defaultName } = generateSequentialName({
           base: "RAG_Session",
@@ -230,13 +225,7 @@ export default function NewSessionModal({
             component: "",
             params: {},
           },
-          prompt_model: sessionData.parameters.prompt_model || {
-            component: "CustomGenerationPrompt",
-            params: {
-              template:
-                "Answer to this message: {input}, with the following information: {chunks}",
-            },
-          },
+          prompt_id: sessionData.parameters.prompt_id,
         },
       };
 

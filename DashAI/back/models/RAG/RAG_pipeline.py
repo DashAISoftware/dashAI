@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dependencies.database.models import (
     Document as DBDocument,
     RAGPipeline as DBPipeline,
+    RAGPrompt as PromptDBModel
     )
 
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
@@ -92,10 +93,10 @@ class RAGPipelineSchema(BaseSchema):
         description="Text generation model used in the RAG pipeline."
     ) # type: ignore
 
-    prompt_model: schema_field(
-        component_field(parent="Prompt"),
-        placeholder={"component": "DefaultGenerationPrompt", "params": {}},
-        description="Prompt template used to format the input for the generation model."
+    prompt_id: schema_field(
+        int_field(gt=0),
+        placeholder=None,
+        description="Database ID of the prompt template to be used in the RAG pipeline."
     ) # type: ignore
 
 class RAGPipeline(BaseGenerativeModel):
@@ -150,15 +151,25 @@ class RAGPipeline(BaseGenerativeModel):
             self.pipeline_db_model = None
             self.pipeline_id = None
         self.documents_ids: List[int] = kwargs.pop("documents")
+        self.prompt_db_id: int = kwargs.pop("prompt_id")
+        prompt_db_model: PromptDBModel = self.db.query(PromptDBModel).filter_by(id=self.prompt_db_id).first()
+        if not prompt_db_model:
+            raise RAGPipelineInitializationError(f"Prompt with ID {self.prompt_db_id} not found in the database.")
+        prompt_model_args = {
+            'component': prompt_db_model.class_name,
+            'params': prompt_db_model.parameters
+        }
+
         self.documents = self.load_documents_from_db(documents_ids=self.documents_ids)
         self.validate_params(kwargs)
 
-        try:        
+        try:
+            
             config = {
                 'chunking_model': kwargs.pop('chunking_model'),
                 'retriever_model': kwargs.pop('retriever_model'),
                 'generation_model': kwargs.pop('generation_model'),
-                'prompt_model': kwargs.pop('prompt_model'),
+                'prompt_model': prompt_model_args
             }
         except KeyError as e:
             raise RAGPipelineParametersError(f"Missing required parameter: {str(e)}")
@@ -171,7 +182,6 @@ class RAGPipeline(BaseGenerativeModel):
         self.retriever_id = self.retriever.retriever_db_model.id
         self.llm_model = self.init_component(config["generation_model"])
         self.prompt_model = self.init_component(config["prompt_model"])
-        self.prompt_db_id = self.prompt_model.id
         self.retrieval_algorithm = "SINGLE_INTERACTION"
         print("RAG pipeline initialized")
 
@@ -179,14 +189,14 @@ class RAGPipeline(BaseGenerativeModel):
             self, 
             params: dict):
         """Validate RAG pipeline parameters."""
-        required_keys = ["chunking_model", "retriever_model", "generation_model", "prompt_model"]
+        required_keys = ["chunking_model", "retriever_model", "generation_model"]
         for key in required_keys:
             if key not in params:
                 raise RAGPipelineParametersError(f"Missing required parameter '{key}' in RAG pipeline configuration")
     
             
         # Validate model components
-        for model in ["chunking_model", "retriever_model", "generation_model", "prompt_model"]:
+        for model in ["chunking_model", "retriever_model", "generation_model"]:
             args = params[model]
             if "component" not in args:
                 raise RAGPipelineParametersError(f"Missing 'component' field in '{model}' configuration")
@@ -194,8 +204,6 @@ class RAGPipeline(BaseGenerativeModel):
                 raise RAGPipelineParametersError(f"Missing 'params' field in '{model}' configuration")
             if args["component"] not in self.component_registry:
                 raise RAGPipelineParametersError(f"No components registered for type '{model}'")
-        if "Custom" in params["prompt_model"]["component"] and "template" not in params["prompt_model"]["params"]:
-            raise RAGPipelineParametersError("Custom prompt model requires a 'template' parameter in its configuration")
        
     def single_interaction(
         self, 

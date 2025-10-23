@@ -11,6 +11,9 @@ class AugmentationPrompt(Prompt):
     required_placeholders = ["{input}", "{n_search_terms}"]
     optional_placeholders = ["{history}"]
 
+    def __init__(self, **kwargs: Any):
+        self.template = kwargs.pop("template")
+
     def format(
             self,
             input: str,

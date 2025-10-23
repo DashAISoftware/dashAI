@@ -115,7 +115,10 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
             await createRAGPrompt({
               class_name: selectedPromptType,
               name: promptName,
-              parameters: { template: promptTemplate },
+              parameters: { 
+                template: promptTemplate,
+                /* name: promptName */
+              },
             });
             if (onPromptCreated) {
               await onPromptCreated();
