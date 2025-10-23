@@ -14,6 +14,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { formatDate } from "../../../utils";
 import TemplateModal from "../../custom/TemplateModal";
 import NewPromptModal from "./NewPromptModal";
+import { getRAGPrompts } from "../../../api/rag";
 
 export default function PromptSelectionTable({
   prompts = [],
@@ -25,6 +26,15 @@ export default function PromptSelectionTable({
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [newPromptModalOpen, setNewPromptModalOpen] = useState(false);
+  const [promptRows, setPromptRows] = useState([]);
+  React.useEffect(() => {
+    async function fetchPrompts() {
+      const initialPrompts = await getRAGPrompts();
+      initialPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));
+      setPromptRows(initialPrompts);
+    }
+    fetchPrompts();
+  }, []);
 
   const handleViewTemplate = (template) => {
     setSelectedTemplate(template);
@@ -98,6 +108,13 @@ export default function PromptSelectionTable({
     [],
   );
 
+  const handlePromptCreated = async () => {
+    const updatedPrompts = await getRAGPrompts();
+    updatedPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));
+    setPromptRows(updatedPrompts);
+    setNewPromptModalOpen(false);
+  };
+
   return (
     <Paper sx={{ py: 4, px: 4 }}>
       {showTableTitle && (
@@ -139,7 +156,7 @@ export default function PromptSelectionTable({
       )}
       <Box sx={{ height: "100%" }}>
         <DataGrid
-          rows={prompts}
+          rows={promptRows}
           columns={columns}
           initialState={{
             pagination: {
@@ -162,6 +179,7 @@ export default function PromptSelectionTable({
         <NewPromptModal
           open={newPromptModalOpen}
           handleClose={() => setNewPromptModalOpen(false)}
+          onPromptCreated={handlePromptCreated}
         />
       </Box>
     </Paper>

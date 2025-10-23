@@ -17,9 +17,9 @@ import {
 
 import TextField from "@mui/material/TextField";
 
-import { getGenerationPromptChildren } from "../../../api/rag";
+import { getGenerationPromptChildren, createRAGPrompt } from "../../../api/rag";
 
-export default function NewPromptModal({ open, handleClose }) {
+export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
   const [promptTypes, setPromptTypes] = React.useState([]);
   const [selectedPromptType, setSelectedPromptType] = React.useState("");
   const [promptName, setPromptName] = React.useState("");
@@ -109,7 +109,21 @@ export default function NewPromptModal({ open, handleClose }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleClose}>
+        <Button
+          variant="contained"
+          onClick={async () => {
+            await createRAGPrompt({
+              class_name: selectedPromptType,
+              name: promptName,
+              parameters: { template: promptTemplate },
+            });
+            if (onPromptCreated) {
+              await onPromptCreated();
+            } else {
+              handleClose();
+            }
+          }}
+        >
           Save
         </Button>
       </DialogActions>

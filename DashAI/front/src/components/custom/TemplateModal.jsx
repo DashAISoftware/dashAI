@@ -13,7 +13,7 @@ import {
 export default function TemplateModal({ open, handleClose, template }) {
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Prompt Template</DialogTitle>
+      <DialogTitle>Prompt</DialogTitle>
       <DialogContent>
         <DialogContentText>
           <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
