@@ -230,7 +230,7 @@ class ModelJob(BaseJob):
                         f"Unable to instantiate model using run {run_id}",
                     ) from e
                 try:
-                    if len(run.goal_metric) > 0:
+                    if run_optimizable_parameters:
                         goal_metric = selected_metrics[run.goal_metric]
                 except Exception as e:
                     log.exception(e)
@@ -239,7 +239,7 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     # Optimizer configuration
-                    if len(run.optimizer_name) > 0:
+                    if run_optimizable_parameters:
                         run_optimizer_class = component_registry[run.optimizer_name][
                             "class"
                         ]
