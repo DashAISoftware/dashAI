@@ -41,11 +41,11 @@ class LinearSVRSchema(BaseSchema):
     )  # type: ignore
 
     C: schema_field(
-        optimizer_float_field(gt=0.0),
+        optimizer_int_field(ge=1),
         placeholder={
             "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 0.1,
+            "fixed_value": 1,
+            "lower_bound": 1,
             "upper_bound": 10,
         },
         description="Regularization parameter. The strength of the regularization "
@@ -66,11 +66,11 @@ class LinearSVRSchema(BaseSchema):
     )  # type: ignore
 
     intercept_scaling: schema_field(
-        optimizer_float_field(gt=0.0),
+        optimizer_float_field(ge=1.0),
         placeholder={
             "optimize": False,
             "fixed_value": 1.0,
-            "lower_bound": 0.1,
+            "lower_bound": 1.0,
             "upper_bound": 10,
         },
         description="When fit_intercept is True, instance vector x becomes "

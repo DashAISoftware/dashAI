@@ -4,6 +4,7 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
     enum_field,
+    float_field,
     none_type,
     optimizer_float_field,
     optimizer_int_field,
@@ -63,13 +64,8 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     min_weight_fraction_leaf: schema_field(
-        optimizer_float_field(ge=0.0, le=0.5),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.0,
-            "lower_bound": 0.0,
-            "upper_bound": 0.5,
-        },
+        float_field(ge=0.0, le=0.5),
+        placeholder=0.0,
         description="The minimum weighted fraction of the sum total of weights"
         " required to be at a leaf node.",
     )  # type: ignore
@@ -91,13 +87,8 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     min_impurity_decrease: schema_field(
-        optimizer_float_field(ge=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.0,
-            "lower_bound": 0.0,
-            "upper_bound": 0.5,
-        },
+        float_field(ge=0.0),
+        placeholder=0.0,
         description="A node will be split if this split induces a decrease of"
         " the impurity greater than or equal to this value.",
     )  # type: ignore

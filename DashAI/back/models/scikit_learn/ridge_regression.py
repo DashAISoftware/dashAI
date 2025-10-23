@@ -18,12 +18,12 @@ class RidgeRegressionSchema(BaseSchema):
     """Ridge regression is a linear model that includes L2 regularization."""
 
     alpha: schema_field(
-        optimizer_float_field(ge=0.0),
+        optimizer_int_field(ge=1),
         placeholder={
             "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 0.1,
-            "upper_bound": 10.0,
+            "fixed_value": 1,
+            "lower_bound": 1,
+            "upper_bound": 10,
         },
         description="Regularization strength; must be a positive float. "
         "Larger values specify stronger regularization.",
@@ -44,11 +44,11 @@ class RidgeRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_iter: schema_field(
-        optimizer_int_field(ge=1),
+        optimizer_int_field(ge=10),
         placeholder={
             "optimize": False,
-            "fixed_value": 1000,
-            "lower_bound": 100,
+            "fixed_value": 100,
+            "lower_bound": 10,
             "upper_bound": 10000,
         },
         description="Maximum number of iterations for conjugate gradient solver.",
