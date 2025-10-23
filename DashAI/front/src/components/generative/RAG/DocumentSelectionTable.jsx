@@ -64,7 +64,7 @@ export default function DocumentSelectionTable({
         flex: 0.5,
         editable: false,
         valueGetter: (value, row) => {
-          return row.optional_metadata?.last_modified
+          return row?.optional_metadata?.last_modified
             ? formatDate(row.optional_metadata.last_modified)
             : "N/A";
         },
