@@ -23,3 +23,6 @@ class SelectFwe(FeatureSelectionConverter, SklearnWrapper, SelectFweOperation):
     DISPLAY_NAME = "Select FWE"
     IMAGE_PREVIEW = "select_fwe.png"
     metadata = {}
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)

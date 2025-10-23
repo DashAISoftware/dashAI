@@ -25,3 +25,14 @@ class SelectPercentile(
     DISPLAY_NAME = "Select Percentile"
     IMAGE_PREVIEW = "select_percentile.png"
     metadata = {}
+
+    def __init__(self, **kwargs):
+        if callable(self._get_tags):
+            original_get_tags = self._get_tags
+            self._get_tags = lambda *a, **k: {
+                **original_get_tags(*a, **k),
+                "requires_y": True,
+            }
+        else:
+            self._get_tags = {**self._get_tags, "requires_y": True}
+        super().__init__(**kwargs)
