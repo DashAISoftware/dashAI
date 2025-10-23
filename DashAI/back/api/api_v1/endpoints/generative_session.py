@@ -176,7 +176,10 @@ async def get_all_prompts(
                     {
                         "id": prompt.id,
                         "class_name": prompt.class_name,
+                        "name": prompt.name,
                         "parameters": prompt.parameters,
+                        "created": prompt.created,
+                        "last_modified": prompt.last_modified,
                     }
                 )
 
