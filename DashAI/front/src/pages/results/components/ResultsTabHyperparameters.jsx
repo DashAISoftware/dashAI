@@ -4,6 +4,7 @@ import Plot from "react-plotly.js";
 import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
+import { checkIfHaveOptimazers } from "../../../utils/schema";
 
 function ResultsTabHyperparameters({ runData }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
@@ -17,12 +18,10 @@ function ResultsTabHyperparameters({ runData }) {
     const layout = formattedPlot.layout;
     return formattedPlot;
   }
-  const optimizables = Object.keys(runData.parameters).filter(
-    (key) => runData.parameters[key].optimize === true,
-  ).length;
+  const optimizables = checkIfHaveOptimazers(runData.parameters);
   const getHyperparameterPlot = async () => {
     try {
-      if (optimizables >= 2) {
+      if (optimizables) {
         const historicalPlot = await getHyperparameterPlotRequest(
           runData.id,
           1,
@@ -91,7 +90,7 @@ function ResultsTabHyperparameters({ runData }) {
           config={{ staticPlot: false }}
         />
       </Grid>
-      {optimizables >= 2 && (
+      {optimizables && (
         <>
           <Grid container direction="column">
             <Plot
