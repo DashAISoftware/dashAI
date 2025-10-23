@@ -232,3 +232,18 @@ export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
   }
   return response.data;
 };
+
+export const getGenerationPromptChildren = async (): Promise<IComponent[]> => {
+  const response = await api.get<IComponent[]>(
+    "/v1/component/GenerationPrompt/children",
+    {
+      params: { recursive: false },
+    },
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch GenerationPrompt children: ${response.statusText}`,
+    );
+  }
+  return response.data;
+};
