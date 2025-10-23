@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import load_dataset
+from datasets import Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -187,6 +187,7 @@ class CSVDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load the uploaded CSV files into a DatasetDict.
 
@@ -200,6 +201,8 @@ class CSVDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - `separator` (str): The character that delimits the CSV data.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -215,13 +218,18 @@ class CSVDataLoader(BaseDataLoader):
                 "csv",
                 data_files=prepared_path[0],
                 **clean_params,
+                streaming=bool(n_sample),
             )
         else:
             dataset = load_dataset(
                 "csv",
                 data_dir=prepared_path[0],
                 **clean_params,
+                streaming=bool(n_sample),
             )
             shutil.rmtree(prepared_path[0])
-
+        if n_sample:
+            if type(dataset) is IterableDatasetDict:
+                dataset = dataset["train"]
+            dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)
