@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
+from DashAI.back.api.api_v1.schemas.rag_prompt import RAGPromptSchema
 from DashAI.back.dependencies.database.models import (
     Document,
     GenerativeProcess,
@@ -24,6 +25,24 @@ from DashAI.back.tasks.RAG_task import RAGTask
 
 router = APIRouter()
 log = logging.getLogger(__name__)
+
+
+@router.post("/prompts", status_code=status.HTTP_201_CREATED)
+async def create_rag_prompt(
+    prompt: RAGPromptSchema,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Create a new RAGPrompt entry in the database."""
+    with session_factory() as db:
+        new_prompt = RAGPrompt(
+            class_name=prompt.class_name,
+            name=prompt.name,
+            parameters=prompt.parameters,
+        )
+        db.add(new_prompt)
+        db.commit()
+        db.refresh(new_prompt)
+        return {"id": new_prompt.id}
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
