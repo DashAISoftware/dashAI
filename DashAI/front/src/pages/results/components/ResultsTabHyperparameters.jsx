@@ -18,7 +18,9 @@ function ResultsTabHyperparameters({ runData }) {
     const layout = formattedPlot.layout;
     return formattedPlot;
   }
-  const optimizables = checkIfHaveOptimazers(runData.parameters);
+  const optimizables = checkIfHaveOptimazers({
+    params: runData.parameters,
+  });
   const getHyperparameterPlot = async () => {
     try {
       if (optimizables) {
