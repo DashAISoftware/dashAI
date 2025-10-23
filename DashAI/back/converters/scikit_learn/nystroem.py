@@ -1,6 +1,9 @@
 from sklearn.kernel_approximation import Nystroem as NystroemOperation
 
 from DashAI.back.api.utils import create_random_state, parse_string_to_dict
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -65,15 +68,17 @@ class NystroemSchema(BaseSchema):
     )  # type: ignore
 
 
-class Nystroem(SklearnWrapper, NystroemOperation):
+class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperation):
     """Scikit-learn's Nystroem wrapper for DashAI."""
 
     SCHEMA = NystroemSchema
     DESCRIPTION = (
-        "Approximates the feature map of an RBF kernel by Monte Carlo "
-        "approximation of its Fourier transform."
+        "Approximate a kernel map using a subset of the training data. "
+        "Constructs an approximate feature map for an arbitrary kernel "
+        "using a subset of the data as basis."
     )
     DISPLAY_NAME = "Nystroem Approximation"
+    IMAGE_PREVIEW = "nystroem.png"
 
     def __init__(self, **kwargs):
         self.kernel_params = kwargs.pop("kernel_params", None)

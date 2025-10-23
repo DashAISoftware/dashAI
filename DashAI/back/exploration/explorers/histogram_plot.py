@@ -19,7 +19,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class HistFunc(enum.Enum):
@@ -66,7 +67,7 @@ class HistogramPlotSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class HistogramPlotExplorer(BaseExplorer):
+class HistogramPlotExplorer(DistributionExplorer):
     """
     HistogramPlotExplorer is an explorer that returns a density heatmap
     of a selected column of a dataset.
@@ -77,6 +78,7 @@ class HistogramPlotExplorer(BaseExplorer):
         "HistogramPlotExplorer is an explorer that returns a density heatmap "
         "of a selected column of a dataset."
     )
+    IMAGE_PREVIEW = "histogram_plot.png"
 
     SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {

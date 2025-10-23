@@ -1,6 +1,9 @@
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
 from DashAI.back.api.utils import cast_string_to_type
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -56,12 +59,13 @@ class KNNImputerSchema(BaseSchema):
     )  # type: ignore
 
 
-class KNNImputer(SklearnWrapper, KNNImputerOperation):
+class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperation):
     """Scikit-learn's KNNImputer wrapper for DashAI."""
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
     DISPLAY_NAME = "KNN Imputer"
+    IMAGE_PREVIEW = "knn_imputer.png"
 
     def __init__(self, **kwargs):
         self.missing_values = kwargs.pop("missing_values", None)
