@@ -33,7 +33,7 @@ class QwenSchema(BaseSchema):
             enum=[
                 "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
                 "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
-                "Qwen/Qwen3-4B-GGUF ",
+                "Qwen/Qwen3-4B-GGUF",
             ]
         ),
         placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
