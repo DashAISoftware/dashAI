@@ -17,7 +17,7 @@ import {
 
 import TextField from "@mui/material/TextField";
 
-import { getGenerationPromptChildren, createRAGPrompt } from "../../../api/rag";
+import { getPromptChildren, createRAGPrompt } from "../../../api/rag";
 
 export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
   const [promptTypes, setPromptTypes] = React.useState([]);
@@ -27,7 +27,7 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
 
   React.useEffect(() => {
     if (open) {
-      getGenerationPromptChildren()
+      getPromptChildren()
         .then((data) => setPromptTypes(data))
         .catch(() => setPromptTypes([]));
     }
@@ -115,7 +115,7 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
             await createRAGPrompt({
               class_name: selectedPromptType,
               name: promptName,
-              parameters: { 
+              parameters: {
                 template: promptTemplate,
                 /* name: promptName */
               },
