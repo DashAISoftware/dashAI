@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
+import torch
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
@@ -22,7 +23,14 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.translation_model import TranslationModel
-from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, NAME_TO_DEVICE
+
+DEVICE_ENUM = ["CPU"]
+DEVICE_PLACEHOLDER = "CPU"
+NAME_TO_DEVICE = {"CPU": "cpu"}
+if torch.cuda.is_available():
+    DEVICE_ENUM = ["GPU"] + DEVICE_ENUM
+    DEVICE_PLACEHOLDER = "GPU"
+    NAME_TO_DEVICE.update({"GPU": "gpu"})
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -49,7 +57,8 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
         description="Hardware on which the training is run. If available, GPU is "
-        "recommended for efficiency reasons. Otherwise, use CPU.",
+        "recommended for efficiency reasons. Otherwise, use CPU. "
+        "If GPU is selected then it will use all gpus available. ",
     )  # type: ignore
     weight_decay: schema_field(
         float_field(ge=0.0),
@@ -81,7 +90,7 @@ class OpusMtEnESTransformer(TranslationModel):
         if model is None:
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
-            self.device = NAME_TO_DEVICE.get(kwargs.get("device"))
+            self.device = NAME_TO_DEVICE.get(kwargs.pop("device"))
         self.model = (
             model
             if model is not None
