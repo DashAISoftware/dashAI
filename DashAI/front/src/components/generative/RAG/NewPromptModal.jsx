@@ -165,16 +165,15 @@ export default function NewPromptModal({
           variant="contained"
           disabled={!canSave}
           onClick={async () => {
-            await createRAGPrompt({
+            const result = await createRAGPrompt({
               class_name: selectedPromptType,
               name: promptName,
               parameters: {
                 template: promptTemplate,
-                /* name: promptName */
               },
             });
-            if (onPromptCreated) {
-              await onPromptCreated();
+            if (onPromptCreated && result && result.id) {
+              await onPromptCreated(result.id);
             } else {
               handleClose();
             }

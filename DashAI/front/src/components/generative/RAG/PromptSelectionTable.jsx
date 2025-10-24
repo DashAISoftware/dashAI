@@ -22,6 +22,7 @@ export default function PromptSelectionTable({
   rowSelectionModel = [],
   onRowSelectionModelChange,
   showTableTitle = false,
+  setSessionData,
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
@@ -108,12 +109,21 @@ export default function PromptSelectionTable({
     [],
   );
 
-  const handlePromptCreated = async () => {
+  const handlePromptCreated = async (newPromptId) => {
     const updatedPrompts = await getRAGPrompts();
     updatedPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));
     setPromptRows(updatedPrompts);
-    if (updatedPrompts.length > 0 && onRowSelectionModelChange) {
-      onRowSelectionModelChange([updatedPrompts[0].id]);
+    if (onRowSelectionModelChange && newPromptId) {
+      onRowSelectionModelChange([newPromptId]);
+    }
+    if (setSessionData && newPromptId) {
+      setSessionData((prev) => ({
+        ...prev,
+        parameters: {
+          ...prev.parameters,
+          prompt_id: newPromptId,
+        },
+      }));
     }
     setNewPromptModalOpen(false);
   };

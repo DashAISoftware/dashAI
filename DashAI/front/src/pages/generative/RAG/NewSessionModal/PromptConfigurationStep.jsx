@@ -40,6 +40,7 @@ export default function PromptConfigurationStep({
       loading={loading}
       rowSelectionModel={selectedPromptId}
       onRowSelectionModelChange={setSelectedPromptId}
+      setSessionData={setSessionData}
     />
   );
 }
