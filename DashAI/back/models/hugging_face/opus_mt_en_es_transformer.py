@@ -113,38 +113,36 @@ class OpusMtEnESTransformer(TranslationModel):
         Dataset
             Dataset with the processed data.
         """
-        is_y = bool(y)
-        if not y:
-            y = Dataset.from_list([{"foo": 0}] * len(x))
+        is_y = y is not None
         dataset = []
         input_column_name = x.column_names[0]
-        output_column_name = y.column_names[0]
+        output_column_name = y.column_names[0] if is_y else None
 
-        for input_sample, output_sample in zip(x, y):
+        for i, input_sample in enumerate(x):
             tokenized_input = self.tokenizer(
                 input_sample[input_column_name],
                 truncation=True,
                 padding="max_length",
                 max_length=512,
             )
-            tokenized_output = (
-                self.tokenizer(
+
+            sample = {
+                "input_ids": tokenized_input["input_ids"],
+                "attention_mask": tokenized_input["attention_mask"],
+            }
+
+            if is_y:
+                output_sample = y[i]
+                tokenized_output = self.tokenizer(
                     output_sample[output_column_name],
                     truncation=True,
                     padding="max_length",
                     max_length=512,
                 )
-                if is_y
-                else None
-            )
-            sample = {
-                "input_ids": tokenized_input["input_ids"],
-                "attention_mask": tokenized_input["attention_mask"],
-                "labels": (
-                    tokenized_output["input_ids"] if is_y else y[output_column_name]
-                ),
-            }
+                sample["labels"] = tokenized_output["input_ids"]
+
             dataset.append(sample)
+
         return Dataset.from_list(dataset)
 
     def fit(self, x_train: Dataset, y_train: Dataset):
