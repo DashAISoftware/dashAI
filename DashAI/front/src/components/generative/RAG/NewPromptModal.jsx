@@ -18,12 +18,16 @@ import {
 import TextField from "@mui/material/TextField";
 
 import { getPromptChildren, createRAGPrompt } from "../../../api/rag";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import Tooltip from "@mui/material/Tooltip";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
   const [promptTypes, setPromptTypes] = React.useState([]);
   const [selectedPromptType, setSelectedPromptType] = React.useState("");
   const [promptName, setPromptName] = React.useState("");
-  const [promptTemplate, setPromptTemplate] = React.useState(""); // <-- NUEVO
+  const [promptTemplate, setPromptTemplate] = React.useState("");
 
   React.useEffect(() => {
     if (open) {
@@ -33,7 +37,6 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
     }
   }, [open]);
 
-  // MODIFICADO
   const handlePromptTypeChange = (event) => {
     const typeName = event.target.value;
     setSelectedPromptType(typeName);
@@ -97,6 +100,95 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
             ))}
           </Select>
         </FormControl>
+        {/* Mostrar placeholders si hay un tipo seleccionado, en listas verticales */}
+        {selectedPromptType &&
+          (() => {
+            const selectedType = promptTypes.find(
+              (type) => type.name === selectedPromptType,
+            );
+            if (!selectedType || !selectedType.metadata) return null;
+            return (
+              <div style={{ marginTop: 16, marginBottom: 16 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Required Placeholders
+                </Typography>
+                <ul style={{ marginTop: 0 }}>
+                  {selectedType.metadata.required_placeholders?.map((ph) => {
+                    const isPresent = promptTemplate.includes(ph);
+                    return (
+                      <li
+                        key={ph}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        {isPresent ? (
+                          <CheckCircleIcon fontSize="small" color="success" />
+                        ) : (
+                          <WarningAmberIcon fontSize="small" color="warning" />
+                        )}
+                        <strong>{ph}</strong>
+                        <Tooltip
+                          title={
+                            selectedType.metadata.placeholder_descriptions?.[
+                              ph
+                            ] || ""
+                          }
+                          placement="right"
+                        >
+                          <HelpOutlineIcon
+                            fontSize="small"
+                            color="action"
+                            style={{ cursor: "pointer" }}
+                          />
+                        </Tooltip>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <Typography variant="subtitle1" gutterBottom>
+                  Optional Placeholders
+                </Typography>
+                <ul style={{ marginTop: 0 }}>
+                  {selectedType.metadata.optional_placeholders?.map((ph) => {
+                    const isPresent = promptTemplate.includes(ph);
+                    return (
+                      <li
+                        key={ph}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        {isPresent && (
+                          <CheckCircleIcon fontSize="small" color="success" />
+                        )}
+                        <strong>{ph}</strong>
+                        <Tooltip
+                          title={
+                            selectedType.metadata.placeholder_descriptions?.[
+                              ph
+                            ] || ""
+                          }
+                          placement="right"
+                        >
+                          <HelpOutlineIcon
+                            fontSize="small"
+                            color="action"
+                            style={{ cursor: "pointer" }}
+                          />
+                        </Tooltip>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })()}
+
         <TextField
           fullWidth
           label="Prompt"
