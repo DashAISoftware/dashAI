@@ -19,7 +19,7 @@ import TextField from "@mui/material/TextField";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import PlaceholdersList from "./PlaceholdersList";
 
-import { getPromptChildren, createRAGPrompt } from "../../../api/rag";
+import { getCustomPrompts, createRAGPrompt } from "../../../api/rag";
 
 export default function NewPromptModal({
   open,
@@ -49,7 +49,7 @@ export default function NewPromptModal({
 
   React.useEffect(() => {
     if (open) {
-      getPromptChildren()
+      getCustomPrompts()
         .then((data) => setPromptTypes(data))
         .catch(() => setPromptTypes([]));
 

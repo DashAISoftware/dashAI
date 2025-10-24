@@ -239,10 +239,10 @@ export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
   return response.data;
 };
 
-export const getPromptChildren = async (
+export const getCustomPrompts = async (
   types: string[] = ["GenerationPrompt", "AugmentationPrompt"],
 ): Promise<IComponent[]> => {
-  const allChildren: IComponent[] = [];
+  let allChildren: IComponent[] = [];
   for (const type of types) {
     const response = await api.get<IComponent[]>(
       `/v1/component/${type}/children`,
@@ -253,7 +253,15 @@ export const getPromptChildren = async (
         `Failed to fetch ${type} children: ${response.statusText}`,
       );
     }
-    allChildren.push(...response.data);
+    const filtered = response.data.filter(
+      (child) =>
+        !(
+          child.name &&
+          typeof child.name === "string" &&
+          child.name.includes("Default")
+        ),
+    );
+    allChildren.push(...filtered);
   }
   return allChildren;
 };
