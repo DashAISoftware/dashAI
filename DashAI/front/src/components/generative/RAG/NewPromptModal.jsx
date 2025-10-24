@@ -19,10 +19,6 @@ import TextField from "@mui/material/TextField";
 import PlaceholdersList from "./PlaceholdersList";
 
 import { getPromptChildren, createRAGPrompt } from "../../../api/rag";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import Tooltip from "@mui/material/Tooltip";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
   const [promptTypes, setPromptTypes] = React.useState([]);
@@ -119,7 +115,6 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
             ))}
           </Select>
         </FormControl>
-        {/* Mostrar placeholders si hay un tipo seleccionado, usando componente */}
         {selectedPromptType &&
           (() => {
             const selectedType = promptTypes.find(
