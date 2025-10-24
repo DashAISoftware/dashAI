@@ -58,9 +58,9 @@ export default function NewPromptModal({
         items: existingPrompts,
       });
       setDefaultPromptName(generatedName.defaultName);
-      setPromptName((prev) =>
-        prev && prev.trim() ? prev : generatedName.defaultName,
-      );
+      setPromptName(generatedName.defaultName);
+      setSelectedPromptType("");
+      setPromptTemplate("");
     }
   }, [open]);
 
