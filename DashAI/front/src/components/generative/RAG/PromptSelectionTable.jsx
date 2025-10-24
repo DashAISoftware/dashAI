@@ -183,6 +183,7 @@ export default function PromptSelectionTable({
           open={newPromptModalOpen}
           handleClose={() => setNewPromptModalOpen(false)}
           onPromptCreated={handlePromptCreated}
+          existingPrompts={promptRows}
         />
       </Box>
     </Paper>

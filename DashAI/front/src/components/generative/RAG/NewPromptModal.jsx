@@ -16,15 +16,22 @@ import {
 } from "@mui/material";
 
 import TextField from "@mui/material/TextField";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import PlaceholdersList from "./PlaceholdersList";
 
 import { getPromptChildren, createRAGPrompt } from "../../../api/rag";
 
-export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
+export default function NewPromptModal({
+  open,
+  handleClose,
+  onPromptCreated,
+  existingPrompts = [],
+}) {
   const [promptTypes, setPromptTypes] = React.useState([]);
   const [selectedPromptType, setSelectedPromptType] = React.useState("");
   const [promptName, setPromptName] = React.useState("");
   const [promptTemplate, setPromptTemplate] = React.useState("");
+  const [defaultPromptName, setDefaultPromptName] = React.useState("");
 
   const allRequiredPresent = React.useMemo(() => {
     if (!selectedPromptType) return false;
@@ -45,6 +52,15 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
       getPromptChildren()
         .then((data) => setPromptTypes(data))
         .catch(() => setPromptTypes([]));
+
+      const generatedName = generateSequentialName({
+        base: "Prompt",
+        items: existingPrompts,
+      });
+      setDefaultPromptName(generatedName.defaultName);
+      setPromptName((prev) =>
+        prev && prev.trim() ? prev : generatedName.defaultName,
+      );
     }
   }, [open]);
 
