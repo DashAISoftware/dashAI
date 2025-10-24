@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
-import torch
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
@@ -23,13 +22,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.translation_model import TranslationModel
-
-if torch.cuda.is_available():
-    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
-    DEVICE_PLACEHOLDER = "cuda:0"
-else:
-    DEVICE_ENUM = ["cpu"]
-    DEVICE_PLACEHOLDER = "cpu"
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, NAME_TO_DEVICE
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -88,7 +81,7 @@ class OpusMtEnESTransformer(TranslationModel):
         if model is None:
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
-            self.device = kwargs.pop("device", "gpu")
+            self.device = NAME_TO_DEVICE.get(kwargs.get("device"))
         self.model = (
             model
             if model is not None

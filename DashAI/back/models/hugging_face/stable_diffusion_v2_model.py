@@ -14,13 +14,7 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
-
-if torch.cuda.is_available():
-    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
-    DEVICE_PLACEHOLDER = "cuda:0"
-else:
-    DEVICE_ENUM = ["cpu"]
-    DEVICE_PLACEHOLDER = "cpu"
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, NAME_TO_DEVICE
 
 
 class StableDiffusionSchema(BaseSchema):
@@ -106,7 +100,7 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     def __init__(self, **kwargs):
         """Initialize the model."""
         kwargs = self.validate_and_transform(kwargs)
-        self.device = kwargs.get("device")
+        self.device = NAME_TO_DEVICE.get(kwargs.get("device"))
         self.model_name = kwargs.get("model_name", "stabilityai/stable-diffusion-2")
 
         self.model = DiffusionPipeline.from_pretrained(
