@@ -29,6 +29,20 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
   const [promptName, setPromptName] = React.useState("");
   const [promptTemplate, setPromptTemplate] = React.useState("");
 
+  const allRequiredPresent = React.useMemo(() => {
+    if (!selectedPromptType) return false;
+    const selectedType = promptTypes.find(
+      (type) => type.name === selectedPromptType,
+    );
+    if (!selectedType || !selectedType.metadata) return false;
+    const required = selectedType.metadata.required_placeholders || [];
+    return required.every((ph) => promptTemplate.includes(ph));
+  }, [selectedPromptType, promptTypes, promptTemplate]);
+
+  const canSave = Boolean(
+    selectedPromptType && promptName.trim() && allRequiredPresent,
+  );
+
   React.useEffect(() => {
     if (open) {
       getPromptChildren()
@@ -82,6 +96,10 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
           value={promptName}
           onChange={(e) => setPromptName(e.target.value)}
           sx={{ mt: 2 }}
+          required
+          error={!promptName.trim()}
+          helperText={!promptName.trim() ? "Prompt name is required" : ""}
+          InputLabelProps={{ required: false }}
         />
 
         <FormControl fullWidth sx={{ mt: 2 }}>
@@ -218,6 +236,7 @@ export default function NewPromptModal({ open, handleClose, onPromptCreated }) {
         <Button onClick={handleClose}>Cancel</Button>
         <Button
           variant="contained"
+          disabled={!canSave}
           onClick={async () => {
             await createRAGPrompt({
               class_name: selectedPromptType,
