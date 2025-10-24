@@ -239,17 +239,21 @@ export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
   return response.data;
 };
 
-export const getGenerationPromptChildren = async (): Promise<IComponent[]> => {
-  const response = await api.get<IComponent[]>(
-    "/v1/component/GenerationPrompt/children",
-    {
-      params: { recursive: false },
-    },
-  );
-  if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch GenerationPrompt children: ${response.statusText}`,
+export const getPromptChildren = async (
+  types: string[] = ["GenerationPrompt", "AugmentationPrompt"],
+): Promise<IComponent[]> => {
+  const allChildren: IComponent[] = [];
+  for (const type of types) {
+    const response = await api.get<IComponent[]>(
+      `/v1/component/${type}/children`,
+      { params: { recursive: false } },
     );
+    if (response.status !== 200) {
+      throw new Error(
+        `Failed to fetch ${type} children: ${response.statusText}`,
+      );
+    }
+    allChildren.push(...response.data);
   }
-  return response.data;
+  return allChildren;
 };
