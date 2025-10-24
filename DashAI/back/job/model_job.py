@@ -176,6 +176,8 @@ class ModelJob(BaseJob):
                         loaded_dataset, experiment.output_columns
                     )
                     n_labels = None
+
+                    # ✅ Detect n_labels for classification tasks
                     if experiment.task_name in [
                         "TextClassificationTask",
                         "TabularClassificationTask",
@@ -185,6 +187,13 @@ class ModelJob(BaseJob):
                             experiment.output_columns[0]
                         )
                         n_labels = len(all_classes)
+                    elif experiment.task_name == "TimeSeriesClassificationTask":
+                        # ✅ For TimeSeriesClassificationTask with multi-label to multi-class conversion
+                        # Number of classes = number of original binary targets + 1 (normal class)
+                        n_labels = len(experiment.output_columns) + 1
+                        log.info(
+                            f"TimeSeriesClassificationTask detected with {n_labels} classes"
+                        )
 
                     splits = json.loads(experiment.splits)
                     prepared_dataset, splits = prepare_for_experiment(

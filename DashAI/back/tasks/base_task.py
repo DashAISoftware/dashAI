@@ -55,6 +55,10 @@ class BaseTask:
             Dataset to be validated
         dataset_name : str
             Dataset name
+        input_columns : List[str]
+            List of input column names
+        output_columns : List[str]
+            List of output column names
         """
         metadata = self.metadata
         allowed_input_types = tuple(metadata["inputs_types"])
@@ -64,19 +68,48 @@ class BaseTask:
 
         # Check input types
         for input_col in input_columns:
+            if input_col not in dataset.features:
+                raise KeyError(
+                    f"Input column '{input_col}' not found in dataset '{dataset_name}'. "
+                    f"Available columns: {list(dataset.features.keys())}"
+                )
             input_col_type = dataset.features[input_col]
             if not isinstance(input_col_type, allowed_input_types):
                 raise TypeError(
-                    f"{input_col_type} is not an allowed type for input columns."
+                    f"{input_col_type} is not an allowed type for input columns. "
+                    f"Allowed types: {allowed_input_types}"
                 )
 
-        # Check output types
-        for output_col in output_columns:
-            output_col_type = dataset.features[output_col]
-            if not isinstance(output_col_type, allowed_output_types):
-                raise TypeError(
-                    f"{output_col_type} is not an allowed type for output columns."
+        # ✅ Check output types - skip validation if columns will be transformed
+        # This allows tasks like TimeSeriesClassificationTask to transform
+        # multi-label binary columns into a single categorical column
+        missing_output_cols = [
+            col for col in output_columns if col not in dataset.features
+        ]
+
+        if missing_output_cols:
+            # If output columns are missing, check if this task transforms them
+            # (e.g., TimeSeriesClassificationTask converts multiple binary columns to one categorical)
+            if (
+                hasattr(self, "_transforms_output_columns")
+                and self._transforms_output_columns
+            ):
+                # Skip validation for output columns that will be created by prepare_for_task
+                pass
+            else:
+                raise KeyError(
+                    f"Output column(s) {missing_output_cols} not found in dataset '{dataset_name}'. "
+                    f"Available columns: {list(dataset.features.keys())}"
                 )
+        else:
+            # Validate output column types only if they exist
+            for output_col in output_columns:
+                output_col_type = dataset.features[output_col]
+                if not isinstance(output_col_type, allowed_output_types):
+                    raise TypeError(
+                        f"{output_col_type} is not an allowed type for output columns. "
+                        f"Allowed types: {allowed_output_types}"
+                    )
 
         # Check input cardinality
         if inputs_cardinality != "n" and len(input_columns) != inputs_cardinality:
@@ -85,13 +118,20 @@ class BaseTask:
                 f" match task cardinality ({inputs_cardinality})"
             )
 
-        # Check output cardinality
-        if outputs_cardinality != "n" and len(output_columns) != outputs_cardinality:
-            raise ValueError(
-                f"Output cardinality ({len(output_columns)})"
-                f" does not "
-                f"match task cardinality ({outputs_cardinality})"
-            )
+        # ✅ Check output cardinality - handle special case for transforming tasks
+        if outputs_cardinality != "n":
+            # For tasks that transform output columns (like TimeSeriesClassificationTask),
+            # the output cardinality check should happen after prepare_for_task
+            if not (
+                hasattr(self, "_transforms_output_columns")
+                and self._transforms_output_columns
+            ):
+                if len(output_columns) != outputs_cardinality:
+                    raise ValueError(
+                        f"Output cardinality ({len(output_columns)})"
+                        f" does not "
+                        f"match task cardinality ({outputs_cardinality})"
+                    )
 
     @abstractmethod
     def prepare_for_task(
@@ -103,6 +143,8 @@ class BaseTask:
         ----------
         dataset : Union[DatasetDict, DashAIDataset]
             Dataset to be changed
+        outputs_columns : List[str]
+            List of output column names
 
         Returns
         -------

@@ -8,4 +8,7 @@ from DashAI.back.tasks.tabular_classification_task import TabularClassificationT
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationTask
+from DashAI.back.tasks.time_series_classification_task import (
+    TimeSeriesClassificationTask,
+)
 from DashAI.back.tasks.translation_task import TranslationTask

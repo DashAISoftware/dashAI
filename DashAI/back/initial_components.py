@@ -38,7 +38,12 @@ from DashAI.back.converters import (
     TruncatedSVD,
     VarianceThreshold,
 )
-from DashAI.back.dataloaders import CSVDataLoader, ExcelDataLoader, JSONDataLoader
+from DashAI.back.dataloaders import (
+    CNNDataLoader,
+    CSVDataLoader,
+    ExcelDataLoader,
+    JSONDataLoader,
+)
 from DashAI.back.explainability import (
     KernelShap,
     PartialDependence,
@@ -74,6 +79,7 @@ from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall
 from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
+    CNNModel,
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
@@ -110,6 +116,7 @@ from DashAI.back.tasks import (
     TextClassificationTask,
     TextToImageGenerationTask,
     TextToTextGenerationTask,
+    TimeSeriesClassificationTask,
     TranslationTask,
 )
 
@@ -138,6 +145,7 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
+        TimeSeriesClassificationTask,
         # Models
         SVC,
         DecisionTreeClassifier,
@@ -159,10 +167,12 @@ def get_initial_components():
         RidgeRegression,
         LinearSVR,
         LinearRegression,
+        CNNModel,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,
         ExcelDataLoader,
+        CNNDataLoader,
         # Metrics
         F1,
         Accuracy,

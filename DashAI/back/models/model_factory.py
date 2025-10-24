@@ -1,7 +1,11 @@
+import logging
+
 import torch
 from sklearn.exceptions import NotFittedError
 
 from DashAI.back.metrics.classification_metric import ClassificationMetric
+
+log = logging.getLogger(__name__)
 
 
 class ModelFactory:
@@ -115,27 +119,125 @@ class ModelFactory:
         if not self.fitted:
             raise NotFittedError("Model must be trained before evaluating metrics.")
 
-        multiclass = None
+        # ✅ Determine if this is a multiclass problem
+        multiclass = False
         if hasattr(self, "num_labels") and self.num_labels is not None:
             multiclass = self.num_labels > 2
 
         results = {}
         for split in ["train", "validation", "test"]:
             split_results = {}
-            predictions = self.model.predict(x[split])
-            for metric in metrics:
-                if (
-                    isinstance(metric, type)
-                    and issubclass(metric, ClassificationMetric)
-                    and "multiclass" in metric.score.__code__.co_varnames
-                    and multiclass is not None
-                ):
-                    score = metric.score(y[split], predictions, multiclass=multiclass)
-                else:
-                    # For metrics that don't accept the multiclass parameter
-                    score = metric.score(y[split], predictions)
 
-                split_results[metric.__name__] = score
+            # ✅ Calculate and store loss if model supports it
+            if hasattr(self.model, "evaluate_loss"):
+                try:
+                    loss_value = self.model.evaluate_loss(x[split], y[split])
+                    split_results["Loss"] = loss_value
+                    log.info(f"{split.capitalize()} Loss: {loss_value:.4f}")
+
+                    # Store in model for later retrieval
+                    if split == "train":
+                        self.model.train_loss = loss_value
+                    elif split == "validation":
+                        self.model.val_loss = loss_value
+                    elif split == "test":
+                        self.model.test_loss = loss_value
+
+                except Exception as e:
+                    log.warning(f"Could not calculate loss for {split}: {e}")
+
+            # Get predictions
+            try:
+                predictions = self.model.predict(x[split])
+            except Exception as e:
+                log.error(f"Failed to get predictions for {split}: {e}")
+                continue
+
+            # ✅ Auto-detect multiclass from predictions if not already set
+            if not multiclass:
+                from DashAI.back.metrics.classification_metric import prepare_to_metric
+
+                try:
+                    _, pred_labels = prepare_to_metric(y[split], predictions)
+                    unique_preds = len(set(pred_labels))
+                    multiclass = unique_preds > 2
+                    log.info(
+                        f"Detected {unique_preds} classes, multiclass={multiclass}"
+                    )
+                except Exception as e:
+                    log.warning(f"Could not auto-detect multiclass: {e}")
+
+            # Calculate metrics
+            for metric in metrics:
+                metric_name = metric.__name__
+                try:
+                    # Check if metric is a ClassificationMetric and supports multiclass parameter
+                    if isinstance(metric, type) and issubclass(
+                        metric, ClassificationMetric
+                    ):
+                        # Use macro average for multiclass problems
+                        if multiclass:
+                            # Try to use macro averaging
+                            try:
+                                from sklearn.metrics import (
+                                    f1_score,
+                                    precision_score,
+                                    recall_score,
+                                )
+
+                                from DashAI.back.metrics.classification_metric import (
+                                    prepare_to_metric,
+                                )
+
+                                true_labels, pred_labels = prepare_to_metric(
+                                    y[split], predictions
+                                )
+
+                                if metric_name == "F1":
+                                    score = f1_score(
+                                        true_labels,
+                                        pred_labels,
+                                        average="macro",
+                                        zero_division=0,
+                                    )
+                                elif metric_name == "Precision":
+                                    score = precision_score(
+                                        true_labels,
+                                        pred_labels,
+                                        average="macro",
+                                        zero_division=0,
+                                    )
+                                elif metric_name == "Recall":
+                                    score = recall_score(
+                                        true_labels,
+                                        pred_labels,
+                                        average="macro",
+                                        zero_division=0,
+                                    )
+                                else:
+                                    # For other metrics, try normal calculation
+                                    score = metric.score(y[split], predictions)
+
+                                split_results[metric_name] = score
+                                log.info(f"{split} {metric_name}: {score:.4f}")
+
+                            except Exception as e:
+                                log.warning(
+                                    f"Metric {metric_name} failed for {split} with macro: {e}"
+                                )
+                                split_results[metric_name] = 0.0
+                        else:
+                            # Binary classification
+                            score = metric.score(y[split], predictions)
+                            split_results[metric_name] = score
+                    else:
+                        # For non-classification metrics
+                        score = metric.score(y[split], predictions)
+                        split_results[metric_name] = score
+
+                except Exception as e:
+                    log.warning(f"Metric {metric_name} failed for {split}: {e}")
+                    split_results[metric_name] = 0.0
 
             results[split] = split_results
 

@@ -13,6 +13,7 @@ class ClassificationMetric(BaseMetric):
         "TabularClassificationTask",
         "ImageClassificationTask",
         "TextClassificationTask",
+        "TimeSeriesClassificationTask",  # ✅ Added
     ]
 
     @staticmethod

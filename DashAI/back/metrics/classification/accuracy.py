@@ -14,7 +14,9 @@ class Accuracy(ClassificationMetric):
     """Accuracy metric to classification tasks."""
 
     @staticmethod
-    def score(true_labels: DashAIDataset, probs_pred_labels: np.ndarray) -> float:
+    def score(
+        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
+    ) -> float:
         """Calculate the accuracy between true labels and predicted labels.
 
         Parameters
@@ -25,6 +27,8 @@ class Accuracy(ClassificationMetric):
             A two-dimensional matrix in which each column represents a class
             and the row values represent the probability that an example belongs
             to the class associated with the column.
+        multiclass : bool, optional
+            Not used for accuracy but included for consistency with other metrics.
 
         Returns
         -------
