@@ -31,6 +31,7 @@ if torch.cuda.is_available():
     DEVICE_ENUM = ["GPU"] + DEVICE_ENUM
     DEVICE_PLACEHOLDER = "GPU"
     NAME_TO_DEVICE.update({"GPU": "gpu"})
+DEVICE_TO_NAME = {v: k for k, v in NAME_TO_DEVICE.items()}
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -249,7 +250,7 @@ class OpusMtEnESTransformer(TranslationModel):
             num_train_epochs=custom_params.get("num_train_epochs"),
             batch_size=custom_params.get("batch_size"),
             learning_rate=custom_params.get("learning_rate"),
-            device=custom_params.get("device"),
+            device=DEVICE_TO_NAME[custom_params.get("device")],
             weight_decay=custom_params.get("weight_decay"),
         )
         loaded_model.fitted = custom_params.get("fitted", False)
