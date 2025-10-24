@@ -12,7 +12,7 @@ def create_session_1(client: TestClient):
             "num_inference_steps": 1,
             "model_name": "stabilityai/stable-diffusion-2",
             "guidance_scale": 6.0,
-            "device": "cpu",
+            "device": "CPU",
             "negative_prompt": "",
             "seed": 42,
             "width": 256,
