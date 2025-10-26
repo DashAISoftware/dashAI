@@ -150,16 +150,29 @@ async def validate_columns(
     validation_response = {}
 
     try:
-        prepared_dataset = task.prepare_for_task(
-            datasetdict=minimal_dataset,
-            outputs_columns=outputs_names,
-        )
-        task.validate_dataset_for_task(
-            dataset=prepared_dataset,
-            dataset_name=dataset.name,
-            input_columns=inputs_names,
-            output_columns=outputs_names,
-        )
+        # For ForecastingTask, validate BEFORE prepare_for_task to work with
+        # original columns. For other tasks, prepare first (existing behavior)
+        if params.task_name == "ForecastingTask":
+            # Validate with original column names before transformation
+            task.validate_dataset_for_task(
+                dataset=minimal_dataset,
+                dataset_name=dataset.name,
+                input_columns=inputs_names,
+                output_columns=outputs_names,
+            )
+        else:
+            # Other tasks: prepare first, then validate
+            prepared_dataset = task.prepare_for_task(
+                datasetdict=minimal_dataset,
+                outputs_columns=outputs_names,
+            )
+            task.validate_dataset_for_task(
+                dataset=prepared_dataset,
+                dataset_name=dataset.name,
+                input_columns=inputs_names,
+                output_columns=outputs_names,
+            )
+
         validation_response["dataset_status"] = "valid"
     except (TypeError, ValueError) as e:
         validation_response["dataset_status"] = "invalid"

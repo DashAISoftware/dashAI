@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -65,21 +66,14 @@ class PredictJob(BaseJob):
         return f"Prediction (Run:{run_id}, Dataset:{dataset_id})"
 
     def _validate_forecasting_dataset(
-        self,
-        dataset: DashAIDataset,
-        exp: Experiment,
-        trained_model: BaseModel,
-    ) -> None:
-        """Validate dataset for forecasting predictions.
+        self, dataset: DashAIDataset, exp: Experiment, model: Any
+    ) -> str:
+        """Validate dataset for forecasting prediction.
 
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset to validate
-        exp : Experiment
-            Experiment containing training metadata
-        trained_model : BaseModel
-            Trained forecasting model
+        Returns
+        -------
+        str
+            The name of the detected timestamp column
 
         Raises
         ------
@@ -88,41 +82,62 @@ class PredictJob(BaseJob):
         """
         pred_df = dataset.to_pandas()
 
-        # 1. Check 'ds' column exists
-        if "ds" not in pred_df.columns:
+        # Auto-detect timestamp column (try 'ds' first for compatibility, then detect)
+        timestamp_col = None
+        if "ds" in pred_df.columns:
+            timestamp_col = "ds"
+        else:
+            # Try to auto-detect timestamp column
+            for col in pred_df.columns:
+                try:
+                    pd.to_datetime(pred_df[col])
+                    timestamp_col = col
+                    log.info(f"🔍 Auto-detected timestamp column: '{col}'")
+                    break
+                except Exception:
+                    continue
+
+        if timestamp_col is None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Forecasting prediction requires a 'ds' (timestamp) "
-                f"column. Available columns: {list(pred_df.columns)}",
-            )  # 2. Parse and validate timestamps
+                detail="Forecasting prediction requires a timestamp column "
+                f"(datetime). Available columns: {list(pred_df.columns)}",
+            )
+
+        # Parse and validate timestamps
         try:
-            ds_series = pd.to_datetime(pred_df["ds"])
+            ds_series = pd.to_datetime(pred_df[timestamp_col])
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Cannot parse 'ds' column as datetime: {str(e)}",
+                detail=f"Cannot parse '{timestamp_col}' column as datetime: {str(e)}",
             ) from e
 
-        # 3. Check for duplicates
+        # Check for duplicates
         if ds_series.duplicated().any():
             duplicates = ds_series[ds_series.duplicated()].unique()[:5].tolist()
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Duplicate timestamps found in 'ds' column: {duplicates}",
+                detail=(
+                    f"Duplicate timestamps found in '{timestamp_col}' column: "
+                    f"{duplicates}"
+                ),
             )
 
-        # 4. Check monotonicity (strictly increasing)
+        # Check monotonicity (strictly increasing)
         if not ds_series.is_monotonic_increasing:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Timestamps in 'ds' column must be strictly increasing "
-                "(sorted).",
+                detail=(
+                    f"Timestamps in '{timestamp_col}' column must be strictly "
+                    "increasing (sorted)."
+                ),
             )
 
         # 5. Get training metadata from model
-        train_frequency = getattr(trained_model, "frequency", None)
-        train_last_ds = getattr(trained_model, "last_ds", None)
-        exog_cols = getattr(trained_model, "exog_cols", [])
+        train_frequency = getattr(model, "frequency", None)
+        train_last_ds = getattr(model, "last_ds", None)
+        exog_cols = getattr(model, "exog_cols", [])
 
         log.info(
             f"Training metadata - frequency: {train_frequency}, "
@@ -158,8 +173,24 @@ class PredictJob(BaseJob):
                         train_ds = load_dataset(str(train_dataset_path))
                         train_df = train_ds.to_pandas()
 
+                        # Auto-detect timestamp in training data (same logic
+                        # as prediction)
+                        train_timestamp_col = None
                         if "ds" in train_df.columns:
-                            train_ds_series = pd.to_datetime(train_df["ds"])
+                            train_timestamp_col = "ds"
+                        else:
+                            for col in train_df.columns:
+                                try:
+                                    pd.to_datetime(train_df[col])
+                                    train_timestamp_col = col
+                                    break
+                                except Exception:
+                                    continue
+
+                        if train_timestamp_col:
+                            train_ds_series = pd.to_datetime(
+                                train_df[train_timestamp_col]
+                            )
                             train_start = train_ds_series.iloc[train_indexes[0]]
 
                             # Check if any prediction timestamp is before start
@@ -207,6 +238,9 @@ class PredictJob(BaseJob):
                     )
 
         log.info(f"✅ Forecasting validation passed for {len(ds_series)} timestamps")
+
+        # Return the detected timestamp column name
+        return timestamp_col
 
     @inject
     def run(
@@ -293,24 +327,27 @@ class PredictJob(BaseJob):
                     f"{len(loaded_dataset)} timestamps"
                 )
 
-                # Validate forecasting dataset
-                self._validate_forecasting_dataset(loaded_dataset, exp, trained_model)
+                # Validate forecasting dataset and get timestamp column name
+                timestamp_col = self._validate_forecasting_dataset(
+                    loaded_dataset, exp, trained_model
+                )
 
                 # Prepare dataset for forecasting (ignore 'y' if present)
                 pred_df = loaded_dataset.to_pandas()
 
-                # Build future_df with ds + exog columns (ignore 'y')
+                # Build future_df with timestamp + exog columns (ignore 'y')
                 exog_cols = getattr(trained_model, "exog_cols", [])
-                future_cols = ["ds"] + exog_cols
+                future_cols = [timestamp_col] + exog_cols
                 available_cols = [col for col in future_cols if col in pred_df.columns]
 
-                if "ds" not in available_cols:
+                if timestamp_col not in available_cols:
                     raise JobError(
-                        "Forecasting prediction requires 'ds' column in dataset"
+                        f"Forecasting prediction requires '{timestamp_col}' column "
+                        "in dataset"
                     )
 
                 future_df = pred_df[available_cols].copy()
-                future_df["ds"] = pd.to_datetime(future_df["ds"])
+                future_df[timestamp_col] = pd.to_datetime(future_df[timestamp_col])
 
                 log.info(
                     f"Predicting on {len(future_df)} timestamps with "

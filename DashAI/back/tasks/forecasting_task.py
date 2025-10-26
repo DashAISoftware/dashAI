@@ -88,13 +88,18 @@ class ForecastingTask(BaseTask):
             )
 
         dataset_df = dataset.to_pandas()
+        if not isinstance(dataset_df, pd.DataFrame):
+            dataset_df = pd.concat(dataset_df, ignore_index=True)
 
         # 🔬 Revisar tipos de columnas en dataset.features
         print("\n🧪 DEBUG: Column types from dataset.features")
         for col_name, col_type in dataset.features.items():
             print(f"  - {col_name}: {col_type} ({type(col_type)})")
 
+        # Validate all input columns exist and have correct types
         timestamp_found = False
+        detected_timestamp = None
+
         for input_col in input_columns:
             if input_col not in dataset.features:
                 raise ValueError(
@@ -120,29 +125,20 @@ class ForecastingTask(BaseTask):
 
             # Try to detect if it's the timestamp
             if not timestamp_found:
-                col_lower = input_col.lower()
-                if any(
-                    k in col_lower
-                    for k in ["date", "time", "timestamp", "ds", "datetime"]
-                ):
-                    try:
-                        pd.to_datetime(dataset_df[input_col])
-                        timestamp_found = True
-                        print(f"✅ Detected timestamp column by name: '{input_col}'")
-                    except Exception:
-                        pass
-                else:
-                    try:
-                        pd.to_datetime(dataset_df[input_col])
-                        timestamp_found = True
-                        print(
-                            f"✅ Detected timestamp column by conversion: '{input_col}'"
-                        )
-                    except Exception:
-                        pass
+                try:
+                    pd.to_datetime(dataset_df[input_col])
+                    timestamp_found = True
+                    detected_timestamp = input_col
+                    print(f"✅ Detected timestamp column: '{input_col}'")
+                except Exception:
+                    pass
 
         if not timestamp_found:
-            print(f"⚠️ Warning: No timestamp detected in input columns: {input_columns}")
+            raise ValueError(
+                "No timestamp column detected in input columns. "
+                "ForecastingTask requires a datetime column for temporal ordering. "
+                f"Checked columns: {input_columns}"
+            )
 
         # OUTPUT VALIDATION
         output_col = output_columns[0]
@@ -166,13 +162,16 @@ class ForecastingTask(BaseTask):
                 f"{allowed_output_types}."
             )
 
+        # Validate target column
         try:
             pd.to_numeric(dataset_df[output_col])
+            print(f"✅ Target column '{output_col}' is numeric")
         except Exception as e:
             raise TypeError(
                 f"Output column '{output_col}' cannot be converted to numeric: {e}"
             ) from e
 
+        # Check minimum data points
         if len(dataset) < 5:
             raise ValueError(
                 f"Dataset '{dataset_name}' has only {len(dataset)} rows. "
@@ -180,11 +179,10 @@ class ForecastingTask(BaseTask):
             )
 
         # ✅ VALIDATION PASSED
-        print("\n✅ ForecastingTask validation PASSED")
-        print(f"✔️  Inputs: {input_columns}")
-        print(f"✔️  Output: {output_col}")
-        print(f"✔️  Total rows: {len(dataset)}")
-        print("🧠 Dataset ready for forecasting model training.\n")
+        print("✅ ForecastingTask validation PASSED:")
+        print(f"   - Inputs: {input_columns} (timestamp: {detected_timestamp})")
+        print(f"   - Output: {output_col}")
+        print(f"   - Total rows: {len(dataset)}\n")
 
     @property
     def schema(self) -> Dict[str, Any]:
@@ -488,38 +486,31 @@ class ForecastingTask(BaseTask):
         if not isinstance(dataset_df, pd.DataFrame):
             dataset_df = pd.concat(dataset_df, ignore_index=True)
 
-        # Estandarizar nombres
-        rename_map = {timestamp_col: "ds", target_col: "y"}
-        for col in exog_cols:
-            if not col.startswith("exog_"):
-                rename_map[col] = f"exog_{col}"
-        dataset_df = dataset_df.rename(columns=rename_map)
+        # NO renombrar columnas - mantener nombres originales
+        # El modelo (ej: Prophet) hará el renombramiento si lo necesita
 
         # Orden temporal
-        dataset_df["ds"] = pd.to_datetime(dataset_df["ds"])
-        dataset_df = dataset_df.sort_values("ds").reset_index(drop=True)
+        dataset_df[timestamp_col] = pd.to_datetime(dataset_df[timestamp_col])
+        dataset_df = dataset_df.sort_values(timestamp_col).reset_index(drop=True)
 
         # Frecuencia
         if frequency == "auto":
-            frequency = self.detect_frequency(dataset_df["ds"])
+            frequency = self.detect_frequency(dataset_df[timestamp_col])
 
-        # Guardar metadatos
+        # Guardar metadatos con nombres ORIGINALES
         self._temporal_metadata = {
-            "timestamp_col": "ds",
-            "target_col": "y",
-            "exog_cols": [c for c in dataset_df.columns if c.startswith("exog_")],
+            "timestamp_col": timestamp_col,
+            "target_col": target_col,
+            "exog_cols": exog_cols,
             "frequency": frequency,
-            "start_date": dataset_df["ds"].min(),
-            "end_date": dataset_df["ds"].max(),
+            "start_date": dataset_df[timestamp_col].min(),
+            "end_date": dataset_df[timestamp_col].max(),
             "n_periods": len(dataset_df),
-            "original_timestamp_col": timestamp_col,
-            "original_target_col": target_col,
-            "original_exog_cols": exog_cols,
         }
 
         print("✅ Prepared forecasting dataset:")
-        print(f"   - Timestamp: {timestamp_col} → ds")
-        print(f"   - Target: {target_col} → y")
+        print(f"   - Timestamp: {timestamp_col}")
+        print(f"   - Target: {target_col}")
         print(f"   - Frequency: {frequency}")
         print(f"   - Periods: {len(dataset_df)}")
         if exog_cols:

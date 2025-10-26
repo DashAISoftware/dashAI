@@ -68,7 +68,9 @@ def _rebuild_dataset_with_transformed_columns(
     replacement_cols = transformed_cols[: len(scope_column_indexes)]
     new_cols = transformed_cols[len(scope_column_indexes) :]
 
-    index_to_replacement = dict(zip(scope_column_indexes, replacement_cols))
+    index_to_replacement = dict(
+        zip(scope_column_indexes, replacement_cols, strict=False)
+    )
     new_columns_order = []
     for i, col in enumerate(original_columns):
         if i in index_to_replacement:

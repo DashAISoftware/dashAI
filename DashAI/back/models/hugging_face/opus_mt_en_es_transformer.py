@@ -118,7 +118,7 @@ class OpusMtEnESTransformer(TranslationModel):
         input_column_name = x.column_names[0]
         output_column_name = y.column_names[0]
 
-        for input_sample, output_sample in zip(x, y):
+        for input_sample, output_sample in zip(x, y, strict=False):
             tokenized_input = self.tokenizer(
                 input_sample[input_column_name],
                 truncation=True,

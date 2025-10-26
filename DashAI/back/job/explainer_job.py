@@ -387,35 +387,67 @@ class ExplainerJob(BaseJob):
                     ) from e
                 try:
                     splits = json.loads(run.split_indexes)
-                    loaded_dataset = split_dataset(
-                        loaded_dataset,
-                        train_indexes=splits["train_indexes"],
-                        test_indexes=splits["test_indexes"],
-                        val_indexes=splits["val_indexes"],
-                    )
 
-                    prepared_dataset: DatasetDict = task.prepare_for_task(
-                        datasetdict=loaded_dataset,
-                        outputs_columns=self.output_columns,
-                    )
-                    data = select_columns(
-                        prepared_dataset,
-                        self.input_columns,
-                        self.output_columns,
-                    )
+                    # For forecasting tasks, prepare BEFORE splitting
+                    # (so we preserve all data points for later split)
+                    if experiment.task_name == "ForecastingTask":
+                        from DashAI.back.dataloaders.classes.dashai_dataset import (
+                            DashAIDataset,
+                        )
 
-                    data_x = split_dataset(
-                        data[0],
-                        train_indexes=splits["train_indexes"],
-                        test_indexes=splits["test_indexes"],
-                        val_indexes=splits["val_indexes"],
-                    )
-                    data_y = split_dataset(
-                        data[1],
-                        train_indexes=splits["train_indexes"],
-                        test_indexes=splits["test_indexes"],
-                        val_indexes=splits["val_indexes"],
-                    )
+                        # Prepare full dataset first (single DashAIDataset)
+                        prepared_dataset_full: DashAIDataset = task.prepare_for_task(
+                            dataset=loaded_dataset,
+                            outputs_columns=self.output_columns,
+                        )
+
+                        # Now split the prepared dataset
+                        data_x = split_dataset(
+                            prepared_dataset_full,
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
+
+                        # Split only the target column
+                        data_y = split_dataset(
+                            prepared_dataset_full.select_columns(self.output_columns),
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
+                    else:
+                        # For other tasks, use traditional approach (split then prepare)
+                        loaded_dataset = split_dataset(
+                            loaded_dataset,
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
+
+                        prepared_dataset: DatasetDict = task.prepare_for_task(
+                            datasetdict=loaded_dataset,
+                            outputs_columns=self.output_columns,
+                        )
+
+                        data = select_columns(
+                            prepared_dataset,
+                            self.input_columns,
+                            self.output_columns,
+                        )
+
+                        data_x = split_dataset(
+                            data[0],
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
+                        data_y = split_dataset(
+                            data[1],
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
 
                 except Exception as e:
                     log.exception(e)

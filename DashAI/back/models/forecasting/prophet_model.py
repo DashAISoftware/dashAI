@@ -6,7 +6,7 @@ with automatic seasonality detection and holiday effects.
 
 import os
 import pickle
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.forecasting.base_forecasting_model import ForecastingModel
 
 
 class ProphetModelSchema(BaseSchema):
@@ -107,8 +107,14 @@ class ProphetModelSchema(BaseSchema):
     ) = 1000  # type: ignore
 
 
-class ProphetModel(BaseModel):
-    """Prophet forecasting model wrapper for DashAI."""
+class ProphetModel(ForecastingModel):
+    """Prophet forecasting model wrapper for DashAI.
+
+    This model implements the ForecastingModel interface, handling all
+    column name conversions internally. It maintains exogenous variables in
+    their original format and converts to Prophet's 'ds'/'y' convention only
+    during internal operations.
+    """
 
     SCHEMA = ProphetModelSchema
     COMPATIBLE_COMPONENTS = ["ForecastingTask"]
@@ -128,7 +134,7 @@ class ProphetModel(BaseModel):
         uncertainty_samples: int = 1000,
         **kwargs,
     ) -> None:
-        super().__init__(**kwargs)
+        super().__init__(**kwargs)  # Pass kwargs to ForecastingModel
 
         self.seasonality_mode = seasonality_mode
         self.yearly_seasonality = self._parse_bool_setting(yearly_seasonality)
@@ -142,7 +148,7 @@ class ProphetModel(BaseModel):
         self.uncertainty_samples = uncertainty_samples
 
         self.model = None
-        self.exog_cols: List[str] = []
+        # exog_cols, timestamp_col, target_col are inherited from ForecastingModel
         self.last_ds: Optional[pd.Timestamp] = None
         self.frequency: Optional[str] = None
 
@@ -159,9 +165,9 @@ class ProphetModel(BaseModel):
         Parameters
         ----------
         X : DashAIDataset
-            Input features (should contain 'ds' column)
+            Input features (must contain a timestamp column)
         y : DashAIDataset
-            Target values (should contain 'y' column)
+            Target values (must contain a numeric column)
 
         Raises
         ------
@@ -171,32 +177,44 @@ class ProphetModel(BaseModel):
         x_cols = set(x.column_names)
         y_cols = set(y.column_names)
 
-        if "ds" not in x_cols:
+        if len(x_cols) == 0:
             raise ValueError(
-                "Prophet requires 'ds' (timestamp) column in input features. "
-                f"Available columns: {list(x_cols)}. "
-                "Use ForecastingTask.prepare_for_task() to standardize column names."
+                "Prophet requires at least one input column (timestamp). "
+                "Received empty dataset."
             )
 
-        if "y" not in y_cols:
+        if len(y_cols) != 1:
             raise ValueError(
-                "Prophet requires 'y' (target) column in target data. "
-                f"Available columns: {list(y_cols)}. "
-                "Use ForecastingTask.prepare_for_task() to standardize column names."
+                f"Prophet requires exactly one target column. "
+                f"Received {len(y_cols)} columns: {list(y_cols)}"
             )
 
     def fit(
-        self, x_train: DashAIDataset, y: DashAIDataset, **fit_params
+        self,
+        x_train: DashAIDataset,
+        y: DashAIDataset,
+        temporal_metadata: dict = None,
+        **fit_params,
     ) -> "ProphetModel":
-        """Fit Prophet model to time series data.
+        """Train Prophet forecasting model.
+
+        Implements ForecastingModel.fit() interface. Handles all column name
+        conversions internally - stores original names in base class attributes,
+        converts to Prophet's 'ds'/'y' convention only for internal use.
 
         Parameters
         ----------
         x_train : DashAIDataset
-            Input features containing 'ds' (datetime) and optional exogenous
-            variables
+            Input features containing timestamp and optional exogenous variables
         y : DashAIDataset
-            Target time series containing 'y' column
+            Target time series (single column)
+        temporal_metadata : dict, optional
+            Metadata from ForecastingTask containing:
+            - timestamp_col: name of timestamp column
+            - target_col: name of target column
+            - exog_cols: list of exogenous variable column names
+            - frequency: time series frequency
+            If not provided, will attempt auto-detection (legacy behavior)
         **fit_params
             Additional fitting parameters
 
@@ -220,27 +238,107 @@ class ProphetModel(BaseModel):
         x_df = x_train.to_pandas()
         y_df = y.to_pandas()
 
-        # Combine x and y for Prophet format
-        # Prophet expects DataFrame with 'ds', 'y', and optional regressors
+        # Get column information from metadata (task-agnostic approach)
+        if temporal_metadata:
+            timestamp_col = temporal_metadata.get("timestamp_col")
+            target_col = temporal_metadata.get("target_col")
+            exog_cols_from_task = temporal_metadata.get("exog_cols", [])
+            frequency = temporal_metadata.get("frequency", "D")
+
+            print("[ProphetModel] Using temporal metadata from task:")
+            print(f"  - Timestamp: '{timestamp_col}'")
+            print(f"  - Target: '{target_col}'")
+            print(f"  - Frequency: {frequency}")
+            if exog_cols_from_task:
+                print(f"  - Exogenous variables: {exog_cols_from_task}")
+        else:
+            # Legacy: auto-detection if no metadata provided
+            print(
+                "[ProphetModel] ⚠️ No temporal_metadata provided, using auto-detection"
+            )
+
+            # Get target column name (should be single column)
+            target_col = y_df.columns[0]
+
+            # Auto-detect timestamp column in x_df
+            timestamp_col = None
+            for col in x_df.columns:
+                try:
+                    pd.to_datetime(x_df[col])
+                    timestamp_col = col
+                    print(f"[ProphetModel] Detected timestamp column: '{col}'")
+                    break
+                except Exception:
+                    continue
+
+            if timestamp_col is None:
+                raise ValueError(
+                    f"No timestamp column found in input data. "
+                    f"Available columns: {list(x_df.columns)}"
+                )
+
+            exog_cols_from_task = []
+            frequency = fit_params.get("frequency", "D")
+
+        # Store original column names in base class attributes
+        self.timestamp_col = timestamp_col
+        self.target_col = target_col
+        self.frequency = frequency
+
+        # Build Prophet dataframe (internal conversion to 'ds'/'y')
         prophet_df = pd.DataFrame()
-        prophet_df["ds"] = pd.to_datetime(x_df["ds"])
-        prophet_df["y"] = y_df["y"]
+        prophet_df["ds"] = pd.to_datetime(x_df[timestamp_col])
 
-        # Add exogenous variables (additional regressors)
-        self.exog_cols = [col for col in x_df.columns if col.startswith("exog_")]
-        for col in self.exog_cols:
-            prophet_df[col] = x_df[col]
+        # Check if target column is in x_train (user might have included it by mistake)
+        target_in_inputs = target_col in x_df.columns
 
-        # Store metadata
+        if target_in_inputs:
+            # Target is in inputs - use it from there for consistency
+            print(
+                "[ProphetModel] ℹ️  Target '{}' found in inputs - using it "
+                "from there".format(target_col)
+            )
+            prophet_df["y"] = x_df[target_col]
+        else:
+            # Target is only in y - normal case
+            prophet_df["y"] = y_df[target_col]
+
+        # Add exogenous variables (columns that are not timestamp and are numeric)
+        # Exclude timestamp and target columns, and only include numeric columns
+        # Store in ORIGINAL format (as per BaseForecastingModel contract)
+        self.exog_cols = []
+        for col in x_df.columns:
+            if col == timestamp_col:
+                continue  # Skip timestamp
+            if col == target_col:
+                # Skip target - don't use it as exogenous variable
+                if target_in_inputs:
+                    print(
+                        "[ProphetModel] ℹ️  Excluding target '{}' from exogenous "
+                        "variables".format(col)
+                    )
+                continue
+
+            # Only add numeric columns
+            if pd.api.types.is_numeric_dtype(x_df[col]):
+                self.exog_cols.append(col)  # Store ORIGINAL name
+                prophet_df[col] = x_df[col]
+            else:
+                print(
+                    "[ProphetModel] ⚠️  Skipping non-numeric column: '{}' "
+                    "(type: {})".format(col, x_df[col].dtype)
+                )
+
+        # Store additional metadata
         self.last_ds = prophet_df["ds"].max()
-        self.frequency = fit_params.get("frequency", "D")
 
         print(f"[ProphetModel] Training with {len(prophet_df)} data points")
         print(
             f"[ProphetModel] Date range: {prophet_df['ds'].min()} to "
             f"{prophet_df['ds'].max()}"
         )
-        print(f"[ProphetModel] Exogenous variables: {len(self.exog_cols)}")
+        if self.exog_cols:
+            print(f"[ProphetModel] Exogenous variables: {self.exog_cols}")
 
         # Initialize Prophet model
         self.model = Prophet(
@@ -256,6 +354,7 @@ class ProphetModel(BaseModel):
             uncertainty_samples=self.uncertainty_samples,
         )
 
+        # Add exogenous regressors to Prophet (using original names)
         for col in self.exog_cols:
             self.model.add_regressor(col)
 
@@ -298,32 +397,121 @@ class ProphetModel(BaseModel):
                 else:
                     input_df = to_dashai_dataset(x_pred).to_pandas()
 
-                if "ds" not in input_df.columns:
+                # Auto-detect timestamp column (try 'ds' first for compatibility)
+                timestamp_col = None
+                if "ds" in input_df.columns:
+                    timestamp_col = "ds"
+                else:
+                    # Try to find timestamp column
+                    for col in input_df.columns:
+                        try:
+                            pd.to_datetime(input_df[col])
+                            timestamp_col = col
+                            break
+                        except Exception:
+                            continue
+
+                if timestamp_col is None:
                     raise ValueError(
-                        "Prophet predict requires a 'ds' column with timestamps."
+                        "Prophet predict requires a timestamp column. "
+                        f"Available columns: {list(input_df.columns)}"
                     )
 
                 input_df = input_df.copy()
+
+                # Rename to 'ds' for Prophet
+                if timestamp_col != "ds":
+                    input_df = input_df.rename(columns={timestamp_col: "ds"})
+
                 input_df["ds"] = pd.to_datetime(input_df["ds"])
                 input_df = input_df.sort_values("ds").reset_index(drop=True)
 
-                future_df = input_df[["ds"]].copy()
+                # Check if we need in-sample predictions (for explainability)
+                # If any requested date is <= last training date, we need to include
+                # historical dates in the prediction
+                # Use Prophet's internal history dataframe to get training date range
+                if not hasattr(self.model, "history_dates"):
+                    raise ValueError(
+                        "Prophet model has no training history. "
+                        "Ensure the model was fitted before prediction."
+                    )
+                last_train_date = self.model.history_dates.max()
+                has_historical = (input_df["ds"] <= last_train_date).any()
 
-                if self.exog_cols:
-                    missing_cols = [
-                        col for col in self.exog_cols if col not in input_df.columns
-                    ]
-                    if missing_cols:
-                        raise ValueError(
-                            f"Missing exogenous columns for prediction: {missing_cols}."
-                        )
-                    future_df = pd.concat(
-                        [future_df, input_df[self.exog_cols].reset_index(drop=True)],
-                        axis=1,
+                if has_historical:
+                    # For in-sample predictions (explainability use case):
+                    # Include both historical and future dates
+                    # Create a complete dataframe from first training date to last
+                    # requested date. This ensures Prophet generates predictions for
+                    # all dates including historical ones
+                    max_requested_date = input_df["ds"].max()
+
+                    # Use make_future_dataframe but include historical dates
+                    future_df = self.model.make_future_dataframe(
+                        periods=0,  # Don't extend beyond training
+                        freq=self.frequency or "D",
+                        include_history=True,  # Include training dates
                     )
 
+                    # Add any future dates beyond training if needed
+                    if max_requested_date > last_train_date:
+                        additional_periods = pd.date_range(
+                            start=last_train_date + pd.Timedelta(days=1),
+                            end=max_requested_date,
+                            freq=self.frequency or "D",
+                        )
+                        additional_df = pd.DataFrame({"ds": additional_periods})
+                        future_df = pd.concat(
+                            [future_df, additional_df], ignore_index=True
+                        )
+
+                    # Add exogenous variables if present
+                    if self.exog_cols:
+                        missing_cols = [
+                            col for col in self.exog_cols if col not in input_df.columns
+                        ]
+                        if missing_cols:
+                            raise ValueError(
+                                "Missing exogenous columns for prediction: "
+                                f"{missing_cols}."
+                            )
+
+                        # Merge exogenous data from input_df with future_df
+                        # For historical dates, use the provided values
+                        future_df = future_df.merge(
+                            input_df[["ds"] + self.exog_cols], on="ds", how="left"
+                        )
+
+                        # Check if there are missing exogenous values
+                        if future_df[self.exog_cols].isna().any().any():
+                            raise ValueError(
+                                "Missing exogenous values for some dates. "
+                                "All dates in prediction range must have "
+                                "exogenous data."
+                            )
+                else:
+                    # Normal future forecasting (original behavior)
+                    future_df = input_df[["ds"]].copy()
+
+                    if self.exog_cols:
+                        missing_cols = [
+                            col for col in self.exog_cols if col not in input_df.columns
+                        ]
+                        if missing_cols:
+                            raise ValueError(
+                                "Missing exogenous columns for prediction: "
+                                f"{missing_cols}."
+                            )
+                        future_df = pd.concat(
+                            [
+                                future_df,
+                                input_df[self.exog_cols].reset_index(drop=True),
+                            ],
+                            axis=1,
+                        )
+
                 forecast = self.model.predict(future_df)
-                return _extract_predictions(forecast, future_df["ds"])
+                return _extract_predictions(forecast, input_df["ds"])
 
         if horizon is None:
             raise ValueError(
@@ -369,6 +557,10 @@ class ProphetModel(BaseModel):
     def get_forecast_components(self, horizon: int) -> pd.DataFrame:
         """Get forecast decomposition (trend, seasonality, etc.).
 
+        Note: This method requires making future predictions. If the model
+        was trained with exogenous variables, this will fail unless future
+        values for those variables are provided.
+
         Parameters
         ----------
         horizon : int
@@ -378,20 +570,35 @@ class ProphetModel(BaseModel):
         -------
         pd.DataFrame
             Forecast components (trend, seasonal, etc.)
+
+        Raises
+        ------
+        ValueError
+            If model was trained with exogenous variables (cannot forecast
+            without future exogenous values)
         """
         if self.model is None:
             raise ValueError("Model must be fitted before getting components")
 
+        if self.exog_cols:
+            # Model uses exogenous variables - cannot make valid forecast
+            raise ValueError(
+                f"Cannot generate forecast components: model was trained with "
+                f"exogenous variables {self.exog_cols}.\n"
+                f"Future forecasting requires known future values for these variables, "
+                f"which are not available.\n"
+                f"Recommendation: For models with exogenous variables, use "
+                f"ForecastFeatureImportance explainer instead."
+            )
+
+        # No exogenous variables - can make simple forecast
         future_df = self.model.make_future_dataframe(
-            periods=horizon, freq=self.frequency
+            periods=horizon, freq=self.frequency or "D"
         )
         forecast = self.model.predict(future_df)
 
         # Return components for the forecast period
         component_cols = ["ds", "trend", "seasonal", "weekly", "yearly"]
-        if self.exog_cols:
-            component_cols.extend(self.exog_cols)
-
         available_cols = [col for col in component_cols if col in forecast.columns]
         return forecast[available_cols].iloc[-horizon:]
 
@@ -405,7 +612,11 @@ class ProphetModel(BaseModel):
         """
         model_state = {
             "model": self.model,
+            # Base class attributes (original column names)
             "exog_cols": self.exog_cols,
+            "timestamp_col": self.timestamp_col,
+            "target_col": self.target_col,
+            # Prophet-specific metadata
             "last_ds": self.last_ds,
             "frequency": self.frequency,
             "config": {
@@ -445,7 +656,15 @@ class ProphetModel(BaseModel):
             model_state = pickle.load(f)
 
         self.model = model_state["model"]
+
+        # Restore base class attributes (original column names)
         self.exog_cols = model_state["exog_cols"]
+        self.timestamp_col = model_state.get(
+            "timestamp_col"
+        )  # May not exist in old models
+        self.target_col = model_state.get("target_col")  # May not exist in old models
+
+        # Restore Prophet-specific metadata
         self.last_ds = model_state["last_ds"]
         self.frequency = model_state["frequency"]
 

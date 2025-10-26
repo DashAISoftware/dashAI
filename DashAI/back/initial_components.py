@@ -42,6 +42,9 @@ from DashAI.back.converters import (
 )
 from DashAI.back.dataloaders import CSVDataLoader, ExcelDataLoader, JSONDataLoader
 from DashAI.back.explainability import (
+    ForecastDecomposition,
+    ForecastFeatureImportance,
+    ForecastUncertainty,
     KernelShap,
     PartialDependence,
     PermutationFeatureImportance,
@@ -211,6 +214,9 @@ def get_initial_components():
         KernelShap,
         PartialDependence,
         PermutationFeatureImportance,
+        ForecastDecomposition,
+        ForecastFeatureImportance,
+        ForecastUncertainty,
         # Explorers
         DescribeExplorer,
         ScatterPlotExplorer,

@@ -311,10 +311,13 @@ class ForecastingJob(BaseJob):
                     # Forecasting model training
                     if not run_optimizable_parameters:
                         # Simple fit with forecasting-specific parameters
+                        # Pass temporal metadata to model for column information
                         if hasattr(model, "fit") and hasattr(model, "_task_type"):
-                            # Pass frequency for Prophet and other time-aware models
-                            frequency = temporal_metadata.get("frequency", "D")
-                            model.fit(x["train"], y["train"], frequency=frequency)
+                            model.fit(
+                                x["train"],
+                                y["train"],
+                                temporal_metadata=temporal_metadata,
+                            )
                         else:
                             model.fit(x["train"], y["train"])
                     else:
