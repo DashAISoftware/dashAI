@@ -2,6 +2,12 @@
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.forecasting.prophet_model import ProphetModel
+from DashAI.back.models.forecasting.statsmodels_arima_model import (
+    StatsmodelsARIMAModel,
+)
+from DashAI.back.models.forecasting.statsmodels_sarimax_model import (
+    StatsmodelsSARIMAXModel,
+)
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
