@@ -110,6 +110,8 @@ from DashAI.back.models import (
     StableDiffusionV2Model,
     StableDiffusionV3Model,
     StableDiffusionXLV1ControlNet,
+    StatsmodelsARIMAModel,
+    StatsmodelsSARIMAXModel,
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.pipeline import (
@@ -175,6 +177,8 @@ def get_initial_components():
         MLPRegression,
         MultiOutputRegression,
         ProphetModel,
+        StatsmodelsARIMAModel,
+        StatsmodelsSARIMAXModel,
         RandomForestClassifier,
         RandomForestRegression,
         DistilBertTransformer,
