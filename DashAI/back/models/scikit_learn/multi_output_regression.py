@@ -48,7 +48,7 @@ class MultiOutputRegression(RegressionModel, SklearnLikeRegressor):
 
     SCHEMA = MultiOutputRegressionSchema
 
-    COMPATIBLE_COMPONENTS = ["MultiOutputRegressionTask", "RegressionTask"]
+    COMPATIBLE_COMPONENTS = ["RegressionTask"]
 
     def __init__(
         self,

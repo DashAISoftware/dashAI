@@ -19,7 +19,6 @@ class MAPE(RegressionMetric):
 
     COMPATIBLE_COMPONENTS = [
         "RegressionTask",
-        "MultiOutputRegressionTask",
         "ForecastingTask",
     ]
 

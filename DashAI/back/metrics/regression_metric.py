@@ -9,7 +9,7 @@ from DashAI.back.metrics.base_metric import BaseMetric
 class RegressionMetric(BaseMetric):
     """Class for metrics associated with regression models."""
 
-    COMPATIBLE_COMPONENTS = ["RegressionTask", "MultiOutputRegressionTask"]
+    COMPATIBLE_COMPONENTS = ["RegressionTask"]
 
 
 def validate_inputs(true_values: np.ndarray, pred_values: np.ndarray) -> None:

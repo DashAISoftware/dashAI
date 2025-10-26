@@ -2,6 +2,9 @@
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.forecasting.prophet_model import ProphetModel
+from DashAI.back.models.forecasting.sklearn_multistep_forecaster import (
+    SklearnMultiStepForecaster,
+)
 from DashAI.back.models.forecasting.statsmodels_arima_model import (
     StatsmodelsARIMAModel,
 )
@@ -40,7 +43,9 @@ from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
 from DashAI.back.models.scikit_learn.logistic_regression import LogisticRegression
 from DashAI.back.models.scikit_learn.mlp_regression import MLPRegression
-from DashAI.back.models.scikit_learn.multi_output_regression import MultiOutputRegression
+from DashAI.back.models.scikit_learn.multi_output_regression import (
+    MultiOutputRegression,
+)
 from DashAI.back.models.scikit_learn.random_forest_classifier import (
     RandomForestClassifier,
 )
