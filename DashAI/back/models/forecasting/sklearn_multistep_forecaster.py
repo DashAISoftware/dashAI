@@ -117,6 +117,8 @@ class SklearnMultiStepForecaster(ForecastingModel):
         self.models: List[Any] = []
         self.training_history: Optional[pd.Series] = None
         self.training_exog_history: Optional[pd.DataFrame] = None
+        self.training_full_series: Optional[pd.Series] = None
+        self.training_full_exog: Optional[pd.DataFrame] = None
         self.max_horizon: int = 1
 
     def _get_base_estimator(self):
@@ -286,9 +288,12 @@ class SklearnMultiStepForecaster(ForecastingModel):
 
             print("[SklearnMultiStepForecaster] Trained 1 model (recursive strategy)")
 
-        # Store last window_size values for predictions
+        # Store FULL training series and exog for in-sample predictions
+        # We need the complete history to create lags for any subset
+        self.training_full_series = target_series.copy()
         self.training_history = target_series.iloc[-self.window_size :]
         if self.exog_cols and exog_df is not None:
+            self.training_full_exog = exog_df.copy()
             self.training_exog_history = exog_df.iloc[-self.window_size :]
 
         print("[SklearnMultiStepForecaster] ✅ Training completed")
@@ -345,22 +350,16 @@ class SklearnMultiStepForecaster(ForecastingModel):
                 f"{len(input_df)} time steps"
             )
 
-            # We need the full training series to create lags for in-sample predictions
-            # This is stored during fit()
-            if self.training_history is None:
+            # For in-sample predictions, we need the full training data
+            # because we create lags from historical values
+            if not hasattr(self, "training_full_series"):
                 raise ValueError(
                     "No training history available. Model may not be fitted properly."
                 )
 
-            # Get target values from input (needed to create lags)
-            if self.target_col not in input_df.columns:
-                raise ValueError(
-                    f"Target column '{self.target_col}' not found in input data. "
-                    f"Available columns: {list(input_df.columns)}"
-                )
-
-            target_series = input_df[self.target_col]
-
+            # Get indices/timestamps from input to know what to predict
+            # (Currently we use indices directly, timestamp matching not yet
+            # implemented)
             # Get exogenous variables if present
             exog_df = None
             if self.exog_cols:
@@ -373,22 +372,39 @@ class SklearnMultiStepForecaster(ForecastingModel):
                     )
                 exog_df = input_df[self.exog_cols]
 
-            # Create lag features
-            X_with_lags = self._create_lag_features(target_series, exog_df)
+            # Use the FULL training series to create lag features
+            # This allows us to predict any subset without needing target values
+            target_series = self.training_full_series
+            full_exog_df = (
+                self.training_full_exog if hasattr(self, "training_full_exog") else None
+            )
+
+            # Create lag features from full training data
+            X_with_lags = self._create_lag_features(target_series, full_exog_df)
+
+            # If exog was provided in input, update those columns
+            if self.exog_cols and exog_df is not None:
+                # Update exog values for the requested indices
+                for col in self.exog_cols:
+                    X_with_lags.loc[input_df.index, col] = exog_df[col].to_numpy()
+
+            # Select only the rows we need to predict (matching input indices)
+            X_subset = X_with_lags.loc[input_df.index]
 
             # Remove rows with NaN (can't predict without full window)
-            mask = X_with_lags.notna().all(axis=1)
-            X_clean = X_with_lags[mask]
+            mask = X_subset.notna().all(axis=1)
+            X_clean = X_subset[mask]
 
             if len(X_clean) == 0:
                 raise ValueError(
                     f"No valid samples for prediction. Need at least "
-                    f"{self.window_size} historical values to create lags."
+                    f"{self.window_size} historical values before the first "
+                    "prediction point."
                 )
 
             # Use first model (1-step ahead) for in-sample predictions
             # This is standard practice in time series - we're predicting t+1
-            predictions_full = np.full(len(target_series), np.nan)
+            predictions_full = np.full(len(input_df), np.nan)
             predictions = self.models[0].predict(X_clean.to_numpy())
             predictions_full[mask] = predictions.flatten()
 
@@ -499,6 +515,8 @@ class SklearnMultiStepForecaster(ForecastingModel):
             "models": self.models,
             "training_history": self.training_history,
             "training_exog_history": self.training_exog_history,
+            "training_full_series": self.training_full_series,
+            "training_full_exog": self.training_full_exog,
             "exog_cols": self.exog_cols,
             "timestamp_col": self.timestamp_col,
             "target_col": self.target_col,
@@ -536,6 +554,8 @@ class SklearnMultiStepForecaster(ForecastingModel):
         self.models = model_state["models"]
         self.training_history = model_state["training_history"]
         self.training_exog_history = model_state.get("training_exog_history")
+        self.training_full_series = model_state.get("training_full_series")
+        self.training_full_exog = model_state.get("training_full_exog")
         self.exog_cols = model_state["exog_cols"]
         self.timestamp_col = model_state.get("timestamp_col")
         self.target_col = model_state.get("target_col")
