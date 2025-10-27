@@ -88,5 +88,31 @@ def prepare_to_metric(
         f"[prepare_to_metric] Final shapes - true: {true_values.shape}, "
         f"pred: {predicted_values.shape}"
     )
+
+    # Filter out NaN values (common in forecasting with lag features)
+    # For single-output: filter where either true or pred is NaN
+    # For multi-output: filter rows where ANY value is NaN
+    if predicted_values.ndim == 1 or len(y.column_names) == 1:
+        # Single-output case
+        valid_mask = ~(np.isnan(true_values) | np.isnan(predicted_values))
+        n_nan = np.sum(~valid_mask)
+        if n_nan > 0:
+            print(f"[prepare_to_metric] Filtering {n_nan} NaN values")
+            true_values = true_values[valid_mask]
+            predicted_values = predicted_values[valid_mask]
+    else:
+        # Multi-output case: filter rows with ANY NaN
+        valid_mask = ~(
+            np.isnan(true_values).any(axis=1) | np.isnan(predicted_values).any(axis=1)
+        )
+        n_nan = np.sum(~valid_mask)
+        if n_nan > 0:
+            print(f"[prepare_to_metric] Filtering {n_nan} rows with NaN values")
+            true_values = true_values[valid_mask]
+            predicted_values = predicted_values[valid_mask]
+
+    if len(true_values) == 0:
+        raise ValueError("All values are NaN after filtering. Cannot compute metrics.")
+
     validate_inputs(true_values, predicted_values)
     return true_values, predicted_values
