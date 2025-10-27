@@ -85,10 +85,14 @@ class StatsmodelsSARIMAXModelSchema(BaseSchema):
 
     trend: schema_field(
         enum_field(enum=["n", "c", "t", "ct"]),
-        placeholder="c",
-        description="Deterministic trend to include. 'n'=no trend, 'c'=constant, "
-        "'t'=linear trend, 'ct'=constant and linear trend.",
-    ) = "c"  # type: ignore
+        placeholder="n",
+        description=(
+            "Deterministic trend to include. 'n'=no trend, 'c'=constant, "
+            "'t'=linear trend, 'ct'=constant and linear trend. "
+            "Note: When d>0 or D>0, 'c' is not allowed (use 't' instead). "
+            "When d+D>1, neither 'c' nor 't' are allowed."
+        ),
+    ) = "n"  # type: ignore
 
     enforce_stationarity: schema_field(
         bool_field(),
@@ -127,7 +131,7 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
         D: int = 1,  # noqa: N803
         Q: int = 1,  # noqa: N803
         s: int = 12,
-        trend: str = "c",
+        trend: str = "n",
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,
         **kwargs,

@@ -58,10 +58,14 @@ class StatsmodelsARIMAModelSchema(BaseSchema):
 
     trend: schema_field(
         enum_field(enum=["n", "c", "t", "ct"]),
-        placeholder="c",
-        description="Deterministic trend to include. 'n'=no trend, 'c'=constant "
-        "(level), 't'=linear trend, 'ct'=constant and linear trend.",
-    ) = "c"  # type: ignore
+        placeholder="n",
+        description=(
+            "Deterministic trend to include. 'n'=no trend, 'c'=constant "
+            "(level), 't'=linear trend, 'ct'=constant and linear trend. "
+            "Note: When d>0, 'c' is not allowed (use 't' instead). "
+            "When d>1, neither 'c' nor 't' are allowed."
+        ),
+    ) = "n"  # type: ignore
 
 
 class StatsmodelsARIMAModel(ForecastingModel):
@@ -80,7 +84,7 @@ class StatsmodelsARIMAModel(ForecastingModel):
         p: int = 1,
         d: int = 1,
         q: int = 1,
-        trend: str = "c",
+        trend: str = "n",
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
