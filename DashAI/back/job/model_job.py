@@ -186,6 +186,11 @@ class ModelJob(BaseJob):
                         )
                         n_labels = len(all_classes)
 
+                    # Get temporal metadata for forecasting tasks
+                    temporal_metadata = None
+                    if experiment.task_name == "ForecastingTask":
+                        temporal_metadata = task.get_temporal_metadata()
+
                     splits = json.loads(experiment.splits)
                     prepared_dataset, splits = prepare_for_experiment(
                         dataset=prepared_dataset,
@@ -283,7 +288,15 @@ class ModelJob(BaseJob):
                 try:
                     # Hyperparameter Tunning
                     if not run_optimizable_parameters:
-                        model.fit(x["train"], y["train"])
+                        # Pass temporal_metadata for ForecastingTask models
+                        if experiment.task_name == "ForecastingTask":
+                            model.fit(
+                                x["train"],
+                                y["train"],
+                                temporal_metadata=temporal_metadata,
+                            )
+                        else:
+                            model.fit(x["train"], y["train"])
                     else:
                         optimizer.optimize(
                             model,
