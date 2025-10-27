@@ -154,8 +154,7 @@ const JobQueueWidget = () => {
       !expanded
     ) {
       setExpanded(true);
-      const toastTimeout = setTimeout(() => {
-      }, 100);
+      const toastTimeout = setTimeout(() => {}, 100);
       return () => clearTimeout(toastTimeout);
     }
     prevActiveJobsCount.current = activeJobs.length;

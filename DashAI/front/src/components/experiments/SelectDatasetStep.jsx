@@ -13,6 +13,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 
+import { useTourContext } from "../tour/TourProvider";
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 import { formatDate } from "../../utils";
 
@@ -49,6 +50,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [loading, setLoading] = useState(true);
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
+  const tourContext = useTourContext();
 
   const getDatasets = async () => {
     setLoading(true);
@@ -101,6 +103,13 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       );
       setNewExp({ ...newExp, dataset });
       setNextEnabled(true);
+      if (tourContext && tourContext.run) {
+        if (dataset.name === "Clean Personality Dataset") {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 300);
+        }
+      }
     }
   }, [datasetsSelected]);
 
@@ -134,7 +143,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           <Typography></Typography>
         </React.Fragment>
       )}
-      <Paper>
+      <Paper data-tour="exp-dataset-selector">
         <DataGrid
           rows={datasets}
           columns={columns}

@@ -119,7 +119,10 @@ export function CreateNotebookModal({
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." className="notebook-note-box"/>
+          <NoteBox
+            message="A copy of the selected dataset will be created to work in the notebook without altering the original."
+            className="notebook-note-box"
+          />
           {/* Selected Dataset Info Box */}
           {dataset && (
             <Box

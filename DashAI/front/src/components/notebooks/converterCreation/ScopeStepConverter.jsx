@@ -74,94 +74,94 @@ export default function ScopeStepConverter({
   }, [notebook.file_path]);
 
   return (
-  <Box
-    sx={{
-      display: "flex",
-      flexDirection: "column",
-      flexGrow: 1,
-      height: "100%",
-      gap: 1,
-    }}
-  >
-    {/* Content */}
-      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
-      <Typography variant="subtitle2" gutterBottom>
-        Step 1: Select Scope
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        Here you will configure which columns to apply the converter to.
-      </Typography>
-      {/* Scope selection UI */}
-      <ColumnSelector
-        file_path={notebook.file_path}
-        onSelectionChange={(columnsInfo) => {
-          const processedColumns = columnsInfo.map((col) => ({
-            idx: col.id + 1,
-            columnName: col.columnName,
-            valueType: col.valueType,
-            dataType: col.dataType,
-          }));
-          setColumns(processedColumns);
-        }}
-        onValidationChange={() => {}}
-      />
-      <Typography variant="body2" color="text.secondary">
-        Here you will configure which rows to apply the converter to.
-      </Typography>
-      <RowSelector
-        totalRows={datasetInfo?.total_rows || 0}
-        initialRows={rows}
-        onSelectionChange={(selectedRows) => {
-          setRows(selectedRows);
-        }}
-      />
-    </Box>
-  
-    {/* Buttons */}
     <Box
       sx={{
-        flexShrink: 0,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
+        flexDirection: "column",
+        flexGrow: 1,
+        height: "100%",
         gap: 1,
       }}
     >
-      {supervised && (
-        <Tooltip
-          title="Supervised converters will include this column in their learning process."
-          placement="top"
-        >
-          <IconButton>
-            <HelpIcon />
-          </IconButton>
-        </Tooltip>
-      )}
-  
-      {supervised && (
-        <ConverterClassColumnModal
-          updateClassColumn={(column) => {
-            const processedColumn = {
-              idx: column.id + 1,
-              columnName: column.columnName,
-              valueType: column.valueType,
-              dataType: column.dataType,
-            };
-            setTargetColumn(processedColumn);
+      {/* Content */}
+      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Step 1: Select Scope
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Here you will configure which columns to apply the converter to.
+        </Typography>
+        {/* Scope selection UI */}
+        <ColumnSelector
+          file_path={notebook.file_path}
+          onSelectionChange={(columnsInfo) => {
+            const processedColumns = columnsInfo.map((col) => ({
+              idx: col.id + 1,
+              columnName: col.columnName,
+              valueType: col.valueType,
+              dataType: col.dataType,
+            }));
+            setColumns(processedColumns);
           }}
-          classColumnInitialValue={targetColumn?.idx}
-          notebook={notebook}
+          onValidationChange={() => {}}
         />
-      )}
-  
-      <FormSchemaButtonGroup
-        onFormSubmit={handleSubmit}
-        saveButtonText={
-          Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
-        }
-        data-tour="converter-scope-next-button"
-      />
+        <Typography variant="body2" color="text.secondary">
+          Here you will configure which rows to apply the converter to.
+        </Typography>
+        <RowSelector
+          totalRows={datasetInfo?.total_rows || 0}
+          initialRows={rows}
+          onSelectionChange={(selectedRows) => {
+            setRows(selectedRows);
+          }}
+        />
+      </Box>
+
+      {/* Buttons */}
+      <Box
+        sx={{
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 1,
+        }}
+      >
+        {supervised && (
+          <Tooltip
+            title="Supervised converters will include this column in their learning process."
+            placement="top"
+          >
+            <IconButton>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {supervised && (
+          <ConverterClassColumnModal
+            updateClassColumn={(column) => {
+              const processedColumn = {
+                idx: column.id + 1,
+                columnName: column.columnName,
+                valueType: column.valueType,
+                dataType: column.dataType,
+              };
+              setTargetColumn(processedColumn);
+            }}
+            classColumnInitialValue={targetColumn?.idx}
+            notebook={notebook}
+          />
+        )}
+
+        <FormSchemaButtonGroup
+          onFormSubmit={handleSubmit}
+          saveButtonText={
+            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
+          }
+          data-tour="converter-scope-next-button"
+        />
+      </Box>
     </Box>
-  </Box>
   );
 }

@@ -22,7 +22,6 @@ export default function ExplorerList({
         tourContext.nextStep();
       }, 500);
     }
-
   };
 
   return (

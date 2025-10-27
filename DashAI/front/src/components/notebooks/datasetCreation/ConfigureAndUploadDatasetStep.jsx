@@ -4,7 +4,7 @@ import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
-import {enqueueDatasetJob as enqueueDatasetRequest,} from "../../../api/job";
+import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
@@ -39,11 +39,11 @@ export default function ConfigureAndUploadDatasetStep({
     if (formSubmitRef.current && tourContext?.run) {
       setTimeout(() => {
         if (formSubmitRef.current?.setFieldValue) {
-          formSubmitRef.current.setFieldValue('name', 'Personality Dataset');
+          formSubmitRef.current.setFieldValue("name", "Personality Dataset");
         }
       }, 100);
     }
-  }, [tourContext, selectedDataloader]); 
+  }, [tourContext, selectedDataloader]);
 
   const submitNewDataset = useCallback(async () => {
     const params = formSubmitRef.current.values;
@@ -84,9 +84,8 @@ export default function ConfigureAndUploadDatasetStep({
     enqueueSnackbar,
     handleDatasetCreated,
     formSubmitRef,
-    tourContext
+    tourContext,
   ]);
-
 
   const handleFileUpload = (file, url) => {
     setDatasetFileToUpload({ file, url });

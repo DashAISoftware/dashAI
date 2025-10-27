@@ -14,7 +14,7 @@ export default function ParameterStepConverter({
 
   const handleSave = async (params) => {
     await handleSaveConverter(params);
-    
+
     if (tourContext && tourContext.run) {
       setTimeout(() => {
         tourContext.nextStep();
@@ -25,23 +25,29 @@ export default function ParameterStepConverter({
   useEffect(() => {
     if (tourContext?.run) {
       const timeout = setTimeout(() => {
-        const button = document.querySelector('[data-tour="create-converter-button"]');
+        const button = document.querySelector(
+          '[data-tour="create-converter-button"]',
+        );
         if (button) {
-          const dialogContent = button.closest('.MuiDialogContent-root');
+          const dialogContent = button.closest(".MuiDialogContent-root");
           if (dialogContent) {
             const rect = button.getBoundingClientRect();
             const containerRect = dialogContent.getBoundingClientRect();
             const relativeTop = rect.top - containerRect.top;
-            const scrollTop = dialogContent.scrollTop + relativeTop - (dialogContent.clientHeight / 2) + (rect.height / 2);
-            
+            const scrollTop =
+              dialogContent.scrollTop +
+              relativeTop -
+              dialogContent.clientHeight / 2 +
+              rect.height / 2;
+
             dialogContent.scrollTo({
               top: Math.max(0, scrollTop),
-              behavior: 'smooth'
+              behavior: "smooth",
             });
           }
         }
       }, 500);
-      
+
       return () => clearTimeout(timeout);
     }
   }, [tourContext?.stepIndex, tourContext?.run]);

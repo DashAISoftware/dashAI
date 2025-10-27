@@ -99,7 +99,6 @@ export default function NewGlobalExplainerModal({
       });
 
       if (response && response.id) {
-
         startJobPolling(
           response.id,
           (result) => {

@@ -1,9 +1,9 @@
 import { Box, Typography } from "@mui/material";
 
-export default function NoteBox({ message, className = ""}) {
+export default function NoteBox({ message, className = "" }) {
   return (
     <Box
-    className={className}
+      className={className}
       sx={{
         mt: 2,
         p: 2,

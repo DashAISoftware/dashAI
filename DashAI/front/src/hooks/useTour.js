@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 
-const TOUR_STORAGE_KEY = 'dashai_tours_completed';
+const TOUR_STORAGE_KEY = "dashai_tours_completed";
 
 export const useTour = (tourKey) => {
   const [run, setRun] = useState(false);
@@ -8,9 +8,9 @@ export const useTour = (tourKey) => {
 
   useEffect(() => {
     const completedTours = JSON.parse(
-      localStorage.getItem(TOUR_STORAGE_KEY) || '{}'
+      localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
     );
-    
+
     if (!completedTours[tourKey]) {
       const timer = setTimeout(() => setRun(true), 500);
       return () => clearTimeout(timer);
@@ -36,16 +36,21 @@ export const useTour = (tourKey) => {
   }, []);
 
   const nextStep = useCallback(() => {
-    console.log('[useTour] nextStep called, current index:', stepIndex);
-    setStepIndex(prevIndex => {
-      console.log('[useTour] Setting step from', prevIndex, 'to', prevIndex + 1);
+    console.log("[useTour] nextStep called, current index:", stepIndex);
+    setStepIndex((prevIndex) => {
+      console.log(
+        "[useTour] Setting step from",
+        prevIndex,
+        "to",
+        prevIndex + 1,
+      );
       return prevIndex + 1;
     });
   }, [stepIndex]);
 
   const markTourAsCompleted = useCallback(() => {
     const completedTours = JSON.parse(
-      localStorage.getItem(TOUR_STORAGE_KEY) || '{}'
+      localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
     );
     completedTours[tourKey] = true;
     localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(completedTours));
@@ -55,41 +60,51 @@ export const useTour = (tourKey) => {
     localStorage.removeItem(TOUR_STORAGE_KEY);
   }, []);
 
-  const handleJoyrideCallback = useCallback((data) => {
-    const { action, status, index, type, error } = data;
-  
-    console.log('[useTour] Joyride callback:', { action, status, index, type });
+  const handleJoyrideCallback = useCallback(
+    (data) => {
+      const { action, status, index, type, error } = data;
 
-    if (error) {
-      console.warn('[useTour] Error in Joyride callback:', error);
-      if (error.message && error.message.includes('null')) {
-        console.log('[useTour] Element not found, but keeping tour running');
-        setTimeout(() => {
-          console.log('[useTour] Attempting to advance to next step after error');
-          setStepIndex(index + 1);
-          setRun(true);
-        }, 300);
+      console.log("[useTour] Joyride callback:", {
+        action,
+        status,
+        index,
+        type,
+      });
+
+      if (error) {
+        console.warn("[useTour] Error in Joyride callback:", error);
+        if (error.message && error.message.includes("null")) {
+          console.log("[useTour] Element not found, but keeping tour running");
+          setTimeout(() => {
+            console.log(
+              "[useTour] Attempting to advance to next step after error",
+            );
+            setStepIndex(index + 1);
+            setRun(true);
+          }, 300);
+        }
+        return;
       }
-      return;
-    }
 
-    if (status === 'finished' || status === 'skipped') {
-      markTourAsCompleted();
-      setRun(false);
-      return;
-    }
-    
-    if (type === 'step:after') {
-      if (action === "next" || action === "start") {
-        setStepIndex(index + 1);
-      } else if (action === "prev") {
-        setStepIndex(Math.max(index - 1, 0));
-      } else if (action === "close") {
-        setRun(false);
+      if (status === "finished" || status === "skipped") {
         markTourAsCompleted();
+        setRun(false);
+        return;
       }
-    }
-  }, [markTourAsCompleted]);
+
+      if (type === "step:after") {
+        if (action === "next" || action === "start") {
+          setStepIndex(index + 1);
+        } else if (action === "prev") {
+          setStepIndex(Math.max(index - 1, 0));
+        } else if (action === "close") {
+          setRun(false);
+          markTourAsCompleted();
+        }
+      }
+    },
+    [markTourAsCompleted],
+  );
 
   return {
     run,

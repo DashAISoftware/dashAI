@@ -29,6 +29,9 @@ export function SaveDatasetModal({
   const { enqueueSnackbar } = useSnackbar();
 
   const { defaultName } = useMemo(() => {
+    if (tourContext && tourContext.run) {
+      return { defaultName: "Clean personality dataset" };
+    }
     return generateSequentialName({
       base: "Dataset",
       items: existingDatasets,
@@ -79,7 +82,7 @@ export function SaveDatasetModal({
   const nameError = getNameError();
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth >
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         Save Processed Dataset
         <IconButton
@@ -90,7 +93,6 @@ export function SaveDatasetModal({
         </IconButton>
       </DialogTitle>
       <DialogContent data-tour="save-dataset-modal-notebook">
-        
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
           <NoteBox message="A new dataset will be created with these transformations. It can be used with other modules without affecting the original." />
           <TextField

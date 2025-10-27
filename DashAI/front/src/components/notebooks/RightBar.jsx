@@ -185,7 +185,6 @@ export default function RightBar({ notebook }) {
     );
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
-  
   const handleChangeTab = (event, newValue) => {
     setActiveTab(newValue);
     setSearchQuery("");
@@ -225,10 +224,8 @@ export default function RightBar({ notebook }) {
               <Tab
                 data-tour="explorers-tab"
                 label={
-                  <Box 
-                  sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
-
                     Explore
                   </Box>
                 }

@@ -57,7 +57,10 @@ function Home() {
               Icon={TimelineIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="explainability-button">
+          <Grid
+            size={{ md: 4, sm: 6, xs: 12 }}
+            data-tour="explainability-button"
+          >
             <HomeButton
               title="Explainers"
               description="Explore and understand the decision-making process behind your models."

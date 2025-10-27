@@ -50,7 +50,7 @@ export default function SelectDataloaderStep({
     if (tourContext?.run) {
       goToNextStep();
       setTimeout(() => {
-      tourContext.nextStep();
+        tourContext.nextStep();
       }, 1500);
     } else {
       goToNextStep();
@@ -61,10 +61,10 @@ export default function SelectDataloaderStep({
     if (!loading && tourContext?.run) {
       setTimeout(() => {
         const cards = document.querySelectorAll('[role="button"]');
-        cards.forEach(card => {
+        cards.forEach((card) => {
           const cardText = card.textContent;
-          if (cardText.includes('CSVDataLoader') || cardText.includes('CSV')) {
-            card.setAttribute('data-tour', 'csv-dataloader-option');
+          if (cardText.includes("CSVDataLoader") || cardText.includes("CSV")) {
+            card.setAttribute("data-tour", "csv-dataloader-option");
           }
         });
       }, 100);

@@ -12,10 +12,13 @@ function FormSchemaButtonGroup({
 }) {
   const isCreateExplorer = saveButtonText === "Create Explorer";
   const isCreateConverter = saveButtonText === "Create Converter";
-  const finalDataTour = dataTour || 
-    (isCreateExplorer ? "create-explorer-button" : 
-     isCreateConverter ? "create-converter-button" : 
-     undefined);
+  const finalDataTour =
+    dataTour ||
+    (isCreateExplorer
+      ? "create-explorer-button"
+      : isCreateConverter
+        ? "create-converter-button"
+        : undefined);
 
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>

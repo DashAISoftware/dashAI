@@ -60,7 +60,6 @@ async function pollJobs() {
     if (state.subscribers.size === 0 && state.jobWatchers.size === 0) {
       const isEmpty = await isQueueEmpty();
       if (isEmpty) {
-
         stopJobPoller();
         return;
       }
@@ -71,7 +70,6 @@ async function pollJobs() {
     state.lastFetchTime = new Date();
 
     const jobsToProcess = changeData.all_jobs || [];
-
 
     const activeJobsExist = hasActiveJobs(jobsToProcess);
     for (const subscriber of state.subscribers) {
@@ -127,7 +125,6 @@ async function pollJobs() {
  */
 export function startJobPolling(jobId, onSuccess, onError) {
   if (!jobId) return;
-
 
   // Stop existing polling for this job if any
   stopJobPolling(jobId);

@@ -19,7 +19,6 @@ export default function SelectOptionMenu({
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-
   return (
     <CustomLayout title={title} subtitle={subtitle} padding={0}>
       <Box
@@ -48,8 +47,9 @@ export default function SelectOptionMenu({
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
           {filteredOptions.map((option, index) => {
-            const { name, display_name, description, Icon, ...otherProps } = option;
-            
+            const { name, display_name, description, Icon, ...otherProps } =
+              option;
+
             return (
               <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
                 <OptionBox

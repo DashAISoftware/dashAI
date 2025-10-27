@@ -20,12 +20,11 @@ import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
 
-
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
   existingDatasets = [],
-  className="",
+  className = "",
 }) {
   if (!notebook) {
     return (
@@ -99,7 +98,7 @@ export default function DatasetPreviewNotebook({
       sx={{
         mb: 2,
       }}
-      className = {`dataset-preview-section ${className}`}
+      className={`dataset-preview-section ${className}`}
     >
       <Accordion
         width="100%"

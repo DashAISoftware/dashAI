@@ -226,7 +226,6 @@ export default function NotebookView({ notebook }) {
         height: "100%",
         overflow: "auto",
       }}
-
     >
       {explorersAndConverters.length === 0 ? (
         <Box

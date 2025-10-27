@@ -19,14 +19,16 @@ export default function ConverterList({
     setOpen(true);
 
     if (tourContext && tourContext.run) {
-      if (converter.name === "LabelEncoder" || converter.name === "NanRemover") {
+      if (
+        converter.name === "LabelEncoder" ||
+        converter.name === "NanRemover"
+      ) {
         setTimeout(() => {
           tourContext.nextStep();
         }, 500);
       }
     }
   };
-
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>

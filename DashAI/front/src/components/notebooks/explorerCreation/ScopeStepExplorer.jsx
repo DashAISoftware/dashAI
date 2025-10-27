@@ -23,7 +23,7 @@ export default function ScopeStepExplorer({
         tourContext.nextStep();
       }, 500);
     }
-  }
+  };
 
   return (
     <Box

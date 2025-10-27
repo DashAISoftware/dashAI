@@ -208,7 +208,7 @@ export default function DatasetVisualization({
               variant="contained"
               endIcon={<AddIcon />}
               disabled={isProcessing}
-              className = "new-notebook-button"
+              className="new-notebook-button"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowCreateNotebookModal(true);
@@ -262,7 +262,7 @@ export default function DatasetVisualization({
         <CreateNotebookModal
           open={showCreateNotebookModal}
           onClose={() => {
-            setShowCreateNotebookModal(false)
+            setShowCreateNotebookModal(false);
           }}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}

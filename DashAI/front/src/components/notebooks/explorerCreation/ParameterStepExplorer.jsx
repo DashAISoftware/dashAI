@@ -22,18 +22,20 @@ export default function ParameterStepExplorer({
   };
 
   useEffect(() => {
-    if (tourContext?.run) { 
+    if (tourContext?.run) {
       const timeout = setTimeout(() => {
-        const button = document.querySelector('[data-tour="create-explorer-button"]');
+        const button = document.querySelector(
+          '[data-tour="create-explorer-button"]',
+        );
         if (button) {
-          button.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center',
-            inline: 'nearest'
+          button.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
           });
         }
       }, 300);
-      
+
       return () => clearTimeout(timeout);
     }
   }, [tourContext?.stepIndex, tourContext?.run]);

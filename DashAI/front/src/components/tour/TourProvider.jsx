@@ -1,17 +1,23 @@
-import React, { createContext, useContext, useEffect } from 'react';
-import Joyride from 'react-joyride';
-import { useTour } from '../../hooks/useTour';
-import { tours } from '../../constants/tours';
-import { tourStyles } from './tourStyles';
+import React, { createContext, useContext, useEffect } from "react";
+import Joyride from "react-joyride";
+import { useTour } from "../../hooks/useTour";
+import { tours } from "../../constants/tours";
+import { tourStyles } from "./tourStyles";
 
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
 
 export const TourProvider = ({ tourKey, children }) => {
   const {
-    run, stepIndex,
-    startTour, stopTour, resetTour, resetAllTours,
-    handleJoyrideCallback, goToStep, nextStep,
+    run,
+    stepIndex,
+    startTour,
+    stopTour,
+    resetTour,
+    resetAllTours,
+    handleJoyrideCallback,
+    goToStep,
+    nextStep,
   } = useTour(tourKey);
 
   const tourData = tours[tourKey];
@@ -22,7 +28,7 @@ export const TourProvider = ({ tourKey, children }) => {
   const contextValue = {
     run,
     stepIndex,
-    steps: tourData.steps, 
+    steps: tourData.steps,
     startTour,
     stopTour,
     resetTour,

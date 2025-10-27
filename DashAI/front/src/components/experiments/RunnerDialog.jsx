@@ -22,6 +22,7 @@ import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../utils/runStatus";
 import { LoadingButton } from "@mui/lab";
 import { startJobPolling } from "../../utils/jobPoller";
+import { useTourContext } from "../tour/TourProvider";
 
 function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -32,6 +33,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const [finishedRunning, setFinishedRunning] = useState(false);
   const [trackedJobIds, setTrackedJobIds] = useState(new Set());
   const experimentNameRef = useRef(experiment.name);
+  const tourContext = useTourContext();
 
   // Update ref when experiment name changes
   useEffect(() => {
@@ -114,7 +116,6 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
           (result) => {
             getRuns({ showLoading: false });
           },
-          // Error callback
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
             enqueueSnackbar(`Run failed: ${result.error || "Unknown error"}`, {
@@ -125,7 +126,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         );
       }
 
-      return false; // No error
+      return false;
     } catch (error) {
       enqueueSnackbar(`Error enqueueing run with ID ${runId}`, {
         variant: "error",
@@ -148,8 +149,32 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       setTimeout(() => {
         getRuns({ showLoading: false });
       }, 100);
+
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 1000);
+      }
     } else {
       setExpRunning({ ...expRunning, [experiment.id]: false });
+    }
+  };
+
+  const handleCloseAndAdvance = () => {
+    setOpen(false);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 600);
+    }
+  };
+
+  const handleOpenDialog = () => {
+    setOpen(true);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
     }
   };
 
@@ -192,6 +217,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
     <React.Fragment>
       <GridActionsCellItem
         key="runner-button"
+        data-tour="run-experiment-button"
         icon={
           expRunning[experiment.id] ? (
             <CircularProgress size={18} />
@@ -204,13 +230,14 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
           !expRunning[experiment.id] &&
           Object.values(expRunning).some((value) => value === true)
         }
-        onClick={() => setOpen(true)}
+        onClick={handleOpenDialog}
       />
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
         fullWidth
         maxWidth={"md"}
+        data-tour="runner-dialog-progress"
       >
         <DialogTitle>{`Runs in ${experiment.name}`}</DialogTitle>
         <DialogContent>
@@ -248,11 +275,12 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         <DialogActions>
           <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 2 }}>
             <LoadingButton
+              data-tour="runner-dialog-start"
               variant="contained"
               loading={expRunning[experiment.id]}
               endIcon={finishedRunning ? <CheckIcon /> : <PlayArrowIcon />}
               onClick={
-                finishedRunning ? () => setOpen(false) : handleExecuteRuns
+                finishedRunning ? handleCloseAndAdvance : handleExecuteRuns
               }
             >
               {finishedRunning ? "Finished" : "Start"}
