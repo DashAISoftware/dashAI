@@ -32,9 +32,8 @@ export default function DatasetTable({
   columns: columnsProp,
   deps = [],
   autoHeight = true,
-  density = "compact",
   pageSizeOptions = [5, 10, 25],
-  datasetPath, // Nueva prop para la ruta del dataset
+  datasetPath,
   ...props
 }) {
   const [rows, setRows] = useState([]);
@@ -251,8 +250,8 @@ export default function DatasetTable({
       paginationModel={paginationModel}
       onPaginationModelChange={setPaginationModel}
       pageSizeOptions={pageSizeOptions}
-      density={density}
       initialState={{
+        density: "compact",
         pagination: { paginationModel: { pageSize: initialPageSize } },
       }}
       slots={{
