@@ -1,7 +1,5 @@
 """Bag-of-Words converter using scikit-learn's CountVectorizer."""
 
-from typing import Union
-
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -54,7 +52,10 @@ class BagOfWordsConverterSchema(BaseSchema):
 
 
 class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
-    """Converts text into a Bag-of-Words representation with one column per token (frequency per token)."""
+    """
+    Converts text into a Bag-of-Words representation with one column per token
+    (frequency per token).
+    """
 
     SCHEMA = BagOfWordsConverterSchema
     DISPLAY_NAME = "Bag of Words"
@@ -77,20 +78,20 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
         )
         self.fitted = False
 
-    def fit(self, X: DashAIDataset, y=None) -> "BagOfWordsConverter":
+    def fit(self, x: DashAIDataset, y=None) -> "BagOfWordsConverter":
         """Fit CountVectorizer to the input text."""
-        X_df = X.to_pandas()
+        X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
         self.vectorizer.fit(texts)
         self.fitted = True
         return self
 
-    def transform(self, X: DashAIDataset, y=None) -> DashAIDataset:
+    def transform(self, x: DashAIDataset, y=None) -> DashAIDataset:
         """Transform text into Bag-of-Words frequency columns."""
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
 
-        X_df = X.to_pandas()
+        X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
 
         bow_matrix = self.vectorizer.transform(texts)
