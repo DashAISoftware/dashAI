@@ -307,7 +307,8 @@ class SklearnMultiStepForecaster(ForecastingModel):
         Parameters
         ----------
         x_pred : Any, optional
-            Input data for in-sample predictions (not yet supported)
+            Input data for in-sample predictions containing timestamp and
+            optional exogenous variables. Can also be an integer for compatibility.
         periods : int, optional
             Number of steps to forecast into the future
         exog_future : pd.DataFrame, optional
@@ -327,6 +328,76 @@ class SklearnMultiStepForecaster(ForecastingModel):
         if x_pred is not None and isinstance(x_pred, (int, np.integer)):
             periods = int(x_pred)
             x_pred = None
+
+        # In-sample predictions (for metrics calculation)
+        if x_pred is not None and periods is None:
+            from DashAI.back.dataloaders.classes.dashai_dataset import (
+                to_dashai_dataset,
+            )
+
+            if isinstance(x_pred, pd.DataFrame):
+                input_df = x_pred.copy()
+            else:
+                input_df = to_dashai_dataset(x_pred).to_pandas()
+
+            print(
+                f"[SklearnMultiStepForecaster] In-sample prediction for "
+                f"{len(input_df)} time steps"
+            )
+
+            # We need the full training series to create lags for in-sample predictions
+            # This is stored during fit()
+            if self.training_history is None:
+                raise ValueError(
+                    "No training history available. Model may not be fitted properly."
+                )
+
+            # Get target values from input (needed to create lags)
+            if self.target_col not in input_df.columns:
+                raise ValueError(
+                    f"Target column '{self.target_col}' not found in input data. "
+                    f"Available columns: {list(input_df.columns)}"
+                )
+
+            target_series = input_df[self.target_col]
+
+            # Get exogenous variables if present
+            exog_df = None
+            if self.exog_cols:
+                missing_cols = [
+                    col for col in self.exog_cols if col not in input_df.columns
+                ]
+                if missing_cols:
+                    raise ValueError(
+                        f"Missing exogenous columns for prediction: {missing_cols}"
+                    )
+                exog_df = input_df[self.exog_cols]
+
+            # Create lag features
+            X_with_lags = self._create_lag_features(target_series, exog_df)
+
+            # Remove rows with NaN (can't predict without full window)
+            mask = X_with_lags.notna().all(axis=1)
+            X_clean = X_with_lags[mask]
+
+            if len(X_clean) == 0:
+                raise ValueError(
+                    f"No valid samples for prediction. Need at least "
+                    f"{self.window_size} historical values to create lags."
+                )
+
+            # Use first model (1-step ahead) for in-sample predictions
+            # This is standard practice in time series - we're predicting t+1
+            predictions_full = np.full(len(target_series), np.nan)
+            predictions = self.models[0].predict(X_clean.to_numpy())
+            predictions_full[mask] = predictions.flatten()
+
+            print(
+                f"[SklearnMultiStepForecaster] Generated {mask.sum()} in-sample "
+                f"predictions (first {(~mask).sum()} skipped due to lag window)"
+            )
+
+            return predictions_full
 
         # Out-of-sample forecast
         if periods is not None:
@@ -408,14 +479,6 @@ class SklearnMultiStepForecaster(ForecastingModel):
                     current_window.append(pred)
 
                 return np.array(predictions)
-
-        # In-sample predictions not yet supported
-        if x_pred is not None:
-            raise NotImplementedError(
-                "In-sample predictions not yet supported for "
-                "SklearnMultiStepForecaster. Use periods parameter for "
-                "out-of-sample forecasting."
-            )
 
         raise ValueError(
             "Either x_pred or periods parameter must be provided for prediction."

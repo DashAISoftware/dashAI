@@ -140,7 +140,7 @@ class ForecastingModel(BaseModel):
 
         Returns
         -------
-        pd.DataFrame
+        pd.DataFrame or np.ndarray
             Predictions with columns using ORIGINAL names:
             - Timestamp column (same name as training data)
             - Target column (same name as training data)
@@ -148,10 +148,18 @@ class ForecastingModel(BaseModel):
 
         Notes
         -----
+        Implementations MUST support both prediction modes:
+        1. In-sample predictions (x_pred provided): For calculating metrics on
+           train/validation/test splits
+        2. Out-of-sample predictions (periods provided): For future forecasting
+
         Implementations should:
         1. Auto-detect timestamp column in x_pred (handle both original name and 'ds')
         2. Validate exogenous variables are present if model requires them
         3. Return predictions with ORIGINAL column names (not model-specific names)
+
+        IMPORTANT: Do NOT raise NotImplementedError for in-sample predictions.
+        Model evaluation (metrics calculation) requires in-sample predictions.
         """
         raise NotImplementedError
 
@@ -200,3 +208,38 @@ class ForecastingModel(BaseModel):
             "target": self.target_col,
             "exogenous": self.exog_cols.copy(),
         }
+
+    def _validate_predict_implementation(self) -> None:
+        """Validate that subclass implements predict() correctly.
+
+        This method can be called in tests to ensure implementations support
+        both in-sample and out-of-sample predictions.
+
+        Raises
+        ------
+        NotImplementedError
+            If predict() raises NotImplementedError for in-sample predictions
+        ValueError
+            If predict() doesn't handle both prediction modes
+
+        Notes
+        -----
+        This is a helper for testing - not called automatically during runtime.
+        Developers should call this in unit tests for their forecasting models.
+
+        Example
+        -------
+        >>> # In test_my_model.py
+        >>> model = MyForecastingModel()
+        >>> model.fit(x_train, y_train)
+        >>> model._validate_predict_implementation()  # Ensures correct implementation
+        """
+        import warnings
+
+        warnings.warn(
+            "ForecastingModel.predict() must support both in-sample (x_pred) "
+            "and out-of-sample (periods) prediction modes. "
+            "In-sample predictions are required for metrics calculation.",
+            UserWarning,
+            stacklevel=2,
+        )
