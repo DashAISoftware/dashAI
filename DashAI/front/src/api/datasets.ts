@@ -1,3 +1,19 @@
+export const getDatasetFileFiltered = async (
+  path: string,
+  page = 0,
+  pageSize = 5,
+  filterModel?: object,
+) => {
+  const response = await api.get(`${datasetEndpoint}/filter/`, {
+    params: {
+      path,
+      page,
+      page_size: pageSize,
+      filterModel: filterModel ? JSON.stringify(filterModel) : undefined,
+    },
+  });
+  return response.data;
+};
 import api from "./api";
 import type { IDataset } from "../types/dataset";
 
