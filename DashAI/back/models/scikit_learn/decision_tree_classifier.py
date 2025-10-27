@@ -77,6 +77,7 @@ class DecisionTreeClassifier(
 
     SCHEMA = DecisionTreeClassifierSchema
     DISPLAY_NAME: str = "Decision Tree"
+    COLOR: str = "#4CAF50"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
