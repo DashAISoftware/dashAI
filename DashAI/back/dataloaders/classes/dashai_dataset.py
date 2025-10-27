@@ -897,6 +897,9 @@ def prepare_for_experiment(
             test_indexes=splits_index["test"],
             val_indexes=splits_index["validation"],
         )
+        train_indexes = splits_index["train"]
+        test_indexes = splits_index["test"]
+        val_indexes = splits_index["validation"]
     else:
         n = len(dataset)
         labels = None
