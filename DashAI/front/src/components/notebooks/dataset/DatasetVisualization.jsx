@@ -69,7 +69,6 @@ export default function DatasetVisualization({
         const info = await getDatasetInfo(dataset.id);
         setDatasetInfo(info);
       } catch (error) {
-        console.error("Error fetching dataset info:", error);
         setDatasetInfo(null);
       }
     };
@@ -77,7 +76,7 @@ export default function DatasetVisualization({
     fetchDatasetInfo();
   }, [dataset.id, dataset.status]);
 
-  // fetchPage compatible con server-side filtering
+  // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
       if (isProcessing) return { rows: [], total: 0 };
@@ -90,7 +89,6 @@ export default function DatasetVisualization({
         );
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
-        console.error("Error fetching dataset data:", error);
         return { rows: [], total: 0 };
       }
     },
@@ -117,7 +115,6 @@ export default function DatasetVisualization({
         onNotebookCreated(createdNotebook);
       }
     } catch (error) {
-      console.error("Error creating notebook:", error);
       enqueueSnackbar("Error creating notebook", {
         variant: "error",
       });

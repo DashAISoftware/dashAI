@@ -54,9 +54,7 @@ export default function DatasetTable({
       try {
         const types = await getDatasetTypesByFilePath(datasetPath);
         setColumnTypes(types);
-      } catch (e) {
-        console.error("Error fetching column types:", e);
-      }
+      } catch (e) {}
     };
 
     fetchColumnTypes();
@@ -80,7 +78,6 @@ export default function DatasetTable({
         // Siempre usa el total devuelto por el backend para la paginación
         setRowCount(data?.total ?? withIds.length);
       } catch (e) {
-        console.error(e);
         setRows([]);
         setRowCount(0);
       } finally {
@@ -93,8 +90,6 @@ export default function DatasetTable({
     };
   }, [fetchPage, paginationModel, filterModel, ...deps]);
   // Handler for DataGrid filter changes
-  // Evita que el filtro se borre si no hay resultados
-  // Siempre que cambie el filtro, resetea la paginación a la página 0
   const handleFilterModelChange = useCallback((model) => {
     setFilterModel((prev) => {
       // Si el filtro es igual al anterior, igual resetea la paginación
@@ -188,15 +183,15 @@ export default function DatasetTable({
     const handleExportCsv = async () => {
       try {
         if (datasetPath) {
-          // Usar nuestro endpoint personalizado
+          // Use our custom endpoint
           const blob = await exportDatasetCsvByPath(datasetPath);
 
-          // Crear URL temporal y descargar
+          // Create temporary URL and download
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
 
-          // Extraer nombre del dataset desde la ruta
+          // Extract dataset name from path
           const datasetName = datasetPath.split("/").pop() || "dataset";
           link.download = `${datasetName}.csv`;
 
@@ -205,7 +200,7 @@ export default function DatasetTable({
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
         } else {
-          // Fallback al método original del DataGrid
+          // Fallback to original DataGrid method
           const apiRef = useGridApiContext();
           apiRef.current.exportDataAsCsv({
             fileName: "dataset-export",
@@ -215,7 +210,7 @@ export default function DatasetTable({
         }
       } catch (error) {
         console.error("Error exporting CSV:", error);
-        // Fallback al método original en caso de error
+        // Fallback to original method in case of error
         const apiRef = useGridApiContext();
         apiRef.current.exportDataAsCsv({
           fileName: "dataset-export",
@@ -271,11 +266,10 @@ export default function DatasetTable({
     );
   }
 
-  // DEBUG: Log filterModel changes para ver qué se envía al backend
+  // DEBUG: Log filterModel changes to see what is sent to the backend
   useEffect(() => {
     if (filterModel && filterModel.items && filterModel.items.length > 0) {
-      // Solo loguea si hay filtros activos
-      console.log("[DEBUG filterModel]", JSON.stringify(filterModel, null, 2));
+      //
     }
   }, [filterModel]);
 
