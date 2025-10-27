@@ -27,6 +27,8 @@ class HyperOptSchema(BaseSchema):
 
 
 class HyperOptOptimizer(BaseOptimizer):
+    DISPLAY_NAME: str = "HyperOpt Optimizer"
+    COLOR: str = "#FF5722"
     SCHEMA = HyperOptSchema
 
     COMPATIBLE_COMPONENTS = [
