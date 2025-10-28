@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# Nuevo endpoint para filtrado y paginación server-side
+# Server-side filtering and pagination
 @router.get("/filter/")
 async def filter_dataset_file(
     path: str,
@@ -127,7 +127,6 @@ async def filter_dataset_file(
                         mask = pc.match_substring_regex(table[col], f"{val}$")
                     table = table.filter(mask)
                 elif op == "isEmpty":
-                    # Considera empty como null o string vacía
                     if pa.types.is_string(col_type):
                         mask = pc.or_(pc.equal(table[col], ""), pc.is_null(table[col]))
                     else:
@@ -143,7 +142,6 @@ async def filter_dataset_file(
                         mask = pc.invert(pc.is_null(table[col]))
                     table = table.filter(mask)
                 elif op == "isAnyOf" and val is not None:
-                    # val puede ser lista o string separada por comas
                     values = (
                         val
                         if isinstance(val, list)
@@ -156,7 +154,6 @@ async def filter_dataset_file(
     filtered = (
         filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
     )
-    # Siempre pagina sobre la tabla (filtrada o no)
     start = page * page_size
     paged_table = table.slice(start, page_size)
     rows = [

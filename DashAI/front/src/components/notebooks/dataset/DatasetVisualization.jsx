@@ -81,12 +81,22 @@ export default function DatasetVisualization({
     async (page, pageSize, filterModel) => {
       if (isProcessing) return { rows: [], total: 0 };
       try {
-        const data = await getDatasetFileFiltered(
-          dataset.file_path,
-          page,
-          pageSize,
-          filterModel,
-        );
+        // Use getDatasetFile if no filters, else use getDatasetFileFiltered
+        const hasFilters =
+          filterModel &&
+          Array.isArray(filterModel.items) &&
+          filterModel.items.length > 0;
+        let data;
+        if (hasFilters) {
+          data = await getDatasetFileFiltered(
+            dataset.file_path,
+            page,
+            pageSize,
+            filterModel,
+          );
+        } else {
+          data = await getDatasetFile(dataset.file_path, page, pageSize);
+        }
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
         return { rows: [], total: 0 };
