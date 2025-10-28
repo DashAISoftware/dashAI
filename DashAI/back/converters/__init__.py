@@ -20,6 +20,7 @@ from DashAI.back.converters.category.scaling_and_normalization import (
 
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
+from DashAI.back.converters.hugging_face.tokenizer import TokenizerConverter
 
 # Imbalanced_learn
 from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter import (
