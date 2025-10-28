@@ -11,7 +11,6 @@ import SideBar from "../threeSectionLayout/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
 
-
 export default function DatasetsNotebooksBar({
   datasets = [],
   selectedDatasetId,
@@ -77,9 +76,20 @@ export default function DatasetsNotebooksBar({
   return (
     <SideBar>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          p: 1,
+        }}
+      >
         <BarHeader />
-        <IconButton size="small" onClick={onToggle} sx={{ color: "text.secondary" }}>
+        <IconButton
+          size="small"
+          onClick={onToggle}
+          sx={{ color: "text.secondary" }}
+        >
           <ChevronLeft />
         </IconButton>
       </Box>

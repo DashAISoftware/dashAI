@@ -43,7 +43,8 @@ export default function DatasetPreviewNotebook({
   }
 
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
-  const [showNotebookHistoryModal, setShowNotebookHistoryModal] = useState(false);
+  const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
+    useState(false);
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
 
@@ -96,18 +97,20 @@ export default function DatasetPreviewNotebook({
   }, [notebook, explorersAndConverters]);
 
   return (
-    <Box sx={{ 
-      height: "100%",
-      transition: "opacity 0.2s ease", 
-    }}>
+    <Box
+      sx={{
+        height: "100%",
+        transition: "opacity 0.2s ease",
+      }}
+    >
       <Accordion
         width="100%"
-        sx={{ 
-          bgcolor: "#212121", 
-          borderRadius: 2, 
+        sx={{
+          bgcolor: "#212121",
+          borderRadius: 2,
           boxShadow: "none",
           height: "100%",
-       }}
+        }}
         defaultExpanded={true}
         onChange={(event, expanded) => {
           if (onAccordionChange) {
@@ -122,7 +125,7 @@ export default function DatasetPreviewNotebook({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            transition: "background-color 0.2s ease", 
+            transition: "background-color 0.2s ease",
             "&:hover": {
               bgcolor: "rgba(255, 255, 255, 0.05)",
             },
@@ -169,10 +172,12 @@ export default function DatasetPreviewNotebook({
             </IconButton>
           </Box>
         </AccordionSummary>
-        <AccordionDetails sx={{ 
-          p: 0, 
-          height: "calc(100% - 64px)",
-        }}>
+        <AccordionDetails
+          sx={{
+            p: 0,
+            height: "calc(100% - 64px)",
+          }}
+        >
           <Box sx={{ height: "100%", width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}

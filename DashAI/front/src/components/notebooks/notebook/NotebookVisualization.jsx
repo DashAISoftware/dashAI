@@ -4,7 +4,6 @@ import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
 
-
 export default function NotebookVisualization({
   notebook,
   handleAddDatasetFromNotebook,
@@ -14,7 +13,7 @@ export default function NotebookVisualization({
     return window.innerHeight * 0.4;
   });
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(true);
-  const [isToggling, setIsToggling] = useState(false); 
+  const [isToggling, setIsToggling] = useState(false);
   const isResizing = useRef(false);
 
   const handleMouseDown = () => {
@@ -26,7 +25,7 @@ export default function NotebookVisualization({
   const handleMouseMove = useCallback((e) => {
     if (!isResizing.current) return;
 
-    const container = document.querySelector('[data-notebook-container]');
+    const container = document.querySelector("[data-notebook-container]");
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
@@ -48,7 +47,7 @@ export default function NotebookVisualization({
   const handleAccordionChange = (expanded) => {
     setIsToggling(true);
     setIsAccordionExpanded(expanded);
-    setTimeout(() => setIsToggling(false), 300); 
+    setTimeout(() => setIsToggling(false), 300);
   };
 
   useEffect(() => {
@@ -64,18 +63,18 @@ export default function NotebookVisualization({
 
   return (
     <>
-      <Box 
+      <Box
         sx={{ display: "flex", flexDirection: "column", height: "100%" }}
         data-notebook-container
       >
         {/* Dataset View  */}
-        <Box 
-          sx={{ 
-            flexShrink: 0, 
-            height: actualTopHeight, 
+        <Box
+          sx={{
+            flexShrink: 0,
+            height: actualTopHeight,
             mb: 2,
-            transition: isToggling 
-              ? "height 0.3s cubic-bezier(0.4, 0, 0.2, 1)" 
+            transition: isToggling
+              ? "height 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
               : "none",
             overflow: "hidden",
           }}

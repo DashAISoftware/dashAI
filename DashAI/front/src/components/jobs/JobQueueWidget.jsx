@@ -141,7 +141,6 @@ const JobQueueWidget = () => {
   const finishedJobs = jobs.filter((job) => job.status === "finished");
   const errorJobs = jobs.filter((job) => job.status === "error");
 
-
   useEffect(() => {
     if (
       activeJobs.length > 0 &&

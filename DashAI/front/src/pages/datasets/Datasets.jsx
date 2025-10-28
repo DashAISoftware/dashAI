@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback} from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import LeftBar from "../../components/notebooks/LeftBar";
@@ -43,7 +43,6 @@ export default function DatasetsPage() {
   const { enqueueSnackbar } = useSnackbar();
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);
-
 
   const goToNextStep = (option = selectedOption) => {
     setStep((prevStep) => prevStep + 1);
@@ -370,21 +369,23 @@ export default function DatasetsPage() {
     if (isResizingLeft.current) {
       const container = document.querySelector('[data-container="datasets"]');
       const containerRect = container.getBoundingClientRect();
-      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const newWidth =
+        ((e.clientX - containerRect.left) / containerRect.width) * 100;
       if (newWidth >= 15 && newWidth <= 40) {
         setLeftBarWidth(newWidth);
       }
     }
-    
+
     if (isResizingRight.current) {
       const container = document.querySelector('[data-container="datasets"]');
       const containerRect = container.getBoundingClientRect();
-      const newWidth = ((containerRect.right - e.clientX) / containerRect.width) * 100;
+      const newWidth =
+        ((containerRect.right - e.clientX) / containerRect.width) * 100;
       if (newWidth >= 15 && newWidth <= 40) {
         setRightBarWidth(newWidth);
       }
     }
-  }, []); 
+  }, []);
 
   const handleMouseUp = useCallback(() => {
     isResizingLeft.current = false;
@@ -396,7 +397,7 @@ export default function DatasetsPage() {
   const handleToggleLeft = () => {
     setIsTogglingLeft(true);
     setLeftBarVisible(!leftBarVisible);
-    setTimeout(() => setIsTogglingLeft(false), 300); 
+    setTimeout(() => setIsTogglingLeft(false), 300);
   };
 
   const handleToggleRight = () => {
@@ -406,43 +407,43 @@ export default function DatasetsPage() {
   };
 
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove); 
+    window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [handleMouseMove, handleMouseUp]); 
+  }, [handleMouseMove, handleMouseUp]);
 
-
-  const centerWidth = leftBarVisible && rightBarVisible
-    ? 100 - leftBarWidth - rightBarWidth
-    : leftBarVisible
-    ? 100 - leftBarWidth
-    : rightBarVisible
-    ? 100 - rightBarWidth
-    : 100;
+  const centerWidth =
+    leftBarVisible && rightBarVisible
+      ? 100 - leftBarWidth - rightBarWidth
+      : leftBarVisible
+        ? 100 - leftBarWidth
+        : rightBarVisible
+          ? 100 - rightBarWidth
+          : 100;
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
-    <Box 
-      height="calc(100vh - 74px)" 
-      width="100%" 
-      p={1.5} 
-      pb={1} 
+    <Box
+      height="calc(100vh - 74px)"
+      width="100%"
+      p={1.5}
+      pb={1}
       display="flex"
       data-container="datasets"
     >
       {/* Left Panel */}
-      <Box 
+      <Box
         width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
         mr={leftBarVisible ? 0.5 : 0}
         position="relative"
         sx={{
-          transition: isTogglingLeft 
-            ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease" 
+          transition: isTogglingLeft
+            ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
             : "none",
           opacity: leftBarVisible ? 1 : 0,
           overflow: "hidden",
@@ -479,7 +480,7 @@ export default function DatasetsPage() {
                 width: "5px",
                 cursor: "col-resize",
                 bgcolor: "transparent",
-                transition: "background-color 0.2s ease", 
+                transition: "background-color 0.2s ease",
                 "&:hover": {
                   bgcolor: "primary.main",
                 },
@@ -501,8 +502,8 @@ export default function DatasetsPage() {
             transform: "translateY(-50%)",
             bgcolor: "background.paper",
             zIndex: 10,
-            transition: "all 0.2s ease", 
-            "&:hover": { 
+            transition: "all 0.2s ease",
+            "&:hover": {
               bgcolor: "action.hover",
               transform: "translateY(-50%) scale(1.1)",
             },
@@ -514,16 +515,16 @@ export default function DatasetsPage() {
 
       {/* Center Panel */}
       <ExplorersAndConvertersProvider>
-        <Box 
-          width={`${centerWidth}%`} 
+        <Box
+          width={`${centerWidth}%`}
           mx={0.5}
           sx={{
-            transition: (isTogglingLeft || isTogglingRight) 
-              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)" 
-              : "none",
+            transition:
+              isTogglingLeft || isTogglingRight
+                ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                : "none",
           }}
         >
-
           <CenterBox>
             {selectedDatasetId ? (
               <DatasetVisualization
@@ -545,13 +546,15 @@ export default function DatasetsPage() {
                   {
                     name: "dataset",
                     display_name: "Upload Dataset",
-                    description: "Import your data from various sources and formats.",
+                    description:
+                      "Import your data from various sources and formats.",
                     Icon: null,
                   },
                   {
                     name: "notebook",
                     display_name: "Create a New Notebook",
-                    description: "Start a new analysis session with an existing dataset.",
+                    description:
+                      "Start a new analysis session with an existing dataset.",
                     Icon: null,
                   },
                 ]}
@@ -595,7 +598,7 @@ export default function DatasetsPage() {
               bgcolor: "background.paper",
               zIndex: 10,
               transition: "all 0.2s ease",
-              "&:hover": { 
+              "&:hover": {
                 bgcolor: "action.hover",
                 transform: "translateY(-50%) scale(1.1)",
               },
@@ -606,13 +609,13 @@ export default function DatasetsPage() {
         )}
 
         {/* Right Panel  */}
-        <Box 
+        <Box
           width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
           ml={rightBarVisible ? 0.5 : 0}
           position="relative"
           sx={{
-            transition: isTogglingRight 
-              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease" 
+            transition: isTogglingRight
+              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
               : "none",
             opacity: rightBarVisible ? 1 : 0,
             overflow: "hidden",
@@ -635,14 +638,14 @@ export default function DatasetsPage() {
                   width: "5px",
                   cursor: "col-resize",
                   bgcolor: "transparent",
-                  transition: "background-color 0.2s ease", 
+                  transition: "background-color 0.2s ease",
                   "&:hover": {
                     bgcolor: "primary.main",
                   },
                   zIndex: 10,
                 }}
               />
-              <RightBar 
+              <RightBar
                 notebook={selectedNotebook}
                 onToggle={handleToggleRight}
               />

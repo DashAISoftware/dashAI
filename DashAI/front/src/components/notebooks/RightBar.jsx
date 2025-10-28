@@ -222,9 +222,22 @@ export default function RightBar({ notebook, onToggle }) {
           width: "100%",
         }}
       >
-        <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: "1px solid #333",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Typography variant="h6">Analysis Tools</Typography>
-          <IconButton size="small" onClick={onToggle} sx={{ color: "text.secondary" }}>
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            sx={{ color: "text.secondary" }}
+          >
             <ChevronRight />
           </IconButton>
         </Box>

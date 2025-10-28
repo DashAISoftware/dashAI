@@ -35,7 +35,7 @@ export default function DatasetTable({
   autoHeight = true,
   density = "compact",
   pageSizeOptions = [5, 10, 25],
-  datasetPath, 
+  datasetPath,
   containerHeight,
   ...props
 }) {
@@ -60,13 +60,14 @@ export default function DatasetTable({
         comfortable: 64,
       };
 
-      const headerHeight = 85; 
-      const footerHeight = 56; 
-      const toolbarHeight = 56; 
+      const headerHeight = 85;
+      const footerHeight = 56;
+      const toolbarHeight = 56;
       const padding = 20;
 
       const rowHeight = rowHeights[density] || rowHeights.compact;
-      const availableHeight = containerHeight - headerHeight - footerHeight - toolbarHeight - padding;
+      const availableHeight =
+        containerHeight - headerHeight - footerHeight - toolbarHeight - padding;
       const calculatedPageSize = Math.floor(availableHeight / rowHeight);
 
       const newPageSize = Math.max(3, Math.min(25, calculatedPageSize));
@@ -75,7 +76,7 @@ export default function DatasetTable({
         setPaginationModel((prev) => ({
           ...prev,
           pageSize: newPageSize,
-          page: 0, 
+          page: 0,
         }));
       }
     };
@@ -97,7 +98,7 @@ export default function DatasetTable({
 
     return Array.from(options).sort((a, b) => a - b);
   }, [containerHeight, paginationModel.pageSize, autoHeight, pageSizeOptions]);
-  
+
   useEffect(() => {
     if (!datasetPath) return;
     const fetchColumnTypes = async () => {
