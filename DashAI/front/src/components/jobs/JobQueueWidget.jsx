@@ -141,11 +141,6 @@ const JobQueueWidget = () => {
   const finishedJobs = jobs.filter((job) => job.status === "finished");
   const errorJobs = jobs.filter((job) => job.status === "error");
 
-  useEffect(() => {
-    try {
-      localStorage.setItem("jobQueueWidgetExpanded", expanded.toString());
-    } catch (e) {}
-  }, [expanded]);
 
   useEffect(() => {
     if (
