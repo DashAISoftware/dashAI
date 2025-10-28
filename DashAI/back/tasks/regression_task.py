@@ -45,3 +45,38 @@ class RegressionTask(BaseTask):
             Dataset with the new types
         """
         return to_dashai_dataset(datasetdict)
+
+    def process_predictions(self, dataset, predictions, output_column):
+        """Process the predictions
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        predictions : np.ndarray
+            Predictions from the model
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        Processed predictions
+        """
+        return predictions
+
+    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+        """Get the number of unique labels in the output column.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        int | None
+            Number of unique labels or None if not applicable
+        """
+        return None

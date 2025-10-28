@@ -184,7 +184,7 @@ function ExplorationRunner({
         field: "last_modified",
         headerName: "Last Modified",
         flex: 1,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
     ],
     [explorerTypes],

@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   PlayArrow as PlayArrowIcon,
   Check as CheckIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import {
@@ -15,6 +16,7 @@ import {
   DialogTitle,
   Paper,
   Typography,
+  IconButton,
 } from "@mui/material";
 import { getRuns as getRunsRequest } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
@@ -239,7 +241,25 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         maxWidth={"md"}
         data-tour="runner-dialog-progress"
       >
-        <DialogTitle>{`Runs in ${experiment.name}`}</DialogTitle>
+        <DialogTitle>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {`Runs in ${experiment.name}`}
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Paper
             sx={{ px: 3, py: 2 }}

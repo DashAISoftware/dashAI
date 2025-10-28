@@ -1,3 +1,5 @@
+import time
+
 import pytest
 
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
@@ -96,6 +98,7 @@ def test_changes_since(test_job_queue: HueyJobQueue):
     import datetime
 
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    time.sleep(0.05)
     job_1 = DummyJob()
     test_job_queue.put(job_1)
 

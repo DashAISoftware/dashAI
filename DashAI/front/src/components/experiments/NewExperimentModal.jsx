@@ -224,13 +224,43 @@ export default function NewExperimentModal({
     setNextEnabled(false);
   };
 
+  useEffect(() => {
+    if (steps[activeStep].name === "configureModels") {
+      const allModelsHaveMetric = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.goal_metric;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveMetric) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+    if (steps[activeStep].name === "configureOptimizer") {
+      const allModelsHaveOptimizers = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.optimizer_name;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveOptimizers) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+  }, [open, newExp.runs]);
+
   return (
     <Dialog
       open={open}
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}} // No cerrar automáticamente
+      disableEscapeKeyDown // Evitar cierre con Escape
       aria-labelledby="new-experiment-dialog-title"
       aria-describedby="new-experiment-dialog-description"
       scroll="paper"
@@ -292,6 +322,19 @@ export default function NewExperimentModal({
             </Stepper>
           </Grid>
         </Grid>
+        {/* Close button for larger screens */}
+        <IconButton
+          onClick={handleCloseDialog}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+            display: { xs: "none", sm: "flex" },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
       {/* Main content - steps */}
       <DialogContent dividers>

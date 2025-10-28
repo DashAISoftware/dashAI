@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -13,11 +13,12 @@ import {
 import { Close } from "@mui/icons-material";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
-import DatasetTable from "./dataset/DatasetTable";
+import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { useTourContext } from "../tour/TourProvider";
+import api from "../../../api/api";
 
-import { getDatasetFile } from "../../api/datasets";
+import { getDatasetFile } from "../../../api/datasets";
 
 export default function ConfigureToolModal({
   tool,
@@ -32,6 +33,44 @@ export default function ConfigureToolModal({
   const [step, setStep] = useState(0);
   const tourContext = useTourContext();
   const isTourActive = tourContext?.run;
+  const containerRef = useRef(null);
+  const [topHeight, setTopHeight] = useState(100);
+  const isResizingRef = useRef(false);
+
+  const handleMouseDown = () => {
+    isResizingRef.current = true;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isResizingRef.current || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+
+    // Limit min/max
+    const minHeight = 100;
+    const maxHeight = rect.height - 150;
+    const newHeight = Math.max(minHeight, Math.min(maxHeight, offsetY));
+
+    setTopHeight(newHeight);
+  };
+
+  const handleMouseUp = () => {
+    isResizingRef.current = false;
+    document.body.style.cursor = "default";
+    document.body.style.userSelect = "auto";
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -49,14 +88,14 @@ export default function ConfigureToolModal({
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={() => {}}
       slotProps={{
         paper: {
           sx: {
             width: { xs: "95%", sm: "1200px" },
             maxWidth: "100%",
             borderRadius: 2,
-            height: "90vh", // fixed modal height
+            height: "90vh",
             display: "flex",
             flexDirection: "column",
           },
@@ -123,24 +162,66 @@ export default function ConfigureToolModal({
       </Tabs>
       {/* CONTENT AREA */}
       <Box
+        ref={containerRef}
         sx={{
           flex: 1,
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          position: "relative",
         }}
       >
         {/* Tab Panels */}
-        <Box sx={{ flex: 1, overflow: "auto", p: 2, height: "35%" }}>
+        <Box
+          sx={{
+            height: `${topHeight}px`,
+            overflow: "auto",
+            p: 2,
+            flexShrink: 0,
+          }}
+        >
           {activeTab === 0 && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              gutterBottom
-              //textAlign="center"
-            >
-              {tool.description || "No description available."}
-            </Typography>
+            <>
+              {/* Tool Description */}
+              <Box
+                sx={{
+                  bgcolor: "rgb(44, 44, 44)",
+                  border: "1px solid rgb(39, 39, 42)",
+                  borderRadius: 1.5,
+                  p: 2,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 1,
+                    display: "block",
+                  }}
+                >
+                  Description
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    lineHeight: 1.6,
+                    mb: 2,
+                  }}
+                >
+                  {tool.description || "No description available."}
+                </Typography>
+                <img
+                  src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
+                  alt={tool.display_name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                />
+              </Box>
+            </>
           )}
           {activeTab === 1 && (
             <DatasetTable
@@ -157,16 +238,26 @@ export default function ConfigureToolModal({
           )}
         </Box>
 
-        {/* FORM at the bottom */}
+        {/* Divider for resizing */}
+        <Box
+          onMouseDown={handleMouseDown}
+          sx={{
+            height: "6px",
+            cursor: "row-resize",
+            backgroundColor: "divider",
+            "&:hover": { backgroundColor: "action.hover" },
+            zIndex: 2,
+          }}
+        />
+
+        {/* Bottom section (form) */}
         <Box
           sx={{
+            flex: 1,
+            overflow: "auto",
             p: 2,
             borderTop: "1px solid",
             borderColor: "divider",
-            height: "65%",
-            overflow: "auto",
-            display: "flex",
-            flexDirection: "column",
           }}
         >
           <Typography

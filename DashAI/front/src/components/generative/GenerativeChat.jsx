@@ -18,6 +18,7 @@ import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
+import { getRunStatus } from "../../utils/runStatus";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
@@ -56,61 +57,20 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   };
 
   const handleSendMessage = (input) => {
-    // Set the Loading state to true
     setIsLoadingMessage(true);
 
-    // Send the message to the server
     postProcess(sessionId, input).then((response) => {
-      // Update the messages state with the new message
-      // and reset the input field
+      // Añadir el nuevo mensaje en estado inicial
       setMessages((prevMessages) => [...prevMessages, response]);
-      // Wait 1/2 second before enqueing the job to get the input properly from the server
-      setTimeout(() => {
-        // Enqueue the job
-        enqueueGenerativeProcessJob(response.id).then(() => {
-          // Start the job queue
-          startJobQueue(true).then(() => {
-            // Set a timeout to refresh the messages
-            setTimeout(() => {
-              // Refresh the messages after 1 seconds
-              getProcessById(response.id).then((response) => {
-                // Check if the process is finished
-                if (response.status === 4) {
-                  setIsLoadingMessage(false);
 
-                  enqueueSnackbar(
-                    `The process has failed. Deleting it...${
-                      response.output?.[0]?.data
-                        ? `\n${response.output[0].data}`
-                        : ""
-                    }`,
-                    {
-                      autoHideDuration: 8000,
-                      style: { whiteSpace: "pre-line" },
-                    },
-                  );
-
-                  deleteProcessById(response.id).then(() => {
-                    setMessages((prevMessages) =>
-                      prevMessages.filter(
-                        (message) => message.id !== response.id,
-                      ),
-                    );
-                  });
-                } else {
-                  setIsLoadingMessage(false);
-                  setMessages((prevMessages) => {
-                    const updatedMessages = prevMessages.map((message) =>
-                      message.id === response.id ? response : message,
-                    );
-                    return updatedMessages;
-                  });
-                }
-              });
-            }, 1000);
-          });
+      // Encolar el proceso
+      enqueueGenerativeProcessJob(response.id).then(() => {
+        startJobQueue(true).then(() => {
+          // Aquí NO arrancamos polling manual,
+          // el useEffect se encargará de actualizar este mensaje
+          setIsLoadingMessage(false);
         });
-      }, 500);
+      });
     });
   };
 
@@ -127,6 +87,55 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   useEffect(() => {
     scrollToBottom();
   }, [messagesWithHistory]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const POLL_INTERVAL = 1500;
+
+    const intervalId = setInterval(() => {
+      const unfinished = messages.filter(
+        (m) =>
+          getRunStatus(m.status) !== "Finished" &&
+          getRunStatus(m.status) !== "Error",
+      );
+
+      if (unfinished.length === 0) {
+        clearInterval(intervalId); // nothing left to poll
+        return;
+      }
+
+      // Fetch latest status for each unfinished process
+      unfinished.forEach((msg) => {
+        getProcessById(msg.id).then((process) => {
+          const status = getRunStatus(process.status);
+
+          if (status === "Error") {
+            enqueueSnackbar(
+              `The process has failed. Deleting it...${
+                process.output?.[0]?.data ? `\n${process.output[0].data}` : ""
+              }`,
+              {
+                autoHideDuration: 8000,
+                style: { whiteSpace: "pre-line" },
+              },
+            );
+
+            deleteProcessById(process.id).then(() => {
+              setMessages((prev) => prev.filter((m) => m.id !== process.id));
+            });
+          } else {
+            // Update progress or final result
+            setMessages((prev) =>
+              prev.map((m) => (m.id === process.id ? process : m)),
+            );
+          }
+        });
+      });
+    }, POLL_INTERVAL);
+
+    return () => clearInterval(intervalId); // cleanup
+  }, [messages]);
 
   useEffect(() => {
     let messagesObject = messages.map((process) => {

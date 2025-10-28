@@ -100,18 +100,20 @@ export default function ConverterBox({
               color={statusLabel === "Finished" ? "primary" : "default"}
               size="small"
             />
-            <IconButton
-              size="small"
-              onClick={() => handleConverterDeleteClick(converter)}
-              sx={{
-                width: 24,
-                height: 24,
-                bgcolor: "error.main",
-                "&:hover": { bgcolor: "error.dark" },
-              }}
-            >
-              <Delete sx={{ fontSize: 16 }} />
-            </IconButton>
+            {(statusLabel === "Error" || statusLabel === "Finished") && (
+              <IconButton
+                size="small"
+                onClick={() => handleConverterDeleteClick(converter)}
+                sx={{
+                  width: 24,
+                  height: 24,
+                  bgcolor: "error.main",
+                  "&:hover": { bgcolor: "error.dark" },
+                }}
+              >
+                <Delete sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
 

@@ -101,8 +101,8 @@ export default function ExplorerBox({
               color={statusLabel === "Finished" ? "primary" : "default"}
               size="small"
             />
-            {statusLabel === "Finished" && (
-              <>
+            <>
+              {statusLabel === "Finished" && (
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDetailsClick(explorer)}
@@ -116,6 +116,8 @@ export default function ExplorerBox({
                 >
                   <Info sx={{ fontSize: 16 }} />
                 </IconButton>
+              )}
+              {(statusLabel === "Error" || statusLabel === "Finished") && (
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDeleteClick(explorer)}
@@ -128,8 +130,8 @@ export default function ExplorerBox({
                 >
                   <Delete sx={{ fontSize: 16 }} />
                 </IconButton>
-              </>
-            )}
+              )}
+            </>
           </Box>
         </Box>
 

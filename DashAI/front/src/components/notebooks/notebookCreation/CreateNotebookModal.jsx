@@ -107,7 +107,7 @@ export function CreateNotebookModal({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={() => {}} maxWidth="sm" fullWidth>
       <DialogTitle>
         Create a New Notebook
         <IconButton
