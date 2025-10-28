@@ -214,7 +214,6 @@ export default function RightBar({ notebook }) {
   const handleChangeTab = (event, newValue) => {
     setActiveTab(newValue);
     setSearchQuery("");
-    setHoveredTool(null);
 
     if (tourContext && tourContext.run) {
       setTimeout(() => {

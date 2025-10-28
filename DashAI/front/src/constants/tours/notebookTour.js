@@ -91,7 +91,6 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
@@ -111,7 +110,6 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
   },
@@ -212,7 +210,6 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
@@ -263,7 +260,6 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
@@ -287,7 +283,6 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "bottom",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,

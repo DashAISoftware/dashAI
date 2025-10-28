@@ -15,7 +15,7 @@ import DatasetIcon from "@mui/icons-material/Dataset";
 
 import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
-import { useTourContext } from "../tour/TourProvider";
+import { useTourContext } from "../../tour/TourProvider";
 import api from "../../../api/api";
 
 import { getDatasetFile } from "../../../api/datasets";

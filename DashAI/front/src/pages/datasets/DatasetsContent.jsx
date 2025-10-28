@@ -66,7 +66,7 @@ export default function DatasetsPage() {
       setSelectedDatasetId(null);
       setTimeout(() => {
         tourContext.nextStep();
-      }, 300);
+      }, 600);
     } else {
       setStep((prevStep) => prevStep + 1);
       setSelectedOption(option);
