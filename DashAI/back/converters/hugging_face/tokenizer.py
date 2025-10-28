@@ -47,7 +47,10 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """Converter that tokenizes text and stores each token ID in a separate column."""
 
     SCHEMA = TokenizerSchema
-    DESCRIPTION = "Tokenize text into input IDs; each token ID goes into its own column. Attention mask is ignored."
+    DESCRIPTION = (
+        "Tokenize text into input IDs; each token ID goes into its own column. "
+        "Attention mask is ignored."
+    )
     DISPLAY_NAME = "Tokenizer"
     IMAGE_PREVIEW = "tokenizer.png"
 
@@ -64,7 +67,9 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
     def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
-        """Tokenize a batch of text columns and store each input_id in a separate column."""
+        """
+        Tokenize a batch of text columns and store each input_id in a separate column.
+        """
         all_column_tokens = []
 
         for column in batch.column_names:
