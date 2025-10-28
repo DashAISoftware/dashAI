@@ -1,5 +1,3 @@
-"""Bag-of-Words converter using scikit-learn's CountVectorizer."""
-
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 
