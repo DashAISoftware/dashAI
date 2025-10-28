@@ -14,7 +14,6 @@ import { LinearProgress } from "@mui/material";
 import {
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
-  getDatasetFileFiltered,
 } from "../../../api/datasets";
 
 /**
