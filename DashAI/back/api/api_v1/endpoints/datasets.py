@@ -91,33 +91,37 @@ async def filter_dataset_file(
                     return v
 
                 if op == "contains" and val is not None:
+                    # Case-insensitive contains
                     if not pa.types.is_string(col_type):
-                        as_str = pc.cast(table[col], pa.string())
-                        mask = pc.match_substring(as_str, val)
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
-                        mask = pc.match_substring(table[col], val)
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring(as_str, str(val).lower())
                     table = table.filter(mask)
                 elif op == "doesNotContain" and val is not None:
+                    # Case-insensitive doesNotContain
                     if not pa.types.is_string(col_type):
-                        as_str = pc.cast(table[col], pa.string())
-                        mask = pc.invert(pc.match_substring(as_str, val))
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
-                        mask = pc.invert(pc.match_substring(table[col], val))
-                    table = table.filter(mask)
-                elif op == "equals" and val is not None:
-                    casted_val = cast_value(val)
-                    mask = pc.equal(table[col], pa.scalar(casted_val))
-                    table = table.filter(mask)
-                elif op == "doesNotEqual" and val is not None:
-                    casted_val = cast_value(val)
-                    mask = pc.invert(pc.equal(table[col], pa.scalar(casted_val)))
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.invert(pc.match_substring(as_str, str(val).lower()))
                     table = table.filter(mask)
                 elif op == "startsWith" and val is not None:
+                    # Case-insensitive startsWith
                     if not pa.types.is_string(col_type):
-                        as_str = pc.cast(table[col], pa.string())
-                        mask = pc.match_substring_regex(as_str, f"^{val}")
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
                     else:
-                        mask = pc.match_substring_regex(table[col], f"^{val}")
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring_regex(as_str, f"^{str(val).lower()}")
+                    table = table.filter(mask)
+                elif op == "endsWith" and val is not None:
+                    # Case-insensitive endsWith
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring_regex(as_str, f"{str(val).lower()}$")
+                    table = table.filter(mask)
                     table = table.filter(mask)
                 elif op == "endsWith" and val is not None:
                     if not pa.types.is_string(col_type):
