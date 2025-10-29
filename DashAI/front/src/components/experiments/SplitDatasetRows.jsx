@@ -38,6 +38,10 @@ function SplitDatasetRows({
   ).toFixed(2);
   const testDatasetPercentage = (datasetInfo.test_size / totalRows).toFixed(2);
 
+  useEffect(() => {
+    console.log(rowsPartitionsIndex);
+  }, [rowsPartitionsIndex]);
+
   const hasPredefinedSplits =
     trainDatasetPercentage > 0 ||
     validationDatasetPercentage > 0 ||
@@ -75,10 +79,7 @@ function SplitDatasetRows({
       setRowsPartitionsPercentage(newSplit);
 
       // Validate the random split
-      const hasZero =
-        newSplit.train === 0 ||
-        newSplit.validation === 0 ||
-        newSplit.test === 0;
+      const hasZero = newSplit.train === 0;
       const sumsToOne = checkSplit(
         newSplit.train,
         newSplit.validation,
@@ -86,7 +87,7 @@ function SplitDatasetRows({
       );
 
       if (hasZero) {
-        setRandomSplitErrorText("All splits must be greater than 0");
+        setRandomSplitErrorText("Train splits must be greater than 0");
         setRandomSplitError(true);
       } else if (!sumsToOne) {
         setRandomSplitErrorText("Splits must sum to 1");
@@ -100,12 +101,8 @@ function SplitDatasetRows({
       setRowsPartitionsIndex(newIndex);
 
       // Validate the manual split
-      if (
-        newIndex.train.length === 0 ||
-        newIndex.validation.length === 0 ||
-        newIndex.test.length === 0
-      ) {
-        setManualSplitErrorText("All splits must have at least one row");
+      if (newIndex.train.length === 0) {
+        setManualSplitErrorText("Train split must have at least one row");
         setManualSplitError(true);
       } else {
         setManualSplitError(false);
@@ -138,12 +135,8 @@ function SplitDatasetRows({
         setRowsPartitionsIndex(updatedIndex);
 
         // Validate after update
-        if (
-          updatedIndex.train.length === 0 ||
-          updatedIndex.validation.length === 0 ||
-          updatedIndex.test.length === 0
-        ) {
-          setManualSplitErrorText("All splits must have at least one row");
+        if (updatedIndex.train.length === 0) {
+          setManualSplitErrorText("Train split must have at least one row");
           setManualSplitError(true);
         } else {
           setManualSplitError(false);
@@ -171,10 +164,7 @@ function SplitDatasetRows({
       setRowsPartitionsPercentage(newSplit);
 
       // Check if any value is 0 or if sum is not 1
-      const hasZero =
-        newSplit.train === 0 ||
-        newSplit.validation === 0 ||
-        newSplit.test === 0;
+      const hasZero = newSplit.train === 0;
       const sumsToOne = checkSplit(
         newSplit.train,
         newSplit.validation,
@@ -182,7 +172,7 @@ function SplitDatasetRows({
       );
 
       if (hasZero) {
-        setRandomSplitErrorText("All splits must be greater than 0");
+        setRandomSplitErrorText("Train splits must be greater than 0");
         setRandomSplitError(true);
       } else if (!sumsToOne) {
         setRandomSplitErrorText("Splits must sum to 1");
@@ -228,17 +218,13 @@ function SplitDatasetRows({
     } else if (
       splitType === SPLIT_TYPES.MANUAL &&
       !manualSplitError &&
-      rowsPartitionsIndex.train.length >= 1 &&
-      rowsPartitionsIndex.validation.length >= 1 &&
-      rowsPartitionsIndex.test.length >= 1
+      rowsPartitionsIndex.train.length >= 1
     ) {
       setSplitsReady(true);
     } else if (
       splitType === SPLIT_TYPES.RANDOM &&
       !randomSplitError &&
-      rowsPartitionsPercentage.train > 0 &&
-      rowsPartitionsPercentage.validation > 0 &&
-      rowsPartitionsPercentage.test > 0
+      rowsPartitionsPercentage.train > 0
     ) {
       setSplitsReady(true);
     } else {
