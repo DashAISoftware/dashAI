@@ -19,7 +19,7 @@ def create_experiment(client: TestClient, dataset_id):
         "/api/v1/experiment/",
         json={
             "dataset_id": dataset_id,
-            "task_name": "TabularClassificationTask",
+            "task_name": "ClassificationTask",
             "name": "Test Experiment",
             "input_columns": [1, 2, 3, 4],
             "output_columns": [5],

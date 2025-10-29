@@ -15,8 +15,7 @@ from DashAI.back.job.model_job import ModelJob
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
 from DashAI.back.optimizers import OptunaOptimizer
-from DashAI.back.tasks import BaseTask
-from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
+from DashAI.back.tasks import BaseTask, ClassificationTask
 
 
 class DummyTask(BaseTask):
@@ -64,7 +63,7 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             JSONDataLoader,
             ModelJob,
             OptunaOptimizer,
-            TabularClassificationTask,
+            ClassificationTask,
         ]
     )
 
@@ -178,7 +177,7 @@ def create_experiment(client: TestClient, dataset: Dataset):
         experiment = Experiment(
             dataset_id=dataset["id"],
             name="Experiment",
-            task_name="TabularClassificationTask",
+            task_name="ClassificationTask",
             input_columns=["feature_0", "feature_1", "feature_2", "feature_3"],
             output_columns=["class"],
             splits=json.dumps(
@@ -286,7 +285,7 @@ def test_get_metadata_prediction_json(client: TestClient):
         "run_name": "KNeighborsClassifier",
         "model_name": "Run",
         "dataset_name": "test_json",
-        "task_name": "TabularClassificationTask",
+        "task_name": "ClassificationTask",
     }
     assert response.json() == [json_data]
 
@@ -302,7 +301,7 @@ def test_get_prediction_table(client: TestClient):
     assert table_dict["run_name"] == "KNeighborsClassifier"
     assert table_dict["model_name"] == "Run"
     assert table_dict["dataset_name"] == "test_json"
-    assert table_dict["task_name"] == "TabularClassificationTask"
+    assert table_dict["task_name"] == "ClassificationTask"
 
 
 def test_model_table(client: TestClient):
@@ -313,7 +312,7 @@ def test_model_table(client: TestClient):
     assert table_dict["id"] == 1
     assert table_dict["experiment_name"] == "Experiment"
     assert table_dict["run_name"] == "Run"
-    assert table_dict["task_name"] == "TabularClassificationTask"
+    assert table_dict["task_name"] == "ClassificationTask"
     assert table_dict["model_name"] == "KNeighborsClassifier"
     assert table_dict["dataset_name"] == "test_json"
     assert table_dict["dataset_id"] == 1

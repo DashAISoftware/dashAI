@@ -33,7 +33,7 @@ def create_experiment_1(client: TestClient, dataset_id: int):
         "/api/v1/experiment/",
         json={
             "dataset_id": dataset_id,
-            "task_name": "TabularClassificationTask",
+            "task_name": "ClassificationTask",
             "name": "ExperimentA",
             "input_columns": [1, 2, 3, 4],
             "output_columns": [5],
@@ -49,7 +49,7 @@ def create_experiment_2(client: TestClient, dataset_id: int):
         "/api/v1/experiment/",
         json={
             "dataset_id": dataset_id,
-            "task_name": "TabularClassificationTask",
+            "task_name": "ClassificationTask",
             "name": "ExperimentB",
             "input_columns": [1, 4],
             "output_columns": [5],
@@ -70,7 +70,7 @@ def test_create_and_get_experiment(
     assert response.status_code == 200
     data = response.json()
     assert data["dataset_id"] == dataset_id
-    assert data["task_name"] == "TabularClassificationTask"
+    assert data["task_name"] == "ClassificationTask"
     assert data["name"] == "ExperimentA"
     assert data["input_columns"] == input_columns_1
     assert data["output_columns"] == output_columns
@@ -81,7 +81,7 @@ def test_create_and_get_experiment(
     assert response.status_code == 200
     data = response.json()
     assert data["dataset_id"] == dataset_id
-    assert data["task_name"] == "TabularClassificationTask"
+    assert data["task_name"] == "ClassificationTask"
     assert data["name"] == "ExperimentB"
     assert data["input_columns"] == input_columns_2
     assert data["output_columns"] == output_columns
@@ -150,7 +150,7 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
     response = client.post(
         "/api/v1/experiment/validation",
         json={
-            "task_name": "TabularClassificationTask",
+            "task_name": "ClassificationTask",
             "dataset_id": dataset_id,
             "inputs_columns": [1, 2, 3, 4],
             "outputs_columns": [5],
@@ -196,7 +196,7 @@ def test_get_columns_validation_wrong_dataset(client: TestClient):
     response = client.post(
         "/api/v1/experiment/validation",
         json={
-            "task_name": "TabularClassificationTask",
+            "task_name": "ClassificationTask",
             "dataset_id": 127,
             "inputs_columns": [1, 2, 3, 4],
             "outputs_columns": [5],
