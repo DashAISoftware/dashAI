@@ -3,7 +3,6 @@ import pathlib
 
 import PIL
 import pytest
-from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -13,9 +12,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 )
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.database.models import ProcessData
+from DashAI.back.tasks.classification_task import ClassificationTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
-from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
-from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationTask
 from DashAI.back.tasks.translation_task import TranslationTask
@@ -37,7 +35,7 @@ def test_validate_tabular_task():
     dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
 
     dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
-    tabular_task = TabularClassificationTask()
+    tabular_task = ClassificationTask()
     inputs_columns = [
         "SepalLengthCm",
         "SepalWidthCm",
@@ -61,7 +59,7 @@ def test_wrong_type_task():
 
     dataset = dataset.change_columns_type(column_types={"Species": "Categorical"})
 
-    tabular_task = TabularClassificationTask()
+    tabular_task = ClassificationTask()
 
     inputs_columns = [
         "SepalLengthCm",
@@ -81,7 +79,7 @@ def test_wrong_type_task():
 
 def test_prepare_task():
     dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
-    tabular_task = TabularClassificationTask()
+    tabular_task = ClassificationTask()
     inputs_columns = [
         "SepalLengthCm",
         "SepalWidthCm",
@@ -103,7 +101,7 @@ def test_prepare_task():
 
 def test_not_prepared_task():
     dataset = to_dashai_dataset(load_csv_into_datasetdict("iris.csv"))
-    tabular_task = TabularClassificationTask()
+    tabular_task = ClassificationTask()
     inputs_columns = [
         "SepalLengthCm",
         "SepalWidthCm",
@@ -122,69 +120,13 @@ def test_not_prepared_task():
 
 
 def test_get_tabular_class_task_metadata():
-    tabular_class_task = TabularClassificationTask()
+    tabular_class_task = ClassificationTask()
     metadata = tabular_class_task.get_metadata()
 
     assert len(metadata.keys()) == 4
     assert metadata["inputs_types"] == ["ClassLabel", "Value"]
     assert metadata["outputs_types"] == ["ClassLabel"]
     assert metadata["inputs_cardinality"] == "n"
-    assert metadata["outputs_cardinality"] == 1
-
-
-@pytest.fixture(scope="module", name="text_classification_dataset")
-def text_classification_dataset_fixture():
-    test_dataset_path = "tests/back/tasks/ImdbSentimentDatasetSmall.json"
-    json_dataloader = JSONDataLoader()
-
-    dataset = json_dataloader.load_data(
-        filepath_or_buffer=test_dataset_path,
-        temp_path="tests/back/tasks",
-        params={"data_key": "data"},
-    )
-
-    dashai_dataset = to_dashai_dataset(dataset)
-
-    total_rows = dashai_dataset.num_rows
-    train_indexes, test_indexes, val_indexes = split_indexes(
-        total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2
-    )
-    split_datasetdict = split_dataset(
-        dashai_dataset,
-        train_indexes=train_indexes,
-        test_indexes=test_indexes,
-        val_indexes=val_indexes,
-    )
-
-    return split_datasetdict
-
-
-def test_validate_text_dataset(text_classification_dataset: DatasetDict):
-    text_class_task = TextClassificationTask()
-    inputs_columns = ["text"]
-    outputs_columns = ["class"]
-    imbd_sentiment_dataset = text_class_task.prepare_for_task(
-        text_classification_dataset, outputs_columns
-    )
-    try:
-        text_class_task.validate_dataset_for_task(
-            dataset=imbd_sentiment_dataset,
-            dataset_name="IMDBDataset",
-            input_columns=inputs_columns,
-            output_columns=outputs_columns,
-        )
-    except Exception as e:
-        pytest.fail(f"Unexpected error in test_validate_task: {repr(e)}")
-
-
-def test_get_text_class_task_metadata():
-    text_class_task = TextClassificationTask()
-    metadata = text_class_task.get_metadata()
-
-    assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Value"]
-    assert metadata["outputs_types"] == ["ClassLabel"]
-    assert metadata["inputs_cardinality"] == 1
     assert metadata["outputs_cardinality"] == 1
 
 
