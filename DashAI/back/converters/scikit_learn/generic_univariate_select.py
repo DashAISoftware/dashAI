@@ -2,6 +2,7 @@ from sklearn.feature_selection import (
     GenericUnivariateSelect as GenericUnivariateSelectOperation,
 )
 
+from DashAI.back.converters.category.feature_selection import FeatureSelectionConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -29,11 +30,14 @@ class GenericUnivariateSelectSchema(BaseSchema):
     )  # type: ignore
 
 
-class GenericUnivariateSelect(SklearnWrapper, GenericUnivariateSelectOperation):
+class GenericUnivariateSelect(
+    FeatureSelectionConverter, SklearnWrapper, GenericUnivariateSelectOperation
+):
     """SciKit-Learn's GenericUnivariateSelect wrapper for DashAI."""
 
     SCHEMA = GenericUnivariateSelectSchema
     DESCRIPTION = "Univariate feature selector with configurable strategy."
     SUPERVISED = True
     DISPLAY_NAME = "Generic Univariate Select"
+    IMAGE_PREVIEW = "generic_univariate_select.png"
     metadata = {}

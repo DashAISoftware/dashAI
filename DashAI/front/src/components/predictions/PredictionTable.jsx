@@ -15,6 +15,7 @@ import EditPredictionModal from "./EditPredictionModal";
 import PredictionSummaryModal from "./PredictionSummaryModal";
 import DownloadPrediction from "./DownloadPrediction";
 import PropTypes from "prop-types";
+import { getComponents } from "../../api/component";
 
 function PredictionTable({
   handleNewPredict,
@@ -24,8 +25,26 @@ function PredictionTable({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
+  const [models, setModels] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
-  const models = predictions;
+  const rows = predictions;
+
+  useEffect(() => {
+    const fetchModelsAndTasks = async () => {
+      try {
+        const [modelsData, tasksData] = await Promise.all([
+          getComponents({ selectTypes: ["Model"] }),
+          getComponents({ selectTypes: ["Task"] }),
+        ]);
+        setModels(modelsData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error("Error fetching models or tasks:", error);
+      }
+    };
+    fetchModelsAndTasks();
+  }, []);
 
   useEffect(() => {
     if (predictions.length >= 0) {
@@ -95,12 +114,20 @@ function PredictionTable({
         headerName: "Model",
         minWidth: 150,
         editable: false,
+        valueGetter: (value) => {
+          const model = models.find((model) => model.name === value);
+          return model && model.display_name ? model.display_name : value;
+        },
       },
       {
         field: "task_name",
         headerName: "Task",
         minWidth: 150,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "actions",
@@ -169,7 +196,7 @@ function PredictionTable({
 
       <div style={{ width: "100%", position: "relative" }}>
         <DataGrid
-          rows={models}
+          rows={rows}
           columns={columns}
           initialState={{
             pagination: {

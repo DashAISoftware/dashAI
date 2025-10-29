@@ -45,3 +45,4 @@ huey
 
 fasttext-wheel
 pypdf2
+xlrd

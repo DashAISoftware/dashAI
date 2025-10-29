@@ -28,6 +28,7 @@ class TranslationTask(BaseTask):
     converting text or speech from one language into another language while
     preserving the meaning and context.
     """
+    DISPLAY_NAME: str = "Translation"
 
     def prepare_for_task(
         self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
@@ -65,3 +66,20 @@ class TranslationTask(BaseTask):
         Processed predictions
         """
         return predictions
+
+    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+        """Get the number of unique labels in the output column.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        int | None
+            Number of unique labels or None if not applicable
+        """
+        return None

@@ -1,5 +1,8 @@
 from sklearn.preprocessing import MinMaxScaler as MinMaxScalerOperation
 
+from DashAI.back.converters.category.scaling_and_normalization import (
+    ScalingAndNormalizationConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -29,12 +32,15 @@ class MinMaxScalerSchema(BaseSchema):
     )  # type: ignore
 
 
-class MinMaxScaler(SklearnWrapper, MinMaxScalerOperation):
+class MinMaxScaler(
+    ScalingAndNormalizationConverter, SklearnWrapper, MinMaxScalerOperation
+):
     """Scikit-learn's MinMaxScaler wrapper for DashAI."""
 
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = "Transform features by scaling each feature to a given range."
     DISPLAY_NAME = "Min-Max Scaler"
+    IMAGE_PREVIEW = "min_max_scaler.png"
 
     def __init__(self, **kwargs):
         self.min_range = kwargs.pop("min_range", 0)

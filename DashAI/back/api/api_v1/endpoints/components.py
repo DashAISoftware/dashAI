@@ -1,10 +1,13 @@
 """Component API module."""
 
+import io
 import logging
 from typing import Any, Dict, List, Union
 
+import requests
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
+from fastapi.responses import StreamingResponse
 from kink import di, inject
 from typing_extensions import Annotated
 
@@ -275,3 +278,66 @@ async def get_child_components(
     cleaned_children = [_delete_class(child) for child in children_list]
 
     return cleaned_children
+
+@router.get("/image/{component_name}/", status_code=status.HTTP_200_OK)
+async def get_component_image(
+    component_name: str,
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+) -> StreamingResponse:
+    """Return the image of a specific component.
+
+    Parameters
+    ----------
+    component_name : str
+        The name of the component to retrieve the image for.
+    component_registry : ComponentRegistry
+        The current app component registry provided by dependency injection.
+
+    Returns
+    -------
+    StreamingResponse
+        The image of the component.
+    """
+    if component_name not in component_registry:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Component {component_name} not found in the registry.",
+        )
+
+    local_path_image = config["BACK_PATH"] / "static" / "images"
+    image_path: str = (
+        component_registry[component_name]
+        .get("metadata", {})
+        .get("image_preview", None)
+    )
+    if not image_path:
+        with open(local_path_image / "placeholder.svg", "rb") as image_file:
+            return StreamingResponse(
+                io.BytesIO(image_file.read()), media_type="image/svg+xml"
+            )
+
+    # If it is a URL, we obtain the image from the URL
+    if image_path.startswith(("http://", "https://")):
+        response = requests.get(image_path, timeout=5)
+        if response.status_code == 200:
+            return StreamingResponse(
+                io.BytesIO(response.content), media_type="image/png"
+            )
+        else:
+            with open(local_path_image / "placeholder.svg", "rb") as image_file:
+                return StreamingResponse(
+                    io.BytesIO(image_file.read()), media_type="image/svg+xml"
+                )
+
+    # Otherwise, we assume it is a local path
+    try:
+        with open(local_path_image / image_path, "rb") as image_file:
+            return StreamingResponse(
+                io.BytesIO(image_file.read()), media_type="image/png"
+            )
+    except FileNotFoundError:
+        with open(local_path_image / "placeholder.svg", "rb") as image_file:
+            return StreamingResponse(
+                io.BytesIO(image_file.read()), media_type="image/svg+xml"
+            )

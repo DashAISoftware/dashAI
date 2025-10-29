@@ -1,26 +1,38 @@
 import { useState, useEffect } from "react";
 import SideBar from "../threeSectionLayout/SideBar";
-import { Box, Typography, Tabs, Tab } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  ToggleButtonGroup,
+  ToggleButton,
+} from "@mui/material";
+import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import DescriptionPanel from "./DescriptionPanel";
-import ExplorerList from "./explorerCreation/ExplorerList";
-import ConverterList from "./converterCreation/ConverterList";
+import ToolList from "./tool/ToolList";
+import ToolGrid from "./tool/ToolGrid";
+import FormExplorerSection from "./explorerCreation/FormExplorerSection";
+import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
+import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
 export default function RightBar({ notebook }) {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredTool, setHoveredTool] = useState(null);
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
+  const { explorersAndConverters } = useExplorersAndConverters();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,7 +88,7 @@ export default function RightBar({ notebook }) {
     return () => {
       isMounted = false;
     };
-  }, [notebook?.file_path]);
+  }, [notebook?.file_path, explorersAndConverters]);
 
   // Validate explorers based on dataset columns
   const validateExplorer = (explorer) => {
@@ -205,6 +217,7 @@ export default function RightBar({ notebook }) {
           flexDirection: "column",
           overflow: "hidden",
           height: "100%",
+          width: "100%",
         }}
       >
         <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
@@ -255,6 +268,48 @@ export default function RightBar({ notebook }) {
                   placeholder="Search explorers/converters"
                 />
               </Box>
+              {/* View Mode Toggle */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderBottom: "1px solid #333",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "rgb(161, 161, 170)" }}
+                >
+                  View mode
+                </Typography>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, newMode) => newMode && setViewMode(newMode)}
+                  size="small"
+                  sx={{
+                    "& .MuiToggleButton-root": {
+                      color: "rgb(161, 161, 170)",
+                      border: "1px solid rgb(39, 39, 42)",
+                      "&.Mui-selected": {
+                        bgcolor: "rgb(39, 39, 42)",
+                        color: "rgb(6, 182, 212)",
+                      },
+                    },
+                  }}
+                >
+                  <ToggleButton value="list">
+                    <ViewList sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <ToggleButton value="grid">
+                    <ViewModule sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
 
               {/* Tool list and description */}
               <Box
@@ -263,29 +318,56 @@ export default function RightBar({ notebook }) {
                   flexDirection: "column",
                   flex: 1,
                   overflow: "hidden",
+                  minWidth: 0,
                 }}
               >
-                {/* Tool list */}
-                <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                  {activeTab === 0 && (
-                    <ExplorerList
-                      explorers={filteredExplorers}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                    />
-                  )}
-                  {activeTab === 1 && (
-                    <ConverterList
-                      converters={filteredConverters}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                      notebook={notebook}
-                    />
-                  )}
-                </Box>
+                {/* Tool list - grid */}
+                {viewMode === "list" ? (
+                  <Box
+                    sx={{
+                      flex: 1,
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      p: 2,
+                      minWidth: 0,
+                    }}
+                  >
+                    {activeTab === 0 && (
+                      <ToolList
+                        tools={filteredExplorers}
+                        notebook={notebook}
+                        FormComponent={FormExplorerSection}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ToolList
+                        tools={filteredConverters}
+                        notebook={notebook}
+                        FormComponent={FormConverterSection}
+                      />
+                    )}
+                  </Box>
+                ) : (
+                  <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+                    {activeTab === 0 && (
+                      <ToolGrid
+                        tools={filteredExplorers}
+                        notebook={notebook}
+                        FormComponent={FormExplorerSection}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ToolGrid
+                        tools={filteredConverters}
+                        notebook={notebook}
+                        FormComponent={FormConverterSection}
+                      />
+                    )}
+                  </Box>
+                )}
 
                 {/* Description panel - Fixed height */}
-                <DescriptionPanel hoveredTool={hoveredTool} />
+                <DescriptionPanel />
               </Box>
             </Box>
           </>
