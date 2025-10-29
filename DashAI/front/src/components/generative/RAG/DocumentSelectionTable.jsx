@@ -1,5 +1,13 @@
-import React from "react";
-import { Box, IconButton, Tooltip, LinearProgress } from "@mui/material";
+import React, { useState } from "react";
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PropTypes from "prop-types";
@@ -15,6 +23,31 @@ export default function DocumentSelectionTable({
   onRemove,
   isLoading = false,
 }) {
+  // Modal state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [txtContent, setTxtContent] = useState("");
+
+  const handleOpenPreview = async (doc) => {
+    setPreviewDoc(doc);
+    if (doc.file_type === "txt" && doc.preview) {
+      try {
+        const res = await fetch(doc.preview);
+        const text = await res.text();
+        setTxtContent(text);
+      } catch (e) {
+        setTxtContent("Error loading TXT file");
+      }
+    }
+    setPreviewOpen(true);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+    setPreviewDoc(null);
+    setTxtContent("");
+  };
+
   const handleSelectionChange = (newSelection) => {
     // Get currently selected IDs
     const currentSet = new Set(selectedIds);
@@ -79,13 +112,7 @@ export default function DocumentSelectionTable({
           <Tooltip title="Preview" key="preview">
             <IconButton
               size="small"
-              onClick={() => {
-                if (params.row.preview) {
-                  window.open(params.row.preview, "_blank");
-                } else {
-                  console.warn("No preview URL available for this document.");
-                }
-              }}
+              onClick={() => handleOpenPreview(params.row)}
             >
               <VisibilityIcon fontSize="small" />
             </IconButton>
@@ -102,75 +129,111 @@ export default function DocumentSelectionTable({
   );
 
   return (
-    <Box
-      sx={{
-        backgroundColor: "background.paper",
-        borderRadius: 2,
-        p: 2,
-        height: "100%",
-        width: "100%",
-      }}
-    >
-      <DataGrid
-        rows={documents}
-        columns={columns}
-        checkboxSelection
-        disableRowSelectionOnClick
-        rowSelectionModel={selectedIds}
-        onRowSelectionModelChange={handleSelectionChange}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 5,
-            },
-          },
-        }}
-        pageSizeOptions={[5, 10, 25, 50]}
-        loading={isLoading}
-        slots={{
-          loadingOverlay: LinearProgress,
-        }}
+    <>
+      <Box
         sx={{
-          "& .MuiDataGrid-row.Mui-selected": {
-            backgroundColor: "action.hover",
-          },
-          "& .MuiDataGrid-virtualScroller": {
-            "&::-webkit-scrollbar": {
-              width: "10px",
-              height: "10px",
-            },
-            "&::-webkit-scrollbar-track": {
-              backgroundColor: "#252836",
-              borderRadius: "5px",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: "#374151",
-              borderRadius: "5px",
-              border: "2px solid #252836",
-              "&:hover": {
-                backgroundColor: "#4a5568",
+          backgroundColor: "background.paper",
+          borderRadius: 2,
+          p: 2,
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        <DataGrid
+          rows={documents}
+          columns={columns}
+          checkboxSelection
+          disableRowSelectionOnClick
+          rowSelectionModel={selectedIds}
+          onRowSelectionModelChange={handleSelectionChange}
+          initialState={{
+            pagination: {
+              paginationModel: {
+                pageSize: 5,
               },
             },
-          },
-          // Scrollbar styles for Firefox
-          scrollbarWidth: "thin",
-          scrollbarColor: "#374151 #252836",
-        }}
-      />
-    </Box>
+          }}
+          pageSizeOptions={[5, 10, 25, 50]}
+          loading={isLoading}
+          slots={{
+            loadingOverlay: LinearProgress,
+          }}
+          sx={{
+            "& .MuiDataGrid-row.Mui-selected": {
+              backgroundColor: "action.hover",
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              "&::-webkit-scrollbar": {
+                width: "10px",
+                height: "10px",
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "#252836",
+                borderRadius: "5px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#374151",
+                borderRadius: "5px",
+                border: "2px solid #252836",
+                "&:hover": {
+                  backgroundColor: "#4a5568",
+                },
+              },
+            },
+            // Scrollbar styles for Firefox
+            scrollbarWidth: "thin",
+            scrollbarColor: "#374151 #252836",
+          }}
+        />
+      </Box>
+      {/* Modal de previsualización */}
+      <Dialog
+        open={previewOpen}
+        onClose={handleClosePreview}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Preview Document</DialogTitle>
+        <DialogContent>
+          {previewDoc &&
+            previewDoc.file_type === "pdf" &&
+            previewDoc.preview && (
+              <iframe
+                src={previewDoc.preview}
+                title="PDF Preview"
+                width="100%"
+                height="600px"
+                style={{ border: 0 }}
+              />
+            )}
+          {previewDoc && previewDoc.file_type === "txt" && (
+            <pre style={{ maxHeight: 600, overflow: "auto" }}>{txtContent}</pre>
+          )}
+          {previewDoc && !["pdf", "txt"].includes(previewDoc.file_type) && (
+            <Box>No preview available for this file type.</Box>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
 DocumentSelectionTable.propTypes = {
   documents: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      createdAt: PropTypes.string.isRequired,
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      file_name: PropTypes.string.isRequired,
+      created: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.instanceOf(Date),
+      ]).isRequired,
       preview: PropTypes.string,
+      file_type: PropTypes.string,
     }),
   ).isRequired,
-  selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedIds: PropTypes.arrayOf(
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  ).isRequired,
   onToggle: PropTypes.func.isRequired,
   onSelectAll: PropTypes.func.isRequired,
   onDeselectAll: PropTypes.func.isRequired,
