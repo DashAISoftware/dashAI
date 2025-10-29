@@ -128,7 +128,11 @@ export default function DocumentSelector({
     <Box display="flex" gap={2} height="100%">
       <Box width="65%">
         <DocumentSelectionTable
-          documents={documents}
+          documents={documents.map((doc) => ({
+            ...doc,
+            preview: doc.file_url, // Map file_url to preview for modal
+            file_type: doc.file_name.split(".").pop().toLowerCase(), // crude file type detection
+          }))}
           selectedIds={selectedIds}
           onToggle={handleToggleSelection}
           onSelectAll={handleSelectAll}
