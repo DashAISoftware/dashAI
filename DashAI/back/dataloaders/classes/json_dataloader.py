@@ -42,8 +42,7 @@ class JSONDataLoader(BaseDataLoader):
     """Data loader for tabular data in JSON files."""
 
     COMPATIBLE_COMPONENTS = [
-        "TabularClassificationTask",
-        "TextClassificationTask",
+        "ClassificationTask",
         "TranslationTask",
     ]
     SCHEMA = JSONDataloaderSchema

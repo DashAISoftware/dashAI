@@ -48,7 +48,7 @@ class PartialDependence(BaseGlobalExplainer):
     possible value of a feature.
     """
 
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ClassificationTask"]
     SCHEMA = PartialDependenceSchema
 
     def __init__(

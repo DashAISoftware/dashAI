@@ -1,4 +1,7 @@
-class TabularClassificationModel:
-    """Class for models associated to TabularClassificationTask."""
+from DashAI.back.models.base_model import BaseModel
 
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+
+class TabularClassificationModel(BaseModel):
+    """Class for models associated to ClassificationTask."""
+
+    COMPATIBLE_COMPONENTS = ["ClassificationTask"]

@@ -34,7 +34,7 @@ class Train(BaseJob):
     splits : Dict[str, float]
         Dictionary with train/validation/test split ratios
     task : str
-        Name of the task to perform (e.g., "TabularClassificationTask")
+        Name of the task to perform (e.g., "ClassificationTask")
     model : str
         Name of the model to train
     metrics : List[str]
@@ -113,8 +113,7 @@ class Train(BaseJob):
             )
             n_labels = None
             if self.task in [
-                "TextClassificationTask",
-                "TabularClassificationTask",
+                "ClassificationTask",
                 "ImageClassificationTask",
             ]:
                 all_classes = prepared_dataset.unique(output_columns_names[0])

@@ -30,8 +30,7 @@ class HyperOptOptimizer(BaseOptimizer):
     SCHEMA = HyperOptSchema
 
     COMPATIBLE_COMPONENTS = [
-        "TabularClassificationTask",
-        "TextClassificationTask",
+        "ClassificationTask",
         "TranslationTask",
     ]
 
@@ -87,32 +86,15 @@ class HyperOptOptimizer(BaseOptimizer):
         self.metric = metric["class"]
         search_space = self.search_space(self.parameters)
 
-        if task == "TextClassificationTask":
-
-            def objective(params):
-                model_eval = self.model
-                for key, value in params.items():
-                    setattr(model_eval, key, value)
-                model_eval.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_eval.predict(input_dataset["validation"])
-                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
-                return score
-
-        else:
-
-            def objective(params):
-                model_eval = self.model
-                for key, value in params.items():
-                    int_value = int(value)
-                    setattr(model_eval, key, int_value)
-                model_eval.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_eval.predict(input_dataset["validation"])
-                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
-                return score
+        def objective(params):
+            model_eval = self.model
+            for key, value in params.items():
+                int_value = int(value)
+                setattr(model_eval, key, int_value)
+            model_eval.fit(self.input_dataset["train"], self.output_dataset["train"])
+            y_pred = model_eval.predict(input_dataset["validation"])
+            score = 1 * self.metric.score(output_dataset["validation"], y_pred)
+            return score
 
         trials = Trials()
         fmin(

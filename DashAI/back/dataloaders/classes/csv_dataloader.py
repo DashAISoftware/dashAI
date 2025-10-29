@@ -119,7 +119,7 @@ class CSVDataloaderSchema(BaseSchema):
 class CSVDataLoader(BaseDataLoader):
     """Data loader for tabular data in CSV files."""
 
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ClassificationTask"]
     SCHEMA = CSVDataloaderSchema
 
     DESCRIPTION: str = """

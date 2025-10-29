@@ -66,7 +66,7 @@ class KernelShap(BaseLocalExplainer):
     of each feature to the model's prediction.
     """
 
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ClassificationTask"]
     SCHEMA = KernelShapSchema
 
     def __init__(

@@ -61,7 +61,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     decreases when the values of a specific feature are randomly shuffled.
     """
 
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ClassificationTask"]
     SCHEMA = PermutationFeatureImportanceSchema
 
     def __init__(

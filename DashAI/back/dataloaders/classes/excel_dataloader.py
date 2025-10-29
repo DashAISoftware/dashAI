@@ -119,7 +119,7 @@ class ExcelDataloaderSchema(BaseSchema):
 class ExcelDataLoader(BaseDataLoader):
     """Data loader for tabular data in Excel files."""
 
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ClassificationTask"]
     SCHEMA = ExcelDataloaderSchema
 
     DESCRIPTION: str = """

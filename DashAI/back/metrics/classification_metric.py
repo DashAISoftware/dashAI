@@ -10,9 +10,8 @@ class ClassificationMetric(BaseMetric):
     """Class for metrics associated to classification models."""
 
     COMPATIBLE_COMPONENTS = [
-        "TabularClassificationTask",
+        "ClassificationTask",
         "ImageClassificationTask",
-        "TextClassificationTask",
     ]
 
     @staticmethod

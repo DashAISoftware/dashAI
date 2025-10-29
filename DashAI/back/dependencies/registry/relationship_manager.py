@@ -17,15 +17,15 @@ class RelationshipManager:
     related with the class.
 
     For example, a `_relation`that stores relations between
-    "TabularClassificationTask" and "SVM", "KNN" models and "CSVDataloader" loader
+    "ClassificationTask" and "SVM", "KNN" models and "CSVDataloader" loader
     could be:
 
     ```
     {
-        "TabularClassificationTask": ["SVC", "KNN", "CSVDataloader", ...],
-        "SVC": ["TabularClassificationTask"],
-        "KNN": ["TabularClassificationTask"],
-        "CSVDataloader": ["TabularClassificationTask"],
+        "ClassificationTask": ["SVC", "KNN", "CSVDataloader", ...],
+        "SVC": ["ClassificationTask"],
+        "KNN": ["ClassificationTask"],
+        "CSVDataloader": ["ClassificationTask"],
     }
     ```
     Note that the relations are duplicated and hopefully, consistent between them.

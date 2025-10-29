@@ -72,7 +72,6 @@ from DashAI.back.job import (
 from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
 from DashAI.back.models import (
     SVC,
-    BagOfWordsTextClassificationModel,
     DecisionTreeClassifier,
     DistilBertTransformer,
     DummyClassifier,
@@ -102,11 +101,10 @@ from DashAI.back.pipeline import (
 )
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
+    ClassificationTask,
     ControlNetTask,
     ImageClassificationTask,
     RegressionTask,
-    TabularClassificationTask,
-    TextClassificationTask,
     TextToImageGenerationTask,
     TextToTextGenerationTask,
     TranslationTask,
@@ -129,8 +127,7 @@ def get_initial_components():
     # Componentes básicos que siempre deben estar disponibles
     basic_components = [
         # Tasks
-        TabularClassificationTask,
-        TextClassificationTask,
+        ClassificationTask,
         TranslationTask,
         ImageClassificationTask,
         RegressionTask,
@@ -154,7 +151,6 @@ def get_initial_components():
         RandomForestRegression,
         DistilBertTransformer,
         OpusMtEnESTransformer,
-        BagOfWordsTextClassificationModel,
         RidgeRegression,
         LinearSVR,
         LinearRegression,
