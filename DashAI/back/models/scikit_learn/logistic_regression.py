@@ -10,7 +10,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+from DashAI.back.models.tabular_classification_model import ClassificationModel
 
 
 class LogisticRegressionSchema(BaseSchema):
@@ -58,7 +58,7 @@ class LogisticRegressionSchema(BaseSchema):
 
 
 class LogisticRegression(
-    TabularClassificationModel, SklearnLikeClassifier, _LogisticRegression
+    ClassificationModel, SklearnLikeClassifier, _LogisticRegression
 ):
     """Scikit-learn's Logistic Regression wrapper for DashAI."""
 

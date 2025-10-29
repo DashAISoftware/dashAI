@@ -4,7 +4,7 @@ from DashAI.back.core.schema_fields import BaseSchema, optimizer_int_field, sche
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+from DashAI.back.models.tabular_classification_model import ClassificationModel
 
 
 class RandomForestClassifierSchema(BaseSchema):
@@ -90,7 +90,7 @@ class RandomForestClassifierSchema(BaseSchema):
 
 
 class RandomForestClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _RandomForestClassifier
+    ClassificationModel, SklearnLikeClassifier, _RandomForestClassifier
 ):
     """Scikit-learn's Random Forest classifier wrapper for DashAI."""
 

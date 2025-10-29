@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+from DashAI.back.models.tabular_classification_model import ClassificationModel
 
 
 class HistGradientBoostingClassifierSchema(BaseSchema):
@@ -90,7 +90,7 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
 
 
 class HistGradientBoostingClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _HistGradientBoostingClassifier
+    ClassificationModel, SklearnLikeClassifier, _HistGradientBoostingClassifier
 ):
     """Scikit-learn's HistGradientBoostingRegressor wrapper for DashAI."""
 

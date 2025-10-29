@@ -12,7 +12,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+from DashAI.back.models.tabular_classification_model import ClassificationModel
 
 
 class DecisionTreeClassifierSchema(BaseSchema):
@@ -71,7 +71,7 @@ class DecisionTreeClassifierSchema(BaseSchema):
 
 
 class DecisionTreeClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _DecisionTreeClassifier
+    ClassificationModel, SklearnLikeClassifier, _DecisionTreeClassifier
 ):
     """Scikit-learn's Decision Tree Classifier wrapper for DashAI."""
 

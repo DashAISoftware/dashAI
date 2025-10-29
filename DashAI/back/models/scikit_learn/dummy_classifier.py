@@ -4,7 +4,7 @@ from DashAI.back.core.schema_fields import BaseSchema, enum_field, schema_field
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+from DashAI.back.models.tabular_classification_model import ClassificationModel
 
 
 class DummyClassifierSchema(BaseSchema):
@@ -17,9 +17,7 @@ class DummyClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-class DummyClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _DummyClassifier
-):
+class DummyClassifier(ClassificationModel, SklearnLikeClassifier, _DummyClassifier):
     """Scikit-learn's DummyClassifier wrapper for DashAI."""
 
     SCHEMA = DummyClassifierSchema

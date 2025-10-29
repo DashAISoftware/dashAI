@@ -23,7 +23,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+from DashAI.back.models.tabular_classification_model import ClassificationModel
 
 
 class DistilBertTransformerSchema(BaseSchema):
@@ -63,7 +63,7 @@ class DistilBertTransformerSchema(BaseSchema):
     )  # type: ignore
 
 
-class DistilBertTransformer(TabularClassificationModel):
+class DistilBertTransformer(ClassificationModel):
     """
     Pre-trained transformer DistilBERT allowing classification
     tasks with tokenized input.

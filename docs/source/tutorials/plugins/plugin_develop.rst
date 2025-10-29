@@ -41,9 +41,9 @@ For example, if we want to create a tabular classification model, we would have 
 
 .. code-block:: python
 
-   from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+   from DashAI.back.models.tabular_classification_model import ClassificationModel
 
-   class MyTabularClassificationModel(TabularClassificationModel):
+   class MyClassificationModel(ClassificationModel):
        ...
 
 Recommendations when creating plugins
