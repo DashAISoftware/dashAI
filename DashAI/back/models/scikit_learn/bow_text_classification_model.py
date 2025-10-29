@@ -70,6 +70,8 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
     To predict with the tabular_model the vectorizer is used to transform the dataset.
     """
 
+    DISPLAY_NAME: str = "Bag of Words Text Classifier"
+    COLOR: str = "#FF5722"
     SCHEMA = BagOfWordsTextClassificationModelSchema
 
     def __init__(self, **kwargs) -> None:

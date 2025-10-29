@@ -20,6 +20,8 @@ class RegressionTask(BaseTask):
     structured data organized in tabular form (rows and columns).
     Models are trained to learn patterns and relationships in the data,
     enabling accurate prediction of new instances."""
+    DISPLAY_NAME: str = "Regression"
+
     metadata: dict = {
         "inputs_types": [Value],
         "outputs_types": [Value],

@@ -43,12 +43,14 @@ class PartialDependenceSchema(BaseSchema):
 
 
 class PartialDependence(BaseGlobalExplainer):
-    """PartialDependence is a model-agnostic explainability method that
+    """Partial Dependence is a model-agnostic explainability method that
     shows the average prediction of a machine learning model for each
     possible value of a feature.
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    DISPLAY_NAME = "Partial Dependence"
+    COLOR = "#FFA500"
     SCHEMA = PartialDependenceSchema
 
     def __init__(

@@ -62,6 +62,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    DISPLAY_NAME = "Permutation Feature Importance"
+    COLOR = "#800080"
     SCHEMA = PermutationFeatureImportanceSchema
 
     def __init__(

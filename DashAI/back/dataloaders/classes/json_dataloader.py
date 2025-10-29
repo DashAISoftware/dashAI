@@ -53,6 +53,7 @@ class JSONDataLoader(BaseDataLoader):
     Supports both standard JSON array format (a list of dictionaries)
     and nested JSON data where records are contained within a specific key.
     """
+    DISPLAY_NAME: str = "JSON Data Loader"
 
     def _check_params(self, params: Dict[str, Any]) -> None:
         if "data_key" not in params:

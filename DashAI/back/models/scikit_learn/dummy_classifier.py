@@ -23,6 +23,8 @@ class DummyClassifier(
     """Scikit-learn's DummyClassifier wrapper for DashAI."""
 
     SCHEMA = DummyClassifierSchema
+    DISPLAY_NAME: str = "Dummy Classifier"
+    COLOR: str = "#4DB6AC"
 
     def __init__(self, **kwargs) -> None:
         kwargs = self.validate_and_transform(kwargs)
