@@ -1,6 +1,13 @@
-import numpy as np
+from typing import List, Union
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, encode_labels
+import numpy as np
+from datasets import ClassLabel, DatasetDict, Value
+
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    encode_labels,
+    to_dashai_dataset,
+)
 from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -8,6 +15,40 @@ class ClassificationTask(BaseTask):
     """Base class for classification tasks."""
 
     COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
+    DESCRIPTION: str = """
+    Classification is a supervised machine learning task that involves predicting
+    categorical labels for given input data. Models are trained on labeled datasets to
+    learn patterns and relationships, enabling them to classify new, unseen instances
+    into predefined categories accurately.
+    """
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
+
+    def prepare_for_task(
+        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+    ) -> DashAIDataset:
+        """Change the column types to suit the tabular classification task.
+
+        A copy of the dataset is created.
+
+        Parameters
+        ----------
+        datasetdict : Union[DatasetDict, DashAIDataset]
+            Dataset to be changed
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with the new types
+        """
+        types = dict.fromkeys(outputs_columns, "Categorical")
+        datasetdict = to_dashai_dataset(datasetdict)
+        dataset = datasetdict.change_columns_type(types)
+        return dataset
 
     def process_predictions(
         self, dataset: DashAIDataset, predictions: np.ndarray, output_column: str
