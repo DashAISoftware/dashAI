@@ -4,6 +4,7 @@ from DashAI.back.api.api_v1.endpoints import (
     components,
     converters,
     datasets,
+    documents,
     experiments,
     explainers,
     explorers,
@@ -14,8 +15,8 @@ from DashAI.back.api.api_v1.endpoints import (
     pipelines,
     plugins,
     predict,
+    prompts,
     runs,
-    documents
 )
 
 api_router_v1 = APIRouter()
@@ -32,5 +33,6 @@ api_router_v1.include_router(generative_session.router, prefix="/generative-sess
 api_router_v1.include_router(generative_process.router, prefix="/generative-process")
 api_router_v1.include_router(pipelines.router, prefix="/pipelines")
 api_router_v1.include_router(plugins.router, prefix="/plugin")
+api_router_v1.include_router(prompts.router, prefix="/prompts")
 api_router_v1.include_router(documents.router, prefix="/document")
 api_router_v1.include_router(notebook.router, prefix="/notebook")
