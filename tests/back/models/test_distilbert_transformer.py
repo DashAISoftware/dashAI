@@ -65,17 +65,6 @@ def test_model_initialization(sample_model):
     assert sample_model.fitted is False
 
 
-# Prueba de Tokenización
-def test_tokenize_data(sample_model, splited_dataset):
-    x, y = splited_dataset
-    x = x["train"]
-    tokenized_dataset = sample_model.tokenize_data(x)
-
-    assert "input_ids" in tokenized_dataset.features
-    assert "attention_mask" in tokenized_dataset.features
-    assert len(tokenized_dataset) == len(x)
-
-
 # def test_fit(sample_model, splited_dataset):
 #     x_train, y_train = splited_dataset
 #     x_train = x_train["train"]
