@@ -12,7 +12,6 @@ from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    DataCollatorWithPadding,
     Trainer,
     TrainingArguments,
 )
@@ -24,7 +23,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.text_classification_model import TextClassificationModel
+from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
 
 class DistilBertTransformerSchema(BaseSchema):
@@ -49,8 +48,8 @@ class DistilBertTransformerSchema(BaseSchema):
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
-        enum_field(enum=["gpu", "cpu"]),
-        placeholder="gpu",
+        enum_field(enum=["cuda", "cpu"]),
+        placeholder="cuda",
         description="Hardware on which the training is run. If available, GPU is "
         "recommended for efficiency reasons. Otherwise, use CPU.",
     )  # type: ignore
@@ -64,8 +63,10 @@ class DistilBertTransformerSchema(BaseSchema):
     )  # type: ignore
 
 
-class DistilBertTransformer(TextClassificationModel):
-    """Pre-trained transformer DistilBERT allowing English text classification.
+class DistilBertTransformer(TabularClassificationModel):
+    """
+    Pre-trained transformer DistilBERT allowing classification
+    tasks with tokenized input.
 
     DistilBERT is a small, fast, cheap and light Transformer model trained by
     distilling BERT base.
@@ -102,6 +103,7 @@ class DistilBertTransformer(TextClassificationModel):
         }
         self.batch_size = kwargs.get("batch_size", 16)
         self.device = kwargs.get("device", "gpu")
+        self.token_columns = None
 
         if model is not None:
             self.model = model
@@ -122,28 +124,27 @@ class DistilBertTransformer(TextClassificationModel):
 
         self.fitted = False
 
-    def tokenize_data(self, dataset: Dataset) -> Dataset:
-        """Tokenize the input data.
+    def _prepare_batch_from_tokens(self, batch_rows):
+        print("Preparing batch from tokens...")
+        print(batch_rows)
+        if len(batch_rows) == 0:
+            return {}
+        token_columns = self.token_columns
 
-        Parameters
-        ----------
-        dataset : Dataset
-            Dataset with the input data to preprocess.
+        input_ids_list = [
+            [row[col] if row[col] is not None else 0 for col in token_columns]
+            for row in batch_rows
+        ]
 
-        Returns
-        -------
-        Dataset
-            Dataset with the tokenized input data.
-        """
-        text_columns = [col for col in dataset.column_names if col != "label"]
-        if len(text_columns) != 1:
-            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
-        return dataset.map(
-            lambda examples: self.tokenizer(
-                examples[text_columns[0]], truncation=True, padding=True, max_length=512
-            ),
-            batched=True,
-        )
+        # Convert to tensor
+        device = next(self.model.parameters()).device
+        input_ids = torch.tensor(input_ids_list, dtype=torch.long, device=device)
+        print("Input IDs:", input_ids)
+
+        # Create attention mask (1 where there is a token, 0 where there is padding)
+        attention_mask = (input_ids == 0).long()
+
+        return {"input_ids": input_ids, "attention_mask": attention_mask}
 
     def fit(self, x_train: Dataset, y_train: Dataset):
         """Fine-tune the pre-trained model.
@@ -157,6 +158,7 @@ class DistilBertTransformer(TextClassificationModel):
 
         """
         output_column_name = y_train.column_names[0]
+        self.token_columns = x_train.column_names
 
         if self.num_labels is None:
             self.num_labels = len(y_train.unique(output_column_name))
@@ -169,8 +171,8 @@ class DistilBertTransformer(TextClassificationModel):
                 self.model_name, config=config
             )
 
-        train_dataset = self.tokenize_data(x_train)
-        train_dataset = train_dataset.add_column("label", y_train[output_column_name])
+        # Combine x_train and y_train into a single Dataset
+        train_dataset = x_train.add_column("label", y_train[output_column_name])
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args_obj = TrainingArguments(
@@ -181,15 +183,30 @@ class DistilBertTransformer(TextClassificationModel):
             per_device_train_batch_size=self.batch_size,
             use_cpu=self.device != "gpu",
             fp16=can_use_fp16,
+            remove_unused_columns=False,
             **self.training_args_params,
         )
 
-        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+        # Define custom collate function to prepare batches
+        def collate_fn(batch):
+            # Extract features (everything except label)
+            inputs = self._prepare_batch_from_tokens(
+                [{k: v for k, v in row.items() if k != "label"} for row in batch]
+            )
+            # Extract labels
+            labels = torch.tensor(
+                [row["label"] for row in batch],
+                dtype=torch.long,
+                device=next(self.model.parameters()).device,
+            )
+            inputs["labels"] = labels
+            return inputs
+
         trainer = Trainer(
             model=self.model,
             args=training_args_obj,
             train_dataset=train_dataset,
-            data_collator=data_collator,
+            data_collator=collate_fn,
         )
 
         trainer.train()
@@ -219,27 +236,16 @@ class DistilBertTransformer(TextClassificationModel):
                 " with appropriate arguments before using this estimator."
             )
 
-        pred_dataset = self.tokenize_data(x_pred)
-
-        data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
-        text_columns = [col for col in x_pred.column_names if col != "label"]
-        if len(text_columns) != 1:
-            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
-
         pred_loader = DataLoader(
-            pred_dataset.remove_columns(text_columns[0]),
+            x_pred,
             batch_size=self.batch_size,
-            collate_fn=data_collator,
+            collate_fn=lambda batch: self._prepare_batch_from_tokens(batch),
         )
 
         probabilities = []
 
         for batch in pred_loader:
-            inputs = {
-                k: v.to(self.model.device) for k, v in batch.items() if k != "labels"
-            }
-
-            outputs = self.model(**inputs)
+            outputs = self.model(**batch)
             probs = outputs.logits.softmax(dim=-1)
             probabilities.extend(probs.detach().cpu().numpy())
 
@@ -256,6 +262,7 @@ class DistilBertTransformer(TextClassificationModel):
             "weight_decay": self.training_args_params.get("weight_decay"),
             "num_labels": self.num_labels,
             "fitted": self.fitted,
+            "token_columns": self.token_columns,
         }
 
         config.save_pretrained(filename)
@@ -278,6 +285,7 @@ class DistilBertTransformer(TextClassificationModel):
             device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
         )
-        loaded_model.fitted = custom_params.get("fitted")
+        loaded_model.fitted = bool(custom_params.get("fitted", False))
+        loaded_model.token_columns = custom_params.get("token_columns")
 
         return loaded_model
