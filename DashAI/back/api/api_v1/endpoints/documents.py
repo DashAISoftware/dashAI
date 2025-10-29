@@ -1,19 +1,19 @@
-import logging
 import json
+import logging
 import os
-import hashlib
 from datetime import datetime
 from typing import Any, Dict, List
 
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
-    status,
     File,
     Form,
-    UploadFile,
+    HTTPException,
+    Request,
     Response,
+    UploadFile,
+    status,
 )
 from fastapi.responses import FileResponse
 from kink import di
@@ -31,8 +31,11 @@ log = logging.getLogger(__name__)
 
 
 base_url = "/api/v1/document"
+
+
 @router.get("/", response_model=List[DocumentResponse])
 async def get_all_documents(
+    request: Request,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Get all documents with file_url included."""
@@ -41,7 +44,7 @@ async def get_all_documents(
             documents: List[DocumentDBModel] = db.query(DocumentDBModel).all()
 
             documents_responses = []
-
+            base = str(request.base_url).rstrip("/")
             for doc in documents:
                 documents_responses.append(
                     DocumentResponse(
@@ -52,8 +55,12 @@ async def get_all_documents(
                         created=doc.created,
                         last_modified=doc.last_modified,
                         optional_metadata=doc.optional_metadata,
-                        related_sessions=doc.get_related_sessions,
-                        file_url=f"{base_url}/{doc.id}/download",
+                        related_sessions=[
+                            session.id for session in doc.related_sessions_ids
+                        ]
+                        if getattr(doc, "related_sessions_ids", None)
+                        else None,
+                        file_url=f"{base}{base_url}/{doc.id}/download",
                     )
                 )
 
@@ -69,6 +76,7 @@ async def get_all_documents(
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document(
     document_id: int,
+    request: Request,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Get metadata of a document by its ID."""
@@ -80,14 +88,19 @@ async def get_document(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Document {document_id} does not exist in DB.",
                 )
+            base = str(request.base_url).rstrip("/")
             return DocumentResponse(
                 id=document.id,
                 file_name=document.file_name,
                 file_hash=document.file_hash,
                 created=document.created,
                 optional_metadata=document.optional_metadata,
-                related_sessions=[session.id for session in document.related_sessions_ids] if document.related_sessions_ids else None,
-                file_url=f"{base_url}/{document.id}/download",
+                related_sessions=[
+                    session.id for session in document.related_sessions_ids
+                ]
+                if getattr(document, "related_sessions_ids", None)
+                else None,
+                file_url=f"{base}{base_url}/{document.id}/download",
             )
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -115,11 +128,29 @@ async def download_document(
                 status_code=500,
                 detail=f"File not found at {document.file_path}",
             )
-        return FileResponse(
-            path=document.file_path,
-            file_name=document.file_name,
-            media_type="application/octet-stream",
-        )
+        # Detect media type by file extension
+        ext = os.path.splitext(document.file_name)[1].lower()
+        if ext == ".txt":
+            media_type = "text/plain"
+        elif ext == ".pdf":
+            media_type = "application/pdf"
+        else:
+            media_type = "application/octet-stream"
+        if ext == ".pdf":
+            return FileResponse(
+                path=document.file_path,
+                filename=document.file_name,
+                media_type=media_type,
+                headers={
+                    "Content-Disposition": f"inline; filename={document.file_name}"
+                },
+            )
+        else:
+            return FileResponse(
+                path=document.file_path,
+                filename=document.file_name,
+                media_type=media_type,
+            )
 
 
 @router.post("/", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
@@ -131,7 +162,8 @@ async def upload_document(
 ):
     """
     Upload a new document to the RAG system with file content and metadata.
-    The metadata should be a JSON string with required fields and an 'optional_metadata' dict.
+    The metadata should be a JSON string with required fields and an 'optional_metadata'
+    dict.
     """
     docs_folder_path = config["DOCUMENTS_PATH"]
     if not docs_folder_path.exists():
@@ -142,7 +174,9 @@ async def upload_document(
     try:
         metadata_dict = json.loads(metadata)
     except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON in metadata")
+        raise HTTPException(
+            status_code=400, detail="Invalid JSON in metadata"
+        ) from None
 
     file_name = metadata_dict.get("file_name")
     last_modified = metadata_dict.get("last_modified")
@@ -160,11 +194,15 @@ async def upload_document(
     try:
         content_bytes = await file.read()
     except Exception:
-        raise HTTPException(status_code=400, detail="Failed to read file content")
+        raise HTTPException(
+            status_code=400, detail="Failed to read file content"
+        ) from None
 
     file_content_hash = hash_function(content_bytes)
     with session_factory() as db:
-        existing_doc: DocumentDBModel = db.query(DocumentDBModel).filter_by(file_hash=file_content_hash).first()
+        existing_doc: DocumentDBModel = (
+            db.query(DocumentDBModel).filter_by(file_hash=file_content_hash).first()
+        )
         if existing_doc:
             # Update existing document's information
             existing_doc.file_name = file_name
@@ -180,19 +218,21 @@ async def upload_document(
                 last_modified=existing_doc.last_modified,
                 related_sessions=existing_doc.get_related_sessions,
                 optional_metadata=existing_doc.optional_metadata,
-                file_url=f"{base_url}/{existing_doc.id}/download"
+                file_url=f"{base_url}/{existing_doc.id}/download",
             )
         else:
             # Create a new document entry
             try:
-                file_path = os.path.join(docs_folder_path, f"{file_name}_{file_content_hash}")
+                file_path = os.path.join(
+                    docs_folder_path, f"{file_name}_{file_content_hash}"
+                )
 
                 with open(file_path, "wb") as f:
                     f.write(content_bytes)
 
                 # Get file type from file extension
-                file_type = os.path.splitext(file_name)[1].lstrip('.') or 'unknown'
-                
+                file_type = os.path.splitext(file_name)[1].lstrip(".") or "unknown"
+
                 doc = DocumentDBModel(
                     file_name=file_name,
                     file_type=file_type,
@@ -222,6 +262,7 @@ async def upload_document(
                     detail="Internal database error",
                 ) from e
 
+
 @router.get("/related-sessions/{document_id}", response_model=List[int])
 async def get_related_sessions(
     document_id: int,
@@ -238,7 +279,9 @@ async def get_related_sessions(
                 )
             if not document.related_sessions_ids:
                 return []
-            related_session_ids = [session.id for session in document.related_sessions_ids]
+            related_session_ids = [
+                session.id for session in document.related_sessions_ids
+            ]
             return related_session_ids
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -246,6 +289,7 @@ async def get_related_sessions(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
@@ -261,15 +305,15 @@ async def delete_document(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Document {document_id} does not exist in DB.",
                 )
-            
+
             # Delete the physical file
             if os.path.exists(document.file_path):
                 os.remove(document.file_path)
-            
+
             # Delete the database record
             db.delete(document)
             db.commit()
-            
+
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -300,18 +344,23 @@ async def update_document_metadata(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Document {document_id} does not exist in DB.",
                 )
-            
+
             try:
                 metadata_dict = json.loads(metadata)
             except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="Invalid JSON in metadata")
-            
+                raise HTTPException(
+                    status_code=400, detail="Invalid JSON in metadata"
+                ) from None
+
             # Update fields that are allowed to be modified
             if "file_name" in metadata_dict:
                 document.file_name = metadata_dict["file_name"]
                 # Update file_type when file_name changes
-                document.file_type = os.path.splitext(metadata_dict["file_name"])[1].lstrip('.') or 'unknown'
-            
+                document.file_type = (
+                    os.path.splitext(metadata_dict["file_name"])[1].lstrip(".")
+                    or "unknown"
+                )
+
             if "optional_metadata" in metadata_dict:
                 optional_metadata = metadata_dict["optional_metadata"]
                 if not isinstance(optional_metadata, dict):
@@ -320,26 +369,29 @@ async def update_document_metadata(
                         detail="'optional_metadata' must be a dictionary",
                     )
                 document.optional_metadata = optional_metadata
-            
+
             document.last_modified = datetime.now()
-            
+
             db.commit()
             db.refresh(document)
-            
+
             return DocumentResponse(
                 id=document.id,
                 file_name=document.file_name,
                 file_hash=document.file_hash,
                 created=document.created,
                 optional_metadata=document.optional_metadata,
-                related_sessions=[session.id for session in document.related_sessions_ids] if document.related_sessions_ids else None,
+                related_sessions=[
+                    session.id for session in document.related_sessions_ids
+                ]
+                if document.related_sessions_ids
+                else None,
                 file_url=f"{base_url}/{document.id}/download",
             )
-            
+
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        
