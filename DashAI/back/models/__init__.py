@@ -15,9 +15,6 @@ from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
 from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
     StableDiffusionV3Model,
 )
-from DashAI.back.models.scikit_learn.bow_text_classification_model import (
-    BagOfWordsTextClassificationModel,
-)
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
