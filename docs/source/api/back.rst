@@ -23,8 +23,7 @@ Tasks
 
    DashAI.back.tasks.BaseTask
    DashAI.back.tasks.RegressionTask
-   DashAI.back.tasks.TabularClassificationTask
-   DashAI.back.tasks.TextClassificationTask
+   DashAI.back.tasks.ClassificationTask
    DashAI.back.tasks.TranslationTask
 
 .. _models:
@@ -37,7 +36,6 @@ Models
 
    DashAI.back.models.BaseModel
    DashAI.back.models.SVC
-   DashAI.back.models.BagOfWordsTextClassificationModel
    DashAI.back.models.DecisionTreeClassifier
    DashAI.back.models.DistilBertTransformer
    DashAI.back.models.DummyClassifier
