@@ -303,14 +303,6 @@ class ModelJob(BaseJob):
                     raise JobError(
                         f"Hyperparameter plot path saving failed {e}",
                     ) from e
-                try:
-                    run.set_status_as_finished()
-                    db.commit()
-                except exc.SQLAlchemyError as e:
-                    log.exception(e)
-                    raise JobError(
-                        "Connection with the database failed",
-                    ) from e
 
                 try:
                     model_metrics = factory.evaluate(x, y, metrics)
@@ -340,6 +332,14 @@ class ModelJob(BaseJob):
                     log.exception(e)
                     run.set_status_as_error()
                     db.commit()
+                    raise JobError(
+                        "Connection with the database failed",
+                    ) from e
+                try:
+                    run.set_status_as_finished()
+                    db.commit()
+                except exc.SQLAlchemyError as e:
+                    log.exception(e)
                     raise JobError(
                         "Connection with the database failed",
                     ) from e

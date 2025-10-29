@@ -3,6 +3,7 @@ import logging
 from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
+    BagOfWordsConverter,
     Binarizer,
     CharacterReplacer,
     ColumnRemover,
@@ -221,6 +222,7 @@ def get_initial_components():
         PolynomialFeatures,
         StandardScaler,
         Embedding,
+        BagOfWordsConverter,
         VarianceThreshold,
         SimpleImputer,
         MissingIndicator,
