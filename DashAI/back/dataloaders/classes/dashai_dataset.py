@@ -472,11 +472,33 @@ def split_indexes(
     if seed is None:
         seed = 42
     indexes = np.arange(total_rows)
+    stratify_labels = np.array(labels) if stratify else None
+
+    if test_size == 0 and val_size == 0:
+        return indexes.tolist(), [], []
+
+    if test_size == 0:
+        train_indexes, val_indexes = train_test_split(
+            indexes,
+            train_size=train_size,
+            random_state=seed,
+            shuffle=shuffle,
+            stratify=stratify_labels,
+        )
+        return train_indexes.tolist(), [], val_indexes.tolist()
+
+    if val_size == 0:
+        train_indexes, test_indexes = train_test_split(
+            indexes,
+            train_size=train_size,
+            random_state=seed,
+            shuffle=shuffle,
+            stratify=stratify_labels,
+        )
+        return train_indexes.tolist(), test_indexes.tolist(), []
 
     test_val = test_size + val_size
     val_proportion = test_size / test_val
-
-    stratify_labels = np.array(labels) if stratify else None
 
     train_indexes, test_val_indexes = train_test_split(
         indexes,
@@ -927,9 +949,9 @@ def prepare_for_experiment(
 
         train_indexes, test_indexes, val_indexes = split_indexes(
             n,
-            splits["train"],
-            splits["test"],
-            splits["validation"],
+            float(splits["train"]),
+            float(splits["test"]),
+            float(splits["validation"]),
             shuffle=splits.get("shuffle", False),
             seed=splits.get("seed"),
             stratify=splits.get("stratify", False),
