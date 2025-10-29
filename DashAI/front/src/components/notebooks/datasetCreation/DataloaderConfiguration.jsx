@@ -32,13 +32,14 @@ function DataloaderConfiguration({
       <Stack spacing={3}>
         {/* Form title */}
         <DialogContentText sx={{ alignSelf: "center" }}>
-          {selectedDataloader} configuration
+          {selectedDataloader.display_name ?? selectedDataloader.name}{" "}
+          configuration
         </DialogContentText>
 
         <FormSchemaLayout>
           <FormSchema
             autoSave
-            model={selectedDataloader}
+            model={selectedDataloader.name}
             formSubmitRef={formSubmitRef}
             setError={setError}
             initialValues={{ name: defaultName }}

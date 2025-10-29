@@ -6,6 +6,7 @@ import DeleteItemModal from "../custom//DeleteItemModal";
 import EditModelDialog from "./EditModelDialog";
 import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
 import { checkIfHaveOptimazers } from "../../utils/schema";
+import { getComponents } from "../../api/component";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -14,6 +15,19 @@ import { checkIfHaveOptimazers } from "../../utils/schema";
  */
 function ModelsTable({ newExp, setNewExp }) {
   const [selectedMetric, setSelectedMetric] = useState({});
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   const handleDeleteModel = (id) => {
     setNewExp({
@@ -85,6 +99,10 @@ function ModelsTable({ newExp, setNewExp }) {
       headerName: "Model",
       flex: 1,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "actions",

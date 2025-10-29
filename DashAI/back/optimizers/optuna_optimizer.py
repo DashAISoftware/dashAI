@@ -41,6 +41,8 @@ class OptunaSchema(BaseSchema):
 
 
 class OptunaOptimizer(BaseOptimizer):
+    DISPLAY_NAME: str = "Optuna Optimizer"
+    COLOR: str = "#E91E63"
     SCHEMA = OptunaSchema
 
     COMPATIBLE_COMPONENTS = [

@@ -95,6 +95,8 @@ class RandomForestClassifier(
     """Scikit-learn's Random Forest classifier wrapper for DashAI."""
 
     SCHEMA = RandomForestClassifierSchema
+    DISPLAY_NAME: str = "Random Forest"
+    COLOR: str = "#FF8A65"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

@@ -162,6 +162,8 @@ class RandomForestRegression(
     """Scikit-learn's Ridge Regression wrapper for DashAI."""
 
     SCHEMA = RandomForestRegressionSchema
+    DISPLAY_NAME: str = "Random Forest"
+    COLOR: str = "#FF8A65"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

@@ -95,6 +95,8 @@ class HistGradientBoostingClassifier(
     """Scikit-learn's HistGradientBoostingRegressor wrapper for DashAI."""
 
     SCHEMA = HistGradientBoostingClassifierSchema
+    DISPLAY_NAME: str = "Histogram-based Gradient Boosting"
+    COLOR: str = "#9575CD"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
