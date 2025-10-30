@@ -132,7 +132,13 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
         Manage documents for your RAG sessions
       </Typography>
       <DocumentTable
-        documents={allDocuments}
+        documents={allDocuments.map((doc) => ({
+          ...doc,
+          preview: doc.file_url, // Map file_url to preview for modal
+          file_type: doc.file_name
+            ? doc.file_name.split(".").pop().toLowerCase()
+            : "",
+        }))}
         onRemove={handleRemoveDocumentFromTable}
         isLoading={documentsLoading}
       />

@@ -1,14 +1,17 @@
+import React, { useState } from "react";
 import {
   Paper,
   Typography,
   IconButton,
   Tooltip,
   LinearProgress,
-  Button,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-import { Preview as PreviewIcon, Edit as EditIcon } from "@mui/icons-material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { formatDate } from "../../../utils";
+import DeleteItemModal from "../../custom/DeleteItemModal";
+import DocumentPreviewModal from "./DocumentPreviewModal";
 
 export default function DocumentTable({
   documents,
@@ -16,84 +19,80 @@ export default function DocumentTable({
   isLoading = false,
   tableTitle = null,
 }) {
-  // Format the date to a more readable format
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
-    } catch (e) {
-      return dateString;
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [txtContent, setTxtContent] = useState("");
+
+  const handleOpenPreview = async (doc) => {
+    setPreviewDoc(doc);
+    if (doc.file_type === "txt" && doc.preview) {
+      try {
+        const res = await fetch(doc.preview);
+        const text = await res.text();
+        setTxtContent(text);
+      } catch (e) {
+        setTxtContent("Error loading TXT file");
+      }
     }
+    setPreviewOpen(true);
   };
 
-  const onPreview = (previewUrl) => {
-    if (previewUrl) {
-      window.open(previewUrl, "_blank");
-    } else {
-      console.warn("No preview URL available for this document.");
-    }
-  };
-
-  const onEdit = (id) => {
-    console.warn(
-      "Edit functionality is not implemented yet for document ID:",
-      id,
-    );
+  const handleClosePreview = () => {
+    setPreviewOpen(false);
+    setPreviewDoc(null);
+    setTxtContent("");
   };
 
   const columns = [
-    { field: "id", headerName: "Id", flex: 0.1 },
-    { field: "file_name", headerName: "Name", flex: 0.6, minWidth: 150 },
+    { field: "id", headerName: "ID", minWidth: 50, flex: 0.5, editable: false },
+    {
+      field: "file_name",
+      headerName: "Name",
+      minWidth: 220,
+      flex: 1,
+      editable: false,
+    },
     {
       field: "created",
       headerName: "Added On",
-      flex: 0.4,
-      valueGetter: (value) => {
-        if (!value) return "";
-        return formatDate(value);
-      },
+      minWidth: 140,
+      flex: 0.5,
+      editable: false,
+      valueGetter: (value) => formatDate(value),
     },
     {
       field: "last_modified",
       headerName: "Last Modified",
-      flex: 0.4,
+      minWidth: 140,
+      flex: 0.5,
+      editable: false,
       valueGetter: (value, row) => {
-        const lastModified = row?.optional_metadata?.last_modified;
-        if (!lastModified) return "";
-        return formatDate(lastModified);
+        return row?.optional_metadata?.last_modified
+          ? formatDate(row.optional_metadata.last_modified)
+          : "N/A";
       },
     },
     {
       field: "actions",
+      type: "actions",
       headerName: "Actions",
-      flex: 0.5,
-      renderCell: (params) => (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            width: "100%",
-            gap: "auto",
-          }}
-        >
-          <Button
+      minWidth: 100,
+      flex: 0.3,
+      getActions: (params) => [
+        <Tooltip title="Preview" key="preview">
+          <IconButton
             size="small"
-            variant="outlined"
-            onClick={() => openPreview(params.row.preview)}
+            onClick={() => handleOpenPreview(params.row)}
           >
-            <PreviewIcon />
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            color="warning"
-            onClick={() => onEdit(params.row.id)}
-          >
-            <EditIcon />
-          </Button>
-        </div>
-      ),
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>,
+        <DeleteItemModal
+          key="delete-button"
+          deleteFromTable={() => onRemove(params.row.id)}
+          item="document"
+        />,
+      ],
     },
   ];
 
@@ -135,6 +134,12 @@ export default function DocumentTable({
           }}
         />
       )}
+      <DocumentPreviewModal
+        open={previewOpen}
+        onClose={handleClosePreview}
+        document={previewDoc}
+        txtContent={txtContent}
+      />
     </Paper>
   );
 }
