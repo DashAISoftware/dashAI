@@ -1,5 +1,6 @@
 import * as Yup from "yup";
 import { getComponents } from "../api/component";
+import { isObject } from "formik";
 
 // Generate a Yup schema from a JSON schema object based on the JSON schema specification from the api, it also generates the initial values of the form
 export const generateYupSchema = (schemaObj) => {
@@ -234,22 +235,18 @@ export const formattedSubform = ({ parent, model, params }) => ({
 });
 
 export const checkIfHaveOptimazers = (values) => {
-  if (!values?.params) {
-    return false;
-  }
+  if (!values) return false;
 
-  for (let key in values.params) {
-    const param = values.params[key];
-    if (!param) continue;
+  for (const key of Object.keys(values)) {
+    const param = values[key];
+    if (!param || typeof param !== "object") continue;
 
     if (param.optimize) {
       return true;
     }
 
-    if (
-      param.properties &&
-      checkIfHaveOptimazers(param.properties.params.comp.params)
-    ) {
+    // Only return true if a recursive check finds something
+    if (checkIfHaveOptimazers(param)) {
       return true;
     }
   }
