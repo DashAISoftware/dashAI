@@ -1,18 +1,11 @@
 import React, { useState } from "react";
-import {
-  Box,
-  IconButton,
-  Tooltip,
-  LinearProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-} from "@mui/material";
+import { Box, IconButton, Tooltip, LinearProgress } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PropTypes from "prop-types";
 import { formatDate } from "../../../utils";
 import DeleteItemModal from "../../custom/DeleteItemModal";
+import DocumentPreviewModal from "./DocumentPreviewModal";
 
 export default function DocumentSelectionTable({
   documents,
@@ -186,34 +179,12 @@ export default function DocumentSelectionTable({
           }}
         />
       </Box>
-      {/* Modal de previsualización */}
-      <Dialog
+      <DocumentPreviewModal
         open={previewOpen}
         onClose={handleClosePreview}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Preview Document</DialogTitle>
-        <DialogContent>
-          {previewDoc &&
-            previewDoc.file_type === "pdf" &&
-            previewDoc.preview && (
-              <iframe
-                src={previewDoc.preview}
-                title="PDF Preview"
-                width="100%"
-                height="600px"
-                style={{ border: 0 }}
-              />
-            )}
-          {previewDoc && previewDoc.file_type === "txt" && (
-            <pre style={{ maxHeight: 600, overflow: "auto" }}>{txtContent}</pre>
-          )}
-          {previewDoc && !["pdf", "txt"].includes(previewDoc.file_type) && (
-            <Box>No preview available for this file type.</Box>
-          )}
-        </DialogContent>
-      </Dialog>
+        document={previewDoc}
+        txtContent={txtContent}
+      />
     </>
   );
 }
