@@ -7,6 +7,7 @@ import {
   Typography,
   Button,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
@@ -17,11 +18,13 @@ import { getDatasetFile } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
   existingDatasets = [],
+  className = "",
 }) {
   if (!notebook) {
     return (
@@ -43,6 +46,7 @@ export default function DatasetPreviewNotebook({
     useState(false);
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
+  const tourContext = useTourContext();
 
   // Find the associated dataset name
   const getDatasetName = () => {
@@ -103,6 +107,7 @@ export default function DatasetPreviewNotebook({
       sx={{
         mb: 2,
       }}
+      className={`dataset-preview-section ${className}`}
     >
       <Accordion
         width="100%"
@@ -136,6 +141,11 @@ export default function DatasetPreviewNotebook({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSaveDatasetModal(true);
+                if (tourContext && tourContext.run) {
+                  setTimeout(() => {
+                    tourContext.nextStep();
+                  }, 500);
+                }
               }}
               disabled={false}
               sx={{
@@ -145,6 +155,7 @@ export default function DatasetPreviewNotebook({
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
+              className="save-dataset-button"
             >
               Save as new Dataset
             </Button>

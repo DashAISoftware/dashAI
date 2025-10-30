@@ -13,6 +13,7 @@ import { deleteExperiment as deleteExperimentRequest } from "../../api/experimen
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
+import { useTourContext } from "../tour/TourProvider";
 import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
@@ -26,6 +27,7 @@ function ExperimentsTable({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
+  const tourContext = useTourContext();
   const [tasks, setTasks] = useState([]);
 
   const datasetMap = React.useMemo(() => {
@@ -67,6 +69,15 @@ function ExperimentsTable({
 
   const handleDeleteExperiment = (id) => {
     deleteExperiment(id);
+  };
+
+  const handleNewExperiment = () => {
+    handleOpenNewExperimentModal();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
   };
 
   const columns = React.useMemo(
@@ -156,8 +167,9 @@ function ExperimentsTable({
           <Grid container spacing={2}>
             <Grid>
               <Button
+                data-tour="new-experiment-button"
                 variant="contained"
-                onClick={handleOpenNewExperimentModal}
+                onClick={handleNewExperiment}
                 endIcon={<AddIcon />}
               >
                 New Experiment
@@ -178,6 +190,7 @@ function ExperimentsTable({
 
       {/* Experiments Table */}
       <DataGrid
+        data-tour="experiments-table"
         rows={experiments}
         columns={columns}
         initialState={{

@@ -15,6 +15,7 @@ import DatasetIcon from "@mui/icons-material/Dataset";
 
 import DatasetTable from "../dataset/DatasetTable";
 import DescriptionIcon from "@mui/icons-material/Description";
+import { useTourContext } from "../../tour/TourProvider";
 import api from "../../../api/api";
 
 import { getDatasetFile } from "../../../api/datasets";
@@ -30,6 +31,8 @@ export default function ConfigureToolModal({
 
   const [activeTab, setActiveTab] = useState(0);
   const [step, setStep] = useState(0);
+  const tourContext = useTourContext();
+  const isTourActive = tourContext?.run;
   const containerRef = useRef(null);
   const [topHeight, setTopHeight] = useState(100);
   const isResizingRef = useRef(false);

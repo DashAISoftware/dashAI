@@ -41,6 +41,7 @@ function DivideDatasetColumns({
       </Grid>
 
       <Autocomplete
+        data-tour="dataset-input-columns-autocomplete"
         multiple
         id="dataset-input-columns-autocomplete"
         options={allColumnNames}
@@ -69,6 +70,7 @@ function DivideDatasetColumns({
       />
 
       <Autocomplete
+        data-tour="dataset-output-columns-autocomplete"
         multiple
         id="dataset-output-columns-autocomplete"
         options={allColumnNames}

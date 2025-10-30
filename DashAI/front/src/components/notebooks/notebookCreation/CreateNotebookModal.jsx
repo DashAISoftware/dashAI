@@ -10,6 +10,7 @@ import {
   Chip,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { useTourContext } from "../../tour/TourProvider";
 import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
@@ -26,6 +27,7 @@ export function CreateNotebookModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [datasetInfo, setDatasetInfo] = useState(null);
+  const tourContext = useTourContext();
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [infoError, setInfoError] = useState(null);
 
@@ -80,6 +82,12 @@ export function CreateNotebookModal({
         name: notebookName,
         description: description.trim() || "",
       });
+
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 200);
+      }
       handleClose();
     }
   };
@@ -111,7 +119,10 @@ export function CreateNotebookModal({
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
+          <NoteBox
+            message="A copy of the selected dataset will be created to work in the notebook without altering the original."
+            className="notebook-note-box"
+          />
           {/* Selected Dataset Info Box */}
           {dataset && (
             <Box
@@ -201,6 +212,7 @@ export function CreateNotebookModal({
               formik={{ errors: nameError ? { name: nameError } : {} }}
               saveButtonText="Create Notebook"
               backButtonText="Cancel"
+              dataTour="create-notebook-button"
             />
           </Box>
         </Box>

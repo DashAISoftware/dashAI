@@ -13,6 +13,7 @@ function ItemSelectorWithInfo({
   selectedItem,
   setSelectedItem,
   disabled,
+  ...props
 }) {
   // Display images that help to describe the item selected by the user
   const displayImages = (images) => {

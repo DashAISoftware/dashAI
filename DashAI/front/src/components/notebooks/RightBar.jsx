@@ -20,6 +20,7 @@ import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
+import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
 export default function RightBar({ notebook }) {
@@ -30,6 +31,7 @@ export default function RightBar({ notebook }) {
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const tourContext = useTourContext();
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
   const { explorersAndConverters } = useExplorersAndConverters();
@@ -209,6 +211,17 @@ export default function RightBar({ notebook }) {
     setFilteredConverters(filteredConverters);
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
+  const handleChangeTab = (event, newValue) => {
+    setActiveTab(newValue);
+    setSearchQuery("");
+
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
+
   return (
     <SideBar>
       <Box
@@ -219,6 +232,7 @@ export default function RightBar({ notebook }) {
           height: "100%",
           width: "100%",
         }}
+        className="right-bar-container"
       >
         <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
           <Typography variant="h6">Analysis Tools</Typography>
@@ -229,11 +243,12 @@ export default function RightBar({ notebook }) {
             {/* Tabs Section */}
             <Tabs
               value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
+              onChange={handleChangeTab}
               centered
               sx={{ flexShrink: 0 }}
             >
               <Tab
+                data-tour="explorers-tab"
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
@@ -242,6 +257,7 @@ export default function RightBar({ notebook }) {
                 }
               />
               <Tab
+                data-tour="converters-tab"
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
@@ -258,6 +274,7 @@ export default function RightBar({ notebook }) {
                 flexDirection: "column",
                 overflow: "hidden",
               }}
+              className="explorer-converter-box"
             >
               {/* Search bar */}
               <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>

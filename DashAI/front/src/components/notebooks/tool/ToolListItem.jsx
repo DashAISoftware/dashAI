@@ -33,6 +33,19 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
     setHoveredTool(null);
   };
 
+  const getTourAttribute = () => {
+    if (tool.name === "HistogramPlotExplorer") {
+      return "histogram-explorer";
+    }
+    if (tool.name === "LabelEncoder") {
+      return "label-encoder-converter";
+    }
+    if (tool.name === "NanRemover") {
+      return "nan-remover-converter";
+    }
+    return undefined;
+  };
+
   return (
     <>
       <Tooltip
@@ -60,6 +73,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
       >
         <Box
           key={tool.id}
+          data-tour={getTourAttribute()}
           onMouseEnter={(e) => handleMouseEnter(e, tool)}
           onMouseLeave={handleMouseLeave}
           onClick={disabled ? null : onClick}
