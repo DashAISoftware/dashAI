@@ -87,57 +87,24 @@ class OptunaOptimizer(BaseOptimizer):
 
         self.metric = metric["class"]
 
-        if task == "TextClassificationTask":
+        def objective(trial):
+            # Set value for each hyperparameter and for each model
+            # (either self or submodels nested inside)
+            for obj, key, bounds in self.parameters:
+                model_trial = obj
+                if any(isinstance(i, float) for i in bounds):
+                    value = trial.suggest_float(key, bounds[0], bounds[1], log=False)
+                elif any(isinstance(i, int) for i in bounds):
+                    value = trial.suggest_int(key, bounds[0], bounds[1], log=False)
+                else:
+                    raise ValueError(f"Unsupported parameter type for {key}")
+                setattr(model_trial, key, value)
 
-            def objective(trial):
-                classifier_trial = self.model.classifier
-                for hyperparameter, values in self.parameters.items():
-                    if any(isinstance(i, float) for i in values):
-                        value = trial.suggest_float(
-                            hyperparameter, values[0], values[-1]
-                        )
-                    elif any(isinstance(i, int) for i in values):
-                        value = trial.suggest_int(hyperparameter, values[0], values[-1])
-                    else:
-                        raise ValueError(
-                            f"Unsupported parameter type for {hyperparameter}"
-                        )
-                    setattr(classifier_trial, hyperparameter, value)
+            self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
+            y_pred = self.model.predict(input_dataset["validation"])
+            score = self.metric.score(output_dataset["validation"], y_pred)
 
-                model_trial = self.model
-                model_trial.classifier = classifier_trial
-                model_trial.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_trial.predict(input_dataset["validation"])
-                score = self.metric.score(output_dataset["validation"], y_pred)
-
-                return score
-
-        else:
-
-            def objective(trial):
-                model_trial = self.model
-                for hyperparameter, values in self.parameters.items():
-                    if any(isinstance(i, float) for i in values):
-                        value = trial.suggest_float(
-                            hyperparameter, values[0], values[-1]
-                        )
-                    elif any(isinstance(i, int) for i in values):
-                        value = trial.suggest_int(hyperparameter, values[0], values[-1])
-                    else:
-                        raise ValueError(
-                            f"Unsupported parameter type for {hyperparameter}"
-                        )
-                    setattr(model_trial, hyperparameter, value)
-
-                model_trial.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_trial.predict(input_dataset["validation"])
-                score = self.metric.score(output_dataset["validation"], y_pred)
-
-                return score
+            return score
 
         study.optimize(objective, n_trials=self.n_trials)
 
