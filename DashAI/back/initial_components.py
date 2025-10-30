@@ -35,6 +35,7 @@ from DashAI.back.converters import (
     SMOTEConverter,
     SMOTEENNConverter,
     StandardScaler,
+    TokenizerConverter,
     TruncatedSVD,
     VarianceThreshold,
 )
@@ -222,6 +223,7 @@ def get_initial_components():
         PolynomialFeatures,
         StandardScaler,
         Embedding,
+        TokenizerConverter,
         BagOfWordsConverter,
         VarianceThreshold,
         SimpleImputer,
