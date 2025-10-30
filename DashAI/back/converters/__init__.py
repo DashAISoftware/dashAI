@@ -70,6 +70,7 @@ from DashAI.back.converters.scikit_learn.select_percentile import SelectPercenti
 from DashAI.back.converters.scikit_learn.simple_imputer import SimpleImputer
 from DashAI.back.converters.scikit_learn.skewed_chi_2_sampler import SkewedChi2Sampler
 from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
+from DashAI.back.converters.scikit_learn.tf_idf import TFIDFConverter
 from DashAI.back.converters.scikit_learn.truncated_svd import TruncatedSVD
 from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThreshold
 
