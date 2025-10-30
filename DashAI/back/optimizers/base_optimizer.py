@@ -289,7 +289,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             fig (json): json with the plot data
         """
         distributions = {}
-        for param, (low, high) in self.parameters.items():
+        for _, param, (low, high) in self.parameters:
             if isinstance(low, int):
                 distributions[param] = optuna.distributions.IntDistribution(low, high)
             elif isinstance(low, float):
@@ -312,7 +312,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             importances = evaluator.evaluate(study)
         except RuntimeError:
             importances = {
-                param: 1.0 / len(self.parameters) for param in self.parameters
+                param: 1.0 / len(self.parameters) for _, param, _ in self.parameters
             }
             log.warning(
                 "Could not calculate parameter importance using FANOVA. "
