@@ -108,8 +108,8 @@ export default function ToolList({ tools, notebook, FormComponent }) {
               <Chip
                 size="small"
                 label={list.length}
-                sx={{ 
-                  bgcolor: "rgb(43, 43, 43)", 
+                sx={{
+                  bgcolor: "rgb(43, 43, 43)",
                   color: "text.secondary",
                   height: 20,
                 }}
