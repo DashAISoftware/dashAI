@@ -1,32 +1,107 @@
-import React, { useState } from "react";
-import { Box } from "@mui/material";
+import React, { useState, useMemo } from "react";
+import { Box, Typography } from "@mui/material";
 import ToolGridItem from "./ToolGridItem";
 import ConfigureToolModal from "./ConfigureToolModal";
+import { useTourContext } from "../../tour/TourProvider";
+import { groupByCategory, sortCategories } from "./toolCategories";
 
 export default function ToolGrid({ tools, notebook, FormComponent }) {
   const [open, setOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
+  const tourContext = useTourContext();
+
+  const grouped = useMemo(() => groupByCategory(tools), [tools]);
+  const categories = useMemo(
+    () => sortCategories(Object.keys(grouped)),
+    [grouped],
+  );
 
   const handleToolClick = (tool) => {
     setSelectedTool(tool);
     setOpen(true);
+
+    // Auto-advance tour for specific tools
+    if (tourContext && tourContext.run) {
+      const shouldAdvance =
+        tool.name === "HistogramPlotExplorer" ||
+        tool.name === "LabelEncoder" ||
+        tool.name === "NanRemover";
+
+      if (shouldAdvance) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 500);
+      }
+    }
   };
+
+  if (!tools || tools.length === 0) {
+    return (
+      <Typography
+        variant="body2"
+        sx={{ color: "text.secondary", textAlign: "center", py: 2 }}
+      >
+        No tools found matching your search.
+      </Typography>
+    );
+  }
+
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)",
-        gap: 1.5,
-      }}
-    >
-      {tools.map((item) => (
-        <ToolGridItem
-          key={item.name}
-          tool={item}
-          disabled={item.disabled}
-          onClick={() => handleToolClick(item)}
-        />
-      ))}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {categories.map((cat) => {
+        const list = grouped[cat] || [];
+        return (
+          <Box key={cat}>
+            {/* Category Header */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 1.5,
+                pb: 0.5,
+                borderBottom: "1px solid rgb(39, 39, 42)",
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ flex: 1 }}>
+                {cat}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary" }}
+              >
+                {list.length} {list.length === 1 ? "tool" : "tools"}
+              </Typography>
+            </Box>
+
+            {/* Grid of tools */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: 1.5,
+              }}
+            >
+              {list
+                .slice()
+                .sort((a, b) => {
+                  const nameA = a.display_name || a.name;
+                  const nameB = b.display_name || b.name;
+                  return nameA.localeCompare(nameB);
+                })
+                .map((tool) => (
+                  <ToolGridItem
+                    key={tool.name}
+                    tool={tool}
+                    disabled={tool.disabled}
+                    onClick={() => handleToolClick(tool)}
+                  />
+                ))}
+            </Box>
+          </Box>
+        );
+      })}
+
       {selectedTool && (
         <ConfigureToolModal
           open={open}

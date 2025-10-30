@@ -15,6 +15,19 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
     }
   };
 
+  const getTourAttribute = () => {
+    if (tool.name === "HistogramPlotExplorer") {
+      return "histogram-explorer";
+    }
+    if (tool.name === "LabelEncoder") {
+      return "label-encoder-converter";
+    }
+    if (tool.name === "NanRemover") {
+      return "nan-remover-converter";
+    }
+    return undefined;
+  };
+
   const handleMouseLeave = () => {
     setAnchorEl(null);
     setHoveredTool(null);
@@ -124,7 +137,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
                   whiteSpace: "nowrap",
                 }}
               >
-                {tool.display_name}
+                {tool.display_name || tool.name}
               </Typography>
             </Box>
             <Typography
