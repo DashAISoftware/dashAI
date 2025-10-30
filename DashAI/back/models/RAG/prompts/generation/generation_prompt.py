@@ -9,7 +9,8 @@ class GenerationPrompt(Prompt):
     GenerationPrompt class for formatting prompts used in the language generation step of RAG.
     """
     required_placeholders = ["{input}", "{chunks}"]
-    optional_placeholders = ["{history}"]
+    optional_placeholders = []
+    #optional_placeholders = ["{history}"]
     
 
     @staticmethod

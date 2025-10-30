@@ -92,6 +92,7 @@ from DashAI.back.models import (
     StableDiffusionV2Model,
     StableDiffusionV3Model,
     StableDiffusionXLV1ControlNet,
+    OpenAITextToTextGenerationModel
 )
 from DashAI.back.models.RAG import (
     RAGPipeline,
@@ -116,6 +117,7 @@ from DashAI.back.models.RAG import (
     TFIDFRetriever,
     TFIDFVectorizerModel,
     TokenChunkModel,
+    
 )
 from DashAI.back.optimizers import HyperOptOptimizer, OptunaOptimizer
 from DashAI.back.pipeline import (
@@ -186,6 +188,7 @@ def get_initial_components():
         RidgeRegression,
         LinearSVR,
         LinearRegression,
+        OpenAITextToTextGenerationModel,
         # Dataloaders
         CSVDataLoader,
         JSONDataLoader,

@@ -183,7 +183,6 @@ class RAGPipeline(BaseGenerativeModel):
         self.llm_model = self.init_component(config["generation_model"])
         self.prompt_model = self.init_component(config["prompt_model"])
         self.retrieval_algorithm = "SINGLE_INTERACTION"
-        print("RAG pipeline initialized")
 
     def validate_params(
             self, 
@@ -309,7 +308,7 @@ class RAGPipeline(BaseGenerativeModel):
         except Exception as e:
             raise RAGPipelineRuntimeError(f"Document retrieval failed: {str(e)}")
     
-    def generate(self, input_data: Tuple[str, List[Tuple[str, str]]]) -> List[str]:
+    def generate(self, input_data: Tuple[str, List[Dict[str, str]]]) -> List[str]:
         """Generate a response based on the input and retrieved documents.
 
         Args:
@@ -322,8 +321,13 @@ class RAGPipeline(BaseGenerativeModel):
             RAGPipelineRuntimeError: If any generation step fails
         """
         try:
-            input_message = input_data
+            input_dict = input_data[-1]
+            input_message = input_dict['content']
+            history = input_data[:-1]
             chunks = self.single_interaction(input_message)
+        except Exception as e:
+            raise RAGPipelineRuntimeError(f"Failed during retrieval: {str(e)}")
+        try:
             chunks_texts = []
             for chunk in chunks:
                 chunk_id = chunk.id
@@ -332,39 +336,22 @@ class RAGPipeline(BaseGenerativeModel):
                 document = self.documents[document_id]
                 chunks_texts.append(f"Document {document.file_name}, chunk nº {document_position}, text:\n {chunk.text}")
             chunks_text = "\n\n".join(chunks_texts)
-            return self._generate_response(input_message, chunks_text)
-        except RAGPipelineRuntimeError:
-            raise
-        except Exception as e:
-            raise RAGPipelineRuntimeError(f"Failed during response generation: {str(e)}")
-
-    def _generate_response(self, input_message: str, chunks_text: str) -> List[str]:
-        """Generate the final response using the LLM.
-
-        Args:
-            query: Original input query
-            context: Formatted context from retrieved chunks
-
-        Returns:
-            List containing the generated response with source information
-
-        Raises:
-            RAGPipelineRuntimeError: If response generation fails
-        """
-        try:
-            prompt = DefaultGenerationPrompt.format(
+            prompt = self.prompt_model.format(
                 input=input_message,
-                history=None,
                 chunks=chunks_text
             )
             print(f"Prompt: {prompt[:500]}...")
-            
-            response = self.llm_model.generate(prompt)
-            full_response = f"{response[0]}\n\nSources:{chunks_text}"
-            return [full_response]
         except Exception as e:
-            raise RAGPipelineRuntimeError(f"Text generation failed: {str(e)}")
+            raise RAGPipelineRuntimeError(f"Failed during prompt formatting: {str(e)}")
+        try:
+            model_input = history + [{"role": "user", "content": prompt}]
+            output = self.llm_model.generate(model_input)
+            response_with_sources = f"{output[0]}\n\nSources:\n{chunks_texts}"
+            return [response_with_sources]
+        except Exception as e:
+            raise RAGPipelineRuntimeError(f"Failed during LLM generation: {str(e)}")
 
+    
     def load_documents_from_db(self, documents_ids: List[int]) -> Dict[int, BaseDocument]:
         """
         Retrieve Document instances from the database based on their IDs.

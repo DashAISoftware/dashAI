@@ -48,3 +48,4 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 from DashAI.back.models.scikit_learn.svc import SVC
 
 from DashAI.back.models.RAG import RAGPipeline, RetrieverModel, TFIDFRetriever, DenseRetriever
+from DashAI.back.models.remote_models import OpenAITextToTextGenerationModel

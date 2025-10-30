@@ -1,0 +1,138 @@
+from typing import List
+
+from pydantic import field_validator
+
+try:
+    from llama_cpp import Llama
+except ImportError:
+    Llama = None
+
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    enum_field,
+    string_field,
+    float_field,
+    int_field,
+    schema_field,
+    none_type
+)
+from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
+
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    enum_field,
+)
+
+from openai import OpenAI
+import requests
+
+# Hardcoded since the list of available models is only accessible via API call with api key :c
+gpt_available_models = [
+    "gpt-4-0613",
+    "gpt-4",
+    "gpt-3.5-turbo",
+    "gpt-4-0314",
+    "gpt-3.5-turbo-instruct",
+    "gpt-3.5-turbo-instruct-0914",
+    "gpt-4-1106-preview",
+    "gpt-3.5-turbo-1106",
+    "gpt-4-0125-preview",
+    "gpt-4-turbo-preview",
+    "gpt-3.5-turbo-0125",
+    "gpt-4-turbo",
+    "gpt-4-turbo-2024-04-09",
+    "gpt-4o",
+    "gpt-4o-2024-05-13",
+    "gpt-4o-mini-2024-07-18",
+    "gpt-4o-mini",
+    "gpt-4o-2024-08-06",
+    "gpt-4o-2024-11-20",
+    "gpt-4o-mini-tts",
+    "gpt-4.1-2025-04-14",
+    "gpt-4.1",
+    "gpt-4.1-mini-2025-04-14",
+    "gpt-4.1-mini",
+    "gpt-4.1-nano-2025-04-14",
+    "gpt-4.1-nano",
+    "gpt-5-chat-latest",
+    "gpt-5-2025-08-07",
+    "gpt-5",
+    "gpt-5-mini-2025-08-07",
+    "gpt-5-mini",
+    "gpt-5-nano-2025-08-07",
+    "gpt-5-nano",
+    "gpt-5-pro-2025-10-06",
+    "gpt-5-pro",
+    "gpt-3.5-turbo-16k"]
+
+class OpenAITextToTextGenerationModelSchema(BaseSchema):
+    
+    API_key : schema_field(
+        string_field(),
+        placeholder="",
+        description="API key for OpenAI access.",
+    ) # type: ignore
+
+    model_name : schema_field(
+        enum_field(enum=gpt_available_models),       
+        placeholder="gpt-3.5-turbo",
+        description="The specific OpenAI model version to use.",
+    ) # type: ignore
+
+    """ @field_validator('frequency_penalty', 'max_completions_tokens', 'presence_penalty', 'temperature', 'top_p', mode='before')
+    def validate_optional_fields(cls, v):
+        if v == "":
+            return None
+        return v
+    
+    frequency_penalty : schema_field(
+        none_type(float_field(ge=-2.0, le=2.0)),
+        placeholder=None,
+        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."
+        ,
+    )  # type: ignore
+
+    max_completions_tokens : schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="An upper bound for the number of tokens that can be generated for a completion, including visible output tokens and reasoning tokens.",
+    )  # type: ignore
+
+    presence_penalty : schema_field(
+        none_type(float_field(ge=-2.0, le=2.0)),
+        placeholder=None,
+        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
+    )  # type: ignore
+
+    temperature : schema_field(
+        none_type(float_field(ge=0.0, le=2.0)),
+        placeholder=None,
+        description="temperature: What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or `top_p` but not both."
+    )  # type: ignore
+
+    top_p : schema_field(
+        none_type(float_field(ge=0.0, le=2.0)),
+        placeholder=None,
+        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\mWe generally recommend altering this or `temperature` but not both."
+    )  # type: ignore """
+
+
+    
+
+
+
+class OpenAITextToTextGenerationModel(TextToTextGenerationTaskModel):
+    """Wrapper around OpenAI's text-to-text generation models."""
+    SCHEMA = OpenAITextToTextGenerationModelSchema
+
+    def __init__(self, **kwargs):
+        kwargs = self.validate_and_transform(kwargs)
+        self.client = OpenAI(api_key=kwargs.get("API_key"))
+        self.model_name = kwargs.get("model_name")
+
+    def generate(self, prompt: list[dict[str, str]]) -> List[str]:
+        output = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=prompt
+        )
+        return [output.choices[0].message.content]

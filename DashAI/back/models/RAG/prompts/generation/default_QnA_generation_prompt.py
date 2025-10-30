@@ -28,7 +28,6 @@ class DefaultQnAGenerationPrompt(GenerationPrompt):
         "optional_placeholders": GenerationPrompt.optional_placeholders,
         "placeholder_descriptions": {
             "{input}": "The user input message.",
-            "{history}": "The chat history (optional) to be included in the context.",
             "{chunks}": "The document chunks to be included in the context."
         },
         "template": template
@@ -43,7 +42,6 @@ class DefaultQnAGenerationPrompt(GenerationPrompt):
     def format(
             input: str, 
             chunks: List[str],
-            history:List[Tuple[str, str]] = [],
             **kwargs: Any
         ) -> str:
         """
@@ -57,10 +55,6 @@ class DefaultQnAGenerationPrompt(GenerationPrompt):
             str: The formatted prompt.
         """
         buffer = template
-        if history:
-            buffer = buffer.replace("{history}", "\n".join(
-                [f"User message: {h_input}\nResponse: {h_output}" for h_input, h_output in history]
-            ))
         buffer = buffer.replace("{input}", input)
         buffer = buffer.replace("{chunks}", "\n".join(chunks))
         return buffer
