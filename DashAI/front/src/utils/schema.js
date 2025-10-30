@@ -257,24 +257,18 @@ export const checkIfHaveOptimazers = (values) => {
 export const checkHowManyOptimazers = (values) => {
   let count = 0;
 
-  if (!values?.params) {
-    return count;
-  }
+  if (!values) return count;
 
-  for (let key in values.params) {
-    const param = values.params[key];
-    if (!param) continue;
+  for (const key of Object.keys(values)) {
+    const param = values[key];
+    if (!param || typeof param !== "object") continue;
 
     if (param.optimize) {
       count += 1;
     }
 
-    if (
-      param.properties &&
-      checkIfHaveOptimazers(param.properties.params.comp.params)
-    ) {
-      count += checkHowManyOptimazers(param.properties.params.comp.params);
-    }
+    // Recursively count optimizers in nested objects
+    count += checkHowManyOptimazers(param);
   }
 
   return count;
