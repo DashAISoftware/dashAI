@@ -127,6 +127,7 @@ class CSVDataLoader(BaseDataLoader):
     All uploaded CSV files must have the same column structure and use
     consistent separators.
     """
+    DISPLAY_NAME: str = "CSV Data Loader"
 
     def _check_params(
         self,

@@ -205,6 +205,8 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
     """Scikit-learn's Ridge Regression wrapper for DashAI."""
 
     SCHEMA = GradientBoostingRSchema
+    DISPLAY_NAME: str = "Gradient Boosting Regression"
+    COLOR: str = "#4CAF50"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
