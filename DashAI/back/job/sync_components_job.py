@@ -32,14 +32,14 @@ class SyncComponentsJob(BaseJob):
 
         component_registry = di["component_registry"]
         available = set(get_available_plugins())
-        registered = set(
-            component_registry[comp]["class"]
-            for comp in [
-                c["name"] for c in component_registry.get_components_by_types()
-            ]
-        )
+        registered = {
+            component_registry[c["name"]]["class"]
+            for c in component_registry.get_components_by_types()
+        }
+
         to_add = list(available - registered)
         to_remove = list(registered - available)
+
         if to_add:
             register_plugin_components(to_add, component_registry)
         if to_remove:
