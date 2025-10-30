@@ -34,7 +34,6 @@ class BaseConverter(ConfigObject, ABC):
     COLOR: Final[str] = "rgb(255, 255, 255)"
     SUPERVISED: bool = False
     SCHEMA: BaseConverterSchema
-    CATEGORY: Final[str] = "Other"
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:

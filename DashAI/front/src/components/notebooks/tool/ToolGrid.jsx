@@ -66,10 +66,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
               <Typography variant="subtitle2" sx={{ flex: 1 }}>
                 {cat}
               </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: "text.secondary" }}
-              >
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {list.length} {list.length === 1 ? "tool" : "tools"}
               </Typography>
             </Box>
@@ -114,6 +111,6 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
           FormSection={FormComponent}
         />
       )}
-    </>
+    </Box>
   );
 }
