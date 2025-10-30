@@ -67,6 +67,8 @@ class KernelShap(BaseLocalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    DISPLAY_NAME = "Kernel SHAP"
+    COLOR = "#008000"
     SCHEMA = KernelShapSchema
 
     def __init__(

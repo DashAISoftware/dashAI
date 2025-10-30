@@ -41,7 +41,7 @@ export default function ConfigureAndUploadDatasetStep({
     const name = params.name || datasetFileToUpload.file.name;
 
     params["name"] = name;
-    params["dataloader"] = selectedDataloader;
+    params["dataloader"] = selectedDataloader.name;
 
     createDataset(name).then(async (data) => {
       enqueueSnackbar(`Dataset ${data.name} created successfully`, {

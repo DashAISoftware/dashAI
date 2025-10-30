@@ -20,6 +20,7 @@ from DashAI.back.converters.category.scaling_and_normalization import (
 
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
+from DashAI.back.converters.hugging_face.tokenizer import TokenizerConverter
 
 # Imbalanced_learn
 from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter import (
@@ -33,6 +34,7 @@ from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapp
 from DashAI.back.converters.scikit_learn.additive_chi_2_sampler import (
     AdditiveChi2Sampler,
 )
+from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 
 # Preprocessing module
 from DashAI.back.converters.scikit_learn.binarizer import Binarizer

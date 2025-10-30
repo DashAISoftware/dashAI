@@ -3,6 +3,7 @@ import logging
 from DashAI.back.converters import (
     PCA,
     AdditiveChi2Sampler,
+    BagOfWordsConverter,
     Binarizer,
     CharacterReplacer,
     ColumnRemover,
@@ -35,6 +36,7 @@ from DashAI.back.converters import (
     SMOTEENNConverter,
     StandardScaler,
     TFIDFConverter,
+    TokenizerConverter,
     TruncatedSVD,
     VarianceThreshold,
 )
@@ -223,6 +225,8 @@ def get_initial_components():
         StandardScaler,
         Embedding,
         TFIDFConverter,
+        TokenizerConverter,
+        BagOfWordsConverter,
         VarianceThreshold,
         SimpleImputer,
         MissingIndicator,

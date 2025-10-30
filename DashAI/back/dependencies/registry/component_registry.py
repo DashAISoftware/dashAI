@@ -28,6 +28,7 @@ class ComponentRegistry:
         "metadata": {...},  # Component metadata if applies.
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
+        "color": "...",  # A color associated to the component.
     }
     ```
 
@@ -202,6 +203,7 @@ class ComponentRegistry:
             ),
             "description": getattr(new_component, "DESCRIPTION", None),
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
+            "color": getattr(new_component, "COLOR", None),
         }
 
         if base_type not in self._registry:

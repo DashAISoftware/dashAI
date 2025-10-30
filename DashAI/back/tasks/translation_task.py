@@ -28,6 +28,7 @@ class TranslationTask(BaseTask):
     converting text or speech from one language into another language while
     preserving the meaning and context.
     """
+    DISPLAY_NAME: str = "Translation"
 
     def prepare_for_task(
         self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]

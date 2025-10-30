@@ -110,6 +110,8 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     """Scikit-learn's Support Vector Machine (SVM) classifier wrapper for DashAI."""
 
     SCHEMA = SVCSchema
+    DISPLAY_NAME: str = "Support Vector Machine (SVM)"
+    COLOR: str = "#FF80AB"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

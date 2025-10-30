@@ -44,7 +44,7 @@ function OptimizationTableSelectOptimizer({
     >
       {compatibleModels.map((optimizer) => (
         <MenuItem key={optimizer.name} value={optimizer.name}>
-          {optimizer.name}
+          {optimizer.display_name ?? optimizer.name}
         </MenuItem>
       ))}
     </TextField>

@@ -63,6 +63,8 @@ class LogisticRegression(
     """Scikit-learn's Logistic Regression wrapper for DashAI."""
 
     SCHEMA = LogisticRegressionSchema
+    DISPLAY_NAME: str = "Logistic Regression"
+    COLOR: str = "#64B5F6"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
