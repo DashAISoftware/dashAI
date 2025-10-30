@@ -1,3 +1,5 @@
+import { getComponents } from "../../../api/component";
+
 // name of the properties in the run object that contain objects
 const runObjectProperties = [
   "train_metrics",
@@ -20,10 +22,19 @@ const getPrefix = (property) => {
   }
 };
 
-export const extractRows = (rawRuns) => {
+const getModels = async () => {
+  return await getComponents({ selectTypes: ["Model"] });
+};
+
+export const extractRows = async (rawRuns) => {
   let rows = [];
+  const models = await getModels();
   rawRuns.forEach((run) => {
-    let newRun = { ...run };
+    let newRun = {
+      ...run,
+      model_name:
+        models.find((m) => m.name === run.model_name) || run.model_name,
+    };
     runObjectProperties.forEach((p) => {
       // adds its corresponding prefix to the metric name (e.g. train_F1) and
       // if the metric value is a number, it is rounded to two decimal places.
@@ -40,4 +51,12 @@ export const extractRows = (rawRuns) => {
     rows = [...rows, newRun];
   });
   return rows;
+};
+
+export const replaceModelNameForRuns = async (runs) => {
+  const models = await getModels();
+  return runs.map((run) => ({
+    ...run,
+    model_name: models.find((m) => m.name === run.model_name) || run.model_name,
+  }));
 };

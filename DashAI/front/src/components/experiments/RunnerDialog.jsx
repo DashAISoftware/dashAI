@@ -25,6 +25,7 @@ import { getRunStatus } from "../../utils/runStatus";
 import { LoadingButton } from "@mui/lab";
 import { startJobPolling } from "../../utils/jobPoller";
 import { useTourContext } from "../tour/TourProvider";
+import { getComponents } from "../../api/component";
 
 function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -36,6 +37,19 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const [trackedJobIds, setTrackedJobIds] = useState(new Set());
   const experimentNameRef = useRef(experiment.name);
   const tourContext = useTourContext();
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   // Update ref when experiment name changes
   useEffect(() => {
@@ -206,6 +220,10 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       headerName: "Model Name",
       minWidth: 300,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "status",

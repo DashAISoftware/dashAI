@@ -14,6 +14,7 @@ import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
 import { useTourContext } from "../tour/TourProvider";
+import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
 
@@ -27,6 +28,7 @@ function ExperimentsTable({
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
   const tourContext = useTourContext();
+  const [tasks, setTasks] = useState([]);
 
   const datasetMap = React.useMemo(() => {
     return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
@@ -44,6 +46,18 @@ function ExperimentsTable({
       enqueueSnackbar("Error when trying to delete the experiment.");
     }
   };
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const components = await getComponents({ selectTypes: ["Task"] });
+        setTasks(components);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
 
   // Initialize running state when experiments change
   useEffect(() => {
@@ -85,6 +99,10 @@ function ExperimentsTable({
         headerName: "Task",
         minWidth: 200,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "dataset_id",

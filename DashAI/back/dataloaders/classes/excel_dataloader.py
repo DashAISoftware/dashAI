@@ -126,6 +126,7 @@ class ExcelDataLoader(BaseDataLoader):
     Data loader for tabular data in Excel files.
     Supports xls, xlsx, xlsm, xlsb, odf, ods and odt file extensions.
     """
+    DISPLAY_NAME: str = "Excel Data Loader"
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare parameters for pandas.read_excel."""

@@ -212,12 +212,9 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               )}
               {compatibleModels.length > 0 &&
                 compatibleModels.map((model) => (
-                  <MenuItem
-                    key={model.name}
-                    value={model.name}
+                  <MenuItem key={model.name} value={model.name}>
+                    {model.display_name || model.name}
                     data-tour={`exp-model-option-${model.name}`}
-                  >
-                    {model.name}
                   </MenuItem>
                 ))}
             </TextField>
