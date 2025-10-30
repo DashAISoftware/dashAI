@@ -35,6 +35,11 @@ export const getConverterById = async (id: number): Promise<IConverter> => {
   return response.data;
 };
 
-export const deleteConverterById = async (id: number): Promise<void> => {
-  await api.delete(`${converterEndpoint}/${id}`);
+export const deleteConverterById = async (
+  id: number,
+): Promise<string | null> => {
+  const response = await api.delete<{ jobId: string | null }>(
+    `${converterEndpoint}/${id}`,
+  );
+  return response.data.jobId;
 };
