@@ -208,31 +208,63 @@ export default function NewExperimentModal({
     setNextEnabled(false);
   };
 
+  useEffect(() => {
+    if (steps[activeStep].name === "configureModels") {
+      const allModelsHaveMetric = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.goal_metric;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveMetric) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+    if (steps[activeStep].name === "configureOptimizer") {
+      const allModelsHaveOptimizers = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.optimizer_name;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveOptimizers) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+  }, [open, newExp.runs]);
+
   return (
     <Dialog
       open={open}
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}} // No cerrar automáticamente
+      disableEscapeKeyDown // Evitar cierre con Escape
       aria-labelledby="new-experiment-dialog-title"
       aria-describedby="new-experiment-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -242,7 +274,7 @@ export default function NewExperimentModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -254,7 +286,7 @@ export default function NewExperimentModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -274,8 +306,20 @@ export default function NewExperimentModal({
             </Stepper>
           </Grid>
         </Grid>
+        {/* Close button for larger screens */}
+        <IconButton
+          onClick={handleCloseDialog}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+            display: { xs: "none", sm: "flex" },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {renderStep(
@@ -287,7 +331,6 @@ export default function NewExperimentModal({
           existingExperiments,
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

@@ -41,7 +41,7 @@ export default function ConfigureAndUploadDatasetStep({
     const name = params.name || datasetFileToUpload.file.name;
 
     params["name"] = name;
-    params["dataloader"] = selectedDataloader;
+    params["dataloader"] = selectedDataloader.name;
 
     createDataset(name).then(async (data) => {
       enqueueSnackbar(`Dataset ${data.name} created successfully`, {
@@ -93,12 +93,12 @@ export default function ConfigureAndUploadDatasetStep({
         spacing={3}
       >
         {/* Upload file */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Upload onFileUpload={handleFileUpload} />
         </Grid>
 
         {/* Configure dataloader parameters */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <DataloaderConfiguration
             selectedDataloader={selectedDataloader}
             formSubmitRef={formSubmitRef}
@@ -109,7 +109,7 @@ export default function ConfigureAndUploadDatasetStep({
       </Grid>
 
       {/* Form buttons */}
-      <Grid item sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={goToPrevStep}
           onFormSubmit={submitNewDataset}

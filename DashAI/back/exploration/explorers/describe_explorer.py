@@ -15,7 +15,10 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.preview_inspection_explorer import (
+    PreviewInspectionExplorer,
+)
 
 
 class DescribeExplorerSchema(BaseExplorerSchema):
@@ -40,7 +43,7 @@ class DescribeExplorerSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class DescribeExplorer(BaseExplorer):
+class DescribeExplorer(PreviewInspectionExplorer):
     """
     DescribeExplorer is an explorer that uses the pandas describe method to
     describe the dataset. It returns a tabular representation of the dataset
@@ -63,6 +66,7 @@ class DescribeExplorer(BaseExplorer):
     )
 
     SHORT_DESCRIPTION = "Generate a statistical summary of the dataset."
+    IMAGE_PREVIEW = "describe_explorer.png"
 
     SCHEMA = DescribeExplorerSchema
     metadata: Dict[str, Any] = {

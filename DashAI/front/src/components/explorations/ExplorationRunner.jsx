@@ -9,7 +9,7 @@ import {
   Check as CheckIcon,
 } from "@mui/icons-material";
 
-import { LoadingButton } from "@mui/lab";
+import { LoadingButton } from "@mui/material";
 import { useSnackbar } from "notistack";
 
 import { getComponents } from "../../api/component";
@@ -184,7 +184,7 @@ function ExplorationRunner({
         field: "last_modified",
         headerName: "Last Modified",
         flex: 1,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
     ],
     [explorerTypes],

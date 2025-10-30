@@ -20,7 +20,9 @@ import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+    >
       <ResponsiveAppBar />
       <Routes>
         <Route path="/" element={<Home />} />

@@ -15,6 +15,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, load_d
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks import BaseTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -140,7 +141,35 @@ class PredictJob(BaseJob):
                 raise JobError(
                     "Model prediction failed",
                 ) from e
+            try:
+                train_dataset: DashAIDataset = load_dataset(
+                    str(Path(f"{exp.dataset.file_path}/dataset/"))
+                )
+            except Exception as e:
+                log.exception(e)
+                raise JobError(
+                    "Can not load dataset from path {exp.dataset.file_path}/dataset/"
+                ) from e
+            try:
+                task: BaseTask = component_registry[exp.task_name]["class"]()
+            except Exception as e:
+                log.exception(e)
+                raise JobError(
+                    f"Task {exp.task_name} not found in the registry",
+                ) from e
 
+            try:
+                prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
+                y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+
+                y_pred = task.process_predictions(
+                    train_dataset, y_pred_proba, exp.output_columns[0]
+                )
+            except Exception as e:
+                log.exception(e)
+                raise JobError(
+                    "Processing predictions failed",
+                ) from e
             try:
                 path = str(Path(f"{config['DATASETS_PATH']}/predictions/"))
                 os.makedirs(path, exist_ok=True)

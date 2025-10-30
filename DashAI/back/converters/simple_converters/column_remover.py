@@ -1,4 +1,7 @@
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -7,7 +10,7 @@ class ColumnRemoverSchema(BaseSchema):
     pass
 
 
-class ColumnRemover(BaseConverter):
+class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     """
     Converter that removes specified columns from the dataset.
     This converter uses the scope columns defined in the converter job UI.
@@ -19,6 +22,7 @@ class ColumnRemover(BaseConverter):
     SHORT_DESCRIPTION = "Removes the columns selected in scope from the dataset."
     DISPLAY_NAME = "Column Remover"
     CATEGORY = "Basic Preprocessing"
+    IMAGE_PREVIEW = "column_remover.png"
 
     def __init__(self):
         super().__init__()

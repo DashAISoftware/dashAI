@@ -107,8 +107,8 @@ const ConverterSelectorModal = ({ setConvertersToApply }) => {
             alignItems="stretch"
             spacing={2}
           >
-            <Grid item xs={12}>
-              <Grid container spacing={1}>
+            <Grid size={{ xs: 12 }}>
+              <Grid>
                 {/* Converter list and description */}
                 {!loading ? (
                   <ItemSelectorWithInfo

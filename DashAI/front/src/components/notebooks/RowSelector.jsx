@@ -140,7 +140,6 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           </Button>
         </Stack>
       </FormControl>
-
       {selectionMode === "range" ? (
         <Stack spacing={2} mb={2}>
           <Stack direction="row" spacing={2}>
@@ -150,8 +149,10 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
               size="small"
               value={rangeStart}
               onChange={(e) => handleRangeChange(e.target.value, rangeEnd)}
-              inputProps={{ min: 0, max: totalRows - 1 }}
               fullWidth
+              slotProps={{
+                htmlInput: { min: 0, max: totalRows - 1 },
+              }}
             />
             <TextField
               label="End Index"
@@ -159,8 +160,10 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
               size="small"
               value={rangeEnd}
               onChange={(e) => handleRangeChange(rangeStart, e.target.value)}
-              inputProps={{ min: 0, max: totalRows - 1 }}
               fullWidth
+              slotProps={{
+                htmlInput: { min: 0, max: totalRows - 1 },
+              }}
             />
           </Stack>
         </Stack>
@@ -176,9 +179,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           />
         </Stack>
       )}
-
       <Divider sx={{ my: 1 }} />
-
       <Box mt={1}>
         <Typography variant="caption" color="text.secondary">
           Selected rows:{" "}

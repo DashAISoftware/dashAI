@@ -126,7 +126,6 @@ export default function UploadNotebookSteps({
         name="name"
         value={formik.values.name}
         onChange={formik.handleChange}
-        InputLabelProps={{ shrink: true }}
         error={Boolean(selectedDataset && nameError)}
         helperText={selectedDataset ? nameError : ""}
         sx={{ mb: 2 }}
@@ -134,6 +133,9 @@ export default function UploadNotebookSteps({
         placeholder={
           !selectedDataset ? "Select a dataset first" : "Notebook Name"
         }
+        slotProps={{
+          inputLabel: { shrink: true },
+        }}
       />
       {/* Notebook description */}
       <TextField

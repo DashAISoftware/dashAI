@@ -232,6 +232,7 @@ def create_local_explainer(client: TestClient, run_id: int, dataset_id: int):
             run_id=run_id,
             explainer_name="DummyLocalExplainer",
             dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 20},
             parameters={},
             fit_parameters={},
         )

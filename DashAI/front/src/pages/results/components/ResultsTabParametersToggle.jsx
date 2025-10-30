@@ -4,7 +4,7 @@ import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 function ResultsTabParametersToggle({ displayMode, setDisplayMode }) {
   return (
-    <Grid item>
+    <Grid>
       <ToggleButtonGroup
         value={displayMode}
         exclusive

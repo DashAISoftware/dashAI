@@ -13,6 +13,7 @@ import { deleteExperiment as deleteExperimentRequest } from "../../api/experimen
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
+import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
 
@@ -25,6 +26,7 @@ function ExperimentsTable({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
+  const [tasks, setTasks] = useState([]);
 
   const datasetMap = React.useMemo(() => {
     return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
@@ -42,6 +44,18 @@ function ExperimentsTable({
       enqueueSnackbar("Error when trying to delete the experiment.");
     }
   };
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const components = await getComponents({ selectTypes: ["Task"] });
+        setTasks(components);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
 
   // Initialize running state when experiments change
   useEffect(() => {
@@ -74,15 +88,19 @@ function ExperimentsTable({
         headerName: "Task",
         minWidth: 200,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "dataset_id",
         headerName: "Dataset",
         minWidth: 200,
         editable: false,
-        valueFormatter: (params) => {
-          const datasetName = datasetMap.get(params.value);
-          return datasetName || `Dataset ID: ${params.value}`;
+        valueGetter: (value) => {
+          const datasetName = datasetMap.get(value);
+          return datasetName || `Dataset ID: ${value}`;
         },
       },
       {
@@ -90,15 +108,14 @@ function ExperimentsTable({
         headerName: "Created",
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
         headerName: "Edited",
-        type: Date,
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
@@ -135,9 +152,9 @@ function ExperimentsTable({
         <Typography variant="h5" component="h2">
           Current experiments
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={handleOpenNewExperimentModal}
@@ -146,7 +163,7 @@ function ExperimentsTable({
                 New Experiment
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={onUpdateExperiments}

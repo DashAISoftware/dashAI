@@ -12,7 +12,10 @@ import {
   Grid,
   Typography,
   StepButton,
+  IconButton,
+  Box,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
@@ -113,18 +116,21 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   return (
     <Dialog
       open={open}
-      onClose={handleCloseDialog}
+      onClose={() => {}}
+      disableEscapeKeyDown
       fullWidth
       maxWidth={"lg"}
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
-        <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+        <Grid container direction={"row"} alignItems={"center"} spacing={1}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Typography
               variant="h6"
               component={"h3"}
@@ -133,7 +139,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               New dataset
             </Typography>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -152,9 +158,24 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
               ))}
             </Stepper>
           </Grid>
+          <Grid
+            size={{ xs: 12, md: 1 }}
+            display="flex"
+            justifyContent="flex-end"
+          >
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{
+                position: { xs: "absolute", md: "static" },
+                right: { xs: 8, md: "auto" },
+                top: { xs: 8, md: "auto" },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {/* Step 1: select dataloader */}
@@ -175,7 +196,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

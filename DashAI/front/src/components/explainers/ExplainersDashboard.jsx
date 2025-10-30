@@ -48,7 +48,7 @@ export default function ExplainersDashboard() {
 
   const ExplainersTable = ({ scope, handleNewExplainer, description }) => {
     return (
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Paper sx={{ py: 2, px: 2 }}>
           <Grid
             container
@@ -60,7 +60,7 @@ export default function ExplainersDashboard() {
             <Typography variant="h4" component="h2">
               {scope.charAt(0).toUpperCase() + scope.slice(1)} explanations
             </Typography>
-            <Grid item>
+            <Grid>
               <TimestampWrapper
                 eventName={
                   TIMESTAMP_KEYS.explainer[

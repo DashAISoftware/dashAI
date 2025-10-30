@@ -28,6 +28,7 @@ class ComponentRegistry:
         "metadata": {...},  # Component metadata if applies.
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
+        "color": "...",  # A color associated to the component.
     }
     ```
 
@@ -203,9 +204,8 @@ class ComponentRegistry:
             "schema": new_component.get_schema() if is_configurable_object else None,
             "metadata": _metadata,
             "description": getattr(new_component, "DESCRIPTION", None),
-            "display_name": (_metadata or {}).get(
-                "display_name", getattr(new_component, "DISPLAY_NAME", None)
-            ),
+            "display_name": getattr(new_component, "DISPLAY_NAME", None),
+            "color": getattr(new_component, "COLOR", None),
         }
 
         if base_type not in self._registry:

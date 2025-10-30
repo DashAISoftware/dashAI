@@ -346,10 +346,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           {columnsAreValid
             ? "Current Input and Output columns match"
             : "Current Input and Output columns doesn't match"}{" "}
-          {taskRequirements.name} requirements
+          {taskRequirements.display_name} requirements
         </AlertTitle>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             The input columns must be of the types{" "}
             {taskRequirements
               ? parseListOfStrings(taskRequirements.metadata.inputs_types)
@@ -357,7 +357,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             , and they should have a cardinality of{" "}
             {taskRequirements.metadata.inputs_cardinality}.
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             The output columns must be of the types{" "}
             {taskRequirements
               ? parseListOfStrings(taskRequirements.metadata.outputs_types)
@@ -367,6 +367,28 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Alert>
+      {!infoLoading && datasetInfo.nan ? (
+        Object.values(datasetInfo.nan).some((v) => v > 0) ? (
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            <AlertTitle>
+              The dataset contains missing values (NaN) in the columns:
+            </AlertTitle>
+            <Grid container spacing={2}>
+              {Object.entries(datasetInfo.nan)
+                .filter(([_, count]) => count > 0)
+                .map(([col, count]) => (
+                  <Grid item xs={12} key={col}>
+                    - {col}: {count} missing values
+                  </Grid>
+                ))}
+            </Grid>
+            <p>
+              It's recommended to preprocess the dataset to handle these missing
+              values before training a model.
+            </p>
+          </Alert>
+        ) : null
+      ) : null}
 
       {!infoLoading ? (
         <Grid container spacing={1}>

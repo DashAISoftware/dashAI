@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import Audio, load_dataset
+from datasets import Audio, Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -22,6 +22,7 @@ class AudioDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load and audio dataset into a DatasetDict.
 
@@ -35,6 +36,8 @@ class AudioDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - `separator` (str): The character that delimits the CSV data.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -44,9 +47,14 @@ class AudioDataLoader(BaseDataLoader):
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "dir":
             dataset = load_dataset(
-                "audiofolder",
-                data_dir=prepared_path[0],
-            ).cast_column(
+                "audiofolder", data_dir=prepared_path[0], streaming=bool(n_sample)
+            )
+            if n_sample:
+                if type(dataset) is IterableDatasetDict:
+                    dataset = dataset["train"]
+                dataset = Dataset.from_list(list(dataset.take(n_sample)))
+
+            dataset.cast_column(
                 "audio",
                 Audio(decode=False),
             )

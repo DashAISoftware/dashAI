@@ -76,12 +76,12 @@ function ConfigureAndUploadDataset({
         spacing={3}
       >
         {/* Upload file */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Upload onFileUpload={handleFileUpload} />
         </Grid>
 
         {/* Configure dataloader parameters */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }}>
           {!loading && Object.keys(schema).length > 0 && (
             <DataloaderConfiguration
               dataloader={newDataset.dataloader}

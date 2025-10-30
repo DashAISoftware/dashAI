@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   PlayArrow as PlayArrowIcon,
   Check as CheckIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import {
@@ -15,6 +16,7 @@ import {
   DialogTitle,
   Paper,
   Typography,
+  IconButton,
 } from "@mui/material";
 import { getRuns as getRunsRequest } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
@@ -22,6 +24,7 @@ import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../utils/runStatus";
 import { LoadingButton } from "@mui/lab";
 import { startJobPolling } from "../../utils/jobPoller";
+import { getComponents } from "../../api/component";
 
 function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -32,6 +35,19 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const [finishedRunning, setFinishedRunning] = useState(false);
   const [trackedJobIds, setTrackedJobIds] = useState(new Set());
   const experimentNameRef = useRef(experiment.name);
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   // Update ref when experiment name changes
   useEffect(() => {
@@ -180,6 +196,10 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       headerName: "Model Name",
       minWidth: 300,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "status",
@@ -213,7 +233,25 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         fullWidth
         maxWidth={"md"}
       >
-        <DialogTitle>{`Runs in ${experiment.name}`}</DialogTitle>
+        <DialogTitle>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {`Runs in ${experiment.name}`}
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Paper
             sx={{ px: 3, py: 2 }}

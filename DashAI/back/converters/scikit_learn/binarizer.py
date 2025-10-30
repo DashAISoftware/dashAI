@@ -1,5 +1,6 @@
 from sklearn.preprocessing import Binarizer as BinarizerOperation
 
+from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -19,7 +20,7 @@ class BinarizerSchema(BaseSchema):
     )  # type: ignore
 
 
-class Binarizer(SklearnWrapper, BinarizerOperation):
+class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     """Scikit-learn's Binarizer wrapper for DashAI."""
 
     SCHEMA = BinarizerSchema
@@ -27,3 +28,5 @@ class Binarizer(SklearnWrapper, BinarizerOperation):
         "Binarize data (set feature values to 0 or 1) according to a threshold."
     )
     CATEGORY = "Encoding"
+    DISPLAY_NAME = "Binarizer"
+    IMAGE_PREVIEW = "binarizer.png"

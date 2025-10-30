@@ -133,12 +133,31 @@ class DashAIDataset(Dataset):
         new_features = self.features.copy()
         for column in column_types:
             if column_types[column] == "Categorical":
-                names = list(set(self[column]))
-                new_features[column] = ClassLabel(names=names)
+                new_features[column] = encode_labels(self, column)
             elif column_types[column] == "Numerical":
                 new_features[column] = Value("float32")
         dataset = self.cast(new_features)
         return dataset
+
+    def nan_per_column(self) -> "DashAIDataset":
+        """Calculate the number of NaN values per column in the dataset and
+        add it to the metadata under the 'nan' key.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset with the updated metadata.
+        """
+        dataset_df = self.to_pandas()
+        # Calculate the number of NaN values per column
+        nan_count = dataset_df.isna().sum().to_dict()
+        self.splits.update({"nan": nan_count})
+
+        return self
 
     @beartype
     def remove_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
@@ -341,6 +360,34 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
         splits = {}
 
     return DashAIDataset(data, splits=splits)
+
+
+@beartype
+def encode_labels(
+    dataset: DashAIDataset,
+    column_name: str,
+) -> ClassLabel:
+    """Encode a categorical column into numerical labels and
+    return the ClassLabel feature.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Dataset containing the column to encode.
+    column_name : str
+        Name of the column to encode.
+
+    Returns
+    -------
+    ClassLabel
+        The ClassLabel feature with the mapping of labels to integers.
+    """
+    if column_name not in dataset.column_names:
+        raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
+
+    names = list(set(dataset[column_name]))
+    class_label_feature = ClassLabel(names=names)
+    return class_label_feature
 
 
 @beartype
@@ -790,6 +837,7 @@ def get_dataset_info(dataset_path: str) -> object:
         "total_rows": total_rows,
         "total_columns": len(column_names),
         "column_names": column_names,
+        "nan": splits_data.get("nan", {}),
         "train_size": len(train_indices),
         "test_size": len(test_indices),
         "val_size": len(val_indices),

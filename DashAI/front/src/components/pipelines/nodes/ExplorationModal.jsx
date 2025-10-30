@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  ButtonGroup,
   IconButton,
   useMediaQuery,
   useTheme,
@@ -89,12 +90,15 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => {}}
+      disableEscapeKeyDown
       fullScreen={fullScreen}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       <DialogTitle>
@@ -111,17 +115,24 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-
       <DialogContent dividers>
         <Box mt={2}>
           <ConfigureExplorersStep onValidation={setValid} />
         </Box>
       </DialogContent>
-
       <DialogActions>
-        <Button onClick={handleSave} variant="contained" disabled={!valid}>
-          Save
-        </Button>
+        <ButtonGroup size="large">
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            disabled={!valid}
+            autoFocus
+            color="primary"
+          >
+            Save
+          </Button>
+        </ButtonGroup>
       </DialogActions>
     </Dialog>
   );

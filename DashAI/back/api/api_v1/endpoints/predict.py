@@ -3,17 +3,16 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.predict_params import (
-    FilterDatasetParams,
-    RenameRequest,
-)
+from DashAI.back.api.api_v1.schemas.predict_params import RenameRequest
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.classification_task import ClassificationTask
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -184,14 +183,18 @@ async def get_model_table(
 @router.get("/predict_summary")
 @inject
 async def get_predict_summary(
-    pred_name: str, config: dict = Depends(lambda: di["config"])
+    pred_name: str,
+    config: dict = Depends(lambda: di["config"]),
+    component_registry: dict = Depends(lambda: di["component_registry"]),
 ):
     path = Path(f"{config['DATASETS_PATH']}/predictions/{pred_name}")
     summary = {}
     try:
         with open(path, "r") as f:
             try:
-                data = json.load(f)["prediction"]
+                json_file = json.load(f)
+                data = json_file["prediction"]
+                metadata = json_file["metadata"]
             except json.JSONDecodeError as e:
                 raise HTTPException(
                     status_code=400, detail="Invalid JSON format"
@@ -199,11 +202,14 @@ async def get_predict_summary(
 
             summary["total_data_points"] = len(data)
 
-            # Verificar si los datos son strings
-            if isinstance(data[0], str):
-                summary["data_type"] = "string"
-            else:
-                summary["data_type"] = "numeric"
+            task: BaseTask = component_registry[metadata["task_name"]]["class"]
+            if not task:
+                raise HTTPException(
+                    status_code=400, detail="Task not found in component registry"
+                )
+            summary["data_type"] = str(task().get_metadata().get("outputs_types")[0])
+            # Only for classification tasks
+            if issubclass(task, ClassificationTask):
                 class_set = set(data)
                 classes = [str(item) for item in class_set]
                 summary["Unique_classes"] = len(classes)
@@ -211,7 +217,7 @@ async def get_predict_summary(
                 id = 1
                 for class_name in classes:
                     try:
-                        occurrences = data.count(int(class_name))
+                        occurrences = data.count(str(class_name))
                     except ValueError as e:
                         raise HTTPException(
                             status_code=400, detail=f"Invalid class value: {class_name}"
@@ -237,9 +243,9 @@ async def get_predict_summary(
     return summary
 
 
-@router.post("/filter_datasets")
+@router.get("/filter_datasets")
 async def filter_datasets_endpoint(
-    params: FilterDatasetParams,
+    run_id: int = Query(..., description="The ID of the trained model/run"),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """
@@ -247,10 +253,8 @@ async def filter_datasets_endpoint(
 
     Parameters
     ----------
-    train_dataset_id : int
-        The ID of the train dataset.
-    datasets : List[str]
-        List of datasets paths to filter.
+    run_id : int
+        The ID of the trained model/run.
 
     Returns
     -------
@@ -259,26 +263,30 @@ async def filter_datasets_endpoint(
     """
     try:
         with session_factory() as db:
-            train_dataset_id = params.train_dataset_id
-            datasets_paths = params.datasets
-            filtered_list = []
-            file_path = Path(db.get(Dataset, train_dataset_id).file_path, "dataset")
-            if not file_path:
+            run: Run = db.get(Run, run_id)
+            if not run:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Dataset not found",
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
-            train_dataset_spec = get_columns_spec(str(file_path))
-            for dataset_path in datasets_paths:
-                dataset_spec = get_columns_spec(str(Path(dataset_path, "dataset")))
-                if train_dataset_spec == dataset_spec:
-                    dataset = (
-                        db.query(Dataset)
-                        .filter(Dataset.file_path == dataset_path)
-                        .first()
-                    )
-                    filtered_list.append(dataset)
-            return filtered_list
+
+            exp: Experiment = db.get(Experiment, run.experiment_id)
+            if not exp:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Experiment not found"
+                )
+            input_columns = list(exp.input_columns)
+
+            datasets = db.query(Dataset).all()
+            datasets_filtered = []
+            for dataset in datasets:
+                dataset_path = Path(f"{dataset.file_path}/dataset/")
+                if dataset_path.exists():
+                    columns_spec = get_columns_spec(str(dataset_path))
+                    if all(col in columns_spec for col in input_columns):
+                        datasets_filtered.append(dataset)
+                else:
+                    logger.warning("Dataset path does not exist: %s", dataset_path)
+            return datasets_filtered
     except Exception as e:
         logger.exception("Error filtering datasets: %s", str(e))
         raise HTTPException(

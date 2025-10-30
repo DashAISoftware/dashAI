@@ -15,6 +15,7 @@ import {
   Grid,
   Typography,
   IconButton,
+  Box,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
@@ -187,25 +188,28 @@ export default function NewGlobalExplainerModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}}
+      disableEscapeKeyDown
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-global-explainer-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -215,7 +219,7 @@ export default function NewGlobalExplainerModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -227,7 +231,7 @@ export default function NewGlobalExplainerModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -246,9 +250,24 @@ export default function NewGlobalExplainerModal({
               ))}
             </Stepper>
           </Grid>
+          <Grid
+            size={{ xs: 12, md: 1 }}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              justifyContent: "flex-end",
+            }}
+          >
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {activeStep === 0 && (
@@ -271,7 +290,6 @@ export default function NewGlobalExplainerModal({
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

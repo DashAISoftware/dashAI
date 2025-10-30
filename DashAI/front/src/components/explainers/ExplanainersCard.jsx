@@ -50,7 +50,7 @@ export default function ExplainersCard({ explainer, scope }) {
           justifyContent={"space-between"}
           alignItems={"center"}
         >
-          <Grid item>
+          <Grid>
             <Typography variant="h6">
               {plotName(explainer.explainer_name)} Plot
             </Typography>
@@ -58,7 +58,7 @@ export default function ExplainersCard({ explainer, scope }) {
               Explainer name: {explainer.name}
             </Typography>
           </Grid>
-          <Grid item>
+          <Grid>
             <IconButton
               aria-label="zoomin"
               onClick={() => {

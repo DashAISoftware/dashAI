@@ -4,7 +4,7 @@ import { Grid, Typography } from "@mui/material";
 
 function ResultsTabInfoDescription({ runData }) {
   return (
-    <Grid item>
+    <Grid>
       <Typography variant="subtitle1">Description</Typography>
       <Typography variant="p" sx={{ color: "gray" }}>
         {runData.description ?? "-"}
