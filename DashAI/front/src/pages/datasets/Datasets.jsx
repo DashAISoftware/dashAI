@@ -287,7 +287,28 @@ export default function DatasetsPage() {
             `Error creating dataset: ${result.error || "Unknown error"}`,
             { variant: "error" },
           );
-          fetchDatasets();
+
+          // Check if dataset exists in state before attempting deletion
+          setDatasets((prevDatasets) => {
+            const datasetExists = prevDatasets.some((d) => d.id === datasetId);
+
+            if (datasetExists) {
+              // Only call deleteDataset API if the dataset exists in state
+              deleteDataset(datasetId).catch((error) => {
+                console.error("Error deleting failed dataset:", error);
+              });
+
+              // Remove from state
+              return prevDatasets.filter((d) => d.id !== datasetId);
+            }
+
+            // Dataset already removed, no action needed
+            return prevDatasets;
+          });
+
+          setSelectedDatasetId(null);
+          setStep(0);
+          setSelectedOption(null);
         },
       );
     }
