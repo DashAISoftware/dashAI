@@ -123,17 +123,23 @@ function GeneratorConfigurationContent({
         },
         {},
       );
-      formik.setValues(initialFormValues);
+      if (JSON.stringify(formik.values) !== JSON.stringify(initialFormValues)) {
+        formik.setValues(initialFormValues);
+      }
     } else {
       setValidationSchema(null);
-      formik.setValues({});
+      if (Object.keys(formik.values).length > 0) {
+        formik.setValues({});
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSelectedGeneratorOption, generatorModel?.params]);
 
   useEffect(() => {
     const isValid = !!currentSelectedGeneratorOption && formik.isValid;
     setNextEnabled(isValid);
-  }, [currentSelectedGeneratorOption, formik.isValid, setNextEnabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSelectedGeneratorOption, formik.isValid]);
 
   const handleGeneratorSelectionChange = (event, newValue) => {
     setCurrentSelectedGeneratorOption(newValue);
