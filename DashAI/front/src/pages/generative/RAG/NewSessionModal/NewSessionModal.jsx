@@ -251,7 +251,7 @@ export default function NewSessionModal({
     >
       <DialogTitle id="rag-configuration-wizard-title">
         <Grid container direction="row" alignItems="center">
-          <Grid xs={12} md={3}>
+          <Grid columns={{ md: 3, xs: 12 }}>
             <Grid container alignItems="center" justifyContent="space-between">
               <Grid>
                 <IconButton
@@ -263,14 +263,14 @@ export default function NewSessionModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid xs>
+              <Grid>
                 <Typography variant="h6" component="h3" align="left">
                   {session ? "Edit" : "Create New"} RAG Session
                 </Typography>
               </Grid>
             </Grid>
           </Grid>
-          <Grid xs={12} md={9}>
+          <Grid columns={{ md: 9, xs: 12 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
