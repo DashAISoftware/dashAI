@@ -10,9 +10,13 @@ import {
 } from "../../../api/rag";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
 
-function RAGHomePage({ onSessionCreated, onSessionSelect }) {
+function RAGHomePage({
+  onSessionCreated,
+  onSessionSelect,
+  sessions,
+  setSessions,
+}) {
   const [showModal, setShowModal] = useState(false);
-  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingSession, setEditingSession] = useState(null);
   const [allDocuments, setAllDocuments] = useState([]);
@@ -45,7 +49,7 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
   useEffect(() => {
     loadSessions();
     fetchAllDocuments();
-  }, [fetchAllDocuments]);
+  }, [fetchAllDocuments, setSessions]);
 
   const handleOpenNewSessionModal = (session = null) => {
     setEditingSession(session);
@@ -57,9 +61,6 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
       const savedSession = await createRAGSession(sessionData);
 
       await loadSessions();
-      if (onSessionCreated) {
-        onSessionCreated(savedSession);
-      }
       setShowModal(false);
 
       return savedSession;
@@ -81,9 +82,12 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
     [fetchAllDocuments],
   );
 
-  const handleRemoveSession = useCallback((id) => {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
-  }, []);
+  const handleRemoveSession = useCallback(
+    (id) => {
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    },
+    [setSessions],
+  );
 
   return (
     <Box

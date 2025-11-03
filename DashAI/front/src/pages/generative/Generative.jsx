@@ -96,6 +96,8 @@ export default function Generative() {
             <RAGHomePage
               onSessionCreated={handleAddSession}
               onSessionSelect={setSelectedSessionId}
+              sessions={sessions}
+              setSessions={setSessions}
             />
           ) : (
             <SelectModelMenu
