@@ -346,7 +346,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           {columnsAreValid
             ? "Current Input and Output columns match"
             : "Current Input and Output columns doesn't match"}{" "}
-          {taskRequirements.name} requirements
+          {taskRequirements.display_name} requirements
         </AlertTitle>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>

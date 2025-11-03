@@ -70,6 +70,8 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
     To predict with the tabular_model the vectorizer is used to transform the dataset.
     """
 
+    DISPLAY_NAME: str = "Bag of Words Text Classifier"
+    COLOR: str = "#FF5722"
     SCHEMA = BagOfWordsTextClassificationModelSchema
 
     def __init__(self, **kwargs) -> None:
@@ -203,7 +205,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         input_column = x.column_names[0]
         self.vectorizer.fit(x[input_column])
         tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
+        tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         self.classifier.fit(tokenized_dataset, y)
@@ -212,7 +214,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         input_column = x.column_names[0]
 
         tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
+        tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         return self.classifier.predict(tokenized_dataset)

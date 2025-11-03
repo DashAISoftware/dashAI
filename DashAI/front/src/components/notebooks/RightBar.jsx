@@ -20,6 +20,7 @@ import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
+import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 
 export default function RightBar({ notebook }) {
   const [activeTab, setActiveTab] = useState(0);
@@ -31,6 +32,7 @@ export default function RightBar({ notebook }) {
   const [datasetColumns, setDatasetColumns] = useState([]);
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
+  const { explorersAndConverters } = useExplorersAndConverters();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,7 +88,7 @@ export default function RightBar({ notebook }) {
     return () => {
       isMounted = false;
     };
-  }, [notebook?.file_path]);
+  }, [notebook?.file_path, explorersAndConverters]);
 
   // Validate explorers based on dataset columns
   const validateExplorer = (explorer) => {

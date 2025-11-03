@@ -51,9 +51,9 @@ jobs:
           key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
 
       - name: Upgrade pip tools
-        run: pip install --upgrade pip setuptools wheel
-      - run: pip install --upgrade --upgrade-strategy eager -r requirements.txt
-      - run: pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
+        run: python -m pip install --upgrade pip setuptools wheel
+      - run: python -m pip install --upgrade --upgrade-strategy eager -r requirements.txt
+      - run: python -m pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
 
       - name: Prepare frontend build
         run: mkdir -p DashAI/front/build

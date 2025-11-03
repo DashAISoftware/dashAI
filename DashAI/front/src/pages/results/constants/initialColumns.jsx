@@ -22,31 +22,11 @@ export const initialColumns = [
     headerName: "Model",
     minWidth: 200,
     renderCell: (params) => {
-      let color;
-      switch (params.value) {
-        case "RandomForestClassifier":
-          color = "#FF8A65";
-          break;
-        case "LogisticRegression":
-          color = "#64B5F6";
-          break;
-        case "KNeighborsClassifier":
-          color = "#FFD54F";
-          break;
-        case "HistGradientBoostingClassifier":
-          color = "#9575CD";
-          break;
-        case "DummyClassifier":
-          color = "#4DB6AC";
-          break;
-        case "SVC":
-          color = "#FF80AB";
-          break;
-        default:
-          color = "#795548";
-          break;
-      }
-      return <StyledCell color={color}>{params.value}</StyledCell>;
+      return (
+        <StyledCell color={params.value.color ?? "#535353ff"}>
+          {params.value.display_name ?? params.value.name}
+        </StyledCell>
+      );
     },
   },
   {
