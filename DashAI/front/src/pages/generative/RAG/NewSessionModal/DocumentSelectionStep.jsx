@@ -16,7 +16,7 @@ export default function DocumentSelectionStep({
     const hasSelectedDocuments = propDocumentIds && propDocumentIds.length > 0;
     const validSessionName = sessionName.trim() !== "";
     setNextEnabled(hasSelectedDocuments && validSessionName);
-  }, [propDocumentIds, sessionName, setNextEnabled]);
+  }, [propDocumentIds, sessionName]);
 
   const handleDocumentSelectionChange = (selectedDocs) => {
     const selectedIds = selectedDocs.map((doc) => doc.id);
@@ -75,7 +75,7 @@ export default function DocumentSelectionStep({
       <Box flexGrow={1}>
         <DocumentSelector
           key={`doc-selector-${JSON.stringify(propDocumentIds || [])}`}
-          selectedIds={propDocumentIds || []}
+          selectedIds={(propDocumentIds || []).map(String)}
           onSelect={handleDocumentSelectionChange}
         />
       </Box>
