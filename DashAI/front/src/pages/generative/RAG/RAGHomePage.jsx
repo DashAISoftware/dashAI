@@ -125,7 +125,7 @@ function RAGHomePage({
         </Box>
       ) : (
         <RAGSessionsTable
-          sessions={sessions}
+          sessions={sessions.map((s) => ({ ...s, id: String(s.id) }))}
           onEdit={(session) => handleOpenNewSessionModal(session)}
           onSelect={onSessionSelect}
           onRefreshSessions={loadSessions}
@@ -143,7 +143,10 @@ function RAGHomePage({
       <DocumentTable
         documents={allDocuments.map((doc) => ({
           ...doc,
-          preview: doc.file_url, // Map file_url to preview for modal
+          id: String(doc.id),
+          name: doc.file_name,
+          createdAt: doc.created || doc.createdAt || "",
+          preview: doc.file_url,
           file_type: doc.file_name
             ? doc.file_name.split(".").pop().toLowerCase()
             : "",
