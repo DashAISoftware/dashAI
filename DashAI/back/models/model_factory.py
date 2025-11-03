@@ -138,6 +138,7 @@ class ModelFactory:
         elif isinstance(value, dict) and value.get("optimize") is True:
             lower, upper = value.get("lower_bound"), value.get("upper_bound")
             fixed_value = value.get("fixed_value")
+            print(value)
 
             setattr(obj, key, fixed_value)
             local_refs.append((obj, key, (lower, upper)))
