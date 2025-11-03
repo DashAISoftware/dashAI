@@ -105,18 +105,30 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
             <Table size="small">
               <TableBody>
                 {Object.entries(sessionData.parameters || {}).map(
-                  ([key, value]) => (
-                    <TableRow key={key}>
-                      <TableCell
-                        component="th"
-                        scope="row"
-                        sx={{ color: "text.secondary" }}
-                      >
-                        {key.replace(/_/g, " ")}
-                      </TableCell>
-                      <TableCell align="right">{value}</TableCell>
-                    </TableRow>
-                  ),
+                  ([key, value]) => {
+                    let displayValue = value;
+                    if (
+                      typeof value === "object" &&
+                      value !== null &&
+                      !Array.isArray(value)
+                    ) {
+                      displayValue = JSON.stringify(value, null, 2);
+                    } else if (Array.isArray(value)) {
+                      displayValue = JSON.stringify(value);
+                    }
+                    return (
+                      <TableRow key={key}>
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          sx={{ color: "text.secondary" }}
+                        >
+                          {key.replace(/_/g, " ")}
+                        </TableCell>
+                        <TableCell align="right">{displayValue}</TableCell>
+                      </TableRow>
+                    );
+                  },
                 )}
               </TableBody>
             </Table>
