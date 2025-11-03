@@ -44,7 +44,7 @@ export default function DocumentTable({
   };
 
   const columns = [
-    { field: "id", headerName: "ID", minWidth: 50, flex: 0.5, editable: false },
+    { field: "id", headerName: "ID", minWidth: 50, flex: 0.3, editable: false },
     {
       field: "file_name",
       headerName: "Name",

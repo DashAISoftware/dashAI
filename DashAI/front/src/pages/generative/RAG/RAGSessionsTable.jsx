@@ -1,16 +1,21 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 
-import {
-  AddCircleOutline as AddIcon,
-  Update as UpdateIcon,
-  Edit as EditIcon,
-  DeleteOutline as DeleteIcon,
-  Visibility as ViewDocsIcon,
-} from "@mui/icons-material";
+import AddIcon from "@mui/icons-material/AddCircleOutline";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import { DataGrid } from "@mui/x-data-grid";
-import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
+import {
+  Button,
+  Grid,
+  Paper,
+  Typography,
+  LinearProgress,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import DeleteItemModal from "../../../components/custom/DeleteItemModal";
 
 import { deleteRAGSession } from "../../../api/rag";
 import { formatDate } from "../../../utils";
@@ -53,9 +58,18 @@ export default function RAGSessionsTable({
         },
       },
       {
+        field: "last_modified",
+        headerName: "Last Modified",
+        flex: 0.4,
+        valueGetter: (value) => {
+          if (!value) return "";
+          return formatDate(value);
+        },
+      },
+      {
         field: "documents",
         headerName: "Documents",
-        flex: 0.4,
+        flex: 0.3,
         valueGetter: (value, row) => {
           if (!row || !row.parameters || !row.parameters.documents) {
             return 0;
@@ -65,49 +79,41 @@ export default function RAGSessionsTable({
       },
       {
         field: "actions",
+        type: "actions",
         headerName: "Actions",
-        flex: 0.9,
-        renderCell: (params) => (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
-              gap: "auto",
-            }}
-          >
-            <Button
+        minWidth: 100,
+        flex: 0.3,
+        getActions: (params) => [
+          <Tooltip title="Open" key="open">
+            <IconButton
               size="small"
-              variant="outlined"
+              sx={{ color: "white" }}
               onClick={() => onSelect(params.row.id, params.row.task_name)}
             >
-              Open
-            </Button>
-            <Button
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>,
+          <Tooltip title="Edit" key="edit">
+            <IconButton
               size="small"
-              variant="outlined"
-              color="warning"
+              sx={{ color: "white" }}
               onClick={() => onEdit(params.row)}
             >
-              <EditIcon />
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              color="error"
-              onClick={async () => {
-                try {
-                  await deleteRAGSession(params.row.id);
-                } catch (error) {
-                  console.error("Error deleting session:", error);
-                }
-              }}
-            >
-              <DeleteIcon />
-            </Button>
-          </div>
-        ),
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>,
+          <DeleteItemModal
+            key="delete-button"
+            deleteFromTable={async () => {
+              try {
+                await deleteRAGSession(params.row.id);
+              } catch (error) {
+                console.error("Error deleting session:", error);
+              }
+            }}
+            item="session"
+          />,
+        ],
       },
     ],
     [onSelect, onEdit],
