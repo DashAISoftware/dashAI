@@ -8,6 +8,7 @@ import {
   Grid,
   Link,
   Paper,
+  TextField,
   Typography,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
@@ -52,9 +53,12 @@ function SelectDatasetStep({
   setSelectedDatasetId,
   setNextEnabled,
   trainDataset,
-  defaultPredictionName,
-  onPredictNameInput,
+  defaultName,
+  handlePredictNameInput,
+  predictName,
   selectedTaskName,
+  forecastPeriods,
+  setForecastPeriods,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -95,9 +99,17 @@ function SelectDatasetStep({
   }, []);
 
   useEffect(() => {
-    if (datasetsSelected.length > 0) {
-      // the index of the table start with 1!
-      // const dataset = datasets[datasetsSelected[0] - 1];
+    // For ForecastingTask: enable Next if either dataset selected OR forecast_periods provided
+    if (isForecastingTask && forecastPeriods > 0) {
+      // Auto-generate mode: no dataset needed
+      setSelectedDatasetId(null); // Clear dataset selection if forecast_periods is set
+      if (preselectedModelId) {
+        setNextEnabled(isNameValid);
+      } else {
+        setNextEnabled(true);
+      }
+    } else if (datasetsSelected.length > 0) {
+      // Dataset upload mode: dataset required
       const selectedDatasetId = datasetsSelected[0];
       setSelectedDatasetId(selectedDatasetId);
       if (preselectedModelId) {
@@ -105,8 +117,17 @@ function SelectDatasetStep({
       } else {
         setNextEnabled(true);
       }
+    } else {
+      // Neither dataset nor forecast_periods: disable Next
+      setNextEnabled(false);
     }
-  }, [datasetsSelected, isNameValid, preselectedModelId]);
+  }, [
+    datasetsSelected,
+    isNameValid,
+    preselectedModelId,
+    isForecastingTask,
+    forecastPeriods,
+  ]);
 
   return (
     <React.Fragment>
@@ -117,9 +138,9 @@ function SelectDatasetStep({
           </Typography>
 
           <PredictionNameInput
-            defaultPredictionName={defaultPredictionName}
+            defaultPredictionName={defaultName}
             onValidChange={setIsNameValid}
-            onNameChange={onPredictNameInput}
+            onNameChange={handlePredictNameInput}
           />
         </Grid>
       )}
@@ -150,6 +171,34 @@ function SelectDatasetStep({
               </ul>
             </Typography>
           </Alert>
+        </Grid>
+      )}
+
+      {isForecastingTask && (
+        <Grid item xs={12} sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Auto-generate Future Timestamps (Optional)"
+            placeholder="e.g., 30"
+            value={forecastPeriods || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                setForecastPeriods(null);
+              } else {
+                const numValue = parseInt(value, 10);
+                if (numValue > 0 && numValue <= 1000) {
+                  setForecastPeriods(numValue);
+                }
+              }
+            }}
+            helperText="Number of future periods to forecast from last training date. Leave empty to upload your own dataset with timestamps. Cannot be used with exogenous variables."
+            inputProps={{
+              min: 1,
+              max: 1000,
+            }}
+          />
         </Grid>
       )}
 
@@ -209,6 +258,13 @@ SelectDatasetStep.propTypes = {
   trainDataset: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
     .isRequired,
   selectedTaskName: PropTypes.string,
+  defaultName: PropTypes.string,
+  handlePredictNameInput: PropTypes.func,
+  predictName: PropTypes.string,
+  preselectedModelId: PropTypes.number,
+  forecastPeriods: PropTypes.number,
+  setForecastPeriods: PropTypes.func,
+  selectedModelId: PropTypes.number,
 };
 
 export default SelectDatasetStep;

@@ -123,12 +123,25 @@ export const enqueueExplorerJob = async (
 
 export const enqueuePredictionJob = async (
   run_id: number,
-  id: number,
+  id: number | null,
   json_filename: string,
+  forecast_periods?: number,
 ): Promise<object> => {
+  const kwargs: any = { run_id, json_filename };
+
+  // Add id only if provided (not needed when forecast_periods is used)
+  if (id !== null) {
+    kwargs.id = id;
+  }
+
+  // Add forecast_periods only if provided (for ForecastingTask)
+  if (forecast_periods !== undefined && forecast_periods > 0) {
+    kwargs.forecast_periods = forecast_periods;
+  }
+
   const data = {
     job_type: "PredictJob",
-    kwargs: { run_id, id, json_filename },
+    kwargs: kwargs,
   };
 
   const formData = new FormData();

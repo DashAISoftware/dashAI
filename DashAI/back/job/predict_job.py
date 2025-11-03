@@ -253,8 +253,9 @@ class PredictJob(BaseJob):
         config = di["config"]
 
         run_id: int = self.kwargs["run_id"]
-        id: int = self.kwargs["id"]
+        id: int | None = self.kwargs.get("id")  # Optional when forecast_periods is used
         json_filename: str = self.kwargs["json_filename"]
+        forecast_periods = self.kwargs.get("forecast_periods")
 
         with session_factory() as db:
             try:
@@ -270,27 +271,43 @@ class PredictJob(BaseJob):
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Experiment not found",
                     )
-                dataset: Dataset = db.get(Dataset, id)
-                if not dataset:
+
+                # Dataset is optional when using auto-generated timestamps
+                dataset: Dataset | None = None
+                loaded_dataset: DashAIDataset | None = None
+
+                if id is not None:
+                    dataset = db.get(Dataset, id)
+                    if not dataset:
+                        raise HTTPException(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Dataset not found",
+                        )
+
+                    try:
+                        loaded_dataset = load_dataset(
+                            str(Path(f"{dataset.file_path}/dataset/"))
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            f"Cannot load dataset from path "
+                            f"{dataset.file_path}/dataset/"
+                        ) from e
+                elif forecast_periods is None:
                     raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Dataset not found",
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail=(
+                            "Either 'id' (dataset) or 'forecast_periods' "
+                            "must be provided"
+                        ),
                     )
+
             except exc.SQLAlchemyError as e:
                 log.exception(e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
-                ) from e
-
-            try:
-                loaded_dataset: DashAIDataset = load_dataset(
-                    str(Path(f"{dataset.file_path}/dataset/"))
-                )
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    f"Cannot load dataset from path {dataset.file_path}/dataset/"
                 ) from e
 
             try:
@@ -322,32 +339,97 @@ class PredictJob(BaseJob):
             is_forecasting = exp.task_name == "ForecastingTask"
 
             if is_forecasting:
-                log.info(
-                    f"🔮 Running forecasting prediction for "
-                    f"{len(loaded_dataset)} timestamps"
-                )
+                # Check if user provided forecast_periods for auto-generation
+                forecast_periods = self.kwargs.get("forecast_periods")
 
-                # Validate forecasting dataset and get timestamp column name
-                timestamp_col = self._validate_forecasting_dataset(
-                    loaded_dataset, exp, trained_model
-                )
+                if forecast_periods is not None:
+                    # ============ AUTO-GENERATE TIMESTAMPS ============
+                    log.info(f"🔮 Auto-generating {forecast_periods} future timestamps")
 
-                # Prepare dataset for forecasting (ignore 'y' if present)
-                pred_df = loaded_dataset.to_pandas()
+                    # Get timestamp column from metadata
+                    timestamp_col = exp.metadata.get("timestamp_column", "ds")
 
-                # Build future_df with timestamp + exog columns (ignore 'y')
-                exog_cols = getattr(trained_model, "exog_cols", [])
-                future_cols = [timestamp_col] + exog_cols
-                available_cols = [col for col in future_cols if col in pred_df.columns]
+                    # Get frequency from model or metadata
+                    frequency = getattr(trained_model, "frequency", None)
+                    if frequency is None:
+                        frequency = exp.metadata.get("frequency", "D")
 
-                if timestamp_col not in available_cols:
-                    raise JobError(
-                        f"Forecasting prediction requires '{timestamp_col}' column "
-                        "in dataset"
+                    # Get last training date from metadata
+                    last_training_date_str = exp.metadata.get("last_training_date")
+                    if not last_training_date_str:
+                        raise JobError(
+                            "Cannot auto-generate timestamps: 'last_training_date' "
+                            "not found in experiment metadata"
+                        )
+
+                    last_training_date = pd.to_datetime(last_training_date_str)
+
+                    # Check if model has exogenous regressors
+                    exog_cols = getattr(trained_model, "exog_cols", [])
+                    if exog_cols:
+                        raise HTTPException(
+                            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=(
+                                f"Cannot auto-generate predictions for models with "
+                                f"exogenous variables ({exog_cols}). Please upload "
+                                f"a dataset with timestamps and exogenous values."
+                            ),
+                        )
+
+                    # Generate future timestamps
+                    try:
+                        future_dates = pd.date_range(
+                            start=last_training_date
+                            + pd.Timedelta(1, unit=frequency[0]),
+                            periods=forecast_periods,
+                            freq=frequency,
+                        )
+                        future_df = pd.DataFrame({timestamp_col: future_dates})
+                        available_cols = [
+                            timestamp_col
+                        ]  # No exog columns in auto-generate mode
+
+                        log.info(
+                            f"Generated timestamps from {future_dates[0]} to "
+                            f"{future_dates[-1]}"
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            f"Failed to generate timestamps: {str(e)}. "
+                            f"Frequency: {frequency}, Last date: {last_training_date}"
+                        ) from e
+
+                else:
+                    # ============ USE UPLOADED DATASET ============
+                    log.info(
+                        f"🔮 Running forecasting prediction for "
+                        f"{len(loaded_dataset)} timestamps"
                     )
 
-                future_df = pred_df[available_cols].copy()
-                future_df[timestamp_col] = pd.to_datetime(future_df[timestamp_col])
+                    # Validate forecasting dataset and get timestamp column name
+                    timestamp_col = self._validate_forecasting_dataset(
+                        loaded_dataset, exp, trained_model
+                    )
+
+                    # Prepare dataset for forecasting (ignore 'y' if present)
+                    pred_df = loaded_dataset.to_pandas()
+
+                    # Build future_df with timestamp + exog columns (ignore 'y')
+                    exog_cols = getattr(trained_model, "exog_cols", [])
+                    future_cols = [timestamp_col] + exog_cols
+                    available_cols = [
+                        col for col in future_cols if col in pred_df.columns
+                    ]
+
+                    if timestamp_col not in available_cols:
+                        raise JobError(
+                            f"Forecasting prediction requires '{timestamp_col}' column "
+                            "in dataset"
+                        )
+
+                    future_df = pred_df[available_cols].copy()
+                    future_df[timestamp_col] = pd.to_datetime(future_df[timestamp_col])
 
                 log.info(
                     f"Predicting on {len(future_df)} timestamps with "
@@ -452,7 +534,9 @@ class PredictJob(BaseJob):
                         "pred_name": json_name,
                         "run_name": run.model_name,
                         "model_name": run.name,
-                        "dataset_name": dataset.name,
+                        "dataset_name": dataset.name
+                        if dataset
+                        else f"auto_forecast_{forecast_periods}_periods",
                         "task_name": exp.task_name,
                     },
                     "prediction": y_pred.tolist(),

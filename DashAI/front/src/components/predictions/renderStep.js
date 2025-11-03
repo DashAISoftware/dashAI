@@ -2,7 +2,7 @@ import React from "react";
 import SelectModelStep from "./SelectModelStep";
 import SelectDatasetStep from "./SelectDatasetStep";
 
-export function renderStep(
+export const renderStep = (
   stepName,
   selectedModelId,
   preselectedModelId,
@@ -13,19 +13,23 @@ export function renderStep(
   setTrainDataset,
   trainDataset,
   predictName,
-  defaultPredictionName,
+  defaultName,
   selectedTaskName,
   setSelectedTaskName,
-) {
+  forecastPeriods,
+  setForecastPeriods,
+) => {
   switch (stepName) {
     case "selectModel":
       return (
         <SelectModelStep
+          defaultPredictionName={defaultName}
+          selectedModelId={selectedModelId}
           setSelectedModelId={setSelectedModelId}
           setNextEnabled={setNextEnabled}
           onPredictNameInput={handlePredictNameInput}
           setTrainDataset={setTrainDataset}
-          defaultPredictionName={defaultPredictionName}
+          selectedTaskName={selectedTaskName}
           setSelectedTaskName={setSelectedTaskName}
         />
       );
@@ -33,18 +37,19 @@ export function renderStep(
       return (
         <SelectDatasetStep
           selectedModelId={selectedModelId}
-          preselectedModelId={preselectedModelId}
-          handlePredictNameInput={handlePredictNameInput}
+          trainDataset={trainDataset}
           setSelectedDatasetId={setSelectedDatasetId}
           setNextEnabled={setNextEnabled}
-          defaultPredictionName={defaultPredictionName}
-          trainDataset={trainDataset}
+          handlePredictNameInput={handlePredictNameInput}
           predictName={predictName}
-          onPredictNameInput={handlePredictNameInput}
+          defaultName={defaultName}
+          preselectedModelId={preselectedModelId}
           selectedTaskName={selectedTaskName}
+          forecastPeriods={forecastPeriods}
+          setForecastPeriods={setForecastPeriods}
         />
       );
     default:
       return null;
   }
-}
+};

@@ -48,6 +48,7 @@ function PredictionModal({
   const [trainDataset, setTrainDataset] = useState(preselectedTrainedDatasetId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTaskName, setSelectedTaskName] = useState("");
+  const [forecastPeriods, setForecastPeriods] = useState(null);
 
   const { defaultName } = useMemo(
     () =>
@@ -97,6 +98,7 @@ function PredictionModal({
     setTrainDataset(null);
     setIsSubmitting(false);
     setSelectedTaskName("");
+    setForecastPeriods(null);
   };
 
   const handleCloseDialog = () => {
@@ -151,6 +153,7 @@ function PredictionModal({
         selectedModelId,
         selectedDatasetId,
         finalPredictionName,
+        forecastPeriods,
       );
 
       console.log("Prediction job response:", response);
@@ -298,6 +301,8 @@ function PredictionModal({
           defaultName,
           selectedTaskName,
           setSelectedTaskName,
+          forecastPeriods,
+          setForecastPeriods,
         )}
       </DialogContent>
       <DialogActions>
