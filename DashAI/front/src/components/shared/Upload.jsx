@@ -33,9 +33,8 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
     const url = "";
     await onFileUpload(fileArray, url);
     setDatasetState(LOADED);
-    setFileNames(fileArray.map(f => f.name));
-    };
-
+    setFileNames(fileArray.map((f) => f.name));
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -122,15 +121,14 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
             <TextSnippetIcon sx={{ fontSize: "58px" }} />
             <Grid item>
               {fileNames.map((name, index) => (
-                <Typography 
-                  key={index} 
+                <Typography
+                  key={index}
                   variant="subtitle1"
-                  sx={
-                    { 
-                      color: "gray", 
-                      textAlign: "center" 
-                    }
-                  }>
+                  sx={{
+                    color: "gray",
+                    textAlign: "center",
+                  }}
+                >
                   {name}
                 </Typography>
               ))}
@@ -141,7 +139,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
   };
 
   return (
-    <Paper sx={{ p: 4, height: "100%" }} borderRadius={2}>
+    <Paper sx={{ p: 4, height: "100%", borderRadius: 2 }}>
       <Grid container direction="column" rowSpacing={3}>
         {/* state text */}
         <Grid sx={{ textAlign: "center" }}>
@@ -149,7 +147,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
             {datasetState === LOADING && "Loading..."}
             {datasetState === LOADED && "Loaded"}
             {/* {datasetState === EMPTY && "Upload your dataset"} */}
-            {datasetState === EMPTY &&emptyUploadText}
+            {datasetState === EMPTY && emptyUploadText}
           </DialogContentText>
         </Grid>
 
@@ -203,10 +201,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
 
 Upload.propTypes = {
   onFileUpload: PropTypes.func.isRequired,
-  emptyUploadText: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.node,
-  ])
+  emptyUploadText: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
 };
 
 export default Upload;
