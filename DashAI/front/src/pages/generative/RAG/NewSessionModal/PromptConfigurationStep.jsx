@@ -32,7 +32,7 @@ export default function PromptConfigurationStep({
         }));
       }
     }
-  }, [selectedPromptId, prompts, setNextEnabled, setSessionData]);
+  }, [selectedPromptId, prompts]);
 
   return (
     <PromptSelectionTable
