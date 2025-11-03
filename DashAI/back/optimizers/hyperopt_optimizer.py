@@ -107,7 +107,7 @@ class HyperOptOptimizer(BaseOptimizer):
             self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
             y_pred = self.model.predict(input_dataset["validation"])
             score = self.metric.score(output_dataset["validation"], y_pred)
-            return score
+            return -score if metric["metadata"]["maximize"] else score
 
         trials = Trials()
         fmin(
