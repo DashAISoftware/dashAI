@@ -118,10 +118,9 @@ export default function NewSessionModal({
             generator_model: {
               ...sessionGeneratorModel,
             },
-            prompt_id: sessionParameters.prompt_id
-          }
-        }
-      );
+            prompt_id: sessionParameters.prompt_id,
+          },
+        });
       } else {
         const { defaultName } = generateSequentialName({
           base: "RAG_Session",
@@ -252,9 +251,9 @@ export default function NewSessionModal({
     >
       <DialogTitle id="rag-configuration-wizard-title">
         <Grid container direction="row" alignItems="center">
-          <Grid item xs={12} md={3}>
+          <Grid xs={12} md={3}>
             <Grid container alignItems="center" justifyContent="space-between">
-              <Grid item>
+              <Grid>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -264,14 +263,14 @@ export default function NewSessionModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs>
+              <Grid xs>
                 <Typography variant="h6" component="h3" align="left">
                   {session ? "Edit" : "Create New"} RAG Session
                 </Typography>
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid xs={12} md={9}>
             <Stepper
               nonLinear
               activeStep={activeStep}

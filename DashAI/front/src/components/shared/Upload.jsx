@@ -119,7 +119,7 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
         return (
           <>
             <TextSnippetIcon sx={{ fontSize: "58px" }} />
-            <Grid item>
+            <Grid>
               {fileNames.map((name, index) => (
                 <Typography
                   key={index}
