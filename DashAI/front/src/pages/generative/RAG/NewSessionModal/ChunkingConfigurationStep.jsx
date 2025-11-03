@@ -53,7 +53,7 @@ export default function ChunkingConfigurationStep({
   useEffect(() => {
     const enabled = isNextEnabled();
     setNextEnabled(enabled);
-  }, [selectedChunking, chunkingModel, setNextEnabled]);
+  }, [selectedChunking, chunkingModel]);
 
   const handleChunkingSelectionChange = (event, newValue) => {
     setSelectedChunking(newValue);
