@@ -44,27 +44,24 @@ export default function DocumentTable({
   };
 
   const columns = [
-    { field: "id", headerName: "ID", minWidth: 50, flex: 0.3, editable: false },
+    { field: "id", headerName: "ID", flex: 0.1, editable: false },
     {
       field: "file_name",
       headerName: "Name",
-      minWidth: 220,
-      flex: 1,
+      flex: 0.6,
       editable: false,
     },
     {
       field: "created",
       headerName: "Added On",
-      minWidth: 140,
-      flex: 0.5,
+      flex: 0.4,
       editable: false,
       valueGetter: (value) => formatDate(value),
     },
     {
       field: "last_modified",
       headerName: "Last Modified",
-      minWidth: 140,
-      flex: 0.5,
+      flex: 0.4,
       editable: false,
       valueGetter: (value, row) => {
         return row?.optional_metadata?.last_modified
@@ -76,7 +73,6 @@ export default function DocumentTable({
       field: "actions",
       type: "actions",
       headerName: "Actions",
-      minWidth: 100,
       flex: 0.3,
       getActions: (params) => [
         <Tooltip title="Preview" key="preview">
