@@ -69,24 +69,32 @@ function GeneratorConfigurationContent({
   }, []);
 
   useEffect(() => {
-    const loadAndSetGenerator = async () => {
+    let isMounted = true;
+    const loadGenerators = async () => {
       const data = await getGeneratorComponents();
-      setGenerators(data);
-
-      if (generatorModel?.component) {
-        const existingGenerator = data.find(
-          (r) => r.name === generatorModel.component,
-        );
-        if (existingGenerator) {
-          setCurrentSelectedGeneratorOption(existingGenerator);
-          if (generatorModel.params) {
-            formik.setValues(generatorModel.params);
-          }
-        }
-      }
+      if (isMounted) setGenerators(data);
     };
-    loadAndSetGenerator();
-  }, [generatorModel?.component]);
+    loadGenerators();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!generators.length || !generatorModel?.component) return;
+    const existingGenerator = generators.find(
+      (r) => r.name === generatorModel.component,
+    );
+    if (existingGenerator) {
+      setCurrentSelectedGeneratorOption(existingGenerator);
+      if (
+        generatorModel.params &&
+        JSON.stringify(formik.values) !== JSON.stringify(generatorModel.params)
+      ) {
+        formik.setValues(generatorModel.params);
+      }
+    }
+  }, [generators, generatorModel?.component, generatorModel?.params]);
 
   const formik = useFormik({
     initialValues: generatorModel?.params || {},
