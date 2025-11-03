@@ -25,6 +25,7 @@ export default function RAGSessionsTable({
   onSelect,
   onEdit,
   onOpenNewSessionModal,
+  onRemove,
   showTableTitle = false,
 }) {
   const columns = React.useMemo(
@@ -107,6 +108,7 @@ export default function RAGSessionsTable({
             deleteFromTable={async () => {
               try {
                 await deleteRAGSession(params.row.id);
+                if (onRemove) onRemove(params.row.id);
               } catch (error) {
                 console.error("Error deleting session:", error);
               }
@@ -186,7 +188,7 @@ RAGSessionsTable.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
-      created_at: PropTypes.string.isRequired,
+      created_at: PropTypes.string,
       documents: PropTypes.array,
       task_name: PropTypes.string,
     }),
@@ -194,4 +196,5 @@ RAGSessionsTable.propTypes = {
   onSelect: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onOpenNewSessionModal: PropTypes.func.isRequired,
+  onRemove: PropTypes.func,
 };

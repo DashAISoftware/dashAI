@@ -81,6 +81,10 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
     [fetchAllDocuments],
   );
 
+  const handleRemoveSession = useCallback((id) => {
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
   return (
     <Box
       display={"flex"}
@@ -122,6 +126,7 @@ function RAGHomePage({ onSessionCreated, onSessionSelect }) {
           onSelect={onSessionSelect}
           onRefreshSessions={loadSessions}
           onOpenNewSessionModal={() => handleOpenNewSessionModal()}
+          onRemove={handleRemoveSession}
         />
       )}
 
