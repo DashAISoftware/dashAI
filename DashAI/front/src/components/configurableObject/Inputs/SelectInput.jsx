@@ -1,8 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { MenuItem } from "@mui/material";
+import { MenuItem, TextField } from "@mui/material";
 import FormInputWrapper from "./FormInputWrapper";
-import { Input } from "./InputStyles";
 /**
  * This component renders a dropdown form field, allowing users to select from a list of options.
  * @param {string} name name of the input to use as an identifier
@@ -15,13 +14,13 @@ import { Input } from "./InputStyles";
  */
 function SelectInput({
   name,
-  value,
+  value = null,
   label,
   onChange,
-  error,
+  error = undefined,
   description,
   options,
-  optionNames,
+  optionNames = undefined,
 }) {
   const handleChange = (event) => {
     const inputValue = event.target.value;
@@ -31,7 +30,7 @@ function SelectInput({
 
   return (
     <FormInputWrapper name={name} description={description}>
-      <Input
+      <TextField
         select
         name={name}
         label={label}
@@ -40,13 +39,14 @@ function SelectInput({
         error={error !== undefined}
         helperText={error || " "}
         margin="dense"
+        fullWidth
       >
         {options.map((option, index) => (
           <MenuItem key={option} value={option}>
             {optionNames !== undefined ? optionNames[index] : option}
           </MenuItem>
         ))}
-      </Input>
+      </TextField>
     </FormInputWrapper>
   );
 }
@@ -59,11 +59,6 @@ SelectInput.propTypes = {
   error: PropTypes.string,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
   optionNames: PropTypes.arrayOf(PropTypes.string),
-};
-SelectInput.defaultProps = {
-  value: null,
-  error: undefined,
-  optionNames: undefined,
 };
 
 export default SelectInput;
