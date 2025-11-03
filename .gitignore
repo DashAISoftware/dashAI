@@ -186,3 +186,6 @@ job_queue.db-wal
 
 db.sqlite
 trained_models/
+
+
+test_forecasting_models.ipynb

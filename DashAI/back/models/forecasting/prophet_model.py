@@ -376,14 +376,26 @@ class ProphetModel(ForecastingModel):
         def _extract_predictions(
             forecast_df: pd.DataFrame, requested_ds: pd.Series
         ) -> Union[np.ndarray, pd.DataFrame]:
+            """Extract predictions for requested timestamps.
+
+            For timestamps that don't exist in Prophet's forecast (gaps in data),
+            returns NaN. These will be filtered out by prepare_to_metric().
+            """
             aligned = forecast_df.set_index("ds").reindex(requested_ds)
+
+            # Check for missing predictions
             missing_mask = aligned["yhat"].isna()
             if missing_mask.any():
-                missing_dates = aligned.index[missing_mask].unique().tolist()
-                raise ValueError(
-                    "Unable to obtain predictions for requested timestamps. "
-                    f"Missing dates: {missing_dates}"
+                missing_count = missing_mask.sum()
+                total_count = len(requested_ds)
+                print(
+                    f"[ProphetModel] ⚠️  {missing_count}/{total_count} timestamps "
+                    f"have no predictions (gaps in data). These will be excluded "
+                    f"from metrics calculation."
                 )
+                # Don't raise error - return NaN for missing dates
+                # The prepare_to_metric() function will filter these out
+
             if return_components:
                 return aligned.reset_index()
             return aligned["yhat"].to_numpy()

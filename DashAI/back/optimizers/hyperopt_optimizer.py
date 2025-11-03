@@ -87,6 +87,15 @@ class HyperOptOptimizer(BaseOptimizer):
         self.metric = metric["class"]
         search_space = self.search_space(self.parameters)
 
+        # Determine optimization direction from metric class attribute
+        # HyperOpt's fmin always minimizes, so we need to negate scores for
+        # metrics where higher is better (e.g., Accuracy, F1)
+        metric_class = metric["class"]
+        if hasattr(metric_class, "HIGHER_IS_BETTER") and metric_class.HIGHER_IS_BETTER:
+            score_multiplier = -1  # Negate to maximize via minimization
+        else:
+            score_multiplier = 1  # Keep as-is to minimize
+
         if task == "TextClassificationTask":
 
             def objective(params):
@@ -97,7 +106,9 @@ class HyperOptOptimizer(BaseOptimizer):
                     self.input_dataset["train"], self.output_dataset["train"]
                 )
                 y_pred = model_eval.predict(input_dataset["validation"])
-                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
+                score = score_multiplier * self.metric.score(
+                    output_dataset["validation"], y_pred
+                )
                 return score
 
         else:
@@ -111,7 +122,9 @@ class HyperOptOptimizer(BaseOptimizer):
                     self.input_dataset["train"], self.output_dataset["train"]
                 )
                 y_pred = model_eval.predict(input_dataset["validation"])
-                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
+                score = score_multiplier * self.metric.score(
+                    output_dataset["validation"], y_pred
+                )
                 return score
 
         trials = Trials()

@@ -11,7 +11,12 @@ from DashAI.back.metrics.classification_metric import (
 
 
 class Recall(ClassificationMetric):
-    """Recall metric to classification tasks."""
+    """Recall metric to classification tasks.
+
+    Higher recall values are better (range: 0.0 to 1.0).
+    """
+
+    HIGHER_IS_BETTER = True
 
     @staticmethod
     def score(

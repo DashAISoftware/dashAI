@@ -11,7 +11,12 @@ from DashAI.back.metrics.classification_metric import (
 
 
 class F1(ClassificationMetric):
-    """F1 score to classification tasks."""
+    """F1 score to classification tasks.
+
+    Higher F1 values are better (range: 0.0 to 1.0).
+    """
+
+    HIGHER_IS_BETTER = True
 
     @staticmethod
     def score(

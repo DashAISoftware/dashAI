@@ -74,16 +74,18 @@ class OptunaOptimizer(BaseOptimizer):
         self.output_dataset = output_dataset
         self.parameters = parameters
 
-        if metric["name"] in ["Accuracy", "F1", "Precision", "Recall"]:
-            study = optuna.create_study(
-                direction="maximize", sampler=self.sampler(), pruner=self.pruner
-            )
+        # Determine optimization direction from metric class attribute
+        metric_class = metric["class"]
+        if hasattr(metric_class, "HIGHER_IS_BETTER") and metric_class.HIGHER_IS_BETTER:
+            direction = "maximize"
         else:
-            study = optuna.create_study(
-                direction="minimize", sampler=self.sampler(), pruner=self.pruner
-            )
+            direction = "minimize"
 
-        self.metric = metric["class"]
+        study = optuna.create_study(
+            direction=direction, sampler=self.sampler(), pruner=self.pruner
+        )
+
+        self.metric = metric_class
 
         if task == "TextClassificationTask":
 

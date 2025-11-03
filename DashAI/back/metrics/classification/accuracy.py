@@ -11,7 +11,12 @@ from DashAI.back.metrics.classification_metric import (
 
 
 class Accuracy(ClassificationMetric):
-    """Accuracy metric to classification tasks."""
+    """Accuracy metric to classification tasks.
+
+    Higher accuracy values are better (range: 0.0 to 1.0).
+    """
+
+    HIGHER_IS_BETTER = True
 
     @staticmethod
     def score(true_labels: DashAIDataset, probs_pred_labels: np.ndarray) -> float:
