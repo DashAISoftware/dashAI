@@ -33,7 +33,7 @@ export default function RAGSessionsTable({
       {
         field: "name",
         headerName: "Session Name",
-        flex: 0.8,
+        flex: 0.6,
         renderCell: (params) => (
           <Button
             size="small"
@@ -70,7 +70,7 @@ export default function RAGSessionsTable({
       {
         field: "documents",
         headerName: "Documents",
-        flex: 0.3,
+        flex: 0.4,
         valueGetter: (value, row) => {
           if (!row || !row.parameters || !row.parameters.documents) {
             return 0;
@@ -83,7 +83,7 @@ export default function RAGSessionsTable({
         type: "actions",
         headerName: "Actions",
         minWidth: 100,
-        flex: 0.3,
+        flex: 0.5,
         getActions: (params) => [
           <Tooltip title="Open" key="open">
             <IconButton
