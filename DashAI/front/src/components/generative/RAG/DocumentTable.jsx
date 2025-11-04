@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import Dialog from "@mui/material/Dialog";
+import Upload from "../../shared/Upload";
+import { addDocument } from "../../../api/rag";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
 import {
   Paper,
@@ -19,6 +22,7 @@ import DocumentPreviewModal from "./DocumentPreviewModal";
 export default function DocumentTable({
   documents,
   onRemove,
+  onAddDocument,
   isLoading = false,
   tableTitle = null,
   showTableTitle = false,
@@ -26,6 +30,7 @@ export default function DocumentTable({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const handleOpenPreview = async (doc) => {
     setPreviewDoc(doc);
@@ -39,6 +44,29 @@ export default function DocumentTable({
       }
     }
     setPreviewOpen(true);
+  };
+
+  const handleRemoveDocument = (id) => {
+    if (onRemove) onRemove(id);
+  };
+
+  const handleFileUpload = async (files, url) => {
+    if (!files) return;
+    const fileList = Array.isArray(files) ? files : [files];
+    for (const file of fileList) {
+      const docToAdd = {
+        file,
+        optional_metadata: {
+          name: file.name,
+          source: url || "local_upload",
+        },
+      };
+      try {
+        const savedDoc = await addDocument(docToAdd);
+        if (onAddDocument) onAddDocument(savedDoc);
+      } catch (error) {}
+    }
+    setUploadOpen(false);
   };
 
   const handleClosePreview = () => {
@@ -89,7 +117,7 @@ export default function DocumentTable({
         </Tooltip>,
         <DeleteItemModal
           key="delete-button"
-          deleteFromTable={() => onRemove(params.row.id)}
+          deleteFromTable={() => handleRemoveDocument(params.row.id)}
           item="document"
         />,
       ],
@@ -112,9 +140,9 @@ export default function DocumentTable({
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
-            onClick={() => {}}
+            onClick={() => setUploadOpen(true)}
           >
-            Upload a file
+            Add new document
           </Button>
         </Grid>
       ) : (
@@ -128,9 +156,9 @@ export default function DocumentTable({
             variant="contained"
             color="primary"
             startIcon={<AddIcon />}
-            onClick={() => {}}
+            onClick={() => setUploadOpen(true)}
           >
-            Upload a file
+            Add new document
           </Button>
         </Grid>
       )}
@@ -171,6 +199,18 @@ export default function DocumentTable({
         document={previewDoc}
         txtContent={txtContent}
       />
+      <Dialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <Upload
+          onFileUpload={handleFileUpload}
+          multiple={true}
+          emptyUploadText="Upload your document(s)"
+        />
+      </Dialog>
     </Paper>
   );
 }

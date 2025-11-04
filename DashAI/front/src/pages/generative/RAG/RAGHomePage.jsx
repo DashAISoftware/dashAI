@@ -89,6 +89,10 @@ function RAGHomePage({
     [setSessions],
   );
 
+  const handleAddDocument = useCallback((newDoc) => {
+    setAllDocuments((prev) => [newDoc, ...prev]);
+  }, []);
+
   return (
     <Box
       display={"flex"}
@@ -153,6 +157,7 @@ function RAGHomePage({
             : "",
         }))}
         onRemove={handleRemoveDocumentFromTable}
+        onAddDocument={handleAddDocument}
         isLoading={documentsLoading}
         showTableTitle={true}
       />
