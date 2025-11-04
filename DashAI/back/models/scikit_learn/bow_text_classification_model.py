@@ -205,7 +205,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         input_column = x.column_names[0]
         self.vectorizer.fit(x[input_column])
         tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
+        tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         self.classifier.fit(tokenized_dataset, y)
@@ -214,7 +214,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         input_column = x.column_names[0]
 
         tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
+        tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         return self.classifier.predict(tokenized_dataset)

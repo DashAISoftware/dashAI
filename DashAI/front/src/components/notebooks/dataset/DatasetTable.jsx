@@ -1,5 +1,4 @@
-// src/components/common/ServerDataGrid.jsx
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   DataGrid,
   GridToolbarContainer,
@@ -18,7 +17,7 @@ import {
 
 /**
  * Props:
- * - fetchPage: async (page, pageSize) => { rows: Array<object>, total: number }
+ * - fetchPage: async (page, pageSize, filterModel) => { rows: Array<object>, total: number }
  * - initialPageSize?: number (default 5)
  * - columns?: GridColDef[] (optional)
  * - deps?: any[] (optional)
@@ -33,7 +32,6 @@ export default function DatasetTable({
   columns: columnsProp,
   deps = [],
   autoHeight = true,
-  density = "compact",
   pageSizeOptions = [5, 10, 25],
   datasetPath,
   containerHeight,
@@ -49,6 +47,7 @@ export default function DatasetTable({
     page: 0,
     pageSize: initialPageSize,
   });
+  const [filterModel, setFilterModel] = useState({ items: [] });
 
   useEffect(() => {
     if (!containerHeight || autoHeight) return;
@@ -105,9 +104,7 @@ export default function DatasetTable({
       try {
         const types = await getDatasetTypesByFilePath(datasetPath);
         setColumnTypes(types);
-      } catch (e) {
-        console.error("Error fetching column types:", e);
-      }
+      } catch (e) {}
     };
 
     fetchColumnTypes();
@@ -119,7 +116,7 @@ export default function DatasetTable({
       try {
         setLoading(true);
         const { page, pageSize } = paginationModel;
-        const data = await fetchPage(page, pageSize);
+        const data = await fetchPage(page, pageSize, filterModel);
         if (!alive) return;
 
         const withIds = (data?.rows ?? []).map((r, i) => ({
@@ -128,9 +125,9 @@ export default function DatasetTable({
         }));
 
         setRows(withIds);
+        // Siempre usa el total devuelto por el backend para la paginación
         setRowCount(data?.total ?? withIds.length);
       } catch (e) {
-        console.error(e);
         setRows([]);
         setRowCount(0);
       } finally {
@@ -141,7 +138,18 @@ export default function DatasetTable({
     return () => {
       alive = false;
     };
-  }, [fetchPage, paginationModel, ...deps]);
+  }, [fetchPage, paginationModel, filterModel, ...deps]);
+  // Handler for DataGrid filter changes
+  const handleFilterModelChange = useCallback((model) => {
+    setFilterModel((prev) => {
+      // Si el filtro es igual al anterior, igual resetea la paginación
+      setPaginationModel((m) => ({ ...m, page: 0 }));
+      if (!model || !model.items || model.items.length === 0) {
+        return { items: [] };
+      }
+      return model;
+    });
+  }, []);
 
   useEffect(() => {
     setPaginationModel((m) => ({ ...m, page: 0 }));
@@ -156,6 +164,23 @@ export default function DatasetTable({
       .map((field) => ({
         field,
         headerName: field,
+        type:
+          columnTypes[field] &&
+          ["int", "integer", "float", "double", "number"].includes(
+            String(columnTypes[field].type).toLowerCase(),
+          )
+            ? "number"
+            : columnTypes[field] &&
+                ["bool", "boolean"].includes(
+                  String(columnTypes[field].type).toLowerCase(),
+                )
+              ? "boolean"
+              : columnTypes[field] &&
+                  ["date", "datetime", "timestamp"].includes(
+                    String(columnTypes[field].type).toLowerCase(),
+                  )
+                ? "date"
+                : "string",
         minWidth: 120,
         width: Math.max(120, field.length * 8 + 40),
         renderHeader: () => (
@@ -208,15 +233,15 @@ export default function DatasetTable({
     const handleExportCsv = async () => {
       try {
         if (datasetPath) {
-          // Usar nuestro endpoint personalizado
+          // Use our custom endpoint
           const blob = await exportDatasetCsvByPath(datasetPath);
 
-          // Crear URL temporal y descargar
+          // Create temporary URL and download
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
 
-          // Extraer nombre del dataset desde la ruta
+          // Extract dataset name from path
           const datasetName = datasetPath.split("/").pop() || "dataset";
           link.download = `${datasetName}.csv`;
 
@@ -225,7 +250,7 @@ export default function DatasetTable({
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
         } else {
-          // Fallback al método original del DataGrid
+          // Fallback to original DataGrid method
           const apiRef = useGridApiContext();
           apiRef.current.exportDataAsCsv({
             fileName: "dataset-export",
@@ -235,7 +260,7 @@ export default function DatasetTable({
         }
       } catch (error) {
         console.error("Error exporting CSV:", error);
-        // Fallback al método original en caso de error
+        // Fallback to original method in case of error
         const apiRef = useGridApiContext();
         apiRef.current.exportDataAsCsv({
           fileName: "dataset-export",
@@ -291,6 +316,13 @@ export default function DatasetTable({
     );
   }
 
+  // DEBUG: Log filterModel changes to see what is sent to the backend
+  useEffect(() => {
+    if (filterModel && filterModel.items && filterModel.items.length > 0) {
+      //
+    }
+  }, [filterModel]);
+
   return (
     <DataGrid
       ref={gridRef}
@@ -301,11 +333,15 @@ export default function DatasetTable({
       autoHeight={autoHeight}
       disableRowSelectionOnClick
       paginationMode="server"
+      filterMode="server"
       paginationModel={paginationModel}
       onPaginationModelChange={setPaginationModel}
       pageSizeOptions={dynamicPageSizeOptions}
       density={density}
+      filterModel={filterModel}
+      onFilterModelChange={handleFilterModelChange}
       initialState={{
+        density: "compact",
         pagination: { paginationModel: { pageSize: initialPageSize } },
       }}
       slots={{

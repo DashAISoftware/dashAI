@@ -10,7 +10,6 @@ import {
   Chip,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { getDatasetInfo } from "../../../api/datasets";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import { generateSequentialName } from "../../../utils/nameGenerator";
@@ -21,13 +20,11 @@ export function CreateNotebookModal({
   onClose,
   onCreateNotebook,
   dataset,
+  datasetInfo,
   existingNotebooks = [],
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [datasetInfo, setDatasetInfo] = useState(null);
-  const [loadingInfo, setLoadingInfo] = useState(false);
-  const [infoError, setInfoError] = useState(null);
 
   const { defaultName } = useMemo(() => {
     if (!dataset) {
@@ -46,31 +43,6 @@ export function CreateNotebookModal({
       setDescription("");
     }
   }, [open, defaultName]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchInfo = async () => {
-      if (!dataset?.id) {
-        setDatasetInfo(null);
-        setInfoError(null);
-        return;
-      }
-      try {
-        setLoadingInfo(true);
-        setInfoError(null);
-        const info = await getDatasetInfo(dataset.id);
-        if (!cancelled) setDatasetInfo(info);
-      } catch (e) {
-        if (!cancelled) setInfoError("Failed to load dataset info");
-      } finally {
-        if (!cancelled) setLoadingInfo(false);
-      }
-    };
-    fetchInfo();
-    return () => {
-      cancelled = true;
-    };
-  }, [dataset?.id]);
 
   const handleSubmit = () => {
     const notebookName = name.trim();
@@ -142,20 +114,9 @@ export function CreateNotebookModal({
                   </Typography>
                 </Box>
                 <Typography variant="body2" fontWeight="medium">
-                  Rows:{" "}
-                  {loadingInfo
-                    ? "Loading..."
-                    : (datasetInfo?.total_rows ?? "-")}{" "}
-                  | Columns:{" "}
-                  {loadingInfo
-                    ? "Loading..."
-                    : (datasetInfo?.total_columns ?? "-")}
+                  Rows: {datasetInfo?.total_rows ?? "-"} | Columns:{" "}
+                  {datasetInfo?.total_columns ?? "-"}
                 </Typography>
-                {infoError && (
-                  <Typography variant="caption" color="error">
-                    {infoError}
-                  </Typography>
-                )}
               </Box>
             </Box>
           )}

@@ -9,7 +9,11 @@ import {
   Chip,
 } from "@mui/material";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { getDatasetFile, getDatasetInfo } from "../../../api/datasets";
+import {
+  getDatasetFile,
+  getDatasetInfo,
+  getDatasetFileFiltered,
+} from "../../../api/datasets";
 import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
@@ -65,7 +69,6 @@ export default function DatasetVisualization({
         const info = await getDatasetInfo(dataset.id);
         setDatasetInfo(info);
       } catch (error) {
-        console.error("Error fetching dataset info:", error);
         setDatasetInfo(null);
       }
     };
@@ -73,16 +76,29 @@ export default function DatasetVisualization({
     fetchDatasetInfo();
   }, [dataset.id, dataset.status]);
 
+  // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      // Don't try to fetch data if it's a temporary/processing dataset
+    async (page, pageSize, filterModel) => {
       if (isProcessing) return { rows: [], total: 0 };
-
       try {
-        const data = await getDatasetFile(dataset.file_path, page, pageSize);
+        // Use getDatasetFile if no filters, else use getDatasetFileFiltered
+        const hasFilters =
+          filterModel &&
+          Array.isArray(filterModel.items) &&
+          filterModel.items.length > 0;
+        let data;
+        if (hasFilters) {
+          data = await getDatasetFileFiltered(
+            dataset.file_path,
+            page,
+            pageSize,
+            filterModel,
+          );
+        } else {
+          data = await getDatasetFile(dataset.file_path, page, pageSize);
+        }
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
-        console.error("Error fetching dataset data:", error);
         return { rows: [], total: 0 };
       }
     },
@@ -109,7 +125,6 @@ export default function DatasetVisualization({
         onNotebookCreated(createdNotebook);
       }
     } catch (error) {
-      console.error("Error creating notebook:", error);
       enqueueSnackbar("Error creating notebook", {
         variant: "error",
       });
@@ -253,6 +268,7 @@ export default function DatasetVisualization({
           onClose={() => setShowCreateNotebookModal(false)}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}
+          datasetInfo={datasetInfo}
           existingNotebooks={existingNotebooks}
         />
       </Paper>
