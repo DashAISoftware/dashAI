@@ -131,6 +131,7 @@ function RAGHomePage({
           onRefreshSessions={loadSessions}
           onOpenNewSessionModal={() => handleOpenNewSessionModal()}
           onRemove={handleRemoveSession}
+          showTableTitle={true}
         />
       )}
 
