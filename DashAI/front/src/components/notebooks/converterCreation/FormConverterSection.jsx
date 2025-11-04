@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Box } from "@mui/material";
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";

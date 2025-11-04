@@ -1,4 +1,3 @@
-import { style } from "@mui/system";
 import React from "react";
 
 export const experimentsTourSteps = [

@@ -85,7 +85,15 @@ export default function ScopeStepConverter({
       }}
     >
       {/* Content */}
-      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
         <Typography variant="subtitle2" gutterBottom>
           Step 1: Select Scope
         </Typography>

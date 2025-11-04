@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext } from "react";
 import Joyride from "react-joyride";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
