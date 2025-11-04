@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import AddIcon from "@mui/icons-material/AddCircleOutline";
 import {
   Paper,
   Typography,
   IconButton,
   Tooltip,
   LinearProgress,
+  Button,
+  Grid,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
@@ -18,6 +21,7 @@ export default function DocumentTable({
   onRemove,
   isLoading = false,
   tableTitle = null,
+  showTableTitle = false,
 }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
@@ -94,10 +98,41 @@ export default function DocumentTable({
 
   return (
     <Paper sx={{ py: 4, px: 4 }}>
-      {tableTitle && (
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          {tableTitle}
-        </Typography>
+      {showTableTitle ? (
+        <Grid
+          container
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Typography variant="h5" component="h2">
+            {tableTitle || "Current documents"}
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => {}}
+          >
+            Upload a file
+          </Button>
+        </Grid>
+      ) : (
+        <Grid
+          container
+          justifyContent="flex-end"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => {}}
+          >
+            Upload a file
+          </Button>
+        </Grid>
       )}
       {documents.length === 0 && !isLoading ? (
         <Typography
@@ -151,4 +186,6 @@ DocumentTable.propTypes = {
   ).isRequired,
   onRemove: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  tableTitle: PropTypes.string,
+  showTableTitle: PropTypes.bool,
 };

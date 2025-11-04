@@ -154,6 +154,7 @@ function RAGHomePage({
         }))}
         onRemove={handleRemoveDocumentFromTable}
         isLoading={documentsLoading}
+        showTableTitle={true}
       />
     </Box>
   );
