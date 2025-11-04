@@ -146,16 +146,22 @@ function RAGHomePage({
         Manage documents for your RAG sessions
       </Typography>
       <DocumentTable
-        documents={allDocuments.map((doc) => ({
-          ...doc,
-          id: String(doc.id),
-          name: doc.file_name,
-          createdAt: doc.created || doc.createdAt || "",
-          preview: doc.file_url,
-          file_type: doc.file_name
-            ? doc.file_name.split(".").pop().toLowerCase()
-            : "",
-        }))}
+        documents={[...allDocuments]
+          .sort(
+            (a, b) =>
+              new Date(b.created || b.createdAt || 0) -
+              new Date(a.created || a.createdAt || 0),
+          )
+          .map((doc) => ({
+            ...doc,
+            id: String(doc.id),
+            name: doc.file_name,
+            createdAt: doc.created || doc.createdAt || "",
+            preview: doc.file_url,
+            file_type: doc.file_name
+              ? doc.file_name.split(".").pop().toLowerCase()
+              : "",
+          }))}
         onRemove={handleRemoveDocumentFromTable}
         onAddDocument={handleAddDocument}
         isLoading={documentsLoading}
