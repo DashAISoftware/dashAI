@@ -40,4 +40,4 @@ def optimizer_int_field(
     ValidationError
         If the value of the field is greater or equal than the exclusive maximum.
     """
-    return dict
+    return int
