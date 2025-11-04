@@ -12,7 +12,7 @@ class RAGTask(BaseGenerativeTask):
 
     metadata: dict = {
         "inputs_types": [str],
-        "outputs_types": [str,],
+        "outputs_types": [str],
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }

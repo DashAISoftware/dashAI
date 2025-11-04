@@ -114,7 +114,7 @@ class OpenAITextToTextGenerationModelSchema(BaseSchema):
         none_type(float_field(ge=0.0, le=2.0)),
         placeholder=None,
         description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\mWe generally recommend altering this or `temperature` but not both."
-    )  # type: ignore """
+    )  # type: ignore  """
 
 
     

@@ -9,7 +9,7 @@ class AugmentationPrompt(Prompt):
     """
 
     required_placeholders = ["{input}", "{n_search_terms}"]
-    optional_placeholders = ["{history}"]
+    optional_placeholders = []
 
     def __init__(self, **kwargs: Any):
         self.template = kwargs.pop("template")
@@ -18,7 +18,6 @@ class AugmentationPrompt(Prompt):
             self,
             input: str,
             n_search_terms: int,
-            history: List[Tuple[str, str]] = None,
             **kwargs: Any
         ) -> str:
         """

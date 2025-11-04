@@ -38,6 +38,8 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
     }
 
     template = template
+    required_placeholders = ["{input}", "{n_search_terms}"]
+    optional_placeholders = []
 
     @staticmethod
     def format(

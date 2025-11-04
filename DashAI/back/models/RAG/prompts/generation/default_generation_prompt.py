@@ -2,12 +2,11 @@ from typing import Any, List, Tuple
 from DashAI.back.models.RAG.prompts.generation.generation_prompt import GenerationPrompt
 
 template = """
-Answer to this question
+You are a helpful AI assistant that generates responses based on user input and provided document context.
+User Input:
 {input}
 Using the following documents as context:
 {chunks}
-The chat history is:
-{history}
 """
 
 class DefaultGenerationPrompt(GenerationPrompt):
@@ -27,6 +26,10 @@ class DefaultGenerationPrompt(GenerationPrompt):
         },
         "template": template
     }
+
+    template: str = template
+    required_placeholders = ["{input}", "{chunks}"]
+    optional_placeholders = []
 
     def __init__(self, **kwargs):
         self.template = kwargs.pop("template")

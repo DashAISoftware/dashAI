@@ -66,7 +66,7 @@ class QwenSchema(BaseSchema):
 
     context_window: schema_field(
         int_field(ge=1),
-        placeholder=512,
+        placeholder=4096,
         description=(
             "Maximum number of tokens the model can process in a single forward pass "
             "(context window size)."

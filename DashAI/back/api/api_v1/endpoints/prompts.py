@@ -95,7 +95,7 @@ async def get_all_prompts(
                 default_generation_prompt = RAGPrompt(
                     class_name=DefaultGenerationPrompt.__name__,
                     name="Default Generation Prompt",
-                    parameters={"template": DefaultAugmentationPrompt.template},
+                    parameters={"template": DefaultGenerationPrompt.template},
                 )
                 default_qa_prompt = RAGPrompt(
                     class_name=DefaultQnAGenerationPrompt.__name__,

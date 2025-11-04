@@ -16,10 +16,12 @@ class CustomAugmentationPrompt(AugmentationPrompt):
         "optional_placeholders": AugmentationPrompt.optional_placeholders,
         "placeholder_descriptions": {
             "{input}": "The user input message.",
-            "{history}": "The chat history (optional) to be included in the context.",
             "{n_search_terms}": "The number of search terms to generate."
         }
     }
+
+    required_placeholders = ["{input}", "{n_search_terms}"]
+    optional_placeholders = []
 
 
     def __init__(self, **kwargs):
