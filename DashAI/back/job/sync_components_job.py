@@ -17,7 +17,7 @@ class SyncComponentsJob(BaseJob):
     DESCRIPTION = "Sync consumer ComponentRegistry with installed DashAI plugins"
 
     def set_status_as_delivered(self):
-        log.debug("Prediction job marked as delivered")
+        log.debug("Sync components job marked as delivered")
 
     def set_status_as_error(self):
         log.debug("Sync components job failed")
@@ -30,15 +30,20 @@ class SyncComponentsJob(BaseJob):
     def run(self):
         from kink import di
 
+        from DashAI.back.initial_components import get_initial_components
+
         component_registry = di["component_registry"]
-        available = set(get_available_plugins())
-        registered = {
+
+        basic_components = set(get_initial_components())
+        available_plugins = set(get_available_plugins())
+
+        all_registered = {
             component_registry[c["name"]]["class"]
             for c in component_registry.get_components_by_types()
         }
-
-        to_add = list(available - registered)
-        to_remove = list(registered - available)
+        registered_plugins = all_registered - basic_components
+        to_add = list(available_plugins - registered_plugins)
+        to_remove = list(registered_plugins - available_plugins)
 
         if to_add:
             register_plugin_components(to_add, component_registry)
