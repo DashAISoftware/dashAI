@@ -154,6 +154,8 @@ export default function DocumentSelector({
 }
 
 DocumentSelector.propTypes = {
-  selectedIds: PropTypes.arrayOf(PropTypes.string),
+  selectedIds: PropTypes.arrayOf(
+    PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  ),
   onSelect: PropTypes.func,
 };

@@ -75,7 +75,7 @@ export default function DocumentSelectionStep({
       <Box flexGrow={1}>
         <DocumentSelector
           key={`doc-selector-${JSON.stringify(propDocumentIds || [])}`}
-          selectedIds={(propDocumentIds || []).map(String)}
+          selectedIds={propDocumentIds || []}
           onSelect={handleDocumentSelectionChange}
         />
       </Box>
