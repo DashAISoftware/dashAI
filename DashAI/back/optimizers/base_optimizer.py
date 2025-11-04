@@ -306,8 +306,6 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                     state=optuna.trial.TrialState.COMPLETE,
                 )
             )
-        evaluator = FanovaImportanceEvaluator()
-        importances = evaluator.evaluate(study)
         try:
             evaluator = FanovaImportanceEvaluator()
             importances = evaluator.evaluate(study)
