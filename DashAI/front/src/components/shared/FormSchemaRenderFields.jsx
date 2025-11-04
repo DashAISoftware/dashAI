@@ -46,6 +46,10 @@ function FormSchemaRenderFields({
     for (const key in modelSchema) {
       const fieldSchema = modelSchema[key];
       const objName = key;
+
+      // Detect if it is an optimizable field (has placeholder.optimize)
+      const isOptimizable = fieldSchema.placeholder?.optimize !== undefined;
+
       if ("anyOf" in fieldSchema) {
         fields.push(
           <FormSchemaFieldWithOptions
@@ -63,21 +67,23 @@ function FormSchemaRenderFields({
             }}
           />,
         );
+      } else if (isOptimizable) {
+        // If it has placeholder.optimize, use FormSchemaFieldWithOptimizers
+        // regardless of the type (integer, number, object)
+        fields.push(
+          <FormSchemaFieldWithOptimizers
+            key={objName}
+            objName={objName}
+            paramJsonSchema={fieldSchema}
+            field={{
+              value: formik?.values[objName],
+              onChange: onChange(objName),
+              error: formik?.errors[objName],
+            }}
+          />,
+        );
       } else if (fieldSchema.type === "object") {
-        if (fieldSchema.placeholder?.optimize !== undefined) {
-          fields.push(
-            <FormSchemaFieldWithOptimizers
-              key={objName}
-              objName={objName}
-              paramJsonSchema={fieldSchema}
-              field={{
-                value: formik?.values[objName],
-                onChange: onChange(objName),
-                error: formik?.errors[objName],
-              }}
-            />,
-          );
-        } else if (Boolean(fieldSchema?.parent)) {
+        if (Boolean(fieldSchema?.parent)) {
           fields.push(
             <FormSchemaFieldWithParent
               key={objName}

@@ -24,11 +24,10 @@ function OptimizeNumberInput({
   placeholder,
 }) {
   // 1) Merge existing user data with defaults from placeholder (if user data is missing)
-  //    e.g. if 'value.optimize' is undefined, fallback to placeholder.optimize or false
-  const mergedOptimize = value.optimize ?? placeholder.optimize ?? false;
-  const mergedLower = value.lower_bound ?? placeholder.lower_bound ?? "";
-  const mergedUpper = value.upper_bound ?? placeholder.upper_bound ?? "";
-  const mergedFixed = value.fixed_value ?? placeholder.fixed_value ?? "";
+  const mergedOptimize = value?.optimize ?? placeholder?.optimize ?? false;
+  const mergedLower = value?.lower_bound ?? placeholder?.lower_bound ?? null;
+  const mergedUpper = value?.upper_bound ?? placeholder?.upper_bound ?? null;
+  const mergedFixed = value?.fixed_value ?? placeholder?.fixed_value ?? null;
 
   // 2) Keep local state for the switch, so toggling is immediate in the UI
   const [switchState, setSwitchState] = useState(mergedOptimize);
@@ -43,26 +42,40 @@ function OptimizeNumberInput({
     const toggled = !switchState;
     setSwitchState(toggled);
     // Spread the entire "value" and override 'optimize'
-    onChange({ ...value, optimize: toggled });
+    onChange({
+      fixed_value: mergedFixed,
+      lower_bound: mergedLower,
+      upper_bound: mergedUpper,
+      optimize: toggled,
+    });
   };
 
   const handleChangeLower = (inputValue) => {
     const parsed = inputValue === "" ? null : parseFloat(inputValue);
-    onChange({ ...value, lower_bound: parsed });
+    onChange({
+      ...value,
+      lower_bound: isNaN(parsed) ? null : parsed,
+    });
   };
 
   const handleChangeUpper = (inputValue) => {
     const parsed = inputValue === "" ? null : parseFloat(inputValue);
-    onChange({ ...value, upper_bound: parsed });
+    onChange({
+      ...value,
+      upper_bound: isNaN(parsed) ? null : parsed,
+    });
   };
 
   const handleChangeFixed = (inputValue) => {
     const parsed = inputValue === "" ? null : parseFloat(inputValue);
-    onChange({ ...value, fixed_value: parsed });
+    onChange({
+      ...value,
+      fixed_value: isNaN(parsed) ? null : parsed,
+    });
   };
 
   // 4) If 'optimize' is recognized in placeholder, we show the switch & bound inputs
-  const canOptimize = placeholder.optimize !== undefined;
+  const canOptimize = placeholder?.optimize !== undefined;
 
   return (
     <FormInputWrapper name={name} description={description}>
@@ -70,7 +83,7 @@ function OptimizeNumberInput({
       {canOptimize && (
         <FormControl error={Boolean(error)}>
           <FormControlLabel
-            label={`Optimize hyperparameter "${name}"`}
+            label={`Optimize hyperparameter "${label || name}"`}
             control={
               <Switch
                 name={name}
@@ -87,9 +100,9 @@ function OptimizeNumberInput({
         <>
           <InputWithDebounce
             variant="outlined"
-            label="enter a value for the lower bound of search space"
+            label="Lower bound of search space"
             name={`${name}-lower`}
-            value={mergedLower}
+            value={mergedLower !== null ? mergedLower : ""}
             onChange={handleChangeLower}
             error={Boolean(error)}
             helperText={error || " "}
@@ -98,9 +111,9 @@ function OptimizeNumberInput({
           />
           <InputWithDebounce
             variant="outlined"
-            label="enter a value for the upper bound of search space"
+            label="Upper bound of search space"
             name={`${name}-upper`}
-            value={mergedUpper}
+            value={mergedUpper !== null ? mergedUpper : ""}
             onChange={handleChangeUpper}
             error={Boolean(error)}
             helperText={error || " "}
@@ -112,9 +125,9 @@ function OptimizeNumberInput({
         // If "optimize" is off (or we can't optimize), show a single "fixed_value"
         <InputWithDebounce
           variant="outlined"
-          label="enter a value"
+          label={label || "Enter a value"}
           name={`${name}-fixed`}
-          value={mergedFixed}
+          value={mergedFixed !== null ? mergedFixed : ""}
           onChange={handleChangeFixed}
           error={Boolean(error)}
           helperText={error || " "}
@@ -128,8 +141,8 @@ function OptimizeNumberInput({
 
 OptimizeNumberInput.propTypes = {
   name: PropTypes.string,
-  label: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
+  label: PropTypes.string,
+  description: PropTypes.string,
   value: PropTypes.shape({
     optimize: PropTypes.bool,
     fixed_value: PropTypes.oneOfType([
@@ -147,7 +160,6 @@ OptimizeNumberInput.propTypes = {
   }),
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.shape({
-    // The original defaults
     optimize: PropTypes.bool,
     fixed_value: PropTypes.number,
     lower_bound: PropTypes.number,
@@ -160,6 +172,7 @@ OptimizeNumberInput.defaultProps = {
   value: {},
   placeholder: {},
   error: undefined,
+  description: "",
 };
 
 export default OptimizeNumberInput;
