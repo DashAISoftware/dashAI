@@ -52,6 +52,10 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [requestError, setRequestError] = useState(false);
   const tourContext = useTourContext();
 
+  useEffect(() => {
+    setNewExp({ ...newExp, input_columns: [], output_columns: [] });
+  }, []);
+
   const getDatasets = async () => {
     setLoading(true);
     try {
@@ -175,8 +179,8 @@ SelectDatasetStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

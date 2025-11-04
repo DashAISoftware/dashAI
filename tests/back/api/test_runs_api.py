@@ -21,8 +21,13 @@ def create_experiment(client: TestClient, dataset_id):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "Test Experiment",
-            "input_columns": [1, 2, 3, 4],
-            "output_columns": [5],
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
             "splits": json.dumps(
                 {
                     "train": 0.5,
