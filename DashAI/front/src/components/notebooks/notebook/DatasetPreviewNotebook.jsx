@@ -188,11 +188,18 @@ export default function DatasetPreviewNotebook({
               containerHeight={height ? height - 64 : undefined}
               pageSizeOptions={[5]}
               autoHeight={false}
+              disableColumnSelector
               disableDensitySelector
               sx={{
                 height: "100%",
                 "& .MuiDataGrid-virtualScroller": {
                   "overflow-y": "hidden",
+                },
+                "& .MuiTablePagination-select": {
+                  display: "none",
+                },
+                "& .MuiTablePagination-selectLabel": {
+                  display: "none",
                 },
               }}
             />

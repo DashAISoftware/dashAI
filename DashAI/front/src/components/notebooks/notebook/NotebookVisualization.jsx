@@ -15,9 +15,13 @@ export default function NotebookVisualization({
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
   const isResizing = useRef(false);
+  const startY = useRef(0);
+  const startHeight = useRef(0);
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e) => {
     isResizing.current = true;
+    startY.current = e.clientY;
+    startHeight.current = topHeight;
     document.body.style.cursor = "row-resize";
     document.body.style.userSelect = "none";
   };
@@ -29,8 +33,8 @@ export default function NotebookVisualization({
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
-    const mouseY = e.clientY;
-    const newHeight = mouseY - rect.top;
+    const deltaY = e.clientY - startY.current;
+    const newHeight = startHeight.current + deltaY;
 
     const minHeight = 200;
     const maxHeight = rect.height * 0.7;
