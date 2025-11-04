@@ -55,12 +55,12 @@ class HyperOptOptimizer(BaseOptimizer):
         """
         search_space = {}
 
-        for _, hyperparameter, values in hyperparams_data:
-            if any(isinstance(v, int) for v in values):
+        for _, hyperparameter, values, dtype in hyperparams_data:
+            if dtype == "integer":
                 search_space[hyperparameter] = hp.quniform(
                     hyperparameter, values[0], values[1], 1
                 )
-            elif any(isinstance(v, float) for v in values):
+            elif dtype == "number":
                 search_space[hyperparameter] = hp.uniform(
                     hyperparameter, values[0], values[1]
                 )
