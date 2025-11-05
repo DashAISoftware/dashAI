@@ -1,13 +1,34 @@
 import torch
 
+from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
+
 DEVICE_ENUM: list[str] = ["CPU"]
 DEVICE_PLACEHOLDER: str = "CPU"
-NAME_TO_DEVICE: dict[str, str] = {"CPU": "cpu"}
+DEVICE_TO_IDX: dict[str, int] = {"CPU": -1}
+GPU_OR_CPU: list[str] = ["CPU"]
+GPU_OR_CPU_PLACEHOLDER: str = "CPU"
 
 if torch.cuda.is_available():
+    GPU_OR_CPU.insert(0, "GPU")
+    GPU_OR_CPU_PLACEHOLDER = "GPU"
     cuda_devices = []
     for i in range(torch.cuda.device_count()):
-        cuda_devices.append(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+        cuda_devices.append(
+            f"GPU {i}: {torch.cuda.get_device_name(i)} - Compute Capability {torch.cuda.get_device_capability(i)[0]}.{torch.cuda.get_device_capability(i)[1]}"
+        )
     DEVICE_ENUM = cuda_devices + ["CPU"]
-    DEVICE_PLACEHOLDER = f"GPU 0: {torch.cuda.get_device_name(0)}"
-    NAME_TO_DEVICE.update({name: f"cuda:{i}" for i, name in enumerate(cuda_devices)})
+    DEVICE_PLACEHOLDER = cuda_devices[0]
+    DEVICE_TO_IDX.update({name: i for i, name in enumerate(cuda_devices)})
+
+LLAMA_DEVICE_ENUM: list[str] = ["CPU"]
+LLAMA_DEVICE_PLACEHOLDER: str = "CPU"
+LLAMA_DEVICE_TO_IDX: dict[str, int] = {"CPU": -1}
+if is_gpu_available_for_llama_cpp():
+    cuda_devices = []
+    for i in range(torch.cuda.device_count()):
+        cuda_devices.append(
+            f"GPU {i}: {torch.cuda.get_device_name(i)} - Compute Capability {torch.cuda.get_device_capability(i)[0]}.{torch.cuda.get_device_capability(i)[1]}"
+        )
+    LLAMA_DEVICE_ENUM = cuda_devices + ["CPU"]
+    LLAMA_DEVICE_PLACEHOLDER = cuda_devices[0]
+    LLAMA_DEVICE_TO_IDX.update({name: i - 1 for i, name in enumerate(cuda_devices)})

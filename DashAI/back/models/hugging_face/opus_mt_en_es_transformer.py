@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
-import torch
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
@@ -23,15 +22,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.translation_model import TranslationModel
-
-DEVICE_ENUM = ["CPU"]
-DEVICE_PLACEHOLDER = "CPU"
-NAME_TO_DEVICE = {"CPU": "cpu"}
-if torch.cuda.is_available():
-    DEVICE_ENUM = ["GPU"] + DEVICE_ENUM
-    DEVICE_PLACEHOLDER = "GPU"
-    NAME_TO_DEVICE.update({"GPU": "gpu"})
-DEVICE_TO_NAME = {v: k for k, v in NAME_TO_DEVICE.items()}
+from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -55,8 +46,8 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
-        enum_field(enum=DEVICE_ENUM),
-        placeholder=DEVICE_PLACEHOLDER,
+        enum_field(enum=GPU_OR_CPU),
+        placeholder=GPU_OR_CPU_PLACEHOLDER,
         description="Hardware on which the training is run. If available, GPU is "
         "recommended for efficiency reasons. Otherwise, use CPU. "
         "If GPU is selected then it will use all gpus available. ",
@@ -79,7 +70,7 @@ class OpusMtEnESTransformer(TranslationModel):
 
     SCHEMA = OpusMtEnESTransformerSchema
     DISPLAY_NAME: str = "Opus MT En-Es Transformer"
-    COLOR: str = "#4CAF50"
+    COLOR: str = "#FFA500"
 
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer.
@@ -93,7 +84,7 @@ class OpusMtEnESTransformer(TranslationModel):
         if model is None:
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
-            self.device = NAME_TO_DEVICE.get(kwargs.pop("device"))
+            self.device = kwargs.pop("device")
         self.model = (
             model
             if model is not None
@@ -169,7 +160,7 @@ class OpusMtEnESTransformer(TranslationModel):
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
-            use_cpu=self.device != "gpu",
+            use_cpu=self.device.lower() != "gpu",
             **self.training_args,
         )
 
@@ -252,7 +243,7 @@ class OpusMtEnESTransformer(TranslationModel):
             num_train_epochs=custom_params.get("num_train_epochs"),
             batch_size=custom_params.get("batch_size"),
             learning_rate=custom_params.get("learning_rate"),
-            device=DEVICE_TO_NAME[custom_params.get("device")],
+            device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
         )
         loaded_model.fitted = custom_params.get("fitted", False)
