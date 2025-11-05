@@ -17,7 +17,9 @@ from DashAI.back.dependencies.database.utils import (
     add_plugin_to_db,
     upgrade_plugin_info_in_db,
 )
+from DashAI.back.dependencies.job_queues import BaseJobQueue
 from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.sync_components_job import SyncComponentsJob
 from DashAI.back.plugins.utils import (
     get_plugin_by_name_from_pypi,
     get_plugins_from_pypi,
@@ -223,6 +225,7 @@ async def update_plugin(
     params: PluginUpdateParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
     """Updates the status of a plugin with the provided ID.
 
@@ -271,12 +274,15 @@ async def update_plugin(
                 # else the new components should be registered
                 else:
                     register_plugin_components(installed_components, component_registry)
+                    job_queue.put(SyncComponentsJob())
             elif (
                 plugin.status == PluginStatus.INSTALLED
                 and params.new_status == PluginStatus.REGISTERED
             ):
                 uninstalled_components = uninstall_plugin(plugin_name)
                 unregister_plugin_components(uninstalled_components, component_registry)
+                job_queue.put(SyncComponentsJob())
+
             setattr(plugin, "status", params.new_status)
             db.commit()
             db.refresh(plugin)
@@ -295,6 +301,7 @@ async def upgrade_plugin(
     plugin_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
     """
     Upgrade the plugin version prvided in pyPI.
@@ -326,12 +333,14 @@ async def upgrade_plugin(
             if plugin.status == PluginStatus.INSTALLED:
                 uninstalled_components = uninstall_plugin(plugin_name)
                 unregister_plugin_components(uninstalled_components, component_registry)
+                job_queue.put(SyncComponentsJob())
 
             plugin_info = get_plugin_by_name_from_pypi(plugin_name)
             new_plugin_params = PluginParams.model_validate(plugin_info)
 
             installed_components = install_plugin(plugin_name)
             register_plugin_components(installed_components, component_registry)
+            job_queue.put(SyncComponentsJob())
             plugin = upgrade_plugin_info_in_db(new_plugin_params)
 
             if plugin is None:

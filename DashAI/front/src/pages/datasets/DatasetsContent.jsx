@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
@@ -37,7 +37,6 @@ export default function DatasetsPage() {
   const [selectedNotebookId, setSelectedNotebookId] = useState(0);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Box, Typography, Grid } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import ToolGridItem from "./ToolGridItem";
 import ConfigureToolModal from "./ConfigureToolModal";
 import { useTourContext } from "../../tour/TourProvider";

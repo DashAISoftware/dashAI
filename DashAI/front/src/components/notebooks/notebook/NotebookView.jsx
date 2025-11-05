@@ -13,6 +13,7 @@ import ItemsToDeleteList from "../converter/ItemsToDeleteList";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { deleteExplorer } from "../../../api/explorer";
 import { deleteConverterById } from "../../../api/converter";
+import { startJobPolling } from "../../../utils/jobPoller";
 
 const RowItem = React.memo(function RowItem({
   item,
@@ -166,21 +167,26 @@ export default function NotebookView({ notebook }) {
   }, [explorerToDelete, setExplorersAndConverters]);
 
   const handleConfirmConverterDelete = useCallback(async () => {
-    if (converterToDelete) {
-      try {
-        await deleteConverterById(converterToDelete.id);
-
-        await fetchExplorersAndConverters();
-
-        setOpenDeleteConverterConfirmation(false);
-        setConverterToDelete(null);
-        setDeleteModalContent("");
-        setItemsToDelete([]);
-      } catch (error) {
-        console.error("Failed to delete converter:", error);
+    if (!converterToDelete) return;
+    try {
+      const jobId = await deleteConverterById(converterToDelete.id);
+      setOpenDeleteConverterConfirmation(false);
+      setConverterToDelete(null);
+      setDeleteModalContent("");
+      setItemsToDelete([]);
+      if (jobId) {
+        startJobPolling(
+          jobId,
+          () => fetchExplorersAndConverters(),
+          () => fetchExplorersAndConverters(),
+        );
+      } else {
+        fetchExplorersAndConverters();
       }
+    } catch (error) {
+      console.error("Failed to delete converter:", error);
     }
-  }, [converterToDelete, setExplorersAndConverters]);
+  }, [converterToDelete, fetchExplorersAndConverters]);
 
   const handleCancelDelete = useCallback(() => {
     setOpenDeleteExplorerConfirmation(false);

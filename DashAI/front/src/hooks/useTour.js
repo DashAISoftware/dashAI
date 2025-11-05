@@ -36,14 +36,7 @@ export const useTour = (tourKey) => {
   }, []);
 
   const nextStep = useCallback(() => {
-    console.log("[useTour] nextStep called, current index:", stepIndex);
     setStepIndex((prevIndex) => {
-      console.log(
-        "[useTour] Setting step from",
-        prevIndex,
-        "to",
-        prevIndex + 1,
-      );
       return prevIndex + 1;
     });
   }, [stepIndex]);
@@ -63,22 +56,10 @@ export const useTour = (tourKey) => {
   const handleJoyrideCallback = useCallback(
     (data) => {
       const { action, status, index, type, error } = data;
-
-      console.log("[useTour] Joyride callback:", {
-        action,
-        status,
-        index,
-        type,
-      });
-
       if (error) {
         console.warn("[useTour] Error in Joyride callback:", error);
         if (error.message && error.message.includes("null")) {
-          console.log("[useTour] Element not found, but keeping tour running");
           setTimeout(() => {
-            console.log(
-              "[useTour] Attempting to advance to next step after error",
-            );
             setStepIndex(index + 1);
             setRun(true);
           }, 300);

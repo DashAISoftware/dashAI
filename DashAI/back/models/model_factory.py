@@ -122,6 +122,10 @@ class ModelFactory:
         results = {}
         for split in ["train", "validation", "test"]:
             split_results = {}
+            if x[split].shape[0] == 0:
+                split_results = {metric.__name__: None for metric in metrics}
+                results[split] = split_results
+                continue
             predictions = self.model.predict(x[split])
             for metric in metrics:
                 if (

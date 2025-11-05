@@ -3,7 +3,6 @@ import { Box, Grid, Button } from "@mui/material";
 import SearchBar from "./SearchBar";
 import CustomLayout from "../custom/CustomLayout";
 import OptionBox from "./OptionBox";
-import { useTourContext } from "../tour/TourProvider";
 
 export default function SelectOptionMenu({
   goToNextStep,
@@ -14,7 +13,6 @@ export default function SelectOptionMenu({
   searchBar = false,
 }) {
   const [search, setSearch] = useState("");
-
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
