@@ -154,9 +154,7 @@ const JobQueueWidget = () => {
       !expanded
     ) {
       setExpanded(true);
-      const toastTimeout = setTimeout(() => {
-        console.log("New active job");
-      }, 100);
+      const toastTimeout = setTimeout(() => {}, 100);
       return () => clearTimeout(toastTimeout);
     }
     prevActiveJobsCount.current = activeJobs.length;
@@ -175,7 +173,6 @@ const JobQueueWidget = () => {
   };
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered");
     setForceUpdate((prev) => prev + 1);
     refresh();
   };

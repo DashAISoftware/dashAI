@@ -18,6 +18,7 @@ export default function NotebookVisualization({
             notebook={notebook}
             handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
             existingDatasets={existingDatasets}
+            className="dataset-preview-section"
           />
         </Box>
 

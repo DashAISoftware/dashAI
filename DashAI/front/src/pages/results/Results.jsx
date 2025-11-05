@@ -5,13 +5,20 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import ResultsDialogLayout from "./components/ResultsDialogLayout";
 import TimestampWrapper from "../../components/shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
+import { useTourContext } from "../../components/tour/TourProvider";
 
 function Results({ experiment }) {
   const [open, setOpen] = useState(false);
   const [showTable, setShowTable] = useState(true);
+  const tourContext = useTourContext();
 
   const handleOpen = () => {
     setOpen(true);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
   };
 
   const handleClose = () => {
@@ -29,7 +36,7 @@ function Results({ experiment }) {
   return (
     <>
       <TimestampWrapper eventName={TIMESTAMP_KEYS.experiments.showResults}>
-        <IconButton onClick={handleOpen}>
+        <IconButton onClick={handleOpen} data-tour="exp-view-results-button">
           <VisibilityIcon />
         </IconButton>
       </TimestampWrapper>

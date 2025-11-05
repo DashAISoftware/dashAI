@@ -38,6 +38,7 @@ def test_queue_jobs_list(test_job_queue: HueyJobQueue):
 
     job_1 = DummyJob()
     job_1_id = test_job_queue.put(job_1).id
+    time.sleep(0.05)
 
     jobs_list = test_job_queue.to_list()
     assert len(jobs_list) == 1
@@ -46,6 +47,7 @@ def test_queue_jobs_list(test_job_queue: HueyJobQueue):
 
     job_2 = DummyJob()
     job_2_id = test_job_queue.put(job_2).id
+    time.sleep(0.05)
 
     jobs_list = test_job_queue.to_list()
     assert len(jobs_list) == 2
