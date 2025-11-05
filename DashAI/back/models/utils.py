@@ -14,7 +14,9 @@ if torch.cuda.is_available():
     cuda_devices = []
     for i in range(torch.cuda.device_count()):
         cuda_devices.append(
-            f"GPU {i}: {torch.cuda.get_device_name(i)} - Compute Capability {torch.cuda.get_device_capability(i)[0]}.{torch.cuda.get_device_capability(i)[1]}"
+            f"GPU {i}: {torch.cuda.get_device_name(i)} - "
+            f"Compute Capability {torch.cuda.get_device_capability(i)[0]}."
+            f"{torch.cuda.get_device_capability(i)[1]}"
         )
     DEVICE_ENUM = cuda_devices + ["CPU"]
     DEVICE_PLACEHOLDER = cuda_devices[0]
@@ -27,7 +29,9 @@ if is_gpu_available_for_llama_cpp():
     cuda_devices = []
     for i in range(torch.cuda.device_count()):
         cuda_devices.append(
-            f"GPU {i}: {torch.cuda.get_device_name(i)} - Compute Capability {torch.cuda.get_device_capability(i)[0]}.{torch.cuda.get_device_capability(i)[1]}"
+            f"GPU {i}: {torch.cuda.get_device_name(i)} - "
+            f"Compute Capability {torch.cuda.get_device_capability(i)[0]}."
+            f"{torch.cuda.get_device_capability(i)[1]}"
         )
     LLAMA_DEVICE_ENUM = cuda_devices + ["CPU"]
     LLAMA_DEVICE_PLACEHOLDER = cuda_devices[0]
