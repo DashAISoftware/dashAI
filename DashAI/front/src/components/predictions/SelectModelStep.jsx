@@ -111,7 +111,7 @@ function SelectModelStep({
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Provide a prediction name and select a model
+          Provide a prediction name
         </Typography>
 
         <PredictionNameInput
@@ -121,24 +121,32 @@ function SelectModelStep({
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <Paper sx={{ height: 400, width: "100%" }}>
-          <Typography variant="h6" component="h2" sx={{ pl: 2, pt: 1 }}>
-            Select a Model
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            component="h3"
-            sx={{ p: 1 }}
-            color="text.secondary"
-          >
-            Select a model to proceed
-          </Typography>
+        <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
+          Select a model to use for prediction
+        </Typography>
+        <Paper
+          sx={{
+            height: 400,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <DataGrid
             rows={rows}
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}
             onRowClick={handleRowClick}
+            density="compact"
+            sx={{
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "background.box",
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+              },
+            }}
           />
         </Paper>
       </Grid>
