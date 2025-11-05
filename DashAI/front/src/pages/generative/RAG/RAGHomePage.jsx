@@ -9,6 +9,7 @@ import {
   deleteDocument,
 } from "../../../api/rag";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
+import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
 
 function RAGHomePage({
   onSessionCreated,
@@ -105,7 +106,7 @@ function RAGHomePage({
       paddingRight={5}
       gap={1}
     >
-      <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
+      <Typography variant="h5" component="h1" sx={{ mt: 2 }}>
         RAG Sessions
       </Typography>
       <Typography variant="subtitle1" component="p" sx={{ mb: 1 }}>
@@ -166,6 +167,19 @@ function RAGHomePage({
         onAddDocument={handleAddDocument}
         isLoading={documentsLoading}
         showTableTitle={true}
+      />
+
+      <Typography variant="h5" component="h2" sx={{ mt: 2 }}>
+        Prompts
+      </Typography>
+      <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
+        View all available prompts for your RAG sessions
+      </Typography>
+      <PromptSelectionTable
+        showTableTitle={true}
+        loading={false}
+        rowSelectionModel={[]}
+        onRowSelectionModelChange={() => {}}
       />
     </Box>
   );
