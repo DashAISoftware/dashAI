@@ -24,5 +24,6 @@ class MaxAbsScaler(
 
     SCHEMA = MaxAbsScalerSchema
     DESCRIPTION = "Scale each feature by its maximum absolute value."
+    CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Max Abs Scaler"
     IMAGE_PREVIEW = "max_abs_scaler.png"

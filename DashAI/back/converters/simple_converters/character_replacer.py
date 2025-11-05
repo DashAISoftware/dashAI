@@ -33,6 +33,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     If 'replacement_char' is an empty string, 'char_to_replace' will be removed.
     """
 
+    CATEGORY = "Basic Preprocessing"
     SCHEMA = CharacterReplacerSchema
     DESCRIPTION = (
         "Replaces or removes specified characters/substrings "

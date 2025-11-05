@@ -4,6 +4,7 @@ from pathlib import Path
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -21,6 +22,12 @@ from DashAI.back.tasks.tabular_classification_task import TabularClassificationT
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, dataset, output_columns):
         return dataset

@@ -51,6 +51,7 @@ class PolynomialFeatures(
     """Scikit-learn's PolynomialFeatures wrapper for DashAI."""
 
     SCHEMA = PolynomialFeaturesSchema
+    CATEGORY = "Polynomial & Kernel Methods"
     DESCRIPTION = (
         "Generate polynomial and interaction features. "
         "For example, if an input sample is two dimensional "

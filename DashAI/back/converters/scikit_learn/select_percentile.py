@@ -25,6 +25,7 @@ class SelectPercentile(
     DISPLAY_NAME = "Select Percentile"
     IMAGE_PREVIEW = "select_percentile.png"
     metadata = {}
+    CATEGORY = "Feature Selection"
 
     def __init__(self, **kwargs):
         if callable(self._get_tags):

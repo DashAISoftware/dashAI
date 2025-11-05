@@ -21,6 +21,7 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     DESCRIPTION = "Removes the columns selected in scope from the dataset."
     SHORT_DESCRIPTION = "Removes the columns selected in scope from the dataset."
     DISPLAY_NAME = "Column Remover"
+    CATEGORY = "Basic Preprocessing"
     IMAGE_PREVIEW = "column_remover.png"
 
     def __init__(self):

@@ -37,6 +37,7 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     DESCRIPTION = "SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."
     DISPLAY_NAME = "SMOTE-ENN (Hybrid Sampling)"
     IMAGE_PREVIEW = "smoteenn.png"
+    CATEGORY = "Resampling & Class Balancing"
 
     def __init__(self, **kwargs):
         self.smote = SMOTE(
@@ -45,7 +46,7 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
             k_neighbors=kwargs.get("k_neighbors"),
         )
 
-        super(SMOTEENNConverter, self).__init__(
+        super().__init__(
             smote=self.smote,
             sampling_strategy=kwargs.get("sampling_strategy", "auto"),
             random_state=kwargs.get("random_state"),

@@ -76,6 +76,7 @@ class TruncatedSVD(
     DISPLAY_NAME = "Truncated SVD"
     IMAGE_PREVIEW = "truncated_svd.png"
     metadata = {}
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

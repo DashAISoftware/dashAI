@@ -77,6 +77,7 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
         "Constructs an approximate feature map for an arbitrary kernel "
         "using a subset of the data as basis."
     )
+    CATEGORY = "Dimensionality Reduction"
     DISPLAY_NAME = "Nystroem Approximation"
     IMAGE_PREVIEW = "nystroem.png"
 

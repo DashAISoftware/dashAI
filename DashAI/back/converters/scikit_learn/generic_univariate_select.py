@@ -41,3 +41,4 @@ class GenericUnivariateSelect(
     DISPLAY_NAME = "Generic Univariate Select"
     IMAGE_PREVIEW = "generic_univariate_select.png"
     metadata = {}
+    CATEGORY = "Feature Selection"

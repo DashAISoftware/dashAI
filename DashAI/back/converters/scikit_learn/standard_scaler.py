@@ -39,5 +39,6 @@ class StandardScaler(
     DESCRIPTION = (
         "Standardize features by removing the mean and scaling to unit variance."
     )
+    CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Standard Scaler"
     IMAGE_PREVIEW = "standard_scaler.png"
