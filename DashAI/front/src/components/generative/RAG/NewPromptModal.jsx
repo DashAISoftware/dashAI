@@ -152,11 +152,13 @@ export default function NewPromptModal({
         <TextField
           fullWidth
           label="Prompt"
+          placeholder={`Here you can modify the prompt, for example:\nEach user message is added as {input}\nThe sources are added as {chunks}`}
           multiline
           minRows={4}
           value={promptTemplate}
           onChange={(e) => setPromptTemplate(e.target.value)}
           sx={{ mt: 2 }}
+          InputLabelProps={{ shrink: true }}
         />
       </DialogContent>
       <DialogActions>
