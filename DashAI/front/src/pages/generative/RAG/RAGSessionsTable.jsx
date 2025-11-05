@@ -131,7 +131,7 @@ export default function RAGSessionsTable({
           sx={{ mb: 4 }}
         >
           <Typography variant="h5" component="h2">
-            Current RAG Sessions
+            Current RAG sessions
           </Typography>
           <Button
             variant="contained"
