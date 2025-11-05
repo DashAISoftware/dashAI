@@ -154,6 +154,7 @@ function Upload({ onFileUpload }) {
               overflow: "auto",
               position: "relative",
             }}
+            data-tour="upload-area"
             // blocks the upload of a new file if the file state is not empty
             onClick={datasetState === EMPTY ? handleButtonClick : null}
             onDragEnter={datasetState === EMPTY ? handleDrag : null}

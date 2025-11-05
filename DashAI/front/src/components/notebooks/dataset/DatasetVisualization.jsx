@@ -17,6 +17,7 @@ import {
 import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
+import { useTourContext } from "../../tour/TourProvider";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +41,7 @@ export default function DatasetVisualization({
 
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
+  const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -211,6 +213,7 @@ export default function DatasetVisualization({
               }}
               endIcon={<AddIcon />}
               sx={{ mr: 2, height: "100%" }}
+              data-tour="new-experiment-button-notebook"
             >
               New Experiment
             </Button>
@@ -218,9 +221,15 @@ export default function DatasetVisualization({
               variant="contained"
               endIcon={<AddIcon />}
               disabled={isProcessing}
+              className="new-notebook-button"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowCreateNotebookModal(true);
+                if (tourContext && tourContext.run) {
+                  setTimeout(() => {
+                    tourContext.nextStep();
+                  }, 200);
+                }
               }}
               sx={{ height: "100%" }}
             >
@@ -265,7 +274,9 @@ export default function DatasetVisualization({
 
         <CreateNotebookModal
           open={showCreateNotebookModal}
-          onClose={() => setShowCreateNotebookModal(false)}
+          onClose={() => {
+            setShowCreateNotebookModal(false);
+          }}
           onCreateNotebook={handleCreateNotebook}
           dataset={dataset}
           datasetInfo={datasetInfo}

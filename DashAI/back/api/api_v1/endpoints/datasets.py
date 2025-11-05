@@ -196,9 +196,15 @@ async def create_dataset(
     Dataset
         The newly created dataset with NOT_STARTED status.
     """
-    logger.debug("Creating new dataset entry.")
     with session_factory() as db:
         try:
+            existing = db.query(Dataset).filter(Dataset.name == params.name).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"A dataset with the name '{params.name}' already exists",
+                )
+
             dataset = Dataset(
                 name=params.name,
                 file_path="",
@@ -208,8 +214,18 @@ async def create_dataset(
             db.refresh(dataset)
             return dataset
 
+        except HTTPException:
+            raise
+        except exc.IntegrityError as e:
+            logger.exception(e)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A dataset with the name '{params.name}' already exists",
+            ) from e
         except exc.SQLAlchemyError as e:
             logger.exception(e)
+            db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",

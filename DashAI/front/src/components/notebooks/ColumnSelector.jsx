@@ -299,6 +299,7 @@ function ColumnSelector({
 
       {/* Data Grid */}
       <DataGrid
+        data-tour="column-selector"
         key={`${datasetColumns.length}-${inputCardinality.exact}-${inputCardinality.max}`}
         autoHeight
         rows={rows}

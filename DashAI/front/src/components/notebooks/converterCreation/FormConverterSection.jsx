@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
@@ -49,13 +48,10 @@ export default function FormConverterSection({
         enqueueConverterJob(data.id)
           .then((jobResponse) => {
             if (jobResponse && jobResponse.id) {
-              console.log(`Starting to track converter job: ${jobResponse.id}`);
-
               startJobPolling(
                 jobResponse.id,
 
                 (result) => {
-                  console.log("Converter job completed successfully:", result);
                   enqueueSnackbar(
                     `Converter ${tool.name} processed successfully`,
                     {
@@ -108,16 +104,19 @@ export default function FormConverterSection({
       });
   };
 
+  const needsScroll = step === 1;
+
   return (
     <Box
       sx={{
-        overflow: "auto",
+        overflow: needsScroll ? "scroll" : "auto",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
+        maxHeight: "100%",
       }}
+      data-tour="column-selector-converter-container"
     >
-      {/* Step content */}
       {step === 0 && (
         <ScopeStepConverter
           supervised={tool.metadata.supervised}

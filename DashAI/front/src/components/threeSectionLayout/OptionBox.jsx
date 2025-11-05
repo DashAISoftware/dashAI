@@ -12,6 +12,7 @@ export default function OptionBox({
   description,
   onClick,
   Icon = null,
+  ...otherProps
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));
@@ -28,6 +29,7 @@ export default function OptionBox({
         textTransform: "none",
         borderRadius: 2,
       }}
+      {...otherProps}
     >
       <Paper
         elevation={2}

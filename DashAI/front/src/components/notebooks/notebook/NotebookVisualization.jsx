@@ -89,6 +89,7 @@ export default function NotebookVisualization({
             existingDatasets={existingDatasets}
             height={topHeight}
             onAccordionChange={handleAccordionChange}
+            className="dataset-preview-section"
           />
         </Box>
 

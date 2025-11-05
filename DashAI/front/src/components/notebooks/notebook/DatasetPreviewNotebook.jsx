@@ -18,6 +18,7 @@ import { getDatasetFile } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetPreviewNotebook({
   notebook,
@@ -25,6 +26,7 @@ export default function DatasetPreviewNotebook({
   existingDatasets = [],
   height,
   onAccordionChange,
+  className = "",
 }) {
   if (!notebook) {
     return (
@@ -47,6 +49,7 @@ export default function DatasetPreviewNotebook({
     useState(false);
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
+  const tourContext = useTourContext();
 
   const getDatasetName = () => {
     if (!notebook.dataset_id || !existingDatasets.length) {
@@ -102,6 +105,7 @@ export default function DatasetPreviewNotebook({
         height: "100%",
         transition: "opacity 0.2s ease",
       }}
+      className={`dataset-preview-section ${className}`}
     >
       <Accordion
         width="100%"
@@ -149,6 +153,11 @@ export default function DatasetPreviewNotebook({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSaveDatasetModal(true);
+                if (tourContext && tourContext.run) {
+                  setTimeout(() => {
+                    tourContext.nextStep();
+                  }, 500);
+                }
               }}
               sx={{
                 fontSize: "0.7rem",
@@ -157,6 +166,7 @@ export default function DatasetPreviewNotebook({
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
+              className="save-dataset-button"
             >
               Save as new Dataset
             </Button>

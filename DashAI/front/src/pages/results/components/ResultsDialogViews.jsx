@@ -14,7 +14,7 @@ function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
           </Typography>
         </Grid>
       </Grid>
-      <Grid sx={{ my: 1 }}>
+      <Grid sx={{ my: 1 }} data-tour="exp-results-view-tabs">
         <Grid container justifyContent="center">
           <TimestampWrapper eventName={TIMESTAMP_KEYS.experiments.viewGraphs}>
             <Button

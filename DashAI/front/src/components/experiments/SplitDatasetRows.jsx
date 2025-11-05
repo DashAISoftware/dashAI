@@ -249,6 +249,7 @@ function SplitDatasetRows({
         </Grid>
       </Grid>
       <RadioGroup
+        data-tour="exp-dataset-splits"
         value={splitType}
         onChange={handleSplitTypeChange}
         name="radio-buttons-group"

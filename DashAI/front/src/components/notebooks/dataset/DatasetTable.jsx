@@ -35,6 +35,7 @@ export default function DatasetTable({
   pageSizeOptions = [5, 10, 25],
   datasetPath,
   containerHeight,
+  density = "compact",
   ...props
 }) {
   const [rows, setRows] = useState([]);

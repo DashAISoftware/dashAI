@@ -14,6 +14,7 @@ import ConverterHistoryList from "../converter/ConverterHistoryList";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
 import { generateSequentialName } from "../../../utils/nameGenerator";
+import { useTourContext } from "../../tour/TourProvider";
 
 export function SaveDatasetModal({
   open,
@@ -24,9 +25,13 @@ export function SaveDatasetModal({
 }) {
   const [name, setName] = useState("");
   const [frozenDefaultName, setFrozenDefaultName] = useState("");
+  const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
 
   const { defaultName } = useMemo(() => {
+    if (tourContext && tourContext.run) {
+      return { defaultName: "Clean personality dataset" };
+    }
     return generateSequentialName({
       base: "Dataset",
       items: existingDatasets,
@@ -87,7 +92,7 @@ export function SaveDatasetModal({
           <Close />
         </IconButton>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent data-tour="save-dataset-modal-notebook">
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
           <NoteBox message="A new dataset will be created with these transformations. It can be used with other modules without affecting the original." />
           <TextField
@@ -122,6 +127,7 @@ export function SaveDatasetModal({
               }}
               saveButtonText="Save Dataset"
               backButtonText="Cancel"
+              dataTour="save-dataset-button-notebook"
             />
           </Box>
         </Box>
