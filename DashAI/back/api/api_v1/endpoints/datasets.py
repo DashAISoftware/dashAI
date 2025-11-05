@@ -1,13 +1,15 @@
 import io
+import json
 import logging
 import os
 import shutil
 from typing import Any, Dict
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.csv as csv
 import pyarrow.ipc as ipc
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -25,6 +27,153 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# Server-side filtering and pagination
+@router.get("/filter/")
+async def filter_dataset_file(
+    path: str,
+    page: int = 0,
+    page_size: int = 10,
+    filter_model: str = Query(None, alias="filterModel"),
+):
+    """
+    Fetch filtered and paginated dataset rows based on the provided
+    filterModel from the frontend.
+    """
+    arrow_file_path = f"{path}/dataset/data.arrow"
+    rows = []
+    table = None
+    with pa.memory_map(arrow_file_path, "r") as source:
+        reader = ipc.RecordBatchFileReader(source)
+        batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
+        table = pa.Table.from_batches(batches)
+
+    # Parse filter_model if present
+    filter_dict = None
+    if filter_model:
+        logger.info(f"[FILTER DEBUG] filter_model param: {filter_model}")
+        try:
+            filter_dict = json.loads(filter_model)
+            logger.info(f"[FILTER DEBUG] filter_dict parsed: {filter_dict}")
+        except Exception as e:
+            logger.error(f"[FILTER DEBUG] Error parsing filter_model: {e}")
+            filter_dict = None
+
+    # Apply filters if filter_model and items are provided
+    if filter_dict and "items" in filter_dict:
+        for item in filter_dict["items"]:
+            col = item.get("field") or item.get("columnField")
+            op = item.get("operator") or item.get("operatorValue")
+            val = item.get("value")
+            if col and op:
+                col_type = table[col].type
+
+                def cast_value(v, col_type=col_type):
+                    if pa.types.is_integer(col_type):
+                        try:
+                            return int(v)
+                        except Exception:
+                            return v
+                    elif pa.types.is_floating(col_type):
+                        try:
+                            return float(v)
+                        except Exception:
+                            return v
+                    elif pa.types.is_boolean(col_type):
+                        if isinstance(v, bool):
+                            return v
+                        if str(v).lower() in ["true", "1"]:
+                            return True
+                        if str(v).lower() in ["false", "0"]:
+                            return False
+                        return v
+                    return v
+
+                if op == "contains" and val is not None:
+                    # Case-insensitive contains
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring(as_str, str(val).lower())
+                    table = table.filter(mask)
+                elif op == "doesNotContain" and val is not None:
+                    # Case-insensitive doesNotContain
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.invert(pc.match_substring(as_str, str(val).lower()))
+                    table = table.filter(mask)
+                elif op == "startsWith" and val is not None:
+                    # Case-insensitive startsWith
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring_regex(as_str, f"^{str(val).lower()}")
+                    table = table.filter(mask)
+                elif op == "endsWith" and val is not None:
+                    # Case-insensitive endsWith
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring_regex(as_str, f"{str(val).lower()}$")
+                    table = table.filter(mask)
+                    table = table.filter(mask)
+                elif op == "endsWith" and val is not None:
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.cast(table[col], pa.string())
+                        mask = pc.match_substring_regex(as_str, f"{val}$")
+                    else:
+                        mask = pc.match_substring_regex(table[col], f"{val}$")
+                    table = table.filter(mask)
+                elif op == "isEmpty":
+                    if pa.types.is_string(col_type):
+                        mask = pc.or_(pc.equal(table[col], ""), pc.is_null(table[col]))
+                    else:
+                        mask = pc.is_null(table[col])
+                    table = table.filter(mask)
+                elif op == "isNotEmpty":
+                    if pa.types.is_string(col_type):
+                        mask = pc.and_(
+                            pc.invert(pc.equal(table[col], "")),
+                            pc.invert(pc.is_null(table[col])),
+                        )
+                    else:
+                        mask = pc.invert(pc.is_null(table[col]))
+                    table = table.filter(mask)
+                elif op == "isAnyOf" and val is not None:
+                    values = (
+                        val
+                        if isinstance(val, list)
+                        else [v.strip() for v in str(val).split(",")]
+                    )
+                    casted_values = [cast_value(v) for v in values]
+                    mask = pc.in_list(table[col], pa.array(casted_values))
+                    table = table.filter(mask)
+
+    filtered = (
+        filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
+    )
+    start = page * page_size
+    paged_table = table.slice(start, page_size)
+    rows = [
+        {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
+        for i in range(paged_table.num_rows)
+    ]
+    if filtered:
+        total_for_pagination = table.num_rows
+    else:
+        try:
+            info = get_dataset_info(path)
+            total_for_pagination = info["total_rows"]
+        except Exception:
+            total_for_pagination = table.num_rows
+
+    return JSONResponse(content={"rows": rows, "total": total_for_pagination})
 
 
 @router.post("/", response_model=schemas.Dataset, status_code=status.HTTP_201_CREATED)

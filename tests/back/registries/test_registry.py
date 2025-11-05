@@ -78,6 +78,7 @@ COMPONENT1_DICT = {
     "metadata": None,
     "description": None,
     "display_name": None,
+    "color": None,
 }
 COMPONENT2_DICT = {
     "name": "Component2",
@@ -88,6 +89,7 @@ COMPONENT2_DICT = {
     "metadata": None,
     "description": None,
     "display_name": None,
+    "color": None,
 }
 SUBCOMPONENT1_DICT = {
     "name": "SubComponent1",
@@ -98,6 +100,7 @@ SUBCOMPONENT1_DICT = {
     "metadata": None,
     "description": None,
     "display_name": None,
+    "color": None,
 }
 COMPONENT3_DICT = {
     "name": "Component3",
@@ -108,6 +111,7 @@ COMPONENT3_DICT = {
     "metadata": None,
     "description": "Some static component",
     "display_name": None,
+    "color": None,
 }
 RELATED_COMPONENT1_DICT = {
     "name": "RelatedComponent1",
@@ -118,6 +122,7 @@ RELATED_COMPONENT1_DICT = {
     "metadata": None,
     "description": None,
     "display_name": None,
+    "color": None,
 }
 RELATED_COMPONENT2_DICT = {
     "name": "RelatedComponent2",
@@ -128,6 +133,7 @@ RELATED_COMPONENT2_DICT = {
     "metadata": None,
     "description": None,
     "display_name": None,
+    "color": None,
 }
 
 

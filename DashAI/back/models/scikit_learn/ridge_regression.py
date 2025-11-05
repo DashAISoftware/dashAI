@@ -89,6 +89,8 @@ class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
     """Scikit-learn's Ridge regression wrapper for DashAI."""
 
     SCHEMA = RidgeRegressionSchema
+    DISPLAY_NAME: str = "Ridge Regression"
+    COLOR: str = "#2196F3"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

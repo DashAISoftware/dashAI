@@ -78,6 +78,8 @@ class OpusMtEnESTransformer(TranslationModel):
     """
 
     SCHEMA = OpusMtEnESTransformerSchema
+    DISPLAY_NAME: str = "Opus MT En-Es Transformer"
+    COLOR: str = "#4CAF50"
 
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer.

@@ -185,7 +185,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               {compatibleModels.length > 0 &&
                 compatibleModels.map((model) => (
                   <MenuItem key={model.name} value={model.name}>
-                    {model.name}
+                    {model.display_name || model.name}
                   </MenuItem>
                 ))}
             </TextField>
@@ -218,8 +218,8 @@ ConfigureModelsStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

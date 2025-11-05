@@ -71,7 +71,9 @@ export default function SelectDataloaderStep({
           onCancel={goToPrevStep}
           onFormSubmit={goToNextStep}
           formik={{
-            errors: selectedDataloader.name ? {} : { dataloader: "Required" },
+            errors: selectedDataloader.display_name
+              ? {}
+              : { dataloader: "Required" },
           }}
           saveButtonText="Next"
           backButtonText="Back"

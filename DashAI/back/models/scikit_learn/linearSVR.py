@@ -120,6 +120,8 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     wrapper for DashAI."""
 
     SCHEMA = LinearSVRSchema
+    DISPLAY_NAME: str = "Linear Support Vector Regression"
+    COLOR: str = "#2196F3"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
