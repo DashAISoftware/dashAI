@@ -1,66 +1,111 @@
-name: Build and Test
+name: Build, Test & Executable
+
 on:
   push:
   pull_request:
 
 jobs:
-  react-build-test:
+  react-build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: DashAI/front
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Enable Corepack and use Yarn 3
         run: corepack enable
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18.x'
           cache: 'yarn'
           cache-dependency-path: DashAI/front/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
-      - uses: actions/upload-artifact@v4
+      - name: Install and build
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build
           retention-days: 1
-      - run: yarn test --passWithNoTests
+      - name: Run frontend tests
+        run: yarn test --passWithNoTests
 
   pytest:
-    needs: react-build-test
+    needs: react-build
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ github.event_name == 'pull_request' && fromJson('["3.10", "3.11", "3.12", "3.13"]') || fromJson('["3.10"]') }}
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [ "3.10" ]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - uses: actions/cache@v3
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
-
       - name: Upgrade pip tools
-        run: pip install --upgrade pip setuptools wheel
-      - run: pip install --upgrade --upgrade-strategy eager -r requirements.txt
-      - run: pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
-
-      - name: Prepare frontend build
-        run: mkdir -p DashAI/front/build
-
-      - uses: actions/download-artifact@v4
+        run: python -m pip install --upgrade pip setuptools wheel
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build
       - name: Test with pytest
         run: pytest -v
+
+  build-windows-executable:
+    needs: react-build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: DashAI/front/build
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies (CPU-only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-cpu.txt
+          pip install pyinstaller
+          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+
+      - name: Build executable
+        shell: cmd
+        run: |
+          if exist "%PythonPath%\Lib\site-packages\llama_cpp\lib" (
+              echo Found llama_cpp/lib — adding binaries
+              pyinstaller -F -n DashAI-launcher-cpu --clean ^
+                --add-data "DashAI/front/build;DashAI/front/build" ^
+                --add-data "%PythonPath%\Lib\site-packages\transformers;transformers" ^
+                --add-binary "%PythonPath%\Lib\site-packages\llama_cpp\lib\*;llama_cpp/lib" ^
+                --additional-hooks-dir=hooks DashAI/__main__.py
+          ) else (
+              echo No llama_cpp/lib — building without binaries
+              pyinstaller -F -n DashAI-launcher-cpu --clean ^
+                --add-data "DashAI/front/build;DashAI/front/build" ^
+                --add-data "%PythonPath%\Lib\site-packages\transformers;transformers" ^
+                --additional-hooks-dir=hooks DashAI/__main__.py
+          )
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: DashAI-windows-cpu
+          path: dist/DashAI-launcher-cpu.exe
+          retention-days: 1
