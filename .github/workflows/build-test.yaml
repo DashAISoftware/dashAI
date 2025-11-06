@@ -87,7 +87,7 @@ jobs:
       - name: Build executable
         shell: cmd
         run: |
-          for /f "delims=" %%i in ('python -c "import site; print(site.getsitepackages()[0])"') do set SITEPKG=%%i
+          for /f "delims=" %%i in ('python -c "import site; s=site.getsitepackages(); print(s[-1])"') do set SITEPKG=%%i
           echo SITEPKG=%SITEPKG%
           if exist "%SITEPKG%\llama_cpp\lib" (
               echo Found llama_cpp/lib — adding binaries
