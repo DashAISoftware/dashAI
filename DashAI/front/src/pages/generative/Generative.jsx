@@ -6,6 +6,7 @@ import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
+import DocumentsBar from "../../components/generative/DocumentsBar";
 
 import RAGHomePage from "./RAG/RAGHomePage";
 
@@ -112,23 +113,28 @@ export default function Generative() {
         </MainGenerativeBox>
       </Box>
 
-      {!isRAGTask() && (
-        <Box width="22%">
-          <Box
-            width="100%"
-            height="100%"
-            sx={{ backgroundColor: "background.box", borderRadius: 2 }}
-          >
-            {!selectedSessionId ? (
+      <Box width="22%">
+        <Box
+          width="100%"
+          height="100%"
+          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+        >
+          {selectedSessionId ? (
+            isRAGTask() ? (
+              <DocumentsBar
+                selectedSessionId={selectedSessionId}
+                taskName={selectedTaskName}
+              />
+            ) : (
               <ParamsBar
                 selectedSessionId={selectedSessionId}
                 onParamsUpdate={onParamsUpdate}
                 taskName={selectedTaskName}
               />
-            ) : null}
-          </Box>
+            )
+          ) : null}
         </Box>
-      )}
+      </Box>
     </Box>
   );
 }
