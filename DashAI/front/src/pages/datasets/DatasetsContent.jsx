@@ -389,7 +389,7 @@ export default function DatasetsPage() {
         pb={1}
         display="flex"
       >
-        <Box width="22%" mr={1} className="datasets-list">
+        <Box width="20%" mr={1} className="datasets-list">
           <LeftBar
             datasets={datasets}
             notebooks={notebooks}
@@ -407,7 +407,7 @@ export default function DatasetsPage() {
         <ExplorersAndConvertersProvider>
           {selectedDatasetId ? (
             <>
-              <Box width="56%" mr={1}>
+              <Box width="60%" mr={1}>
                 <CenterBox>
                   <DatasetVisualization
                     dataset={selectedDataset}
@@ -416,13 +416,13 @@ export default function DatasetsPage() {
                   />
                 </CenterBox>
               </Box>
-              <Box width="22%">
+              <Box width="20%">
                 <RightBar notebook={null} />
               </Box>
             </>
           ) : selectedNotebookId ? (
             <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
-              <Box width="56%" mr={1}>
+              <Box width="60%" mr={1}>
                 <CenterBox>
                   <NotebookVisualization
                     notebook={selectedNotebook}
@@ -431,14 +431,14 @@ export default function DatasetsPage() {
                   />
                 </CenterBox>
               </Box>
-              <Box width="22%">
+              <Box width="20%">
                 <RightBar notebook={selectedNotebook} />
               </Box>
               <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
             </TourProvider>
           ) : (
             <>
-              <Box width="56%" mr={1}>
+              <Box width="60%" mr={1}>
                 <CenterBox>
                   {step === 0 ? (
                     <SelectOptionMenu
@@ -474,7 +474,7 @@ export default function DatasetsPage() {
                   ) : null}
                 </CenterBox>
               </Box>
-              <Box width="22%">
+              <Box width="20%">
                 <RightBar notebook={null} />
               </Box>
             </>
