@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 import textwrap
+from functools import lru_cache
 from pathlib import Path
 
 from packaging.version import Version
@@ -16,6 +17,7 @@ except ImportError:
     llama_cpp = None
 
 
+@lru_cache(maxsize=1)
 def get_llama_gpu_devices_formatted() -> list[str]:
     """
     Return a list of formatted GPU device strings detected by llama_cpp.
