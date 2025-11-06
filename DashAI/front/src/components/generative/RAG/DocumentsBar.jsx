@@ -28,6 +28,11 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
           name: doc.file_name,
           type: doc.file_type,
           uploadedAt: doc.created,
+          file_name: doc.file_name,
+          file_type: doc.file_type,
+          preview: doc.file_url,
+          created: doc.created,
+          optional_metadata: doc.optional_metadata,
         }));
 
         setDocuments(transformedDocuments);
@@ -55,11 +60,6 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
     );
     setFilteredDocuments(filtered);
   }, [searchQuery, documents]);
-
-  const handleDocumentClick = (document) => {
-    console.log("Document clicked:", document);
-    // TODO: Implementar acción al hacer click (ej: mostrar preview, descargar, etc.)
-  };
 
   return (
     <Box
@@ -101,10 +101,7 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
         }}
       >
         {filteredDocuments.length > 0 ? (
-          <DocumentList
-            documents={filteredDocuments}
-            onDocumentClick={handleDocumentClick}
-          />
+          <DocumentList documents={filteredDocuments} />
         ) : (
           <Box
             sx={{
