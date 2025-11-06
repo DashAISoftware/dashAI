@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
-import SearchBar from "../threeSectionLayout/SearchBar";
+import SearchBar from "../../threeSectionLayout/SearchBar";
 import DocumentList from "./DocumentList";
 import { useSnackbar } from "notistack";
-
-// TODO: Crear esta función API cuando esté disponible
-// import { getSessionDocuments } from "../../api/rag";
+import { getSessionDocuments } from "../../../api/rag";
 
 export default function DocumentsBar({ selectedSessionId, taskName }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,33 +20,18 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
       }
 
       try {
-        // TODO: Reemplazar con la llamada API real cuando esté disponible
-        // const data = await getSessionDocuments(selectedSessionId);
+        const data = await getSessionDocuments(selectedSessionId);
 
-        // Por ahora, datos mock para desarrollo
-        const mockDocuments = [
-          {
-            id: 1,
-            name: "Document 1.pdf",
-            type: "pdf",
-            uploadedAt: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            name: "Research Paper.txt",
-            type: "txt",
-            uploadedAt: new Date().toISOString(),
-          },
-          {
-            id: 3,
-            name: "Notes.md",
-            type: "md",
-            uploadedAt: new Date().toISOString(),
-          },
-        ];
+        // Transform API response to component format
+        const transformedDocuments = data.map((doc) => ({
+          id: doc.id,
+          name: doc.file_name,
+          type: doc.file_type,
+          uploadedAt: doc.created,
+        }));
 
-        setDocuments(mockDocuments);
-        setFilteredDocuments(mockDocuments);
+        setDocuments(transformedDocuments);
+        setFilteredDocuments(transformedDocuments);
       } catch (error) {
         enqueueSnackbar("Failed to fetch documents", {
           variant: "error",
