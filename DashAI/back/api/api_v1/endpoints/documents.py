@@ -24,6 +24,9 @@ from DashAI.back.api.api_v1.schemas import DocumentResponse
 from DashAI.back.dependencies.database.models import (
     Document as DocumentDBModel,
 )
+from DashAI.back.dependencies.database.models import (
+    GenerativeSession,
+)
 from DashAI.back.models.RAG.utils import hash_function
 
 router = APIRouter()
@@ -261,6 +264,65 @@ async def upload_document(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
                 ) from e
+
+
+@router.get("/session/{session_id}", response_model=List[DocumentResponse])
+async def get_documents_by_session(
+    session_id: int,
+    request: Request,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get all documents associated with a specific RAG session."""
+    with session_factory() as db:
+        try:
+            # Get the session
+            session = db.query(GenerativeSession).filter_by(id=session_id).first()
+            if not session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Session {session_id} does not exist.",
+                )
+
+            # Extract document IDs from session parameters
+            document_ids = session.parameters.get("documents", [])
+            if not document_ids:
+                return []
+
+            # Query documents by IDs
+            documents = (
+                db.query(DocumentDBModel)
+                .filter(DocumentDBModel.id.in_(document_ids))
+                .all()
+            )
+
+            documents_responses = []
+            base = str(request.base_url).rstrip("/")
+            for doc in documents:
+                documents_responses.append(
+                    DocumentResponse(
+                        id=doc.id,
+                        file_name=doc.file_name,
+                        file_type=doc.file_type,
+                        file_hash=doc.file_hash,
+                        created=doc.created,
+                        last_modified=doc.last_modified,
+                        optional_metadata=doc.optional_metadata,
+                        related_sessions=[
+                            session.id for session in doc.get_related_sessions
+                        ]
+                        if doc.pipeline_links
+                        else None,
+                        file_url=f"{base}{base_url}/{doc.id}/download",
+                    )
+                )
+
+            return documents_responses
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.get("/related-sessions/{document_id}", response_model=List[int])
