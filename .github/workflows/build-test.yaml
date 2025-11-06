@@ -83,23 +83,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-cpu.txt
           pip install pyinstaller
-          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 
       - name: Build executable
         shell: cmd
         run: |
-          if exist "%PythonPath%\Lib\site-packages\llama_cpp\lib" (
+          for /f "delims=" %%i in ('python -c "import site; print(site.getsitepackages()[0])"') do set SITEPKG=%%i
+          echo SITEPKG=%SITEPKG%
+          if exist "%SITEPKG%\llama_cpp\lib" (
               echo Found llama_cpp/lib — adding binaries
               pyinstaller -F -n DashAI-launcher-cpu --clean ^
                 --add-data "DashAI/front/build;DashAI/front/build" ^
-                --add-data "%PythonPath%\Lib\site-packages\transformers;transformers" ^
-                --add-binary "%PythonPath%\Lib\site-packages\llama_cpp\lib\*;llama_cpp/lib" ^
+                --add-data "%SITEPKG%\transformers;transformers" ^
+                --add-binary "%SITEPKG%\llama_cpp\lib\*;llama_cpp/lib" ^
                 --additional-hooks-dir=hooks DashAI/__main__.py
           ) else (
               echo No llama_cpp/lib — building without binaries
               pyinstaller -F -n DashAI-launcher-cpu --clean ^
                 --add-data "DashAI/front/build;DashAI/front/build" ^
-                --add-data "%PythonPath%\Lib\site-packages\transformers;transformers" ^
+                --add-data "%SITEPKG%\transformers;transformers" ^
                 --additional-hooks-dir=hooks DashAI/__main__.py
           )
 
