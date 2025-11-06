@@ -5,6 +5,9 @@ on:
   pull_request:
 
 jobs:
+  # ============================================================
+  # 1. Build del frontend (React)
+  # ============================================================
   react-build:
     runs-on: ubuntu-latest
     defaults:
@@ -33,6 +36,9 @@ jobs:
       - name: Run frontend tests
         run: yarn test --passWithNoTests
 
+  # ============================================================
+  # 2. Tests de backend (pytest)
+  # ============================================================
   pytest:
     needs: react-build
     runs-on: ${{ matrix.os }}
@@ -41,6 +47,7 @@ jobs:
       matrix:
         python-version: [ "3.10" ]
         os: [ ubuntu-latest, windows-latest, macos-latest ]
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -59,16 +66,22 @@ jobs:
       - name: Test with pytest
         run: pytest -v
 
+  # ============================================================
+  # 3. Build ejecutable Windows (CPU only)
+  # ============================================================
   build-windows-executable:
     needs: react-build
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build
-      - uses: actions/setup-python@v5
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install dependencies (CPU-only)
@@ -95,18 +108,23 @@ jobs:
                 --add-data "%SITEPKG%\transformers;transformers" ^
                 --additional-hooks-dir=hooks DashAI/__main__.py
           )
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
         with:
           name: DashAI-windows-cpu
           path: dist/DashAI-launcher-cpu.exe
           retention-days: 1
 
+  # ============================================================
+  # 4. Build ejecutable macOS ARM64 (Apple Silicon)
+  # ============================================================
   build-macos-arm64:
     needs: react-build
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build
@@ -127,18 +145,27 @@ jobs:
             --add-data "DashAI/front/build:DashAI/front/build" \
             --add-data "$SITEPKG/transformers:transformers" \
             --additional-hooks-dir=hooks DashAI/__main__.py
-      - uses: actions/upload-artifact@v4
+      - name: Sign ARM64 binary (ad-hoc)
+        run: |
+          chmod +x dist/DashAI-launcher-cpu-arm64
+          codesign --force --deep --sign - dist/DashAI-launcher-cpu-arm64
+      - name: Upload ARM64 executable
+        uses: actions/upload-artifact@v4
         with:
           name: DashAI-macos-arm64
           path: dist/DashAI-launcher-cpu-arm64
           retention-days: 1
 
+  # ============================================================
+  # 5. Build ejecutable macOS x86_64 (Intel)
+  # ============================================================
   build-macos-x86_64:
     needs: react-build
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
         with:
           name: react-build
           path: DashAI/front/build
@@ -159,7 +186,12 @@ jobs:
             --add-data "DashAI/front/build:DashAI/front/build" \
             --add-data "$SITEPKG/transformers:transformers" \
             --additional-hooks-dir=hooks DashAI/__main__.py
-      - uses: actions/upload-artifact@v4
+      - name: Sign x86_64 binary (ad-hoc)
+        run: |
+          chmod +x dist/DashAI-launcher-cpu-x86_64
+          codesign --force --deep --sign - dist/DashAI-launcher-cpu-x86_64
+      - name: Upload x86_64 executable
+        uses: actions/upload-artifact@v4
         with:
           name: DashAI-macos-x86_64
           path: dist/DashAI-launcher-cpu-x86_64
