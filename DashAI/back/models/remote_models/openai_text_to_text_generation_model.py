@@ -7,26 +7,23 @@ try:
 except ImportError:
     Llama = None
 
+from openai import OpenAI
+
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
-    string_field,
     float_field,
     int_field,
+    none_type,
     schema_field,
-    none_type
+    string_field,
 )
-from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
-
-from DashAI.back.core.schema_fields import (
-    BaseSchema,
-    enum_field,
+from DashAI.back.models.text_to_text_generation_model import (
+    TextToTextGenerationTaskModel,
 )
 
-from openai import OpenAI
-import requests
-
-# Hardcoded since the list of available models is only accessible via API call with api key :c
+# Hardcoded since the list of available models is only accessible via API call with
+# api key :c
 gpt_available_models = [
     "gpt-4-0613",
     "gpt-4",
@@ -63,66 +60,92 @@ gpt_available_models = [
     "gpt-5-nano",
     "gpt-5-pro-2025-10-06",
     "gpt-5-pro",
-    "gpt-3.5-turbo-16k"]
+    "gpt-3.5-turbo-16k",
+]
+
 
 class OpenAITextToTextGenerationModelSchema(BaseSchema):
-    
-    API_key : schema_field(
+    API_key: schema_field(
         string_field(),
         placeholder="",
         description="API key for OpenAI access.",
-    ) # type: ignore
+    )  # type: ignore
 
-    model_name : schema_field(
-        enum_field(enum=gpt_available_models),       
+    model_name: schema_field(
+        enum_field(enum=gpt_available_models),
         placeholder="gpt-3.5-turbo",
         description="The specific OpenAI model version to use.",
-    ) # type: ignore
+    )  # type: ignore
 
-    """ @field_validator('frequency_penalty', 'max_completions_tokens', 'presence_penalty', 'temperature', 'top_p', mode='before')
-    def validate_optional_fields(cls, v):
+    @field_validator(
+        "frequency_penalty",
+        "max_completions_tokens",
+        "presence_penalty",
+        "temperature",
+        "top_p",
+        mode="before",
+    )
+    def validate_optional_fields(cls, v):  # noqa: N805
         if v == "":
             return None
         return v
-    
-    frequency_penalty : schema_field(
+
+    frequency_penalty: schema_field(
         none_type(float_field(ge=-2.0, le=2.0)),
         placeholder=None,
-        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."
-        ,
+        description=(
+            "Number between -2.0 and 2.0. Positive values penalize new tokens "
+            "based on their existing frequency in the text so far, decreasing the "
+            "model's likelihood to repeat the same line verbatim."
+        ),
     )  # type: ignore
 
-    max_completions_tokens : schema_field(
+    max_completions_tokens: schema_field(
         none_type(int_field(ge=1)),
         placeholder=None,
-        description="An upper bound for the number of tokens that can be generated for a completion, including visible output tokens and reasoning tokens.",
+        description=(
+            "An upper bound for the number of tokens that can be generated for a "
+            "completion, including visible output tokens and reasoning tokens."
+        ),
     )  # type: ignore
 
-    presence_penalty : schema_field(
+    presence_penalty: schema_field(
         none_type(float_field(ge=-2.0, le=2.0)),
         placeholder=None,
-        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
+        description=(
+            "Number between -2.0 and 2.0. Positive values penalize new tokens "
+            "based on whether they appear in the text so far, increasing the "
+            "model's likelihood to talk about new topics."
+        ),
     )  # type: ignore
 
-    temperature : schema_field(
+    temperature: schema_field(
         none_type(float_field(ge=0.0, le=2.0)),
         placeholder=None,
-        description="temperature: What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or `top_p` but not both."
+        description=(
+            "temperature: What sampling temperature to use, between 0 and 2. "
+            "Higher values like 0.8 will make the output more random, while lower "
+            "values like 0.2 will make it more focused and deterministic. "
+            "We generally recommend altering this or `top_p` but not both."
+        ),
     )  # type: ignore
 
-    top_p : schema_field(
+    top_p: schema_field(
         none_type(float_field(ge=0.0, le=2.0)),
         placeholder=None,
-        description="An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.\mWe generally recommend altering this or `temperature` but not both."
-    )  # type: ignore  """
-
-
-    
-
+        description=(
+            "An alternative to sampling with temperature, called nucleus sampling, "
+            "where the model considers the results of the tokens with top_p "
+            "probability mass. So 0.1 means only the tokens comprising the top 10% "
+            "probability mass are considered. "
+            "We generally recommend altering this or `temperature` but not both."
+        ),
+    )  # type: ignore
 
 
 class OpenAITextToTextGenerationModel(TextToTextGenerationTaskModel):
     """Wrapper around OpenAI's text-to-text generation models."""
+
     SCHEMA = OpenAITextToTextGenerationModelSchema
 
     def __init__(self, **kwargs):
@@ -133,6 +156,6 @@ class OpenAITextToTextGenerationModel(TextToTextGenerationTaskModel):
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:
         output = self.client.chat.completions.create(
             model=self.model_name,
-            messages=prompt
+            messages=prompt,
         )
         return [output.choices[0].message.content]

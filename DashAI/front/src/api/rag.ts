@@ -187,6 +187,18 @@ export const loadDocuments = async (): Promise<IDocumentResponse[]> => {
   return response.data;
 };
 
+export const getSessionDocuments = async (
+  sessionId: number,
+): Promise<IDocumentResponse[]> => {
+  const response = await api.get<IDocumentResponse[]>(
+    `/v1/document/session/${sessionId}`,
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to load session documents: ${response.statusText}`);
+  }
+  return response.data;
+};
+
 export const deleteDocument = async (documentId: number): Promise<void> => {
   const response = await api.delete(`/v1/document/${documentId}`);
   if (response.status !== 204) {

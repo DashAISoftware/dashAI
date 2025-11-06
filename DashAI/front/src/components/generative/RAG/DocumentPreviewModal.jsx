@@ -7,23 +7,26 @@ export default function DocumentPreviewModal({
   document,
   txtContent,
 }) {
+  const fileType = document?.file_type || document?.type;
+  const preview = document?.preview;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Preview Document</DialogTitle>
       <DialogContent>
-        {document && document.file_type === "pdf" && document.preview && (
+        {document && fileType === "pdf" && preview && (
           <iframe
-            src={document.preview}
+            src={preview}
             title="PDF Preview"
             width="100%"
             height="600px"
             style={{ border: 0 }}
           />
         )}
-        {document && document.file_type === "txt" && (
+        {document && fileType === "txt" && (
           <pre style={{ maxHeight: 600, overflow: "auto" }}>{txtContent}</pre>
         )}
-        {document && !["pdf", "txt"].includes(document.file_type) && (
+        {document && !["pdf", "txt"].includes(fileType) && (
           <Box>No preview available for this file type.</Box>
         )}
       </DialogContent>

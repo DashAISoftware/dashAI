@@ -138,7 +138,7 @@ export default function PromptSelectionTable({
           sx={{ mb: 4 }}
         >
           <Typography variant="h5" component="h2">
-            Prompts
+            Current prompts
           </Typography>
           <Button
             variant="contained"
@@ -153,10 +153,13 @@ export default function PromptSelectionTable({
       {!showTableTitle && (
         <Grid
           container
-          justifyContent="flex-end"
+          justifyContent="space-between"
           alignItems="center"
           sx={{ mb: 4 }}
         >
+          <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
+            Choose or customize your prompt to define the model’s behavior.
+          </Typography>
           <Button
             variant="contained"
             color="primary"
