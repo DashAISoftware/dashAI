@@ -120,7 +120,7 @@ jobs:
   # ============================================================
   build-macos-arm64:
     needs: react-build
-    runs-on: macos-15
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - name: Download React build artifact
