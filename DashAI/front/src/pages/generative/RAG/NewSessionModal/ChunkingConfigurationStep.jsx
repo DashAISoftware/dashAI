@@ -1,8 +1,16 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Autocomplete, TextField, Typography } from "@mui/material";
-import useSchema from "../../../../hooks/useSchema";
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Autocomplete,
+  TextField,
+  Typography,
+  Stack,
+  DialogContentText,
+} from "@mui/material";
+import PropTypes from "prop-types";
 import { getChunkingComponents } from "../../../../api/rag";
-import FormSchemaEmbedded from "../FormSchemaEmbedded";
+import FormSchemaLayout from "../../../../components/shared/FormSchemaLayout";
+import FormSchema from "../../../../components/shared/FormSchema";
 
 export default function ChunkingConfigurationStep({
   chunkingModel,
@@ -11,111 +19,87 @@ export default function ChunkingConfigurationStep({
 }) {
   const [chunkingOptions, setChunkingOptions] = useState([]);
   const [selectedChunking, setSelectedChunking] = useState(null);
-  const { defaultValues } = useSchema({ modelName: selectedChunking?.name });
-
-  // Memoize the initial values to prevent unnecessary re-renders
-  const initialValues = useMemo(() => {
-    if (chunkingModel?.params && Object.keys(chunkingModel.params).length > 0) {
-      return chunkingModel.params;
-    }
-    return defaultValues || {};
-  }, [chunkingModel?.params, defaultValues]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchChunkingModels = async () => {
       const data = await getChunkingComponents();
-      setChunkingOptions(data);
-
-      if (chunkingModel?.component) {
-        const existing = data.find((c) => c.name === chunkingModel.component);
-        if (existing) {
-          setSelectedChunking(existing);
-        }
-      }
+      if (isMounted) setChunkingOptions(data || []);
     };
     fetchChunkingModels();
-  }, [chunkingModel?.component]);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const isNextEnabled = () => {
-    if (!selectedChunking) {
-      return false;
-    }
-    if (!chunkingModel || !chunkingModel.params) {
-      return false;
-    }
-
-    return Object.keys(chunkingModel.params).every((param) => {
-      const value = chunkingModel.params[param];
-      return value !== undefined && value !== null && value !== "";
-    });
-  };
-
+  // If parent gives a preselected chunking model, sync it
   useEffect(() => {
-    const enabled = isNextEnabled();
-    setNextEnabled(enabled);
-  }, [selectedChunking, chunkingModel]);
+    if (!chunkingOptions.length) return;
+    if (chunkingModel?.component) {
+      const found = chunkingOptions.find(
+        (c) => c.name === chunkingModel.component,
+      );
+      if (found) setSelectedChunking(found);
+    }
+    // Enable next when there is a selection
+    setNextEnabled(!!chunkingModel?.component);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chunkingOptions, chunkingModel?.component]);
 
   const handleChunkingSelectionChange = (event, newValue) => {
     setSelectedChunking(newValue);
-    if (newValue) {
-      const isDifferentModel =
-        !chunkingModel?.component || chunkingModel.component !== newValue.name;
+    setError(null);
 
-      const modelData = {
+    if (newValue) {
+      // Set initial params using placeholders if available
+      const initialParams = Object.keys(
+        newValue.schema?.properties || {},
+      ).reduce((acc, k) => {
+        acc[k] = newValue.schema.properties[k].placeholder ?? "";
+        return acc;
+      }, {});
+
+      setChunkingModel({
         component: newValue.name,
-        params: isDifferentModel
-          ? newValue.schema?.properties
-            ? getInitialParamsFromSchema(newValue.schema.properties)
-            : {}
-          : chunkingModel?.params || {},
-      };
-      setChunkingModel(modelData);
+        params: chunkingModel?.params ?? initialParams,
+      });
+      setNextEnabled(true);
     } else {
       setChunkingModel({ component: "", params: {} });
+      setNextEnabled(false);
     }
   };
 
-  const handleParametersSave = (params) => {
-    const modelData = {
+  const handleFormSubmit = (values) => {
+    // Generic validation for any chunking model with chunk_size and chunk_overlap
+    if (
+      values.chunk_size !== undefined &&
+      values.chunk_overlap !== undefined &&
+      values.chunk_overlap >= values.chunk_size
+    ) {
+      const errorMsg =
+        "chunk_overlap must be less than chunk_size. " +
+        `Got chunk_overlap=${values.chunk_overlap} and chunk_size=${values.chunk_size}`;
+      setError(errorMsg);
+      setNextEnabled(false);
+      return;
+    }
+
+    setError(null);
+    setChunkingModel({
       component: selectedChunking.name,
-      params: params,
-    };
-    setChunkingModel(modelData);
-
-    const isValid =
-      selectedChunking &&
-      params &&
-      Object.keys(params).every((param) => {
-        const value = params[param];
-        return value !== undefined && value !== null && value !== "";
-      });
-
-    setNextEnabled(isValid);
+      params: values,
+    });
+    setNextEnabled(true);
   };
 
-  function getInitialParamsFromSchema(schemaProperties) {
-    if (!schemaProperties) return {};
-    return Object.keys(schemaProperties).reduce((acc, key) => {
-      acc[key] =
-        schemaProperties[key].placeholder !== undefined
-          ? schemaProperties[key].placeholder
-          : "";
-      return acc;
-    }, {});
-  }
-
   return (
-    <Box
-      display="flex"
-      height="100%"
-      width="100%"
-      flexDirection="column"
-      justifyContent="flex-start"
-      overflow="auto"
-    >
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Configure Chunking Model
-      </Typography>
+    <Stack spacing={3} sx={{ height: "100%" }}>
+      <DialogContentText>
+        <Typography sx={{ fontSize: 16 }}>Configure Chunking Model</Typography>
+      </DialogContentText>
+
       <Autocomplete
         disablePortal
         options={chunkingOptions}
@@ -126,16 +110,37 @@ export default function ChunkingConfigurationStep({
         renderInput={(params) => (
           <TextField {...params} label="Chunking Model" />
         )}
-        sx={{ mb: 3 }}
       />
-      {selectedChunking && selectedChunking.schema && (
-        <FormSchemaEmbedded
-          model={selectedChunking.name}
-          initialValues={initialValues}
-          onFormSubmit={handleParametersSave}
-          autoSave={true}
-        />
+
+      {error && (
+        <Typography variant="body2" color="error" sx={{ px: 1 }}>
+          {error}
+        </Typography>
       )}
-    </Box>
+
+      {selectedChunking && (
+        <FormSchemaLayout>
+          <FormSchema
+            autoSave
+            model={selectedChunking.name}
+            initialValues={chunkingModel?.params || {}}
+            onFormSubmit={handleFormSubmit}
+            setError={(err) => {
+              if (err) {
+                console.error("FormSchema error:", err);
+                setError(err?.message || "Validation error");
+                setNextEnabled(false);
+              }
+            }}
+          />
+        </FormSchemaLayout>
+      )}
+    </Stack>
   );
 }
+
+ChunkingConfigurationStep.propTypes = {
+  chunkingModel: PropTypes.object,
+  setChunkingModel: PropTypes.func.isRequired,
+  setNextEnabled: PropTypes.func,
+};

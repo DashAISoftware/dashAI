@@ -1,13 +1,15 @@
 from typing import List
 
+from pydantic import field_validator
+
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     int_field,
     schema_field,
 )
-from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
-from DashAI.back.models.RAG.documents.base_document import BaseDocument
-from DashAI.back.models.RAG.documents.chunk import Chunk
+from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
+    BaseChunkingModel,
+)
 
 
 class CharacterChunkModelSchema(BaseSchema):
@@ -22,8 +24,23 @@ class CharacterChunkModelSchema(BaseSchema):
     chunk_overlap: schema_field(
         int_field(gt=0),
         placeholder=20,
-        description="Number of characters to overlap between chunks.",
+        description=(
+            "Number of characters to overlap between chunks. "
+            "Must be less than chunk_size."
+        ),
     )  # type: ignore
+
+    @field_validator("chunk_overlap", mode="after")
+    @classmethod
+    def validate_chunk_overlap(cls, v, info):
+        """Validate that chunk_overlap is less than chunk_size."""
+        chunk_size = info.data.get("chunk_size")
+        if chunk_size is not None and v >= chunk_size:
+            raise ValueError(
+                f"chunk_overlap must be less than chunk_size. "
+                f"Got chunk_overlap={v} and chunk_size={chunk_size}"
+            )
+        return v
 
 
 class CharacterChunkModel(BaseChunkingModel):
@@ -53,7 +70,7 @@ class CharacterChunkModel(BaseChunkingModel):
 
         Args:
             text (str): The input text to be chunked.
-        
+
         Returns:
             List[str]: A list of text chunks.
         """
