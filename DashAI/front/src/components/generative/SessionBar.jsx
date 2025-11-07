@@ -8,6 +8,7 @@ import SessionList from "./SessionList";
 import SessionBarHeader from "./SessionBarHeader";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
+import BarHeader from "../threeSectionLayout/BarHeader";
 
 export default function SessionBar({
   sessions,
@@ -83,6 +84,19 @@ export default function SessionBar({
         justifyContent={"flex-start"}
         minHeight={0}
       >
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pr: 2,
+          }}
+        >
+          <BarHeader />
+        </Box>
+        <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+
         <Box
           p={2}
           sx={{ height: "64px", display: "flex", alignItems: "center" }}
