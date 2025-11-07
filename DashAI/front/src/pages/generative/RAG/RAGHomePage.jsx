@@ -22,18 +22,24 @@ function RAGHomePage({
   const [editingSession, setEditingSession] = useState(null);
   const [allDocuments, setAllDocuments] = useState([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
+  const ragSessions = sessions.filter((s) => s.task_name === "RAGTask");
 
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getRAGSessions();
-      setSessions(data);
+      setSessions((prevSessions) => {
+        const nonRAGSessions = prevSessions.filter(
+          (s) => s.task_name !== "RAGTask",
+        );
+        return [...data, ...nonRAGSessions];
+      });
     } catch (error) {
       console.error("RAGHomePage: Error loading RAG sessions:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [setSessions]);
 
   const fetchAllDocuments = useCallback(async () => {
     setDocumentsLoading(true);
@@ -50,7 +56,7 @@ function RAGHomePage({
   useEffect(() => {
     loadSessions();
     fetchAllDocuments();
-  }, [fetchAllDocuments, setSessions]);
+  }, [loadSessions, fetchAllDocuments]);
 
   const handleOpenNewSessionModal = (session = null) => {
     setEditingSession(session);
@@ -85,7 +91,8 @@ function RAGHomePage({
 
   const handleRemoveSession = useCallback(
     (id) => {
-      setSessions((prev) => prev.filter((s) => s.id !== id));
+      const numericId = typeof id === "string" ? parseInt(id, 10) : id;
+      setSessions((prev) => prev.filter((s) => s.id !== numericId));
     },
     [setSessions],
   );
@@ -121,7 +128,7 @@ function RAGHomePage({
         onSessionSaved={handleCreateOrUpdateSession}
         onSessionSelect={onSessionSelect}
         session={editingSession}
-        existingSessions={sessions}
+        existingSessions={ragSessions}
       />
 
       {loading ? (
@@ -130,7 +137,7 @@ function RAGHomePage({
         </Box>
       ) : (
         <RAGSessionsTable
-          sessions={sessions.map((s) => ({ ...s, id: String(s.id) }))}
+          sessions={ragSessions.map((s) => ({ ...s, id: String(s.id) }))}
           onEdit={(session) => handleOpenNewSessionModal(session)}
           onSelect={onSessionSelect}
           onRefreshSessions={loadSessions}

@@ -1,4 +1,6 @@
 from typing import List
+
+from pydantic import field_validator
 from transformers import AutoTokenizer
 
 from DashAI.back.core.schema_fields import (
@@ -7,7 +9,9 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
+from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
+    BaseChunkingModel,
+)
 
 
 class TokenChunkModelSchema(BaseSchema):
@@ -31,8 +35,23 @@ class TokenChunkModelSchema(BaseSchema):
     chunk_overlap: schema_field(
         int_field(ge=0),
         placeholder=20,
-        description="The number of overlapping tokens between chunks.",
+        description=(
+            "The number of overlapping tokens between chunks. "
+            "Must be less than chunk_size."
+        ),
     )  # type: ignore
+
+    @field_validator("chunk_overlap")
+    @classmethod
+    def validate_chunk_overlap(cls, v, info):
+        """Validate that chunk_overlap is less than chunk_size."""
+        chunk_size = info.data.get("chunk_size")
+        if chunk_size is not None and v >= chunk_size:
+            raise ValueError(
+                f"chunk_overlap must be less than chunk_size. "
+                f"Got chunk_overlap={v} and chunk_size={chunk_size}"
+            )
+        return v
 
 
 class TokenChunkModel(BaseChunkingModel):
@@ -44,11 +63,9 @@ class TokenChunkModel(BaseChunkingModel):
         self.chunk_overlap = self.parameters["chunk_overlap"]
         self.tokenizer_name = self.parameters["tokenizer_name"]
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
-        super().__init__(**kwargs)        
+        super().__init__(**kwargs)
 
-    
     def chunk_text(self, text: str) -> List[str]:
-
         tokens = self.tokenizer.tokenize(text)
 
         token_chunks = []
