@@ -73,28 +73,24 @@ export default function DatasetsNotebooksBar({
 
   return (
     <SideBar>
-      {/* Header */}
-      <BarHeader />
-      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
-
       {/* Create new item button */}
-      {selectedDatasetId || selectedNotebookId ? (
-        <NewItemButton
-          onClick={handleNewSessionButton}
-          title="New Dataset/Notebook"
-        />
-      ) : (
-        <Box px={2} py={1}>
+      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+        {selectedDatasetId || selectedNotebookId ? (
+          <NewItemButton
+            onClick={handleNewSessionButton}
+            title="New Dataset/Notebook"
+          />
+        ) : (
           <Typography variant="body1" color="textSecondary">
             Dataset Module
           </Typography>
-        </Box>
-      )}
+        )}
+      </Box>
 
       {/* Search bar global */}
-      <Box px={2} py={1} flex="0 0 auto">
+      <Box px={2} pb={2} flex={"0 0 auto"}>
         <SearchBar
-          placeholder="Search datasets and notebooks"
+          placeholder="Search Datasets and Notebooks"
           value={searchQuery}
           onChange={handleSearchChange}
         />
