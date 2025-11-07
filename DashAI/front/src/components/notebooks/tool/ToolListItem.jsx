@@ -141,14 +141,28 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
                 {tool.display_name || tool.name}
               </Typography>
             </Box>
-            <Typography
-              variant="caption"
+            <Box
               sx={{
-                color: disabled ? "rgb(90, 90, 90)" : "rgb(113, 113, 122)",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: 0.5,
               }}
             >
-              {tool.metadata.category ?? "Other"}
-            </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: disabled ? "rgb(90, 90, 90)" : "rgb(113, 113, 122)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  width: 0,
+                  flexGrow: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {tool.metadata.category ?? "Other"}
+              </Typography>
+            </Box>
           </Box>
 
           {/* Preview Thumbnail */}
@@ -161,6 +175,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
               border: `1px solid ${
                 disabled ? "rgb(50, 50, 50)" : "rgb(63, 63, 70)"
               }`,
+              display: { xs: "none", lg: "none", xl: "block" },
               overflow: "hidden",
               flexShrink: 0,
             }}

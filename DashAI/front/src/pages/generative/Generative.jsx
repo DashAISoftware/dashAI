@@ -59,7 +59,7 @@ export default function Generative() {
 
   return (
     <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="22%" mr={1}>
+      <Box width="20%" mr={1}>
         <SessionBar
           sessions={sessions}
           selectedSessionId={selectedSessionId}
@@ -69,7 +69,7 @@ export default function Generative() {
           stepIndex={stepIndex}
         />
       </Box>
-      <Box width="56%" mr={1}>
+      <Box width="60%" mr={1}>
         <MainGenerativeBox>
           {selectedSessionId ? (
             <GenerativeChat
@@ -97,7 +97,7 @@ export default function Generative() {
           )}
         </MainGenerativeBox>
       </Box>
-      <Box width="22%">
+      <Box width="20%">
         <Box
           width="100%"
           height="100%"

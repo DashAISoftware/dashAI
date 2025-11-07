@@ -104,12 +104,10 @@ export default function FormConverterSection({
       });
   };
 
-  const needsScroll = step === 1;
-
   return (
     <Box
       sx={{
-        overflow: needsScroll ? "scroll" : "auto",
+        overflow: "visible",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
