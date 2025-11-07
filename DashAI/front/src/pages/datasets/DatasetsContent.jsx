@@ -385,11 +385,11 @@ export default function DatasetsPage() {
       <Box
         height="calc(100vh - 74px)"
         width="100%"
-        p={1.5}
-        pb={1}
+        // p={1.5}
+        // pb={1}
         display="flex"
       >
-        <Box width="22%" mr={1} className="datasets-list">
+        <Box width="22%" className="datasets-list">
           <LeftBar
             datasets={datasets}
             notebooks={notebooks}
@@ -407,7 +407,7 @@ export default function DatasetsPage() {
         <ExplorersAndConvertersProvider>
           {selectedDatasetId ? (
             <>
-              <Box width="56%" mr={1}>
+              <Box width="56%">
                 <CenterBox>
                   <DatasetVisualization
                     dataset={selectedDataset}
@@ -422,7 +422,7 @@ export default function DatasetsPage() {
             </>
           ) : selectedNotebookId ? (
             <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
-              <Box width="56%" mr={1}>
+              <Box width="56%">
                 <CenterBox>
                   <NotebookVisualization
                     notebook={selectedNotebook}
@@ -438,7 +438,7 @@ export default function DatasetsPage() {
             </TourProvider>
           ) : (
             <>
-              <Box width="56%" mr={1}>
+              <Box width="56%">
                 <CenterBox>
                   {step === 0 ? (
                     <SelectOptionMenu
