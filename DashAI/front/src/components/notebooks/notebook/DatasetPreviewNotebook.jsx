@@ -172,7 +172,7 @@ export default function DatasetPreviewNotebook({
           </Box>
         </AccordionSummary>
 
-        <AccordionDetails sx={{ p: 0 }}>
+        <AccordionDetails>
           <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}

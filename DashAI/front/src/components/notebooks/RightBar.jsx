@@ -242,9 +242,11 @@ export default function RightBar({ notebook, onToggle }) {
             borderBottom: "1px solid #333",
             flexShrink: 0,
             height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
           }}
         >
-          <Typography variant="h6">Analysis Tools</Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -252,6 +254,7 @@ export default function RightBar({ notebook, onToggle }) {
           >
             <ChevronRight />
           </IconButton>
+          <Typography variant="h6">Analysis Tools</Typography>
         </Box>
 
         {notebook ? (
