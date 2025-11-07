@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from sqlalchemy.orm import Session
-from typing import Dict, List
+from typing import Dict, Final, List
 
 from sklearn.metrics.pairwise import pairwise_distances
 
@@ -22,7 +22,19 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.models.RAG.documents import BaseDocument, Chunk
 from DashAI.back.models.RAG.embeddings import DenseEmbedding
-from DashAI.back.models.RAG.Retrievers.retriever_model import RetrieverModel
+from DashAI.back.models.RAG.extra_args_enum import (
+    PIPELINE_ID,
+    DB,
+    COMPONENT_REGISTRY,
+    ENV_RAG_PATH,
+    DOCUMENTS,
+    CHUNKS,
+    CHUNKING_MODEL_ID,
+    EMBEDDING_DB_MODEL,
+    EMBEDDING_MATRICES_DB_MODELS,
+    DENSE_RETRIEVER_DB_MODEL
+)
+from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 
 class DenseRetrieverSchema(BaseSchema):
     """Schema for Dense Retriever."""
@@ -58,6 +70,18 @@ class DenseRetriever(RetrieverModel):
     """
 
     SCHEMA = DenseRetrieverSchema
+    REQUIRED_EXTRA_KWARGS: Final[List[str]] = [
+        PIPELINE_ID, 
+        DB, 
+        COMPONENT_REGISTRY, 
+        ENV_RAG_PATH, 
+        DOCUMENTS, 
+        CHUNKS, 
+        CHUNKING_MODEL_ID, 
+        EMBEDDING_DB_MODEL, 
+        EMBEDDING_MATRICES_DB_MODELS,
+        DENSE_RETRIEVER_DB_MODEL
+        ]
 
     pipeline_id: int
     db: Session
@@ -79,7 +103,16 @@ class DenseRetriever(RetrieverModel):
     chunk_id_to_doc_id: Dict[int, int]
 
     def __init__(self, **kwargs):
-        # RetrieverModel class fetches retriever_db_model if exists
+        kwargs["class_name"] = self.__class__.__name__
+        
+        self.dense_retriever_db_model: DenseRetrieverDBModel = kwargs.pop(DENSE_RETRIEVER_DB_MODEL)
+        if self.dense_retriever_db_model:
+            self.id = self.dense_retriever_db_model.id
+        else:
+            self.id = None
+        self.embedding_db_model = kwargs.pop(EMBEDDING_DB_MODEL)
+        self.embedding_db_matrices: Dict[int, EmbeddingMatrixDBModel] = kwargs.pop(EMBEDDING_MATRICES_DB_MODELS)
+
         self.embedding_class_name = kwargs["encoding_model"]["properties"]["params"]["comp"]["component"]
         self.embedding_params = kwargs["encoding_model"]["properties"]["params"]["comp"]["params"]
         kwargs["encoding_model"] = kwargs["encoding_model"]["properties"]["params"]["comp"]
@@ -92,43 +125,12 @@ class DenseRetriever(RetrieverModel):
             "parameters": self.embedding_params
         }
    
-        self.fetch_db_models()
+        #self.fetch_db_models()
         self.similarity_metric = self.params["similarity_metric"]
         self.top_k = self.params["top_k"]
 
-        if self.embedding_db_model is None:
-            self.embedding_db_model = self.create_embedding_db_model()
         self.compute_missing_embeddings()
-        if not self.dense_retriever_db_model:
-            db_model = DenseRetrieverDBModel(
-                class_name=self.__class__.__name__,
-                parameters=self.params,
-                embedding_model_id=self.embedding_db_model.id
-            ) 
-            self.db.add(db_model)
-            self.db.commit()
-            self.db.refresh(db_model)
-            self.dense_retriever_db_model = db_model
-        if not self.retriever_db_model:
-            retriever_db_model = RetrieverDBModel(
-                class_name=self.__class__.__name__,
-                dense_retriever_id=self.dense_retriever_db_model.id,
-                sparse_retriever_id=None
-            )
-            self.db.add(retriever_db_model)
-            self.db.commit()
-            self.db.refresh(retriever_db_model)
-            self.retriever_db_model = retriever_db_model
-
         self.init_similarity_matrix()
-
-    def __fetch_embedding_db_model(self)-> EmbeddingDBModel|None:
-        """Fetch the embedding database model if it exists."""
-        embedding_db_model = self.db.query(EmbeddingDBModel).filter_by(
-            class_name=self.embedding_class_name,
-            parameters=self.embedding_params
-        ).first()
-        return embedding_db_model
 
     def fetch_db_models(self):
         """Fetch all database models related to the retriever if they exist."""
@@ -167,17 +169,6 @@ class DenseRetriever(RetrieverModel):
 
         return embeddings_matrices_db_models
 
-    def create_embedding_db_model(self) -> EmbeddingDBModel:
-        """Create the embedding model in the database."""
-        new_model = EmbeddingDBModel(
-            class_name=self.embedding_class_name,
-            parameters=self.embedding_params
-        )
-        self.db.add(new_model)
-        self.db.commit()
-        self.db.refresh(new_model)
-        return new_model
-
     def save(self):
         """Save the dense retriever model to the database."""
         pass      
@@ -206,9 +197,6 @@ class DenseRetriever(RetrieverModel):
                 matrix_shape=list(matrix_shape),
                 storage_folder=storage_folder
             )
-            self.db.add(new_db_model)
-            self.db.commit()
-            self.db.refresh(new_db_model)
             self.embedding_db_matrices[doc_id] = new_db_model
 
     def init_similarity_matrix(self):

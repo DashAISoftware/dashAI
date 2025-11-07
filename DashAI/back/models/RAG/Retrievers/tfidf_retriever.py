@@ -1,6 +1,7 @@
 import os
 import pickle
 from typing import Dict, List, Tuple
+from typing_extensions import Final
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -31,7 +32,16 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import BaseDocument, Chunk
-from DashAI.back.models.RAG.Retrievers.sparse_retriever import SparseRetriever
+from DashAI.back.models.RAG.retrievers.sparse_retriever import SparseRetriever
+from DashAI.back.models.RAG.extra_args_enum import (
+    PIPELINE_ID,
+    DB,
+    COMPONENT_REGISTRY,
+    ENV_RAG_PATH,
+    DOCUMENTS,
+    CHUNKS,
+    CHUNKING_MODEL_ID
+)
 
 
 class TFIDFVectorizerSchema(BaseSchema):
@@ -158,6 +168,7 @@ class TFIDFVectorizerSchema(BaseSchema):
 
 
 class TFIDFVectorizerModel(BaseModel):
+    REQUIRED_EXTRA_KWARGS: Final[List[str]] = [PIPELINE_ID, DB, COMPONENT_REGISTRY, ENV_RAG_PATH, DOCUMENTS, CHUNKS, CHUNKING_MODEL_ID]
     SCHEMA = TFIDFVectorizerSchema
 
     def __init__(self, **kwargs) -> None:
@@ -267,6 +278,7 @@ class TFIDFRetriever(SparseRetriever):
             chunk_size (int): The size of chunks to split the documents into.
             chunk_overlap (int): The overlap between chunks.
         """
+        kwargs["class_name"] = self.__class__.__name__
         self.retriever_db_model = None
         self.sparse_retriever_db_model = None
         kwargs["TFIDFVectorizer"] = kwargs["TFIDFVectorizer"]["properties"]["params"][

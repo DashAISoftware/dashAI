@@ -879,7 +879,10 @@ class RAGSparseRetriever(Base):
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     storage_folder: Mapped[str] = mapped_column(String, nullable=False)
-
+    documents_ids: Mapped[List[int]] = mapped_column(JSON, nullable=False)
+    chunking_model_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_chunking_model.id", ondelete="CASCADE"), nullable=False
+    )
     related_retriever: Mapped["RAGRetriever"] = relationship(
         "RAGRetriever",
         back_populates="sparse_retriever",
@@ -896,6 +899,10 @@ class RAGDenseRetriever(Base):
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     embedding_model_id: Mapped[int] = mapped_column(
         ForeignKey("rag_embedding_model.id", ondelete="CASCADE"), nullable=False
+    )
+    document_ids: Mapped[List[int]] = mapped_column(JSON, nullable=False)
+    chunking_model_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_chunking_model.id", ondelete="CASCADE"), nullable=False
     )
 
     # Relationships

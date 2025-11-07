@@ -1,5 +1,5 @@
 
-from DashAI.back.models.RAG.Retrievers.retriever_model import RetrieverModel
+from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 
 
 class SparseRetriever(RetrieverModel):

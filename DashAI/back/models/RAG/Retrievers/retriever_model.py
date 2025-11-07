@@ -9,19 +9,29 @@ from DashAI.back.dependencies.database.models import(
     RAGRetriever as RetrieverDBModel,
     RAGPipeline as PipelineDBModel,
 )
+from DashAI.back.models.RAG.exceptions import RAGWorkflowError
 from DashAI.back.models.RAG.utils import hash_function
 from sqlalchemy.orm import Session
 
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.RAG.extra_args_enum import (
+    PIPELINE_ID,
+    DB,
+    COMPONENT_REGISTRY,
+    ENV_RAG_PATH,
+    DOCUMENTS,
+    CHUNKS,
+    CHUNKING_MODEL_ID
+)
 
 class RetrieverModel(BaseModel):
     """
     Abstract class to define the interface for retriever models.
     """
 
-    REQUIRED_EXTRA_KWARGS: Final[List[str]] = ["pipeline_id", "db", "component_registry", "env_rag_path", "documents", "chunks", "chunking_model_id"]
-    id: int
+    REQUIRED_EXTRA_KWARGS: Final[List[str]] = [PIPELINE_ID, DB, COMPONENT_REGISTRY, ENV_RAG_PATH, DOCUMENTS, CHUNKS, CHUNKING_MODEL_ID]
 
+    id: int
     pipeline_id: int
     db: Session
     component_registry: ComponentRegistry
@@ -32,10 +42,12 @@ class RetrieverModel(BaseModel):
     chunking_model_id: int
 
     retriever_db_model = RetrieverDBModel
+    class_name: str
+    params: Dict[str, Any]
     
     def __init__(self, **kwargs):
+        self.class_name = kwargs.pop("class_name")
         self.params = kwargs
-        
         self.pipeline_id: int = self.params.pop("pipeline_id")
         self.db: Session = self.params.pop("db")
         self.component_registry: ComponentRegistry = self.params.pop("component_registry")
@@ -106,3 +118,22 @@ class RetrieverModel(BaseModel):
 
     def save(self):
         pass
+
+    @classmethod
+    def load_model_from_db(cls, model_params: Dict[str, Any], **kwargs) -> 'RetrieverModel':
+        raise NotImplementedError("This method should be implemented by subclasses.")
+    
+    @classmethod
+    def save_model_to_db(cls, **kwargs) -> int:
+        raise NotImplementedError("This method should be implemented by subclasses.")
+    
+    def get_id(self) -> int:
+        """Get the ID of the retriever model from the database."""
+        return self.retriever_db_model.id
+    
+    def set_id(self, id: int) -> None:
+        """Set the ID of the retriever model in the database."""
+        if self.id is None:
+            self.id = id
+        else:
+            raise RAGWorkflowError("ID is already set and cannot be modified.")

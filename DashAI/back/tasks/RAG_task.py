@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Optional
+from typing import Any, List, Tuple, Optional, Dict
 from itertools import chain
 
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -12,9 +12,9 @@ class RAGTask(BaseGenerativeTask):
 
     metadata: dict = {
         "inputs_types": [str],
-        "outputs_types": [str],
+        "outputs_types": [str, List[Dict]],
         "inputs_cardinality": 1,
-        "outputs_cardinality": 1,
+        "outputs_cardinality": 2,
     }
 
     DISPLAY_NAME: str = "Retreival-Augmented Generation (RAG) Task"

@@ -20,8 +20,10 @@ from DashAI.back.dependencies.registry.component_registry import ComponentRegist
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.text_to_text_generation_model import TextToTextGenerationTaskModel
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel
+from DashAI.back.models.RAG.chunking_models.chunking_models_factory import ChunkingModelsFactory
 from DashAI.back.models.RAG.prompts import Prompt, DefaultGenerationPrompt, DefaultAugmentationPrompt
-from DashAI.back.models.RAG.Retrievers.retriever_model import RetrieverModel
+from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
+from DashAI.back.models.RAG.retrievers.retriever_models_factory import RetrieverModelsFactory
 
 from DashAI.back.models.RAG.documents import (
     BaseDocument,
@@ -150,38 +152,66 @@ class RAGPipeline(BaseGenerativeModel):
         else:
             self.pipeline_db_model = None
             self.pipeline_id = None
+        
         self.documents_ids: List[int] = kwargs.pop("documents")
+        self.documents = self.load_documents_from_db(documents_ids=self.documents_ids)
+        
         self.prompt_db_id: int = kwargs.pop("prompt_id")
         prompt_db_model: PromptDBModel = self.db.query(PromptDBModel).filter_by(id=self.prompt_db_id).first()
         if not prompt_db_model:
             raise RAGPipelineInitializationError(f"Prompt with ID {self.prompt_db_id} not found in the database.")
-        prompt_model_args = {
-            'component': prompt_db_model.class_name,
-            'params': prompt_db_model.parameters
-        }
+        prompt_class_name = prompt_db_model.class_name
+        prompt_params = prompt_db_model.parameters
 
-        self.documents = self.load_documents_from_db(documents_ids=self.documents_ids)
         self.validate_params(kwargs)
 
         try:
-            
-            config = {
-                'chunking_model': kwargs.pop('chunking_model'),
-                'retriever_model': kwargs.pop('retriever_model'),
-                'generation_model': kwargs.pop('generation_model'),
-                'prompt_model': prompt_model_args
-            }
+            chunking_model_class_name = kwargs['chunking_model']['component']
+            chunking_model_params = kwargs['chunking_model']['params']
+            retriever_model_class_name = kwargs['retriever_model']['component']
+            retriever_model_params = kwargs['retriever_model']['params']
+            generation_model_class_name = kwargs['generation_model']['component']
+            generation_model_params = kwargs['generation_model']['params']
+
         except KeyError as e:
             raise RAGPipelineParametersError(f"Missing required parameter: {str(e)}")
         
-        self.chunking_model = self.init_component(config["chunking_model"])
+        try:
+            chunking_model_class = self.component_registry[chunking_model_class_name]['class']
+            retriever_model_class = self.component_registry[retriever_model_class_name]['class']
+            generation_model_class = self.component_registry[generation_model_class_name]['class']
+            prompt_class = self.component_registry[prompt_class_name]['class']
+        except KeyError as e:
+            raise RAGPipelineInitializationError(f"Component '{str(e)}' not found in the component registry.")
+        
+        self.chunking_model_factory = ChunkingModelsFactory(
+            db = self.db,
+            documents=self.documents
+            )
+        self.chunking_model_id, self.chunking_model = self.chunking_model_factory.init_component(
+            model_class=chunking_model_class,
+            model_params=chunking_model_params
+        )
+        self.chunking_model_factory.update_db_models(self.chunking_model)
+
+        self.retriever_model_factory = RetrieverModelsFactory(
+            db = self.db,
+            pipeline_id = self.pipeline_id,
+            component_registry = self.component_registry,
+            env_rag_path = self.env_rag_path,
+            documents = self.documents,
+            chunks = self.chunking_model.get_chunks(),
+            chunking_model_id = self.chunking_model_id
+            )
+        self.retriever_id, self.retriever = self.retriever_model_factory.init_component(
+            model_class=retriever_model_class,
+            model_params=retriever_model_params
+        )
         self.chunks = self.chunking_model.get_chunks()
         self.chunking_model_id = self.chunking_model.id
 
-        self.retriever = self.init_component(config["retriever_model"])
-        self.retriever_id = self.retriever.retriever_db_model.id
-        self.llm_model = self.init_component(config["generation_model"])
-        self.prompt_model = self.init_component(config["prompt_model"])
+        self.llm_model: TextToTextGenerationTaskModel = generation_model_class(**generation_model_params)
+        self.prompt_model: Prompt = prompt_class(**prompt_params)
         self.retrieval_algorithm = "SINGLE_INTERACTION"
 
     def validate_params(
@@ -307,8 +337,8 @@ class RAGPipeline(BaseGenerativeModel):
             return self.retriever.retrieve(search_terms)
         except Exception as e:
             raise RAGPipelineRuntimeError(f"Document retrieval failed: {str(e)}")
-    
-    def generate(self, input_data: Tuple[str, List[Dict[str, str]]]) -> List[str]:
+
+    def generate(self, input_data: Tuple[str, List[Dict[str, str]]]) -> Tuple[str, Dict[str, Any]]:
         """Generate a response based on the input and retrieved documents.
 
         Args:
@@ -329,11 +359,17 @@ class RAGPipeline(BaseGenerativeModel):
             raise RAGPipelineRuntimeError(f"Failed during retrieval: {str(e)}")
         try:
             chunks_texts = []
+            chunk_dict = {}
             for chunk in chunks:
                 chunk_id = chunk.id
+                chunk_dict[chunk_id] = {}
                 document_id = chunk.document_id
-                document_position = chunk.document_position
+                chunk_dict[chunk_id]['document_id'] = document_id
                 document = self.documents[document_id]
+                chunk_dict[chunk_id]['document_name'] = document.file_name
+                document_position = chunk.document_position
+                chunk_dict[chunk_id]['chunk_position'] = document_position
+                chunk_dict[chunk_id]['chunk_text'] = chunk.text
                 chunks_texts.append(f"Document {document.file_name}, chunk nº {document_position}, text:\n {chunk.text}")
             chunks_text = "\n\n".join(chunks_texts)
             prompt = self.prompt_model.format(
@@ -346,8 +382,7 @@ class RAGPipeline(BaseGenerativeModel):
         try:
             model_input = history + [{"role": "user", "content": prompt}]
             output = self.llm_model.generate(model_input)
-            response_with_sources = f"{output[0]}\n\nSources:\n{chunks_texts}"
-            return [response_with_sources]
+            return [output[0], chunk_dict]
         except Exception as e:
             raise RAGPipelineRuntimeError(f"Failed during LLM generation: {str(e)}")
 
@@ -384,50 +419,3 @@ class RAGPipeline(BaseGenerativeModel):
             documents[doc_id] = document
         return documents
 
-    def init_component(
-            self,
-            config: Dict[str, Any]) -> Any:
-        """
-        Initialize a component based on the provided configuration, using the component registry.
-
-        Args:
-            model_name: The key in the config dict for the component to initialize
-            config: Configuration dictionary containing component details
-
-        Returns:
-            An instance of the initialized component
-
-        Raises:
-            RAGPipelineInitializationError: If the component fails to initialize
-        """
-        
-        model_class_name = config['component']
-        model_params = config['params']
-        model_registry = self.component_registry[model_class_name]
-        model_class = model_registry['class']
-
-        if 'db' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['db'] = self.db
-            model_params['pipeline_id'] = self.pipeline_id
-        if 'pipeline_id' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['pipeline_id'] = self.pipeline_id
-        if 'component_registry' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['component_registry'] = self.component_registry
-        if 'env_rag_path' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['env_rag_path'] = self.env_rag_path
-        
-        if 'documents' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['documents'] = self.documents
-        if 'chunks' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['chunks'] = self.chunks
-        if 'chunking_model_id' in model_class.REQUIRED_EXTRA_KWARGS:
-            model_params['chunking_model_id'] = self.chunking_model_id
-        try:
-            model_instance = model_class(**model_params)
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            
-            raise RAGPipelineInitializationError(f"Failed to initialize {model_class_name}: {str(e)}")
-        return model_instance
-    

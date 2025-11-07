@@ -11,9 +11,6 @@ class PromptSchema(BaseSchema):
         placeholder="",
         description="The prompt template with placeholders.",
     )
-    name: str = schema_field(
-        string_field(), placeholder="", description="Optional name for the prompt."
-    )
 
 
 class Prompt(BaseModel):
