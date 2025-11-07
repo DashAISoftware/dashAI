@@ -24,9 +24,7 @@ export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
   existingDatasets = [],
-  height,
   onAccordionChange,
-  className = "",
 }) {
   if (!notebook) {
     return (
@@ -100,20 +98,12 @@ export default function DatasetPreviewNotebook({
   }, [notebook, explorersAndConverters]);
 
   return (
-    <Box
-      sx={{
-        height: "100%",
-        transition: "opacity 0.2s ease",
-      }}
-      className={`dataset-preview-section ${className}`}
-    >
+    <Box>
       <Accordion
-        width="100%"
         sx={{
           bgcolor: "#212121",
           borderRadius: 2,
           boxShadow: "none",
-          height: "100%",
         }}
         defaultExpanded={true}
         onChange={(event, expanded) => {
@@ -121,7 +111,6 @@ export default function DatasetPreviewNotebook({
             onAccordionChange(expanded);
           }
         }}
-        transition={false}
       >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
@@ -182,29 +171,20 @@ export default function DatasetPreviewNotebook({
             </IconButton>
           </Box>
         </AccordionSummary>
-        <AccordionDetails
-          sx={{
-            p: 0,
-            height: "calc(100% - 64px)",
-          }}
-        >
-          <Box sx={{ height: "100%", width: "100%" }}>
+
+        <AccordionDetails sx={{ p: 0 }}>
+          <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path]}
               initialPageSize={5}
               density="compact"
               datasetPath={notebook.file_path}
-              containerHeight={height ? height - 64 : undefined}
-              pageSizeOptions={[5]}
-              autoHeight={false}
+              pageSizeOptions={[5, 10, 25]}
+              autoHeight={true}
               disableColumnSelector
               disableDensitySelector
               sx={{
-                height: "100%",
-                "& .MuiDataGrid-virtualScroller": {
-                  "overflow-y": "hidden",
-                },
                 "& .MuiTablePagination-select": {
                   display: "none",
                 },

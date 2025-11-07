@@ -24,7 +24,6 @@ import {
  * - autoHeight?: boolean (default true)
  * - pageSizeOptions?: number[] (default [5, 10, 25])
  * - datasetPath?: string (optional) - Path to dataset for CSV export
- * - containerHeight?: number (optional) - Height of the container
  */
 export default function DatasetTable({
   fetchPage,
@@ -34,7 +33,6 @@ export default function DatasetTable({
   autoHeight = true,
   pageSizeOptions = [5, 10, 25],
   datasetPath,
-  containerHeight,
   density = "compact",
   ...props
 }) {
@@ -49,55 +47,6 @@ export default function DatasetTable({
     pageSize: initialPageSize,
   });
   const [filterModel, setFilterModel] = useState({ items: [] });
-
-  useEffect(() => {
-    if (!containerHeight || autoHeight) return;
-
-    const calculatePageSize = () => {
-      const rowHeights = {
-        compact: 28,
-        standard: 52,
-        comfortable: 64,
-      };
-
-      const headerHeight = 85;
-      const footerHeight = 56;
-      const toolbarHeight = 56;
-      const padding = 20;
-
-      const rowHeight = rowHeights[density] || rowHeights.compact;
-      const availableHeight =
-        containerHeight - headerHeight - footerHeight - toolbarHeight - padding;
-      const calculatedPageSize = Math.floor(availableHeight / rowHeight);
-
-      const newPageSize = Math.max(3, Math.min(25, calculatedPageSize));
-
-      if (newPageSize !== paginationModel.pageSize) {
-        setPaginationModel((prev) => ({
-          ...prev,
-          pageSize: newPageSize,
-          page: 0,
-        }));
-      }
-    };
-
-    calculatePageSize();
-  }, [containerHeight, density, autoHeight]);
-
-  const dynamicPageSizeOptions = useMemo(() => {
-    if (!containerHeight || autoHeight) return pageSizeOptions;
-
-    const currentSize = paginationModel.pageSize;
-    const options = new Set([currentSize]);
-
-    [5, 10, 15, 20, 25].forEach((size) => {
-      if (size <= currentSize * 1.5 && size >= currentSize * 0.5) {
-        options.add(size);
-      }
-    });
-
-    return Array.from(options).sort((a, b) => a - b);
-  }, [containerHeight, paginationModel.pageSize, autoHeight, pageSizeOptions]);
 
   useEffect(() => {
     if (!datasetPath) return;
@@ -337,7 +286,7 @@ export default function DatasetTable({
       filterMode="server"
       paginationModel={paginationModel}
       onPaginationModelChange={setPaginationModel}
-      pageSizeOptions={dynamicPageSizeOptions}
+      pageSizeOptions={pageSizeOptions}
       density={density}
       filterModel={filterModel}
       onFilterModelChange={handleFilterModelChange}
