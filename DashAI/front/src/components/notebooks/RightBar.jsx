@@ -234,7 +234,14 @@ export default function RightBar({ notebook }) {
         }}
         className="right-bar-container"
       >
-        <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: "1px solid #333",
+            flexShrink: 0,
+            height: 64,
+          }}
+        >
           <Typography variant="h6">Analysis Tools</Typography>
         </Box>
 
