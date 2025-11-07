@@ -75,8 +75,12 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
                 gap: 1.5,
+                gridTemplateColumns: {
+                  lg: "repeat(1, minmax(0, 1fr))",
+                  xl: "repeat(2, minmax(0, 1fr))",
+                },
+                width: "100%",
               }}
             >
               {list

@@ -1,5 +1,8 @@
-import { useState, useEffect } from "react";
-import { Box } from "@mui/material";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Box, IconButton } from "@mui/material";
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
+import { useTourContext } from "../../components/tour/TourProvider";
 import LeftBar from "../../components/notebooks/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/notebooks/RightBar";
@@ -21,57 +24,32 @@ import {
   deleteNotebook,
   updateNotebook,
 } from "../../api/notebook";
-import { TourProvider } from "../../components/tour/TourProvider";
-import { TourButton } from "../../components/tour/TourButton";
-import { TOUR_KEYS } from "../../constants/tours";
-
 import { enqueueDatasetJob } from "../../api/job";
-import { useSnackbar } from "notistack";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
-import { useTourContext } from "../../components/tour/TourProvider";
 
-export default function DatasetsPage() {
+export default function DatasetsContent() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [selectedNotebookId, setSelectedNotebookId] = useState(0);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
+  const [leftBarVisible, setLeftBarVisible] = useState(true);
+  const [rightBarVisible, setRightBarVisible] = useState(true);
+  const [leftBarWidth, setLeftBarWidth] = useState(20);
+  const [rightBarWidth, setRightBarWidth] = useState(20);
+  const isResizingLeft = useRef(false);
+  const isResizingRight = useRef(false);
+  const [isTogglingLeft, setIsTogglingLeft] = useState(false);
+  const [isTogglingRight, setIsTogglingRight] = useState(false);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
 
-  const menuOptions = [
-    {
-      name: "dataset",
-      display_name: "Upload Dataset",
-      description: "Import your data from various sources and formats.",
-      Icon: null,
-      "data-tour": "dataset-option",
-    },
-    {
-      name: "notebook",
-      display_name: "Create a New Notebook",
-      description: "Start a new analysis session with an existing dataset.",
-      Icon: null,
-      "data-tour": "notebook-option",
-    },
-  ];
-
-  const goToNextStep = (option) => {
-    if (option === "dataset" && tourContext?.run) {
-      setStep((prevStep) => prevStep + 1);
-      setSelectedOption(option);
-      setSelectedNotebookId(null);
-      setSelectedDatasetId(null);
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 600);
-    } else {
-      setStep((prevStep) => prevStep + 1);
-      setSelectedOption(option);
-      setSelectedNotebookId(null);
-      setSelectedDatasetId(null);
-    }
+  const goToNextStep = (option = selectedOption) => {
+    setStep((prevStep) => prevStep + 1);
+    setSelectedOption(option);
+    setSelectedNotebookId(null);
+    setSelectedDatasetId(null);
   };
 
   const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
@@ -168,18 +146,15 @@ export default function DatasetsPage() {
       setSelectedOption(null);
     }
 
-    // Remove the dataset from the state
     setDatasets((prevDatasets) =>
       prevDatasets.filter((dataset) => dataset.id !== id),
     );
 
-    // Remove all notebooks associated with this dataset
     setNotebooks((prevNotebooks) => {
       const filteredNotebooks = prevNotebooks.filter(
         (notebook) => notebook.dataset_id !== id,
       );
 
-      // If the currently selected notebook is being removed, clear the selection
       if (
         selectedNotebookId &&
         prevNotebooks.find(
@@ -273,9 +248,12 @@ export default function DatasetsPage() {
     maxAttempts = 10,
   ) => {
     if (jobId && attempt === 1) {
+      console.log(`Setting up job polling for dataset creation job: ${jobId}`);
+
       startJobPolling(
         jobId,
         async (result) => {
+          console.log(`Dataset job completed successfully`);
           enqueueSnackbar(`Dataset "${datasetName}" created successfully`, {
             variant: "success",
           });
@@ -292,11 +270,17 @@ export default function DatasetsPage() {
               setDatasets(enrichedDatasets);
               setSelectedDatasetId(datasetId);
             } else {
+              console.log(
+                "Dataset job completed but couldn't find real dataset",
+              );
               await fetchDatasets();
               setSelectedDatasetId(datasetId);
             }
           } catch (error) {
-            console.error("Error fetching datasets:", error);
+            console.error(
+              "Error fetching datasets after job completion:",
+              error,
+            );
             await fetchDatasets();
             setSelectedDatasetId(datasetId);
           }
@@ -307,7 +291,24 @@ export default function DatasetsPage() {
             `Error creating dataset: ${result.error || "Unknown error"}`,
             { variant: "error" },
           );
-          fetchDatasets();
+
+          setDatasets((prevDatasets) => {
+            const datasetExists = prevDatasets.some((d) => d.id === datasetId);
+
+            if (datasetExists) {
+              deleteDataset(datasetId).catch((error) => {
+                console.error("Error deleting failed dataset:", error);
+              });
+
+              return prevDatasets.filter((d) => d.id !== datasetId);
+            }
+
+            return prevDatasets;
+          });
+
+          setSelectedDatasetId(null);
+          setStep(0);
+          setSelectedOption(null);
         },
       );
     }
@@ -377,111 +378,290 @@ export default function DatasetsPage() {
     }
   };
 
+  const handleMouseMove = useCallback((e) => {
+    if (isResizingLeft.current) {
+      const container = document.querySelector('[data-container="datasets"]');
+      const containerRect = container.getBoundingClientRect();
+      const newWidth =
+        ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      if (newWidth >= 15 && newWidth <= 40) {
+        setLeftBarWidth(newWidth);
+      }
+    }
+
+    if (isResizingRight.current) {
+      const container = document.querySelector('[data-container="datasets"]');
+      const containerRect = container.getBoundingClientRect();
+      const newWidth =
+        ((containerRect.right - e.clientX) / containerRect.width) * 100;
+      if (newWidth >= 15 && newWidth <= 40) {
+        setRightBarWidth(newWidth);
+      }
+    }
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isResizingLeft.current = false;
+    isResizingRight.current = false;
+    document.body.style.cursor = "default";
+    document.body.style.userSelect = "auto";
+  }, []);
+
+  const handleToggleLeft = () => {
+    setIsTogglingLeft(true);
+    setLeftBarVisible(!leftBarVisible);
+    setTimeout(() => setIsTogglingLeft(false), 300);
+  };
+
+  const handleToggleRight = () => {
+    setIsTogglingRight(true);
+    setRightBarVisible(!rightBarVisible);
+    setTimeout(() => setIsTogglingRight(false), 300);
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
+  const centerWidth =
+    leftBarVisible && rightBarVisible
+      ? 100 - leftBarWidth - rightBarWidth
+      : leftBarVisible
+      ? 100 - leftBarWidth
+      : rightBarVisible
+      ? 100 - rightBarWidth
+      : 100;
+
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
-    <>
+    <Box
+      height="calc(100vh - 74px)"
+      width="100%"
+      display="flex"
+      data-container="datasets"
+    >
+      {/* Left Panel */}
       <Box
-        height="calc(100vh - 74px)"
-        width="100%"
-        // p={1.5}
-        // pb={1}
-        display="flex"
+        width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
+        position="relative"
+        className="datasets-list"
+        sx={{
+          transition: isTogglingLeft
+            ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
+            : "none",
+          opacity: leftBarVisible ? 1 : 0,
+          overflow: "hidden",
+        }}
       >
-        <Box width="22%" className="datasets-list">
-          <LeftBar
-            datasets={datasets}
-            notebooks={notebooks}
-            selectedDatasetId={selectedDatasetId}
-            selectedNotebookId={selectedNotebookId}
-            onDatasetClick={handleDatasetClick}
-            onDatasetDelete={handleDatasetDelete}
-            onDatasetEdit={handleEditDataset}
-            onNotebookClick={handleNotebookClick}
-            onNotebookDelete={handleNotebookDelete}
-            onNotebookEdit={handleEditNotebook}
-            handleNewSessionButton={handleNewSessionButton}
-          />
+        {leftBarVisible && (
+          <>
+            <LeftBar
+              datasets={datasets}
+              notebooks={notebooks}
+              selectedDatasetId={selectedDatasetId}
+              selectedNotebookId={selectedNotebookId}
+              onDatasetClick={handleDatasetClick}
+              onDatasetDelete={handleDatasetDelete}
+              onDatasetEdit={handleEditDataset}
+              onNotebookClick={handleNotebookClick}
+              onNotebookDelete={handleNotebookDelete}
+              onNotebookEdit={handleEditNotebook}
+              handleNewSessionButton={handleNewSessionButton}
+              onToggle={handleToggleLeft}
+            />
+            {/* Resize Handle */}
+            <Box
+              onMouseDown={() => {
+                isResizingLeft.current = true;
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+              }}
+              sx={{
+                position: "absolute",
+                right: -2,
+                top: 0,
+                bottom: 0,
+                width: "5px",
+                cursor: "col-resize",
+                bgcolor: "transparent",
+                transition: "background-color 0.2s ease",
+                "&:hover": {
+                  bgcolor: "primary.main",
+                },
+                zIndex: 10,
+              }}
+            />
+          </>
+        )}
+      </Box>
+
+      {/* Toggle button when left panel is hidden */}
+      {!leftBarVisible && (
+        <IconButton
+          onClick={handleToggleLeft}
+          sx={{
+            position: "absolute",
+            left: 8,
+            top: "50%",
+            transform: "translateY(-50%)",
+            bgcolor: "background.paper",
+            zIndex: 10,
+            transition: "all 0.2s ease",
+            "&:hover": {
+              bgcolor: "action.hover",
+              transform: "translateY(-50%) scale(1.1)",
+            },
+          }}
+        >
+          <ChevronRight />
+        </IconButton>
+      )}
+
+      {/* Center Panel */}
+      <ExplorersAndConvertersProvider>
+        <Box
+          width={`${centerWidth}%`}
+          sx={{
+            transition:
+              isTogglingLeft || isTogglingRight
+                ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                : "none",
+          }}
+        >
+          <CenterBox>
+            {selectedDatasetId ? (
+              <DatasetVisualization
+                dataset={selectedDataset}
+                onNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
+              />
+            ) : selectedNotebookId ? (
+              <NotebookVisualization
+                notebook={selectedNotebook}
+                handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
+                existingDatasets={datasets}
+              />
+            ) : step === 0 ? (
+              <SelectOptionMenu
+                title="Dataset Module"
+                subtitle="Upload your datasets: Explore, analyze, and transform your data with advanced exploratory analysis tools. Create interactive notebooks, generate visualizations, and apply data transformations intuitively."
+                options={[
+                  {
+                    name: "dataset",
+                    display_name: "Upload Dataset",
+                    description:
+                      "Import your data from various sources and formats.",
+                    Icon: null,
+                  },
+                  {
+                    name: "notebook",
+                    display_name: "Create a New Notebook",
+                    description:
+                      "Start a new analysis session with an existing dataset.",
+                    Icon: null,
+                  },
+                ]}
+                searchBar={false}
+                goToNextStep={goToNextStep}
+              />
+            ) : step === 1 && selectedOption === "dataset" ? (
+              <UploadDatasetSteps
+                backHome={() => {
+                  setStep(0);
+                  setSelectedOption(null);
+                  fetchDatasets();
+                }}
+                handleDatasetCreated={handleDatasetCreated}
+                existingDatasets={datasets}
+              />
+            ) : step === 1 && selectedOption === "notebook" ? (
+              <UploadNotebookSteps
+                backHome={() => {
+                  setStep(0);
+                  setSelectedOption(null);
+                  fetchNotebooks();
+                }}
+                datasets={datasets}
+                handleNotebookCreated={handleNotebookCreated}
+                existingNotebooks={notebooks}
+              />
+            ) : null}
+          </CenterBox>
         </Box>
-        <ExplorersAndConvertersProvider>
-          {selectedDatasetId ? (
+
+        {/* Toggle button when right panel is hidden */}
+        {!rightBarVisible && (
+          <IconButton
+            onClick={handleToggleRight}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              bgcolor: "background.paper",
+              zIndex: 10,
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "action.hover",
+                transform: "translateY(-50%) scale(1.1)",
+              },
+            }}
+          >
+            <ChevronLeft />
+          </IconButton>
+        )}
+
+        {/* Right Panel */}
+        <Box
+          width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
+          position="relative"
+          sx={{
+            transition: isTogglingRight
+              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
+              : "none",
+            opacity: rightBarVisible ? 1 : 0,
+            overflow: "hidden",
+          }}
+        >
+          {rightBarVisible && (
             <>
-              <Box width="56%">
-                <CenterBox>
-                  <DatasetVisualization
-                    dataset={selectedDataset}
-                    onNotebookCreated={handleNotebookCreated}
-                    existingNotebooks={notebooks}
-                  />
-                </CenterBox>
-              </Box>
-              <Box width="22%">
-                <RightBar notebook={null} />
-              </Box>
-            </>
-          ) : selectedNotebookId ? (
-            <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
-              <Box width="56%">
-                <CenterBox>
-                  <NotebookVisualization
-                    notebook={selectedNotebook}
-                    handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
-                    existingDatasets={datasets}
-                  />
-                </CenterBox>
-              </Box>
-              <Box width="22%">
-                <RightBar notebook={selectedNotebook} />
-              </Box>
-              <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
-            </TourProvider>
-          ) : (
-            <>
-              <Box width="56%">
-                <CenterBox>
-                  {step === 0 ? (
-                    <SelectOptionMenu
-                      title="Dataset Module"
-                      subtitle="Upload your datasets: Explore, analyze, and transform your
-                   data with advanced exploratory analysis tools. Create interactive notebooks,
-                   generate visualizations, and apply data transformations intuitively."
-                      options={menuOptions}
-                      searchBar={false}
-                      goToNextStep={goToNextStep}
-                    />
-                  ) : step === 1 && selectedOption === "dataset" ? (
-                    <UploadDatasetSteps
-                      backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
-                        fetchDatasets();
-                      }}
-                      handleDatasetCreated={handleDatasetCreated}
-                      existingDatasets={datasets}
-                    />
-                  ) : step === 1 && selectedOption === "notebook" ? (
-                    <UploadNotebookSteps
-                      backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
-                        fetchNotebooks();
-                      }}
-                      datasets={datasets}
-                      handleNotebookCreated={handleNotebookCreated}
-                      existingNotebooks={notebooks}
-                    />
-                  ) : null}
-                </CenterBox>
-              </Box>
-              <Box width="22%">
-                <RightBar notebook={null} />
-              </Box>
+              {/* Resize Handle */}
+              <Box
+                onMouseDown={() => {
+                  isResizingRight.current = true;
+                  document.body.style.cursor = "col-resize";
+                  document.body.style.userSelect = "none";
+                }}
+                sx={{
+                  position: "absolute",
+                  left: -2,
+                  top: 0,
+                  bottom: 0,
+                  width: "5px",
+                  cursor: "col-resize",
+                  bgcolor: "transparent",
+                  transition: "background-color 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "primary.main",
+                  },
+                  zIndex: 10,
+                }}
+              />
+              <RightBar
+                notebook={selectedNotebook}
+                onToggle={handleToggleRight}
+              />
             </>
           )}
-        </ExplorersAndConvertersProvider>
-      </Box>
-      {!selectedNotebookId && <TourButton tourKey={TOUR_KEYS.DATASETS} />}
-    </>
+        </Box>
+      </ExplorersAndConvertersProvider>
+    </Box>
   );
 }

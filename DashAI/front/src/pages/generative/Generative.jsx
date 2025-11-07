@@ -60,7 +60,7 @@ export default function Generative() {
 
   return (
     <Box height="calc(100vh - 74px)" width="100%" display="flex">
-      <Box width="22%">
+      <Box width="20%">
         <SessionBar
           sessions={sessions}
           selectedSessionId={selectedSessionId}
@@ -70,7 +70,7 @@ export default function Generative() {
           stepIndex={stepIndex}
         />
       </Box>
-      <Box width="56%">
+      <Box width="60%">
         <CenterBox>
           {selectedSessionId ? (
             <GenerativeChat
@@ -98,7 +98,7 @@ export default function Generative() {
           )}
         </CenterBox>
       </Box>
-      <Box width="22%">
+      <Box width="20%">
         <ParamsBar
           selectedSessionId={selectedSessionId}
           onParamsUpdate={onParamsUpdate}

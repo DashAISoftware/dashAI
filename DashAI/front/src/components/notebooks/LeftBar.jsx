@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, Divider, Typography, IconButton } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import DescriptionIcon from "@mui/icons-material/Description";
 import Footer from "../threeSectionLayout/Footer";
@@ -9,6 +9,7 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
+import { ChevronLeft } from "@mui/icons-material";
 
 export default function DatasetsNotebooksBar({
   datasets = [],
@@ -21,6 +22,7 @@ export default function DatasetsNotebooksBar({
   onNotebookClick,
   onNotebookDelete,
   onNotebookEdit,
+  onToggle,
   handleNewSessionButton,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,6 +75,26 @@ export default function DatasetsNotebooksBar({
 
   return (
     <SideBar>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          p: 1,
+        }}
+      >
+        <BarHeader />
+        <IconButton
+          size="small"
+          onClick={onToggle}
+          sx={{ color: "text.secondary" }}
+        >
+          <ChevronLeft />
+        </IconButton>
+      </Box>
+      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedNotebookId ? (

@@ -90,12 +90,10 @@ export default function FormExplorerSection({
     setFormValues(copyValues);
   }, [classColumnInitialValue, scopeColumns]);
 
-  const needsScroll = step === 1;
-
   return (
     <Box
       sx={{
-        overflow: needsScroll ? "scroll" : "hidden",
+        overflow: "visible",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,

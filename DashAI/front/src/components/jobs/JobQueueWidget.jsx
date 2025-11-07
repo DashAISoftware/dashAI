@@ -142,12 +142,6 @@ const JobQueueWidget = () => {
   const errorJobs = jobs.filter((job) => job.status === "error");
 
   useEffect(() => {
-    try {
-      localStorage.setItem("jobQueueWidgetExpanded", expanded.toString());
-    } catch (e) {}
-  }, [expanded]);
-
-  useEffect(() => {
     if (
       activeJobs.length > 0 &&
       activeJobs.length !== prevActiveJobsCount.current &&
