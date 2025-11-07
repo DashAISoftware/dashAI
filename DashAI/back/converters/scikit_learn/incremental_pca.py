@@ -52,6 +52,7 @@ class IncrementalPCA(
     """Scikit-learn's IncrementalPCA wrapper for DashAI."""
 
     SCHEMA = IncrementalPCASchema
+    CATEGORY = "Dimensionality Reduction"
     DESCRIPTION = (
         "Incremental principal component analysis (IPCA) is "
         "typically used as a replacement for principal component analysis "

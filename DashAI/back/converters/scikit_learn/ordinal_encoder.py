@@ -60,6 +60,7 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
 
     SCHEMA = OrdinalEncoderSchema
     DESCRIPTION = "Encode categorical features as an integer array."
+    CATEGORY = "Encoding"
     DISPLAY_NAME = "Ordinal Encoder"
     IMAGE_PREVIEW = "ordinal_encoder.png"
 

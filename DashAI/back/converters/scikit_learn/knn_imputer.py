@@ -52,6 +52,7 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
+    CATEGORY = "Basic Preprocessing"
     DISPLAY_NAME = "KNN Imputer"
     IMAGE_PREVIEW = "knn_imputer.png"
 

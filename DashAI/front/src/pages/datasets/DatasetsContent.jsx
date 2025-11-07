@@ -454,6 +454,7 @@ export default function DatasetsContent() {
         width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
         mr={leftBarVisible ? 0.5 : 0}
         position="relative"
+        className="datasets-list"
         sx={{
           transition: isTogglingLeft
             ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"

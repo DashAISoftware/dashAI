@@ -27,5 +27,6 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     DESCRIPTION = (
         "Binarize data (set feature values to 0 or 1) according to a threshold."
     )
+    CATEGORY = "Encoding"
     DISPLAY_NAME = "Binarizer"
     IMAGE_PREVIEW = "binarizer.png"

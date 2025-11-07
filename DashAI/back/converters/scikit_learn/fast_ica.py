@@ -93,6 +93,7 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
 
     SCHEMA = FastICASchema
     DESCRIPTION = "FastICA: a fast algorithm for Independent Component Analysis."
+    CATEGORY = "Dimensionality Reduction"
     DISPLAY_NAME = "Fast ICA"
     IMAGE_PREVIEW = "fast_ica.png"
 

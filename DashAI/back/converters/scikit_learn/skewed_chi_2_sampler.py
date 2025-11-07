@@ -51,6 +51,7 @@ class SkewedChi2Sampler(
         "Approximates the feature map of a chi-squared kernel by Monte "
         "Carlo approximation of its Fourier transform."
     )
+    CATEGORY = "Polynomial & Kernel Methods"
     DISPLAY_NAME = "Skewed Chi² Sampler"
     IMAGE_PREVIEW = "skewed_chi2_sampler.png"
 

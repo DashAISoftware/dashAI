@@ -27,5 +27,6 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
 
     SCHEMA = NormalizerSchema
     DESCRIPTION = "Normalize samples individually to unit norm."
+    CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Normalizer"
     IMAGE_PREVIEW = "normalizer.png"
