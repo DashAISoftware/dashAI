@@ -11,9 +11,13 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    load_dataset,
+    save_dataset,
+)
 from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.types.inf.type_inference import infer_types
 
 log = logging.getLogger(__name__)
 
@@ -106,7 +110,6 @@ class DatasetJob(BaseJob):
         url = self.kwargs.get("url", "")
         schema = self.kwargs.get("params", {}).get("schema", {})
 
-
         try:
             with session_factory() as db:
                 dataset = db.get(Dataset, dataset_id)
@@ -164,6 +167,7 @@ class DatasetJob(BaseJob):
                 # Calculate nan per column
                 new_dataset.nan_per_column()
                 gc.collect()
+                schema = infer_types(new_dataset.to_pandas(), method="DashAIPtype")
 
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))

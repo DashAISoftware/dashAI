@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 import numpy as np
 import pandas as pd
 
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.inf.inference_methods import (
     DashAIImageInference,
     DashAIPtype,
@@ -15,6 +16,7 @@ AcceptedDataInput = Union[
     List[dict],
     List[List],
     Dict[str, List],
+    DashAIDataset,
 ]
 
 AcceptedMethods = {

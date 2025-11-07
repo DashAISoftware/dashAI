@@ -6,6 +6,7 @@ from typing import Any, Dict, Final, Type, Union
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class BaseConverterSchema(BaseSchema):
@@ -60,6 +61,23 @@ class BaseConverter(ConfigObject, ABC):
         Samplers typically do, while most other transformers do not.
         """
         return False
+
+    @abstractmethod
+    def get_output_type(self, input_type: DashAIDataType = None) -> DashAIDataType:
+        """
+        Get the output type for transformed data.
+
+        Parameters
+        ----------
+        input_type : DashAIDataType, optional
+            The input data type (useful for converters that preserve type)
+
+        Returns
+        -------
+        DashAIDataType
+            The output type after transformation
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def fit(

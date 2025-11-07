@@ -3,15 +3,14 @@
 import json
 import logging
 import os
-import uuid
-from beartype.typing import Dict, List, Literal, Optional, Tuple, Union
+from contextlib import suppress
 
 import numpy as np
 import pyarrow as pa
 import pyarrow.ipc as ipc
 from beartype import beartype
-from datasets import ClassLabel, Value
-from datasets import Dataset, DatasetDict, concatenate_datasets
+from beartype.typing import Dict, List, Literal, Optional, Tuple, Union
+from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 
@@ -19,14 +18,13 @@ from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.utils import (
     arrow_to_dashai_types,
+    comma_float_to_float,
     get_types_from_arrow_metadata,
     save_types_in_arrow_metadata,
     to_arrow_types,
-    comma_float_to_float
 )
 
 log = logging.getLogger(__name__)
-
 
 
 def get_arrow_table(ds: Dataset) -> pa.Table:
@@ -125,9 +123,8 @@ class DashAIDataset(Dataset):
         if "split_indices" in self.splits:
             return list(self.splits["split_indices"].keys())
         return []
-    
 
-    #This method is still used only because Image dataset load
+    # This method is still used only because Image dataset load
     # haven't been implemented to be DashAITypes compatible
     # So categories can't be labeled as Categorical Datatype
     # Should be removed ASAP when DashAIImageType and its handlers are implemented
@@ -167,9 +164,6 @@ class DashAIDataset(Dataset):
                 new_features[column] = Value("float32")
         dataset = self.cast(new_features)
         return dataset
-
-
-
 
     def nan_per_column(self) -> "DashAIDataset":
         """Calculate the number of NaN values per column in the dataset and
@@ -220,7 +214,7 @@ class DashAIDataset(Dataset):
     def sample(
         self,
         n: int = 1,
-        method: Literal["head", "tail", "random"] = "head",
+        method: Literal["head", "tail", "random"] = "head",  # noqa
         seed: Union[int, None] = None,
     ) -> Dict[str, List]:
         """Return sample rows from dataset.
@@ -293,7 +287,7 @@ class DashAIDataset(Dataset):
         subset = DashAIDataset(arrow_table, splits=new_splits)
         return subset
 
-    @beartype  
+    @beartype
     def select_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
         """
         Selects specific columns from the dataset and returns a new DashAIDataset
@@ -340,6 +334,7 @@ class DashAIDataset(Dataset):
             )
             return DashAIDataset(arrow_tblx, types=self._types)
 
+
 @beartype
 def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     """
@@ -385,6 +380,7 @@ def merge_splits_with_metadata(dataset_dict: DatasetDict) -> DashAIDataset:
     dashai_dataset = DashAIDataset(arrow_tbl, splits={"split_indices": split_index})
 
     return dashai_dataset
+
 
 @beartype
 def transform_dataset_with_schema(
@@ -464,6 +460,7 @@ def transform_dataset_with_schema(
 
     return DashAIDataset(transformed_table, splits=dataset.splits, types=dashai_types)
 
+
 @beartype
 def save_dataset(
     dataset: DashAIDataset, path: Union[str, os.PathLike], schema=None
@@ -491,8 +488,17 @@ def save_dataset(
         writer.close()
 
     metadata_filepath = os.path.join(path, "splits.json")
+    metadata = dataset.splits
+    metadata.update(
+        {
+            "total_rows": dataset.shape[0],
+            "column_names": dataset.column_names,
+        }
+    )
+    print("Categorical info", dataset.types["Species"].to_string())
+
     with open(metadata_filepath, "w") as f:
-        json.dump(dataset.splits, f, indent=2, sort_keys=True, ensure_ascii=False)
+        json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
 
 @beartype
@@ -523,9 +529,10 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
         splits = {}
     return DashAIDataset(data, splits=splits)
 
-#Use it only for Image classification 
-#since images are loaded different to tabular data
-#And it's link to DashAIDataTypes is not implemented yet
+
+# Use it only for Image classification
+# since images are loaded different to tabular data
+# And it's link to DashAIDataTypes is not implemented yet
 # So categorical columns can't be labeled as Categorical Datatype but ClassLabel
 # Should be removed ASAP when DashAIImageType and its handlers are implemented
 @beartype
@@ -916,7 +923,8 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
         }
     return column_types
 
-#Not currently used
+
+# Not currently used
 @beartype
 def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
@@ -944,9 +952,7 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     # copy the features with the columns ans types
     new_features = dataset.features
     for column in columns:
-        if columns[column].type == "ClassLabel":
-            pass
-        elif columns[column].type == "Value":
+        if columns[column].type == "ClassLabel" or columns[column].type == "Value":
             pass
 
         # cast the column types with the changes
@@ -956,8 +962,6 @@ def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
         except ValueError as e:
             raise ValueError("Error while trying to cast the columns") from e
     return dataset
-
-
 
 
 def get_dataset_info(dataset_path: str) -> object:
@@ -1038,8 +1042,9 @@ def update_dataset_splits(
     }
     return dataset
 
-#I'm not completely sure what this function does in converting categorical indexes part
-#I think it could be simplified since DashAITypes, but I don't want to break anything
+
+# I'm not completely sure what this function does in converting categorical indexes part
+# I think it could be simplified since DashAITypes, but I don't want to break anything
 def prepare_for_experiment(
     dataset: DashAIDataset, splits: dict, output_columns: List[str]
 ) -> DatasetDict:
@@ -1065,10 +1070,12 @@ def prepare_for_experiment(
                 column_values = dataset[output_column]
                 # Check column type and convert to numerical indices if needed
                 if isinstance(column_type, Categorical):
-                    try:
-                        labels = [column_type.str2int(v) for v in column_values] if column_values else []
-                    except:
-                        pass
+                    with suppress(Exception):
+                        labels = (
+                            [column_type.str2int(v) for v in column_values]
+                            if column_values
+                            else []
+                        )
                 else:
                     labels = [
                         int(x) if not isinstance(x, (list, tuple)) else int(x[0])
@@ -1100,6 +1107,7 @@ def prepare_for_experiment(
         "test_indexes": test_indexes,
         "val_indexes": val_indexes,
     }
+
 
 def modify_table(
     dataset: DashAIDataset,
@@ -1154,4 +1162,4 @@ def modify_table(
     new_types = types if types else dataset.types
 
     return DashAIDataset(new_table, splits=dataset.splits, types=new_types)
-
+    return DashAIDataset(new_table, splits=dataset.splits, types=new_types)
