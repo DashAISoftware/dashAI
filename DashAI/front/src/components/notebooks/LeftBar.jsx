@@ -81,7 +81,7 @@ export default function DatasetsNotebooksBar({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          p: 1,
+          pr: 2,
         }}
       >
         <BarHeader />
