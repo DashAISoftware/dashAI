@@ -1,3 +1,4 @@
+import os
 from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 from DashAI.back.models.RAG.retrievers.dense_retriever import DenseRetriever
 from DashAI.back.models.RAG.retrievers.sparse_retriever import SparseRetriever
@@ -64,12 +65,32 @@ class RetrieverModelsFactory(ModelsFactory):
             ) -> SparseRetrieverDBModel|None:
         """Fetch the sparse retriever database model if it exists."""
         model_params = dict(sorted(model_params.items()))
+        document_ids = sorted(document_ids)
         existing_model = self.db.query(SparseRetrieverDBModel).filter_by(
                 class_name=class_name,
                 parameters=model_params,
-                documents_ids=sorted(document_ids),
+                documents_ids=document_ids,
                 chunking_model_id=self.chunking_model_id
             ).first()
+        #if not existing_model:
+            #new_model = SparseRetrieverDBModel(
+                #class_name=class_name,
+                #parameters=model_params,
+                #storage_folder="",
+                #documents_ids=document_ids,
+                #chunking_model_id=self.chunking_model_id
+            #)
+            #self.db.add(new_model)
+            #self.db.commit()
+            #self.db.refresh(new_model)
+            #new_model.storage_folder = os.path.join(
+                #self.env_rag_path,
+                #"sparse_retrievers",
+                #f"sparse_retriever_id-{new_model.id}"
+            #)
+            #self.db.commit()
+            #return new_model
+
         return existing_model
     
     def fetch_dense_retriever_db_models(
@@ -155,7 +176,6 @@ class RetrieverModelsFactory(ModelsFactory):
             for required_kwarg in model_class.REQUIRED_EXTRA_KWARGS:
                 model_params[required_kwarg] = self.extra_kwargs[required_kwarg]
             instance = model_class(**model_params)
-            instance.set_id(subclass_db_model.id)
             return instance
     
     def save_dense_retriever_model_to_db(self, instance: DenseRetriever, **kwargs):
@@ -193,14 +213,24 @@ class RetrieverModelsFactory(ModelsFactory):
     def save_sparse_retriever_model_to_db(self, instance: SparseRetriever, **kwargs):
         assert isinstance(instance, SparseRetriever), "instance must be an instance of SparseRetriever"
         parameters = dict(sorted(instance.parameters.items()))
-        document_ids = list(instance.documents.keys())
+        document_ids = list(sorted(instance.documents.keys()))
         sparse_db_model = SparseRetrieverDBModel(
             class_name=instance.class_name,
             parameters=parameters,
-            documents_ids=sorted(document_ids),
+            storage_folder="",
+            documents_ids=document_ids,
             chunking_model_id=instance.chunking_model_id
         )
         self.db.add(sparse_db_model)
+        self.db.commit()
+        storage_folder = os.path.join(
+            self.env_rag_path,
+            "sparse_retrievers",
+            f"sparse_retriever_id-{sparse_db_model.id}"
+        )
+        sparse_db_model.storage_folder = storage_folder
+        self.db.commit()
+        
         retriever_db_model = RetrieverDBModel(
             class_name=SparseRetriever.__name__,
             sparse_retriever_id=sparse_db_model.id,
@@ -209,6 +239,12 @@ class RetrieverModelsFactory(ModelsFactory):
         self.db.commit()
         self.db.refresh(sparse_db_model) 
         self.db.refresh(retriever_db_model)
+        kwargs = {SPARSE_RETRIEVER_DB_MODEL_ENUM: sparse_db_model}
+        
+        instance.save_model_to_db(**kwargs)
+        # Check that the storage folder is not empty
+        assert os.path.exists(sparse_db_model.storage_folder), "Storage folder was not created."
+        assert len(os.listdir(sparse_db_model.storage_folder)) > 0, "Storage folder is empty after saving the model."
         return sparse_db_model.id
 
     def save_model_to_db(self, instance, **kwargs):

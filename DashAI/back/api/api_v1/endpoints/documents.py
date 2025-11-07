@@ -228,7 +228,7 @@ async def upload_document(
             # Create a new document entry
             try:
                 file_path = os.path.join(
-                    docs_folder_path, f"{file_name}_{file_content_hash}"
+                    docs_folder_path, file_name
                 )
 
                 with open(file_path, "wb") as f:

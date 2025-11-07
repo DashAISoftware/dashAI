@@ -48,4 +48,4 @@ class PDFDocument(BaseDocument):
         return text.strip()
     
     def get_metadata(self):
-        return self.metadata
+        return self.optional_metadata if self.optional_metadata else {}

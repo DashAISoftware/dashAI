@@ -40,7 +40,8 @@ from DashAI.back.models.RAG.extra_args_enum import (
     ENV_RAG_PATH,
     DOCUMENTS,
     CHUNKS,
-    CHUNKING_MODEL_ID
+    CHUNKING_MODEL_ID,
+    SPARSE_RETRIEVER_DB_MODEL
 )
 
 
@@ -168,7 +169,7 @@ class TFIDFVectorizerSchema(BaseSchema):
 
 
 class TFIDFVectorizerModel(BaseModel):
-    REQUIRED_EXTRA_KWARGS: Final[List[str]] = [PIPELINE_ID, DB, COMPONENT_REGISTRY, ENV_RAG_PATH, DOCUMENTS, CHUNKS, CHUNKING_MODEL_ID]
+    REQUIRED_EXTRA_KWARGS: Final[List[str]] = []
     SCHEMA = TFIDFVectorizerSchema
 
     def __init__(self, **kwargs) -> None:
@@ -244,8 +245,16 @@ class TFIDFRetriever(SparseRetriever):
     """
 
     SCHEMA = TFIDFRetrieverSchema
+    REQUIRED_EXTRA_KWARGS: Final[List[str]] = [
+        PIPELINE_ID, 
+        DB, 
+        COMPONENT_REGISTRY, 
+        ENV_RAG_PATH, 
+        DOCUMENTS, 
+        CHUNKS, 
+        CHUNKING_MODEL_ID,
+        SPARSE_RETRIEVER_DB_MODEL]
 
-    pipeline_id: int
     db: Session
     component_registry: ComponentRegistry
     env_rag_path: str | os.PathLike
@@ -255,7 +264,6 @@ class TFIDFRetriever(SparseRetriever):
     chunking_model_id: int
 
     id: int
-    retriever_db_model = RetrieverDBModel
     sparse_retriever_db_model = SparseRetrieverDBModel
 
     matrix_row_to_chunk_id: Dict[int, int]
@@ -278,12 +286,13 @@ class TFIDFRetriever(SparseRetriever):
             chunk_size (int): The size of chunks to split the documents into.
             chunk_overlap (int): The overlap between chunks.
         """
+        self.parameters = kwargs.copy()
+        for required_kwarg in self.REQUIRED_EXTRA_KWARGS:
+            self.parameters.pop(required_kwarg)
+
         kwargs["class_name"] = self.__class__.__name__
-        self.retriever_db_model = None
-        self.sparse_retriever_db_model = None
-        kwargs["TFIDFVectorizer"] = kwargs["TFIDFVectorizer"]["properties"]["params"][
-            "comp"
-        ]
+        self.sparse_retriever_db_model = kwargs.pop(SPARSE_RETRIEVER_DB_MODEL)
+        kwargs["TFIDFVectorizer"] = kwargs["TFIDFVectorizer"]["properties"]["params"]["comp"]
         super().__init__(**kwargs)
 
         vectorizer: TFIDFVectorizerModel = self.params.pop("TFIDFVectorizer")
@@ -296,23 +305,18 @@ class TFIDFRetriever(SparseRetriever):
         # Attempt to load from cache
         if loaded:
             print(
-                f"TFIDFRetriever loaded from db "
-                f"(pipeline{self.pipeline_id}, "
-                f"sparse retriever {self.sparse_retriever_db_model.id})."
+                f"TFIDFRetriever loaded from db, "
+                f"sparse retriever id: {self.sparse_retriever_db_model.id}."
             )
         else:
             print("Fitting new model...")
             self._fit()
-            self.save()
             print(
-                f"TFIDFRetriever fitted and saved "
-                f"(pipeline{self.pipeline_id}, "
-                f"sparse retriever {self.sparse_retriever_db_model.id})."
+                f"TFIDFRetriever fitted and waiting to be stored after db models creation."
             )
 
     def load(self) -> None:
-        self._fetch_db_models()
-        if not self.sparse_retriever_db_model:
+        if self.sparse_retriever_db_model is None:
             return False
         storage_folder = self.sparse_retriever_db_model.storage_folder
         self._vectorizer_path = os.path.join(storage_folder, "tfidf_vectorizer.pkl")
@@ -325,19 +329,19 @@ class TFIDFRetriever(SparseRetriever):
                 self._vectorizer = pickle.load(f)
             with open(self._tf_idf_matrix_path, "rb") as f:
                 self._tf_idf_matrix = pickle.load(f)
-            with open(self.chunk_to_doc_path, "rb") as f:
+            with open(self.matrix_row_to_chunk_path, "rb") as f:
                 self.matrix_row_to_chunk_map = pickle.load(f)
             return True
         except Exception as e:
             print(f"Error loading state: {e}")
             return False
 
-    def save(self) -> None:
-        if not self.sparse_retriever_db_model:
-            self._create_db_models()
+    def save(self, **kwargs) -> None:
+        self.sparse_retriever_db_model = kwargs.get(SPARSE_RETRIEVER_DB_MODEL)
+        if self.sparse_retriever_db_model is None:
+            raise ValueError("sparse_retriever_db_model is required to save the model.")
         storage_folder = self.sparse_retriever_db_model.storage_folder
         os.makedirs(storage_folder, exist_ok=True)
-        storage_folder = self.sparse_retriever_db_model.storage_folder
         self._vectorizer_path = os.path.join(storage_folder, "tfidf_vectorizer.pkl")
         self._tf_idf_matrix_path = os.path.join(storage_folder, "tf_idf_matrix.pkl")
         self.matrix_row_to_chunk_path = os.path.join(
@@ -350,62 +354,6 @@ class TFIDFRetriever(SparseRetriever):
         with open(self.matrix_row_to_chunk_path, "wb") as f:
             pickle.dump(self.matrix_row_to_chunk_map, f)
 
-    def _fetch_db_models(self):
-        if not self.pipeline_id:
-            return
-        pipeline_db_model = (
-            self.db.query(PipelineDBModel)
-            .filter(PipelineDBModel.id == self.pipeline_id)
-            .first()
-        )
-
-        if not pipeline_db_model:
-            return
-        retriever_id = pipeline_db_model.retriever_id
-
-        self.retriever_db_model = (
-            self.db.query(RetrieverDBModel)
-            .filter(RetrieverDBModel.id == retriever_id)
-            .first()
-        )
-
-        if not self.retriever_db_model:
-            return
-
-        sparse_retriever_id = self.retriever_db_model.sparse_retriever_id
-
-        self.sparse_retriever_db_model = (
-            self.db.query(SparseRetrieverDBModel)
-            .filter(SparseRetrieverDBModel.id == sparse_retriever_id)
-            .first()
-        )
-
-    def _create_db_models(self) -> None:
-        self.sparse_retriever_db_model = SparseRetrieverDBModel(
-            class_name=self.__class__.__name__,
-            parameters=self.params,
-            storage_folder="",
-        )
-        self.db.add(self.sparse_retriever_db_model)
-        self.db.commit()
-        storage_folder = os.path.join(
-            self.env_rag_path,
-            "retrievers",
-            "sparse_retrievers",
-            f"sparse_retriever_{self.sparse_retriever_db_model.id}",
-        )
-        self.sparse_retriever_db_model.storage_folder = storage_folder
-        self.db.commit()
-        os.makedirs(storage_folder, exist_ok=True)
-        if self.retriever_db_model is None:
-            self.retriever_db_model = RetrieverDBModel(
-                class_name="SparseRetriever",
-                dense_retriever_id=None,
-                sparse_retriever_id=self.sparse_retriever_db_model.id,
-            )
-            self.db.add(self.retriever_db_model)
-            self.db.commit()
-
     def _fit(self):
         """
         Fit the TF-IDF model to the documents.
@@ -414,7 +362,7 @@ class TFIDFRetriever(SparseRetriever):
         # Load chunks from the documents
         chunk_texts = []
         current_chunk_idx = 0
-        self.matrix_row_to_chunk_map = {}
+        self.matrix_row_to_chunk_map: Dict[int, Chunk] = {}
 
         for _doc_id, doc_chunks in self.chunks.items():
             for _chunk_pos, chunk in doc_chunks.items():
@@ -455,3 +403,15 @@ class TFIDFRetriever(SparseRetriever):
             chunk = self.matrix_row_to_chunk_map[idx]
             results.append(chunk)
         return results
+
+    def set_id(self, id: int) -> None:
+        """Set the ID of the retriever model from the database."""
+        if self.id is None:
+            self.id = id
+        else:
+            raise ValueError("ID is already set and cannot be modified.")
+        
+    def get_id(self) -> int:
+        """Get the ID of the retriever model from the database."""
+        return self.sparse_retriever_db_model.id
+    

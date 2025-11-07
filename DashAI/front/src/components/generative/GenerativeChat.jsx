@@ -1,4 +1,4 @@
-import { Box, Divider, IconButton, Typography } from "@mui/material";
+import { Box, Divider, IconButton, Typography, Button } from "@mui/material";
 import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -19,6 +19,7 @@ import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
+import TemplateModal from "../custom/TemplateModal";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
@@ -28,6 +29,9 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const chatContainerRef = useRef(null);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
+  const [referenceModalOpen, setReferenceModalOpen] = useState(false);
+  const [selectedReferenceText, setSelectedReferenceText] = useState("");
+  const [referenceModalTitle, setReferenceModalTitle] = useState("");
   const { enqueueSnackbar } = useSnackbar();
 
   const scrollToBottom = () => {
@@ -35,6 +39,14 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
+  };
+
+  const handleOpenReference = (ref, key) => {
+    const title = `Document ${ref.document_id}${ref.document_position ? ` - Chunk ${ref.document_position}` : ''}`;
+    setReferenceModalTitle(title);
+    // Convert escaped newlines to actual newlines
+    setSelectedReferenceText(ref.text.replace(/\\n/g, '\n'));
+    setReferenceModalOpen(true);
   };
 
   const getSessionInfo = () => {
@@ -45,6 +57,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
+      console.log('Fetched messages:', response); // Add here
       setIsLoadingMessage(false);
       setMessages(response);
     });
@@ -138,13 +151,70 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   }, [messages]);
 
   useEffect(() => {
+    console.log('Combining messages and history for display'); // Add here
+    console.log('Messages:', messages);
+    console.log('TASK NAME:', taskName);
     let messagesObject = messages.map((process) => {
+      // Check if there's reference data in the output (only for RAGTask)
+      let referenceOutput = null;
+      let mainOutput = process.output;
+      
+      if (taskName === "RAGTask" && process.output && process.output.length > 1) {
+        // Look for Dict type output that contains reference information
+        const referenceItem = process.output.find(item => item.data_type === "Dict");
+        if (referenceItem) {
+          console.log('Raw reference data:', referenceItem.data);
+          try {
+            // The data might be a Python dict string, try to parse it as JSON
+            let dataStr = referenceItem.data;
+            
+            // If it starts with { but isn't valid JSON, it might be a Python dict
+            // Try to convert Python dict format to JSON format
+            if (dataStr.startsWith('{') && !dataStr.startsWith('{"')) {
+              // Replace Python dict format with JSON format
+              dataStr = dataStr
+                .replace(/'/g, '"')  // Replace single quotes with double quotes
+                .replace(/True/g, 'true')  // Replace Python True with JSON true
+                .replace(/False/g, 'false')  // Replace Python False with JSON false
+                .replace(/None/g, 'null');  // Replace Python None with JSON null
+            }
+            
+            console.log('Processed data string:', dataStr);
+            const parsedData = JSON.parse(dataStr);
+            referenceOutput = parsedData;
+            // Keep only non-Dict outputs as main output
+            mainOutput = process.output.filter(item => item.data_type !== "Dict");
+          } catch (e) {
+            console.log('Could not parse reference data:', e);
+            console.log('Original data:', referenceItem.data);
+            // If parsing fails, try to extract info using regex as fallback for multiple references
+            try {
+              const matches = [...referenceItem.data.matchAll(/(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/g)];
+              if (matches.length > 0) {
+                referenceOutput = {};
+                matches.forEach((match, index) => {
+                  referenceOutput[match[1] || index] = {
+                    document_id: parseInt(match[2]),
+                    text: match[3]
+                  };
+                });
+                mainOutput = process.output.filter(item => item.data_type !== "Dict");
+                console.log('Fallback parsing successful:', referenceOutput);
+              }
+            } catch (fallbackError) {
+              console.log('Fallback parsing also failed:', fallbackError);
+            }
+          }
+        }
+      }
+
       return {
         type: "message",
         timestamp: process.created,
         id: process.id,
         input: process.input,
-        output: process.output,
+        output: mainOutput,
+        referenceOutput: referenceOutput,
         status: process.status,
         end_time: process.end_time,
       };
@@ -285,13 +355,46 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                     isUser={true}
                   />
                   {message.status === 3 ? (
-                    <ChatBubble
-                      messages={message.output}
-                      sender={"Model"}
-                      timestamp={new Date(
-                        message.end_time,
-                      ).toLocaleTimeString()}
-                    />
+                    <>
+                      <ChatBubble
+                        messages={message.output}
+                        sender={"Model"}
+                        timestamp={new Date(
+                          message.end_time,
+                        ).toLocaleTimeString()}
+                      />
+                      {taskName === "RAGTask" && message.referenceOutput && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold', color: 'text.secondary', opacity: 0.8 }}>
+                            References:
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, flexWrap: 'wrap' }}>
+                            {Object.entries(message.referenceOutput).map(([key, ref], index) => (
+                              <Button
+                                key={key}
+                                variant="contained"
+                                size="small"
+                                onClick={() => handleOpenReference(ref, key)}
+                                sx={{
+                                  backgroundColor: 'hsl(179, 100%, 38%) !important',
+                                  color: 'white !important',
+                                  minWidth: 'auto',
+                                  width: 'auto',
+                                  flexShrink: 0,
+                                  boxShadow: 'none',
+                                  '&:hover': {
+                                    backgroundColor: 'hsl(179, 100%, 32%) !important',
+                                    boxShadow: 'none'
+                                  }
+                                }}
+                              >
+                                Reference {index + 1}
+                              </Button>
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+                    </>
                   ) : (
                     <ChatBubble isWaiting={true} sender="Model" />
                   )}
@@ -327,6 +430,15 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
+
+      {/* Reference Modal */}
+      <TemplateModal
+        open={referenceModalOpen}
+        handleClose={() => setReferenceModalOpen(false)}
+        template={selectedReferenceText}
+        title={referenceModalTitle}
+        formatText={true}
+      />
 
       <JobQueueWidget />
     </Box>

@@ -10,13 +10,24 @@ import {
   Typography,
 } from "@mui/material";
 
-export default function TemplateModal({ open, handleClose, template }) {
+export default function TemplateModal({ 
+  open, 
+  handleClose, 
+  template,
+  title = "Prompt",
+  formatText = false,
+}) {
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Prompt</DialogTitle>
+      <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              whiteSpace: formatText ? "pre-wrap" : "normal" 
+            }}
+          >
             {template}
           </Typography>
         </DialogContentText>
@@ -34,4 +45,6 @@ TemplateModal.propTypes = {
   open: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
   template: PropTypes.string,
+  title: PropTypes.string,
+  formatText: PropTypes.bool,
 };

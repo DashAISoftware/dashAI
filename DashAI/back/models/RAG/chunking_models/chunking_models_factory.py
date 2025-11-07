@@ -90,7 +90,6 @@ class ChunkingModelsFactory(ModelsFactory):
                     chunk_index=idx,
                     chunking_model_id=chunking_model_id,
                     text=chunk.text,
-                    hash=hash_function(chunk.text)
                 )
                 self.db.add(db_chunk)
         self.db.commit()
@@ -111,3 +110,14 @@ class ChunkingModelsFactory(ModelsFactory):
                     if idx not in existing_chunks[document_id]:
                         chunks_to_create[document_id][idx] = chunk
         self.create_chunks_in_db(chunks_to_create, instance.get_id())
+
+        # update the chunks ids in the instance's chunks
+        for document_id, document_chunks in instance.get_chunks().items():
+            for idx, chunk in document_chunks.items():
+                db_chunk = self.db.query(ChunkDBModel).filter_by(
+                    document_id=document_id,
+                    chunk_index=idx,
+                    chunking_model_id=instance.get_id()
+                ).first()
+                instance.chunks[document_id][idx].id = db_chunk.id
+                assert instance.chunks[document_id][idx].id is not None, "Chunk ID should not be None after fetching from DB."

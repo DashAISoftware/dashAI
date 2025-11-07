@@ -118,14 +118,6 @@ class RetrieverModel(BaseModel):
 
     def save(self):
         pass
-
-    @classmethod
-    def load_model_from_db(cls, model_params: Dict[str, Any], **kwargs) -> 'RetrieverModel':
-        raise NotImplementedError("This method should be implemented by subclasses.")
-    
-    @classmethod
-    def save_model_to_db(cls, **kwargs) -> int:
-        raise NotImplementedError("This method should be implemented by subclasses.")
     
     def get_id(self) -> int:
         """Get the ID of the retriever model from the database."""

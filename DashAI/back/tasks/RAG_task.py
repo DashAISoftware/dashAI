@@ -12,7 +12,7 @@ class RAGTask(BaseGenerativeTask):
 
     metadata: dict = {
         "inputs_types": [str],
-        "outputs_types": [str, List[Dict]],
+        "outputs_types": [str, Dict],
         "inputs_cardinality": 1,
         "outputs_cardinality": 2,
     }
@@ -98,8 +98,8 @@ class RAGTask(BaseGenerativeTask):
         file_name (Str): Indicates the name of the file.
         path (Str): Indicates the path where the output will be stored.
         """
-
-        return [(str(output[0]), "str")]
+        message, chunks = output
+        return [(str(message), "str"), (str(chunks), "Dict")]
 
     def process_output_from_database(
         self,

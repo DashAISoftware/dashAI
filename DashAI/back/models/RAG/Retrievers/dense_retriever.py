@@ -132,42 +132,6 @@ class DenseRetriever(RetrieverModel):
         self.compute_missing_embeddings()
         self.init_similarity_matrix()
 
-    def fetch_db_models(self):
-        """Fetch all database models related to the retriever if they exist."""
-        self.embedding_db_model = self.__fetch_embedding_db_model()
-
-        self.embedding_db_matrices = {}
-        if self.embedding_db_model and self.chunking_model_id:
-            self.embedding_db_matrices = self.fetch_embedding_matrices()
-
-        self.retriever_db_model = None
-        self.dense_retriever_db_model = None
-        if self.pipeline_id:
-            pipeline_model = self.db.query(PipelineDBModel).filter_by(
-                id=self.pipeline_id).first()
-            retriever_id = pipeline_model.retriever_model_id
-            self.retriever_db_model = self.db.query(RetrieverDBModel).filter_by(
-                id=retriever_id).first()
-            dense_retriever_id = self.retriever_db_model.dense_retriever_id
-            self.dense_retriever_db_model = self.db.query(DenseRetrieverDBModel).filter_by(
-                id=dense_retriever_id).first()
-
-    def fetch_embedding_matrices(self) -> Dict[int, EmbeddingMatrixDBModel]:
-        """Load precomputed embeddings from the database if they exist."""
-        embeddings_matrices_db_models = {}
-        for doc_id, doc_chunks in self.chunks.items():
-            embedding_matrix_entry = (
-                self.db.query(EmbeddingMatrixDBModel)
-                .filter_by(
-                    document_id=doc_id, 
-                    chunking_model_id=self.chunking_model_id,
-                    embedding_model_id=self.embedding_db_model.id
-                ).first()
-            )
-            if embedding_matrix_entry:
-                embeddings_matrices_db_models[doc_id] = embedding_matrix_entry
-
-        return embeddings_matrices_db_models
 
     def save(self):
         """Save the dense retriever model to the database."""

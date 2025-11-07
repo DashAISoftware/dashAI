@@ -193,6 +193,7 @@ class RAGPipeline(BaseGenerativeModel):
             model_params=chunking_model_params
         )
         self.chunking_model_factory.update_db_models(self.chunking_model)
+        self.chunks = self.chunking_model.get_chunks()
 
         self.retriever_model_factory = RetrieverModelsFactory(
             db = self.db,
@@ -207,7 +208,8 @@ class RAGPipeline(BaseGenerativeModel):
             model_class=retriever_model_class,
             model_params=retriever_model_params
         )
-        self.chunks = self.chunking_model.get_chunks()
+        
+            
         self.chunking_model_id = self.chunking_model.id
 
         self.llm_model: TextToTextGenerationTaskModel = generation_model_class(**generation_model_params)
@@ -361,16 +363,18 @@ class RAGPipeline(BaseGenerativeModel):
             chunks_texts = []
             chunk_dict = {}
             for chunk in chunks:
-                chunk_id = chunk.id
-                chunk_dict[chunk_id] = {}
                 document_id = chunk.document_id
-                chunk_dict[chunk_id]['document_id'] = document_id
                 document = self.documents[document_id]
-                chunk_dict[chunk_id]['document_name'] = document.file_name
-                document_position = chunk.document_position
-                chunk_dict[chunk_id]['chunk_position'] = document_position
-                chunk_dict[chunk_id]['chunk_text'] = chunk.text
-                chunks_texts.append(f"Document {document.file_name}, chunk nº {document_position}, text:\n {chunk.text}")
+                chunk_position = chunk.document_position
+                chunk_text = chunk.text
+                chunk = self.chunks[document_id][chunk_position]
+                chunk_id = chunk.id
+                chunk_dict[chunk_id] = {
+                    "document_id": document_id,
+                    "document_position": chunk_position,
+                    "text": chunk_text
+                }
+                chunks_texts.append(f"Document {document.file_name}, chunk nº {chunk_position}, text:\n {chunk_text}")
             chunks_text = "\n\n".join(chunks_texts)
             prompt = self.prompt_model.format(
                 input=input_message,

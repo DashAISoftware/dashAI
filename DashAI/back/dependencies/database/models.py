@@ -718,7 +718,6 @@ class Chunk(Base):
         ForeignKey("rag_chunking_model.id", ondelete="CASCADE"), nullable=False
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
 
     document: Mapped["Document"] = relationship("Document", back_populates="chunks")
 

@@ -60,7 +60,7 @@ class ModelsFactory(ABC):
     def init_component(self, model_class: RetrieverModel|BaseChunkingModel, model_params: Dict[str, Any], **kwargs) -> RetrieverModel|BaseChunkingModel:
         loaded_model = self.load_model_from_db(model_class, model_params, **kwargs)
         if loaded_model is not None:
-            return [loaded_model.id, loaded_model]
+            return [loaded_model.get_id(), loaded_model]
         for kwarg in model_class.REQUIRED_EXTRA_KWARGS:
             model_params[kwarg] = self.extra_kwargs[kwarg]
         created_model = model_class(**model_params)
