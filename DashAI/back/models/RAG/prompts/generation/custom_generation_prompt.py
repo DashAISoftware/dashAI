@@ -42,5 +42,5 @@ class CustomGenerationPrompt(GenerationPrompt):
         """
         buffer = self.template
         buffer = buffer.replace("{input}", input)
-        buffer = buffer.replace("{documents}", "\n".join(chunks))
+        buffer = buffer.replace("{chunks}", chunks)
         return buffer

@@ -33,12 +33,23 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [selectedReferenceText, setSelectedReferenceText] = useState("");
   const [referenceModalTitle, setReferenceModalTitle] = useState("");
   const { enqueueSnackbar } = useSnackbar();
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
+  };
+
+  const isAtBottom = () => {
+    if (!chatContainerRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    return Math.abs(scrollHeight - clientHeight - scrollTop) < 5; // 5px threshold
+  };
+
+  const handleScroll = () => {
+    setShouldAutoScroll(isAtBottom());
   };
 
   const handleOpenReference = (ref, key) => {
@@ -71,6 +82,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
 
   const handleSendMessage = (input) => {
     setIsLoadingMessage(true);
+    setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
     postProcess(sessionId, input).then((response) => {
       // Añadir el nuevo mensaje en estado inicial
@@ -98,8 +110,10 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   }, [taskName]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messagesWithHistory]);
+    if (shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messagesWithHistory, shouldAutoScroll]);
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -316,6 +330,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
         mt={1}
         p={2}
         ref={chatContainerRef}
+        onScroll={handleScroll}
         sx={{
           "&::-webkit-scrollbar": {
             width: "8px",

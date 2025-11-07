@@ -41,7 +41,7 @@ from DashAI.back.models.RAG.extra_args_enum import (
     DOCUMENTS,
     CHUNKS,
     CHUNKING_MODEL_ID,
-    SPARSE_RETRIEVER_DB_MODEL
+    SPARSE_RETRIEVER_DB_MODEL_ENUM
 )
 
 
@@ -253,7 +253,7 @@ class TFIDFRetriever(SparseRetriever):
         DOCUMENTS, 
         CHUNKS, 
         CHUNKING_MODEL_ID,
-        SPARSE_RETRIEVER_DB_MODEL]
+        SPARSE_RETRIEVER_DB_MODEL_ENUM]
 
     db: Session
     component_registry: ComponentRegistry
@@ -291,7 +291,8 @@ class TFIDFRetriever(SparseRetriever):
             self.parameters.pop(required_kwarg)
 
         kwargs["class_name"] = self.__class__.__name__
-        self.sparse_retriever_db_model = kwargs.pop(SPARSE_RETRIEVER_DB_MODEL)
+        self.sparse_retriever_db_model = kwargs.pop(SPARSE_RETRIEVER_DB_MODEL_ENUM)
+        self.id:int = self.sparse_retriever_db_model.id if self.sparse_retriever_db_model else None
         kwargs["TFIDFVectorizer"] = kwargs["TFIDFVectorizer"]["properties"]["params"]["comp"]
         super().__init__(**kwargs)
 
@@ -337,7 +338,7 @@ class TFIDFRetriever(SparseRetriever):
             return False
 
     def save(self, **kwargs) -> None:
-        self.sparse_retriever_db_model = kwargs.get(SPARSE_RETRIEVER_DB_MODEL)
+        self.sparse_retriever_db_model = kwargs.get(SPARSE_RETRIEVER_DB_MODEL_ENUM)
         if self.sparse_retriever_db_model is None:
             raise ValueError("sparse_retriever_db_model is required to save the model.")
         storage_folder = self.sparse_retriever_db_model.storage_folder
@@ -353,6 +354,16 @@ class TFIDFRetriever(SparseRetriever):
             pickle.dump(self._tf_idf_matrix, f)
         with open(self.matrix_row_to_chunk_path, "wb") as f:
             pickle.dump(self.matrix_row_to_chunk_map, f)
+
+    def save_model_to_db(self, **kwargs) -> None:
+        """
+        Save the retriever model to the database.
+        This method should be called after fitting the model.
+        """
+        assert SPARSE_RETRIEVER_DB_MODEL_ENUM in kwargs, (
+            f"{SPARSE_RETRIEVER_DB_MODEL_ENUM} is required to save the model."
+        )
+        self.save(**kwargs)
 
     def _fit(self):
         """
