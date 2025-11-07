@@ -1,5 +1,4 @@
-// src/components/common/ServerDataGrid.jsx
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   DataGrid,
   GridToolbarContainer,
@@ -34,12 +33,14 @@ export default function DatasetTable({
   autoHeight = true,
   pageSizeOptions = [5, 10, 25],
   datasetPath,
+  density = "compact",
   ...props
 }) {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [columnTypes, setColumnTypes] = useState({});
+  const gridRef = useRef(null);
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
@@ -274,6 +275,7 @@ export default function DatasetTable({
 
   return (
     <DataGrid
+      ref={gridRef}
       rows={rows}
       columns={columns}
       rowCount={rowCount}
@@ -284,9 +286,10 @@ export default function DatasetTable({
       filterMode="server"
       paginationModel={paginationModel}
       onPaginationModelChange={setPaginationModel}
+      pageSizeOptions={pageSizeOptions}
+      density={density}
       filterModel={filterModel}
       onFilterModelChange={handleFilterModelChange}
-      pageSizeOptions={pageSizeOptions}
       initialState={{
         density: "compact",
         pagination: { paginationModel: { pageSize: initialPageSize } },

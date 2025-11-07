@@ -7,6 +7,7 @@ import {
   Tab,
   ToggleButtonGroup,
   ToggleButton,
+  IconButton,
 } from "@mui/material";
 import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
@@ -22,8 +23,9 @@ import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
+import { ChevronRight } from "@mui/icons-material";
 
-export default function RightBar({ notebook }) {
+export default function RightBar({ notebook, onToggle }) {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
@@ -234,8 +236,24 @@ export default function RightBar({ notebook }) {
         }}
         className="right-bar-container"
       >
-        <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: "1px solid #333",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Typography variant="h6">Analysis Tools</Typography>
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            sx={{ color: "text.secondary" }}
+          >
+            <ChevronRight />
+          </IconButton>
         </Box>
 
         {notebook ? (

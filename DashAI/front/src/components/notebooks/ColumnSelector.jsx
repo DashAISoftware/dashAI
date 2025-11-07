@@ -317,7 +317,6 @@ function ColumnSelector({
         disableDensitySelector
         pageSizeOptions={[5, 10, 20]}
         checkboxSelection
-        disableRowSelectionOnClick
         onRowSelectionModelChange={handleSelection}
         rowSelectionModel={rowSelectionModel}
         isRowSelectable={isRowSelectable}
