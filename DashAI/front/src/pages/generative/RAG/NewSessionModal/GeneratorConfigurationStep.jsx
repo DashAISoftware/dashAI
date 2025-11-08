@@ -56,7 +56,8 @@ export default function GeneratorConfigurationStep({
       const initialParams = Object.keys(
         newValue.schema?.properties || {},
       ).reduce((acc, k) => {
-        acc[k] = newValue.schema.properties[k].placeholder ?? "";
+        const placeholder = newValue.schema.properties[k].placeholder;
+        acc[k] = placeholder !== undefined ? placeholder : "";
         return acc;
       }, {});
 
@@ -107,8 +108,9 @@ export default function GeneratorConfigurationStep({
                 : Object.keys(
                     selectedGenerator.schema?.properties || {},
                   ).reduce((acc, k) => {
-                    acc[k] =
-                      selectedGenerator.schema.properties[k].placeholder ?? "";
+                    const placeholder =
+                      selectedGenerator.schema.properties[k].placeholder;
+                    acc[k] = placeholder !== undefined ? placeholder : "";
                     return acc;
                   }, {})
             }
