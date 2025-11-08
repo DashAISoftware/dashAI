@@ -59,9 +59,14 @@ export default function GeneratorConfigurationStep({
         acc[k] = newValue.schema.properties[k].placeholder ?? "";
         return acc;
       }, {});
+
+      const existingParams = generatorModel?.params;
+      const shouldUseInitialParams =
+        !existingParams || Object.keys(existingParams).length === 0;
+
       setGeneratorModel({
         component: newValue.name,
-        params: generatorModel?.params ?? initialParams,
+        params: shouldUseInitialParams ? initialParams : existingParams,
       });
       setNextEnabled(true);
     } else {
@@ -95,7 +100,18 @@ export default function GeneratorConfigurationStep({
           <FormSchema
             autoSave
             model={selectedGenerator.name}
-            initialValues={generatorModel?.params || {}}
+            initialValues={
+              generatorModel?.params &&
+              Object.keys(generatorModel.params).length > 0
+                ? generatorModel.params
+                : Object.keys(
+                    selectedGenerator.schema?.properties || {},
+                  ).reduce((acc, k) => {
+                    acc[k] =
+                      selectedGenerator.schema.properties[k].placeholder ?? "";
+                    return acc;
+                  }, {})
+            }
             onFormSubmit={(values) => {
               setGeneratorModel({
                 component: selectedGenerator.name,

@@ -60,9 +60,13 @@ export default function ChunkingConfigurationStep({
         return acc;
       }, {});
 
+      const existingParams = chunkingModel?.params;
+      const shouldUseInitialParams =
+        !existingParams || Object.keys(existingParams).length === 0;
+
       setChunkingModel({
         component: newValue.name,
-        params: chunkingModel?.params ?? initialParams,
+        params: shouldUseInitialParams ? initialParams : existingParams,
       });
       setNextEnabled(true);
     } else {
@@ -123,7 +127,19 @@ export default function ChunkingConfigurationStep({
           <FormSchema
             autoSave
             model={selectedChunking.name}
-            initialValues={chunkingModel?.params || {}}
+            initialValues={
+              chunkingModel?.params &&
+              Object.keys(chunkingModel.params).length > 0
+                ? chunkingModel.params
+                : Object.keys(selectedChunking.schema?.properties || {}).reduce(
+                    (acc, k) => {
+                      acc[k] =
+                        selectedChunking.schema.properties[k].placeholder ?? "";
+                      return acc;
+                    },
+                    {},
+                  )
+            }
             onFormSubmit={handleFormSubmit}
             setError={(err) => {
               if (err) {
