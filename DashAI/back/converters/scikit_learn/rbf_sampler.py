@@ -46,6 +46,7 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
         "Approximates the feature map of an RBF kernel by Monte Carlo "
         "approximation of its Fourier transform."
     )
+    CATEGORY = "Polynomial & Kernel Methods"
     DISPLAY_NAME = "RBF Sampler"
     IMAGE_PREVIEW = "rbf_sampler.png"
 

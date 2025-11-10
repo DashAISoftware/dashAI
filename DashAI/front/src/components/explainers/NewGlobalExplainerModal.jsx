@@ -100,12 +100,9 @@ export default function NewGlobalExplainerModal({
       });
 
       if (response && response.id) {
-        console.log("Starting to track global explainer job:", response.id);
-
         startJobPolling(
           response.id,
           (result) => {
-            console.log("Global explainer job completed successfully:", result);
             enqueueSnackbar(
               `Explainer "${newGlobalExpl.name}" completed successfully`,
               {

@@ -4,10 +4,8 @@ import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
-import {
-  enqueueDatasetJob as enqueueDatasetRequest,
-  startJobQueue,
-} from "../../../api/job";
+import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
+import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
 
@@ -33,8 +31,19 @@ export default function ConfigureAndUploadDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const [nextEnabled, setNextEnabled] = useState(false);
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
+  const tourContext = useTourContext();
 
   const formSubmitRef = useRef(null);
+
+  useEffect(() => {
+    if (formSubmitRef.current && tourContext?.run) {
+      setTimeout(() => {
+        if (formSubmitRef.current?.setFieldValue) {
+          formSubmitRef.current.setFieldValue("name", "Personality Dataset");
+        }
+      }, 100);
+    }
+  }, [tourContext, selectedDataloader]);
 
   const submitNewDataset = useCallback(async () => {
     const params = formSubmitRef.current.values;
@@ -55,6 +64,12 @@ export default function ConfigureAndUploadDatasetStep({
           params,
         );
         handleDatasetCreated(data, job);
+
+        if (tourContext?.run) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 500);
+        }
       } catch {
         enqueueSnackbar("Error when trying to enqueue the dataset job.", {
           variant: "error",
@@ -69,6 +84,7 @@ export default function ConfigureAndUploadDatasetStep({
     enqueueSnackbar,
     handleDatasetCreated,
     formSubmitRef,
+    tourContext,
   ]);
 
   const handleFileUpload = (file, url) => {
@@ -118,6 +134,7 @@ export default function ConfigureAndUploadDatasetStep({
           }}
           saveButtonText="Upload"
           backButtonText="Back"
+          dataTour="dataset-step-upload-button"
         />
       </Grid>
     </Grid>

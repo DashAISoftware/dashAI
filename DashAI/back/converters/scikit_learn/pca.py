@@ -111,6 +111,7 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     DISPLAY_NAME = "Principal Component Analysis (PCA)"
     IMAGE_PREVIEW = "pca.png"
     metadata = {}
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

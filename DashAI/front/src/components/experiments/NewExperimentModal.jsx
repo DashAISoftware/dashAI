@@ -25,7 +25,7 @@ import { generateSequentialName } from "../../utils/nameGenerator";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
-
+import { useTourContext } from "../tour/TourProvider";
 import { renderStep } from "./renderStep";
 
 export default function NewExperimentModal({
@@ -39,6 +39,7 @@ export default function NewExperimentModal({
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
+  const tourContext = useTourContext();
 
   const defaultNewExp = useMemo(
     () => ({
@@ -186,6 +187,11 @@ export default function NewExperimentModal({
     if (activeStep === steps.length - 1) {
       uploadNewExperiment();
       handleCloseDialog();
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 300);
+      }
       return;
     }
 
@@ -200,11 +206,21 @@ export default function NewExperimentModal({
           setNewExp(defaultNewExp);
           setNextEnabled(false);
         }, 100);
+        if (tourContext && tourContext.run) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 600);
+        }
         return;
       }
     }
 
     setActiveStep((prevStep) => prevStep + 1);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
     setNextEnabled(false);
   };
 
@@ -349,6 +365,19 @@ export default function NewExperimentModal({
             }
           >
             <Button
+              data-tour={
+                steps[activeStep].name === "selectTask"
+                  ? "exp-task-selector-next-button"
+                  : steps[activeStep].name === "selectDataset"
+                    ? "exp-dataset-selector-next-button"
+                    : steps[activeStep].name === "prepareDataset"
+                      ? "exp-prepare-dataset-next-button"
+                      : steps[activeStep].name === "configureModels"
+                        ? "exp-configure-models-next-button"
+                        : steps[activeStep].name === "configureOptimizer"
+                          ? "exp-configure-optimizer-next-button"
+                          : undefined
+              }
               onClick={handleNextButton}
               autoFocus
               variant="contained"

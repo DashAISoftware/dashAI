@@ -59,6 +59,7 @@ class SimpleImputer(
         "(e.g. mean, median, or most frequent) "
         "along each column, or using a constant value."
     )
+    CATEGORY = "Basic Preprocessing"
     DISPLAY_NAME = "Simple Imputer"
     IMAGE_PREVIEW = "simple_imputer.png"
 

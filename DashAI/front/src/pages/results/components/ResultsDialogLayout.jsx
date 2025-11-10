@@ -80,7 +80,7 @@ function ResultsDialogLayout({
         handleShowGraphs={handleShowGraphs}
       />
       <Divider />
-      <Grid size={{ xs: 10 }}>
+      <Grid size={{ xs: 10 }} data-tour="exp-results-metrics">
         <CustomLayout>
           {showTable ? (
             <ResultsTable experimentId={experiment.id.toString()} />

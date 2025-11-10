@@ -86,14 +86,13 @@ class OptunaOptimizer(BaseOptimizer):
             # Set value for each hyperparameter and for each model
             # (either self or submodels nested inside)
             for obj, key, bounds, dtype in self.parameters:
-                model_trial = obj
                 if dtype == "number":
                     value = trial.suggest_float(key, bounds[0], bounds[1], log=False)
                 elif dtype == "integer":
                     value = trial.suggest_int(key, bounds[0], bounds[1], log=False)
                 else:
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
-                setattr(model_trial, key, value)
+                setattr(obj, key, value)
 
             self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
             y_pred = self.model.predict(input_dataset["validation"])

@@ -1,6 +1,5 @@
 import * as Yup from "yup";
 import { getComponents } from "../api/component";
-import { isObject } from "formik";
 
 // Generate a Yup schema from a JSON schema object based on the JSON schema specification from the api, it also generates the initial values of the form
 export const generateYupSchema = (schemaObj) => {

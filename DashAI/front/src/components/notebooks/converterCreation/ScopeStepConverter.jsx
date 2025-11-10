@@ -9,6 +9,7 @@ import {
   getDatasetInfoByFilePath,
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function ScopeStepConverter({
   supervised,
@@ -24,6 +25,16 @@ export default function ScopeStepConverter({
 }) {
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const tourContext = useTourContext();
+
+  const handleSubmit = () => {
+    nextStep();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
   const [isColumnSelectionValid, setIsColumnSelectionValid] = useState(false);
 
   useEffect(() => {
@@ -80,7 +91,7 @@ export default function ScopeStepConverter({
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 1,
         }}
       >
         <Typography variant="subtitle2" gutterBottom>
@@ -153,15 +164,14 @@ export default function ScopeStepConverter({
         )}
 
         <FormSchemaButtonGroup
-          onFormSubmit={nextStep}
+          onFormSubmit={handleSubmit}
           error={
             !isColumnSelectionValid || (supervised ? !targetColumn : false)
           }
           saveButtonText={
-            Object.values(tool.schema.properties).length > 0
-              ? "Next"
-              : "Create Converter"
+            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
           }
+          data-tour="converter-scope-next-button"
         />
       </Box>
     </Box>

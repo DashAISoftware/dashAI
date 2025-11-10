@@ -142,7 +142,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                 minHeight: "2.6em",
               }}
             >
-              {tool.display_name}
+              {tool.display_name || tool.name}
             </Typography>
 
             {/* Category */}

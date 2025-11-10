@@ -28,6 +28,7 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     )
     SHORT_DESCRIPTION = "Removes the rows with NaN values from the dataset."
     DISPLAY_NAME = "NaN Remover"
+    CATEGORY = "Basic Preprocessing"
     IMAGE_PREVIEW = "nan_remover.png"
 
     def __init__(self):

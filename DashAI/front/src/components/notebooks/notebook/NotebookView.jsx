@@ -226,9 +226,11 @@ export default function NotebookView({ notebook }) {
   return (
     <Box
       sx={{
+        className: "explorer-converter-box",
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        overflow: "auto",
       }}
     >
       {explorersAndConverters.length === 0 ? (
