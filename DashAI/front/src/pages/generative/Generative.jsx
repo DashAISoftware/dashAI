@@ -8,6 +8,7 @@ import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { getSessions, removeSession } from "../../api/session";
 import JobQueueWidget from "../../components/jobs/JobQueueWidget";
+import CenterBox from "../../components/threeSectionLayout/CenterBox";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -58,8 +59,8 @@ export default function Generative() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="20%" mr={1}>
+    <Box height="calc(100vh - 74px)" width="100%" display="flex">
+      <Box width="20%">
         <SessionBar
           sessions={sessions}
           selectedSessionId={selectedSessionId}
@@ -69,8 +70,8 @@ export default function Generative() {
           stepIndex={stepIndex}
         />
       </Box>
-      <Box width="60%" mr={1}>
-        <MainGenerativeBox>
+      <Box width="60%">
+        <CenterBox>
           {selectedSessionId ? (
             <GenerativeChat
               sessionId={selectedSessionId}
@@ -95,22 +96,14 @@ export default function Generative() {
               existingSessions={sessions}
             />
           )}
-        </MainGenerativeBox>
+        </CenterBox>
       </Box>
       <Box width="20%">
-        <Box
-          width="100%"
-          height="100%"
-          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
-        >
-          {selectedSessionId ? (
-            <ParamsBar
-              selectedSessionId={selectedSessionId}
-              onParamsUpdate={onParamsUpdate}
-              taskName={selectedTaskName}
-            />
-          ) : null}
-        </Box>
+        <ParamsBar
+          selectedSessionId={selectedSessionId}
+          onParamsUpdate={onParamsUpdate}
+          taskName={selectedTaskName}
+        />
       </Box>
     </Box>
   );

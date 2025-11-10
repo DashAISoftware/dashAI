@@ -241,6 +241,7 @@ export default function RightBar({ notebook, onToggle }) {
             p: 2,
             borderBottom: "1px solid #333",
             flexShrink: 0,
+            height: 64,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",

@@ -36,8 +36,8 @@ export default function DatasetsContent() {
   const [notebooks, setNotebooks] = useState([]);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
-  const [leftBarWidth, setLeftBarWidth] = useState(22);
-  const [rightBarWidth, setRightBarWidth] = useState(22);
+  const [leftBarWidth, setLeftBarWidth] = useState(20);
+  const [rightBarWidth, setRightBarWidth] = useState(20);
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
@@ -444,15 +444,12 @@ export default function DatasetsContent() {
     <Box
       height="calc(100vh - 74px)"
       width="100%"
-      p={1.5}
-      pb={1}
       display="flex"
       data-container="datasets"
     >
       {/* Left Panel */}
       <Box
         width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
-        mr={leftBarVisible ? 0.5 : 0}
         position="relative"
         className="datasets-list"
         sx={{
@@ -531,7 +528,6 @@ export default function DatasetsContent() {
       <ExplorersAndConvertersProvider>
         <Box
           width={`${centerWidth}%`}
-          mx={0.5}
           sx={{
             transition:
               isTogglingLeft || isTogglingRight
@@ -625,7 +621,6 @@ export default function DatasetsContent() {
         {/* Right Panel */}
         <Box
           width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
-          ml={rightBarVisible ? 0.5 : 0}
           position="relative"
           sx={{
             transition: isTogglingRight
