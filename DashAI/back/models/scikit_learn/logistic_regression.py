@@ -25,12 +25,12 @@ class LogisticRegressionSchema(BaseSchema):
         description="Specify the norm of the penalty",
     )  # type: ignore
     tol: schema_field(
-        optimizer_float_field(gt=0.0),
+        optimizer_float_field(ge=0.0),
         placeholder={
             "optimize": False,
-            "fixed_value": 0.001,
-            "lower_bound": 0.001,
-            "upper_bound": 5,
+            "fixed_value": 0.0,
+            "lower_bound": 0.0,
+            "upper_bound": 5.0,
         },
         description="Tolerance for stopping criteria.",
     )  # type: ignore

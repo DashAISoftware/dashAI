@@ -75,15 +75,10 @@ class OptunaOptimizer(BaseOptimizer):
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
-
-        if metric["name"] in ["Accuracy", "F1", "Precision", "Recall"]:
-            study = optuna.create_study(
-                direction="maximize", sampler=self.sampler(), pruner=self.pruner
-            )
-        else:
-            study = optuna.create_study(
-                direction="minimize", sampler=self.sampler(), pruner=self.pruner
-            )
+        direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
+        study = optuna.create_study(
+            direction=direction, sampler=self.sampler(), pruner=self.pruner
+        )
 
         self.metric = metric["class"]
 
