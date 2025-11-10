@@ -30,6 +30,7 @@
     "react-virtuoso": "^4.14.0",
     "react-window": "^1.8.11",
     "reactflow": "^11.11.4",
+    "recharts": "^3.4.1",
     "web-vitals": "^2.1.4",
     "yup": "^0.32.11"
   },
