@@ -638,7 +638,6 @@ export default function DatasetsContent() {
               </Box>
             </>
           ) : selectedNotebookId ? (
-            // ✅ TourProvider envuelve TANTO el centro COMO el panel derecho
             <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
               <>
                 {/* Center Panel - Notebook */}
@@ -734,7 +733,6 @@ export default function DatasetsContent() {
               </>
             </TourProvider>
           ) : (
-            // Menu and upload steps
             <Box
               width={`${centerWidth}%`}
               mx={0.5}

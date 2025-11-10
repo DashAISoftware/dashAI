@@ -8,6 +8,7 @@ import ResultsTabParameters from "./ResultsTabParameters";
 import ResultsTabMetrics from "./ResultsTabMetrics";
 import ResultsTabHyperparameters from "./ResultsTabHyperparameters";
 import { tabsResultsDetails } from "../constants/tabsResultsDetails";
+import { checkIfHaveOptimazers } from "../../../utils/schema";
 
 function ResultsDetailsLayout({
   runData,
@@ -16,14 +17,10 @@ function ResultsDetailsLayout({
   handleTabChange,
   handleCloseCustomLayout,
 }) {
-  const optimizables = runData?.parameters
-    ? Object.keys(runData.parameters).filter(
-        (key) => runData.parameters[key]?.optimize === true,
-      ).length
-    : 0;
+  const optimizables = checkIfHaveOptimazers(runData.parameters);
   const updatedTabs = tabsResultsDetails.map((tab) => ({
     ...tab,
-    disabled: tab.value === 3 ? optimizables === 0 : tab.disabled,
+    disabled: tab.value === 3 ? !optimizables : tab.disabled,
   }));
   return (
     <CustomLayout>

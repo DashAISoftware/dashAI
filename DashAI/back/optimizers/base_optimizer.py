@@ -275,7 +275,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         )
         return plotly.io.to_json(fig)
 
-    def importance_plot(self, trials):
+    def importance_plot(self, trials, goal_metric):
         """
         Plot to obtain the importance between all the hyperparameters
         involved in hyperparameter optimization.
@@ -289,13 +289,14 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             fig (json): json with the plot data
         """
         distributions = {}
-        for param, (low, high) in self.parameters.items():
+        for _, param, (low, high) in self.parameters:
             if isinstance(low, int):
                 distributions[param] = optuna.distributions.IntDistribution(low, high)
             elif isinstance(low, float):
                 distributions[param] = optuna.distributions.FloatDistribution(low, high)
 
-        study = optuna.create_study(direction="maximize")
+        direction = "maximize" if goal_metric["metadata"]["maximize"] else "minimize"
+        study = optuna.create_study(direction=direction)
         for trial in trials:
             study.add_trial(
                 optuna.trial.create_trial(
@@ -312,7 +313,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             importances = evaluator.evaluate(study)
         except RuntimeError:
             importances = {
-                param: 1.0 / len(self.parameters) for param in self.parameters
+                param: 1.0 / len(self.parameters) for _, param, _ in self.parameters
             }
             log.warning(
                 "Could not calculate parameter importance using FANOVA. "
@@ -343,7 +344,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         return plotly.io.to_json(fig)
 
-    def create_plots(self, trials, run_id, n_params):
+    def create_plots(self, trials, run_id, n_params, goal_metric):
         """
         List of available plots.
 
@@ -354,6 +355,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                             from the experiment.
             n_params (int): Number of the different hyperparameters involved
                             in the process of hyperparameter optimization
+            goal_metric (dict): Metric optimized in the process.
 
         Returns
         -------
@@ -370,7 +372,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                 self.history_objective_plot(trials),
                 self.slice_plot(trials),
                 self.contour_plot(trials),
-                self.importance_plot(trials),
+                self.importance_plot(trials, goal_metric),
             ]
             return plots_filenames, plots_list
         else:
