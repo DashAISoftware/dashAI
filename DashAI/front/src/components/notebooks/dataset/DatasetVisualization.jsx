@@ -7,8 +7,15 @@ import {
   CircularProgress,
   Box,
   Chip,
+  Alert,
+  Divider,
+  Tabs,
+  Tab,
 } from "@mui/material";
-import { AddCircleOutline as AddIcon } from "@mui/icons-material";
+import {
+  AddCircleOutline as AddIcon,
+  CheckCircle as CheckIcon,
+} from "@mui/icons-material";
 import {
   getDatasetFile,
   getDatasetInfo,
@@ -22,6 +29,14 @@ import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
 import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
+import { formatDate } from "../../../pages/results/constants/formatDate";
+import Header from "./Header";
+import Tooltip from "@mui/material/Tooltip";
+import OverviewTab from "./OverviewTab";
+import { NumericTab } from "./NumericTab";
+import { CategoricalTab } from "./CategoricalTab";
+import QualityTab from "./QualityTab";
+import CorrelationsTab from "./CorrelationsTab";
 
 export default function DatasetVisualization({
   dataset,
@@ -41,29 +56,13 @@ export default function DatasetVisualization({
 
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
+  const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      });
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  // Fetch dataset info when component mounts or dataset changes
   useEffect(() => {
+    setTab(0);
     const fetchDatasetInfo = async () => {
       if (isProcessing) return;
 
@@ -136,116 +135,285 @@ export default function DatasetVisualization({
   const status = getDatasetStatus(dataset.status);
   const isProcessing = !(status === "Finished" || status === "Error");
 
+  // Helper function to render quality alerts
+  const renderQualityAlerts = () => {
+    if (!datasetInfo?.quality_info) return null;
+
+    const alerts = [];
+    const { quality_info, general_info } = datasetInfo;
+
+    if (general_info?.duplicate_rows > 0) {
+      alerts.push(
+        <Alert severity="warning" sx={{ mb: 1 }} key="duplicates">
+          Found {general_info.duplicate_rows} duplicate rows in the dataset
+        </Alert>,
+      );
+    }
+
+    const highNanColumns = Object.entries(
+      quality_info.nan_ratio_per_column || {},
+    )
+      .filter(([_, ratio]) => ratio > 0.1)
+      .map(([col]) => col);
+
+    if (highNanColumns.length > 0) {
+      alerts.push(
+        <Alert severity="warning" sx={{ mb: 1 }} key="nan">
+          High missing values in: {highNanColumns.join(", ")}
+        </Alert>,
+      );
+    }
+
+    if (quality_info.high_cardinality_columns?.length > 0) {
+      alerts.push(
+        <Alert severity="info" sx={{ mb: 1 }} key="cardinality">
+          High cardinality detected in:{" "}
+          {quality_info.high_cardinality_columns.join(", ")}
+        </Alert>,
+      );
+    }
+
+    if (alerts.length === 0) {
+      alerts.push(
+        <Alert
+          severity="success"
+          sx={{ mb: 1 }}
+          key="quality"
+          icon={<CheckIcon />}
+        >
+          No data quality issues detected
+        </Alert>,
+      );
+    }
+
+    return alerts;
+  };
+
   return (
     <>
-      {/* Dataset Info Section */}
-      {!isProcessing && datasetInfo && (
-        <Paper
-          sx={{
-            bgcolor: "#212121",
-            borderRadius: 2,
-            boxShadow: "none",
-            p: 2,
-            mb: 2,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              flexWrap: "wrap",
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Dataset Info:
-            </Typography>
-            <Chip
-              label={`${datasetInfo.total_rows || 0} rows`}
-              size="small"
-              variant="outlined"
-              sx={{ color: "text.primary", borderColor: "divider" }}
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2, mx: 1 }}
+      >
+        {/* Quick Stats Section */}
+        {!isProcessing && datasetInfo && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Dataset quality score */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography variant="h4">{dataset.name}</Typography>
+              </Box>
+              <Box>
+                <Tooltip
+                  title="Data Quality Score is calculated based on various factors including missing values, duplicate rows, and data consistency. A higher score indicates better data quality."
+                  arrow
+                >
+                  <Chip
+                    label={`Quality Score: ${
+                      datasetInfo?.quality_info?.data_quality_score?.toFixed(
+                        2,
+                      ) ?? "N/A"
+                    } ${
+                      datasetInfo?.quality_info?.data_quality_score ? "%" : ""
+                    }`}
+                    color={
+                      datasetInfo?.quality_info?.data_quality_score >= 80
+                        ? "success"
+                        : datasetInfo?.quality_info?.data_quality_score >= 50
+                        ? "warning"
+                        : datasetInfo?.quality_info?.data_quality_score
+                        ? "error"
+                        : "default"
+                    }
+                    sx={{
+                      "& .MuiChip-label": {
+                        fontSize: "1rem",
+                      },
+                    }}
+                  />
+                </Tooltip>
+              </Box>
+            </Box>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography variant="subtitle1" color="text.secondary">
+                  {formatDate(dataset.created)}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 2,
+                  flexDirection: "column",
+                }}
+              >
+                {/* Buttons */}
+                <Grid
+                  sx={{
+                    height: "35px",
+                    display: "flex",
+                    gap: 2,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    disabled={isProcessing}
+                    onClick={() => {
+                      navigate("../app/experiments", {
+                        state: { dataset: dataset },
+                      });
+                    }}
+                    endIcon={<AddIcon />}
+                    sx={{ height: "100%" }}
+                    data-tour="new-experiment-button-notebook"
+                  >
+                    New Experiment
+                  </Button>
+                  <Button
+                    variant="contained"
+                    endIcon={<AddIcon />}
+                    disabled={isProcessing}
+                    className="new-notebook-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCreateNotebookModal(true);
+                      if (tourContext && tourContext.run) {
+                        setTimeout(() => {
+                          tourContext.nextStep();
+                        }, 200);
+                      }
+                    }}
+                    sx={{ height: "100%" }}
+                  >
+                    New Notebook
+                  </Button>
+                </Grid>
+              </Box>
+            </Box>
+            <Header
+              totalRows={datasetInfo?.total_rows}
+              totalColumns={datasetInfo?.total_columns}
+              fileSize={datasetInfo?.general_info?.memory_usage_mb}
+              duplicateRows={datasetInfo?.general_info?.duplicate_rows}
+              missingValues={datasetInfo?.nan}
             />
-            <Chip
-              label={`${datasetInfo.total_columns || 0} columns`}
-              size="small"
-              variant="outlined"
-              sx={{ color: "text.primary", borderColor: "divider" }}
-            />
-            {dataset.created && (
-              <Chip
-                label={`Created: ${formatDate(dataset.created)}`}
-                size="small"
-                variant="outlined"
-                sx={{ color: "text.primary", borderColor: "divider" }}
+            {/* Data Quality Alerts */}
+            <Box>{renderQualityAlerts()}</Box>
+            {/* Tabs */}
+            <Tabs
+              sx={{
+                bgcolor: "#2C2C2C",
+                borderRadius: 1,
+                minHeight: "48px",
+                "& .MuiTabs-indicator": {
+                  height: "2px",
+                },
+                "& .MuiTab-root": {
+                  minHeight: "48px",
+                  fontSize: "0.85rem",
+                  borderRadius: "4px",
+                  transition: "all 0.2s",
+                  border: "1px solid transparent",
+                  textTransform: "none",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.05)",
+                  },
+                  "&.Mui-disabled": {
+                    color: "rgb(150, 150, 150)",
+                    bgcolor: "rgb(32, 32, 32)",
+                    borderColor: "rgb(39, 39, 42)",
+                    opacity: 0.6,
+                    cursor: "not-allowed",
+                    filter: "grayscale(0.6)",
+                    position: "relative",
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "4px",
+                      pointerEvents: "none",
+                      background:
+                        "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)",
+                    },
+                  },
+                },
+              }}
+              value={tab}
+              onChange={(_, newValue) => setTab(newValue)}
+            >
+              <Tab label="Overview" />
+              <Tab
+                label="Numerical Analysis"
+                disabled={
+                  !datasetInfo?.numeric_stats ||
+                  Object.keys(datasetInfo.numeric_stats).length === 0
+                }
+              />
+              <Tab
+                label="Categorical"
+                disabled={
+                  !datasetInfo?.categorical_stats ||
+                  Object.keys(datasetInfo.categorical_stats).length === 0
+                }
+              />
+              <Tab label="Data Quality" disabled={!datasetInfo?.quality_info} />
+              <Tab
+                label="Correlations"
+                disabled={
+                  !datasetInfo?.correlations ||
+                  Object.keys(datasetInfo.correlations).length === 0
+                }
+              />
+            </Tabs>
+
+            {/* Divider */}
+            <Divider sx={{ my: 2 }} />
+
+            {/* Content based on selected tab */}
+            {tab === 0 && (
+              <OverviewTab
+                dataset={dataset}
+                dtypes={datasetInfo?.general_info?.dtypes}
+                nan={datasetInfo?.nan}
+                total_rows={datasetInfo?.total_rows}
+                fetchDatasetPage={fetchDatasetPage}
               />
             )}
+            {tab === 1 && (
+              <NumericTab numericStats={datasetInfo?.numeric_stats} />
+            )}
+            {tab === 2 && (
+              <CategoricalTab
+                categoricalStats={datasetInfo?.categorical_stats}
+              />
+            )}
+            {tab === 3 && (
+              <QualityTab
+                qualityInfo={datasetInfo?.quality_info}
+                totalRows={datasetInfo?.total_rows}
+              />
+            )}
+            {tab === 4 && (
+              <CorrelationsTab correlations={datasetInfo?.correlations} />
+            )}
           </Box>
-        </Paper>
-      )}
-
-      {/* Main Dataset Visualization */}
-      <Paper
-        sx={{
-          bgcolor: "#212121",
-          borderRadius: 2,
-          boxShadow: "none",
-          p: 2,
-        }}
-      >
-        {/* Title and button */}
-        <Grid
-          container
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 4 }}
-        >
-          <Typography variant="h6">{dataset.name}</Typography>
-          <Grid sx={{ height: "35px" }}>
-            <Button
-              variant="contained"
-              disabled={isProcessing}
-              onClick={() => {
-                navigate("../app/experiments", {
-                  state: { dataset: dataset },
-                });
-              }}
-              endIcon={<AddIcon />}
-              sx={{ mr: 2, height: "100%" }}
-              data-tour="new-experiment-button-notebook"
-            >
-              New Experiment
-            </Button>
-            <Button
-              variant="contained"
-              endIcon={<AddIcon />}
-              disabled={isProcessing}
-              className="new-notebook-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCreateNotebookModal(true);
-                if (tourContext && tourContext.run) {
-                  setTimeout(() => {
-                    tourContext.nextStep();
-                  }, 200);
-                }
-              }}
-              sx={{ height: "100%" }}
-            >
-              New Notebook
-            </Button>
-          </Grid>
-        </Grid>
-
-        {/* Table - only show if not processing */}
-        {!isProcessing && (
-          <DatasetTable
-            fetchPage={fetchDatasetPage}
-            deps={[dataset.file_path]}
-            initialPageSize={10}
-            datasetPath={dataset.file_path}
-          />
         )}
 
         {/* Processing placeholder */}
@@ -271,18 +439,20 @@ export default function DatasetVisualization({
             </Typography>
           </Box>
         )}
+      </Box>
 
-        <CreateNotebookModal
-          open={showCreateNotebookModal}
-          onClose={() => {
-            setShowCreateNotebookModal(false);
-          }}
-          onCreateNotebook={handleCreateNotebook}
-          dataset={dataset}
-          datasetInfo={datasetInfo}
-          existingNotebooks={existingNotebooks}
-        />
-      </Paper>
+      {/* Main Dataset Visualization */}
+
+      <CreateNotebookModal
+        open={showCreateNotebookModal}
+        onClose={() => {
+          setShowCreateNotebookModal(false);
+        }}
+        onCreateNotebook={handleCreateNotebook}
+        dataset={dataset}
+        datasetInfo={datasetInfo}
+        existingNotebooks={existingNotebooks}
+      />
 
       <JobQueueWidget />
     </>
