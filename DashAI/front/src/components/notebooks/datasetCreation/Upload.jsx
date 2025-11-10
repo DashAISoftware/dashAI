@@ -19,12 +19,17 @@ import ClearIcon from "@mui/icons-material/Clear";
  * The upload (send to API) doesn't happen here, this component just adds the file "uploaded" to the
  * newDataset state in the modal
  * @param {function} onFileUpload function to handle when the user "uploads" a dataset
+ * @param {File} initialFile optional initial file to display (when coming back from preview)
  */
-function Upload({ onFileUpload }) {
+function Upload({ onFileUpload, initialFile = null }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
-  const [datasetState, setDatasetState] = useState(EMPTY);
+  const [datasetState, setDatasetState] = useState(
+    initialFile ? LOADED : EMPTY,
+  );
   const [dragActive, setDragActive] = useState(false);
-  const [fileOriginalName, setFileOriginalName] = useState("");
+  const [fileOriginalName, setFileOriginalName] = useState(
+    initialFile ? initialFile.name : "",
+  );
   const inputRef = useRef(null);
 
   const uploadDataset = async (file) => {
@@ -190,6 +195,7 @@ function Upload({ onFileUpload }) {
 
 Upload.propTypes = {
   onFileUpload: PropTypes.func.isRequired,
+  initialFile: PropTypes.object,
 };
 
 export default Upload;
