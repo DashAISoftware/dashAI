@@ -55,12 +55,12 @@ class HyperOptOptimizer(BaseOptimizer):
         """
         search_space = {}
 
-        for _, hyperparameter, values in hyperparams_data:
-            if any(isinstance(v, int) for v in values):
+        for _, hyperparameter, values, dtype in hyperparams_data:
+            if dtype == "integer":
                 search_space[hyperparameter] = hp.quniform(
                     hyperparameter, values[0], values[1], 1
                 )
-            elif any(isinstance(v, float) for v in values):
+            elif dtype == "number":
                 search_space[hyperparameter] = hp.uniform(
                     hyperparameter, values[0], values[1]
                 )
@@ -89,19 +89,13 @@ class HyperOptOptimizer(BaseOptimizer):
         self.parameters = parameters
         self.metric = metric["class"]
 
-        param_mapping = {key: (obj, key) for obj, key, _ in self.parameters}
+        param_mapping = {key: (obj, key) for obj, key, _, _ in self.parameters}
 
         search_space = self.search_space(self.parameters)
 
         def objective(params):
             for param_name, value in params.items():
                 obj, key = param_mapping[param_name]
-                # Convert to int if it was a quniform (integer) parameter
-                if any(
-                    isinstance(v, int)
-                    for v in [b for o, k, b in self.parameters if k == param_name][0]
-                ):
-                    value = int(value)
                 setattr(obj, key, value)
 
             self.model.fit(self.input_dataset["train"], self.output_dataset["train"])

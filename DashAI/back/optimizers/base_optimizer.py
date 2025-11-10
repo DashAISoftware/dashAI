@@ -289,10 +289,10 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             fig (json): json with the plot data
         """
         distributions = {}
-        for _, param, (low, high) in self.parameters:
-            if isinstance(low, int):
+        for _, param, (low, high), dtype in self.parameters:
+            if dtype == "integer":
                 distributions[param] = optuna.distributions.IntDistribution(low, high)
-            elif isinstance(low, float):
+            elif dtype == "number":
                 distributions[param] = optuna.distributions.FloatDistribution(low, high)
 
         direction = "maximize" if goal_metric["metadata"]["maximize"] else "minimize"
@@ -306,8 +306,6 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                     state=optuna.trial.TrialState.COMPLETE,
                 )
             )
-        evaluator = FanovaImportanceEvaluator()
-        importances = evaluator.evaluate(study)
         try:
             evaluator = FanovaImportanceEvaluator()
             importances = evaluator.evaluate(study)

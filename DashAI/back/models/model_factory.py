@@ -104,6 +104,13 @@ class ModelFactory:
         local_refs = []
         component_registry = di["component_registry"]
 
+        component = {
+            key: value
+            for key, value in component_registry[obj.__class__.__name__].items()
+            if key != "class"
+        }
+        component_params = component.get("schema").get("properties")
+
         # Unwrap 'properties' if present
         if isinstance(value, dict) and "properties" in value and len(value) == 1:
             value = value["properties"]
@@ -140,7 +147,9 @@ class ModelFactory:
             fixed_value = value.get("fixed_value")
 
             setattr(obj, key, fixed_value)
-            local_refs.append((obj, key, (lower, upper)))
+            local_refs.append(
+                (obj, key, (lower, upper), component_params[key].get("type"))
+            )
 
             fixed_val = fixed_value
 
