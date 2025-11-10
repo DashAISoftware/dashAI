@@ -37,6 +37,7 @@ import { NumericTab } from "./NumericTab";
 import { CategoricalTab } from "./CategoricalTab";
 import QualityTab from "./QualityTab";
 import CorrelationsTab from "./CorrelationsTab";
+import { QualityAlerts } from "./QualityAlerts";
 
 export default function DatasetVisualization({
   dataset,
@@ -134,60 +135,6 @@ export default function DatasetVisualization({
 
   const status = getDatasetStatus(dataset.status);
   const isProcessing = !(status === "Finished" || status === "Error");
-
-  // Helper function to render quality alerts
-  const renderQualityAlerts = () => {
-    if (!datasetInfo?.quality_info) return null;
-
-    const alerts = [];
-    const { quality_info, general_info } = datasetInfo;
-
-    if (general_info?.duplicate_rows > 0) {
-      alerts.push(
-        <Alert severity="warning" sx={{ mb: 1 }} key="duplicates">
-          Found {general_info.duplicate_rows} duplicate rows in the dataset
-        </Alert>,
-      );
-    }
-
-    const highNanColumns = Object.entries(
-      quality_info.nan_ratio_per_column || {},
-    )
-      .filter(([_, ratio]) => ratio > 0.1)
-      .map(([col]) => col);
-
-    if (highNanColumns.length > 0) {
-      alerts.push(
-        <Alert severity="warning" sx={{ mb: 1 }} key="nan">
-          High missing values in: {highNanColumns.join(", ")}
-        </Alert>,
-      );
-    }
-
-    if (quality_info.high_cardinality_columns?.length > 0) {
-      alerts.push(
-        <Alert severity="info" sx={{ mb: 1 }} key="cardinality">
-          High cardinality detected in:{" "}
-          {quality_info.high_cardinality_columns.join(", ")}
-        </Alert>,
-      );
-    }
-
-    if (alerts.length === 0) {
-      alerts.push(
-        <Alert
-          severity="success"
-          sx={{ mb: 1 }}
-          key="quality"
-          icon={<CheckIcon />}
-        >
-          No data quality issues detected
-        </Alert>,
-      );
-    }
-
-    return alerts;
-  };
 
   return (
     <>
@@ -315,7 +262,12 @@ export default function DatasetVisualization({
               missingValues={datasetInfo?.nan}
             />
             {/* Data Quality Alerts */}
-            <Box>{renderQualityAlerts()}</Box>
+            <Box>
+              <QualityAlerts
+                qualityInfo={datasetInfo?.quality_info}
+                generalInfo={datasetInfo?.general_info}
+              />
+            </Box>
             {/* Tabs */}
             <Tabs
               sx={{
