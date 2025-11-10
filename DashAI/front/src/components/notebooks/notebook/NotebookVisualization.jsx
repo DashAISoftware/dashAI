@@ -18,7 +18,10 @@ export default function NotebookVisualization({
         data-notebook-container
       >
         {/* Dataset View */}
-        <Box sx={{ flexGrow: 0, position: "sticky" }}>
+        <Box
+          sx={{ flexGrow: 0, position: "sticky" }}
+          data-tour="dataset-preview-section"
+        >
           <DatasetPreviewNotebook
             notebook={notebook}
             handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
