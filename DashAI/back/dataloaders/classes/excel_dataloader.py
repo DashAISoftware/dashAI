@@ -254,3 +254,39 @@ class ExcelDataLoader(BaseDataLoader):
             finally:
                 shutil.rmtree(prepared_path[0])
         return to_dashai_dataset(dataset_dict)
+
+    def load_preview(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 10,
+    ) -> pd.DataFrame:
+        """
+        Load a preview of the Excel dataset.
+
+        Note: Excel doesn't support native streaming in the same way as CSV/JSON,
+        so we use nrows parameter to limit memory usage.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to the Excel file.
+        params : Dict[str, Any]
+            Parameters for loading Excel (sheet, header, etc.).
+        n_rows : int, optional
+            Number of rows to preview. Default is 10.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the preview rows.
+        """
+        pandas_params = self._prepare_pandas_params(params)
+        pandas_params["nrows"] = n_rows
+
+        df_preview = pd.read_excel(
+            io=filepath_or_buffer,
+            **pandas_params,
+        )
+
+        return df_preview

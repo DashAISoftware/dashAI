@@ -1,14 +1,12 @@
-import json
 import io
+import json
 import logging
 import os
 import shutil
-from itertools import islice
+import tempfile
 from typing import Any, Dict
 
-import ijson
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import pyarrow.csv as csv
 import pyarrow.ipc as ipc
@@ -904,120 +902,117 @@ async def export_dataset_csv_by_id(
                 detail="Error exporting dataset as CSV",
             ) from e
 
-@router.post("/load_preview")
-async def load_preview(file: UploadFile = File(...), params: str = Form(None)):
-    """Load a small preview of the dataset from a file, without saving it.
+
+@router.post("/preview_with_types")
+@inject
+async def preview_with_types(
+    file: UploadFile = File(...),
+    params: str = Form(None),
+    component_registry: Dict = Depends(lambda: di["component_registry"]),
+):
+    """
+    Load preview AND infer types in a single call.
+    This combines load_preview and infer_datatypes for better UX.
 
     Parameters
     ----------
     file : UploadFile
         The file uploaded by the user.
-        This file is expected to be a dataset file (e.g., CSV, Excel, json, etc.).
+    params : str
+        JSON string with parameters for the dataloader.
+    component_registry : Dict
+        Registry of available dataloaders.
 
     Returns
     -------
     Dict
-        A dictionary containing a preview of the dataset.
-        Included the first 10 rows and column types.
-    """
-    try:
-        parsed_params = json.loads(params)
-        if file.filename.endswith(".csv"):
-            sep = parsed_params.get("separator", ",")
-            print(f"sep: {sep}")
-            loaded_dataset = pd.read_csv(file.file, sep=sep, nrows=10000)
-        elif file.filename.endswith(".xlsx"):
-            sheet = parsed_params.get("sheet", 0)
-            header = parsed_params.get("header", 0)
-            usecols = parsed_params.get("usecols", None)
-            loaded_dataset = pd.read_excel(
-                file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10
-            )
-        elif file.filename.endswith(".json"):
-            data_key = parsed_params.get("data_key", None)
-            items = ijson.items(file.file, f"{data_key}.item")
-            limited_items = list(
-                islice(items, 10)
-            )  # We check the first 100 items w/o loading the entire file into memory
-            loaded_dataset = pd.DataFrame(limited_items)
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unsupported file type."
-                " Only CSV, Excel and JSON files are supported.",
-            )
-
-        table = pa.Table.from_pandas(loaded_dataset)
-        schema = arrow_to_dashai_schema(table)
-
-        loaded_dataset = loaded_dataset.replace(
-            {np.nan: None, np.inf: None, -np.inf: None}
-        )
-
-        sample = loaded_dataset.to_dict(orient="records")
-        return {
-            "sample": sample,
-            "schema": schema,
-        }
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to load preview",
-        ) from e
-
-
-@router.post("/infer_datatypes")
-async def infer_datatypes(file: UploadFile = File(...), params: str = Form(None)):
-    """Infer the datatypes of the dataset.
-
-    Parameters
-    ----------
-    file : UploadFile
-        The Dataset from load_preview, as a json.
-
-    Returns
-    -------
-    Dict
-        A dictionary containing the inferred datatypes of the dataset columns.
+        A dictionary containing:
+        - sample: First 10 rows of the dataset
+        - schema: Column types from Arrow
+        - inferred_types: Detailed type inference (DashAI types)
+        - preview_row_count: Number of rows used for inference
     """
     try:
         parsed_params = json.loads(params) if params else {}
-        if file.filename.endswith(".csv"):
-            sep = parsed_params.get("separator", ",")
-            loaded_dataset = pd.read_csv(file.file, sep=sep, nrows=10000)
-        elif file.filename.endswith(".xlsx"):
-            sheet = parsed_params.get("sheet", 0)
-            header = parsed_params.get("header", 0)
-            usecols = parsed_params.get("usecols", None)
-            loaded_dataset = pd.read_excel(
-                file.file, sheet_name=sheet, header=header, usecols=usecols, nrows=10000
-            )
-        elif file.filename.endswith(".json"):
-            data_key = parsed_params.get("data_key", None)
-            items = ijson.items(file.file, f"{data_key}.item")
-            limited_items = list(islice(items, 10000))
-            # We check the first 10000 items without loading the entire file into memory
-            loaded_dataset = pd.DataFrame(limited_items)
 
-        methods = parsed_params.get("methods", ["DashAIPtype"])
-        # returns a dictionary with the inferred datatypes and column name for each
-        final_types = {}
-        for method in methods:
-            inferred_types = infer_types(loaded_dataset, method)
-            # This part is just to prioritize if using multiple methods
-            for column_name, column_detail in inferred_types.items():
-                current = final_types.get(column_name) or {}
-                current_type = current.get("type", None)
-                if current_type is None or current_type in value_types:
-                    final_types[column_name] = column_detail
-                else:
-                    pass
-        return final_types
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file.filename
+        ) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+
+        try:
+            if file.filename.endswith(".csv"):
+                dataloader_name = "CSVDataLoader"
+                if "separator" not in parsed_params:
+                    parsed_params["separator"] = ","
+
+            elif file.filename.endswith(".xlsx") or file.filename.endswith(".xls"):
+                dataloader_name = "ExcelDataLoader"
+
+            elif file.filename.endswith(".json"):
+                dataloader_name = "JSONDataLoader"
+                if "data_key" not in parsed_params:
+                    parsed_params["data_key"] = None
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Unsupported file type. Only CSV, Excel and JSON files are "
+                        "supported."
+                    ),
+                )
+
+            if dataloader_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Dataloader {dataloader_name} not found in registry.",
+                )
+
+            dataloader = component_registry[dataloader_name]["class"]()
+
+            inference_rows = parsed_params.get("inference_rows", 1000)
+            loaded_dataset = dataloader.load_preview(
+                filepath_or_buffer=tmp_file_path,
+                params=parsed_params,
+                n_rows=inference_rows,
+            )
+
+            sample_df = loaded_dataset.head(10)
+
+            table = pa.Table.from_pandas(loaded_dataset)
+            arrow_schema = arrow_to_dashai_schema(table)
+
+            methods = parsed_params.get("methods", ["DashAIPtype"])
+
+            inferred_types = {}
+            for method in methods:
+                types_result = infer_types(loaded_dataset, method)
+                for column_name, column_detail in types_result.items():
+                    current = inferred_types.get(column_name) or {}
+                    current_type = current.get("type", None)
+                    if current_type is None or current_type in value_types:
+                        inferred_types[column_name] = column_detail
+
+            sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
+            sample = sample_df.to_dict(orient="records")
+
+            return {
+                "sample": sample,
+                "schema": arrow_schema,
+                "inferred_types": inferred_types,
+                "preview_row_count": len(loaded_dataset),
+                "total_rows_estimated": "unknown",  # Could estimate from file size
+            }
+
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
 
     except Exception as e:
         logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to infer datatypes",
+            detail=f"Failed to load preview with types: {str(e)}",
         ) from e

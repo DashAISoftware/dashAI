@@ -6,6 +6,7 @@ import zipfile
 from abc import abstractmethod
 from typing import Any, Dict, Final
 
+import pandas as pd
 from datasets.download.download_manager import DownloadManager
 
 from DashAI.back.config_object import ConfigObject
@@ -44,6 +45,36 @@ class BaseDataLoader(ConfigObject):
             A DashAI Dataset with the loaded data.
         """
         raise NotImplementedError
+
+    def load_preview(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 10,
+    ) -> pd.DataFrame:
+        """
+        Load a preview of the dataset using streaming.
+
+        This is a default implementation that can be overridden by specific dataloaders
+        for better performance.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to the file or buffer to load.
+        params : Dict[str, Any]
+            Parameters for loading the data.
+        n_rows : int, optional
+            Number of rows to preview. Default is 10.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame with the preview data.
+        """
+        raise NotImplementedError(
+            "load_preview must be implemented by specific dataloader"
+        )
 
     def prepare_files(self, file_path: str, temp_path: str) -> str:
         """Prepare the files to load the data.
