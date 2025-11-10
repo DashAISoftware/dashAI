@@ -10,6 +10,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class SMOTEENNSchema(BaseSchema):
@@ -37,3 +38,12 @@ class SMOTEENNConverter(ImbalancedLearnWrapper, SMOTEENN):
 
     def __init__(self, **kwargs):
         super(SMOTEENNConverter, self).__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        SMOTEENN preserves input column types.
+        Type handling is done in ImbalancedLearnWrapper.transform().
+        """
+        raise NotImplementedError(
+            "SMOTEENN preserves input types. Types are handled in the transform method."
+        )

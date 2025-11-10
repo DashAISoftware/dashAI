@@ -6,6 +6,7 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer, Text
 
 
@@ -138,3 +139,11 @@ class CharacterReplacer(BaseConverter):
     def changes_row_count(self) -> bool:
         """This converter does not change the number of rows."""
         return False
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Returns Text or Integer depending on whether values can be converted
+        to int. Since this is determined dynamically during transform, we
+        return Text as default.
+        """
+        return Text(arrow_type=pa.string())

@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.decomposition import IncrementalPCA as IncrementalPCAOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
@@ -8,6 +9,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class IncrementalPCASchema(BaseSchema):
@@ -49,3 +52,7 @@ class IncrementalPCA(SklearnWrapper, IncrementalPCAOperation):
     SCHEMA = IncrementalPCASchema
     DESCRIPTION = "Incremental principal components analysis (IPCA)."
     DISPLAY_NAME = "Incremental PCA"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for transformed data."""
+        return Float(arrow_type=pa.float64())

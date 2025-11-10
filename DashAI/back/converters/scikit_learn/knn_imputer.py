@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
 from DashAI.back.api.utils import cast_string_to_type
@@ -13,6 +14,8 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class KNNImputerSchema(BaseSchema):
@@ -69,3 +72,7 @@ class KNNImputer(SklearnWrapper, KNNImputerOperation):
         kwargs["missing_values"] = self.missing_values
 
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for imputed data."""
+        return Float(arrow_type=pa.float64())

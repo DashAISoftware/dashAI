@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.kernel_approximation import (
     AdditiveChi2Sampler as AdditiveChi2SamplerOperation,
 )
@@ -10,6 +11,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class AdditiveChi2SamplerSchema(BaseSchema):
@@ -34,3 +37,7 @@ class AdditiveChi2Sampler(SklearnWrapper, AdditiveChi2SamplerOperation):
         "at regular intervals."
     )
     DISPLAY_NAME = "Additive Chi² Sampler"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for transformed data."""
+        return Float(arrow_type=pa.float64())

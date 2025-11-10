@@ -1,8 +1,11 @@
+import pyarrow as pa
 from sklearn.preprocessing import LabelBinarizer as LabelBinarizerOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 
 class LabelBinarizerSchema(BaseSchema):
@@ -25,3 +28,7 @@ class LabelBinarizer(SklearnWrapper, LabelBinarizerOperation):
     SCHEMA = LabelBinarizerSchema
     DESCRIPTION = "Binarize labels in a one-vs-all fashion."
     DISPLAY_NAME = "Label Binarizer"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Integer64 as the output type for binarized labels."""
+        return Integer(arrow_type=pa.int64())

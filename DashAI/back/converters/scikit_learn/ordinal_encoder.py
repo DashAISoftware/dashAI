@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.preprocessing import OrdinalEncoder as OrdinalEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type
@@ -12,6 +13,8 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class OrdinalEncoderSchema(BaseSchema):
@@ -77,3 +80,12 @@ class OrdinalEncoder(SklearnWrapper, OrdinalEncoderOperation):
         kwargs["min_frequency"] = self.min_frequency
 
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Returns Categorical type with encoded values.
+        After fitting, categories are encoded as integers.
+        """
+        # Return a placeholder categorical type
+        # The actual categories will be set by sklearn_wrapper's transform method
+        return Categorical(values=pa.array(["0", "1"]))

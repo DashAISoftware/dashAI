@@ -495,7 +495,6 @@ def save_dataset(
             "column_names": dataset.column_names,
         }
     )
-    print("Categorical info", dataset.types["Species"].to_string())
 
     with open(metadata_filepath, "w") as f:
         json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)

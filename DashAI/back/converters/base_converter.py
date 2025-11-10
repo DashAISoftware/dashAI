@@ -63,19 +63,24 @@ class BaseConverter(ConfigObject, ABC):
         return False
 
     @abstractmethod
-    def get_output_type(self, input_type: DashAIDataType = None) -> DashAIDataType:
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """
-        Get the output type for transformed data.
+        Get the output type for a specific column after transformation.
+
+        This method must be implemented by each converter to specify what type
+        of data it produces. The converter should determine the output type based
+        on its transformation logic.
 
         Parameters
         ----------
-        input_type : DashAIDataType, optional
-            The input data type (useful for converters that preserve type)
+        column_name : str, optional
+            The name of the column to get the output type for.
+            Useful for converters that may produce different types per column.
 
         Returns
         -------
         DashAIDataType
-            The output type after transformation
+            The output type after transformation for the specified column.
         """
         raise NotImplementedError
 

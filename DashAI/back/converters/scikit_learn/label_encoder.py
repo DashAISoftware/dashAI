@@ -1,5 +1,6 @@
 from typing import Union
 
+import pyarrow as pa
 from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
 
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
@@ -8,6 +9,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class LabelEncoderSchema(BaseSchema):
@@ -30,6 +33,22 @@ class LabelEncoder(SklearnWrapper):
             "changes_data_types": True,
             "supported_dtypes": ["object", "category", "string"],
         }
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Returns Categorical type with the proper encoding for label encoded data.
+        If the encoder has been fitted and has classes_, use them to create
+        a proper categorical type.
+        """
+        if column_name and column_name in self.encoders:
+            encoder = self.encoders[column_name]
+            if hasattr(encoder, "classes_"):
+                values = pa.array(encoder.classes_.tolist())
+                encoding = {v: i for i, v in enumerate(encoder.classes_)}
+                return Categorical(values=values, encoding=encoding, converted=True)
+
+        # Default placeholder if not fitted yet
+        return Categorical(values=pa.array(["0", "1"]))
 
     def fit(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None):
         """Fit label encoders to each column in the dataset."""
@@ -60,4 +79,11 @@ class LabelEncoder(SklearnWrapper):
                         x_pandas.loc[mask, col]
                     )
 
-        return to_dashai_dataset(x_pandas)
+        converted_dataset = to_dashai_dataset(x_pandas)
+
+        # Set proper categorical types for each encoded column
+        for col in self.fitted_columns:
+            if col in converted_dataset.column_names:
+                converted_dataset.types[col] = self.get_output_type(col)
+
+        return converted_dataset

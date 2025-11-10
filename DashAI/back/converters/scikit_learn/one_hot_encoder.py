@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type, parse_string_to_list
@@ -12,6 +13,8 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 
 class OneHotEncoderSchema(BaseSchema):
@@ -90,3 +93,7 @@ class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
         kwargs["sparse_output"] = self.sparse_output
 
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Integer64 as the output type for one-hot encoded data."""
+        return Integer(arrow_type=pa.int64())

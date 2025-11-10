@@ -8,6 +8,7 @@ import pyarrow as pa
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.job.base_job import JobError
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -22,6 +23,18 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
 
     def changes_row_count(self) -> bool:
         return True
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        ImbalancedLearn samplers preserve the data types of the input columns.
+        This method should ideally return the original type for each column,
+        but since samplers don't change types, we raise NotImplementedError
+        and rely on the transform method to preserve types from the input.
+        """
+        raise NotImplementedError(
+            "ImbalancedLearn samplers preserve input types. "
+            "Types are handled in the transform method."
+        )
 
     def fit(self, x: DashAIDataset, y: DashAIDataset) -> Type[BaseConverter]:
         """

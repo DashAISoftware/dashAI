@@ -1,9 +1,13 @@
+import pyarrow as pa
+
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Text
 
 
 class NanRemoverSchema(BaseSchema):
@@ -65,3 +69,10 @@ class NanRemover(BaseConverter):
         Indicates that the converter changes the number of rows in the dataset.
         """
         return True
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        This converter removes rows with NaN, doesn't change column types.
+        Return a placeholder type.
+        """
+        return Text(arrow_type=pa.string())
