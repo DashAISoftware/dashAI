@@ -118,3 +118,19 @@ export const inferDataTypes = async (formData: FormData): Promise<object> => {
   );
   return response.data;
 };
+
+export const previewWithTypes = async (
+  formData: FormData,
+): Promise<{
+  sample: Array<Record<string, any>>;
+  schema: Record<string, { type: string; dtype: string; encoding?: string }>;
+  inferred_types: Record<string, { type: string; dtype: string }>;
+  preview_row_count: number;
+  total_rows_estimated: string;
+}> => {
+  const response = await api.post(
+    `${datasetEndpoint}/preview_with_types`,
+    formData,
+  );
+  return response.data;
+};
