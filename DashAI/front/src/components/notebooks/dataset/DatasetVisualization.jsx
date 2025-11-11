@@ -173,6 +173,10 @@ export default function DatasetVisualization({
                     }
                     sx={{
                       fontSize: "1rem",
+                      height: "45px",
+                      display: "flex",
+                      alignItems: "center",
+                      p: "0 12px",
                     }}
                   >
                     Quality Score:{" "}
@@ -215,7 +219,7 @@ export default function DatasetVisualization({
               >
                 <Grid
                   sx={{
-                    minHeight: "35px",
+                    minHeight: "40px",
                     display: "flex",
                     gap: 2,
                     flexWrap: "wrap",
@@ -231,7 +235,7 @@ export default function DatasetVisualization({
                       });
                     }}
                     endIcon={<AddIcon />}
-                    sx={{ height: "35px" }}
+                    sx={{ height: "40px" }}
                     data-tour="new-experiment-button-notebook"
                   >
                     New Experiment
@@ -250,7 +254,7 @@ export default function DatasetVisualization({
                         }, 200);
                       }
                     }}
-                    sx={{ height: "35px" }}
+                    sx={{ height: "40px" }}
                   >
                     New Notebook
                   </Button>
