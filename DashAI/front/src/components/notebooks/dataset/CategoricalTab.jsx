@@ -120,9 +120,9 @@ export const CategoricalTab = ({ categoricalStats }) => (
                       contentStyle={{
                         backgroundColor: "#121212",
                         borderRadius: 4,
-                        color: "#ffffff",
                       }}
                       labelStyle={{ color: "#ffffff" }}
+                      itemStyle={{ color: "#ffffff" }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
