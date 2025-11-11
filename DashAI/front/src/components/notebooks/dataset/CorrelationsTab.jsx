@@ -27,7 +27,7 @@ const CorrelationsTab = ({ correlations }) => {
   return (
     <Card>
       <CardContent sx={{ bgcolor: "#2C2C2C" }}>
-        <Typography variant="h5" fontWeight="bold" mb={3}>
+        <Typography variant="h6" fontWeight="bold" mb={3}>
           Correlation Analysis
         </Typography>
 
@@ -58,13 +58,8 @@ const CorrelationsTab = ({ correlations }) => {
         </Box>
 
         <Box>
-          <Typography
-            variant="h6"
-            fontWeight={600}
-            color="text.secondary"
-            mb={2}
-          >
-            Strong Correlations
+          <Typography variant="h6" fontWeight="bold" mb={2}>
+            Strong Correlations (|r| &gt; 0.5)
           </Typography>
           <Box display="flex" flexDirection="column" gap={1}>
             {corrData
@@ -100,7 +95,7 @@ const CorrelationsTab = ({ correlations }) => {
                   color="text.secondary"
                   fontStyle="italic"
                 >
-                  No strong correlations (|r| &gt; 0.5) detected
+                  No strong correlations detected
                 </Typography>
               </Box>
             )}
