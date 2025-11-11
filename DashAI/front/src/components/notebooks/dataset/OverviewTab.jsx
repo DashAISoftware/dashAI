@@ -47,6 +47,20 @@ const OverviewTab = ({
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
+      {/* Data View */}
+      <Card>
+        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+          <Typography variant="h6" gutterBottom>
+            Dataset Preview
+          </Typography>
+          <DatasetTable
+            fetchPage={fetchDatasetPage}
+            deps={[dataset.file_path]}
+            initialPageSize={10}
+            datasetPath={dataset.file_path}
+          />
+        </CardContent>
+      </Card>
       {/* Missing Values Overview */}
       <Card>
         <CardContent sx={{ bgcolor: "#2C2C2C" }}>
@@ -108,21 +122,6 @@ const OverviewTab = ({
               </Grid>
             ))}
           </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Data View */}
-      <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
-          <Typography variant="h6" gutterBottom>
-            Dataset Preview
-          </Typography>
-          <DatasetTable
-            fetchPage={fetchDatasetPage}
-            deps={[dataset.file_path]}
-            initialPageSize={10}
-            datasetPath={dataset.file_path}
-          />
         </CardContent>
       </Card>
     </Box>
