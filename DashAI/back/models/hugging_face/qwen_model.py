@@ -30,7 +30,7 @@ class QwenSchema(BaseSchema):
             enum=[
                 "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
                 "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
-                "Qwen/Qwen3-4B-GGUF",
+                # "Qwen/Qwen3-4B-GGUF", This one is not working on llama-cpp 0.3.4
             ]
         ),
         placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
