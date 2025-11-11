@@ -1,9 +1,10 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Tooltip } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
 import TagIcon from "@mui/icons-material/Tag";
 import DescriptionIcon from "@mui/icons-material/Description";
 import InfoIcon from "@mui/icons-material/Info";
+import { HeaderBox } from "./HeaderBox";
 
 export default function Header({
   totalRows,
@@ -13,167 +14,62 @@ export default function Header({
   missingValues,
 }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 1,
+        flexGrow: 1,
+        minHeight: 0,
+      }}
+    >
       <Box
         sx={{
           display: "flex",
           flexDirection: "row",
           gap: 1,
-          justifyContent: "",
+          justifyContent: "flex-start",
           alignItems: "flex-start",
-          height: "120px",
           width: "100%",
           flexWrap: "wrap",
+          flexGrow: 0,
         }}
       >
-        <Box
-          sx={{
-            minWidth: "140px",
-            height: "100%",
-            flex: 1,
-            borderRadius: 2,
-            bgcolor: "#2C2C2C",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            p: 2,
-            boxShadow: 3,
-          }}
-        >
-          <StorageIcon
-            sx={{
-              color: "blue",
-              bgcolor: "rgba(0, 0, 255, 0.2)",
-              mb: 1,
-              borderRadius: 1,
-              p: 0.4,
-            }}
-          />
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              lineHeight: 1.6,
-            }}
-          >
-            Total Rows
-          </Typography>
-          <Typography variant="h4" align="center">
-            {totalRows}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            minWidth: "140px",
-            height: "100%",
-            flex: 1,
-            borderRadius: 2,
-            bgcolor: "#2C2C2C",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            p: 2,
-            boxShadow: 3,
-          }}
-        >
-          <TagIcon
-            sx={{
-              color: "green",
-              bgcolor: "rgba(0, 128, 0, 0.2)",
-              mb: 1,
-              borderRadius: 1,
-              p: 0.4,
-            }}
-          />
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              lineHeight: 1.6,
-            }}
-          >
-            Total Columns
-          </Typography>
-          <Typography variant="h4" align="center">
-            {totalColumns}
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            minWidth: "140px",
-            height: "100%",
-            flex: 1,
-            borderRadius: 2,
-            bgcolor: "#2C2C2C",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            p: 2,
-            boxShadow: 3,
-          }}
-        >
-          <DescriptionIcon
-            sx={{
-              color: "purple",
-              bgcolor: "rgba(128, 0, 128, 0.2)",
-              mb: 1,
-              borderRadius: 1,
-              p: 0.4,
-            }}
-          />
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              lineHeight: 1.6,
-            }}
-          >
-            File Size
-          </Typography>
-          <Typography variant="h4" align="center">
-            {fileSize?.toFixed(3)} MB
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            minWidth: "140px",
-            height: "100%",
-            flex: 1,
-            borderRadius: 2,
-            bgcolor: "#2C2C2C",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            p: 2,
-            boxShadow: 3,
-          }}
-        >
-          <InfoIcon
-            sx={{
-              color: "orange",
-              bgcolor: "rgba(255, 165, 0, 0.2)",
-              mb: 1,
-              borderRadius: 1,
-              p: 0.4,
-            }}
-          />
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-              lineHeight: 1.6,
-            }}
-          >
-            Missing Values
-          </Typography>
-          <Typography variant="h4" align="center">
-            {Object.values(missingValues ?? {}).reduce((a, b) => a + b, 0)}
-          </Typography>
-        </Box>
+        <HeaderBox
+          title="Total Rows"
+          value={totalRows}
+          IconComponent={StorageIcon}
+          iconColor="rgb(100, 150, 255)"
+          bgColor="rgba(100, 150, 255, 0.15)"
+        />
+        <HeaderBox
+          title="Total Columns"
+          value={totalColumns}
+          IconComponent={TagIcon}
+          iconColor="rgb(100, 200, 150)"
+          bgColor="rgba(100, 200, 150, 0.15)"
+        />
+        <HeaderBox
+          title="File Size (MB)"
+          value={fileSize ? fileSize?.toFixed(3) : "N/A"}
+          IconComponent={DescriptionIcon}
+          iconColor="rgb(180, 120, 200)"
+          bgColor="rgba(180, 120, 200, 0.15)"
+        />
+        <HeaderBox
+          title="Duplicate Rows"
+          value={duplicateRows ?? "N/A"}
+          IconComponent={InfoIcon}
+          iconColor="rgb(255, 180, 100)"
+          bgColor="rgba(255, 180, 100, 0.15)"
+        />
+        <HeaderBox
+          title="Missing Values"
+          value={Object.values(missingValues).reduce((a, b) => a + b, 0)}
+          IconComponent={InfoIcon}
+          iconColor="rgb(255, 120, 120)"
+          bgColor="rgba(255, 120, 120, 0.15)"
+        />
       </Box>
     </Box>
   );
