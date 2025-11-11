@@ -93,7 +93,7 @@ export const NumericTab = ({ numericStats }) => (
                   orientation: "h", // ← rotated here
                   boxpoints: "suspectedoutliers",
                   marker: { color: "#8884d8" },
-                  line: { color: "#000000ff" },
+                  line: { color: "#212121" },
                   fillcolor: "#8884d8",
                   opacity: 0.6,
                   showlegend: false,
