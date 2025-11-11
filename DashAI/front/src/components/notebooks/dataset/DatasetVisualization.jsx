@@ -150,6 +150,7 @@ export default function DatasetVisualization({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                flexWrap: "wrap",
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
@@ -160,34 +161,36 @@ export default function DatasetVisualization({
                   title="Data Quality Score is calculated based on various factors including missing values, duplicate rows, and data consistency. A higher score indicates better data quality."
                   arrow
                 >
-                  <Chip
-                    label={`Quality Score: ${
-                      datasetInfo?.quality_info?.data_quality_score?.toFixed(
-                        2,
-                      ) ?? "N/A"
-                    } ${
-                      datasetInfo?.quality_info?.data_quality_score ? "%" : ""
-                    }`}
-                    color={
+                  <Alert
+                    severity={
                       datasetInfo?.quality_info?.data_quality_score >= 80
                         ? "success"
                         : datasetInfo?.quality_info?.data_quality_score >= 50
                         ? "warning"
                         : datasetInfo?.quality_info?.data_quality_score
                         ? "error"
-                        : "default"
+                        : "info"
                     }
                     sx={{
-                      "& .MuiChip-label": {
-                        fontSize: "1rem",
-                      },
+                      fontSize: "1rem",
                     }}
-                  />
+                  >
+                    Quality Score:{" "}
+                    {datasetInfo?.quality_info?.data_quality_score?.toFixed(
+                      2,
+                    ) ?? "N/A"}
+                    {datasetInfo?.quality_info?.data_quality_score ? "%" : ""}
+                  </Alert>
                 </Tooltip>
               </Box>
             </Box>
             <Box
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 1,
+                flexWrap: "wrap",
+              }}
             >
               <Box
                 sx={{
@@ -201,6 +204,7 @@ export default function DatasetVisualization({
                 </Typography>
               </Box>
 
+              {/* Buttons */}
               <Box
                 sx={{
                   display: "flex",
@@ -209,14 +213,13 @@ export default function DatasetVisualization({
                   flexDirection: "column",
                 }}
               >
-                {/* Buttons */}
                 <Grid
                   sx={{
-                    height: "35px",
+                    minHeight: "35px",
                     display: "flex",
                     gap: 2,
                     flexWrap: "wrap",
-                    justifyContent: "flex-end",
+                    justifyContent: "flex-start",
                   }}
                 >
                   <Button
@@ -228,7 +231,7 @@ export default function DatasetVisualization({
                       });
                     }}
                     endIcon={<AddIcon />}
-                    sx={{ height: "100%" }}
+                    sx={{ height: "35px" }}
                     data-tour="new-experiment-button-notebook"
                   >
                     New Experiment
@@ -247,7 +250,7 @@ export default function DatasetVisualization({
                         }, 200);
                       }
                     }}
-                    sx={{ height: "100%" }}
+                    sx={{ height: "35px" }}
                   >
                     New Notebook
                   </Button>
@@ -393,8 +396,7 @@ export default function DatasetVisualization({
         )}
       </Box>
 
-      {/* Main Dataset Visualization */}
-
+      {/* Create Notebook Modal */}
       <CreateNotebookModal
         open={showCreateNotebookModal}
         onClose={() => {
