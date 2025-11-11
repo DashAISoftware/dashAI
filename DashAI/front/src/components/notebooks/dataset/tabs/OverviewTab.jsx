@@ -38,8 +38,8 @@ const OverviewTab = ({
         type.includes("float") || type.includes("int")
           ? "Numeric"
           : type.includes("object")
-          ? "Text"
-          : "Other";
+            ? "Text"
+            : "Other";
       acc[category] = (acc[category] || 0) + 1;
       return acc;
     }, {}),
