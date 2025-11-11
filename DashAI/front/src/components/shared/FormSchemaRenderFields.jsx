@@ -42,15 +42,11 @@ function FormSchemaRenderFields({
       const error = formik?.errors?.[objName];
       const isOptimizable = fieldSchema.placeholder?.optimize !== undefined;
 
-      // Memoize the field object to avoid unnecessary re-renders
-      const baseField = useMemo(
-        () => ({
-          value,
-          error,
-          onChange: handleChange(objName),
-        }),
-        [value, error, objName, handleChange],
-      );
+      const baseField = {
+        value,
+        error,
+        onChange: handleChange(objName),
+      };
 
       if ("anyOf" in fieldSchema) {
         fields.push(
