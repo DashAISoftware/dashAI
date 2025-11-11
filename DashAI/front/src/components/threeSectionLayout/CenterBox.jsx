@@ -8,6 +8,7 @@ export default function CenterBox({ children }) {
       sx={{
         border: "0.1px solid",
         borderColor: "grey.600",
+        // bgcolor: "background.paper",
       }}
       // borderRadius={2}
       overflow={"auto"}

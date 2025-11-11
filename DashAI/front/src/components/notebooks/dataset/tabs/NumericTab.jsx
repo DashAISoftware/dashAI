@@ -3,8 +3,8 @@ import { Box, Typography, Card, CardContent, Alert } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
 import Plot from "react-plotly.js";
-import { StatBox } from "./StatBox";
-import { MetricRow } from "./MetricRow";
+import { StatBox } from "../StatBox";
+import { MetricRow } from "../MetricRow";
 
 export const NumericTab = ({ numericStats }) => (
   <Box display="flex" flexDirection="column" gap={4}>

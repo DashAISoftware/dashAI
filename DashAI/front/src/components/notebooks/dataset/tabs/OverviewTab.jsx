@@ -17,7 +17,7 @@ import {
   Tooltip,
   Bar,
 } from "recharts";
-import DatasetTable from "../dataset/DatasetTable";
+import DatasetTable from "../DatasetTable";
 
 const OverviewTab = ({
   dataset,

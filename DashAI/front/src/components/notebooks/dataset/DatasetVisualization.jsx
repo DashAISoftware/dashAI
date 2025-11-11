@@ -30,13 +30,13 @@ import JobQueueWidget from "../../jobs/JobQueueWidget";
 import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
 import { formatDate } from "../../../pages/results/constants/formatDate";
-import Header from "./Header";
+import Header from "./header/Header";
 import Tooltip from "@mui/material/Tooltip";
-import OverviewTab from "./OverviewTab";
-import { NumericTab } from "./NumericTab";
-import { CategoricalTab } from "./CategoricalTab";
-import QualityTab from "./QualityTab";
-import CorrelationsTab from "./CorrelationsTab";
+import OverviewTab from "./tabs/OverviewTab";
+import { NumericTab } from "./tabs/NumericTab";
+import { CategoricalTab } from "./tabs/CategoricalTab";
+import QualityTab from "./tabs/QualityTab";
+import CorrelationsTab from "./tabs/CorrelationsTab";
 import { QualityAlerts } from "./QualityAlerts";
 
 export default function DatasetVisualization({

@@ -7,7 +7,7 @@ import {
   CardContent,
   Alert,
 } from "@mui/material";
-import IssueCard from "./IssueCard";
+import IssueCard from "../IssueCard";
 
 const QualityTab = ({ qualityInfo, totalRows }) => {
   return (

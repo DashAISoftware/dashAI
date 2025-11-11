@@ -13,7 +13,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { StatBox } from "./StatBox";
+import { StatBox } from "../StatBox";
 
 export const CategoricalTab = ({ categoricalStats }) => (
   <Box display="flex" flexDirection="column" gap={4}>
