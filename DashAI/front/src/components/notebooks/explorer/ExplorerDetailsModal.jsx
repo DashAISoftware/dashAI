@@ -62,7 +62,7 @@ export default function ExplorerDetailsModal({
         paper: {
           sx: {
             width: 1400,
-            height: 700,
+            height: "90vh",
             maxWidth: "none",
             m: "auto",
           },
