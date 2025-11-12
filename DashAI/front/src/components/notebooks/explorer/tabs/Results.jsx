@@ -5,6 +5,7 @@ import { getExplorerResults } from "../../../../api/explorer";
 import ImageVisualizer from "../visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "../visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "../visualizations/TabularVisualizer";
+import PlotLayoutForm from "../PlotLayoutForm";
 
 /**
  * NullCell component to render null values in the tabular visualizer
@@ -219,6 +220,7 @@ function Results({ id, minimalist = false }) {
         justifyContent: "center",
         borderRadius: 1,
         overflow: "hidden",
+        flexDirection: "column",
       }
     : {
         height: "100%",
@@ -226,6 +228,8 @@ function Results({ id, minimalist = false }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        flexDirection: "column",
+        flex: 1,
       };
 
   return (
@@ -254,6 +258,17 @@ function Results({ id, minimalist = false }) {
 
       {!loading && dataType === visualizersKeys.image_url && (
         <ImageVisualizer data={data} minimalist={minimalist} />
+      )}
+      {!minimalist && !loading && dataType === visualizersKeys.plotly_json && (
+        <PlotLayoutForm
+          layout={data.layout}
+          setLayout={(newLayout) => {
+            setData((prevData) => ({
+              ...prevData,
+              layout: newLayout,
+            }));
+          }}
+        />
       )}
     </Box>
   );
