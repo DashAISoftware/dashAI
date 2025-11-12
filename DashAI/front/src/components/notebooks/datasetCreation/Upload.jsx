@@ -6,11 +6,9 @@ import {
   CircularProgress,
   DialogContentText,
   Grid,
-  IconButton,
   Typography,
 } from "@mui/material";
 
-import ClearIcon from "@mui/icons-material/Clear";
 import { useSnackbar } from "notistack";
 import PreviewDatasetTable from "./PreviewDatasetTable";
 import { previewWithTypes } from "../../../api/datasets";
@@ -183,15 +181,55 @@ function Upload({
               ) : (
                 previewData && (
                   <Box sx={{ overflowX: "scroll", width: "100%" }}>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 2, textAlign: "center" }}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 2,
+                        px: 1,
+                      }}
                     >
-                      Showing {previewData.sample.length} of{" "}
-                      {previewData.preview_row_count} rows analyzed for type
-                      inference
-                    </Typography>
+                      <Box sx={{ flex: 1 }} /> {/* Spacer */}
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          textAlign: "center",
+                          flex: 1,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Showing {previewData.sample.length} of{" "}
+                        {previewData.preview_row_count} rows analyzed for type
+                        inference
+                      </Typography>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          display: "flex",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDataset();
+                          }}
+                          sx={{
+                            fontSize: "0.7rem",
+                            px: 1.5,
+                            py: 0.5,
+                            textTransform: "uppercase",
+                            minWidth: "auto",
+                          }}
+                        >
+                          Change Dataset
+                        </Button>
+                      </Box>
+                    </Box>
                     <PreviewDatasetTable
                       rows={previewData.sample}
                       columnTypes={previewData.inferred_types}
@@ -223,7 +261,7 @@ function Upload({
       </Grid>
 
       {/* Drag and drop */}
-      <Grid sx={{ width: "100%" }}>
+      <Grid sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
         <Box
           sx={{
             ...(datasetState === LOADED && !loadingPreview
@@ -236,7 +274,9 @@ function Upload({
             ...(datasetState === LOADED && !loadingPreview
               ? { minHeight: "33vh" }
               : { height: "33vh" }),
-            width: "100%",
+            width: datasetState === LOADED && !loadingPreview ? "100%" : "60%",
+            maxWidth:
+              datasetState === LOADED && !loadingPreview ? "100%" : "600px",
             borderRadius: 2,
             cursor: datasetState === EMPTY ? "pointer" : "auto",
             overflow:
@@ -264,15 +304,6 @@ function Upload({
               flex: 1,
             }}
           >
-            {/* delete uploaded dataset button */}
-            {datasetState === LOADED && (
-              <Grid sx={{ position: "absolute", right: 0, top: 0, zIndex: 1 }}>
-                <IconButton onClick={handleDeleteDataset}>
-                  <ClearIcon />
-                </IconButton>
-              </Grid>
-            )}
-
             {/* Content inside the drag and drop that depends on the state */}
             {stateContent(datasetState)}
           </Grid>

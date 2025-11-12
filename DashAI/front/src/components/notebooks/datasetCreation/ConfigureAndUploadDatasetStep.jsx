@@ -97,7 +97,7 @@ export default function ConfigureAndUploadDatasetStep({
         spacing={2}
         sx={{
           width: "100%",
-          backgroundColor: "background.paper",
+          backgroundColor: "#212121",
           minHeight: "80vh",
           padding: 4,
           borderRadius: 2,
