@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Grid } from "@mui/material";
+import {
+  Grid,
+  Paper,
+  Typography,
+  CircularProgress,
+  Box,
+  Button,
+} from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import DataloaderConfiguration from "./DataloaderConfiguration";
-import {
-  enqueueDatasetJob as enqueueDatasetRequest,
-  startJobQueue,
-} from "../../../api/job";
-
-import { createDataset } from "../../../api/datasets";
 
 /**
  * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.
@@ -36,8 +37,10 @@ export default function ConfigureAndUploadDatasetStep({
   initialDatasetData = null,
 }) {
   const [error, setError] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
   const [nextEnabled, setNextEnabled] = useState(false);
+  const [formValues, setFormValues] = useState(
+    initialDatasetData?.params || {},
+  );
 
   // Initialize with previous data if available (when coming back from preview)
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(
@@ -85,35 +88,39 @@ export default function ConfigureAndUploadDatasetStep({
   }, [error, datasetFileToUpload]);
 
   return (
-    <Grid sx={{ p: 4 }}>
+    <Grid sx={{ width: "100%" }}>
       <Grid
         container
-        direction="row"
+        direction="column"
         justifyContent="space-around"
         alignItems="stretch"
-        spacing={3}
+        spacing={2}
+        sx={{
+          width: "100%",
+          backgroundColor: "background.paper",
+          minHeight: "80vh",
+          padding: 4,
+          borderRadius: 2,
+        }}
       >
-        {/* Upload file */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Upload
-            onFileUpload={handleFileUpload}
-            initialFile={initialDatasetData?.file}
-          />
-        </Grid>
+        <Upload
+          onFileUpload={handleFileUpload}
+          initialFile={initialDatasetData?.file}
+          formSubmitRef={formSubmitRef}
+          formValues={formValues}
+        />
 
-        {/* Configure dataloader parameters */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          <DataloaderConfiguration
-            selectedDataloader={selectedDataloader}
-            formSubmitRef={formSubmitRef}
-            setError={setError}
-            existingDatasets={existingDatasets}
-          />
-        </Grid>
+        <DataloaderConfiguration
+          selectedDataloader={selectedDataloader}
+          formSubmitRef={formSubmitRef}
+          setError={setError}
+          existingDatasets={existingDatasets}
+          onValuesChange={setFormValues}
+        />
       </Grid>
 
       {/* Form buttons */}
-      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Grid sx={{ m: 2, display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={goToPrevStep}
           onFormSubmit={prepareDataForPreview}

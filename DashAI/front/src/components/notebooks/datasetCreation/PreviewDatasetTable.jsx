@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Typography } from "@mui/material";
+import { Typography, Tooltip } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 
 /**
@@ -25,35 +25,47 @@ export default function PreviewDatasetTable({ rows, columnTypes }) {
       minWidth: 120,
       flex: 1,
       renderHeader: () => (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            width: "100%",
-          }}
-        >
-          <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
-            {field}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            style={{ fontSize: "0.7rem" }}
+        <Tooltip title={field} arrow placement="top">
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              width: "100%",
+              cursor: "help",
+            }}
           >
-            {columnTypes[field]?.type || "unknown"}
-          </Typography>
-          {columnTypes[field]?.dtype && (
+            <Typography
+              variant="subtitle2"
+              style={{
+                fontWeight: "bold",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "100%",
+              }}
+            >
+              {field}
+            </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              style={{ fontSize: "0.7rem", opacity: 0.8 }}
+              style={{ fontSize: "0.7rem" }}
             >
-              {columnTypes[field]?.dtype}
+              {columnTypes[field]?.type || "unknown"}
             </Typography>
-          )}
-        </div>
+            {columnTypes[field]?.dtype && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                style={{ fontSize: "0.7rem", opacity: 0.8 }}
+              >
+                {columnTypes[field]?.dtype}
+              </Typography>
+            )}
+          </div>
+        </Tooltip>
       ),
     }));
   }, [rows, columnTypes]);
@@ -66,7 +78,7 @@ export default function PreviewDatasetTable({ rows, columnTypes }) {
       density="compact"
       disableRowSelectionOnClick
       initialState={{
-        pagination: { paginationModel: { pageSize: 10 } },
+        pagination: { paginationModel: { pageSize: 5 } },
       }}
       pageSizeOptions={[5, 10]}
       columnHeaderHeight={85}
