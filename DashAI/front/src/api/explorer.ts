@@ -111,3 +111,14 @@ export const getExplorerResults = async (
   );
   return response.data;
 };
+
+export const updateExplorerResults = async (
+  explorerId: number,
+  data: object,
+): Promise<{ message: string }> => {
+  const response = await api.put(
+    `${explorerEndpoint}/${explorerId}/results/`,
+    data,
+  );
+  return response.data;
+};
