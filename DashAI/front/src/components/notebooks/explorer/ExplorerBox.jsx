@@ -13,14 +13,19 @@ import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
 import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
+import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 
 export default function ExplorerBox({
   explorer,
-  handleExplorerDetailsClick,
   handleExplorerDeleteClick,
   onStatusChange,
 }) {
   const [explorerComponent, setExplorerComponent] = useState({});
+  const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
+
+  const handleExplorerDetailsClick = () => {
+    setOpenExplorerDetails(true);
+  };
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -120,7 +125,7 @@ export default function ExplorerBox({
               {(statusLabel === "Error" || statusLabel === "Finished") && (
                 <IconButton
                   size="small"
-                  onClick={() => handleExplorerDeleteClick(explorer)}
+                  onClick={handleExplorerDeleteClick}
                   sx={{
                     width: 24,
                     height: 24,
@@ -181,6 +186,15 @@ export default function ExplorerBox({
             <CircularProgress size={24} sx={{ mr: 1 }} />
             <Typography>Processing...</Typography>
           </Box>
+        )}
+        {openExplorerDetails && (
+          <ExplorerDetailsModal
+            open={openExplorerDetails}
+            onClose={() => {
+              setOpenExplorerDetails(false);
+            }}
+            explorer={explorer}
+          />
         )}
       </CardContent>
     </Card>

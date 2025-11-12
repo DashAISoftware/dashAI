@@ -6,6 +6,8 @@ import ImageVisualizer from "../visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "../visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "../visualizations/TabularVisualizer";
 import PlotLayoutForm from "../PlotLayoutForm";
+import { updateExplorerResults } from "../../../../api/explorer";
+import { useSnackbar } from "notistack";
 
 /**
  * NullCell component to render null values in the tabular visualizer
@@ -150,6 +152,21 @@ function Results({ id, minimalist = false }) {
   const [loading, setLoading] = useState(false);
   const [dataType, setDataType] = useState(null);
   const [data, setData] = useState(null);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleSaveChangesLayout = async () => {
+    try {
+      await updateExplorerResults(id, data);
+      enqueueSnackbar("Explorer results updated successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update explorer results:", error);
+      enqueueSnackbar("Failed to update explorer results", {
+        variant: "error",
+      });
+    }
+  };
 
   const fetchExplorerResults = async () => {
     if (!id) return;
@@ -268,6 +285,7 @@ function Results({ id, minimalist = false }) {
               layout: newLayout,
             }));
           }}
+          onSave={handleSaveChangesLayout}
         />
       )}
     </Box>

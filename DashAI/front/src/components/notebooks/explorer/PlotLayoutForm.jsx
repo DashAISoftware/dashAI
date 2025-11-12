@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Box,
   TextField,
@@ -28,13 +28,22 @@ const FONT_LIST = [
 export default function PlotLayoutForm({ layout, setLayout, onSave }) {
   if (!layout) return null;
 
+  const [modified, setModified] = useState(false);
+
   const localLayout = useRef(layout);
   const handleChange = (field, value) => {
     setLayout({ ...layout, [field]: value });
+    setModified(true);
   };
 
   const handleCancel = () => {
     setLayout(localLayout.current);
+    setModified(false);
+  };
+  const handleSave = () => {
+    localLayout.current = layout;
+    setModified(false);
+    onSave();
   };
 
   const handleAxisChange = (axis, field, value) => {
@@ -42,6 +51,7 @@ export default function PlotLayoutForm({ layout, setLayout, onSave }) {
       ...layout,
       [axis]: { ...layout[axis], [field]: value },
     });
+    setModified(true);
   };
 
   return (
@@ -229,10 +239,15 @@ export default function PlotLayoutForm({ layout, setLayout, onSave }) {
       <Divider sx={{ my: 2, borderColor: "#444" }} />
 
       <Stack direction="row" spacing={2} justifyContent="flex-end">
-        <Button variant="outlined" onClick={handleCancel}>
+        <Button variant="outlined" onClick={handleCancel} disabled={!modified}>
           Cancel
         </Button>
-        <Button variant="contained" color="primary" onClick={onSave}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSave}
+          disabled={!modified}
+        >
           Save
         </Button>
       </Stack>
