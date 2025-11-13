@@ -136,7 +136,7 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    backgroundColor: "rgb(32,32,32)",
+                    backgroundColor: "background.box",
 
                 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

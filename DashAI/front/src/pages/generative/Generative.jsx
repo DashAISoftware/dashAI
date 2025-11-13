@@ -8,6 +8,7 @@ import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import DocumentsBar from "../../components/generative/RAG/DocumentsBar";
+import RAGSessionSummary from "../../components/generative/RAG/RAGSessionSummary";
 
 import RAGHomePage from "./RAG/RAGHomePage";
 
@@ -25,6 +26,7 @@ export default function Generative() {
   const [selectedDisplayName, setSelectedDisplayName] = useState("");
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
+  const [showRAGSummary, setShowRAGSummary] = useState(false);
 
   const isRAGTask = () => selectedTaskName === "RAGTask";
 
@@ -32,12 +34,20 @@ export default function Generative() {
     setSelectedTaskName(taskName);
     setSelectedSessionId(sessionId);
     setSelectedDisplayName(taskDisplayName);
+    
+    // Show RAG summary for RAG tasks, chat for others
+    setShowRAGSummary(taskName === "RAGTask");
   };
 
   const handleNewSessionButton = () => {
     setSelectedSessionId(null);
     setStepIndex(0);
     setSelectedTaskName("");
+    setShowRAGSummary(false);
+  };
+
+  const handleStartRAGChat = () => {
+    setShowRAGSummary(false);
   };
 
   const onParamsUpdate = (newParams) => {
@@ -59,11 +69,13 @@ export default function Generative() {
       if (location.state.selectedTaskName && location.state.selectedDisplayName) {
         setSelectedTaskName(location.state.selectedTaskName);
         setSelectedDisplayName(location.state.selectedDisplayName);
+        setShowRAGSummary(location.state.selectedTaskName === "RAGTask");
       } else {
         const session = sessions.find(s => s.id === location.state.selectedSessionId);
         if (session) {
           setSelectedTaskName(session.task_name);
           setSelectedDisplayName(session.task_name); // Map this if needed
+          setShowRAGSummary(session.task_name === "RAGTask");
         }
       }
       
@@ -74,6 +86,12 @@ export default function Generative() {
 
   const handleAddSession = (session) => {
     setSessions((prevSessions) => [session, ...prevSessions]);
+    
+    // Auto-select the new session and show RAG summary if it's a RAG task
+    setSelectedSessionId(session.id);
+    setSelectedTaskName(session.task_name);
+    setSelectedDisplayName(session.display_name || session.task_name);
+    setShowRAGSummary(session.task_name === "RAGTask");
   };
 
   const handleSessionDelete = (id) => {
@@ -81,6 +99,7 @@ export default function Generative() {
       setSelectedSessionId(null);
       setStepIndex(0);
       setSelectedTaskName("");
+      setShowRAGSummary(false);
     }
 
     setSessions((prevSessions) =>
@@ -95,6 +114,7 @@ export default function Generative() {
     setStepIndex(0);
     setSelectedTaskName("");
     setSelectedDisplayName("");
+    setShowRAGSummary(false);
   };
 
   return (
@@ -113,11 +133,18 @@ export default function Generative() {
       <Box width="56%" mr={1}>
         <MainGenerativeBox>
           {selectedSessionId ? (
-            <GenerativeChat
-              sessionId={selectedSessionId}
-              taskName={selectedTaskName}
-              paramsVersion={paramsVersion}
-            />
+            showRAGSummary && isRAGTask() ? (
+              <RAGSessionSummary
+                sessionId={selectedSessionId}
+                onStartChat={handleStartRAGChat}
+              />
+            ) : (
+              <GenerativeChat
+                sessionId={selectedSessionId}
+                taskName={selectedTaskName}
+                paramsVersion={paramsVersion}
+              />
+            )
           ) : stepIndex === 0 ? (
             <SelectTaskMenu
               goToNextStep={(taskName, displayName) => {

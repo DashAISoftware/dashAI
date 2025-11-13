@@ -77,6 +77,7 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
         <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
           {filteredDocuments.length} document
           {filteredDocuments.length !== 1 ? "s" : ""}
+          {selectedSessionId && ` in current session`}
         </Typography>
       </Box>
 
