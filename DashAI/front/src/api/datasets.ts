@@ -134,3 +134,17 @@ export const previewWithTypes = async (
   );
   return response.data;
 };
+
+export const validateTypeChanges = async (
+  formData: FormData,
+): Promise<{
+  valid: boolean;
+  errors: Record<string, string>;
+  warnings: Record<string, string>;
+}> => {
+  const response = await api.post(
+    `${datasetEndpoint}/validate_type_changes`,
+    formData,
+  );
+  return response.data;
+};

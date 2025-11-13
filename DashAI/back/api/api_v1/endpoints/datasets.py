@@ -26,6 +26,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment
 from DashAI.back.types.inf.type_inference import infer_types
+from DashAI.back.types.type_validation import validate_multiple_type_changes
 from DashAI.back.types.utils import arrow_to_dashai_schema, value_types
 
 logger = logging.getLogger(__name__)
@@ -1015,4 +1016,95 @@ async def preview_with_types(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load preview with types: {str(e)}",
+        ) from e
+
+
+@router.post("/validate_type_changes")
+@inject
+async def validate_type_changes(
+    file: UploadFile = File(...),
+    type_changes: str = Form(...),
+    params: str = Form(None),
+    component_registry: Dict = Depends(lambda: di["component_registry"]),
+):
+    """
+    Validate proposed type changes for dataset columns.
+
+    Parameters
+    ----------
+    file : UploadFile
+        The dataset file
+    type_changes : str
+        JSON string with proposed type changes
+        Format: {
+            "column_name": {
+                "current_type": "...",
+                "new_type": "...",
+                "new_dtype": "..."
+            }
+        }
+    params : str
+        JSON string with dataloader parameters
+
+    Returns
+    -------
+    Dict
+        Validation results with any errors found
+    """
+    try:
+        parsed_params = json.loads(params) if params else {}
+        parsed_type_changes = json.loads(type_changes)
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file.filename
+        ) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+
+        try:
+            if file.filename.endswith(".csv"):
+                dataloader_name = "CSVDataLoader"
+                if "separator" not in parsed_params:
+                    parsed_params["separator"] = ","
+            elif file.filename.endswith((".xlsx", ".xls")):
+                dataloader_name = "ExcelDataLoader"
+            elif file.filename.endswith(".json"):
+                dataloader_name = "JSONDataLoader"
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Unsupported file type",
+                )
+
+            if dataloader_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Dataloader {dataloader_name} not found",
+                )
+
+            dataloader = component_registry[dataloader_name]["class"]()
+
+            sample_df = dataloader.load_preview(
+                filepath_or_buffer=tmp_file_path, params=parsed_params, n_rows=1000
+            )
+
+            all_valid, errors = validate_multiple_type_changes(
+                sample_df, parsed_type_changes
+            )
+
+            return {
+                "valid": all_valid,
+                "errors": errors,
+            }
+
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to validate type changes: {str(e)}",
         ) from e
