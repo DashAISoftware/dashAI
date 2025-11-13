@@ -36,6 +36,8 @@ function FormSchemaInterceptor({ currentFormValuesRef }) {
   return null;
 }
 
+
+
 function AutoSaveFormSchema({
   selectedRetriever,
   retrieverModel,
@@ -98,6 +100,10 @@ const RetrieverConfigurationStep = forwardRef(
 
     const saveCurrentFormValues = useCallback(() => {
       let valuesToSave = currentFormValuesRef.current;
+      console.log(
+        "saveCurrentFormValues - currentFormValuesRef:",
+        currentFormValuesRef.current,
+      );
 
       if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
         const formSchemaElement =
@@ -106,6 +112,7 @@ const RetrieverConfigurationStep = forwardRef(
 
         if (!valuesToSave || Object.keys(valuesToSave).length === 0) {
           const formData = extractFormDataFromDOM();
+          console.log("formData extracted from DOM:", formData);
           if (formData && Object.keys(formData).length > 0) {
             valuesToSave = formData;
             currentFormValuesRef.current = formData;
@@ -130,11 +137,14 @@ const RetrieverConfigurationStep = forwardRef(
         const allInputs = document.querySelectorAll("input, select, textarea");
         const formData = {};
 
+        console.log("allInputs", allInputs);
+
         allInputs.forEach((input) => {
           const name = input.name || input.id || "";
           const value = input.value;
 
           if (name && value) {
+            console.log("Processing input:", name, value);
             if (
               name.includes("similarity_metric") ||
               name.includes("similarity")
@@ -143,6 +153,7 @@ const RetrieverConfigurationStep = forwardRef(
             } else if (name.includes("top_k") || name.includes("topk")) {
               formData.top_k = parseInt(value) || 5;
             } else if (name.includes("model_name")) {
+              console.log("Processing model_name:", name, value);
               if (!formData.encoding_model) {
                 formData.encoding_model = {
                   properties: {

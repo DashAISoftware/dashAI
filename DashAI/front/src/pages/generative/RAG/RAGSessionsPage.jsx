@@ -6,6 +6,7 @@ import MainGenerativeBox from "../../../components/generative/MainGenerativeBox"
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import NewSessionModal from "./NewSessionModal/NewSessionModal";
 import RAGSessionsTable from "./RAGSessionsTable";
+import { FormSchemaProvider } from "../../../contexts/schema";
 import {
   getRAGSessions,
   createRAGSession,
@@ -88,77 +89,79 @@ function RAGSessionsPage() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="22%" mr={1}>
-        <SessionBar
-          sessions={sessions}
-          handleSessionClick={handleSessionClick}
-          handleNewSessionButton={handleNewSessionButton}
-          handleSessionDelete={handleSessionDelete}
-          stepIndex={0}
-        />
-      </Box>
+    <FormSchemaProvider>
+      <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
+        <Box width="22%" mr={1}>
+          <SessionBar
+            sessions={sessions}
+            handleSessionClick={handleSessionClick}
+            handleNewSessionButton={handleNewSessionButton}
+            handleSessionDelete={handleSessionDelete}
+            stepIndex={0}
+          />
+        </Box>
 
-      <Box width="56%" mr={1}>
-        <MainGenerativeBox>
-          <Box
-            display={"flex"}
-            width={"100%"}
-            height={"100%"}
-            flexDirection={"column"}
-            justifyContent={"flex-start"}
-            overflow={"scroll"}
-            p={2}
-            gap={1}
-          >
-            <RAGBreadcrumbs />
-            <Typography variant="h5" component="h1">
-              RAG Sessions
-            </Typography>
-            <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
-              Manage your RAG sessions: view existing sessions and create new ones for enhanced AI conversations.
-            </Typography>
+        <Box width="56%" mr={1}>
+          <MainGenerativeBox>
+            <Box
+              display={"flex"}
+              width={"100%"}
+              height={"100%"}
+              flexDirection={"column"}
+              justifyContent={"flex-start"}
+              overflow={"scroll"}
+              p={2}
+              gap={1}
+            >
+              <RAGBreadcrumbs />
+              <Typography variant="h5" component="h1">
+                RAG Sessions
+              </Typography>
+              <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
+                Manage your RAG sessions: view existing sessions and create new ones for enhanced AI conversations.
+              </Typography>
 
-            <NewSessionModal
-              open={showModal}
-              onClose={() => {
-                setShowModal(false);
-                setEditingSession(null);
-              }}
-              onSessionSaved={handleCreateOrUpdateSession}
-              onSessionSelect={handleSessionSelect}
-              session={editingSession}
-              existingSessions={ragSessions}
-            />
-
-            {loading ? (
-              <Box display="flex" justifyContent="center" mt={4}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <RAGSessionsTable
-                sessions={ragSessions.map((s) => ({ ...s, id: String(s.id) }))}
-                onEdit={(session) => handleOpenNewSessionModal(session)}
-                onSelect={handleSessionSelect}
-                onRefreshSessions={loadSessions}
-                onOpenNewSessionModal={() => handleOpenNewSessionModal()}
-                onRemove={handleRemoveSession}
-                showTableTitle={false}
+              <NewSessionModal
+                open={showModal}
+                onClose={() => {
+                  setShowModal(false);
+                  setEditingSession(null);
+                }}
+                onSessionSaved={handleCreateOrUpdateSession}
+                onSessionSelect={handleSessionSelect}
+                session={editingSession}
+                existingSessions={ragSessions}
               />
-            )}
-          </Box>
-        </MainGenerativeBox>
-      </Box>
 
-      <Box width="22%">
-        <Box
-          width="100%"
-          height="100%"
-          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
-        >
+              {loading ? (
+                <Box display="flex" justifyContent="center" mt={4}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <RAGSessionsTable
+                  sessions={ragSessions.map((s) => ({ ...s, id: String(s.id) }))}
+                  onEdit={(session) => handleOpenNewSessionModal(session)}
+                  onSelect={handleSessionSelect}
+                  onRefreshSessions={loadSessions}
+                  onOpenNewSessionModal={() => handleOpenNewSessionModal()}
+                  onRemove={handleRemoveSession}
+                  showTableTitle={false}
+                />
+              )}
+            </Box>
+          </MainGenerativeBox>
+        </Box>
+
+        <Box width="22%">
+          <Box
+            width="100%"
+            height="100%"
+            sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+          >
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </FormSchemaProvider>
   );
 }
 

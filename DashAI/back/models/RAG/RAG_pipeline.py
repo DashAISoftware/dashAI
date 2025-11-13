@@ -371,6 +371,7 @@ class RAGPipeline(BaseGenerativeModel):
                 chunk_id = chunk.id
                 chunk_dict[chunk_id] = {
                     "document_id": document_id,
+                    "document_name": document.file_name,
                     "document_position": chunk_position,
                     "text": chunk_text
                 }

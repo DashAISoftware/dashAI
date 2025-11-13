@@ -28,13 +28,13 @@ class TokenChunkModelSchema(BaseSchema):
 
     chunk_size: schema_field(
         int_field(gt=1),
-        placeholder=200,
+        placeholder=400,
         description="The size of each chunk in tokens.",
     )  # type: ignore
 
     chunk_overlap: schema_field(
         int_field(ge=0),
-        placeholder=20,
+        placeholder=40,
         description=(
             "The number of overlapping tokens between chunks. "
             "Must be less than chunk_size."

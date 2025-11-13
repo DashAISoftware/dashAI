@@ -19,10 +19,10 @@ function FormSchemaRenderFields({
 }) {
   if (!modelSchema) return null;
 
-  console.debug(
+  /* console.debug(
     "Rendering FormSchemaRenderFields with modelSchema:",
     modelSchema,
-  );
+  ); */
 
   const renderFields = useCallback(() => {
     const fields = [];
@@ -84,7 +84,7 @@ function FormSchemaRenderFields({
           );
         } else if (Boolean(fieldSchema?.parent)) {
           const selectedModel = getModelFromSubform(formik?.values[objName]);
-          console.log("FormSchemaRenderFields - Parent field data:", {
+          /* console.log("FormSchemaRenderFields - Parent field data:", {
             objName,
             fieldSchema,
             formikValue: formik?.values[objName],
@@ -93,7 +93,7 @@ function FormSchemaRenderFields({
           console.log(
             "FormSchemaRenderFields - Deep formikValue structure:",
             JSON.stringify(formik?.values[objName], null, 2),
-          );
+          ); */
 
           fields.push(
             <FormSchemaFieldWithParent

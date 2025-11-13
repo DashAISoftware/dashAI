@@ -20,6 +20,7 @@ import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
 import TemplateModal from "../custom/TemplateModal";
+import SourcesDisplay from "./SourcesDisplay";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [history, setHistory] = useState([]);
@@ -53,7 +54,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   };
 
   const handleOpenReference = (ref, key) => {
-    const title = `Document ${ref.document_id}${ref.document_position ? ` - Chunk ${ref.document_position}` : ''}`;
+    const title = `Document ${ref.document_id}${ref.document_name ? ` (${ref.document_name})` : ''}${ref.document_position ? ` - Chunk ${ref.document_position}` : ''}`;
     setReferenceModalTitle(title);
     // Convert escaped newlines to actual newlines
     setSelectedReferenceText(ref.text.replace(/\\n/g, '\n'));
@@ -203,13 +204,19 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
             console.log('Original data:', referenceItem.data);
             // If parsing fails, try to extract info using regex as fallback for multiple references
             try {
-              const matches = [...referenceItem.data.matchAll(/(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/g)];
+              // Updated regex to capture all fields: document_id, document_name, document_position, text
+              const matches = [...referenceItem.data.matchAll(/(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?document_name['"]?\s*:\s*['"]([^'"]*)['"]\s*.*?['"]?document_position['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/gs)];
+              console.log('Regex matches for references:', matches);
+              
               if (matches.length > 0) {
                 referenceOutput = {};
-                matches.forEach((match, index) => {
-                  referenceOutput[match[1] || index] = {
+                matches.forEach((match) => {
+                  const refId = match[1];
+                  referenceOutput[refId] = {
                     document_id: parseInt(match[2]),
-                    text: match[3]
+                    document_name: match[3],
+                    document_position: parseInt(match[4]),
+                    text: match[5]
                   };
                 });
                 mainOutput = process.output.filter(item => item.data_type !== "Dict");
@@ -371,43 +378,46 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
                   />
                   {message.status === 3 ? (
                     <>
-                      <ChatBubble
-                        messages={message.output}
-                        sender={"Model"}
-                        timestamp={new Date(
-                          message.end_time,
-                        ).toLocaleTimeString()}
-                      />
-                      {taskName === "RAGTask" && message.referenceOutput && (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold', color: 'text.secondary', opacity: 0.8 }}>
-                            References:
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, flexWrap: 'wrap' }}>
-                            {Object.entries(message.referenceOutput).map(([key, ref], index) => (
-                              <Button
-                                key={key}
-                                variant="contained"
-                                size="small"
-                                onClick={() => handleOpenReference(ref, key)}
-                                sx={{
-                                  backgroundColor: 'hsl(179, 100%, 38%) !important',
-                                  color: 'white !important',
-                                  minWidth: 'auto',
-                                  width: 'auto',
-                                  flexShrink: 0,
-                                  boxShadow: 'none',
-                                  '&:hover': {
-                                    backgroundColor: 'hsl(179, 100%, 32%) !important',
-                                    boxShadow: 'none'
-                                  }
-                                }}
-                              >
-                                Reference {index + 1}
-                              </Button>
-                            ))}
+                      {taskName === "RAGTask" && message.referenceOutput ? (
+                        // For RAG messages, we need custom layout to insert sources before timestamp
+                        <>
+                          <ChatBubble
+                            messages={message.output}
+                            sender={"Model"}
+                            timestamp={null} // We'll handle timestamp separately
+                          />
+                          <SourcesDisplay 
+                            references={message.referenceOutput}
+                            onOpenReference={handleOpenReference}
+                            isUser={false}
+                          />
+                          {/* Add timestamp after sources with proper alignment */}
+                          <Box sx={{ 
+                            ml: '40px', // Same alignment as sources and message content
+                            mt: 1,
+                            display: 'flex',
+                            justifyContent: 'flex-start'
+                          }}>
+                            <Box
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                                opacity: 0.7,
+                              }}
+                            >
+                              {new Date(message.end_time).toLocaleTimeString()}
+                            </Box>
                           </Box>
-                        </Box>
+                        </>
+                      ) : (
+                        // For non-RAG messages, use normal ChatBubble with timestamp
+                        <ChatBubble
+                          messages={message.output}
+                          sender={"Model"}
+                          timestamp={new Date(
+                            message.end_time,
+                          ).toLocaleTimeString()}
+                        />
                       )}
                     </>
                   ) : (

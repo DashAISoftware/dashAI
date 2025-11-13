@@ -153,7 +153,7 @@ export default function Generative() {
           height="100%"
           sx={{ backgroundColor: "background.box", borderRadius: 2 }}
         >
-          {selectedSessionId ? (
+          {selectedSessionId && selectedTaskName ? (
             isRAGTask() ? (
               <DocumentsBar
                 selectedSessionId={selectedSessionId}
