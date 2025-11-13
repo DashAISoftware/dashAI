@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import SessionBar from "../../components/generative/SessionBar";
 import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
@@ -14,8 +15,11 @@ import { getSessions, removeSession } from "../../api/session";
 import JobQueueWidget from "../../components/jobs/JobQueueWidget";
 
 export default function Generative() {
+  const location = useLocation();
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedSessionId, setSelectedSessionId] = useState(
+    location.state?.selectedSessionId || null
+  );
   // TODO: Combine selectedTaskName and selectedDisplayName into a single selectedTask State
   const [selectedTaskName, setSelectedTaskName] = useState("");
   const [selectedDisplayName, setSelectedDisplayName] = useState("");
@@ -46,6 +50,28 @@ export default function Generative() {
     });
   }, []);
 
+  // Handle navigation from RAG pages
+  useEffect(() => {
+    if (location.state?.selectedSessionId) {
+      setSelectedSessionId(location.state.selectedSessionId);
+      
+      // Use the task info from navigation state if available, otherwise find from session
+      if (location.state.selectedTaskName && location.state.selectedDisplayName) {
+        setSelectedTaskName(location.state.selectedTaskName);
+        setSelectedDisplayName(location.state.selectedDisplayName);
+      } else {
+        const session = sessions.find(s => s.id === location.state.selectedSessionId);
+        if (session) {
+          setSelectedTaskName(session.task_name);
+          setSelectedDisplayName(session.task_name); // Map this if needed
+        }
+      }
+      
+      // Clear the navigation state to prevent re-triggering
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [location.state, sessions]);
+
   const handleAddSession = (session) => {
     setSessions((prevSessions) => [session, ...prevSessions]);
   };
@@ -62,6 +88,13 @@ export default function Generative() {
     );
 
     removeSession(id);
+  };
+
+  const handleNavigateToGenerative = () => {
+    setSelectedSessionId(null);
+    setStepIndex(0);
+    setSelectedTaskName("");
+    setSelectedDisplayName("");
   };
 
   return (
@@ -99,6 +132,7 @@ export default function Generative() {
               onSessionSelect={setSelectedSessionId}
               sessions={sessions}
               setSessions={setSessions}
+              onNavigateToGenerative={handleNavigateToGenerative}
             />
           ) : (
             <SelectModelMenu

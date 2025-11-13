@@ -92,7 +92,7 @@ export default function NewPromptModal({
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid item>
             <Typography variant="h6" component="h2">
-              Create New Prompt
+              Create a new Prompt
             </Typography>
           </Grid>
           <Grid item>

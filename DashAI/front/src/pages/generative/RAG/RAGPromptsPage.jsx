@@ -1,0 +1,107 @@
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
+import SessionBar from "../../../components/generative/SessionBar";
+import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
+import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
+import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
+import { getSessions, removeSession } from "../../../api/session";
+
+function RAGPromptsPage() {
+  const navigate = useNavigate();
+  const [rowSelectionModel, setRowSelectionModel] = useState([]);
+  const [sessions, setSessions] = useState([]);
+
+  const loadSessions = useCallback(async () => {
+    try {
+      const allSessions = await getSessions();
+      setSessions(allSessions);
+    } catch (error) {
+      console.error("RAGPromptsPage: Error loading sessions:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
+  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
+    // Navigate directly to generative with session
+    navigate("/app/generative", { 
+      state: { 
+        selectedSessionId: sessionId,
+        selectedTaskName: taskName,
+        selectedDisplayName: taskDisplayName
+      } 
+    });
+  };
+
+  const handleNewSessionButton = () => {
+    // Navigate to generative with no session selected
+    navigate("/app/generative");
+  };
+
+  const handleSessionDelete = async (id) => {
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+    await removeSession(id);
+  };
+
+  const handleRowSelectionModelChange = (newSelection) => {
+    setRowSelectionModel(newSelection);
+  };
+
+  return (
+    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
+      <Box width="22%" mr={1}>
+        <SessionBar
+          sessions={sessions}
+          handleSessionClick={handleSessionClick}
+          handleNewSessionButton={handleNewSessionButton}
+          handleSessionDelete={handleSessionDelete}
+          stepIndex={0}
+        />
+      </Box>
+
+      <Box width="56%" mr={1}>
+        <MainGenerativeBox>
+          <Box
+            display={"flex"}
+            flexDirection={"column"}
+            justifyContent={"flex-start"}
+            gap={1}
+            width={"100%"}
+            height={"100%"}
+            overflow={"scroll"}
+            p={2}
+          >
+            <RAGBreadcrumbs />
+            <Typography variant="h5" component="h1">
+              RAG Prompts
+            </Typography>
+            <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
+              Manage prompts for your RAG sessions: view all available prompts and create new ones to improve your AI interactions.
+            </Typography>
+
+            <PromptSelectionTable
+              showTableTitle={false}
+              loading={false}
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={handleRowSelectionModelChange}
+            />
+          </Box>
+        </MainGenerativeBox>
+      </Box>
+
+      <Box width="22%">
+        <Box
+          width="100%"
+          height="100%"
+          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+        >
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+export default RAGPromptsPage;

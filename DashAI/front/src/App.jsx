@@ -17,6 +17,10 @@ import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import PredictionPage from "./pages/predictions/PredictionPage";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
+import RAGSessionsPage from "./pages/generative/RAG/RAGSessionsPage";
+import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
+import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
+import RAGStandaloneHomePage from "./pages/generative/RAG/RAGStandaloneHomePage";
 
 function App() {
   return (
@@ -39,6 +43,10 @@ function App() {
           />
         </Route>
         <Route path="/app/generative" element={<Generative />} />
+        <Route path="/app/generative/rag" element={<RAGStandaloneHomePage />} />
+        <Route path="/app/generative/rag/sessions" element={<RAGSessionsPage />} />
+        <Route path="/app/generative/rag/documents" element={<RAGDocumentsPage />} />
+        <Route path="/app/generative/rag/prompts" element={<RAGPromptsPage />} />
         <Route path="/app/pipelines" element={<PipelinesPage />} />
         <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
         <Route
