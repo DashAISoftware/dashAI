@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -6,31 +6,19 @@ import {
   CircularProgress,
   DialogContentText,
   Grid,
-  IconButton,
   Typography,
 } from "@mui/material";
 
-import ClearIcon from "@mui/icons-material/Clear";
-import { useSnackbar } from "notistack";
-import PreviewDatasetTable from "./PreviewDatasetTable";
-import { previewWithTypes } from "../../../api/datasets";
+import PreviewDataset from "./PreviewDataset";
 /**
  * Renders a drag and drop to upload a file (dataset).
  * The upload (send to API) doesn't happen here, this component just adds the file "uploaded" to the
  * newDataset state in the modal
  * @param {function} onFileUpload function to handle when the user "uploads" a dataset
  * @param {File} initialFile optional initial file to display (when coming back from preview)
- * @param {object} formSubmitRef reference to the form submit function
  * @param {object} formValues current form values from the configuration form
- * @param {function} onPreviewError callback to notify parent when preview has an error
  */
-function Upload({
-  onFileUpload,
-  initialFile = null,
-  formSubmitRef = null,
-  formValues = {},
-  onPreviewError = null,
-}) {
+function Upload({ onFileUpload, initialFile = null, formValues = {} }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
     initialFile ? LOADED : EMPTY,
@@ -38,8 +26,6 @@ function Upload({
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(initialFile);
   const inputRef = useRef(null);
-
-  const { enqueueSnackbar } = useSnackbar();
 
   const uploadDataset = async (file) => {
     setDatasetState(LOADING);
@@ -88,53 +74,6 @@ function Upload({
     setFile(null);
   };
 
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const [previewError, setPreviewError] = useState(null);
-  const [previewData, setPreviewData] = useState(null);
-
-  useEffect(() => {
-    const loadPreview = async () => {
-      if (!file) {
-        setPreviewData(null);
-        setPreviewError(null);
-        if (onPreviewError) onPreviewError(false);
-        return;
-      }
-
-      try {
-        setLoadingPreview(true);
-        setPreviewError(null);
-        if (onPreviewError) onPreviewError(false);
-
-        // Prepare FormData
-        const formData = new FormData();
-        formData.append("file", file);
-
-        // Add params as JSON string
-        const previewParams = {
-          inference_rows: 500,
-          ...formValues,
-        };
-        formData.append("params", JSON.stringify(previewParams));
-
-        // Call preview endpoint
-        const result = await previewWithTypes(formData);
-        setPreviewData(result);
-      } catch (err) {
-        console.error("Error loading preview:", err);
-        setPreviewError("Failed to load preview");
-        if (onPreviewError) onPreviewError(true);
-        enqueueSnackbar("Error loading dataset preview", {
-          variant: "error",
-        });
-      } finally {
-        setLoadingPreview(false);
-      }
-    };
-
-    loadPreview();
-  }, [file, formValues, enqueueSnackbar, onPreviewError]);
-
   // renders content inside the drag and drop component depending on the state of the dataset
   const stateContent = useCallback(
     (state) => {
@@ -176,106 +115,25 @@ function Upload({
 
         case LOADED:
           return (
-            <React.Fragment>
-              {loadingPreview ? (
-                <React.Fragment>
-                  <Typography>Loading preview...</Typography>
-                  <CircularProgress color="inherit" />
-                </React.Fragment>
-              ) : previewError ? (
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    position: "relative",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      right: 0,
-                      top: 0,
-                    }}
-                  >
-                    <IconButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteDataset();
-                      }}
-                    >
-                      <ClearIcon />
-                    </IconButton>
-                  </Box>
-                  <Typography color="error">{previewError}</Typography>
-                </Box>
-              ) : (
-                previewData && (
-                  <Box sx={{ overflowX: "scroll", width: "100%" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 2,
-                        px: 1,
-                      }}
-                    >
-                      <Box sx={{ flex: 1 }} /> {/* Spacer */}
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          textAlign: "center",
-                          flex: 1,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        Showing {previewData.sample.length} of{" "}
-                        {previewData.preview_row_count} rows analyzed for type
-                        inference
-                      </Typography>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          display: "flex",
-                          justifyContent: "flex-end",
-                        }}
-                      >
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDataset();
-                          }}
-                          sx={{
-                            fontSize: "0.7rem",
-                            px: 1.5,
-                            py: 0.5,
-                            textTransform: "uppercase",
-                            minWidth: "auto",
-                          }}
-                        >
-                          Change Dataset
-                        </Button>
-                      </Box>
-                    </Box>
-                    <PreviewDatasetTable
-                      rows={previewData.sample}
-                      columnTypes={previewData.inferred_types}
-                    />
-                  </Box>
-                )
-              )}
-            </React.Fragment>
+            <Box sx={{ overflowX: "scroll", width: "100%" }}>
+              <PreviewDataset
+                datasetData={{
+                  file,
+                  params: {
+                    inference_rows: 500,
+                    ...formValues,
+                  },
+                }}
+                onChangeDataset={(e) => {
+                  e.stopPropagation();
+                  handleDeleteDataset();
+                }}
+              />
+            </Box>
           );
       }
     },
-    [handleSelect, loadingPreview, previewError, previewData],
+    [handleSelect, file, formValues],
   );
 
   return (
@@ -284,8 +142,8 @@ function Upload({
       <Grid sx={{ textAlign: "center" }}>
         <DialogContentText>
           {datasetState === EMPTY && "Upload your dataset"}
-          {datasetState === LOADING && "Loading..."}
-          {datasetState === LOADED && "Loaded"}
+          {datasetState === LOADING && "Dataset Loading..."}
+          {datasetState === LOADED && "Dataset Loaded"}
           {datasetState === EMPTY && (
             <Typography variant="body2" component="div">
               If your dataset have splits, upload it as a zip file
@@ -298,30 +156,21 @@ function Upload({
       <Grid sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
         <Box
           sx={{
-            ...(datasetState === LOADED && !loadingPreview && !previewError
+            ...(datasetState === LOADED
               ? {}
               : {
                   border: 1,
                   borderWidth: 1,
                   borderStyle: "dashed",
                 }),
-            ...(datasetState === LOADED && !loadingPreview && !previewError
+            ...(datasetState === LOADED
               ? { minHeight: "33vh" }
               : { height: "33vh" }),
-            width:
-              datasetState === LOADED && !loadingPreview && !previewError
-                ? "100%"
-                : "60%",
-            maxWidth:
-              datasetState === LOADED && !loadingPreview && !previewError
-                ? "100%"
-                : "600px",
+            width: datasetState === LOADED ? "100%" : "60%",
+            maxWidth: datasetState === LOADED ? "100%" : "600px",
             borderRadius: 2,
             cursor: datasetState === EMPTY ? "pointer" : "auto",
-            overflow:
-              datasetState === LOADED && !loadingPreview && !previewError
-                ? "visible"
-                : "auto",
+            overflow: datasetState === LOADED ? "visible" : "auto",
             position: "relative",
             display: "flex",
           }}
@@ -339,8 +188,7 @@ function Upload({
             alignItems="center"
             justifyContent="center"
             sx={{
-              height:
-                datasetState === LOADED && !loadingPreview ? "auto" : "100%",
+              height: datasetState === LOADED ? "auto" : "100%",
               width: "100%",
               flex: 1,
             }}
