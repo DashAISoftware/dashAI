@@ -167,4 +167,3 @@ PreviewDataset.propTypes = {
 };
 
 export default PreviewDataset;
-s;
