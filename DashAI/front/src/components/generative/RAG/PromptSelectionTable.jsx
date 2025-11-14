@@ -158,7 +158,7 @@ export default function PromptSelectionTable({
           sx={{ mb: 4 }}
         >
           <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
-            Choose or customize your prompt to define the model’s behavior.
+            Choose or customize your prompt to define the model's behavior.
           </Typography>
           <Button
             variant="contained"

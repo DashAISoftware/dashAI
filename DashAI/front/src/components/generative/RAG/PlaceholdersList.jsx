@@ -7,7 +7,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 export default function PlaceholdersList({
   required = [],
-  optional = [],
+  /* optional = [], */
   descriptions = {},
   template = "",
 }) {
@@ -44,7 +44,7 @@ export default function PlaceholdersList({
             })}
           </ul>
         </div>
-        <div>
+        {/* <div>
           <Typography variant="subtitle1" gutterBottom>
             Optional Placeholders
           </Typography>
@@ -71,7 +71,7 @@ export default function PlaceholdersList({
               );
             })}
           </ul>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -28,7 +28,8 @@ export default function NewPromptModal({
   existingPrompts = [],
 }) {
   const [promptTypes, setPromptTypes] = React.useState([]);
-  const [selectedPromptType, setSelectedPromptType] = React.useState("");
+  /* const [selectedPromptType, setSelectedPromptType] = React.useState(""); */
+  const selectedPromptType = "CustomGenerationPrompt"; // Default to GenerationPrompt
   const [promptName, setPromptName] = React.useState("");
   const [promptTemplate, setPromptTemplate] = React.useState("");
   const [defaultPromptName, setDefaultPromptName] = React.useState("");
@@ -59,14 +60,14 @@ export default function NewPromptModal({
       });
       setDefaultPromptName(generatedName.defaultName);
       setPromptName(generatedName.defaultName);
-      setSelectedPromptType("");
+      /* setSelectedPromptType(""); */
       setPromptTemplate("");
     }
   }, [open]);
 
   const handlePromptTypeChange = (event) => {
     const typeName = event.target.value;
-    setSelectedPromptType(typeName);
+    /* setSelectedPromptType(typeName); */
     const selectedType = promptTypes.find((type) => type.name === typeName);
     if (
       selectedType &&
@@ -102,6 +103,10 @@ export default function NewPromptModal({
           </Grid>
         </Grid>
       </DialogTitle>
+      <Typography variant="body2" sx={{ px: 3 }}>
+        Prompt template defines how the chunks (pieces of documents) and chat messages are integrated to generate responses. Customize the prompt to tailor the behavior of your RAG sessions.
+        Use `{`chunks`}` to represent where the retrieved document chunks will be inserted, and `{`input`}` for the user query.
+      </Typography>
       <DialogContent dividers>
         <TextField
           fullWidth
@@ -115,7 +120,7 @@ export default function NewPromptModal({
           InputLabelProps={{ required: false }}
         />
 
-        <FormControl fullWidth sx={{ mt: 2 }}>
+        {/* <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="prompt-type-label">Prompt Type</InputLabel>
           <Select
             labelId="prompt-type-label"
@@ -130,7 +135,7 @@ export default function NewPromptModal({
               </MenuItem>
             ))}
           </Select>
-        </FormControl>
+        </FormControl> */}
         {selectedPromptType &&
           (() => {
             const selectedType = promptTypes.find(
@@ -140,7 +145,7 @@ export default function NewPromptModal({
             return (
               <PlaceholdersList
                 required={selectedType.metadata.required_placeholders || []}
-                optional={selectedType.metadata.optional_placeholders || []}
+                /* optional={selectedType.metadata.optional_placeholders || []} */
                 descriptions={
                   selectedType.metadata.placeholder_descriptions || {}
                 }
