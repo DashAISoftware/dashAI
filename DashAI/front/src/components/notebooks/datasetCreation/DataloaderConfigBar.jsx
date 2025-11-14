@@ -68,11 +68,11 @@ export default function DataloaderConfigBar({
       {/* Header */}
       <Box
         display="flex"
-        justifyContent="space-between"
+        justifyContent="center"
         alignItems="center"
-        p="40px"
-        pt="30px"
-        pb="20px"
+        px={2}
+        pt={2}
+        pb={1}
       >
         <Typography
           sx={{
@@ -80,6 +80,7 @@ export default function DataloaderConfigBar({
             whiteSpace: "normal",
             wordBreak: "break-word",
             fontWeight: 500,
+            textAlign: "center",
           }}
         >
           Dataloader Configuration
@@ -87,10 +88,10 @@ export default function DataloaderConfigBar({
       </Box>
 
       {/* Configuration Form */}
-      <Box sx={{ mr: 5, ml: 5, mb: 5, flex: 1, overflow: "auto" }}>
+      <Box sx={{ px: 2, pb: 2, flex: 1, overflow: "auto" }}>
         <Typography
           variant="body2"
-          sx={{ color: "text.secondary", mb: 3, textAlign: "center" }}
+          sx={{ color: "text.secondary", mb: 2, textAlign: "center" }}
         >
           {selectedDataloader}
         </Typography>
@@ -103,6 +104,7 @@ export default function DataloaderConfigBar({
             setError={setError}
             initialValues={{ name: defaultName }}
             onValuesChange={onValuesChange}
+            showBorder={false}
           />
         </FormSchemaContainer>
       </Box>
