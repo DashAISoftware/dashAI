@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Grid, Typography, CircularProgress, Box, Paper } from "@mui/material";
-import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import PropTypes from "prop-types";
+import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
-import { createDataset, previewWithTypes } from "../../../api/datasets";
+import { previewWithTypes } from "../../../api/datasets";
 import PreviewDatasetTable from "./PreviewDatasetTable";
 
 /**
@@ -11,16 +10,9 @@ import PreviewDatasetTable from "./PreviewDatasetTable";
  * It contains the Upload button that creates the dataset and enqueues the processing job.
  *
  * @param {object} datasetData - Object containing params, file, and url for the dataset
- * @param {function} goToPrevStep - Function to navigate back to the previous step
- * @param {function} backHome - Function to navigate back to home on error
- * @param {function} handleDatasetCreated - Callback when dataset is successfully created
+ * @param {function} onChangeDataset - Callback function when the user wants to change the dataset
  */
-export default function PreviewDataset({
-  datasetData,
-  goToPrevStep,
-  backHome,
-  handleDatasetCreated,
-}) {
+function PreviewDataset({ datasetData, onChangeDataset }) {
   const { enqueueSnackbar } = useSnackbar();
   const [previewData, setPreviewData] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
@@ -68,7 +60,6 @@ export default function PreviewDataset({
     loadPreview();
   }, [datasetData, enqueueSnackbar]);
 
-  // Handler cuando el usuario cambia tipos de columnas
   const handleTypeChange = useCallback(
     (typeChanges) => {
       // typeChanges es un objeto: { columnName: { current_type, new_type, new_dtype } }
@@ -94,60 +85,9 @@ export default function PreviewDataset({
     [enqueueSnackbar],
   );
 
-  const submitNewDataset = useCallback(async () => {
-    if (!datasetData) {
-      enqueueSnackbar("No dataset data available", {
-        variant: "error",
-      });
-      return;
-    }
-
-    const { params, file, url } = datasetData;
-    const name = params.name;
-
-    try {
-      const data = await createDataset(name);
-      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-        variant: "success",
-      });
-
-      try {
-        const enrichedParams = {
-          ...params,
-          inferred_types: columnTypes,
-        };
-
-        const job = await enqueueDatasetRequest(
-          data.id,
-          file,
-          url,
-          enrichedParams,
-        );
-        handleDatasetCreated(data, job);
-      } catch {
-        enqueueSnackbar("Error when trying to enqueue the dataset job.", {
-          variant: "error",
-        });
-        backHome();
-      }
-    } catch (error) {
-      enqueueSnackbar("Error creating dataset", {
-        variant: "error",
-      });
-      backHome();
-    }
-  }, [
-    datasetData,
-    columnTypes,
-    enqueueSnackbar,
-    handleDatasetCreated,
-    backHome,
-  ]);
-
   return (
-    <Paper
+    <Grid
       sx={{
-        bgcolor: "#212121",
         borderRadius: 2,
         boxShadow: "none",
         p: 2,
@@ -175,14 +115,38 @@ export default function PreviewDataset({
         )}
 
         {!loading && !error && previewData && (
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Showing {previewData.sample.length} of{" "}
-              {previewData.preview_row_count} rows analyzed for type inference.
-              <br />
-              You can change column types by clicking on the dropdown in each
-              column header.
-            </Typography>
+          <Grid container direction="column" spacing={2}>
+            <Grid
+              sx={{
+                flex: 1,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Showing {previewData.sample.length} of{" "}
+                {previewData.preview_row_count} rows analyzed for type
+                inference.
+                <br />
+                You can change column types by clicking on the dropdown in each
+                column header.
+              </Typography>
+
+              <Button
+                variant="contained"
+                size="small"
+                onClick={onChangeDataset}
+                sx={{
+                  lineHeight: "1rem",
+                  padding: "0.5rem",
+                  textTransform: "uppercase",
+                }}
+              >
+                Change Dataset
+              </Button>
+            </Grid>
+
             <PreviewDatasetTable
               rows={previewData.sample}
               columnTypes={columnTypes}
@@ -190,22 +154,17 @@ export default function PreviewDataset({
               params={datasetData.params}
               onTypeChange={handleTypeChange}
             />
-          </Box>
+          </Grid>
         )}
-
-        {/* Form buttons */}
-        <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-          <FormSchemaButtonGroup
-            onCancel={goToPrevStep}
-            onFormSubmit={submitNewDataset}
-            formik={{
-              errors: {},
-            }}
-            saveButtonText="Upload"
-            backButtonText="Back"
-          />
-        </Grid>
       </Grid>
-    </Paper>
+    </Grid>
   );
 }
+
+PreviewDataset.propTypes = {
+  datasetData: PropTypes.object,
+  onChangeDataset: PropTypes.func,
+};
+
+export default PreviewDataset;
+s;
