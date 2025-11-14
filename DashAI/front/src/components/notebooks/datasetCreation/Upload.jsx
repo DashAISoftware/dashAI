@@ -6,9 +6,11 @@ import {
   CircularProgress,
   DialogContentText,
   Grid,
+  IconButton,
   Typography,
 } from "@mui/material";
 
+import ClearIcon from "@mui/icons-material/Clear";
 import { useSnackbar } from "notistack";
 import PreviewDatasetTable from "./PreviewDatasetTable";
 import { previewWithTypes } from "../../../api/datasets";
@@ -20,12 +22,14 @@ import { previewWithTypes } from "../../../api/datasets";
  * @param {File} initialFile optional initial file to display (when coming back from preview)
  * @param {object} formSubmitRef reference to the form submit function
  * @param {object} formValues current form values from the configuration form
+ * @param {function} onPreviewError callback to notify parent when preview has an error
  */
 function Upload({
   onFileUpload,
   initialFile = null,
   formSubmitRef = null,
   formValues = {},
+  onPreviewError = null,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -92,12 +96,15 @@ function Upload({
     const loadPreview = async () => {
       if (!file) {
         setPreviewData(null);
+        setPreviewError(null);
+        if (onPreviewError) onPreviewError(false);
         return;
       }
 
       try {
         setLoadingPreview(true);
         setPreviewError(null);
+        if (onPreviewError) onPreviewError(false);
 
         // Prepare FormData
         const formData = new FormData();
@@ -116,6 +123,7 @@ function Upload({
       } catch (err) {
         console.error("Error loading preview:", err);
         setPreviewError("Failed to load preview");
+        if (onPreviewError) onPreviewError(true);
         enqueueSnackbar("Error loading dataset preview", {
           variant: "error",
         });
@@ -125,7 +133,7 @@ function Upload({
     };
 
     loadPreview();
-  }, [file, formValues, enqueueSnackbar]);
+  }, [file, formValues, enqueueSnackbar, onPreviewError]);
 
   // renders content inside the drag and drop component depending on the state of the dataset
   const stateContent = useCallback(
@@ -175,7 +183,33 @@ function Upload({
                   <CircularProgress color="inherit" />
                 </React.Fragment>
               ) : previewError ? (
-                <Box sx={{ textAlign: "center", p: 2 }}>
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    position: "relative",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      right: 0,
+                      top: 0,
+                    }}
+                  >
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDataset();
+                      }}
+                    >
+                      <ClearIcon />
+                    </IconButton>
+                  </Box>
                   <Typography color="error">{previewError}</Typography>
                 </Box>
               ) : (
@@ -264,23 +298,30 @@ function Upload({
       <Grid sx={{ width: "100%", display: "flex", justifyContent: "center" }}>
         <Box
           sx={{
-            ...(datasetState === LOADED && !loadingPreview
+            ...(datasetState === LOADED && !loadingPreview && !previewError
               ? {}
               : {
                   border: 1,
                   borderWidth: 1,
                   borderStyle: "dashed",
                 }),
-            ...(datasetState === LOADED && !loadingPreview
+            ...(datasetState === LOADED && !loadingPreview && !previewError
               ? { minHeight: "33vh" }
               : { height: "33vh" }),
-            width: datasetState === LOADED && !loadingPreview ? "100%" : "60%",
+            width:
+              datasetState === LOADED && !loadingPreview && !previewError
+                ? "100%"
+                : "60%",
             maxWidth:
-              datasetState === LOADED && !loadingPreview ? "100%" : "600px",
+              datasetState === LOADED && !loadingPreview && !previewError
+                ? "100%"
+                : "600px",
             borderRadius: 2,
             cursor: datasetState === EMPTY ? "pointer" : "auto",
             overflow:
-              datasetState === LOADED && !loadingPreview ? "visible" : "auto",
+              datasetState === LOADED && !loadingPreview && !previewError
+                ? "visible"
+                : "auto",
             position: "relative",
             display: "flex",
           }}
@@ -318,6 +359,7 @@ Upload.propTypes = {
   initialFile: PropTypes.object,
   formSubmitRef: PropTypes.object,
   formValues: PropTypes.object,
+  onPreviewError: PropTypes.func,
 };
 
 export default Upload;

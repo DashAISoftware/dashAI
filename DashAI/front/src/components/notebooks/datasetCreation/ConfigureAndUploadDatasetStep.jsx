@@ -29,6 +29,7 @@ export default function ConfigureAndUploadDatasetStep({
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [formValues, setFormValues] = useState({});
   const [uploading, setUploading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
 
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
 
@@ -93,12 +94,17 @@ export default function ConfigureAndUploadDatasetStep({
   };
 
   useEffect(() => {
-    if (datasetFileToUpload && datasetFileToUpload.file !== null && !error) {
+    if (
+      datasetFileToUpload &&
+      datasetFileToUpload.file !== null &&
+      !error &&
+      !previewError
+    ) {
       setUploadEnabled(true);
     } else {
       setUploadEnabled(false);
     }
-  }, [error, datasetFileToUpload]);
+  }, [error, datasetFileToUpload, previewError]);
 
   return (
     <Grid sx={{ width: "100%" }}>
@@ -120,6 +126,7 @@ export default function ConfigureAndUploadDatasetStep({
           onFileUpload={handleFileUpload}
           formSubmitRef={formSubmitRef}
           formValues={formValues}
+          onPreviewError={setPreviewError}
         />
 
         <DataloaderConfiguration
