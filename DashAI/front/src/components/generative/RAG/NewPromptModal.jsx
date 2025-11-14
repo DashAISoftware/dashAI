@@ -105,7 +105,9 @@ export default function NewPromptModal({
       </DialogTitle>
       <Typography variant="body2" sx={{ px: 3 }}>
         Prompt template defines how the chunks (pieces of documents) and chat messages are integrated to generate responses. Customize the prompt to tailor the behavior of your RAG sessions.
-        Use `{`chunks`}` to represent where the retrieved document chunks will be inserted, and `{`input`}` for the user query.
+      </Typography>
+      <Typography variant="body2" sx={{ px: 3 }}>
+        Use {`{chunks}`} to represent where the retrieved document chunks will be inserted, and {`{input}`} for the user message.
       </Typography>
       <DialogContent dividers>
         <TextField
