@@ -1,52 +1,33 @@
-# Summary
+## Summary
+Short explanation of what changed and why.
 
-<!--
-Include a short summary of the changes made to the platforn and list any dependencies
-of the pr - Required.
--->
-...
+---
 
-## Type of change
+## Type of Change
+Check all that apply like this [x]:
 
-<!-- Indicate the type of change. Delete those that do not apply  - Required -->
+- [ ] Backend change
+- [ ] Frontend change
+- [ ] CI / Workflow change
+- [ ] Build / Packaging change
+- [ ] Bug fix
+- [ ] Documentation
 
-- Front end new feature.
-- Back end new feature.
-- Bug fix.
-- Refactoring.
-- Documentation.
+---
 
-## Changes
+## Changes (by file)
+Briefly list the important modified files and what was done.
 
-<!--
-Indicate the changes/fixes that you want to merge - Required.
+Example:
+- `path/to/file.py`: description
+- `another/file.tsx`: description
 
-- Bug 1
-- Bug 2
-- Feature 1
-- Feature 2
--->
-...
+---
 
-## How to Test
+## Testing (optional)
+Only add if there's something reviewers should verify.
 
-<!--
-Describe the tests or executions that you ran to verify your changes and provide
-instructions to reproduce them - Required.
--->
-...
+---
 
-## Screenshots
-
-<!--
-In the case of modifying a view in the front-end, include screenshots with the changes.
-Optional, delete this section if not needed.-->
-...
-
-## Notes
-
-<!--
-Include any additional information that would be useful to the reviewer.
-Optional, delete this section if not needed.
--->
-...
+## Notes (optional)
+Additional context or considerations.
