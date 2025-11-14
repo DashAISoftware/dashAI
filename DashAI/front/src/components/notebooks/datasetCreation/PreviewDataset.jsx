@@ -57,16 +57,13 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
       } catch (err) {
         console.error("Error loading preview:", err);
         setError("Failed to load preview");
-        enqueueSnackbar("Error loading dataset preview", {
-          variant: "error",
-        });
       } finally {
         setLoading(false);
       }
     };
 
     loadPreview();
-  }, [datasetData, enqueueSnackbar]);
+  }, [datasetData]);
 
   const handleTypeChange = useCallback(
     (typeChanges) => {
@@ -98,7 +95,6 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
       sx={{
         borderRadius: 2,
         boxShadow: "none",
-        p: 2,
       }}
     >
       <Grid sx={{ p: 4 }}>
@@ -117,8 +113,48 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
         )}
 
         {error && !loading && (
-          <Box sx={{ textAlign: "center", p: 4 }}>
-            <Typography color="error">{error}</Typography>
+          <Box
+            sx={{
+              border: 1,
+              borderWidth: 1,
+              borderStyle: "dashed",
+              borderRadius: 2,
+              height: "33vh",
+              width: "60%",
+              maxWidth: "600px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              margin: "0 auto",
+            }}
+          >
+            <Typography color="error" variant="h6">
+              {error}
+            </Typography>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onChangeDataset(e);
+              }}
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                minWidth: "auto",
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                padding: 0,
+                fontSize: "1.3rem",
+                color: "text.secondary",
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
+              }}
+            >
+              ✕
+            </Button>
           </Box>
         )}
 
@@ -127,8 +163,7 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
             sx={{
               display: "flex",
               flexDirection: "column",
-              height: "100%",
-              maxHeight: "50vh",
+              width: "100%",
             }}
           >
             {/* Header - Fixed */}
@@ -166,12 +201,10 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
               </Button>
             </Box>
 
-            {/* Table - Scrollable */}
+            {/* Table - No scroll, expands */}
             <Box
               sx={{
-                flex: 1,
-                overflow: "auto",
-                minHeight: 0,
+                width: "100%",
               }}
             >
               <PreviewDatasetTable
