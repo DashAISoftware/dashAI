@@ -16,6 +16,7 @@ import FormSchemaRenderFields from "./FormSchemaRenderFields";
  * @param {object} formSubmitRef a reference to the formik object
  * @param {function} setError function to set an error in the form
  * @param {object} errors object that contains the errors of the form
+ * @param {function} onValuesChange function to call when the form values change
  */
 function FormSchema({
   model,
@@ -28,12 +29,14 @@ function FormSchema({
   setError,
   errorsMessage,
   saveButtonText,
+  onValuesChange,
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,
     initialValues,
     formSubmitRef,
     setError,
+    onValuesChange,
   });
 
   return (
@@ -73,6 +76,7 @@ FormSchema.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   saveButtonText: PropTypes.string,
+  onValuesChange: PropTypes.func,
 };
 
 export default FormSchema;
