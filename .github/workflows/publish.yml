@@ -8,7 +8,7 @@ on:
 jobs:
 
   # ============================================================
-  # 1. Build del frontend (React)
+  # 1. Frontend Build
   # ============================================================
   react-build:
     runs-on: ubuntu-latest
@@ -39,7 +39,7 @@ jobs:
         run: yarn test --passWithNoTests
 
   # ============================================================
-  # 2. Publicación a PyPI
+  # 2. Publish to PyPI
   # ============================================================
   publish-pypi:
     needs: react-build
@@ -65,7 +65,7 @@ jobs:
       - name: Verify frontend is included in wheel
         run: |
           if ! zipinfo dist/*.whl | grep -q 'DashAI/front/build'; then
-            echo "❌ Archivos del frontend no encontrados en el wheel"
+            echo "Frontend files not found in the wheel package!"
             exit 1
           fi
 
@@ -76,7 +76,7 @@ jobs:
         run: twine upload dist/*
 
   # ============================================================
-  # 3. Build ejecutable Windows
+  # 3. Build Windows Executable
   # ============================================================
   build-windows-executable:
     needs: react-build
@@ -125,7 +125,7 @@ jobs:
           retention-days: 1
 
   # ============================================================
-  # 4. Build ejecutable macOS ARM64
+  # 4. Build macOS ARM64 Executable
   # ============================================================
   build-macos-arm64:
     needs: react-build
@@ -176,7 +176,7 @@ jobs:
           retention-days: 1
 
   # ============================================================
-  # 5. Build ejecutable macOS x86_64
+  # 5. Build macOS x86_64 Executable
   # ============================================================
   build-macos-x86_64:
     needs: react-build
