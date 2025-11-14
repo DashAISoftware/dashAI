@@ -273,6 +273,7 @@ export default function DatasetVisualization({
               <QualityAlerts
                 qualityInfo={datasetInfo?.quality_info}
                 generalInfo={datasetInfo?.general_info}
+                missingValues={datasetInfo?.nan}
               />
             </Box>
             {/* Tabs */}
