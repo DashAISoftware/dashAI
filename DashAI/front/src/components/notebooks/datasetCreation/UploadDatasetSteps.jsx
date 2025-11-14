@@ -80,6 +80,7 @@ export default function UploadDatasetSteps({
           formSubmitRef={formSubmitRef}
           formValues={formValues}
           onPreviewError={setPreviewError}
+          formHasErrors={error}
         />
       )}
     </CustomLayout>

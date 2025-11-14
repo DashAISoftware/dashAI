@@ -17,6 +17,7 @@ import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
  * @param {object} formSubmitRef - The reference to the form submit function from the config bar
  * @param {object} formValues - Current form values from the configuration form
  * @param {function} onPreviewError - Callback to notify parent of preview errors
+ * @param {boolean} formHasErrors - Whether the configuration form has validation errors
  */
 
 export default function ConfigureAndUploadDatasetStep({
@@ -27,6 +28,7 @@ export default function ConfigureAndUploadDatasetStep({
   formSubmitRef,
   formValues,
   onPreviewError,
+  formHasErrors,
 }) {
   const [uploadEnabled, setUploadEnabled] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -100,17 +102,34 @@ export default function ConfigureAndUploadDatasetStep({
     setDatasetFileToUpload({ file, url });
   };
 
+  // Check if form is valid (no errors) and has required fields
+  const isFormValid = () => {
+    if (!formSubmitRef.current) return false;
+
+    const formik = formSubmitRef.current;
+    const hasErrors = formik.errors && Object.keys(formik.errors).length > 0;
+    const isTouched = formik.touched && Object.keys(formik.touched).length > 0;
+
+    // If form has validation errors or the parent reports errors, it's invalid
+    return !hasErrors && !formHasErrors;
+  };
+
   useEffect(() => {
+    // Enable upload only if:
+    // 1. File is uploaded
+    // 2. No preview errors
+    // 3. Form is valid (no validation errors and all required fields filled)
     if (
       datasetFileToUpload &&
       datasetFileToUpload.file !== null &&
-      !previewError
+      !previewError &&
+      isFormValid()
     ) {
       setUploadEnabled(true);
     } else {
       setUploadEnabled(false);
     }
-  }, [datasetFileToUpload, previewError]);
+  }, [datasetFileToUpload, previewError, formHasErrors, formValues]);
 
   return (
     <Grid sx={{ width: "100%", height: "100%" }}>
