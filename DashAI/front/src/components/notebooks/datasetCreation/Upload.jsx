@@ -151,7 +151,7 @@ function Upload({
   );
 
   return (
-    <Grid container direction="column" rowSpacing={3} sx={{ width: "100%" }}>
+    <Grid container direction="column" rowSpacing={1} sx={{ width: "100%" }}>
       {/* state text */}
       <Grid sx={{ textAlign: "center" }}>
         <DialogContentText>

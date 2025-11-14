@@ -17,6 +17,7 @@ import FormSchemaRenderFields from "./FormSchemaRenderFields";
  * @param {function} setError function to set an error in the form
  * @param {object} errors object that contains the errors of the form
  * @param {function} onValuesChange function to call when the form values change
+ * @param {bool} showBorder if true, the parameter container will have a border
  */
 function FormSchema({
   model,
@@ -30,6 +31,7 @@ function FormSchema({
   errorsMessage,
   saveButtonText,
   onValuesChange,
+  showBorder = true,
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,
@@ -41,7 +43,7 @@ function FormSchema({
 
   return (
     <>
-      <FormSchemaParameterContainer>
+      <FormSchemaParameterContainer showBorder={showBorder}>
         <FormSchemaRenderFields
           modelSchema={modelSchema}
           formik={formik}
@@ -77,6 +79,7 @@ FormSchema.propTypes = {
   errorsMessage: PropTypes.object,
   saveButtonText: PropTypes.string,
   onValuesChange: PropTypes.func,
+  showBorder: PropTypes.bool,
 };
 
 export default FormSchema;

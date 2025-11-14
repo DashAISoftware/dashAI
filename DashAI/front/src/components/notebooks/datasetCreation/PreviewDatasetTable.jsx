@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Typography, Select, MenuItem, Chip, Box } from "@mui/material";
+import { Typography, Select, MenuItem, Box } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { TypeChangeValidator } from "./TypeChangeValidator";
 
@@ -136,18 +136,6 @@ export default function PreviewDatasetTable({
               <MenuItem value="Timestamp">Timestamp</MenuItem>
               <MenuItem value="Boolean">Boolean</MenuItem>
             </Select>
-
-            {columnType?.dtype && (
-              <Chip
-                label={columnType.dtype}
-                size="small"
-                sx={{
-                  height: 18,
-                  fontSize: "0.65rem",
-                  backgroundColor: "rgba(0, 0, 0, 0.08)",
-                }}
-              />
-            )}
           </Box>
         ),
       };
@@ -171,7 +159,7 @@ export default function PreviewDatasetTable({
         density="compact"
         disableRowSelectionOnClick
         initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+          pagination: { paginationModel: { pageSize: 5 } },
         }}
         pageSizeOptions={[5, 10, 25]}
         columnHeaderHeight={100}

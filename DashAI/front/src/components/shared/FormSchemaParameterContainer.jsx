@@ -7,7 +7,22 @@ import PropTypes from "prop-types";
  * This component is a container for the parameters of a model schema
  */
 
-function FormSchemaParameterContainer({ children }) {
+function FormSchemaParameterContainer({ children, showBorder = true }) {
+  if (!showBorder) {
+    return (
+      <Box
+        sx={{
+          overflowY: "auto",
+          height: "auto",
+          width: "inherit",
+          transition: "opacity 0.3s ease",
+        }}
+      >
+        {children}
+      </Box>
+    );
+  }
+
   return (
     <BoxWithTitle title="Parameters">
       <Box
@@ -28,6 +43,7 @@ function FormSchemaParameterContainer({ children }) {
 
 FormSchemaParameterContainer.propTypes = {
   children: PropTypes.node.isRequired,
+  showBorder: PropTypes.bool,
 };
 
 export default FormSchemaParameterContainer;
