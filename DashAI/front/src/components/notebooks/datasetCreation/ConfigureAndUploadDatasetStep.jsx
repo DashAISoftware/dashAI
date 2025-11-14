@@ -45,6 +45,15 @@ export default function ConfigureAndUploadDatasetStep({
     }
   }, [previewError, onPreviewError]);
 
+  // Show error notification when preview fails
+  useEffect(() => {
+    if (previewError) {
+      enqueueSnackbar("Error loading dataset preview", {
+        variant: "error",
+      });
+    }
+  }, [previewError, enqueueSnackbar]);
+
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
       enqueueSnackbar("No dataset file available", {
@@ -136,13 +145,12 @@ export default function ConfigureAndUploadDatasetStep({
       <Grid
         container
         direction="column"
-        justifyContent="space-around"
+        justifyContent="flex-start"
         alignItems="stretch"
         spacing={2}
         sx={{
           width: "100%",
           backgroundColor: "#212121",
-          minHeight: "70vh",
           padding: 4,
           borderRadius: 2,
         }}
