@@ -34,6 +34,7 @@ export default function DatasetsPage() {
   const [selectedNotebookId, setSelectedNotebookId] = useState(0);
   const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
+  const [rightBarContent, setRightBarContent] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
 
   const goToNextStep = (option = selectedOption) => {
@@ -118,18 +119,21 @@ export default function DatasetsPage() {
     setSelectedNotebookId(null);
     setStep(0);
     setSelectedOption(null);
+    setRightBarContent(null);
   };
 
   const handleDatasetClick = (datasetId) => {
     setSelectedDatasetId(datasetId);
     setSelectedNotebookId(null);
     setSelectedOption("dataset");
+    setRightBarContent(null);
   };
 
   const handleNotebookClick = (notebookId) => {
     setSelectedNotebookId(notebookId);
     setSelectedDatasetId(null);
     setSelectedOption("notebook");
+    setRightBarContent(null);
   };
 
   const handleDatasetDelete = (id) => {
@@ -137,6 +141,7 @@ export default function DatasetsPage() {
       setSelectedDatasetId(null);
       setStep(0);
       setSelectedOption(null);
+      setRightBarContent(null);
     }
 
     // Remove the dataset from the state
@@ -174,6 +179,7 @@ export default function DatasetsPage() {
       setSelectedNotebookId(null);
       setStep(0);
       setSelectedOption(null);
+      setRightBarContent(null);
     }
 
     setNotebooks((prevNotebooks) =>
@@ -422,16 +428,19 @@ export default function DatasetsPage() {
                 backHome={() => {
                   setStep(0);
                   setSelectedOption(null);
+                  setRightBarContent(null);
                   fetchDatasets();
                 }}
                 handleDatasetCreated={handleDatasetCreated}
                 existingDatasets={datasets}
+                renderRightBar={setRightBarContent}
               />
             ) : step === 1 && selectedOption === "notebook" ? (
               <UploadNotebookSteps
                 backHome={() => {
                   setStep(0);
                   setSelectedOption(null);
+                  setRightBarContent(null);
                   fetchNotebooks();
                 }}
                 datasets={datasets}
@@ -442,7 +451,11 @@ export default function DatasetsPage() {
           </CenterBox>
         </Box>
         <Box width="22%">
-          <RightBar notebook={selectedNotebook} />
+          {rightBarContent ? (
+            rightBarContent
+          ) : (
+            <RightBar notebook={selectedNotebook} />
+          )}
         </Box>
       </ExplorersAndConvertersProvider>
     </Box>

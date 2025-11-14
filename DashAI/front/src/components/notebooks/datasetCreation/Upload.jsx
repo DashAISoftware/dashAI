@@ -17,8 +17,14 @@ import PreviewDataset from "./PreviewDataset";
  * @param {function} onFileUpload function to handle when the user "uploads" a dataset
  * @param {File} initialFile optional initial file to display (when coming back from preview)
  * @param {object} formValues current form values from the configuration form
+ * @param {function} onPreviewError callback to notify parent of preview errors
  */
-function Upload({ onFileUpload, initialFile = null, formValues = {} }) {
+function Upload({
+  onFileUpload,
+  initialFile = null,
+  formValues = {},
+  onPreviewError,
+}) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
     initialFile ? LOADED : EMPTY,
@@ -115,7 +121,14 @@ function Upload({ onFileUpload, initialFile = null, formValues = {} }) {
 
         case LOADED:
           return (
-            <Box sx={{ overflowX: "scroll", width: "100%" }}>
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               <PreviewDataset
                 datasetData={{
                   file,
@@ -128,12 +141,13 @@ function Upload({ onFileUpload, initialFile = null, formValues = {} }) {
                   e.stopPropagation();
                   handleDeleteDataset();
                 }}
+                onPreviewError={onPreviewError}
               />
             </Box>
           );
       }
     },
-    [handleSelect, file, formValues],
+    [handleSelect, file, formValues, onPreviewError],
   );
 
   return (

@@ -1,21 +1,22 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Grid, CircularProgress } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
-import DataloaderConfiguration from "./DataloaderConfiguration";
 import { createDataset } from "../../../api/datasets";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 
 /**
- * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.
- * It uploads the dataset directly to the API.
+ * This component handles the file upload process for dataset creation.
+ * The dataloader configuration is now handled in the right sidebar (DataloaderConfigBar).
  *
  * @param {string} selectedDataloader - The dataloader type to configure
  * @param {function} goToPrevStep - Function to navigate back to the previous step in the dataset creation flow.
  * @param {function} backHome - Function to navigate back to the home/initial state, typically called on error.
  * @param {function} handleDatasetCreated - Callback function called when dataset is successfully created, receives the created dataset data.
- * @param {array} existingDatasets - Array of existing datasets to avoid name conflicts
+ * @param {object} formSubmitRef - The reference to the form submit function from the config bar
+ * @param {object} formValues - Current form values from the configuration form
+ * @param {function} onPreviewError - Callback to notify parent of preview errors
  */
 
 export default function ConfigureAndUploadDatasetStep({
@@ -23,18 +24,24 @@ export default function ConfigureAndUploadDatasetStep({
   goToPrevStep,
   backHome,
   handleDatasetCreated,
-  existingDatasets = [],
+  formSubmitRef,
+  formValues,
+  onPreviewError,
 }) {
-  const [error, setError] = useState(false);
   const [uploadEnabled, setUploadEnabled] = useState(false);
-  const [formValues, setFormValues] = useState({});
   const [uploading, setUploading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
 
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
 
-  const formSubmitRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  // Notify parent about preview errors
+  useEffect(() => {
+    if (onPreviewError) {
+      onPreviewError(previewError);
+    }
+  }, [previewError, onPreviewError]);
 
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
@@ -97,17 +104,16 @@ export default function ConfigureAndUploadDatasetStep({
     if (
       datasetFileToUpload &&
       datasetFileToUpload.file !== null &&
-      !error &&
       !previewError
     ) {
       setUploadEnabled(true);
     } else {
       setUploadEnabled(false);
     }
-  }, [error, datasetFileToUpload, previewError]);
+  }, [datasetFileToUpload, previewError]);
 
   return (
-    <Grid sx={{ width: "100%" }}>
+    <Grid sx={{ width: "100%", height: "100%" }}>
       <Grid
         container
         direction="column"
@@ -117,7 +123,7 @@ export default function ConfigureAndUploadDatasetStep({
         sx={{
           width: "100%",
           backgroundColor: "#212121",
-          minHeight: "80vh",
+          minHeight: "70vh",
           padding: 4,
           borderRadius: 2,
         }}
@@ -127,14 +133,6 @@ export default function ConfigureAndUploadDatasetStep({
           formSubmitRef={formSubmitRef}
           formValues={formValues}
           onPreviewError={setPreviewError}
-        />
-
-        <DataloaderConfiguration
-          selectedDataloader={selectedDataloader}
-          formSubmitRef={formSubmitRef}
-          setError={setError}
-          existingDatasets={existingDatasets}
-          onValuesChange={setFormValues}
         />
       </Grid>
 

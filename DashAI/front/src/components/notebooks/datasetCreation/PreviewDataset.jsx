@@ -11,13 +11,21 @@ import PreviewDatasetTable from "./PreviewDatasetTable";
  *
  * @param {object} datasetData - Object containing params, file, and url for the dataset
  * @param {function} onChangeDataset - Callback function when the user wants to change the dataset
+ * @param {function} onPreviewError - Callback function to notify parent of preview errors
  */
-function PreviewDataset({ datasetData, onChangeDataset }) {
+function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
   const { enqueueSnackbar } = useSnackbar();
   const [previewData, setPreviewData] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Notify parent about preview errors
+  useEffect(() => {
+    if (onPreviewError) {
+      onPreviewError(!!error);
+    }
+  }, [error, onPreviewError]);
 
   useEffect(() => {
     const loadPreview = async () => {
@@ -115,16 +123,26 @@ function PreviewDataset({ datasetData, onChangeDataset }) {
         )}
 
         {!loading && !error && previewData && (
-          <Grid container direction="column" spacing={2}>
-            <Grid
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              maxHeight: "50vh",
+            }}
+          >
+            {/* Header - Fixed */}
+            <Box
               sx={{
-                flex: 1,
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "baseline",
+                alignItems: "flex-start",
+                gap: 2,
+                mb: 2,
+                flexShrink: 0,
               }}
             >
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary">
                 Showing {previewData.sample.length} of{" "}
                 {previewData.preview_row_count} rows analyzed for type
                 inference.
@@ -141,20 +159,30 @@ function PreviewDataset({ datasetData, onChangeDataset }) {
                   lineHeight: "1rem",
                   padding: "0.5rem",
                   textTransform: "uppercase",
+                  flexShrink: 0,
                 }}
               >
                 Change Dataset
               </Button>
-            </Grid>
+            </Box>
 
-            <PreviewDatasetTable
-              rows={previewData.sample}
-              columnTypes={columnTypes}
-              file={datasetData.file}
-              params={datasetData.params}
-              onTypeChange={handleTypeChange}
-            />
-          </Grid>
+            {/* Table - Scrollable */}
+            <Box
+              sx={{
+                flex: 1,
+                overflow: "auto",
+                minHeight: 0,
+              }}
+            >
+              <PreviewDatasetTable
+                rows={previewData.sample}
+                columnTypes={columnTypes}
+                file={datasetData.file}
+                params={datasetData.params}
+                onTypeChange={handleTypeChange}
+              />
+            </Box>
+          </Box>
         )}
       </Grid>
     </Grid>
@@ -164,6 +192,7 @@ function PreviewDataset({ datasetData, onChangeDataset }) {
 PreviewDataset.propTypes = {
   datasetData: PropTypes.object,
   onChangeDataset: PropTypes.func,
+  onPreviewError: PropTypes.func,
 };
 
 export default PreviewDataset;
