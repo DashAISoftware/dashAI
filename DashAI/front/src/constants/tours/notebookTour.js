@@ -17,7 +17,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
   },
   {
-    target: ".dataset-preview-section",
+    target: '[data-tour="dataset-preview-section"]',
     content: (
       <div>
         <h3>Dataset Preview</h3>
@@ -83,8 +83,8 @@ export const notebookTourSteps = [
           histogram.
         </p>
         <p>
-          For this example, you can select any numeric column. Try selecting one
-          column from the list.
+          For this example, you can <strong> select any numeric column </strong>
+          . Try selecting one column from the list.
         </p>
         <p>
           <strong>Click "Next" when you've selected a column.</strong>
@@ -212,6 +212,7 @@ export const notebookTourSteps = [
     ),
     disableBeacon: true,
     spotlightClicks: true,
+    disableOverlay: true,
     hideFooter: true,
   },
   {
@@ -262,6 +263,7 @@ export const notebookTourSteps = [
     ),
     disableBeacon: true,
     spotlightClicks: true,
+    disableOverlay: true,
     hideFooter: true,
   },
 
@@ -324,7 +326,6 @@ export const notebookTourSteps = [
         </div>
       </div>
     ),
-    placement: "auto",
     disableBeacon: true,
     spotlightClicks: true,
     disableScrolling: true,

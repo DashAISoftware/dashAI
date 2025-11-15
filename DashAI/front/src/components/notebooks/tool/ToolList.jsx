@@ -27,32 +27,13 @@ export default function ToolList({ tools, notebook, FormComponent }) {
   const handleToolClick = (tool) => {
     setSelectedTool(tool);
     setOpen(true);
-
+    console.log("Clicked tool:", tool);
+    console.log("Tour context:", tourContext);
     if (tourContext && tourContext.run) {
-      const shouldAdvance =
-        tool.name === "HistogramPlotExplorer" ||
-        tool.name === "LabelEncoder" ||
-        tool.name === "NanRemover";
-
-      if (shouldAdvance) {
-        setTimeout(() => {
-          tourContext.nextStep();
-        }, 500);
-      }
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
     }
-  };
-
-  const getTourAttribute = (toolName) => {
-    if (toolName === "HistogramPlotExplorer") {
-      return "histogram-explorer";
-    }
-    if (toolName === "LabelEncoder") {
-      return "label-encoder-converter";
-    }
-    if (toolName === "NanRemover") {
-      return "nan-remover-converter";
-    }
-    return undefined;
   };
 
   if (!tools || tools.length === 0) {
@@ -136,7 +117,6 @@ export default function ToolList({ tools, notebook, FormComponent }) {
                       tool={tool}
                       disabled={tool.disabled}
                       onClick={() => handleToolClick(tool)}
-                      data-tour={getTourAttribute(tool.name)}
                     />
                   ))}
               </Box>

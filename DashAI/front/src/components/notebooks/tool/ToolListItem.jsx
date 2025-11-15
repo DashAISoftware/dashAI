@@ -4,7 +4,12 @@ import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
 import { CategoryIcon } from "./CategoryIcon";
 
-export default function ToolListItem({ tool, disabled = false, onClick }) {
+export default function ToolListItem({
+  tool,
+  disabled = false,
+  onClick,
+  ...props
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredTool, setHoveredTool] = useState(null);
 
@@ -61,6 +66,7 @@ export default function ToolListItem({ tool, disabled = false, onClick }) {
         <Box
           key={tool.id}
           data-tour={getTourAttribute()}
+          {...props}
           onMouseEnter={(e) => handleMouseEnter(e, tool)}
           onMouseLeave={handleMouseLeave}
           onClick={disabled ? null : onClick}
