@@ -157,7 +157,7 @@ function Upload({
         <DialogContentText>
           {datasetState === EMPTY && "Upload your dataset"}
           {datasetState === LOADING && "Dataset Loading..."}
-          {datasetState === LOADED && "Dataset Loaded"}
+          {datasetState === LOADED && "Dataset preview"}
           {datasetState === EMPTY && (
             <Typography variant="body2" component="div">
               If your dataset have splits, upload it as a zip file

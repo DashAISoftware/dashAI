@@ -46,7 +46,7 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
           separator: params.separator || ",",
           header: params.header,
           encoding: params.encoding,
-          inference_rows: 1000,
+          inference_rows: params.inference_rows || 1000,
         };
         formData.append("params", JSON.stringify(previewParams));
 
