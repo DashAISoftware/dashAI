@@ -14,33 +14,54 @@ import DeleteItemModal from "../custom/DeleteItemModal";
 import EditPredictionModal from "./EditPredictionModal";
 import PredictionSummaryModal from "./PredictionSummaryModal";
 import DownloadPrediction from "./DownloadPrediction";
+import PropTypes from "prop-types";
+import { getComponents } from "../../api/component";
 
 function PredictionTable({
   handleNewPredict,
   updateTableFlag,
   setUpdateTableFlag,
+  predictions = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(true);
   const [models, setModels] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
-  const getModels = useCallback(async () => {
-    setLoading(true);
-    try {
-      const uniqueModels = await get_metadata_prediction_json();
-      setModels(uniqueModels);
-    } catch (error) {
-      enqueueSnackbar("Error when trying to get the predictions", {
-        variant: "error",
-      });
-      console.error("Error fetching predictions:", error);
-    } finally {
+  const rows = predictions;
+
+  useEffect(() => {
+    const fetchModelsAndTasks = async () => {
+      try {
+        const [modelsData, tasksData] = await Promise.all([
+          getComponents({ selectTypes: ["Model"] }),
+          getComponents({ selectTypes: ["Task"] }),
+        ]);
+        setModels(modelsData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error("Error fetching models or tasks:", error);
+      }
+    };
+    fetchModelsAndTasks();
+  }, []);
+
+  useEffect(() => {
+    if (predictions.length >= 0) {
       setLoading(false);
     }
-  }, [enqueueSnackbar]);
+  }, [predictions]);
+
+  useEffect(() => {
+    if (updateTableFlag) {
+      setLoading(true);
+      setUpdateTableFlag(false);
+    }
+  }, [updateTableFlag, setUpdateTableFlag]);
 
   const deletePrediction = async (predict_name) => {
     try {
+      setLoading(true);
       await deletePredictionRequest(predict_name);
       setUpdateTableFlag(true);
       enqueueSnackbar("Prediction successfully deleted.", {
@@ -51,6 +72,7 @@ function PredictionTable({
         variant: "error",
       });
       console.error("Error deleting prediction:", error);
+      setLoading(false);
     }
   };
 
@@ -60,17 +82,6 @@ function PredictionTable({
     },
     [deletePrediction],
   );
-
-  useEffect(() => {
-    getModels();
-  }, [getModels]);
-
-  useEffect(() => {
-    if (updateTableFlag) {
-      getModels();
-      setUpdateTableFlag(false);
-    }
-  }, [updateTableFlag, setUpdateTableFlag, getModels]);
 
   const columns = React.useMemo(
     () => [
@@ -103,12 +114,20 @@ function PredictionTable({
         headerName: "Model",
         minWidth: 150,
         editable: false,
+        valueGetter: (value) => {
+          const model = models.find((model) => model.name === value);
+          return model && model.display_name ? model.display_name : value;
+        },
       },
       {
         field: "task_name",
         headerName: "Task",
         minWidth: 150,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "actions",
@@ -150,9 +169,9 @@ function PredictionTable({
         <Typography variant="h5" component="h2">
           Current predicted datasets
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={handleNewPredict}
@@ -161,7 +180,7 @@ function PredictionTable({
                 New Prediction
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={() => setUpdateTableFlag(true)}
@@ -177,17 +196,16 @@ function PredictionTable({
 
       <div style={{ width: "100%", position: "relative" }}>
         <DataGrid
-          rows={models}
+          rows={rows}
           columns={columns}
-          initialstate={{
+          initialState={{
             pagination: {
-              paginationmodel: {
-                pagesize: 5,
+              paginationModel: {
+                pageSize: 5,
               },
             },
           }}
           getRowId={(row) => row.id}
-          pageSize={5}
           sortModel={[{ field: "id", sort: "asc" }]}
           pageSizeOptions={[5, 10]}
           disableRowSelectionOnClick
@@ -207,5 +225,12 @@ function PredictionTable({
     </Paper>
   );
 }
+
+PredictionTable.propTypes = {
+  handleNewPredict: PropTypes.func.isRequired,
+  updateTableFlag: PropTypes.bool,
+  setUpdateTableFlag: PropTypes.func,
+  predictions: PropTypes.array,
+};
 
 export default PredictionTable;

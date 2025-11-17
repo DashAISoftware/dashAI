@@ -4,20 +4,30 @@ from pathlib import Path
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
+from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
 from DashAI.back.optimizers import OptunaOptimizer
 from DashAI.back.tasks import BaseTask
+from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, dataset, output_columns):
         return dataset
@@ -57,9 +67,11 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             DummyTask,
             DummyModel,
             DummyMetric,
+            CSVDataLoader,
             JSONDataLoader,
             ModelJob,
             OptunaOptimizer,
+            TabularClassificationTask,
         ]
     )
 
@@ -73,90 +85,96 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture(scope="module", name="dataset", autouse=True)
 def create_dataset(client: TestClient):
-    """Create testing dataset using job system."""
-    script_dir = os.path.dirname(__file__)
-    test_dataset = "irisDataset.json"
-    abs_file_path = os.path.join(script_dir, test_dataset)
+    """Create testing dataset using job system for JSON dataset."""
+    abs_file_path = Path(__file__).parent / "irisDataset.json"
 
-    with open(abs_file_path, "rb") as json_file:
-        params = {
-            "dataloader": "JSONDataLoader",
-            "name": "test_json",
-            "data_key": "data",
-        }
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        json_dataset_entry = Dataset(
+            name="test_json",
+            file_path="",
+        )
+        db.add(json_dataset_entry)
+        db.commit()
+        db.refresh(json_dataset_entry)
 
         kwargs = {
-            "name": "test_json",
+            "dataset_id": json_dataset_entry.id,
             "url": "",
-            "params": params,
+            "params": {
+                "dataloader": "JSONDataLoader",
+                "name": json_dataset_entry.name,
+                "data_key": "data",
+            },
+            "file_path": abs_file_path,
         }
+        job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
+        job.run()
 
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+        db.refresh(json_dataset_entry)
 
-        files = {"file": ("irisDataset.json", json_file, "application/json")}
-        headers = {"filename": "irisDataset.json"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-        assert response.status_code == 201, response.text
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        response = client.get("/api/v1/dataset/1")
-        assert response.status_code == 200, response.text
-        dataset = response.json()
+        dataset = {
+            "id": json_dataset_entry.id,
+            "name": json_dataset_entry.name,
+            "file_path": json_dataset_entry.file_path,
+        }
 
     yield dataset
 
-    response = client.delete(f"/api/v1/dataset/{dataset['id']}")
-    assert response.status_code == 204, response.text
+    with session_factory() as db:
+        dataset_to_delete = db.get(Dataset, dataset["id"])
+        if dataset_to_delete:
+            db.delete(dataset_to_delete)
+            db.commit()
 
 
 @pytest.fixture(name="dataset_2", autouse=True, scope="module")
 def create_dataset_2(client: TestClient):
-    """Create testing dataset 2."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
+    """Create testing dataset 2 using CSV file."""
+    abs_file_path = Path(__file__).parent / "iris.csv"
 
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "test_csv",
-            "separator": ",",
-        }
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        csv_dataset_entry = Dataset(
+            name="test_csv",
+            file_path="",
+        )
+        db.add(csv_dataset_entry)
+        db.commit()
+        db.refresh(csv_dataset_entry)
 
         kwargs = {
-            "name": "test_csv",
+            "dataset_id": csv_dataset_entry.id,
             "url": "",
-            "params": params,
+            "params": {
+                "dataloader": "CSVDataLoader",
+                "separator": ",",
+                "name": csv_dataset_entry.name,
+            },
+            "file_path": abs_file_path,
         }
+        job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
+        job.run()
 
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
+        db.refresh(csv_dataset_entry)
 
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-        assert response.status_code == 201, response.text
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        response = client.get("/api/v1/dataset/2")
-        assert response.status_code == 200, response.text
-        dataset = response.json()
+        dataset = {
+            "id": csv_dataset_entry.id,
+            "name": csv_dataset_entry.name,
+            "file_path": csv_dataset_entry.file_path,
+        }
 
     yield dataset
 
-    response = client.delete(f"/api/v1/dataset/{dataset['id']}")
-    assert response.status_code == 204, response.text
+    with session_factory() as db:
+        dataset_to_delete = db.get(Dataset, dataset["id"])
+        if dataset_to_delete:
+            db.delete(dataset_to_delete)
+            db.commit()
 
 
 @pytest.fixture(scope="module", name="experiment_id", autouse=True)
@@ -234,8 +252,9 @@ def create_trained_run(client: TestClient, run_id: int):
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Model job failed: {job_status}"
 
     return run_id
 
@@ -256,8 +275,9 @@ def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset)
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Predict job failed: {job_status}"
 
     return kwargs["json_filename"] + ".json"
 
@@ -320,20 +340,19 @@ def test_predict_summary(client: TestClient, prediction_name: str):
 
 
 def test_filter_datasets_endpoint(
-    client: TestClient, dataset: Dataset, dataset_2: Dataset
+    client: TestClient, trained_run_id: int, dataset: Dataset, dataset_2: Dataset
 ):
-    list_datasets = [dataset["file_path"], dataset_2["file_path"]]
-    params = {
-        "train_dataset_id": 1,
-        "datasets": list_datasets,
-    }
-    response = client.post("/api/v1/predict/filter_datasets", json=params)
+    response = client.get(
+        "/api/v1/predict/filter_datasets",
+        params={"run_id": trained_run_id},
+    )
     assert response.status_code == 200, response.text
-    filtered_datasets = response.json()
-    assert len(filtered_datasets) == 1
-    assert (
-        filtered_datasets[0]["id"] == 1
-    )  # only the first dataset is used to train the model
+    datasets = response.json()
+    assert isinstance(datasets, list)
+    assert len(datasets) == 1
+    dataset_names = [ds["name"] for ds in datasets]
+    assert dataset["name"] in dataset_names
+    assert dataset_2["name"] not in dataset_names
 
 
 @pytest.fixture(name="json_data")

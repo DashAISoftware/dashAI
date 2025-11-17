@@ -11,6 +11,7 @@ import {
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
+import SideBar from "../threeSectionLayout/SideBar";
 
 export default function ParamsBar({
   selectedSessionId,
@@ -85,89 +86,119 @@ export default function ParamsBar({
     : {};
 
   return (
-    <Box
-      display={"flex"}
-      height={"100%"}
-      width={"100%"}
-      flexDirection={"column"}
-      justifyContent={"flex-start"}
-      overflow={"auto"}
-      bgcolor={"background.box"}
-      borderRadius={2}
-    >
+    <SideBar>
       <Box
-        display={"flex"}
-        justifyContent={"space-between"}
-        alignItems={"center"}
-        p="40px"
-        pt="30px"
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          height: "100%",
+          width: "100%",
+        }}
       >
-        <Typography
+        <Box
           sx={{
-            fontSize: "16px",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
+            p: 2,
+            borderBottom: "1px solid #333",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            height: 64,
           }}
         >
-          Edit Parameters
-        </Typography>
+          <Typography variant="h6">Model Parameters</Typography>
 
-        {/* Parameter History Modal */}
-        <IconButton
-          onClick={() => {
-            getHistory();
-            setHistoryInfoVisible(true);
-          }}
-        >
-          <HistoryIcon
-            sx={{
-              color: "#a0a0a0",
-              "&:hover": {
-                color: "#ffffff",
-              },
-            }}
-          />
-        </IconButton>
-      </Box>
-      <form onSubmit={formik.handleSubmit}>
-        <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
-          {/* Render the parameter fields */}
-          <FormSchemaRenderFields
-            modelSchema={processedProperties}
-            formik={formik}
-            autoSave={false}
-            handleUpdateSchema={(updatedValues) => {
-              formik.setValues((prevValues) => ({
-                ...prevValues,
-                ...updatedValues,
-              }));
-            }}
-            onFormSubmit={formik.handleSubmit}
-            setError={(error) => console.error(error)}
-            errorsMessage={formik.errors || {}}
-            spacing={0}
-          />
+          {/* Parameter History Modal */}
+          {selectedSessionId && (
+            <IconButton
+              onClick={() => {
+                getHistory();
+                setHistoryInfoVisible(true);
+              }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <HistoryIcon
+                sx={{
+                  color: "primary.main",
+                }}
+              />
+            </IconButton>
+          )}
+        </Box>
+        {selectedSessionId ? (
+          <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
+            <form onSubmit={formik.handleSubmit}>
+              <Box sx={{ mr: 5, ml: 5, mb: 5 }}>
+                {/* Render the parameter fields */}
+                <FormSchemaRenderFields
+                  modelSchema={processedProperties}
+                  formik={formik}
+                  autoSave={false}
+                  handleUpdateSchema={(updatedValues) => {
+                    formik.setValues((prevValues) => ({
+                      ...prevValues,
+                      ...updatedValues,
+                    }));
+                  }}
+                  onFormSubmit={formik.handleSubmit}
+                  setError={(error) => console.error(error)}
+                  errorsMessage={formik.errors || {}}
+                  spacing={0}
+                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    mt: 2,
+                    position: "sticky",
+                    bottom: 0,
+                    backgroundColor: "background.box",
+                    pb: 2,
+                  }}
+                >
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={!formik.dirty}
+                  >
+                    EDIT
+                  </Button>
+                </Box>
+              </Box>
+            </form>
+          </Box>
+        ) : (
           <Box
             sx={{
+              flex: 1,
               display: "flex",
-              justifyContent: "flex-end",
-              mt: 2,
+              alignItems: "center",
+              justifyContent: "center",
+              p: 2,
             }}
           >
-            <Button type="submit" variant="contained" disabled={!formik.dirty}>
-              EDIT
-            </Button>
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", textAlign: "center" }}
+            >
+              Select a session to view and edit its parameters.
+            </Typography>
           </Box>
-        </Box>
-      </form>
+        )}
 
-      {/* Parameter History Modal */}
-      <ParameterHistoryModal
-        historyChanges={history}
-        open={historyInfoVisible}
-        taskName={taskName}
-        setOpen={setHistoryInfoVisible}
-      />
-    </Box>
+        {/* Parameter History Modal */}
+        <ParameterHistoryModal
+          historyChanges={history}
+          open={historyInfoVisible}
+          taskName={taskName}
+          setOpen={setHistoryInfoVisible}
+        />
+      </Box>
+    </SideBar>
   );
 }

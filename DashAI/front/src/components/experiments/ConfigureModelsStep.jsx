@@ -2,11 +2,13 @@ import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import { Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import uuid from "react-uuid";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
+import { generateSequentialName } from "../../utils/nameGenerator";
+import { useTourContext } from "../tour/TourProvider";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -19,8 +21,24 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const [name, setName] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [compatibleModels, setCompatibleModels] = useState([]);
+  const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
+  const tourContext = useTourContext();
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
+
+  const { defaultName } = useMemo(() => {
+    if (!selectedModel) {
+      return { defaultName: "" };
+    }
+
+    return generateSequentialName({
+      base: selectedModel,
+      items: newExp.runs,
+      getName: (run) => run.name,
+      filter: (run) => run.model === selectedModel,
+    });
+  }, [selectedModel, newExp.runs]);
+
   const getCompatibleModels = async () => {
     try {
       const models = await getComponentsRequest({
@@ -41,14 +59,12 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   };
 
   const handleAddButton = () => {
-    const existingModelsOfType = newExp.runs.filter(
-      (run) => run.model === selectedModel,
-    ).length;
+    const modelName = name.trim();
 
-    const modelName =
-      name.trim() === ""
-        ? `${selectedModel}_${existingModelsOfType + 1}`
-        : name;
+    if (!modelName) {
+      setHasUserTouchedName(true);
+      return;
+    }
 
     const newModel = {
       id: uuid(),
@@ -64,13 +80,52 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     };
 
     setNewExp({ ...newExp, runs: [newModel, ...newExp.runs] });
+    setHasUserTouchedName(false);
     setName("");
     setSelectedModel("");
+
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
   };
 
-  // checks if there is at least 1 model added to enable the "Next" button
+  const handleOnChangeModel = (event) => {
+    setSelectedModel(event.target.value);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
+  };
+
+  const handleOnOpenMenu = () => {
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
+
+  const getNameError = () => {
+    if (!selectedModel || selectedModel.trim() === "") {
+      return null;
+    }
+
+    if (hasUserTouchedName) {
+      const currentName = name.trim();
+      if (!currentName) {
+        return "Name is required";
+      }
+    }
+
+    return null;
+  };
+
+  const nameError = getNameError();
+
   useEffect(() => {
-    // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
     if (newExp.runs.length) {
       setNextEnabled(true);
     } else {
@@ -83,6 +138,16 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     getCompatibleModels();
   }, []);
 
+  useEffect(() => {
+    if (!selectedModel) {
+      setHasUserTouchedName(false);
+      setName("");
+    } else if (defaultName) {
+      setName(defaultName);
+      setHasUserTouchedName(false);
+    }
+  }, [selectedModel, defaultName]);
+
   return (
     <Grid
       container
@@ -91,35 +156,54 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
       alignItems="stretch"
       spacing={2}
     >
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
           Add models to your experiment
         </Typography>
       </Grid>
-
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container direction="row" columnSpacing={3} wrap="nowrap">
-          <Grid item xs={4} md={12}>
+          <Grid size={{ xs: 4, md: 12 }}>
             <TextField
-              label="Name (optional)"
+              label="Model Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={selectedModel ? `${selectedModel}_1` : "Model_1"}
-              InputLabelProps={{ shrink: true }}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (!hasUserTouchedName) {
+                  setHasUserTouchedName(true);
+                }
+              }}
+              onBlur={() => setHasUserTouchedName(true)}
+              error={Boolean(
+                selectedModel && selectedModel.trim() !== "" && nameError,
+              )}
+              helperText={
+                selectedModel && selectedModel.trim() !== "" ? nameError : ""
+              }
               fullWidth
-              key={selectedModel}
+              disabled={!selectedModel}
+              placeholder={
+                !selectedModel ? "Select a model first" : "Model Name"
+              }
+              slotProps={{
+                inputLabel: { shrink: true },
+              }}
             />
           </Grid>
 
-          <Grid item xs={4} md={12}>
+          <Grid size={{ xs: 4, md: 12 }}>
             <TextField
+              data-tour="exp-model-selector"
               select
               label="Select a model to add"
               value={selectedModel}
-              onChange={(e) => {
-                setSelectedModel(e.target.value);
-              }}
+              onChange={handleOnChangeModel}
               fullWidth
+              slotProps={{
+                select: {
+                  onOpen: handleOnOpenMenu,
+                },
+              }}
             >
               {compatibleModels.length === 0 && (
                 <MenuItem value="" disabled>
@@ -128,17 +212,22 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               )}
               {compatibleModels.length > 0 &&
                 compatibleModels.map((model) => (
-                  <MenuItem key={model.name} value={model.name}>
-                    {model.name}
+                  <MenuItem
+                    key={model.name}
+                    value={model.name}
+                    data-tour={`exp-model-option-${model.name}`}
+                  >
+                    {model.display_name || model.name}
                   </MenuItem>
                 ))}
             </TextField>
           </Grid>
 
-          <Grid item xs={1} md={2}>
+          <Grid size={{ xs: 1, md: 2 }}>
             <Button
+              data-tour="exp-add-model-button"
               variant="outlined"
-              disabled={selectedModel === ""}
+              disabled={selectedModel === "" || name.trim() === ""}
               startIcon={<AddIcon />}
               onClick={handleAddButton}
               sx={{ height: "100%" }}
@@ -148,9 +237,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Grid>
-
-      {/* Models table */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }} data-tour="models-table">
         <ModelsTable newExp={newExp} setNewExp={setNewExp} />
       </Grid>
     </Grid>
@@ -163,8 +250,8 @@ ConfigureModelsStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

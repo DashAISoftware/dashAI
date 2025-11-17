@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import shutil
 
@@ -8,13 +7,12 @@ from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.endpoints.jobs import _enqueue_job_logic
 from DashAI.back.api.api_v1.schemas import converter_params as schemas
 from DashAI.back.core.enums.status import ConverterListStatus
 from DashAI.back.dependencies.database.models import ConverterList, Explorer, Notebook
 from DashAI.back.dependencies.job_queues import BaseJobQueue
-from DashAI.back.dependencies.job_queues.job_queue import job_queue_loop
 from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.job.converter_job import ConverterListJob
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -178,25 +176,7 @@ async def delete_converter_list(
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
     job_queue: BaseJobQueue = Depends(lambda: di["job_queue"]),
 ):
-    """Delete a converter list from the database.
-
-    Parameters
-    ----------
-    converter_list_id : int
-        ID of the converter list.
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy session.
-        The generated session can be used to access and query the database.
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    HTTPException
-        If the converter list is not found or if there is an internal database error.
-    """
+    """Delete a converter list from the database."""
     with session_factory() as db:
         try:
             converter_list = db.get(ConverterList, converter_list_id)
@@ -242,21 +222,13 @@ async def delete_converter_list(
             )
 
             # Enqueue all previous converters
+            job_ids = []
             for converter in previous_converters:
-                await _enqueue_job_logic(
-                    job_type="ConverterListJob",
-                    kwargs={
-                        "converter_list_id": converter.id,
-                    },
-                    session_factory=session_factory,
-                    component_registry=component_registry,
-                    job_queue=job_queue,
-                )
-
-            app = request.app
-            # Start the loop only if it's not already running or was cancelled
-            if not hasattr(app.state, "job_loop") or app.state.job_loop.done():
-                app.state.job_loop = asyncio.create_task(job_queue_loop(True))
+                # Crear instancia de ConverterListJob y encolarlo directamente
+                job = ConverterListJob(converter_list_id=converter.id)
+                job_queue.put(job)
+                if hasattr(job, "id"):
+                    job_ids.append(job.id)
 
             # Delete all the converters after the current one
             for converter in next_converters:
@@ -269,6 +241,9 @@ async def delete_converter_list(
             # Delete the current converter
             db.delete(converter_list)
             db.commit()
+
+            last_job_id = job_ids[-1] if job_ids else None
+            return {"jobId": last_job_id}
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)

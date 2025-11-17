@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 from beartype import beartype
-from datasets import load_dataset
+from datasets import Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -17,7 +17,7 @@ from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 class JSONDataloaderSchema(BaseSchema):
     name: schema_field(
-        none_type(string_field()),
+        string_field(),
         "",
         (
             "Custom name to register your dataset. If no name is specified, "
@@ -53,6 +53,7 @@ class JSONDataLoader(BaseDataLoader):
     Supports both standard JSON array format (a list of dictionaries)
     and nested JSON data where records are contained within a specific key.
     """
+    DISPLAY_NAME: str = "JSON Data Loader"
 
     def _check_params(self, params: Dict[str, Any]) -> None:
         if "data_key" not in params:
@@ -73,6 +74,7 @@ class JSONDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load the uploaded JSON dataset into a DatasetDict.
 
@@ -86,6 +88,8 @@ class JSONDataLoader(BaseDataLoader):
         params : Dict[str, Any]
             Dict with the dataloader parameters. The options are:
             - data_key (str): The key of the json where the data is contained.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -101,8 +105,15 @@ class JSONDataLoader(BaseDataLoader):
                 "json",
                 data_files=prepared_path[0],
                 field=field,
+                streaming=bool(n_sample),
             )
         else:
-            dataset = load_dataset("json", data_dir=prepared_path[0], field=field)
+            dataset = load_dataset(
+                "json", data_dir=prepared_path[0], field=field, streaming=bool(n_sample)
+            )
             shutil.rmtree(prepared_path[0])
+        if n_sample:
+            if type(dataset) is IterableDatasetDict:
+                dataset = dataset["train"]
+            dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)

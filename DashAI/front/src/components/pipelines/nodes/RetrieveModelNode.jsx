@@ -92,7 +92,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
   return (
     <Paper sx={{ p: 3 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Typography variant="h6">Select a trained model</Typography>
           <Typography variant="body2" color="textSecondary">
             Choose a trained model from one of the saved pipelines to use in
@@ -100,7 +100,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
           </Typography>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <div style={{ height: 300 }}>
             <DataGrid
               rows={pipelines}
@@ -118,7 +118,7 @@ function RetrieveModelNode({ onClose, onSave, savedConfig, prevNodes }) {
           </div>
         </Grid>
 
-        <Grid item xs={12} container justifyContent="flex-end">
+        <Grid size={{ xs: 12 }} container justifyContent="flex-end">
           <Button
             onClick={handleSave}
             disabled={!selectedModelId}

@@ -30,11 +30,11 @@ function HomeButton({ title, description, to, Icon }) {
             alignItems="center"
             sx={{ height: 128 }}
           >
-            <Grid item md={3}>
+            <Grid size={{ md: 3 }}>
               <Icon color="primary" fontSize="large" sx={{ width: "100%" }} />
             </Grid>
 
-            <Grid item md={9} sx={{ height: "100%" }}>
+            <Grid size={{ md: 9 }} sx={{ height: "100%" }}>
               <Grid
                 container
                 direction="column"
@@ -60,11 +60,11 @@ function HomeButton({ title, description, to, Icon }) {
             alignItems="stretch"
             spacing={2}
           >
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Icon color="primary" fontSize="large" sx={{ width: "100%" }} />
             </Grid>
 
-            <Grid item xs={12} sx={{ mb: 2 }}>
+            <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
               <Typography variant="h5" align="center" sx={{ mb: 1 }}>
                 {title}
               </Typography>

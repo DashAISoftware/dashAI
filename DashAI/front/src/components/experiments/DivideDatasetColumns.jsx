@@ -24,13 +24,13 @@ function DivideDatasetColumns({
 
   return (
     <React.Fragment>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 0 }}>
           Indicate which columns of the dataset will be used as input and
           output.
         </Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography
           variant="caption"
           component="h3"
@@ -41,6 +41,7 @@ function DivideDatasetColumns({
       </Grid>
 
       <Autocomplete
+        data-tour="dataset-input-columns-autocomplete"
         multiple
         id="dataset-input-columns-autocomplete"
         options={allColumnNames}
@@ -69,6 +70,7 @@ function DivideDatasetColumns({
       />
 
       <Autocomplete
+        data-tour="dataset-output-columns-autocomplete"
         multiple
         id="dataset-output-columns-autocomplete"
         options={allColumnNames}

@@ -49,6 +49,7 @@ export const createLocalExplainer = async (
   datasetId: string,
   parameters: object,
   fitParameters: object,
+  scope: object,
 ): Promise<IExplainer> => {
   const data = {
     name,
@@ -57,8 +58,8 @@ export const createLocalExplainer = async (
     explainer_name: explainerName,
     parameters,
     fit_parameters: fitParameters,
+    scope,
   };
-
   const response = await api.post<IExplainer>("/v1/explainer/local", data);
   return response.data;
 };

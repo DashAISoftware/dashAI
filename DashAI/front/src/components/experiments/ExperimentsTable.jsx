@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -9,84 +9,75 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 
-import {
-  getExperiments as getExperimentsRequest,
-  deleteExperiment as deleteExperimentRequest,
-} from "../../api/experiment";
+import { deleteExperiment as deleteExperimentRequest } from "../../api/experiment";
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
+import { useTourContext } from "../tour/TourProvider";
+import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
 
 function ExperimentsTable({
   handleOpenNewExperimentModal,
-  updateTableFlag,
-  setUpdateTableFlag,
+  experiments = [],
+  datasets = [],
+  loading = false,
+  onUpdateExperiments,
 }) {
-  const [loading, setLoading] = useState(true);
-  const [experiments, setExperiments] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
+  const tourContext = useTourContext();
+  const [tasks, setTasks] = useState([]);
 
-  const getExperiments = async () => {
-    setLoading(true);
-    try {
-      const experiments = await getExperimentsRequest();
-      setExperiments(experiments);
-      console.log(experiments);
-      // initially set all experiments running state to false
-      const initialRunningState = experiments.reduce((accumulator, current) => {
-        return { ...accumulator, [current.id]: false };
-      }, {});
-      setExpRunning(initialRunningState);
-    } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the experiment table.");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const datasetMap = React.useMemo(() => {
+    return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
+  }, [datasets]);
 
   const deleteExperiment = async (id) => {
     try {
       await deleteExperimentRequest(id);
-
       enqueueSnackbar("Experiment successfully deleted.", {
         variant: "success",
       });
+      onUpdateExperiments();
     } catch (error) {
       console.error(error);
       enqueueSnackbar("Error when trying to delete the experiment.");
     }
   };
 
-  // Fetch experiments when the component is mounting
-  React.useEffect(() => {
-    getExperiments();
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const components = await getComponents({ selectTypes: ["Task"] });
+        setTasks(components);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
   }, []);
 
-  // triggers an update of the table when updateTableFlag is set to true
-  React.useEffect(() => {
-    if (updateTableFlag) {
-      setUpdateTableFlag(false);
-      getExperiments();
-    }
-  }, [updateTableFlag]);
-
-  const handleUpdateExperiments = () => {
-    getExperiments();
-  };
+  // Initialize running state when experiments change
+  useEffect(() => {
+    const initialRunningState = experiments.reduce((accumulator, current) => {
+      return { ...accumulator, [current.id]: false };
+    }, {});
+    setExpRunning(initialRunningState);
+  }, [experiments]);
 
   const handleDeleteExperiment = (id) => {
     deleteExperiment(id);
-    getExperiments();
+  };
+
+  const handleNewExperiment = () => {
+    handleOpenNewExperimentModal();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
   };
 
   const columns = React.useMemo(
@@ -108,27 +99,34 @@ function ExperimentsTable({
         headerName: "Task",
         minWidth: 200,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "dataset_id",
         headerName: "Dataset",
         minWidth: 200,
         editable: false,
+        valueGetter: (value) => {
+          const datasetName = datasetMap.get(value);
+          return datasetName || `Dataset ID: ${value}`;
+        },
       },
       {
         field: "created",
         headerName: "Created",
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
         headerName: "Edited",
-        type: Date,
         minWidth: 140,
         editable: false,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
@@ -149,7 +147,7 @@ function ExperimentsTable({
         ],
       },
     ],
-    [handleDeleteExperiment],
+    [handleDeleteExperiment, datasetMap],
   );
 
   return (
@@ -165,21 +163,22 @@ function ExperimentsTable({
         <Typography variant="h5" component="h2">
           Current experiments
         </Typography>
-        <Grid item>
+        <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
+                data-tour="new-experiment-button"
                 variant="contained"
-                onClick={handleOpenNewExperimentModal}
+                onClick={handleNewExperiment}
                 endIcon={<AddIcon />}
               >
                 New Experiment
               </Button>
             </Grid>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
-                onClick={handleUpdateExperiments}
+                onClick={onUpdateExperiments}
                 endIcon={<UpdateIcon />}
               >
                 Update
@@ -191,6 +190,7 @@ function ExperimentsTable({
 
       {/* Experiments Table */}
       <DataGrid
+        data-tour="experiments-table"
         rows={experiments}
         columns={columns}
         initialState={{
@@ -216,9 +216,13 @@ function ExperimentsTable({
 }
 
 ExperimentsTable.propTypes = {
-  handleOpenNewExperimentModal: PropTypes.func,
-  updateTableFlag: PropTypes.bool.isRequired,
-  setUpdateTableFlag: PropTypes.func.isRequired,
+  handleOpenNewExperimentModal: PropTypes.func.isRequired,
+  updateTableFlag: PropTypes.bool,
+  setUpdateTableFlag: PropTypes.func,
+  experiments: PropTypes.array,
+  datasets: PropTypes.array,
+  loading: PropTypes.bool,
+  onUpdateExperiments: PropTypes.func.isRequired,
 };
 
 export default ExperimentsTable;

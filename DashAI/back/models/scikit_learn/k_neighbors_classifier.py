@@ -48,6 +48,8 @@ class KNeighborsClassifier(
     """Scikit-learn's K-Nearest Neighbors (KNN) classifier wrapper for DashAI."""
 
     SCHEMA = KNeighborsClassifierSchema
+    DISPLAY_NAME: str = "K-Nearest Neighbors (KNN)"
+    COLOR: str = "#FFD54F"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import {
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
+import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
 
 export default function ExplorerBox({
@@ -19,6 +20,21 @@ export default function ExplorerBox({
   handleExplorerDeleteClick,
   onStatusChange,
 }) {
+  const [explorerComponent, setExplorerComponent] = useState({});
+
+  useEffect(() => {
+    const fetchConverterComponent = async () => {
+      try {
+        const component = await getComponentById(explorer.exploration_type);
+        setExplorerComponent(component);
+      } catch (error) {
+        console.error("Failed to fetch converter component:", error);
+      }
+    };
+
+    fetchConverterComponent();
+  }, [explorer.exploration_type]);
+
   useEffect(() => {
     let intervalId;
 
@@ -55,6 +71,7 @@ export default function ExplorerBox({
     <Card
       key={explorer.id}
       sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      className="explorer-box"
     >
       <CardContent
         sx={{
@@ -74,7 +91,9 @@ export default function ExplorerBox({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{explorer.exploration_type}</Typography>
+            <Typography variant="h6">
+              {explorerComponent.display_name}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
@@ -82,8 +101,8 @@ export default function ExplorerBox({
               color={statusLabel === "Finished" ? "primary" : "default"}
               size="small"
             />
-            {statusLabel === "Finished" && (
-              <>
+            <>
+              {statusLabel === "Finished" && (
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDetailsClick(explorer)}
@@ -97,6 +116,8 @@ export default function ExplorerBox({
                 >
                   <Info sx={{ fontSize: 16 }} />
                 </IconButton>
+              )}
+              {(statusLabel === "Error" || statusLabel === "Finished") && (
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDeleteClick(explorer)}
@@ -109,8 +130,8 @@ export default function ExplorerBox({
                 >
                   <Delete sx={{ fontSize: 16 }} />
                 </IconButton>
-              </>
-            )}
+              )}
+            </>
           </Box>
         </Box>
 

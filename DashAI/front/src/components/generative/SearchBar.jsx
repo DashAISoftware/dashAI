@@ -9,13 +9,6 @@ export default function SearchBar({ placeholder, onChange, value }) {
       onChange={onChange}
       fullWidth
       variant="outlined"
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <SearchIcon sx={{ color: "text.secondary" }} />
-          </InputAdornment>
-        ),
-      }}
       sx={{
         "& .MuiOutlinedInput-root": {
           bgcolor: "background.default",
@@ -30,6 +23,15 @@ export default function SearchBar({ placeholder, onChange, value }) {
           color: "text.secondary",
           opacity: 1,
           fontSize: "0.875rem",
+        },
+      }}
+      slotProps={{
+        input: {
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon sx={{ color: "text.secondary" }} />
+            </InputAdornment>
+          ),
         },
       }}
     />

@@ -9,20 +9,33 @@ import {
   getDatasetInfoByFilePath,
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function ScopeStepConverter({
   supervised,
   targetColumn,
   setTargetColumn,
+  tool,
   rows,
   setRows,
   columns,
   setColumns,
   notebook,
-  setStep,
+  nextStep,
 }) {
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const tourContext = useTourContext();
+
+  const handleSubmit = () => {
+    nextStep();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
+  const [isColumnSelectionValid, setIsColumnSelectionValid] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,6 +83,7 @@ export default function ScopeStepConverter({
         height: "100%",
         gap: 1,
       }}
+      data-tour="column-selector-converter-container"
     >
       {/* Content */}
       <Box
@@ -78,7 +92,7 @@ export default function ScopeStepConverter({
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          gap: 2,
+          gap: 1,
         }}
       >
         <Typography variant="subtitle2" gutterBottom>
@@ -99,7 +113,7 @@ export default function ScopeStepConverter({
             }));
             setColumns(processedColumns);
           }}
-          onValidationChange={() => {}}
+          onValidationChange={(isValid) => setIsColumnSelectionValid(isValid)}
         />
         <Typography variant="body2" color="text.secondary">
           Here you will configure which rows to apply the converter to.
@@ -151,9 +165,14 @@ export default function ScopeStepConverter({
         )}
 
         <FormSchemaButtonGroup
-          onFormSubmit={() => setStep((s) => s + 1)}
-          error={supervised ? !targetColumn : false}
-          saveButtonText="Next"
+          onFormSubmit={handleSubmit}
+          error={
+            !isColumnSelectionValid || (supervised ? !targetColumn : false)
+          }
+          saveButtonText={
+            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
+          }
+          data-tour="converter-scope-next-button"
         />
       </Box>
     </Box>

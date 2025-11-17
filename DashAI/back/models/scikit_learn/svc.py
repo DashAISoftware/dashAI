@@ -69,7 +69,7 @@ class SVCSchema(BaseSchema):
         placeholder={
             "optimize": False,
             "fixed_value": -1,
-            "lower_bound": 1,
+            "lower_bound": -1,
             "upper_bound": 10,
         },
         description="The 'max_iter' parameter determines the iteration limit for the "
@@ -110,6 +110,8 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     """Scikit-learn's Support Vector Machine (SVM) classifier wrapper for DashAI."""
 
     SCHEMA = SVCSchema
+    DISPLAY_NAME: str = "Support Vector Machine (SVM)"
+    COLOR: str = "#FF80AB"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

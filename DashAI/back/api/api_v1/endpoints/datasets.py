@@ -1,21 +1,24 @@
 import io
+import json
 import logging
 import os
 import shutil
 from typing import Any, Dict
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.csv as csv
 import pyarrow.ipc as ipc
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from kink import di, inject
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 from sqlalchemy.orm.session import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.datasets_params import DatasetUpdateParams
+from DashAI.back.api.api_v1.schemas import datasets_params as schemas
+from DashAI.back.core.enums.status import DatasetStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
@@ -24,6 +27,209 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# Server-side filtering and pagination
+@router.get("/filter/")
+async def filter_dataset_file(
+    path: str,
+    page: int = 0,
+    page_size: int = 10,
+    filter_model: str = Query(None, alias="filterModel"),
+):
+    """
+    Fetch filtered and paginated dataset rows based on the provided
+    filterModel from the frontend.
+    """
+    arrow_file_path = f"{path}/dataset/data.arrow"
+    rows = []
+    table = None
+    with pa.memory_map(arrow_file_path, "r") as source:
+        reader = ipc.RecordBatchFileReader(source)
+        batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
+        table = pa.Table.from_batches(batches)
+
+    # Parse filter_model if present
+    filter_dict = None
+    if filter_model:
+        logger.info(f"[FILTER DEBUG] filter_model param: {filter_model}")
+        try:
+            filter_dict = json.loads(filter_model)
+            logger.info(f"[FILTER DEBUG] filter_dict parsed: {filter_dict}")
+        except Exception as e:
+            logger.error(f"[FILTER DEBUG] Error parsing filter_model: {e}")
+            filter_dict = None
+
+    # Apply filters if filter_model and items are provided
+    if filter_dict and "items" in filter_dict:
+        for item in filter_dict["items"]:
+            col = item.get("field") or item.get("columnField")
+            op = item.get("operator") or item.get("operatorValue")
+            val = item.get("value")
+            if col and op:
+                col_type = table[col].type
+
+                def cast_value(v, col_type=col_type):
+                    if pa.types.is_integer(col_type):
+                        try:
+                            return int(v)
+                        except Exception:
+                            return v
+                    elif pa.types.is_floating(col_type):
+                        try:
+                            return float(v)
+                        except Exception:
+                            return v
+                    elif pa.types.is_boolean(col_type):
+                        if isinstance(v, bool):
+                            return v
+                        if str(v).lower() in ["true", "1"]:
+                            return True
+                        if str(v).lower() in ["false", "0"]:
+                            return False
+                        return v
+                    return v
+
+                if op == "contains" and val is not None:
+                    # Case-insensitive contains
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring(as_str, str(val).lower())
+                    table = table.filter(mask)
+                elif op == "doesNotContain" and val is not None:
+                    # Case-insensitive doesNotContain
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.invert(pc.match_substring(as_str, str(val).lower()))
+                    table = table.filter(mask)
+                elif op == "startsWith" and val is not None:
+                    # Case-insensitive startsWith
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring_regex(as_str, f"^{str(val).lower()}")
+                    table = table.filter(mask)
+                elif op == "endsWith" and val is not None:
+                    # Case-insensitive endsWith
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.utf8_lower(pc.cast(table[col], pa.string()))
+                    else:
+                        as_str = pc.utf8_lower(table[col])
+                    mask = pc.match_substring_regex(as_str, f"{str(val).lower()}$")
+                    table = table.filter(mask)
+                    table = table.filter(mask)
+                elif op == "endsWith" and val is not None:
+                    if not pa.types.is_string(col_type):
+                        as_str = pc.cast(table[col], pa.string())
+                        mask = pc.match_substring_regex(as_str, f"{val}$")
+                    else:
+                        mask = pc.match_substring_regex(table[col], f"{val}$")
+                    table = table.filter(mask)
+                elif op == "isEmpty":
+                    if pa.types.is_string(col_type):
+                        mask = pc.or_(pc.equal(table[col], ""), pc.is_null(table[col]))
+                    else:
+                        mask = pc.is_null(table[col])
+                    table = table.filter(mask)
+                elif op == "isNotEmpty":
+                    if pa.types.is_string(col_type):
+                        mask = pc.and_(
+                            pc.invert(pc.equal(table[col], "")),
+                            pc.invert(pc.is_null(table[col])),
+                        )
+                    else:
+                        mask = pc.invert(pc.is_null(table[col]))
+                    table = table.filter(mask)
+                elif op == "isAnyOf" and val is not None:
+                    values = (
+                        val
+                        if isinstance(val, list)
+                        else [v.strip() for v in str(val).split(",")]
+                    )
+                    casted_values = [cast_value(v) for v in values]
+                    mask = pc.in_list(table[col], pa.array(casted_values))
+                    table = table.filter(mask)
+
+    filtered = (
+        filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
+    )
+    start = page * page_size
+    paged_table = table.slice(start, page_size)
+    rows = [
+        {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
+        for i in range(paged_table.num_rows)
+    ]
+    if filtered:
+        total_for_pagination = table.num_rows
+    else:
+        try:
+            info = get_dataset_info(path)
+            total_for_pagination = info["total_rows"]
+        except Exception:
+            total_for_pagination = table.num_rows
+
+    return JSONResponse(content={"rows": rows, "total": total_for_pagination})
+
+
+@router.post("/", response_model=schemas.Dataset, status_code=status.HTTP_201_CREATED)
+@inject
+async def create_dataset(
+    params: schemas.DatasetCreateParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Create a new dataset entry in the database with NOT_STARTED status.
+
+    Parameters
+    ----------
+    params : DatasetCreateParams
+        A schema containing the dataset creation parameters.
+    session_factory : sessionmaker
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    Dataset
+        The newly created dataset with NOT_STARTED status.
+    """
+    with session_factory() as db:
+        try:
+            existing = db.query(Dataset).filter(Dataset.name == params.name).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"A dataset with the name '{params.name}' already exists",
+                )
+
+            dataset = Dataset(
+                name=params.name,
+                file_path="",
+            )
+            db.add(dataset)
+            db.commit()
+            db.refresh(dataset)
+            return dataset
+
+        except HTTPException:
+            raise
+        except exc.IntegrityError as e:
+            logger.exception(e)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A dataset with the name '{params.name}' already exists",
+            ) from e
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.get("/")
@@ -128,12 +334,18 @@ async def get_sample(
     """
     with session_factory() as db:
         try:
-            file_path = db.get(Dataset, dataset_id).file_path
-            if not file_path:
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+            file_path = dataset.file_path
 
             arrow_path = os.path.join(file_path, "dataset", "data.arrow")
 
@@ -270,6 +482,13 @@ async def get_info(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+
             info = get_dataset_info(f"{dataset.file_path}/dataset")
         except exc.SQLAlchemyError as e:
             logger.exception(e)
@@ -306,6 +525,13 @@ async def get_experiments_exist(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
+
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+
             # Check if there are any experiments associated with the dataset
             experiments_exist = (
                 db.query(Experiment).filter(Experiment.dataset_id == dataset_id).first()
@@ -342,13 +568,18 @@ async def get_types(
     """
     with session_factory() as db:
         try:
-            file_path = db.get(Dataset, dataset_id).file_path
-            if not file_path:
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
                 )
-            columns_spec = get_columns_spec(f"{file_path}/dataset")
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+            columns_spec = get_columns_spec(f"{dataset.file_path}/dataset")
             if not columns_spec:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -430,6 +661,11 @@ async def copy_dataset(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Original dataset not found.",
+            )
+        if original_dataset.status != DatasetStatus.FINISHED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Original dataset is not in finished state",
             )
 
         # Create a new folder for the copied dataset
@@ -526,7 +762,7 @@ async def delete_dataset(
 @inject
 async def update_dataset(
     dataset_id: int,
-    params: DatasetUpdateParams,
+    params: schemas.DatasetUpdateParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
     config: Dict[str, Any] = Depends(lambda: di["config"]),
 ):
@@ -550,19 +786,45 @@ async def update_dataset(
         A dictionary containing the updated dataset record.
     """
     with session_factory() as db:
+        dataset = db.get(Dataset, dataset_id)
+        if dataset is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+
+        if not params.name or not params.name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Name cannot be empty",
+            )
+
+        new_name = params.name.strip()
+
+        if new_name == dataset.name:
+            return dataset
+
+        exists = db.execute(
+            select(Dataset.id).where(Dataset.name == new_name, Dataset.id != dataset_id)
+        ).scalar()
+        if exists:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Dataset name already exists",
+            )
+
+        dataset.name = new_name
         try:
-            dataset = db.get(Dataset, dataset_id)
-            if params.name and params.name != dataset.name:
-                setattr(dataset, "name", params.name)
-                db.commit()
-                db.refresh(dataset)
-                return dataset
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_304_NOT_MODIFIED,
-                    detail="Record not modified",
-                )
+            db.commit()
+            db.refresh(dataset)
+            return dataset
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Dataset name already exists",
+            ) from e
         except exc.SQLAlchemyError as e:
+            db.rollback()
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -739,6 +1001,11 @@ async def export_dataset_csv_by_id(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Dataset not found",
+                )
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
                 )
 
             file_path = dataset.file_path

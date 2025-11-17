@@ -1,11 +1,12 @@
 import json
-import os
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import (
+    Dataset,
     Experiment,
     GlobalExplainer,
     LocalExplainer,
@@ -35,61 +36,20 @@ splits = json.dumps(
 
 
 @pytest.fixture(scope="module", name="dataset_id")
-def create_dataset(client):
-    """Create testing dataset using job system."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
-
-    with open(abs_file_path, "rb") as csv:
-        # Preparar los parámetros en el formato que espera el job
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "DummyDataset6",
-            "separator": ",",
-        }
-
-        kwargs = {
-            "name": "DummyDataset6",
-            "url": "",
-            "params": params,
-        }
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
-
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-
-        assert response.status_code == 201, (
-            f"Failed to create dataset job: {response.text}"
-        )
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        datasets_response = client.get("/api/v1/dataset/")
-        assert datasets_response.status_code == 200, datasets_response.text
-
-        datasets = datasets_response.json()
-        dataset_id = None
-        for dataset in datasets:
-            if dataset["name"] == "DummyDataset6":
-                dataset_id = dataset["id"]
-                break
-
-        assert dataset_id is not None, "Dataset not found after job completion"
-
-    yield dataset_id
-
-    response = client.delete(f"/api/v1/dataset/{dataset_id}")
-    assert response.status_code == 204, response.text
+def dataset_id(dataset_1: Dataset) -> int:
+    """Get the dataset ID from the dataset_1 fixture."""
+    return dataset_1.id
 
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, datasetdict, outputs_columns):
         return datasetdict
@@ -272,6 +232,7 @@ def create_local_explainer(client: TestClient, run_id: int, dataset_id: int):
             run_id=run_id,
             explainer_name="DummyLocalExplainer",
             dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 20},
             parameters={},
             fit_parameters={},
         )
@@ -305,15 +266,20 @@ def test_enqueue_explainer_jobs(
     )
     assert response.status_code == 201, response.text
     created_job = response.json()
-    assert created_job["kwargs"]["job_type"] == "ExplainerJob"
-    assert created_job["kwargs"]["explainer_id"] == global_explainer_id
 
-    response = client.get(f"/api/v1/job/{created_job['id']}")
+    assert "id" in created_job, "Response should contain job ID"
+    job_id = created_job["id"]
+
+    response = client.get(f"/api/v1/job/status/{job_id}")
     assert response.status_code == 200, response.text
-    gotten_job = response.json()
-    assert gotten_job["id"] == created_job["id"]
-    assert gotten_job["kwargs"] == created_job["kwargs"]
-    assert gotten_job["kwargs"]["job_type"] == created_job["kwargs"]["job_type"]
+    job_status = response.json()
+
+    assert job_status["status"] == "finished", (
+        f"Job should be finished, got {job_status['status']}"
+    )
+
+    response = client.get(f"/api/v1/explainer/global/?run_id={global_explainer_id}")
+    assert response.status_code == 200, response.text
 
     form_data_local = {
         "job_type": "ExplainerJob",
@@ -331,13 +297,23 @@ def test_enqueue_explainer_jobs(
     )
     assert response.status_code == 201, response.text
     created_job_2 = response.json()
-    assert created_job_2["id"] != created_job["id"]
+    assert "id" in created_job_2
+    job_id_2 = created_job_2["id"]
+    assert job_id_2 != job_id
+
+    response = client.get(f"/api/v1/job/status/{job_id_2}")
+    assert response.status_code == 200, response.text
+    job_status_2 = response.json()
+    assert job_status_2["status"] == "finished", (
+        f"Job should be finished, got {job_status_2['status']}"
+    )
 
     response = client.get("/api/v1/job")
     assert response.status_code == 200, response.text
     gotten_jobs = response.json()
-    assert gotten_jobs[0]["id"] == created_job["id"]
-    assert gotten_jobs[1]["id"] == created_job_2["id"]
+    job_ids = [job["id"] for job in gotten_jobs]
+    assert job_id in job_ids
+    assert job_id_2 in job_ids
 
 
 def test_execute_jobs(
@@ -362,6 +338,7 @@ def test_execute_jobs(
         data=form_data_global,
     )
     assert response.status_code == 201, response.text
+    global_job_id = response.json()["id"]
 
     form_data_local = {
         "job_type": "ExplainerJob",
@@ -378,29 +355,47 @@ def test_execute_jobs(
         data=form_data_local,
     )
     assert response.status_code == 201, response.text
+    local_job_id = response.json()["id"]
 
     response = client.get(f"/api/v1/explainer/global/?run_id={run_id}")
     data = response.json()
     for explainer in data:
-        assert explainer["status"] == 1
+        assert explainer["status"] in [
+            1,
+            3,
+        ], f"Explainer status should be 1 or 3, got {explainer['status']}"
 
     response = client.get(f"/api/v1/explainer/local/?run_id={run_id}")
     data = response.json()
     for explainer in data:
-        assert explainer["status"] == 1
-
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+        assert explainer["status"] in [
+            1,
+            3,
+        ], f"Explainer status should be 1 or 3, got {explainer['status']}"
 
     response = client.get(f"/api/v1/explainer/global/?run_id={run_id}")
     data = response.json()
     for explainer in data:
-        assert explainer["status"] == 3
+        assert explainer["status"] == 3, (
+            f"Explainer status should be 3 (finished), got {explainer['status']}"
+        )
 
     response = client.get(f"/api/v1/explainer/local/?run_id={run_id}")
     data = response.json()
     for explainer in data:
-        assert explainer["status"] == 3
+        assert explainer["status"] == 3, (
+            f"Explainer status should be 3 (finished), got {explainer['status']}"
+        )
+
+    response = client.get(f"/api/v1/job/status/{global_job_id}")
+    assert response.json()["status"] == "finished", (
+        f"Global job should be finished, got {response.json()['status']}"
+    )
+
+    response = client.get(f"/api/v1/job/status/{local_job_id}")
+    assert response.json()["status"] == "finished", (
+        f"Local job should be finished, got {response.json()['status']}"
+    )
 
 
 def test_job_with_wrong_explainer(client: TestClient):
@@ -413,4 +408,14 @@ def test_job_with_wrong_explainer(client: TestClient):
         "/api/v1/job/",
         data=form_data_wrong,
     )
-    assert response.status_code == 500, response.text
+
+    if response.status_code == 500:
+        return
+
+    assert response.status_code == 201, response.text
+    job_id = response.json()["id"]
+
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "error", (
+        f"Job with wrong explainer should fail, got status {job_status['status']}"
+    )

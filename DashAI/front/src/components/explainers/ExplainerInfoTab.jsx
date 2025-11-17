@@ -37,7 +37,7 @@ function ExplainerInfoTab({ explainerData }) {
   return (
     <Grid container direction="column">
       {/* Explainer name related info */}
-      <Grid item>
+      <Grid>
         <Grid
           container
           direction="row"
@@ -46,7 +46,7 @@ function ExplainerInfoTab({ explainerData }) {
           columnSpacing={15}
         >
           {explainerInfo.map((param) => (
-            <Grid item key={param.key}>
+            <Grid key={param.key}>
               <Typography variant="subtitle1">{param.label}</Typography>
               <Typography variant="p" sx={{ color: "gray" }}>
                 {explainerData[param.key] ?? "-"}
@@ -59,7 +59,7 @@ function ExplainerInfoTab({ explainerData }) {
       <Divider sx={{ mt: 3, mb: 3 }} />
 
       {/* Explainer Date related info */}
-      <Grid item>
+      <Grid>
         <Grid
           container
           direction="row"
@@ -68,7 +68,7 @@ function ExplainerInfoTab({ explainerData }) {
           columnSpacing={15}
         >
           {explainerDateInfo.map((param) => (
-            <Grid item key={param.key}>
+            <Grid key={param.key}>
               <Typography variant="subtitle1">{param.label}</Typography>
               <Typography variant="p" sx={{ color: "gray" }}>
                 {formatDate(explainerData[param.key] ?? "-")}

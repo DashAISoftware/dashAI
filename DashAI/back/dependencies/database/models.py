@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
     ConverterListStatus,
+    DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
     PluginStatus,
@@ -26,6 +27,7 @@ class Dataset(Base):
     __tablename__ = "dataset"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -33,12 +35,45 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
+
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
     )
     experiments: Mapped[List["Experiment"]] = relationship(
         "Experiment", cascade="all, delete-orphan", back_populates="dataset"
     )
+    status: Mapped[Enum] = mapped_column(
+        Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """
+        Update the status of the dataset to delivered and set last_modified to now.
+        """
+        self.status = DatasetStatus.DELIVERED
+        self.last_modified = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """
+        Update the status of the dataset to started and set created to now.
+        """
+        self.status = DatasetStatus.STARTED
+        self.created = datetime.now()
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """
+        Update the status of the dataset to finished and set last_modified to now.
+        """
+        self.status = DatasetStatus.FINISHED
+        self.last_modified = datetime.now()
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """
+        Update the status of the dataset to error.
+        """
+        self.status = DatasetStatus.ERROR
 
 
 class Experiment(Base):
@@ -74,6 +109,7 @@ class Run(Base):
     experiment_id: Mapped[int] = mapped_column(
         ForeignKey("experiment.id", ondelete="CASCADE")
     )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -177,6 +213,7 @@ class GlobalExplainer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     run_id: Mapped[int] = mapped_column(nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_path: Mapped[str] = mapped_column(String, nullable=True)
@@ -217,12 +254,14 @@ class LocalExplainer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     run_id: Mapped[int] = mapped_column(nullable=False)
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     dataset_id: Mapped[int] = mapped_column(nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plots_path: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     fit_parameters: Mapped[JSON] = mapped_column(JSON)
+    scope: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
         Enum(ExplainerStatus), nullable=False, default=ExplainerStatus.NOT_STARTED
@@ -401,6 +440,7 @@ class ConverterList(Base):
     notebook_id: Mapped[int] = mapped_column(
         ForeignKey("notebook.id", ondelete="CASCADE")
     )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     converter: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
@@ -509,6 +549,7 @@ class Explorer(Base):
     notebook_id: Mapped[int] = mapped_column(
         ForeignKey("notebook.id", ondelete="CASCADE")
     )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,

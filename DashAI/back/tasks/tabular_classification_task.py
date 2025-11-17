@@ -6,22 +6,21 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.classification_task import ClassificationTask
 
 
-class TabularClassificationTask(BaseTask):
+class TabularClassificationTask(ClassificationTask):
     """Base class for tabular classification tasks.
 
     Here you can change the methods provided by class Task.
     """
-
-    COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
 
     DESCRIPTION: str = """
     Tabular classification in machine learning involves predicting categorical
     labels for structured data organized in tabular form (rows and columns).
     Models are trained to learn patterns and relationships in the data, enabling
     accurate classification of new instances."""
+    DISPLAY_NAME: str = "Tabular Classification"
     metadata: dict = {
         "inputs_types": [ClassLabel, Value],
         "outputs_types": [ClassLabel],

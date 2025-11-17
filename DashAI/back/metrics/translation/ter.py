@@ -18,6 +18,8 @@ class Ter(TranslationMetric):
     [1] https://huggingface.co/spaces/evaluate-metric/ter
     """
 
+    MAXIMIZE: bool = False
+
     @staticmethod
     def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):
         """Calculate the TER score between source and target sentences.

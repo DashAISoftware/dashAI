@@ -124,14 +124,14 @@ async def validate_columns(
 
             column_names = minimal_dataset.column_names
 
-            if max(params.inputs_columns + params.outputs_columns) > len(column_names):
+            if len(params.inputs_columns + params.outputs_columns) > len(column_names):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Column index out of range",
                 )
 
-            inputs_names = [column_names[i - 1] for i in params.inputs_columns]
-            outputs_names = [column_names[i - 1] for i in params.outputs_columns]
+            inputs_names = params.inputs_columns
+            outputs_names = params.outputs_columns
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -208,20 +208,18 @@ async def create_experiment(
                 schema = reader.schema
                 column_names = schema.names
 
-            if max(params.input_columns + params.output_columns) > len(column_names):
+            if len(params.input_columns + params.output_columns) > len(column_names):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Column index out of range",
                 )
 
-            inputs_columns = [column_names[i - 1] for i in params.input_columns]
-            outputs_columns = [column_names[i - 1] for i in params.output_columns]
             experiment = Experiment(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,
                 name=params.name,
-                input_columns=inputs_columns,
-                output_columns=outputs_columns,
+                input_columns=params.input_columns,
+                output_columns=params.output_columns,
                 splits=params.splits,
             )
             db.add(experiment)

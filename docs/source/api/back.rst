@@ -125,7 +125,6 @@ Base Converters
    DashAI.back.converters.sklearn_wrapper.SklearnWrapper
    DashAI.back.converters.hugging_face_wrapper.HuggingFaceWrapper
    DashAI.back.converters.scikit_learn.sklearn_like_converter.SklearnLikeConverter
-   DashAI.back.converters.scikit_learn.converter_chain.ConverterChain
 
 Feature Engineering
 ~~~~~~~~~~~~~~~~~~~

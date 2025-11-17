@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import PropTypes from "prop-types";
-
 import {
   Button,
   Dialog,
@@ -18,69 +17,86 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { useSnackbar } from "notistack";
 
 import { createExperiment as createExperimentRequest } from "../../api/experiment";
 import { createRun as createRunRequest } from "../../api/run";
-
-import SetNameAndTaskStep from "./SetNameAndTaskStep";
-import SelectDatasetStep from "./SelectDatasetStep";
-import PrepareDatasetStep from "./PrepareDatasetStep";
-import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
-import ConfigureModelsStep from "./ConfigureModelsStep";
-
-import { useSnackbar } from "notistack";
+import { generateSequentialName } from "../../utils/nameGenerator";
 import { checkIfHaveOptimazers } from "../../utils/schema";
-
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
+import { useTourContext } from "../tour/TourProvider";
+import { renderStep } from "./renderStep";
 
-const steps = [
-  { name: "selectTask", label: "Set name and task" },
-  { name: "selectDataset", label: "Select dataset" },
-  { name: "prepareDataset", label: "Prepare dataset" },
-  { name: "configureModels", label: "Configure models" },
-  {
-    name: "configureOptimizer",
-    label: "Configure hyperparameter optimization",
-  },
-];
-
-const defaultNewExp = {
-  id: "",
-  name: "",
-  dataset: null,
-  task_name: "",
-  input_columns: [],
-  output_columns: [],
-  splits: {
-    train: 0.6,
-    validation: 0.2,
-    test: 0.2,
-  },
-  step: "SET_NAME",
-  created: null,
-  last_modified: null,
-  runs: [],
-};
-/**
- * This component renders a modal that takes the user through the process of creating a new experiment.
- * @param {bool} open true to open the modal, false to close it
- * @param {function} setOpen function to modify the value of open
- * @param {function} updateExperiments function to update the experiments table
- */
 export default function NewExperimentModal({
   open,
   setOpen,
   updateExperiments,
+  preselectedDataset,
+  setPreselectedDataset,
+  existingExperiments = [],
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
+  const tourContext = useTourContext();
+
+  const defaultNewExp = useMemo(
+    () => ({
+      id: "",
+      name: "",
+      dataset: preselectedDataset,
+      task_name: "",
+      input_columns: [],
+      output_columns: [],
+      splits: {
+        train: 0.6,
+        validation: 0.2,
+        test: 0.2,
+      },
+      step: "SET_NAME",
+      created: null,
+      last_modified: null,
+      runs: [],
+    }),
+    [preselectedDataset],
+  );
+
+  // Build steps dynamically
+  const steps = [
+    { name: "selectTask", label: "Set name and task" },
+    ...(preselectedDataset
+      ? []
+      : [{ name: "selectDataset", label: "Select dataset" }]),
+    { name: "prepareDataset", label: "Prepare dataset" },
+    { name: "configureModels", label: "Configure models" },
+    {
+      name: "configureOptimizer",
+      label: "Configure hyperparameter optimization",
+    },
+  ];
+
   const { enqueueSnackbar } = useSnackbar();
 
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newExp, setNewExp] = useState(defaultNewExp);
+  const [defaultName, setDefaultName] = useState(
+    generateSequentialName({
+      base: "Experiment",
+      items: existingExperiments,
+    }).defaultName,
+  );
+
+  useEffect(() => {
+    if (open) {
+      const generatedName = generateSequentialName({
+        base: "Experiment",
+        items: existingExperiments,
+      });
+      setDefaultName(generatedName.defaultName);
+    }
+  }, [open, existingExperiments]);
 
   const uploadRuns = async (experimentId) => {
     for (const run of newExp.runs) {
@@ -109,16 +125,21 @@ export default function NewExperimentModal({
         } else {
           console.error("Unknown Error", error.message);
         }
+      } finally {
+        setPreselectedDataset(null);
       }
     }
   };
 
   const uploadNewExperiment = async () => {
     try {
+      const finalExperimentName =
+        newExp.name.trim() === "" ? defaultName : newExp.name.trim();
+
       const response = await createExperimentRequest(
         newExp.dataset.id,
         newExp.task_name,
-        newExp.name,
+        finalExperimentName,
         newExp.input_columns,
         newExp.output_columns,
         JSON.stringify(newExp.splits),
@@ -146,6 +167,7 @@ export default function NewExperimentModal({
     setActiveStep(0);
     setOpen(false);
     setNewExp(defaultNewExp);
+    setPreselectedDataset(null);
     setNextEnabled(false);
   };
 
@@ -161,28 +183,75 @@ export default function NewExperimentModal({
     }
   };
 
-  //CHECK IF HAVE OPTIMIZERS
-
   const handleNextButton = () => {
     if (activeStep === steps.length - 1) {
       uploadNewExperiment();
       handleCloseDialog();
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 300);
+      }
       return;
     }
 
-    if (activeStep === 3) {
+    if (steps[activeStep].name === "configureModels") {
       const haveOptimazers = newExp.runs.some(checkIfHaveOptimazers);
 
       if (!haveOptimazers) {
         uploadNewExperiment();
-        handleCloseDialog();
+        setOpen(false);
+        setTimeout(() => {
+          setActiveStep(0);
+          setNewExp(defaultNewExp);
+          setNextEnabled(false);
+        }, 100);
+        if (tourContext && tourContext.run) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 600);
+        }
         return;
       }
     }
 
     setActiveStep((prevStep) => prevStep + 1);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
     setNextEnabled(false);
   };
+
+  useEffect(() => {
+    if (steps[activeStep].name === "configureModels") {
+      const allModelsHaveMetric = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.goal_metric;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveMetric) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+    if (steps[activeStep].name === "configureOptimizer") {
+      const allModelsHaveOptimizers = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.optimizer_name;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveOptimizers) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+  }, [open, newExp.runs]);
 
   return (
     <Dialog
@@ -190,25 +259,28 @@ export default function NewExperimentModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}} // No cerrar automáticamente
+      disableEscapeKeyDown // Evitar cierre con Escape
       aria-labelledby="new-experiment-dialog-title"
       aria-describedby="new-experiment-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-experiment-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -218,7 +290,7 @@ export default function NewExperimentModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -230,7 +302,7 @@ export default function NewExperimentModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -250,47 +322,31 @@ export default function NewExperimentModal({
             </Stepper>
           </Grid>
         </Grid>
+        {/* Close button for larger screens */}
+        <IconButton
+          onClick={handleCloseDialog}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+            display: { xs: "none", sm: "flex" },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
-        {activeStep === 0 && (
-          <SetNameAndTaskStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 1 && (
-          <SelectDatasetStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 2 && (
-          <PrepareDatasetStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 3 && (
-          <ConfigureModelsStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
-        {activeStep === 4 && (
-          <HyperparameterOptimizationStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
+        {renderStep(
+          steps[activeStep].name,
+          newExp,
+          setNewExp,
+          setNextEnabled,
+          defaultName,
+          existingExperiments,
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">
@@ -299,23 +355,36 @@ export default function NewExperimentModal({
           </Button>
           <TimestampWrapper
             eventName={
-              activeStep === 2
+              steps[activeStep].name === "prepareDataset"
                 ? TIMESTAMP_KEYS.experiments.configureModel
-                : activeStep === 3
+                : steps[activeStep].name === "configureModels"
                   ? TIMESTAMP_KEYS.experiments.submitModel
-                  : activeStep === 4
+                  : steps[activeStep].name === "configureOptimizer"
                     ? TIMESTAMP_KEYS.experiments.configureOptimazer
                     : null
             }
           >
             <Button
+              data-tour={
+                steps[activeStep].name === "selectTask"
+                  ? "exp-task-selector-next-button"
+                  : steps[activeStep].name === "selectDataset"
+                    ? "exp-dataset-selector-next-button"
+                    : steps[activeStep].name === "prepareDataset"
+                      ? "exp-prepare-dataset-next-button"
+                      : steps[activeStep].name === "configureModels"
+                        ? "exp-configure-models-next-button"
+                        : steps[activeStep].name === "configureOptimizer"
+                          ? "exp-configure-optimizer-next-button"
+                          : undefined
+              }
               onClick={handleNextButton}
               autoFocus
               variant="contained"
               color="primary"
               disabled={!nextEnabled}
             >
-              {activeStep === 4 ? "Save" : "Next"}
+              {activeStep === steps.length - 1 ? "Save" : "Next"}
             </Button>
           </TimestampWrapper>
         </ButtonGroup>
@@ -328,4 +397,7 @@ NewExperimentModal.propTypes = {
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   updateExperiments: PropTypes.func.isRequired,
+  preselectedDataset: PropTypes.object,
+  setPreselectedDataset: PropTypes.func.isRequired,
+  existingExperiments: PropTypes.array,
 };

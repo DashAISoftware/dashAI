@@ -2,17 +2,28 @@ import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import ColumnSelector from "../ColumnSelector";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function ScopeStepExplorer({
   notebook,
   tool,
   setScopeColumns,
-  setStep,
+  nextStep,
 }) {
   const [isSelectionValid, setIsSelectionValid] = useState(false);
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
   const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
+  const tourContext = useTourContext();
+
+  const handleSubmit = () => {
+    nextStep();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
 
   return (
     <Box
@@ -23,6 +34,7 @@ export default function ScopeStepExplorer({
         height: "100%",
         gap: 1,
       }}
+      data-tour="column-selector-explorer-container"
     >
       {/* Content */}
       <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
@@ -54,9 +66,12 @@ export default function ScopeStepExplorer({
         }}
       >
         <FormSchemaButtonGroup
-          onFormSubmit={() => setStep((s) => s + 1)}
+          onFormSubmit={handleSubmit}
           error={!isSelectionValid}
-          saveButtonText="Next"
+          saveButtonText={
+            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
+          }
+          data-tour="explorer-scope-next-button"
         />
       </Box>
     </Box>

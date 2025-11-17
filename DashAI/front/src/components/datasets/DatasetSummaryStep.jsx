@@ -20,7 +20,7 @@ function DatasetSummaryStep({
       sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
     >
       <Grid container direction={"column"} alignItems={"center"}>
-        <Grid item>
+        <Grid>
           <Typography variant="subtitle1">Dataset Summary</Typography>
           <Typography
             item
@@ -32,7 +32,7 @@ function DatasetSummaryStep({
             types. You can modify the type by selecting a different value.
           </Typography>
         </Grid>
-        <Grid item>
+        <Grid>
           {datasetUploaded ? (
             <DatasetSummaryTable
               datasetId={datasetId}

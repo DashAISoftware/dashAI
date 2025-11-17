@@ -279,16 +279,12 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   return (
     <>
       <DialogContent>
-        <Typography variant="h5" gutterBottom>
-          Select Train Parameters
-        </Typography>
-
         <Grid container>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Typography variant="body1">Split Data:</Typography>
           </Grid>
 
-          <Grid item xs={12} md={6} sx={{ pr: 2 }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ pr: 2 }}>
             <TextField
               label="Input Columns"
               fullWidth
@@ -308,7 +304,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
               helperText={outputError ? outputErrorMessage : ""}
             />
 
-            <Grid item xs={12} sx={{ mt: 3 }}>
+            <Grid size={{ xs: 12 }} sx={{ mt: 3 }}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -335,7 +331,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             </Grid>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               label="Training"
               type="number"
@@ -371,11 +367,11 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             />
           </Grid>
 
-          <Grid item xs={12} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
             <Typography variant="body1">Task and Model:</Typography>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Task"
               select
@@ -401,9 +397,9 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             </TextField>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} alignItems="center">
-              <Grid item xs>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Model"
                   select
@@ -422,7 +418,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
                   ))}
                 </TextField>
               </Grid>
-              <Grid item>
+              <Grid>
                 <IconButton
                   onClick={() => setOpenSettings(true)}
                   disabled={!model}
@@ -435,20 +431,22 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             </Grid>
           </Grid>
 
-          <Grid item xs={12} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
             <Typography variant="body1">Metrics:</Typography>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Metrics"
               select
               fullWidth
-              SelectProps={{ multiple: true }}
               value={metrics}
               onChange={(e) => setMetrics(e.target.value)}
               margin="normal"
               disabled={!task}
+              slotProps={{
+                select: { multiple: true },
+              }}
             >
               {availableMetrics.map((metric) => (
                 <MenuItem key={metric.name} value={metric.name}>

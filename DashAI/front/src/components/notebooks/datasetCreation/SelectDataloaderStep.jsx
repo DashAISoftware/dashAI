@@ -4,21 +4,22 @@ import { getComponents as getComponentsRequest } from "../../../api/component";
 import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
 import { Grid } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { useTourContext } from "../../tour/TourProvider";
 
 /**
- * This component renders a list of dataloaders and allows the user to select one.
- * @param {object} newDataset An object that stores all the important states for the dataset modal.
- * @param {function} setNewDataset function that modifies newDataset state
- * @param {function} setNextEnabled function to enable or disable the "Next" button in the dataset modal.
+ * This component renders a selector for available dataloaders
+ * @param {function} goToNextStep - Function to navigate to the next step in the dataset creation flow.
+ * @param {function} goToPrevStep - Function to navigate back to the previous step in the dataset creation flow.
+ * @param {object} selectedDataloader - The currently selected dataloader
+ * @param {function} setSelectedDataloader - Function to update the selected dataloader
  */
 export default function SelectDataloaderStep({
-  newDataset,
-  setNewDataset,
   goToNextStep,
   goToPrevStep,
   selectedDataloader,
   setSelectedDataloader,
 }) {
+  const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
 
   const [dataloaders, setDataloaders] = useState([]);
@@ -30,15 +31,7 @@ export default function SelectDataloaderStep({
       const dataloaders = await getComponentsRequest({
         selectTypes: ["DataLoader"],
       });
-
       setDataloaders(dataloaders);
-      if (newDataset.dataloader !== "") {
-        const previouslySelectedDataloader =
-          dataloaders.find(
-            (dataloader) => dataloader.name === newDataset.dataloader,
-          ) || {};
-        setSelectedDataloader(previouslySelectedDataloader);
-      }
     } catch (error) {
       enqueueSnackbar("Error while trying to obtain compatible dataloaders");
       if (error.response) {
@@ -53,14 +46,30 @@ export default function SelectDataloaderStep({
     }
   }
 
-  // updates the modal state with the name of the dataloader that is selected by the user
-  useEffect(() => {
-    if (selectedDataloader && Object.keys(selectedDataloader).length === 0) {
-      setNewDataset({ ...newDataset, dataloader: "" });
-    } else if (selectedDataloader && "name" in selectedDataloader) {
-      setNewDataset({ ...newDataset, dataloader: selectedDataloader.name });
+  const handleNext = () => {
+    if (tourContext?.run) {
+      goToNextStep();
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 1500);
+    } else {
+      goToNextStep();
     }
-  }, [selectedDataloader]);
+  };
+
+  useEffect(() => {
+    if (!loading && tourContext?.run) {
+      setTimeout(() => {
+        const cards = document.querySelectorAll('[role="button"]');
+        cards.forEach((card) => {
+          const cardText = card.textContent;
+          if (cardText.includes("CSVDataLoader") || cardText.includes("CSV")) {
+            card.setAttribute("data-tour", "csv-dataloader-option");
+          }
+        });
+      }, 100);
+    }
+  }, [loading, tourContext]);
 
   // fetches the available dataloaders
   useEffect(() => {
@@ -75,24 +84,28 @@ export default function SelectDataloaderStep({
       spacing={2}
     >
       {/* List of dataloaders */}
-      <Grid item>
+      <Grid>
         {!loading && (
           <ItemSelectorWithInfo
             itemsList={dataloaders}
             selectedItem={selectedDataloader}
             setSelectedItem={setSelectedDataloader}
+            data-tour="csv-dataloader-option"
           />
         )}
       </Grid>
-      <Grid item sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
         <FormSchemaButtonGroup
           onCancel={goToPrevStep}
-          onFormSubmit={goToNextStep}
+          onFormSubmit={handleNext}
           formik={{
-            errors: selectedDataloader.name ? {} : { dataloader: "Required" },
+            errors: selectedDataloader.display_name
+              ? {}
+              : { dataloader: "Required" },
           }}
           saveButtonText="Next"
           backButtonText="Back"
+          dataTour="dataloader-step-next-button"
         />
       </Grid>
     </Grid>

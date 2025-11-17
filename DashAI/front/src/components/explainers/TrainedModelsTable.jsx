@@ -19,6 +19,19 @@ function TrainedModelsTable() {
   const [selectedTask, setSelectedTask] = useState("All Tasks");
   const [tasks, setTasks] = useState([]);
   const [originalRows, setOriginalRows] = useState([]);
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   const colums = [
     {
@@ -44,6 +57,10 @@ function TrainedModelsTable() {
       headerName: "Model",
       minWidth: 170,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "created",
@@ -51,7 +68,7 @@ function TrainedModelsTable() {
       minWidth: 170,
       editable: false,
       type: Date,
-      valueFormatter: (params) => formatDate(params.value),
+      valueGetter: (value) => formatDate(value),
     },
     {
       field: "actions",
@@ -171,13 +188,13 @@ function TrainedModelsTable() {
   return (
     <Paper sx={{ py: 4, px: 6 }}>
       <Grid container spacing={2}>
-        <Grid item xs={4}>
+        <Grid size={{ xs: 4 }}>
           <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
             Models
           </Typography>
         </Grid>
-        <Grid item xs={4}></Grid>
-        <Grid item xs={4}>
+        <Grid size={{ xs: 4 }}></Grid>
+        <Grid size={{ xs: 4 }}>
           <TextField
             sx={{ mb: 1, mt: -1 }}
             select

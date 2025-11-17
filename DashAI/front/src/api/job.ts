@@ -1,7 +1,38 @@
 import api from "./api";
 
+export const isQueueEmpty = async (): Promise<boolean> => {
+  const response = await api.get<{ is_empty: boolean }>("/v1/job/is_empty");
+  return response.data.is_empty;
+};
+
 export const getJobs = async (): Promise<object> => {
   const response = await api.get<object>("/v1/job/");
+  return response.data;
+};
+
+export const getJobChanges = async (
+  since: string,
+): Promise<{
+  jobs: any[];
+  cursor: string;
+  server_now: string;
+  queue_empty: boolean;
+  recently_completed: boolean;
+  all_jobs: any[];
+}> => {
+  const response = await api.get<any>("/v1/job/changes", {
+    params: { since },
+  });
+  return response.data;
+};
+
+export const getJobDetails = async (jobId: string): Promise<object> => {
+  const response = await api.get<object>(`/v1/job/${jobId}/details`);
+  return response.data;
+};
+
+export const getJobStatus = async (jobId: string): Promise<any> => {
+  const response = await api.get<any>(`/v1/job/status/${jobId}`);
   return response.data;
 };
 
@@ -22,26 +53,28 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
 };
 
 export const enqueueDatasetJob = async (
-  file: File,
-  name: string,
+  dataset_id: number,
+  file: File | null,
   url: string,
   params: object,
+  notebook_id: number | null = null,
 ): Promise<object> => {
   const formData = new FormData();
   const kwargs = {
-    name: name,
+    dataset_id: dataset_id,
+    notebook_id: notebook_id,
     url: url,
     params: params,
   };
 
   formData.append("job_type", "DatasetJob");
   formData.append("kwargs", JSON.stringify(kwargs));
-  formData.append("file", file);
+  if (file) formData.append("file", file);
 
   const response = await api.post<object>("/v1/job/", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
-      filename: encodeURIComponent(file.name),
+      filename: file ? encodeURIComponent(file.name) : "",
     },
   });
   return response.data;
@@ -158,15 +191,17 @@ export const enqueueConverterJob = async (
 };
 
 export const startJobQueue = async (
-  stopWhenQueueEmpties: boolean | undefined,
-): Promise<object> => {
-  let params = {};
+  stopWhenQueueEmpties?: boolean,
+): Promise<void> => {
+  return;
+};
 
-  if (stopWhenQueueEmpties !== undefined) {
-    params = { ...params, stop_when_queue_empties: stopWhenQueueEmpties };
-  }
+export const deleteJob = async (jobId: string): Promise<void> => {
+  await api.delete(`/v1/job/${jobId}`);
+};
 
-  const response = await api.post<object>("/v1/job/start/", null, { params });
+export const deleteAllJobs = async (): Promise<{ deleted: number }> => {
+  const response = await api.delete<{ deleted: number }>("/v1/job/all");
   return response.data;
 };
 

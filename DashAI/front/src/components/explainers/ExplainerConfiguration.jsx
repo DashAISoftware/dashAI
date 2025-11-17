@@ -12,10 +12,10 @@ function ExplainerConfiguration({ paramsSchema, updateParameters }) {
     >
       <Grid container direction={"column"} alignItems={"center"}>
         {/* Form title */}
-        <Grid item>
+        <Grid>
           <DialogContentText>Explainer configuration</DialogContentText>
         </Grid>
-        <Grid item sx={{ p: 3 }}>
+        <Grid sx={{ p: 3 }}>
           {/* Main dataloader form */}
           <ParameterForm
             parameterSchema={paramsSchema}

@@ -23,6 +23,10 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
 
+  useEffect(() => {
+    setItemsToShow(itemsList.map(() => true));
+  }, [itemsList]);
+
   const handleClearSearchField = (event) => {
     setSearchField("");
     setItemsToShow(itemsList);
@@ -68,21 +72,26 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
             onChange={handleSearchFieldChange}
             size="small"
             sx={{ mb: 2 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end" onClick={handleClearSearchField}>
-                  <IconButton>
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment
+                    position="end"
+                    onClick={handleClearSearchField}
+                  >
+                    <IconButton>
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
             }}
           />
         </ListItem>
         {itemsList.map((item, index) => {
           return (
             <ListItem
-              key={`list-button-${item.name}`}
+              key={`list-button-${item.display_name || item.name}`}
               disablePadding
               sx={{
                 display: itemsToShow[index] ? "show" : "none",
@@ -95,7 +104,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
                 selected={selectedIndex === index}
                 onClick={() => handleListItemClick(item, index)}
               >
-                <ListItemText primary={item.name} />
+                <ListItemText primary={item.display_name || item.name} />
               </ListItemButton>
             </ListItem>
           );

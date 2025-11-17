@@ -1,4 +1,3 @@
-import React from "react";
 import { Grid, Typography, Paper } from "@mui/material";
 import PropTypes from "prop-types";
 import ItemSelector from "./ItemSelector";
@@ -14,13 +13,14 @@ function ItemSelectorWithInfo({
   selectedItem,
   setSelectedItem,
   disabled,
+  ...props
 }) {
   // Display images that help to describe the item selected by the user
   const displayImages = (images) => {
     const imageElements = images.map((img, i) => (
       <img
         src={img}
-        alt={`${selectedItem.name} info ${i}`}
+        alt={`${selectedItem.display_name || selectedItem.name} info ${i}`}
         key={img}
         style={{ borderRadius: "10px", maxWidth: "400px" }}
       />
@@ -49,7 +49,7 @@ function ItemSelectorWithInfo({
       spacing={3}
     >
       {/* Item list */}
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Paper>
           <ItemSelector
             itemsList={itemsList}
@@ -61,7 +61,7 @@ function ItemSelectorWithInfo({
       </Grid>
 
       {/* Section that describes the selected item using text and images (if any) */}
-      <Grid item xs={12} md={6}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Paper sx={{ p: 2, height: "100%" }}>
           <Grid
             container
@@ -71,12 +71,12 @@ function ItemSelectorWithInfo({
           >
             {selectedItem && Object.keys(selectedItem).length > 0 ? (
               <>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" sx={{ mb: 4 }}>
-                    {selectedItem.name}
+                    {selectedItem.display_name || selectedItem.name}
                   </Typography>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   {selectedItem.schema?.images === undefined
                     ? null
                     : displayImages(selectedItem.schema.images)}
@@ -88,7 +88,7 @@ function ItemSelectorWithInfo({
                 </Grid>
               </>
             ) : (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle1">
                   Select an item to see the description.
                 </Typography>

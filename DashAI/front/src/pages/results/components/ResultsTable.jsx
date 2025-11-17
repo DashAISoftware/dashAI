@@ -9,6 +9,7 @@ import { getExperimentById } from "../../../api/experiment";
 import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";
+import { useNavigate } from "react-router-dom";
 
 // constants
 import { extractRows } from "../constants/extractRows";
@@ -20,7 +21,7 @@ import { extractColumns } from "../constants/extractColumns";
  */
 function ResultsTable({ experimentId }) {
   const { enqueueSnackbar } = useSnackbar();
-
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
   const [columnGroupingModel, setColumnGroupingModel] = useState([]);
@@ -38,6 +39,14 @@ function ResultsTable({ experimentId }) {
     setShowRunResults(false);
   };
 
+  const handlePrediction = (runId, trainedDatasetId) => {
+    navigate(`../app/predict`, { state: { runId, trainedDatasetId } });
+  };
+
+  const handleExplainer = (runId) => {
+    navigate(`../app/explainers/runs/${runId}`);
+  };
+
   const getRuns = async () => {
     setLoading(true);
     try {
@@ -47,12 +56,19 @@ function ResultsTable({ experimentId }) {
         selectTypes: ["Metric"],
         relatedComponent: experiment.task_name,
       });
-      const rows = extractRows(runs);
+      const rows = await extractRows(runs);
       const rowsWithStringStatus = rows.map((run) => {
         return { ...run, status: getRunStatus(run.status) };
       });
       const { columns, columnGroupingModel, columnVisibilityModel } =
-        extractColumns(metrics, runs, handleRunResultsOpen);
+        extractColumns(
+          metrics,
+          runs,
+          experiment.dataset_id,
+          handleRunResultsOpen,
+          handlePrediction,
+          handleExplainer,
+        );
       setRows(rowsWithStringStatus);
       setColumns(columns);
       setColumnGroupingModel(columnGroupingModel);

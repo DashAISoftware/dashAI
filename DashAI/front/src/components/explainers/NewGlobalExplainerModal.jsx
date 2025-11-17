@@ -15,14 +15,15 @@ import {
   Grid,
   Typography,
   IconButton,
+  Box,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { startJobPolling } from "../../utils/jobPoller";
 
 import { createGlobalExplainer as createGlobalExplainerRequest } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
-import { startJobQueue as startJobQueueRequest } from "../../api/job";
 
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
 import SetNameAndExplainerStep from "./SetNameAndExplainerStep";
@@ -67,6 +68,7 @@ export default function NewGlobalExplainerModal({
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newGlobalExpl, setNewGlobalExpl] = useState(defaultNewGlobalExpl);
+  const [existingGlobalExplainers, setExistingGlobalExplainers] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -74,36 +76,57 @@ export default function NewGlobalExplainerModal({
     flag: flags.EXPLAINERS,
   });
 
-  const enqueueGlobalExplainerJob = async (explainerId) => {
+  const loadExistingExplainers = async () => {
     try {
-      await enqueueExplainerJobRequest(explainerId, "global");
-      enqueueSnackbar("Global explainer job successfully created.", {
-        variant: "success",
-      });
+      const explainers = await getExplainers(undefined, "global");
+      setExistingGlobalExplainers(explainers);
     } catch (error) {
-      enqueueSnackbar("Error while trying to enqueue global explainer job");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error loading existing explainers:", error);
+      setExistingGlobalExplainers([]);
     }
   };
 
-  const startJobQueue = async () => {
+  useEffect(() => {
+    if (open) {
+      loadExistingExplainers();
+    }
+  }, [open]);
+
+  const enqueueGlobalExplainerJob = async (explainerId) => {
     try {
-      await startJobQueueRequest();
-    } catch (error) {
-      enqueueSnackbar("Error while trying to start job queue");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
+      const response = await enqueueExplainerJobRequest(explainerId, "global");
+      enqueueSnackbar("Global explainer job successfully created.", {
+        variant: "success",
+      });
+
+      if (response && response.id) {
+        startJobPolling(
+          response.id,
+          (result) => {
+            enqueueSnackbar(
+              `Explainer "${newGlobalExpl.name}" completed successfully`,
+              {
+                variant: "success",
+              },
+            );
+            updateExplainers();
+          },
+          (result) => {
+            console.error("Global explainer job failed:", result);
+            enqueueSnackbar(
+              `Error processing explainer: ${result.error || "Unknown error"}`,
+              { variant: "error" },
+            );
+            updateExplainers();
+          },
+        );
       }
+
+      return response;
+    } catch (error) {
+      enqueueSnackbar("Error while trying to enqueue global explainer job");
+      console.error("Error details:", error);
+      throw error;
     }
   };
 
@@ -118,24 +141,10 @@ export default function NewGlobalExplainerModal({
       );
       const explainerId = response.id;
       await enqueueGlobalExplainerJob(explainerId);
-      enqueueSnackbar("Global explainer successfully created.", {
-        variant: "success",
-      });
-      await startJobQueue();
-      enqueueSnackbar("Running explainer jobs.", {
-        variant: "success",
-      });
-      updateExplainers();
+      await loadExistingExplainers();
     } catch (error) {
       enqueueSnackbar("Error while trying to create a new explainer");
-
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error details:", error);
     } finally {
       setIsLoading(false);
     }
@@ -176,25 +185,28 @@ export default function NewGlobalExplainerModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}}
+      disableEscapeKeyDown
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
-      PaperProps={{
-        sx: { minHeight: "80vh" },
+      slotProps={{
+        paper: {
+          sx: { minHeight: "80vh" },
+        },
       }}
     >
       {/* Title */}
       <DialogTitle id="new-global-explainer-dialog-title">
         <Grid container direction={"row"} alignItems={"center"}>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Grid
               container
               direction="row"
               alignItems="center"
               justifyContent="space-between"
             >
-              <Grid item xs={1}>
+              <Grid size={{ xs: 1 }}>
                 <IconButton
                   edge="start"
                   color="inherit"
@@ -204,7 +216,7 @@ export default function NewGlobalExplainerModal({
                   <CloseIcon />
                 </IconButton>
               </Grid>
-              <Grid item xs={11}>
+              <Grid size={{ xs: 11 }}>
                 <Typography
                   variant="h6"
                   component="h3"
@@ -216,7 +228,7 @@ export default function NewGlobalExplainerModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -235,9 +247,24 @@ export default function NewGlobalExplainerModal({
               ))}
             </Stepper>
           </Grid>
+          <Grid
+            size={{ xs: 12, md: 1 }}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              justifyContent: "flex-end",
+            }}
+          >
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Grid>
         </Grid>
       </DialogTitle>
-
       {/* Main content - steps */}
       <DialogContent dividers>
         {activeStep === 0 && (
@@ -247,6 +274,7 @@ export default function NewGlobalExplainerModal({
             setNextEnabled={setNextEnabled}
             scope={"Global"}
             taskName={taskName}
+            existingExplainers={existingGlobalExplainers}
           />
         )}
         {activeStep === 1 && (
@@ -259,7 +287,6 @@ export default function NewGlobalExplainerModal({
           />
         )}
       </DialogContent>
-
       {/* Actions - Back and Next */}
       <DialogActions>
         <ButtonGroup size="large">

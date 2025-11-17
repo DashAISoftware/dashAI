@@ -1,8 +1,9 @@
 import json
-import os
 
 import pytest
 from fastapi.testclient import TestClient
+
+from DashAI.back.dependencies.database.models import Dataset
 
 input_columns_1 = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 input_columns_2 = ["SepalLengthCm", "PetalWidthCm"]
@@ -20,51 +21,13 @@ splits = json.dumps(
 
 
 @pytest.fixture(scope="module", name="dataset_id")
-def create_dataset(client):
-    """Create testing dataset using job system."""
-    abs_file_path = os.path.join(os.path.dirname(__file__), "iris.csv")
-
-    with open(abs_file_path, "rb") as csv:
-        params = {
-            "dataloader": "CSVDataLoader",
-            "name": "DummyDataset",
-            "separator": ",",
-        }
-        kwargs = {
-            "name": "DummyDataset",
-            "url": "",
-            "params": params,
-        }
-        form_data = {"job_type": "DatasetJob", "kwargs": json.dumps(kwargs)}
-        files = {"file": ("iris.csv", csv, "text/csv")}
-        headers = {"filename": "iris.csv"}
-
-        response = client.post(
-            "/api/v1/job/",
-            data=form_data,
-            files=files,
-            headers=headers,
-        )
-
-        client.post("/api/v1/job/start/", params={"stop_when_queue_empties": True})
-
-        datasets = client.get("/api/v1/dataset/").json()
-        dataset_id = None
-        for dataset in datasets:
-            if dataset["name"] == "DummyDataset":
-                dataset_id = dataset["id"]
-                break
-
-        assert dataset_id is not None, "Dataset not found"
-
-    yield dataset_id
-
-    response = client.delete(f"/api/v1/dataset/{dataset_id}")
-    assert response.status_code == 204, response.text
+def dataset_id(dataset_1: Dataset) -> int:
+    """Get the dataset ID from the dataset_1 fixture."""
+    return dataset_1.id
 
 
 @pytest.fixture(scope="module", name="response_1")
-def create_experiment_1(client: TestClient, dataset_id):
+def create_experiment_1(client: TestClient, dataset_id: int):
     """Create experiment 1."""
     return client.post(
         "/api/v1/experiment/",
@@ -72,15 +35,20 @@ def create_experiment_1(client: TestClient, dataset_id):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentA",
-            "input_columns": [1, 2, 3, 4],
-            "output_columns": [5],
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
             "splits": splits,
         },
     )
 
 
 @pytest.fixture(scope="module", name="response_2")
-def create_experiment_2(client: TestClient, dataset_id):
+def create_experiment_2(client: TestClient, dataset_id: int):
     """Create experiment 2."""
     return client.post(
         "/api/v1/experiment/",
@@ -88,8 +56,8 @@ def create_experiment_2(client: TestClient, dataset_id):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentB",
-            "input_columns": [1, 4],
-            "output_columns": [5],
+            "input_columns": ["SepalLengthCm", "PetalWidthCm"],
+            "output_columns": ["Species"],
             "splits": splits,
         },
     )
@@ -125,7 +93,7 @@ def test_create_and_get_experiment(
     assert data["splits"] == splits
 
 
-def test_get_all_experiments(client: TestClient, dataset_id):
+def test_get_all_experiments(client: TestClient, dataset_id: int):
     """Test that all experiments can be retrieved."""
     response = client.get("/api/v1/experiment")
 
@@ -189,8 +157,13 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 200, response.text
@@ -204,8 +177,13 @@ def test_get_columns_validation_invalid(client: TestClient, dataset_id: int):
         json={
             "task_name": "ImageClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 200, response.text
@@ -219,8 +197,13 @@ def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: 
         json={
             "task_name": "TabularClassTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 404, response.text
@@ -235,8 +218,13 @@ def test_get_columns_validation_wrong_dataset(client: TestClient):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": 127,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 404, response.text

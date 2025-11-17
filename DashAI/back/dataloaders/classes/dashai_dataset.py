@@ -133,12 +133,176 @@ class DashAIDataset(Dataset):
         new_features = self.features.copy()
         for column in column_types:
             if column_types[column] == "Categorical":
-                names = list(set(self[column]))
-                new_features[column] = ClassLabel(names=names)
+                new_features[column] = encode_labels(self, column)
             elif column_types[column] == "Numerical":
                 new_features[column] = Value("float32")
         dataset = self.cast(new_features)
         return dataset
+
+    def compute_metadata(self) -> "DashAIDataset":
+        """Compute extended metadata for the dataset and store it in self.splits.
+
+        Includes NaN counts, column types, numeric and categorical summaries,
+        quality indicators, sample data, and correlations
+        useful for frontend visualization.
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset with updated metadata in self.splits.
+        """
+
+        dataset_df = self.to_pandas()
+
+        # --- Base ---
+        self.splits["column_names"] = dataset_df.columns.tolist()
+        self.splits["total_rows"] = len(dataset_df)
+        self.splits["nan"] = dataset_df.isna().sum().to_dict()
+
+        # --- General info ---
+        general_info = {
+            "n_rows": len(dataset_df),
+            "n_columns": len(dataset_df.columns),
+            "memory_usage_mb": float(dataset_df.memory_usage(deep=True).sum() / 1e6),
+            "duplicate_rows": int(dataset_df.duplicated().sum()),
+            "dtypes": dataset_df.dtypes.astype(str).to_dict(),
+        }
+
+        # --- Numeric columns stats ---
+        # TODO: Replace with categorical type from DashAI types when available
+        numeric_cols = dataset_df.select_dtypes(include=[np.number])
+        numeric_stats = {}
+        for col in numeric_cols.columns:
+            series = numeric_cols[col].dropna()
+            if series.empty:
+                continue
+
+            # Calculate quartiles
+            q1 = float(series.quantile(0.25))
+            q3 = float(series.quantile(0.75))
+            iqr = q3 - q1
+
+            # Detect outliers using IQR method
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            outliers_count = int(
+                ((series < lower_bound) | (series > upper_bound)).sum()
+            )
+
+            numeric_stats[col] = {
+                "mean": float(series.mean()),
+                "std": float(series.std()),
+                "min": float(series.min()),
+                "max": float(series.max()),
+                "median": float(series.median()),
+                "q1": q1,
+                "q3": q3,
+                "n_unique": int(series.nunique()),
+                "skew": float(series.skew()),
+                "kurtosis": float(series.kurtosis()),
+                "outliers_count": outliers_count,
+            }
+
+        # --- Categorical columns stats ---
+        # TODO: Replace with categorical type from DashAI types when available
+        categorical_cols = dataset_df.select_dtypes(include=["object", "category"])
+        categorical_stats = {}
+        for col in categorical_cols.columns:
+            series = categorical_cols[col].dropna()
+            if series.empty:
+                continue
+            counts = series.value_counts()
+
+            # Get top 5 categories for visualization
+            top_5 = [
+                {"value": str(val), "count": int(count)}
+                for val, count in counts.head(5).items()
+            ]
+
+            categorical_stats[col] = {
+                "n_unique": int(counts.size),
+                "most_frequent": str(counts.index[0]),
+                "most_frequent_count": int(counts.iloc[0]),
+                "top_5": top_5,
+            }
+
+        # --- Text columns stats ---
+        # TODO: Replace with categorical type from DashAI types when available
+        text_stats = {}
+        for col in categorical_cols.columns:
+            series = dataset_df[col].astype(str)
+            lengths = series.str.len()
+            text_stats[col] = {
+                "avg_length": float(lengths.mean()),
+                "min_length": int(lengths.min()),
+                "max_length": int(lengths.max()),
+                "empty_count": int(
+                    (dataset_df[col].isna() | (dataset_df[col] == "")).sum()
+                ),
+            }
+
+        # --- Quality indicators ---
+        # Count rows with missing values
+        rows_with_any_nan = int(dataset_df.isna().any(axis=1).sum())
+        rows_with_multiple_nan = int((dataset_df.isna().sum(axis=1) > 1).sum())
+
+        # Calculate overall data quality score
+        # by combining completeness and uniqueness
+        completeness = 1 - (
+            dataset_df.isna().sum().sum() / (len(dataset_df) * len(dataset_df.columns))
+        )
+        uniqueness = 1 - (general_info["duplicate_rows"] / len(dataset_df))
+        data_quality_score = float((completeness * 0.7 + uniqueness * 0.3) * 100)
+
+        # Compute unique counts
+        nunique_series = dataset_df.nunique(dropna=False)
+        nunique_categorical = categorical_cols.nunique(dropna=False)
+
+        quality_info = {
+            "constant_columns": [
+                c for c in dataset_df.columns if int(nunique_series[c]) == 1
+            ],
+            "high_cardinality_columns": [
+                c for c in categorical_cols.columns if int(nunique_categorical[c]) > 100
+            ],
+            "possible_id_columns": [
+                c for c in dataset_df.columns if dataset_df[c].is_unique
+            ],
+            "nan_ratio_per_column": {
+                c: float(dataset_df[c].isna().mean()) for c in dataset_df.columns
+            },
+            "rows_with_any_nan": rows_with_any_nan,
+            "rows_with_multiple_nan": rows_with_multiple_nan,
+            "data_quality_score": data_quality_score,
+        }
+
+        # --- Correlations ---
+        if not numeric_cols.empty:
+            corr_matrix = numeric_cols.corr(numeric_only=True)
+            correlations = {}
+            for col1 in corr_matrix.columns:
+                col_corrs = {}
+                for col2 in corr_matrix.columns:
+                    corr_val = float(corr_matrix.loc[col1, col2])
+                    col_corrs[col2] = round(corr_val, 4)
+                if col_corrs:
+                    correlations[col1] = col_corrs
+        else:
+            correlations = {}
+
+        # --- Combine everything ---
+        self.splits.update(
+            {
+                "general_info": general_info,
+                "numeric_stats": numeric_stats,
+                "categorical_stats": categorical_stats,
+                "text_stats": text_stats,
+                "quality_info": quality_info,
+                "correlations": correlations,
+            }
+        )
+
+        return self
 
     @beartype
     def remove_columns(self, column_names: Union[str, List[str]]) -> "DashAIDataset":
@@ -303,12 +467,6 @@ def save_dataset(dataset: DashAIDataset, path: Union[str, os.PathLike]) -> None:
     metadata_filepath = os.path.join(path, "splits.json")
     # Update splits with dataset shape and column names
     metadata = dataset.splits
-    metadata.update(
-        {
-            "total_rows": dataset.shape[0],
-            "column_names": dataset.column_names,
-        }
-    )
     with open(metadata_filepath, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
@@ -341,6 +499,34 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
         splits = {}
 
     return DashAIDataset(data, splits=splits)
+
+
+@beartype
+def encode_labels(
+    dataset: DashAIDataset,
+    column_name: str,
+) -> ClassLabel:
+    """Encode a categorical column into numerical labels and
+    return the ClassLabel feature.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        Dataset containing the column to encode.
+    column_name : str
+        Name of the column to encode.
+
+    Returns
+    -------
+    ClassLabel
+        The ClassLabel feature with the mapping of labels to integers.
+    """
+    if column_name not in dataset.column_names:
+        raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
+
+    names = list(set(dataset[column_name]))
+    class_label_feature = ClassLabel(names=names)
+    return class_label_feature
 
 
 @beartype
@@ -425,11 +611,33 @@ def split_indexes(
     if seed is None:
         seed = 42
     indexes = np.arange(total_rows)
+    stratify_labels = np.array(labels) if stratify else None
+
+    if test_size == 0 and val_size == 0:
+        return indexes.tolist(), [], []
+
+    if test_size == 0:
+        train_indexes, val_indexes = train_test_split(
+            indexes,
+            train_size=train_size,
+            random_state=seed,
+            shuffle=shuffle,
+            stratify=stratify_labels,
+        )
+        return train_indexes.tolist(), [], val_indexes.tolist()
+
+    if val_size == 0:
+        train_indexes, test_indexes = train_test_split(
+            indexes,
+            train_size=train_size,
+            random_state=seed,
+            shuffle=shuffle,
+            stratify=stratify_labels,
+        )
+        return train_indexes.tolist(), test_indexes.tolist(), []
 
     test_val = test_size + val_size
     val_proportion = test_size / test_val
-
-    stratify_labels = np.array(labels) if stratify else None
 
     train_indexes, test_val_indexes = train_test_split(
         indexes,
@@ -553,7 +761,7 @@ def to_dashai_dataset(
         arrow_tbl = get_arrow_table(dataset)
         return DashAIDataset(arrow_tbl)
     if isinstance(dataset, DataFrame):
-        hf_dataset = Dataset.from_pandas(dataset)
+        hf_dataset = Dataset.from_pandas(dataset, preserve_index=False)
         arrow_tbl = get_arrow_table(hf_dataset)
         return DashAIDataset(arrow_tbl)
     if isinstance(dataset, DatasetDict) and len(dataset) == 1:
@@ -774,7 +982,7 @@ def get_dataset_info(dataset_path: str) -> object:
     """
     metadata_filepath = os.path.join(dataset_path, "splits.json")
     if os.path.exists(metadata_filepath):
-        with open(metadata_filepath, "r") as f:
+        with open(metadata_filepath, "r", encoding="utf-8") as f:
             splits_data = json.load(f)
     else:
         splits_data = {"split_indices": {}}
@@ -790,12 +998,14 @@ def get_dataset_info(dataset_path: str) -> object:
         "total_rows": total_rows,
         "total_columns": len(column_names),
         "column_names": column_names,
+        "nan": splits_data.get("nan", {}),
         "train_size": len(train_indices),
         "test_size": len(test_indices),
         "val_size": len(val_indices),
         "train_indices": train_indices,
         "test_indices": test_indices,
         "val_indices": val_indices,
+        **splits_data,
     }
 
 
@@ -849,6 +1059,9 @@ def prepare_for_experiment(
             test_indexes=splits_index["test"],
             val_indexes=splits_index["validation"],
         )
+        train_indexes = splits_index["train"]
+        test_indexes = splits_index["test"]
+        val_indexes = splits_index["validation"]
     else:
         n = len(dataset)
         labels = None
@@ -876,9 +1089,9 @@ def prepare_for_experiment(
 
         train_indexes, test_indexes, val_indexes = split_indexes(
             n,
-            splits["train"],
-            splits["test"],
-            splits["validation"],
+            float(splits["train"]),
+            float(splits["test"]),
+            float(splits["validation"]),
             shuffle=splits.get("shuffle", False),
             seed=splits.get("seed"),
             stratify=splits.get("stratify", False),

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,9 +10,10 @@ import {
   Chip,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { getDatasetInfo } from "../../../api/datasets";
+import { useTourContext } from "../../tour/TourProvider";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
+import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
 
 export function CreateNotebookModal({
@@ -20,54 +21,65 @@ export function CreateNotebookModal({
   onClose,
   onCreateNotebook,
   dataset,
+  datasetInfo,
+  existingNotebooks = [],
 }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [datasetInfo, setDatasetInfo] = useState(null);
-  const [loadingInfo, setLoadingInfo] = useState(false);
-  const [infoError, setInfoError] = useState(null);
+  const tourContext = useTourContext();
+
+  const { defaultName } = useMemo(() => {
+    if (!dataset) {
+      return { defaultName: "" };
+    }
+    return generateSequentialName({
+      base: `Notebook_${dataset.name}`,
+      items: existingNotebooks,
+      filter: (notebook) => notebook.dataset_id === dataset.id,
+    });
+  }, [dataset, existingNotebooks]);
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchInfo = async () => {
-      if (!dataset?.id) {
-        setDatasetInfo(null);
-        setInfoError(null);
-        return;
-      }
-      try {
-        setLoadingInfo(true);
-        setInfoError(null);
-        const info = await getDatasetInfo(dataset.id);
-        if (!cancelled) setDatasetInfo(info);
-      } catch (e) {
-        if (!cancelled) setInfoError("Failed to load dataset info");
-      } finally {
-        if (!cancelled) setLoadingInfo(false);
-      }
-    };
-    fetchInfo();
-    return () => {
-      cancelled = true;
-    };
-  }, [dataset?.id]);
+    if (open && defaultName) {
+      setName(defaultName);
+      setDescription("");
+    }
+  }, [open, defaultName]);
 
   const handleSubmit = () => {
-    onCreateNotebook({
-      name: name.trim() || "Untitled Notebook",
-      description: description.trim() || "",
-    });
-    handleClose();
+    const notebookName = name.trim();
+
+    if (notebookName) {
+      onCreateNotebook({
+        name: notebookName,
+        description: description.trim() || "",
+      });
+
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 200);
+      }
+      handleClose();
+    }
   };
 
+  const getNameError = () => {
+    const currentName = name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+    return null;
+  };
+
+  const nameError = getNameError();
+
   const handleClose = () => {
-    setName("");
-    setDescription("");
     onClose();
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={() => {}} maxWidth="sm" fullWidth>
       <DialogTitle>
         Create a New Notebook
         <IconButton
@@ -79,7 +91,10 @@ export function CreateNotebookModal({
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
+          <NoteBox
+            message="A copy of the selected dataset will be created to work in the notebook without altering the original."
+            className="notebook-note-box"
+          />
           {/* Selected Dataset Info Box */}
           {dataset && (
             <Box
@@ -110,20 +125,9 @@ export function CreateNotebookModal({
                   </Typography>
                 </Box>
                 <Typography variant="body2" fontWeight="medium">
-                  Rows:{" "}
-                  {loadingInfo
-                    ? "Loading..."
-                    : (datasetInfo?.total_rows ?? "-")}{" "}
-                  | Columns:{" "}
-                  {loadingInfo
-                    ? "Loading..."
-                    : (datasetInfo?.total_columns ?? "-")}
+                  Rows: {datasetInfo?.total_rows ?? "-"} | Columns:{" "}
+                  {datasetInfo?.total_columns ?? "-"}
                 </Typography>
-                {infoError && (
-                  <Typography variant="caption" color="error">
-                    {infoError}
-                  </Typography>
-                )}
               </Box>
             </Box>
           )}
@@ -137,7 +141,6 @@ export function CreateNotebookModal({
           >
             Name your Notebook
           </Typography>
-          {/* Notebook name */}
           <TextField
             fullWidth
             label="Notebook Name"
@@ -145,8 +148,12 @@ export function CreateNotebookModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
-            placeholder="Enter a name for your notebook (optional)"
+            error={Boolean(nameError)}
+            helperText={nameError}
             sx={{ mb: 2 }}
+            slotProps={{
+              inputLabel: { shrink: true },
+            }}
           />
           {/* Notebook description */}
           <TextField
@@ -163,9 +170,10 @@ export function CreateNotebookModal({
             <FormSchemaButtonGroup
               onCancel={handleClose}
               onFormSubmit={handleSubmit}
-              formik={{ errors: {} }} // No validation errors for this modal
+              formik={{ errors: nameError ? { name: nameError } : {} }}
               saveButtonText="Create Notebook"
               backButtonText="Cancel"
+              dataTour="create-notebook-button"
             />
           </Box>
         </Box>

@@ -15,13 +15,12 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
+import { LoadingButton } from "@mui/material";
 import DatasetSummaryTable from "./DatasetSummaryTable";
 import ConverterSelectorModal from "./converterModals/ConverterSelectorModal";
 import ConverterTable from "./ConverterTable";
 import { useSnackbar } from "notistack";
 import { enqueueConverterJob as enqueueConverterJobRequest } from "../../api/job";
-import { startJobQueue as startJobQueueRequest } from "../../api/job";
 import {
   saveConverterList,
   getDatasetConverterList,
@@ -70,21 +69,6 @@ function ConvertDatasetModal({ datasetId }) {
     }
   };
 
-  const startJobQueue = async () => {
-    try {
-      await startJobQueueRequest();
-    } catch (error) {
-      enqueueSnackbar("Error while trying to start job queue");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-    }
-  };
-
   const saveAndEnqueueConverterList = async (id) => {
     try {
       // Save the list of converters to apply
@@ -108,8 +92,6 @@ function ConvertDatasetModal({ datasetId }) {
 
       // Enqueue the converter job using the id of the saved list
       await enqueueConverterJob(converterListId);
-
-      await startJobQueue();
 
       setRunning(true);
       enqueueSnackbar("Running converter jobs.", {
@@ -226,7 +208,7 @@ function ConvertDatasetModal({ datasetId }) {
               onClick={(event) => event.stopPropagation()}
             >
               {/* Dataset summary table */}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle1" component="h3" mb={1}>
                   Dataset summary
                 </Typography>
@@ -234,8 +216,13 @@ function ConvertDatasetModal({ datasetId }) {
               <DatasetSummaryTable datasetId={datasetIdToModify} />
 
               {/* Converter selector */}
-              <Grid item xs={12} display={"flex"} alignItems={"center"} gap={2}>
-                <Grid item xs={6} display={"flex"} alignItems={"center"}>
+              <Grid
+                size={{ xs: 12 }}
+                display={"flex"}
+                alignItems={"center"}
+                gap={2}
+              >
+                <Grid size={{ xs: 6 }} display={"flex"} alignItems={"center"}>
                   <Typography variant="subtitle1" component="h3" mb={1}>
                     List of converters
                   </Typography>
@@ -252,7 +239,7 @@ function ConvertDatasetModal({ datasetId }) {
                     setConvertersToApply={setConvertersToApply}
                   />
                 </Grid>
-                <Grid item xs={6} display={"flex"} alignItems={"center"}>
+                <Grid size={{ xs: 6 }} display={"flex"} alignItems={"center"}>
                   <Typography variant="subtitle2" component="h3" mb={1}>
                     Class/Target column index
                   </Typography>

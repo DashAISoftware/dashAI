@@ -69,6 +69,7 @@ export default function ConverterBox({
   return (
     <Card
       key={converter.id}
+      className="converter-box"
       sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
     >
       <CardContent
@@ -89,7 +90,9 @@ export default function ConverterBox({
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
-            <Typography variant="h6">{converter.converter}</Typography>
+            <Typography variant="h6">
+              {converterComponent.display_name}
+            </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
@@ -97,18 +100,20 @@ export default function ConverterBox({
               color={statusLabel === "Finished" ? "primary" : "default"}
               size="small"
             />
-            <IconButton
-              size="small"
-              onClick={() => handleConverterDeleteClick(converter)}
-              sx={{
-                width: 24,
-                height: 24,
-                bgcolor: "error.main",
-                "&:hover": { bgcolor: "error.dark" },
-              }}
-            >
-              <Delete sx={{ fontSize: 16 }} />
-            </IconButton>
+            {(statusLabel === "Error" || statusLabel === "Finished") && (
+              <IconButton
+                size="small"
+                onClick={() => handleConverterDeleteClick(converter)}
+                sx={{
+                  width: 24,
+                  height: 24,
+                  bgcolor: "error.main",
+                  "&:hover": { bgcolor: "error.dark" },
+                }}
+              >
+                <Delete sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
 

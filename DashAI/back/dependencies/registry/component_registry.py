@@ -28,6 +28,7 @@ class ComponentRegistry:
         "metadata": {...},  # Component metadata if applies.
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
+        "color": "...",  # A color associated to the component.
     }
     ```
 
@@ -189,19 +190,22 @@ class ComponentRegistry:
                 "object."
             )
 
+        _metadata = (
+            new_component.get_metadata()
+            if hasattr(new_component, "get_metadata")
+            else None
+        )
+
         new_register_component = {
             "name": new_component.__name__,
             "type": base_type,
             "class": new_component,
             "configurable_object": is_configurable_object,
             "schema": new_component.get_schema() if is_configurable_object else None,
-            "metadata": (
-                new_component.get_metadata()
-                if hasattr(new_component, "metadata")
-                else None
-            ),
+            "metadata": _metadata,
             "description": getattr(new_component, "DESCRIPTION", None),
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
+            "color": getattr(new_component, "COLOR", None),
         }
 
         if base_type not in self._registry:

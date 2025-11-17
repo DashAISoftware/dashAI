@@ -7,13 +7,13 @@ class ExperimentParams(BaseModel):
     dataset_id: int
     task_name: str
     name: str
-    input_columns: List[int]
-    output_columns: List[int]
+    input_columns: List[str]
+    output_columns: List[str]
     splits: str
 
 
 class ColumnsValidationParams(BaseModel):
     task_name: str
     dataset_id: int
-    inputs_columns: List[int]
-    outputs_columns: List[int]
+    inputs_columns: List[str]
+    outputs_columns: List[str]

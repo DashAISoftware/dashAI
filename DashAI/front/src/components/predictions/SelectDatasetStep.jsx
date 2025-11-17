@@ -12,6 +12,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
+import PredictionNameInput from "./PredictionNameInput";
 
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 
@@ -30,7 +31,7 @@ const columns = [
     headerName: "Created",
     minWidth: 200,
     type: Date,
-    valueFormatter: (params) => formatDate(params.value),
+    valueGetter: (value) => formatDate(value),
     editable: false,
   },
   {
@@ -38,15 +39,19 @@ const columns = [
     headerName: "Last modified",
     minWidth: 200,
     type: Date,
-    valueFormatter: (params) => formatDate(params.value),
+    valueGetter: (value) => formatDate(value),
     editable: false,
   },
 ];
 
 function SelectDatasetStep({
+  selectedModelId,
+  preselectedModelId,
   setSelectedDatasetId,
   setNextEnabled,
   trainDataset,
+  defaultPredictionName,
+  onPredictNameInput,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -54,20 +59,14 @@ function SelectDatasetStep({
   const [loading, setLoading] = useState(true);
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
-  const [datasetPaths, setDatasetPaths] = useState([]);
+  const [isNameValid, setIsNameValid] = useState(false);
 
   const getDatasets = async () => {
     setLoading(true);
     try {
-      const datasets = await getDatasetsRequest();
-      const paths = datasets.map((dataset) => dataset.file_path);
-      setDatasetPaths(paths);
-
       const requestData = {
-        train_dataset_id: Number(trainDataset),
-        datasets: paths,
+        run_id: preselectedModelId ?? selectedModelId,
       };
-
       const filteredDatasets = await filterDatasetsRequest(requestData);
       setDatasets(filteredDatasets);
     } catch (error) {
@@ -96,12 +95,29 @@ function SelectDatasetStep({
       // const dataset = datasets[datasetsSelected[0] - 1];
       const selectedDatasetId = datasetsSelected[0];
       setSelectedDatasetId(selectedDatasetId);
-      setNextEnabled(true);
+      if (preselectedModelId) {
+        setNextEnabled(isNameValid);
+      } else {
+        setNextEnabled(true);
+      }
     }
-  }, [datasetsSelected]);
+  }, [datasetsSelected, isNameValid, preselectedModelId]);
 
   return (
     <React.Fragment>
+      {preselectedModelId && (
+        <Grid item xs={12}>
+          <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
+            Provide a prediction name to continue and select a dataset
+          </Typography>
+
+          <PredictionNameInput
+            defaultPredictionName={defaultPredictionName}
+            onValidChange={setIsNameValid}
+            onNameChange={onPredictNameInput}
+          />
+        </Grid>
+      )}
       <Grid
         container
         direction="row"
@@ -113,7 +129,6 @@ function SelectDatasetStep({
           Select a dataset for the selected task
         </Typography>
       </Grid>
-
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
           <Alert severity="warning" sx={{ mb: 2 }}>

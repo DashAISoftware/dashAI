@@ -5,8 +5,10 @@ import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
-import NewSessionButton from "./NewSessionButton";
 import SessionBarHeader from "./SessionBarHeader";
+import NewItemButton from "../threeSectionLayout/NewItemButton";
+import SideBar from "../threeSectionLayout/SideBar";
+import BarHeader from "../threeSectionLayout/BarHeader";
 
 export default function SessionBar({
   sessions,
@@ -74,21 +76,7 @@ export default function SessionBar({
   }, {});
 
   return (
-    <Box
-      width="100%"
-      height="100%"
-      borderRadius={2}
-      display={"flex"}
-      flexDirection={"column"}
-      justifyContent={"space-between"}
-      sx={{
-        bgcolor: "background.box",
-        color: "white",
-        display: "flex",
-        flexDirection: "column",
-        borderRight: "1px solid #252836",
-      }}
-    >
+    <SideBar>
       <Box
         display="flex"
         flexDirection="column"
@@ -97,25 +85,37 @@ export default function SessionBar({
         minHeight={0}
       >
         {/* Header */}
-        <SessionBarHeader />
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pr: 2,
+          }}
+        >
+          <BarHeader />
+        </Box>
         <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
 
-        {/* Create new session button */}
-        {selectedSessionId ? (
-          <NewSessionButton
-            onClick={handleNewSessionButton}
-            tooltipText="Create New Session"
-          />
-        ) : (
-          <Box px={2} py={1}>
+        <Box
+          p={2}
+          sx={{ height: "64px", display: "flex", alignItems: "center" }}
+        >
+          {/* Create new session button */}
+          {selectedSessionId ? (
+            <NewItemButton
+              onClick={handleNewSessionButton}
+              title="New Session"
+            />
+          ) : (
             <Typography variant="body1" color="textSecondary">
               Generative Module
             </Typography>
-          </Box>
-        )}
+          )}
+        </Box>
 
         {/* Search Bar */}
-        <Box px={2} py={1} flex={"0 0 auto"}>
+        <Box px={2} pb={2} flex={"0 0 auto"}>
           <SearchBar
             placeholder={"Search Sessions"}
             value={searchQuery}
@@ -123,10 +123,22 @@ export default function SessionBar({
           />
         </Box>
 
+        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+
         {/* Sessions */}
-        <Box px={2} py={1} flex={1} minHeight={0} overflow="auto">
+        <Box
+          minHeight={0}
+          pb={1}
+          overflow="auto"
+          sx={{
+            flex: 1,
+            pl: 2,
+            pr: 2,
+            pt: 2,
+          }}
+        >
           {/* Header */}
-          <Box display="flex" alignItems="center" pb={1}>
+          <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
             <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
             <Typography>Sessions</Typography>
             <Box
@@ -171,6 +183,6 @@ export default function SessionBar({
           onClose={() => setSelectedInfoSession(null)}
         />
       )}
-    </Box>
+    </SideBar>
   );
 }

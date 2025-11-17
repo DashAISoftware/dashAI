@@ -30,8 +30,13 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     },
   });
 
-  const [inputColumnNames, setInputColumnNames] = useState([]);
-  const [outputColumnNames, setOutputColumnNames] = useState([]);
+  const [inputColumnNames, setInputColumnNames] = useState(
+    newExp.input_columns,
+  );
+  const [outputColumnNames, setOutputColumnNames] = useState(
+    newExp.output_columns,
+  );
+
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [shuffle, setShuffle] = useState(true);
@@ -95,16 +100,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           } else if (allNames.length === 1) {
             setInputColumnNames([allNames[0]]);
           }
-        } else if (
-          newExp.input_columns &&
-          newExp.input_columns.length > 0 &&
-          allNames.length > 0
-        ) {
-          setInputColumnNames(
-            newExp.input_columns
-              .map((index) => allNames[index])
-              .filter((name) => name !== undefined),
-          );
         }
 
         if (
@@ -114,16 +109,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           if (allNames.length > 0) {
             setOutputColumnNames([allNames[allNames.length - 1]]);
           }
-        } else if (
-          newExp.output_columns &&
-          newExp.output_columns.length > 0 &&
-          allNames.length > 0
-        ) {
-          setOutputColumnNames(
-            newExp.output_columns
-              .map((index) => allNames[index])
-              .filter((name) => name !== undefined),
-          );
         }
       }
     } catch (error) {
@@ -175,22 +160,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     }
   };
 
-  const getIndicesFromNames = (selectedNames, allNames) => {
-    if (
-      !allNames ||
-      allNames.length === 0 ||
-      !selectedNames ||
-      selectedNames.length === 0
-    )
-      return [];
-    return selectedNames
-      .map((name) => {
-        const index = allNames.indexOf(name);
-        return index !== -1 ? index + 1 : -1;
-      })
-      .filter((index) => index !== -1);
-  };
-
   const validateColumns = async () => {
     if (
       !datasetInfo ||
@@ -201,16 +170,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       return;
     }
 
-    const inputIndices = getIndicesFromNames(
-      inputColumnNames,
-      datasetInfo.column_names,
-    );
-    const outputIndices = getIndicesFromNames(
-      outputColumnNames,
-      datasetInfo.column_names,
-    );
-
-    if (inputIndices.length === 0 || outputIndices.length === 0) {
+    if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
       setColumnsAreValid(false);
       return;
     }
@@ -219,8 +179,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       const validation = await validateColumnsRequest(
         newExp.task_name,
         newExp.dataset.id,
-        inputIndices,
-        outputIndices,
+        inputColumnNames,
+        outputColumnNames,
       );
       setColumnsAreValid(validation.dataset_status === "valid");
     } catch (error) {
@@ -245,19 +205,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       return;
     }
 
-    const inputIndices = getIndicesFromNames(
-      inputColumnNames,
-      datasetInfo.column_names,
-    );
-    const outputIndices = getIndicesFromNames(
-      outputColumnNames,
-      datasetInfo.column_names,
-    );
-
     const updatedExpData = {
       ...newExp,
-      input_columns: inputIndices,
-      output_columns: outputIndices,
+      input_columns: inputColumnNames,
+      output_columns: outputColumnNames,
     };
 
     if (splitType === SPLIT_TYPES.MANUAL) {
@@ -346,10 +297,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           {columnsAreValid
             ? "Current Input and Output columns match"
             : "Current Input and Output columns doesn't match"}{" "}
-          {taskRequirements.name} requirements
+          {taskRequirements.display_name} requirements
         </AlertTitle>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             The input columns must be of the types{" "}
             {taskRequirements
               ? parseListOfStrings(taskRequirements.metadata.inputs_types)
@@ -357,7 +308,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             , and they should have a cardinality of{" "}
             {taskRequirements.metadata.inputs_cardinality}.
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             The output columns must be of the types{" "}
             {taskRequirements
               ? parseListOfStrings(taskRequirements.metadata.outputs_types)
@@ -367,6 +318,28 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Alert>
+      {!infoLoading && datasetInfo.nan ? (
+        Object.values(datasetInfo.nan).some((v) => v > 0) ? (
+          <Alert severity="warning" sx={{ mb: 1 }}>
+            <AlertTitle>
+              The dataset contains missing values (NaN) in the columns:
+            </AlertTitle>
+            <Grid container spacing={2}>
+              {Object.entries(datasetInfo.nan)
+                .filter(([_, count]) => count > 0)
+                .map(([col, count]) => (
+                  <Grid item xs={12} key={col}>
+                    - {col}: {count} missing values
+                  </Grid>
+                ))}
+            </Grid>
+            <p>
+              It's recommended to preprocess the dataset to handle these missing
+              values before training a model.
+            </p>
+          </Alert>
+        ) : null
+      ) : null}
 
       {!infoLoading ? (
         <Grid container spacing={1}>
@@ -414,8 +387,8 @@ PrepareDatasetStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.object,
     step: PropTypes.string,
     created: PropTypes.instanceOf(Date),

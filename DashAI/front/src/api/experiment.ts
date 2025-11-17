@@ -17,8 +17,8 @@ export const createExperiment = async (
   datasetId: number,
   taskName: string,
   expName: string,
-  inputColumns: number[],
-  outputColumns: number[],
+  inputColumns: string[],
+  outputColumns: string[],
   splitsValue: JSON,
 ): Promise<IExperiment> => {
   const data = {
@@ -53,8 +53,8 @@ export const deleteExperiment = async (id: string): Promise<object> => {
 export const validateColumns = async (
   taskName: string,
   datasetId: number,
-  inputColumns: number[],
-  outputColumns: number[],
+  inputColumns: string[],
+  outputColumns: string[],
 ): Promise<object> => {
   const formData = {
     task_name: taskName,

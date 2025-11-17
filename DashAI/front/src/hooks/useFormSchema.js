@@ -21,7 +21,7 @@ function useFormSchema({ model, initialValues, formSubmitRef, setError }) {
   const formik = useFormik({
     initialValues:
       initialValues && Object.keys(initialValues).length > 0
-        ? initialValues
+        ? { ...defaultValues, ...initialValues }
         : defaultValues,
     enableReinitialize: true,
     validationSchema: yupSchema,
@@ -34,11 +34,11 @@ function useFormSchema({ model, initialValues, formSubmitRef, setError }) {
     }
   }, [formSubmitRef, formik]);
 
-  // Updates the formik schema with the initial values if the formValues is empty
+  // Updates the formik schema with the merged initial values if the formValues is empty
   useEffect(() => {
     if (formValues && Object.keys(formValues).length === 0) {
       if (initialValues && Object.keys(initialValues).length > 0) {
-        handleUpdateSchema(initialValues);
+        handleUpdateSchema({ ...defaultValues, ...initialValues });
       } else if (defaultValues && Object.keys(defaultValues).length > 0) {
         handleUpdateSchema(defaultValues);
       }

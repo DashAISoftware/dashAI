@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   PlayArrow as PlayArrowIcon,
   Check as CheckIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import {
@@ -15,20 +16,17 @@ import {
   DialogTitle,
   Paper,
   Typography,
+  IconButton,
 } from "@mui/material";
 import { getRuns as getRunsRequest } from "../../api/run";
-import {
-  enqueueRunnerJob as enqueueRunnerJobRequest,
-  startJobQueue as startJobQueueRequest,
-} from "../../api/job";
+import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../utils/runStatus";
 import { LoadingButton } from "@mui/lab";
+import { startJobPolling } from "../../utils/jobPoller";
+import { useTourContext } from "../tour/TourProvider";
+import { getComponents } from "../../api/component";
 
-/**
- * Modal for selecting the runs to be sent to execute in an experiment
- * @param {object} experiment contains the information of an experiment as received from the backend (IExperiment)
- */
 function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const { enqueueSnackbar } = useSnackbar();
   const [open, setOpen] = useState(false);
@@ -36,58 +34,85 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
   const [loading, setLoading] = useState(false);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [finishedRunning, setFinishedRunning] = useState(false);
-  const intervalRef = useRef(null);
+  const [trackedJobIds, setTrackedJobIds] = useState(new Set());
+  const experimentNameRef = useRef(experiment.name);
+  const tourContext = useTourContext();
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
+
+  // Update ref when experiment name changes
+  useEffect(() => {
+    experimentNameRef.current = experiment.name;
+  }, [experiment.name]);
 
   const getRuns = async ({ showLoading = true } = {}) => {
     if (showLoading) {
       setLoading(true);
     }
+
     try {
       const runs = await getRunsRequest(experiment.id.toString());
-      const firstRunInExecution = runs.find((run) => run.status === 2); // searches for a run with the status "running"
-      if (firstRunInExecution !== undefined) {
-        // modify state only if the value changes
-        if (!expRunning[experiment.id]) {
-          setExpRunning({ ...expRunning, [experiment.id]: true });
-        }
+
+      // Check for any running runs
+      const runningRun = runs.find((run) => run.status === 2);
+      if (runningRun && !expRunning[experiment.id]) {
+        setExpRunning({ ...expRunning, [experiment.id]: true });
       }
-      // transform status code to a string
-      const runsWithStringStatus = runs.map((run) => {
-        return { ...run, status: getRunStatus(run.status) };
-      });
+
+      // Transform status codes to text
+      const runsWithStringStatus = runs.map((run) => ({
+        ...run,
+        status: getRunStatus(run.status),
+      }));
 
       setRows(runsWithStringStatus);
 
+      // Initialize selection if needed
       if (rowSelectionModel.length === 0) {
-        setRowSelectionModel(runs.map((run, idx) => run.id));
+        setRowSelectionModel(runs.map((run) => run.id));
       }
 
+      // Check if all selected runs are finished
       if (expRunning[experiment.id]) {
-        const allRunsFinished = runs
-          .filter((run) => rowSelectionModel.includes(run.id)) // get only the runs that have been selected to be sent to the runner
-          .every((run) => run.status === 3 || run.status === 4); // finished or error
+        const selectedRuns = runs.filter((run) =>
+          rowSelectionModel.includes(run.id),
+        );
+
+        const allRunsFinished =
+          selectedRuns.length > 0 &&
+          selectedRuns.every((run) => run.status === 3 || run.status === 4);
+
         if (allRunsFinished) {
           setExpRunning({ ...expRunning, [experiment.id]: false });
-          // only shows snackbar one time
+
           if (!finishedRunning) {
-            enqueueSnackbar(`${experiment.name} has completed all its runs`, {
-              variant: "success",
-            });
+            enqueueSnackbar(
+              `${experimentNameRef.current} has completed all runs`,
+              {
+                variant: "success",
+              },
+            );
             setFinishedRunning(true);
           }
         }
       }
     } catch (error) {
       enqueueSnackbar(
-        `Error while trying to obtain the runs associated to ${experiment.name}`,
+        `Error retrieving runs for ${experimentNameRef.current}`,
+        { variant: "error" },
       );
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error("Error fetching runs:", error);
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -97,53 +122,91 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
 
   const enqueueRunnerJob = async (runId) => {
     try {
-      await enqueueRunnerJobRequest(runId);
-      return false; // return false for sucess
-    } catch (error) {
-      enqueueSnackbar(`Error while trying to enqueue run with id ${runId}`);
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
-      return true; // return true for error
-    }
-  };
+      const response = await enqueueRunnerJobRequest(runId);
 
-  const startJobQueue = async () => {
-    try {
-      await startJobQueueRequest();
-    } catch (error) {
-      setExpRunning({ ...expRunning, [experiment.id]: false });
-      enqueueSnackbar("Error while trying to start job queue");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
+      if (response && response.id) {
+        setTrackedJobIds((prev) => new Set(prev).add(response.id));
+
+        startJobPolling(
+          response.id,
+          (result) => {
+            getRuns({ showLoading: false });
+          },
+          (result) => {
+            console.error(`Run job ${response.id} failed:`, result);
+            enqueueSnackbar(`Run failed: ${result.error || "Unknown error"}`, {
+              variant: "error",
+            });
+            getRuns({ showLoading: false });
+          },
+        );
       }
+
+      return false;
+    } catch (error) {
+      enqueueSnackbar(`Error enqueueing run with ID ${runId}`, {
+        variant: "error",
+      });
+      console.error("Error enqueueing run:", error);
+      return true;
     }
   };
 
   const handleExecuteRuns = async () => {
     setExpRunning({ ...expRunning, [experiment.id]: true });
+    setFinishedRunning(false);
     let enqueueErrors = 0;
-    // send runs to the job queue
+
     for (const runId of rowSelectionModel) {
       const error = await enqueueRunnerJob(runId);
       enqueueErrors = error ? enqueueErrors + 1 : enqueueErrors;
     }
-
-    // verify that at least one job was succesfully enqueued to start the job queue
     if (enqueueErrors < rowSelectionModel.length) {
-      startJobQueue(true); // true to stop when queue empties
+      setTimeout(() => {
+        getRuns({ showLoading: false });
+      }, 100);
+
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 1000);
+      }
     } else {
       setExpRunning({ ...expRunning, [experiment.id]: false });
     }
   };
+
+  const handleCloseAndAdvance = () => {
+    setOpen(false);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 600);
+    }
+  };
+
+  const handleOpenDialog = () => {
+    setOpen(true);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
+
+  useEffect(() => {
+    getRuns();
+  }, []);
+
+  useEffect(() => {
+    if (open || expRunning[experiment.id]) {
+      const intervalId = setInterval(() => {
+        getRuns({ showLoading: false });
+      }, 2000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [open, expRunning[experiment.id]]);
 
   const columns = [
     {
@@ -157,6 +220,10 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       headerName: "Model Name",
       minWidth: 300,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "status",
@@ -166,36 +233,11 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
     },
   ];
 
-  // on mount, fetches runs associated to the experiment.
-  useEffect(() => {
-    getRuns();
-  }, []);
-
-  // polling to update the state of the runs
-  useEffect(() => {
-    if (expRunning[experiment.id]) {
-      // Fetch data initially
-      const initialGetRuns = async () => {
-        await getRuns({ showLoading: false });
-      };
-      initialGetRuns().then(() => {
-        // clear previous interval
-        clearInterval(intervalRef.current);
-        // start polling
-        intervalRef.current = setInterval(
-          () => getRuns({ showLoading: false }),
-          1000, // Poll every 1 second
-        );
-      });
-    } else {
-      clearInterval(intervalRef.current);
-    }
-  }, [expRunning]);
-
   return (
     <React.Fragment>
       <GridActionsCellItem
         key="runner-button"
+        data-tour="run-experiment-button"
         icon={
           expRunning[experiment.id] ? (
             <CircularProgress size={18} />
@@ -208,19 +250,37 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
           !expRunning[experiment.id] &&
           Object.values(expRunning).some((value) => value === true)
         }
-        onClick={() => setOpen(true)}
+        onClick={handleOpenDialog}
       />
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
         fullWidth
         maxWidth={"md"}
+        data-tour="runner-dialog-progress"
       >
-        <DialogTitle>{`Runs in ${experiment.name}`}</DialogTitle>
+        <DialogTitle>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {`Runs in ${experiment.name}`}
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
         <DialogContent>
           <Paper
             sx={{ px: 3, py: 2 }}
-            // solves a mui problem related to putting datagrid inside another datagrid
             onClick={(event) => {
               event.target = document.body;
             }}
@@ -252,22 +312,13 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         </DialogContent>
         <DialogActions>
           <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 2 }}>
-            {/* {finishedRunning ? (
-              <LoadingButton
-                variant="outlined"
-                loading={expRunning[experiment.id]}
-                endIcon={<PlayArrowIcon />}
-                onClick={handleExecuteRuns}
-              >
-                {"Re Run"}
-              </LoadingButton>
-            ) : null} */}
             <LoadingButton
+              data-tour="runner-dialog-start"
               variant="contained"
               loading={expRunning[experiment.id]}
               endIcon={finishedRunning ? <CheckIcon /> : <PlayArrowIcon />}
               onClick={
-                finishedRunning ? () => setOpen(false) : handleExecuteRuns
+                finishedRunning ? handleCloseAndAdvance : handleExecuteRuns
               }
             >
               {finishedRunning ? "Finished" : "Start"}
