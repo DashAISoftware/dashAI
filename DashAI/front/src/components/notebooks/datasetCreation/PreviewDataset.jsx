@@ -191,13 +191,15 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
                 size="small"
                 onClick={onChangeDataset}
                 sx={{
-                  lineHeight: "1rem",
-                  padding: "0.5rem",
+                  fontSize: "0.7rem",
+                  px: 1.5,
+                  py: 0.5,
                   textTransform: "uppercase",
+                  minWidth: "auto",
                   flexShrink: 0,
                 }}
               >
-                Change Dataset
+                Re-upload dataset
               </Button>
             </Box>
 
