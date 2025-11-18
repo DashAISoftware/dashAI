@@ -1,3 +1,4 @@
+import { Box, Typography, Tooltip } from "@mui/material";
 import { useState, useEffect } from "react";
 import { getExplorerResults } from "../../../api/explorer";
 import ImageVisualizer from ".//visualizations/ImageVisualizer";
