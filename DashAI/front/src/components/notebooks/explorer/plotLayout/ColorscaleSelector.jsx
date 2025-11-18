@@ -41,7 +41,6 @@ const COLORMAPS = [
 
 export default function ColorscaleSelector({ value, onChange }) {
   const isArrayMode = Array.isArray(value);
-  console.log("ColorscaleSelector value:", isArrayMode, value);
 
   const [mode, setMode] = useState(isArrayMode ? "array" : "preset");
   const [localArray, setLocalArray] = useState(
