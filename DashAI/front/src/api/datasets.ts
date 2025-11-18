@@ -126,7 +126,6 @@ export const previewWithTypes = async (
   schema: Record<string, { type: string; dtype: string; encoding?: string }>;
   inferred_types: Record<string, { type: string; dtype: string }>;
   preview_row_count: number;
-  total_rows_estimated: string;
 }> => {
   const response = await api.post(
     `${datasetEndpoint}/preview_with_types`,

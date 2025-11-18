@@ -27,7 +27,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset, Experiment
 from DashAI.back.types.inf.type_inference import infer_types
 from DashAI.back.types.type_validation import validate_multiple_type_changes
-from DashAI.back.types.utils import arrow_to_dashai_schema, value_types
+from DashAI.back.types.utils import arrow_to_dashai_schema
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -913,7 +913,6 @@ async def preview_with_types(
 ):
     """
     Load preview AND infer types in a single call.
-    This combines load_preview and infer_datatypes for better UX.
 
     Parameters
     ----------
@@ -946,55 +945,42 @@ async def preview_with_types(
         try:
             if file.filename.endswith(".csv"):
                 dataloader_name = "CSVDataLoader"
-                if "separator" not in parsed_params:
-                    parsed_params["separator"] = ","
-
             elif file.filename.endswith(".xlsx") or file.filename.endswith(".xls"):
                 dataloader_name = "ExcelDataLoader"
-
             elif file.filename.endswith(".json"):
                 dataloader_name = "JSONDataLoader"
-                if "data_key" not in parsed_params:
-                    parsed_params["data_key"] = None
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        "Unsupported file type. Only CSV, Excel and JSON files are "
-                        "supported."
-                    ),
+                    detail="Unsupported file type",
                 )
 
             if dataloader_name not in component_registry:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Dataloader {dataloader_name} not found in registry.",
+                    detail=f"Dataloader {dataloader_name} not found",
                 )
 
             dataloader = component_registry[dataloader_name]["class"]()
 
-            inference_rows = parsed_params.get("inference_rows", 1000)
+            inference_rows = parsed_params.pop("inference_rows", 1000)
+
             loaded_dataset = dataloader.load_preview(
                 filepath_or_buffer=tmp_file_path,
                 params=parsed_params,
                 n_rows=inference_rows,
             )
-
             sample_df = loaded_dataset.head(10)
 
             table = pa.Table.from_pandas(loaded_dataset)
             arrow_schema = arrow_to_dashai_schema(table)
 
             methods = parsed_params.get("methods", ["DashAIPtype"])
-
             inferred_types = {}
+
             for method in methods:
-                types_result = infer_types(loaded_dataset, method)
-                for column_name, column_detail in types_result.items():
-                    current = inferred_types.get(column_name) or {}
-                    current_type = current.get("type", None)
-                    if current_type is None or current_type in value_types:
-                        inferred_types[column_name] = column_detail
+                method_types = infer_types(loaded_dataset, method=method)
+                inferred_types.update(method_types)
 
             sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
             sample = sample_df.to_dict(orient="records")
@@ -1004,7 +990,6 @@ async def preview_with_types(
                 "schema": arrow_schema,
                 "inferred_types": inferred_types,
                 "preview_row_count": len(loaded_dataset),
-                "total_rows_estimated": "unknown",  # Could estimate from file size
             }
 
         finally:
@@ -1029,27 +1014,6 @@ async def validate_type_changes(
 ):
     """
     Validate proposed type changes for dataset columns.
-
-    Parameters
-    ----------
-    file : UploadFile
-        The dataset file
-    type_changes : str
-        JSON string with proposed type changes
-        Format: {
-            "column_name": {
-                "current_type": "...",
-                "new_type": "...",
-                "new_dtype": "..."
-            }
-        }
-    params : str
-        JSON string with dataloader parameters
-
-    Returns
-    -------
-    Dict
-        Validation results with any errors found
     """
     try:
         parsed_params = json.loads(params) if params else {}
@@ -1065,8 +1029,6 @@ async def validate_type_changes(
         try:
             if file.filename.endswith(".csv"):
                 dataloader_name = "CSVDataLoader"
-                if "separator" not in parsed_params:
-                    parsed_params["separator"] = ","
             elif file.filename.endswith((".xlsx", ".xls")):
                 dataloader_name = "ExcelDataLoader"
             elif file.filename.endswith(".json"):

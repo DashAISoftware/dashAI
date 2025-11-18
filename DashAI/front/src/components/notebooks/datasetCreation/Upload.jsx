@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 
 import PreviewDataset from "./PreviewDataset";
+
 /**
  * Renders a drag and drop to upload a file (dataset).
  * The upload (send to API) doesn't happen here, this component just adds the file "uploaded" to the
@@ -18,12 +19,14 @@ import PreviewDataset from "./PreviewDataset";
  * @param {File} initialFile optional initial file to display (when coming back from preview)
  * @param {object} formValues current form values from the configuration form
  * @param {function} onPreviewError callback to notify parent of preview errors
+ * @param {function} onTypesChanged callback to notify parent when column types change
  */
 function Upload({
   onFileUpload,
   initialFile = null,
   formValues = {},
   onPreviewError,
+  onTypesChanged,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -142,12 +145,13 @@ function Upload({
                   handleDeleteDataset();
                 }}
                 onPreviewError={onPreviewError}
+                onTypesChanged={onTypesChanged}
               />
             </Box>
           );
       }
     },
-    [handleSelect, file, formValues, onPreviewError],
+    [handleSelect, file, formValues, onPreviewError, onTypesChanged],
   );
 
   return (
@@ -222,6 +226,7 @@ Upload.propTypes = {
   formSubmitRef: PropTypes.object,
   formValues: PropTypes.object,
   onPreviewError: PropTypes.func,
+  onTypesChanged: PropTypes.func,
 };
 
 export default Upload;

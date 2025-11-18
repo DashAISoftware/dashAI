@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -7,20 +7,29 @@ import PreviewDatasetTable from "./PreviewDatasetTable";
 
 /**
  * This component shows a preview of the dataset before final upload.
- * It contains the Upload button that creates the dataset and enqueues the processing job.
  *
  * @param {object} datasetData - Object containing params, file, and url for the dataset
  * @param {function} onChangeDataset - Callback function when the user wants to change the dataset
  * @param {function} onPreviewError - Callback function to notify parent of preview errors
+ * @param {function} onTypesChanged - Callback to notify parent when column types change
  */
-function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
+function PreviewDataset({
+  datasetData,
+  onChangeDataset,
+  onPreviewError,
+  onTypesChanged,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const [previewData, setPreviewData] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const onTypesChangedRef = useRef(onTypesChanged);
 
-  // Notify parent about preview errors
+  useEffect(() => {
+    onTypesChangedRef.current = onTypesChanged;
+  }, [onTypesChanged]);
+
   useEffect(() => {
     if (onPreviewError) {
       onPreviewError(!!error);
@@ -43,16 +52,19 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
         formData.append("file", file);
 
         const previewParams = {
-          separator: params.separator || ",",
-          header: params.header,
-          encoding: params.encoding,
-          inference_rows: params.inference_rows || 1000,
+          ...params,
+          inference_rows: 1000,
         };
         formData.append("params", JSON.stringify(previewParams));
 
         const result = await previewWithTypes(formData);
         setPreviewData(result);
         setColumnTypes(result.inferred_types);
+
+        if (onTypesChangedRef.current) {
+          onTypesChangedRef.current(result.inferred_types);
+        }
+
         setError(null);
       } catch (err) {
         console.error("Error loading preview:", err);
@@ -63,11 +75,10 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
     };
 
     loadPreview();
-  }, [datasetData]);
+  }, [datasetData?.file]);
 
   const handleTypeChange = useCallback(
     (typeChanges) => {
-      // typeChanges es un objeto: { columnName: { current_type, new_type, new_dtype } }
       setColumnTypes((prevTypes) => {
         const updatedTypes = { ...prevTypes };
 
@@ -80,6 +91,10 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
           };
         });
 
+        if (onTypesChangedRef.current) {
+          onTypesChangedRef.current(updatedTypes);
+        }
+
         return updatedTypes;
       });
 
@@ -87,7 +102,7 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
         variant: "success",
       });
     },
-    [enqueueSnackbar],
+    [enqueueSnackbar, onTypesChanged],
   );
 
   return (
@@ -98,7 +113,6 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
       }}
     >
       <Grid sx={{ p: 4 }}>
-        {/* Preview content */}
         {loading && (
           <Box
             sx={{
@@ -166,7 +180,6 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
               width: "100%",
             }}
           >
-            {/* Header - Fixed */}
             <Box
               sx={{
                 display: "flex",
@@ -203,12 +216,7 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
               </Button>
             </Box>
 
-            {/* Table - No scroll, expands */}
-            <Box
-              sx={{
-                width: "100%",
-              }}
-            >
+            <Box sx={{ width: "100%" }}>
               <PreviewDatasetTable
                 rows={previewData.sample}
                 columnTypes={columnTypes}
@@ -228,6 +236,7 @@ PreviewDataset.propTypes = {
   datasetData: PropTypes.object,
   onChangeDataset: PropTypes.func,
   onPreviewError: PropTypes.func,
+  onTypesChanged: PropTypes.func,
 };
 
 export default PreviewDataset;
