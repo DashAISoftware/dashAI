@@ -1,6 +1,9 @@
 import React from "react";
+import { TextField, FormControlLabel, Switch, Box } from "@mui/material";
 
-export default function LegendForm({ layout, handleLegendChange }) {
+import DebouncedColorPicker from "../DebouncedColorPicker";
+
+export default function LegendForm({ layout, handleChange }) {
   return (
     <>
       <FormControlLabel

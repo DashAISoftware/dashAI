@@ -14,6 +14,8 @@ import GeneralForm from "./forms/GeneralForm";
 import TraceForm from "./forms/TraceForm";
 import XAxisForm from "./forms/XAxisForm";
 import YAxisForm from "./forms/YAxisForm";
+import LegendForm from "./forms/LegendForm";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function PlotLayoutForm({
   data,
@@ -92,7 +94,7 @@ export default function PlotLayoutForm({
 
       {/* General Settings */}
       <Accordion defaultExpanded sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-        <AccordionSummary>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
             General Settings
           </Typography>
@@ -108,7 +110,7 @@ export default function PlotLayoutForm({
       {Array.isArray(data) &&
         data.map((trace, index) => (
           <Accordion key={index} sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-            <AccordionSummary>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
                 Trace {index + 1} ({trace.name || trace.type})
               </Typography>
@@ -129,7 +131,7 @@ export default function PlotLayoutForm({
 
       {/* X Axis Settings */}
       <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-        <AccordionSummary>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
             X Axis
           </Typography>
@@ -143,7 +145,7 @@ export default function PlotLayoutForm({
 
       {/* Y Axis Settings */}
       <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-        <AccordionSummary>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
             Y Axis
           </Typography>
@@ -157,14 +159,16 @@ export default function PlotLayoutForm({
 
       {/* Legend Settings */}
       <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-        <AccordionSummary>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
             Legend
           </Typography>
         </AccordionSummary>
         <AccordionDetails
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        ></AccordionDetails>
+        >
+          <LegendForm layout={layout} handleChange={handleChange} />
+        </AccordionDetails>
       </Accordion>
 
       <Divider sx={{ my: 2, borderColor: "#444" }} />
