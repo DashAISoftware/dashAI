@@ -923,7 +923,7 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     return column_types
 
 
-# Not currently used
+# Not currently used, will be used to change column types after upload
 @beartype
 def update_columns_spec(dataset_path: str, columns: Dict) -> DashAIDataset:
     """Update the column specification of some dataset on secondary memory.
@@ -1160,5 +1160,4 @@ def modify_table(
 
     new_types = types if types else dataset.types
 
-    return DashAIDataset(new_table, splits=dataset.splits, types=new_types)
     return DashAIDataset(new_table, splits=dataset.splits, types=new_types)
