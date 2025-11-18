@@ -14,6 +14,7 @@ import { getExplorerStatus } from "../../../utils/explorerStatus";
 import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
 import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
+import { useExplorerResults } from "./useExplorerResults";
 
 export default function ExplorerBox({
   explorer,
@@ -22,6 +23,9 @@ export default function ExplorerBox({
 }) {
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
+  const { loading, data, dataType, setData } = useExplorerResults(explorer);
+
+  const statusLabel = getExplorerStatus(explorer.status);
 
   const handleExplorerDetailsClick = () => {
     setOpenExplorerDetails(true);
@@ -69,8 +73,6 @@ export default function ExplorerBox({
 
     return () => clearInterval(intervalId);
   }, [explorer.id, explorer.status, onStatusChange]);
-
-  const statusLabel = getExplorerStatus(explorer.status);
 
   return (
     <Card
@@ -125,7 +127,7 @@ export default function ExplorerBox({
               {(statusLabel === "Error" || statusLabel === "Finished") && (
                 <IconButton
                   size="small"
-                  onClick={handleExplorerDeleteClick}
+                  onClick={() => handleExplorerDeleteClick(explorer)}
                   sx={{
                     width: 24,
                     height: 24,
@@ -151,7 +153,14 @@ export default function ExplorerBox({
               overflow: "hidden",
             }}
           >
-            <TabResults id={explorer.id} minimalist height={300} />
+            <TabResults
+              id={explorer.id}
+              minimalist
+              height={300}
+              data={data}
+              loading={loading}
+              dataType={dataType}
+            />
           </Box>
         ) : statusLabel === "Error" ? (
           <Box
@@ -194,6 +203,10 @@ export default function ExplorerBox({
               setOpenExplorerDetails(false);
             }}
             explorer={explorer}
+            data={data}
+            dataType={dataType}
+            loading={loading}
+            setData={setData}
           />
         )}
       </CardContent>

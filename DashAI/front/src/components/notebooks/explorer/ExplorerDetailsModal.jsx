@@ -20,6 +20,9 @@ import {
 } from "@mui/icons-material";
 
 import { TabColumns, TabResults, TabInfo, TabParameters } from "./tabs";
+import PlotLayoutForm from "./plotLayout/PlotLayoutForm";
+import { updateExplorerResults } from "../../../api/explorer";
+import { useSnackbar } from "notistack";
 
 const tabs = [
   { label: "Info", value: 0, icon: <InfoOutlined /> },
@@ -30,21 +33,38 @@ const tabs = [
 
 const defaultTab = tabs.find((tab) => tab.label === "Results").value;
 
-const MemoizedResultTab = React.memo(
-  TabResults,
-  (prev, next) => prev.id == next.id,
-);
-
 export default function ExplorerDetailsModal({
   open = false,
   onClose = () => {},
   explorer,
+  data,
+  setData,
+  dataType,
+  loading,
 }) {
   if (!explorer) return null;
+  if (!data) return null;
   const [currentTab, setCurrentTab] = useState(defaultTab);
+  const [localData, setLocalData] = useState(structuredClone(data));
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleTabChange = (_, newValue) => {
     setCurrentTab(newValue);
+  };
+
+  const handleSaveChangesLayout = async () => {
+    try {
+      await updateExplorerResults(explorer.id, localData);
+      setData(localData);
+      enqueueSnackbar("Explorer results updated successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update explorer results:", error);
+      enqueueSnackbar("Failed to update explorer results", {
+        variant: "error",
+      });
+    }
   };
 
   return (
@@ -108,7 +128,31 @@ export default function ExplorerDetailsModal({
                 height: "100%",
               }}
             >
-              <MemoizedResultTab id={explorer.id} />
+              <TabResults
+                id={explorer.id}
+                data={localData}
+                dataType={dataType}
+                loading={loading}
+              />
+              {dataType === "plotly_json" && (
+                <PlotLayoutForm
+                  data={localData.data}
+                  setData={(newData) => {
+                    setLocalData((prevData) => ({
+                      ...prevData,
+                      data: newData,
+                    }));
+                  }}
+                  layout={localData.layout}
+                  setLayout={(newLayout) => {
+                    setLocalData((prevData) => ({
+                      ...prevData,
+                      layout: newLayout,
+                    }));
+                  }}
+                  onSave={handleSaveChangesLayout}
+                />
+              )}
             </Box>
           </Box>
         </Box>
