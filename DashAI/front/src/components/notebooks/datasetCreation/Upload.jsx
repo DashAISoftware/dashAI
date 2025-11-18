@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -74,11 +74,22 @@ function Upload({
     inputRef.current.click();
   };
 
-  const handleDeleteDataset = () => {
+  const handleDeleteDataset = useCallback(() => {
     onFileUpload(null, "");
     setDatasetState(EMPTY);
     setFile(null);
-  };
+  }, [onFileUpload]);
+
+  // memoize datasetData object so its reference stays stable across renders
+  const datasetDataMemo = useMemo(() => {
+    return {
+      file,
+      params: {
+        inference_rows: 500,
+        ...formValues,
+      },
+    };
+  }, [file, formValues]);
 
   // renders content inside the drag and drop component depending on the state of the dataset
   const stateContent = useCallback(
@@ -130,13 +141,7 @@ function Upload({
               }}
             >
               <PreviewDataset
-                datasetData={{
-                  file,
-                  params: {
-                    inference_rows: 500,
-                    ...formValues,
-                  },
-                }}
+                datasetData={datasetDataMemo}
                 onChangeDataset={(e) => {
                   e.stopPropagation();
                   handleDeleteDataset();
@@ -147,7 +152,7 @@ function Upload({
           );
       }
     },
-    [handleSelect, file, formValues, onPreviewError],
+    [handleSelect, datasetDataMemo, onPreviewError, handleDeleteDataset],
   );
 
   return (
