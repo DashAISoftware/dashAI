@@ -37,7 +37,6 @@ const visualizers = {
   image_url: ImageVisualizer,
 };
 
-// Move these constants outside the hook since they're used in multiple places
 const visualizersKeys = {
   tabular: "tabular",
   plotly_json: "plotly_json",
@@ -109,7 +108,7 @@ export function useExplorerResults(explorer) {
   // Fetch the results data when explorer changes or status becomes "Finished"
   useEffect(() => {
     fetchExplorerResults();
-  }, [explorer?.id, explorer?.status]); // Add dependencies
+  }, [explorer?.id, explorer?.status]);
 
   return {
     loading,
@@ -210,5 +209,4 @@ const getDataFromOrientation = (data, orientation) => {
   return res;
 };
 
-// You'll also need to export the visualizersKeys for use in the component
 export { visualizersKeys };
