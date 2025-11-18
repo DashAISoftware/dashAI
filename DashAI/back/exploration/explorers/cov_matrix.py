@@ -124,16 +124,13 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
     ) -> Dict[str, Any]:
         if self.plot:
             resultType = "plotly_json"
-            path = pathlib.Path(exploration_path)
-            result = pio.read_json(path).to_json()
+            with open(exploration_path, "r", encoding="utf-8") as f:
+                result = f.read()
             return {"type": resultType, "data": result, "config": {}}
 
         resultType = "tabular"
-        orientation = options.get("orientation", "dict")
-        config = {"orient": orientation}
+        config = {"orient": "dict"}
 
         path = pathlib.Path(exploration_path)
-        result = (
-            pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)
-        )
+        result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}
