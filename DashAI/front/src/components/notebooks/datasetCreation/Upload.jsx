@@ -23,6 +23,7 @@ function Upload({
   onFileUpload,
   initialFile = null,
   formValues = {},
+  selectedDataloader = null,
   onPreviewError,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
@@ -82,14 +83,21 @@ function Upload({
 
   // memoize datasetData object so its reference stays stable across renders
   const datasetDataMemo = useMemo(() => {
+    console.log(formValues);
+    // Build params but remove keys that don't apply to the selected dataloader
+    const params = {
+      ...formValues,
+      inference_rows:
+        formValues && formValues.inference_rows != null
+          ? formValues.inference_rows
+          : 1000,
+    };
+
     return {
       file,
-      params: {
-        inference_rows: 500,
-        ...formValues,
-      },
+      params,
     };
-  }, [file, formValues]);
+  }, [file, formValues, selectedDataloader]);
 
   // renders content inside the drag and drop component depending on the state of the dataset
   const stateContent = useCallback(
@@ -226,6 +234,7 @@ Upload.propTypes = {
   initialFile: PropTypes.object,
   formSubmitRef: PropTypes.object,
   formValues: PropTypes.object,
+  selectedDataloader: PropTypes.string,
   onPreviewError: PropTypes.func,
 };
 

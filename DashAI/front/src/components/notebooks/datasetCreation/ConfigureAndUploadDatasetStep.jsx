@@ -121,10 +121,6 @@ export default function ConfigureAndUploadDatasetStep({
   };
 
   useEffect(() => {
-    // Enable upload only if:
-    // 1. File is uploaded
-    // 2. No preview errors
-    // 3. Form is valid (no validation errors and all required fields filled)
     if (
       datasetFileToUpload &&
       datasetFileToUpload.file !== null &&
@@ -156,6 +152,7 @@ export default function ConfigureAndUploadDatasetStep({
           onFileUpload={handleFileUpload}
           formSubmitRef={formSubmitRef}
           formValues={formValues}
+          selectedDataloader={selectedDataloader}
           onPreviewError={setPreviewError}
         />
       </Grid>

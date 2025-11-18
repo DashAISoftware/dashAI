@@ -43,10 +43,8 @@ function PreviewDataset({ datasetData, onChangeDataset, onPreviewError }) {
         formData.append("file", file);
 
         const previewParams = {
-          separator: params.separator || ",",
-          header: params.header,
-          encoding: params.encoding,
-          inference_rows: params.inference_rows || 1000,
+          inference_rows: 1000,
+          ...params,
         };
         formData.append("params", JSON.stringify(previewParams));
 
