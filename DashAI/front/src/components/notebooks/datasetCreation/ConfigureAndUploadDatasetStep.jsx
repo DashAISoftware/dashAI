@@ -75,9 +75,6 @@ export default function ConfigureAndUploadDatasetStep({
 
       // Create dataset
       const data = await createDataset(name);
-      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-        variant: "success",
-      });
 
       try {
         // Enqueue dataset job
