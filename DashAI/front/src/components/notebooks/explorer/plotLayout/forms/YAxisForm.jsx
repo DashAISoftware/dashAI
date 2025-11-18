@@ -60,6 +60,16 @@ export default function YAxisForm({ layout, handleAxisChange }) {
         }
         fullWidth
       />
+      <DebouncedColorPicker
+        label="Y Axis Tick Color"
+        value={layout.yaxis?.tickfont?.color || "#2A3F5F"}
+        onChange={(color) =>
+          handleAxisChange("yaxis", "tickfont", {
+            ...layout.yaxis?.tickfont,
+            color,
+          })
+        }
+      />
 
       <TextField
         label="Y Axis Tick Angle"

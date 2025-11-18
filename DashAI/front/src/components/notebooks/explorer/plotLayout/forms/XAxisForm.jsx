@@ -61,6 +61,16 @@ export default function XAxisForm({ layout, handleAxisChange }) {
         fullWidth
       />
 
+      <DebouncedColorPicker
+        label="X Axis Tick Color"
+        value={layout.xaxis?.tickfont?.color || "#2A3F5F"}
+        onChange={(color) =>
+          handleAxisChange("xaxis", "tickfont", {
+            ...layout.xaxis?.tickfont,
+            color,
+          })
+        }
+      />
       <TextField
         label="X Axis Tick Angle"
         variant="filled"
