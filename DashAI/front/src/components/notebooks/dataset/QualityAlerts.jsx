@@ -2,7 +2,7 @@ import React from "react";
 import { Alert } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 
-export const QualityAlerts = ({ qualityInfo, generalInfo }) => {
+export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   if (!qualityInfo) return null;
 
   const alerts = [];
@@ -16,15 +16,15 @@ export const QualityAlerts = ({ qualityInfo, generalInfo }) => {
     );
   }
 
-  // High missing values
-  const highNanColumns = Object.entries(qualityInfo.nan_ratio_per_column || {})
-    .filter(([_, ratio]) => ratio > 0.1)
-    .map(([col]) => col);
-
-  if (highNanColumns.length > 0) {
+  // Missing values
+  if (Object.values(missingValues).some((value) => value > 0)) {
     alerts.push(
       <Alert severity="warning" sx={{ mb: 1 }} key="nan">
-        High missing values in: {highNanColumns.join(", ")}
+        Missing values detected in columns:{" "}
+        {Object.entries(missingValues)
+          .filter(([_, value]) => value > 0)
+          .map(([key, _]) => key)
+          .join(", ")}
       </Alert>,
     );
   }

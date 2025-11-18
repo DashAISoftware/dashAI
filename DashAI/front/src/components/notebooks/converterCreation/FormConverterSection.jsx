@@ -113,7 +113,6 @@ export default function FormConverterSection({
         flexGrow: 1,
         maxHeight: "100%",
       }}
-      data-tour="column-selector-converter-container"
     >
       {step === 0 && (
         <ScopeStepConverter

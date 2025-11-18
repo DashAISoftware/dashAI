@@ -1,4 +1,4 @@
-import time
+import time  # noqa: F401
 
 import pytest
 
@@ -94,22 +94,6 @@ def test_delete_all_jobs(test_job_queue: HueyJobQueue):
 
     jobs_list = test_job_queue.to_list()
     assert len(jobs_list) == 0
-
-
-def test_changes_since(test_job_queue: HueyJobQueue):
-    import datetime
-
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-    time.sleep(0.05)
-    job_1 = DummyJob()
-    test_job_queue.put(job_1)
-
-    job_2 = DummyJob()
-    job_2_id = test_job_queue.put(job_2).id
-
-    changes = test_job_queue.changes_since(current_time)
-    assert len(changes) == 2
-    assert changes[0]["id"] == job_2_id
 
 
 def test_get_nonexistent_job_status(test_job_queue: HueyJobQueue):

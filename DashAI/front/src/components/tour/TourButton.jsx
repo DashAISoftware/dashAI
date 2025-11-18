@@ -14,7 +14,7 @@ export const TourButton = ({ tourKey }) => {
         }}
         sx={{
           position: "fixed",
-          top: 80,
+          top: 20,
           right: 16,
           backgroundColor: "#1976d2",
           color: "white",
@@ -26,7 +26,7 @@ export const TourButton = ({ tourKey }) => {
           },
           transition: "all 0.2s ease-in-out",
           boxShadow: 2,
-          zIndex: 1000,
+          zIndex: 9000,
         }}
       >
         <HelpOutlineIcon />

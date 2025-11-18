@@ -83,6 +83,7 @@ export default function ScopeStepConverter({
         height: "100%",
         gap: 1,
       }}
+      data-tour="column-selector-converter-container"
     >
       {/* Content */}
       <Box
