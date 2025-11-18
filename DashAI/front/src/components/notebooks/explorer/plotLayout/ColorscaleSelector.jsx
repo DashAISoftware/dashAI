@@ -98,6 +98,7 @@ export default function ColorscaleSelector({ value, onChange }) {
         <Box>
           <Typography
             variant="subtitle2"
+            color="text.secondary"
             sx={{
               fontWeight: 600,
               textTransform: "uppercase",
@@ -138,7 +139,8 @@ export default function ColorscaleSelector({ value, onChange }) {
 
         <Divider
           sx={{
-            borderColor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            width: "100%",
+            borderColor: alpha("#ffffff", 0.2),
           }}
         />
 
@@ -147,12 +149,12 @@ export default function ColorscaleSelector({ value, onChange }) {
           <Box>
             <Typography
               variant="subtitle2"
+              color="text.secondary"
               sx={{
                 fontWeight: 600,
                 textTransform: "uppercase",
                 fontSize: "0.75rem",
                 letterSpacing: "0.5px",
-                color: "#06b6d4",
                 mb: 1.5,
               }}
             >
@@ -200,12 +202,12 @@ export default function ColorscaleSelector({ value, onChange }) {
           <Box>
             <Typography
               variant="subtitle2"
+              color="text.secondary"
               sx={{
                 fontWeight: 600,
                 textTransform: "uppercase",
                 fontSize: "0.75rem",
                 letterSpacing: "0.5px",
-                color: "#06b6d4",
                 mb: 1.5,
               }}
             >
@@ -262,7 +264,13 @@ export default function ColorscaleSelector({ value, onChange }) {
                         type="number"
                         variant="outlined"
                         size="small"
-                        inputProps={{ step: "0.1", min: "0", max: "1" }}
+                        slotProps={{
+                          htmlInput: {
+                            step: 0.1,
+                            min: 0,
+                            max: 1,
+                          },
+                        }}
                         value={item[0]}
                         onChange={(e) =>
                           handleArrayValueChange(i, parseFloat(e.target.value))
