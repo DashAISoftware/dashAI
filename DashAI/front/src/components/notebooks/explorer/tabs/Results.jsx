@@ -5,7 +5,7 @@ import { getExplorerResults } from "../../../../api/explorer";
 import ImageVisualizer from "../visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "../visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "../visualizations/TabularVisualizer";
-import PlotLayoutForm from "../PlotLayoutForm";
+import PlotLayoutForm from "../plotLayout/PlotLayoutForm";
 import { updateExplorerResults } from "../../../../api/explorer";
 import { useSnackbar } from "notistack";
 
@@ -278,6 +278,13 @@ function Results({ id, minimalist = false }) {
       )}
       {!minimalist && !loading && dataType === visualizersKeys.plotly_json && (
         <PlotLayoutForm
+          data={data.data}
+          setData={(newData) => {
+            setData((prevData) => ({
+              ...prevData,
+              data: newData,
+            }));
+          }}
           layout={data.layout}
           setLayout={(newLayout) => {
             setData((prevData) => ({
