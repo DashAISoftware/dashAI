@@ -13,6 +13,7 @@ import {
   IconButton,
   Divider,
   alpha,
+  Alert,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -213,6 +214,19 @@ export default function ColorscaleSelector({ value, onChange }) {
             >
               Color Stops
             </Typography>
+            {localArray.length < 2 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                No color stops defined. Please add at least two color stops.
+              </Alert>
+            )}
+            {localArray.length >= 2 &&
+              (localArray[0][0] !== 0 ||
+                localArray[localArray.length - 1][0] !== 1) && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Color stops must include positions 0 at the start and 1 at the
+                  end.
+                </Alert>
+              )}
 
             <Stack spacing={2}>
               {localArray.map((item, i) => (
