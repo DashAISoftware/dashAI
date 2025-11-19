@@ -7,6 +7,7 @@ import {
   Chip,
   IconButton,
   CircularProgress,
+  Button,
 } from "@mui/material";
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
@@ -110,19 +111,18 @@ export default function ExplorerBox({
             />
             <>
               {statusLabel === "Finished" && (
-                <IconButton
-                  size="small"
+                <Chip
+                  label={dataType === "plotly_json" ? "Info/Edit" : "Info"}
                   onClick={() => handleExplorerDetailsClick(explorer)}
+                  size="small"
+                  icon={<Info sx={{ color: "white !important" }} />}
                   sx={{
-                    color: "white",
-                    width: 24,
-                    height: 24,
                     bgcolor: "primary.main",
-                    "&:hover": { bgcolor: "primary.dark" },
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                    },
                   }}
-                >
-                  <Info sx={{ fontSize: 16 }} />
-                </IconButton>
+                />
               )}
               {(statusLabel === "Error" || statusLabel === "Finished") && (
                 <IconButton
