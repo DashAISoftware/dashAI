@@ -1,9 +1,22 @@
 import React from "react";
-import { TextField, FormControlLabel, Switch } from "@mui/material";
+import {
+  TextField,
+  FormControlLabel,
+  Switch,
+  Box,
+  Typography,
+} from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 
-export default function XAxisForm({ layout, handleAxisChange }) {
+export default function XAxisForm({
+  data,
+  layout,
+  handleAxisChange,
+  handleTraceChange,
+}) {
+  const tickvalsArray = Array.isArray(data[0]?.x) ? data[0].x : [];
+
   return (
     <>
       <TextField
@@ -141,6 +154,40 @@ export default function XAxisForm({ layout, handleAxisChange }) {
         }
         label="Show Zero Line"
       />
+      {/* X Axis Tick Labels */}
+      {tickvalsArray.length > 0 &&
+        tickvalsArray.map((tick, idx) => {
+          const rawTicktext = data[0].x[idx];
+
+          return (
+            <Box
+              key={idx}
+              sx={{
+                mt: 2,
+                p: 2,
+                border: "1px solid #444",
+                borderRadius: 1,
+                bgcolor: "#333",
+              }}
+            >
+              {/* Label input */}
+              <TextField
+                label={`X Tick Label for ${tick}`}
+                variant="filled"
+                value={rawTicktext}
+                onChange={(e) => {
+                  const newTicktext = e.target.value;
+                  const newX = [...data[0].x];
+                  newX[idx] = newTicktext;
+
+                  handleTraceChange(0, `x`, newX);
+                }}
+                fullWidth
+                sx={{ mb: 2 }}
+              />
+            </Box>
+          );
+        })}
     </>
   );
 }
