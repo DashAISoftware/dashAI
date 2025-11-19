@@ -52,8 +52,8 @@ function PreviewDataset({
         formData.append("file", file);
 
         const previewParams = {
-          ...params,
           inference_rows: 1000,
+          ...params,
         };
         formData.append("params", JSON.stringify(previewParams));
 

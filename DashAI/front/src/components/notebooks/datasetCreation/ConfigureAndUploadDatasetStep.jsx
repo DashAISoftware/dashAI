@@ -63,9 +63,6 @@ export default function ConfigureAndUploadDatasetStep({
 
       // Create dataset
       const data = await createDataset(name);
-      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-        variant: "success",
-      });
 
       try {
         const job = await enqueueDatasetRequest(data.id, file, url, params);
@@ -144,6 +141,7 @@ export default function ConfigureAndUploadDatasetStep({
           onFileUpload={handleFileUpload}
           formSubmitRef={formSubmitRef}
           formValues={formValues}
+          selectedDataloader={selectedDataloader}
           onPreviewError={setPreviewError}
           onTypesChanged={handleTypesChanged}
         />

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -11,6 +11,8 @@ import {
 
 import PreviewDataset from "./PreviewDataset";
 
+import { useSnackbar } from "notistack";
+import JSZip from "jszip";
 /**
  * Renders a drag and drop to upload a file (dataset).
  * The upload (send to API) doesn't happen here, this component just adds the file "uploaded" to the
@@ -25,6 +27,7 @@ function Upload({
   onFileUpload,
   initialFile = null,
   formValues = {},
+  selectedDataloader = null,
   onPreviewError,
   onTypesChanged,
 }) {
@@ -44,6 +47,89 @@ function Upload({
     setFile(file);
   };
 
+  const { enqueueSnackbar } = useSnackbar();
+
+  // helper to extract allowed extensions from acceptAttr (returns lowercase extensions like ".csv")
+  const getAllowedExtensions = (accept) => {
+    if (!accept) return [];
+    const parts = accept.split(",").map((p) => p.trim().toLowerCase());
+    const exts = [];
+    for (const p of parts) {
+      if (p.startsWith(".")) exts.push(p);
+      else if (p.endsWith("/*")) {
+        // common mappings for wildcards when inspecting zips
+        const major = p.split("/")[0];
+        if (major === "image")
+          exts.push(".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp");
+      }
+      // ignore explicit mime types for zip-inspection
+    }
+    return exts;
+  };
+
+  // helper to check file against acceptAttr (allows extensions like .csv and types like image/*)
+  // for regular files it's synchronous; zip inspection is asynchronous and handled separately
+  const isAcceptedFile = (file) => {
+    if (!file) return false;
+    if (!acceptAttr) return true; // no restriction
+
+    const parts = acceptAttr.split(",").map((p) => p.trim().toLowerCase());
+    const name = (file.name || "").toLowerCase();
+    const type = (file.type || "").toLowerCase();
+
+    for (const part of parts) {
+      if (part.startsWith(".")) {
+        if (name.endsWith(part)) return true;
+      } else if (part.endsWith("/*")) {
+        // image/* etc. compare major type
+        const major = part.split("/")[0];
+        if (type.startsWith(major + "/")) return true;
+      } else {
+        // direct mime type
+        if (type === part) return true;
+      }
+    }
+
+    // if it's a zip but acceptAttr includes .zip, we defer to zip-inspection elsewhere
+    if (name.endsWith(".zip") && parts.includes(".zip")) return true;
+
+    return false;
+  };
+
+  // validate ZIP contents asynchronously: returns true if at least one file inside the zip
+  // matches one of the allowed internal extensions for the current dataloader
+  const validateZipContents = async (file) => {
+    try {
+      const allowedExts = getAllowedExtensions(acceptAttr);
+      if (!allowedExts || allowedExts.length === 0) {
+        // if no explicit allowed extensions, accept any zip
+        return true;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+
+      let found = false;
+      zip.forEach((relativePath, zipEntry) => {
+        if (found) return; // short-circuit
+        if (zipEntry.dir) return; // skip directories
+        const lower = relativePath.toLowerCase();
+        for (const ext of allowedExts) {
+          if (lower.endsWith(ext)) {
+            found = true;
+            break;
+          }
+        }
+      });
+
+      return found;
+    } catch (err) {
+      // If zip can't be read, treat as invalid
+      console.error("Error reading zip for validation:", err);
+      return false;
+    }
+  };
+
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -56,32 +142,116 @@ function Upload({
     }
   };
 
-  const handleSelect = (e) => {
-    if (datasetState === EMPTY) {
-      uploadDataset(e.target.files[0]);
-    }
-  };
+  const handleSelect = async (e) => {
+    if (datasetState !== EMPTY) return;
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (datasetState === EMPTY) {
-      setDragActive(false);
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        uploadDataset(e.dataTransfer.files[0]);
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+
+    // fast check based on filename/mime
+    if (!isAcceptedFile(f)) {
+      enqueueSnackbar("File type not allowed for selected dataloader", {
+        variant: "error",
+      });
+      // clear input so the same file can be selected again later
+      if (inputRef && inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    // if it's a zip, do a deeper inspection
+    const name = (f.name || "").toLowerCase();
+    if (name.endsWith(".zip")) {
+      const ok = await validateZipContents(f);
+      if (!ok) {
+        enqueueSnackbar(
+          "ZIP does not contain files compatible with the selected dataloader",
+          {
+            variant: "error",
+          },
+        );
+        if (inputRef && inputRef.current) inputRef.current.value = "";
+        return;
       }
     }
+
+    uploadDataset(f);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (datasetState !== EMPTY) return;
+
+    setDragActive(false);
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+
+    if (!isAcceptedFile(f)) {
+      enqueueSnackbar("Dropped file type not allowed for selected dataloader", {
+        variant: "error",
+      });
+      return;
+    }
+
+    const name = (f.name || "").toLowerCase();
+    if (name.endsWith(".zip")) {
+      const ok = await validateZipContents(f);
+      if (!ok) {
+        enqueueSnackbar(
+          "ZIP does not contain files compatible with the selected dataloader",
+          {
+            variant: "error",
+          },
+        );
+        return;
+      }
+    }
+
+    uploadDataset(f);
   };
 
   const handleButtonClick = () => {
     inputRef.current.click();
   };
 
-  const handleDeleteDataset = () => {
+  const handleDeleteDataset = useCallback(() => {
     onFileUpload(null, "");
     setDatasetState(EMPTY);
     setFile(null);
-  };
+  }, [onFileUpload]);
+
+  // memoize datasetData object so its reference stays stable across renders
+  const datasetDataMemo = useMemo(() => {
+    console.log(formValues);
+    // Build params but remove keys that don't apply to the selected dataloader
+    const params = {
+      ...formValues,
+      inference_rows:
+        formValues && formValues.inference_rows != null
+          ? formValues.inference_rows
+          : 1000,
+    };
+
+    return {
+      file,
+      params,
+    };
+  }, [file, formValues, selectedDataloader]);
+
+  // determine accepted file types for the file input based on the selected dataloader
+  const acceptAttr = useMemo(() => {
+    if (!selectedDataloader || typeof selectedDataloader !== "string")
+      return undefined;
+    const s = selectedDataloader.toLowerCase();
+    // CSV dataloader: accept .csv and .zip (zipped CSVs)
+    if (s.includes("csv")) return ".csv,.zip";
+    // JSON dataloader: accept .json and .zip
+    if (s.includes("json")) return ".json,.zip";
+    // Images or generic image loaders
+    if (s.includes("excel")) return ".xls,.xlsx,.zip";
+    // Default: no restriction
+    return undefined;
+  }, [selectedDataloader]);
 
   // renders content inside the drag and drop component depending on the state of the dataset
   const stateContent = useCallback(
@@ -96,6 +266,7 @@ function Upload({
                   ref={inputRef}
                   style={{ display: "none" }}
                   onChange={handleSelect}
+                  {...(acceptAttr ? { accept: acceptAttr } : {})}
                 />
               </Grid>
               {dragActive ? (
@@ -112,7 +283,15 @@ function Upload({
                     </Typography>
                   </Grid>
                   <Grid>
-                    <Button variant="contained">Upload a file</Button>
+                    <Button
+                      variant="contained"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleButtonClick();
+                      }}
+                    >
+                      Upload a file
+                    </Button>
                   </Grid>
                 </React.Fragment>
               )}
@@ -133,13 +312,7 @@ function Upload({
               }}
             >
               <PreviewDataset
-                datasetData={{
-                  file,
-                  params: {
-                    inference_rows: 500,
-                    ...formValues,
-                  },
-                }}
+                datasetData={datasetDataMemo}
                 onChangeDataset={(e) => {
                   e.stopPropagation();
                   handleDeleteDataset();
@@ -151,7 +324,16 @@ function Upload({
           );
       }
     },
-    [handleSelect, file, formValues, onPreviewError, onTypesChanged],
+    [
+      handleSelect,
+      datasetDataMemo,
+      onPreviewError,
+      handleDeleteDataset,
+      dragActive,
+      handleButtonClick,
+      acceptAttr,
+      onTypesChanged,
+    ],
   );
 
   return (
@@ -225,6 +407,7 @@ Upload.propTypes = {
   initialFile: PropTypes.object,
   formSubmitRef: PropTypes.object,
   formValues: PropTypes.object,
+  selectedDataloader: PropTypes.string,
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
 };
