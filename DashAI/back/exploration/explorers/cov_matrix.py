@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.io as pio
 from beartype.typing import Any, Dict, Union
 
 from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
