@@ -8,6 +8,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  TextField,
 } from "@mui/material";
 
 import GeneralForm from "./forms/GeneralForm";
@@ -16,6 +17,7 @@ import XAxisForm from "./forms/XAxisForm";
 import YAxisForm from "./forms/YAxisForm";
 import LegendForm from "./forms/LegendForm";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import DimensionsForm from "./forms/DimensionsForm";
 
 export default function PlotLayoutForm({
   data,
@@ -129,33 +131,60 @@ export default function PlotLayoutForm({
           </Accordion>
         ))}
 
-      {/* X Axis Settings */}
-      <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            X Axis
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
-          <XAxisForm layout={layout} handleAxisChange={handleAxisChange} />
-        </AccordionDetails>
-      </Accordion>
+      {data?.[0]?.dimensions ? (
+        <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              Dimensions Labels
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <DimensionsForm data={data} handleTraceChange={handleTraceChange} />
+          </AccordionDetails>
+        </Accordion>
+      ) : (
+        <>
+          {/* X Axis Settings */}
+          <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                X Axis
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <XAxisForm
+                data={data}
+                layout={layout}
+                handleAxisChange={handleAxisChange}
+                handleTraceChange={handleTraceChange}
+              />
+            </AccordionDetails>
+          </Accordion>
 
-      {/* Y Axis Settings */}
-      <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            Y Axis
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
-          <YAxisForm layout={layout} handleAxisChange={handleAxisChange} />
-        </AccordionDetails>
-      </Accordion>
+          {/* Y Axis Settings */}
+          <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                Y Axis
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <YAxisForm
+                data={data}
+                layout={layout}
+                handleAxisChange={handleAxisChange}
+                handleTraceChange={handleTraceChange}
+              />
+            </AccordionDetails>
+          </Accordion>
+        </>
+      )}
 
       {/* Legend Settings */}
       <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
