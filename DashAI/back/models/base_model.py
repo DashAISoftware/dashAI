@@ -6,6 +6,7 @@ from typing import Any, Final
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
+
 class BaseModel(ConfigObject, metaclass=ABCMeta):
     """Abstract class of all machine learning models.
 
@@ -31,18 +32,20 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @abstractmethod
     def prepare_dataset(
         self, dataset: DashAIDataset, is_fit: bool = False
     ) -> DashAIDataset:
-        """Apply the model transformations to the dataset.
+        """Hook for model-specific preprocessing.
+
+        Override in subclasses needing
+        custom tokenization/encoding. Must not mutate input in-place.
 
         Parameters
         ----------
         dataset : DashAIDataset
             The dataset to be transformed.
-        prediction : bool
-            Whether the dataset is for prediction or not.
+        is_fit : bool
+            Whether the dataset is for fitting or not.
 
         Returns
         -------
@@ -50,4 +53,4 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             The prepared dataset ready to be converted to
             an accepted format in the model.
         """
-        raise NotImplementedError
+        return dataset

@@ -48,9 +48,6 @@ class SklearnLikeModel(BaseModel):
         self
             The fitted estimator object.
         """
-        # We recieve base DashAIDataset,
-        # so we first need to apply the transformations
-        # and then convert to desired format to fit the model.
         x_processed = self.prepare_dataset(x_train, is_fit=True).to_pandas()
         y_processed = self.prepare_dataset(y_train, is_fit=True).to_pandas()
         return super().fit(x_processed, y_processed)
@@ -73,19 +70,12 @@ class SklearnLikeModel(BaseModel):
             The prepared dataset ready to be converted to
             an accepted format in the model.
         """
-        if not is_fit:
-            try:
-                dataset = apply_categorical_label_encoder(dataset, self.encodings)
-                return dataset
-            except Exception as e:
-                print(f"Couldn't apply categorical label encoding: {e}")
+
+        if is_fit:
+            prepared, encodings = categorical_label_encoder(dataset)
+            self.encodings.update(encodings)
         else:
-            try:
-                # We apply as many transformations from dashai_dataset_utils as needed.
-                dataset, encodings = categorical_label_encoder(dataset)
-                self.encodings.update(encodings)  # Store the encodings for later use
-                return dataset
-            except Exception as e:
-                print(
-                    f"Couldn't apply transformations to the dataset for the model: {e}"
-                )
+            if self.encodings:
+                prepared = apply_categorical_label_encoder(dataset, self.encodings)
+
+        return prepared

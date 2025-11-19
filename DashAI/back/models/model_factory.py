@@ -135,7 +135,6 @@ class ModelFactory:
                         transformed_y, predictions, multiclass=multiclass
                     )
                 else:
-                    # For metrics that don't accept the multiclass parameter
                     score = metric.score(transformed_y, predictions)
 
                 split_results[metric.__name__] = score

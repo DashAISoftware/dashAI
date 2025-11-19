@@ -3,7 +3,10 @@ from typing import Any, Dict, Final, List, Union
 
 from datasets import DatasetDict
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 
 
 class BaseTask:
@@ -95,25 +98,24 @@ class BaseTask:
                 f"match task cardinality ({outputs_cardinality})"
             )
 
-    # This method should be eliminated since we are using DashAITypes now,
-    # so correct types are already set and further transformations
-    # should be handled by the model as needed.
-    # Could still be used on Image since DashAIImageType and its handlers
-    # haven't been implemented yet.
-    @abstractmethod
     def prepare_for_task(
-        self, dataset: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+        self,
+        dataset: Union[DatasetDict, DashAIDataset],
+        input_columns: List[str],
+        output_columns: List[str],
     ) -> DashAIDataset:
-        """Change column types to suit the task requirements.
-
-        Parameters
-        ----------
-        dataset : Union[DatasetDict, DashAIDataset]
-            Dataset to be changed
-
-        Returns
-        -------
-        DashAIDataset
-            Dataset with the new types
         """
-        raise NotImplementedError
+        Default preparation shared by every task.
+
+        - Ensures DashAIDataset instance.
+        - Validates types against task metadata.
+        - Returns dataset ready for the taks.
+        """
+        dashai_dataset = to_dashai_dataset(dataset)
+        self.validate_dataset_for_task(
+            dashai_dataset,
+            dataset_name=getattr(dashai_dataset, "name", "dataset"),
+            input_columns=input_columns,
+            output_columns=output_columns,
+        )
+        return dashai_dataset

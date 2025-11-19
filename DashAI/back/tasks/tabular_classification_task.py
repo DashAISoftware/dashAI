@@ -1,15 +1,11 @@
 from typing import List, Union
 
-from datasets import ClassLabel, DatasetDict, Value
+from datasets import DatasetDict
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.classification_task import ClassificationTask
-from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.value_types import Float, Integer
+from DashAI.back.types.value_types import Float, Integer, Text
 
 
 class TabularClassificationTask(ClassificationTask):
@@ -24,23 +20,25 @@ class TabularClassificationTask(ClassificationTask):
     Models are trained to learn patterns and relationships in the data, enabling
     accurate classification of new instances."""
     metadata: dict = {
-        "inputs_types": [Float, Integer, Categorical],
+        "inputs_types": [Float, Integer, Text, Categorical],
         "outputs_types": [Categorical],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
     }
 
-    #Now, categorical encoding is a responsability of the model if needed
     def prepare_for_task(
-        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+        self,
+        dataset: Union[DatasetDict, DashAIDataset],
+        input_columns: List[str],
+        output_columns: List[str],
     ) -> DashAIDataset:
-        """Change the column types to suit the tabular classification task.
+        """Convert the dataset to DashAIDataset and check the columns types
 
         A copy of the dataset is created.
 
         Parameters
         ----------
-        datasetdict : Union[DatasetDict, DashAIDataset]
+        dataset : Union[DatasetDict, DashAIDataset]
             Dataset to be changed
 
         Returns
@@ -48,5 +46,7 @@ class TabularClassificationTask(ClassificationTask):
         DashAIDataset
             Dataset with the new types
         """
-
-        return to_dashai_dataset(datasetdict)
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset

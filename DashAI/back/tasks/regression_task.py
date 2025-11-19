@@ -1,13 +1,13 @@
-from typing import List
+from typing import List, Union
 
-from datasets import DatasetDict, Value
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
-    to_dashai_dataset,
 )
 from DashAI.back.tasks.base_task import BaseTask
-from DashAI.back.types.dashai_value import DashAIValue
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
 
 
 class RegressionTask(BaseTask):
@@ -22,16 +22,20 @@ class RegressionTask(BaseTask):
     Models are trained to learn patterns and relationships in the data,
     enabling accurate prediction of new instances."""
     metadata: dict = {
-        "inputs_types": [DashAIValue],
-        "outputs_types": [DashAIValue],
+        "inputs_types": [Float, Integer, Categorical],
+        "outputs_types": [Float, Integer],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
     }
 
     def prepare_for_task(
-        self, datasetdict: DatasetDict, outputs_columns: List[str]
+        self,
+        dataset: Union[DatasetDict, DashAIDataset],
+        input_columns: List[str],
+        output_columns: List[str],
     ) -> DashAIDataset:
-        """Change the column types to suit the regression task.
+        """Convert the dataset to DashAIDataset and validate types.
+
 
         A copy of the dataset is created.
 
@@ -43,25 +47,9 @@ class RegressionTask(BaseTask):
         Returns
         -------
         DashAIDataset
-            Dataset with the new types
+            Dataset with validated types
         """
-        return to_dashai_dataset(datasetdict)
-
-    #Categorical already do this.
-    def process_predictions(self, dataset, predictions, output_column):
-        """Process the predictions
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset used for training
-        predictions : np.ndarray
-            Predictions from the model
-        output_column : str
-            Output column
-
-        Returns
-        -------
-        Processed predictions
-        """
-        return predictions
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset

@@ -23,6 +23,7 @@ from DashAI.back.models import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers import BaseOptimizer
 from DashAI.back.tasks import BaseTask
+from DashAI.back.types.categorical import Categorical
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -173,22 +174,16 @@ class ModelJob(BaseJob):
 
                 try:
                     prepared_dataset = task.prepare_for_task(
-                        loaded_dataset, experiment.output_columns
+                        dataset=loaded_dataset,
+                        input_columns=experiment.input_columns,
+                        output_columns=experiment.output_columns,
                     )
-                    n_labels = None
-                    if experiment.task_name in [
-                        "TextClassificationTask",
-                        "TabularClassificationTask",
-                        "ImageClassificationTask",
-                    ]:
-                        #All that prepare_for_task stuff could be deleted
-                        #Categorical type stores num of categories, their names and their encoding
-                        #Don't want to break anything so I don't delete it
-                        #I just modify it so it does nothing
-                        all_classes = prepared_dataset.unique(
-                            experiment.output_columns[0]
-                        )
-                        n_labels = len(all_classes)
+
+                    output_type = prepared_dataset.types[experiment.output_columns[0]]
+                    if isinstance(output_type, Categorical):
+                        n_labels = output_type.num_categories()
+                    else:
+                        n_labels = None
 
                     splits = json.loads(experiment.splits)
                     prepared_dataset, splits = prepare_for_experiment(

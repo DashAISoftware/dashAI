@@ -2,14 +2,14 @@
 
 from typing import List, Union
 
-from datasets import DatasetDict, Sequence, Value
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
-    to_dashai_dataset,
 )
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.value_types import Text
+
 
 class TranslationTask(BaseTask):
     """Base class for translation task."""
@@ -29,15 +29,18 @@ class TranslationTask(BaseTask):
     """
 
     def prepare_for_task(
-        self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+        self,
+        dataset: Union[DatasetDict, DashAIDataset],
+        input_columns: List[str],
+        output_columns: List[str],
     ) -> DashAIDataset:
-        """Change the column types to suit the tabular classification task.
+        """Convert the dataset to DashAIDataset and check the columns types
 
         A copy of the dataset is created.
 
         Parameters
         ----------
-        datasetdict : DatasetDict
+        dataset : Union[DatasetDict, DashAIDataset]
             Dataset to be changed
 
         Returns
@@ -45,22 +48,7 @@ class TranslationTask(BaseTask):
         DashAIDataset
             Dataset with the new types
         """
-        return to_dashai_dataset(datasetdict)
-
-    def process_predictions(self, dataset, predictions, output_column):
-        """Process the predictions
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset used for training
-        predictions : np.ndarray
-            Predictions from the model
-        output_column : str
-            Output column
-
-        Returns
-        -------
-        Processed predictions
-        """
-        return predictions
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset

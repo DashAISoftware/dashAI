@@ -29,6 +29,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
     categorical_label_encoder,
 )
 from DashAI.back.models.text_classification_model import TextClassificationModel
+from DashAI.back.types.categorical import Categorical
 
 
 class DistilBertTransformerSchema(BaseSchema):
@@ -126,29 +127,6 @@ class DistilBertTransformer(TextClassificationModel):
 
         self.fitted = False
         self.encodings = {}  # Store encodings for categorical columns
-
-    def tokenize_data(self, dataset: DashAIDataset) -> DashAIDataset:
-        """Tokenize the input data.
-
-        Parameters
-        ----------
-        dataset : Dataset
-            Dataset with the input data to preprocess.
-
-        Returns
-        -------
-        Dataset
-            Dataset with the tokenized input data.
-        """
-        text_columns = [col for col in dataset.column_names if col != "label"]
-        if len(text_columns) != 1:
-            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
-        return dataset.map(
-            lambda examples: self.tokenizer(
-                examples[text_columns[0]], truncation=True, padding=True, max_length=512
-            ),
-            batched=True,
-        )
 
     def fit(self, x_train: DashAIDataset, y_train: DashAIDataset):
         """Fine-tune the pre-trained model.
@@ -261,6 +239,8 @@ class DistilBertTransformer(TextClassificationModel):
         ----------
         dataset : DashAIDataset
             The dataset to be transformed.
+        is_fit : bool
+            Whether this is for fitting (True) or prediction (False).
 
         Returns
         -------
@@ -268,25 +248,47 @@ class DistilBertTransformer(TextClassificationModel):
             The prepared dataset ready to be converted to
             an accepted format in the model.
         """
-        if not is_fit:
-            try:
-                dataset = apply_categorical_label_encoder(dataset, self.encodings)
-                dataset = self.tokenize_data(dataset)
+        has_categorical = any(
+            isinstance(col_type, Categorical) for col_type in dataset.types.values()
+        )
 
-            except Exception as e:
-                print(f"Couldn't apply categorical label encoding: {e}")
-        else:
-            try:
+        if has_categorical:
+            if is_fit:
                 dataset, encodings = categorical_label_encoder(dataset)
                 self.encodings.update(encodings)
+            else:
+                dataset = apply_categorical_label_encoder(dataset, self.encodings)
+            return dataset
+        else:
+            return self.tokenize_data(dataset)
 
-                dataset = self.tokenize_data(dataset)
+    def tokenize_data(self, dataset: DashAIDataset) -> DashAIDataset:
+        """Tokenize the input data.
 
-            except Exception as e:
-                print(
-                    f"Couldn't apply transformations to the dataset for the model: {e}"
-                )
-        return dataset
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset with the input data to preprocess.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with the tokenized input data.
+        """
+        text_columns = [
+            col
+            for col in dataset.column_names
+            if not isinstance(dataset.types.get(col), Categorical)
+        ]
+        if len(text_columns) != 1:
+            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
+
+        return dataset.map(
+            lambda batch: self.tokenizer(
+                batch[text_columns[0]], truncation=True, padding=True, max_length=512
+            ),
+            batched=True,
+        )
 
     def save(self, filename: Union[str, Path]) -> None:
         self.model.save_pretrained(filename)
