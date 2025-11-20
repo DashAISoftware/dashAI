@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 import time
-from importlib.resources import files
 from pathlib import Path
 
 from alembic import command
@@ -13,23 +12,16 @@ from DashAI.back.dependencies.database.utils import resolve_db_url
 logger = logging.getLogger(__name__)
 
 
-def get_alembic_ini_path() -> Path:
-    alembic_ini_path = files("DashAI") / "alembic.ini"
-
-    logger.info(f"Looking for alembic ini file at {alembic_ini_path}")
-
-    if not alembic_ini_path.exists():
-        raise FileNotFoundError(f"Alembic ini file not found at {alembic_ini_path}")
-
-    return alembic_ini_path
-
-
 def alembic_config(db_url: str) -> Config:
-    ini_path = get_alembic_ini_path()
-    logger.info("Looking for alembic ini file at %s", str(ini_path))
-    cfg = Config(str(ini_path))
+    package_root = Path(__file__).absolute().parents[3]
+    script_location = package_root / "alembic"
+
+    cfg = Config()
+
+    cfg.set_main_option("script_location", str(script_location))
     cfg.set_main_option("sqlalchemy.url", db_url)
-    cfg.set_main_option("script_location", str(files("DashAI") / "alembic"))
+    cfg.set_main_option("prepend_sys_path", str(package_root))
+    cfg.set_main_option("version_path_separator", "os")
     return cfg
 
 
