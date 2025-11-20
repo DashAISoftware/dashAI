@@ -31,6 +31,9 @@ class QwenSchema(BaseSchema):
                 "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
                 "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
                 # "Qwen/Qwen3-4B-GGUF", This one is not working on llama-cpp 0.3.4
+                "Qwen/Qwen2.5-3B-Instruct-GGUF",
+                "Qwen/Qwen2.5-7B-Instruct-GGUF",
+                "Qwen/Qwen2.5-14B-Instruct-GGUF"
             ]
         ),
         placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",

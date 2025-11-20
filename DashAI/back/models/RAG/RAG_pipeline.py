@@ -91,7 +91,7 @@ class RAGPipelineSchema(BaseSchema):
 
     generation_model: schema_field(
         component_field(parent="TextToTextGenerationTaskModel"),
-        placeholder={"component": "DeepSeek", "params": {}},
+        placeholder={"component": "", "params": {}},
         description="Text generation model used in the RAG pipeline."
     ) # type: ignore
 
