@@ -11,7 +11,6 @@ from datasets import DatasetDict
 from pyarrow.lib import ArrowInvalid
 from sklearn.datasets import load_iris
 
-from DashAI.back.api.api_v1.schemas.datasets_params import ColumnSpecItemParams
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -22,7 +21,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_dataset,
     split_indexes,
     to_dashai_dataset,
-    update_columns_spec,
     update_dataset_splits,
     validate_inputs_outputs,
 )
@@ -557,10 +555,10 @@ def split_dashai_datasetdict_two_class_cols(test_datasetdict):
 #         (
 #             "split_dashai_datasetdict",
 #             {
-#                 "sepal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),
-#                 "sepal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),
-#                 "petal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),
-#                 "petal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),
+#                 "sepal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),  # noqa: E501
+#                 "sepal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),  # noqa: E501
+#                 "petal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),  # noqa: E501
+#                 "petal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),  # noqa: E501
 #                 "target": ColumnSpecItemParams(type="Text", dtype="string"),
 #             },
 #         ),
@@ -568,10 +566,10 @@ def split_dashai_datasetdict_two_class_cols(test_datasetdict):
 #         (
 #             "split_dashai_datasetdict",
 #             {
-#                 "sepal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),
-#                 "sepal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),
-#                 "petal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),
-#                 "petal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),
+#                 "sepal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),  # noqa: E501
+#                 "sepal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),  # noqa: E501
+#                 "petal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),  # noqa: E501
+#                 "petal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),  # noqa: E501
 #                 "target": ColumnSpecItemParams(type="Categorical", dtype="string"),
 #             },
 #         ),
@@ -579,10 +577,10 @@ def split_dashai_datasetdict_two_class_cols(test_datasetdict):
 #         (
 #             "split_dashai_datasetdict_two_class_cols",
 #             {
-#                 "sepal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),
-#                 "sepal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),
-#                 "petal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),
-#                 "petal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),
+#                 "sepal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),  # noqa: E501
+#                 "sepal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),  # noqa: E501
+#                 "petal length (cm)": ColumnSpecItemParams(type="Text", dtype="string"),  # noqa: E501
+#                 "petal width (cm)": ColumnSpecItemParams(type="Float", dtype="float64"),  # noqa: E501
 #                 "target": ColumnSpecItemParams(type="Categorical", dtype="string"),
 #                 "target_2": ColumnSpecItemParams(type="Categorical", dtype="string"),
 #             },

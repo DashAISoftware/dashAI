@@ -8,7 +8,6 @@ from pyarrow.lib import Schema
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import (
     Binary,
     # Boolean,
@@ -72,7 +71,7 @@ PTYPE_TO_DASHAI = {
     "date-non-std": {"type": "Date", "dtype": "date32"},
     "date-non-std-subtype": {"type": "Date", "dtype": "date32"},
     "time": {"type": "Time", "dtype": "time32(s)"},
-    "float_comma": {"type": "Float", "dtype": "float64"}
+    "float_comma": {"type": "Float", "dtype": "float64"},
 }
 
 value_types = [
@@ -159,7 +158,6 @@ def save_types_in_arrow_metadata(
     # We add the serialized metadata to the Arrow table
     new_metadata = dict(metadata)
     new_metadata[b"dashai_types"] = metadata_serialized
-    #print("new metadata is", new_metadata)
     return pa_table.replace_schema_metadata(new_metadata)
 
 
@@ -185,8 +183,11 @@ def get_types_from_arrow_metadata(
         If the metadata does not contain DashAI types.
     """
 
-    metadata = (pa_table.schema.metadata if isinstance(pa_table, Schema)
-                else pa_table.schema.metadata) or {}
+    metadata = (
+        pa_table.schema.metadata
+        if isinstance(pa_table, Schema)
+        else pa_table.schema.metadata
+    ) or {}
     types_serialized = metadata.get(b"dashai_types", b"{}").decode("utf-8")
 
     try:
@@ -201,14 +202,7 @@ def get_types_from_arrow_metadata(
                 dashai_types[column] = Categorical(
                     values=cats, encoding=encoding, converted=converted
                 )
-            #Future implementation for images, modify as needed
-            # elif _type == "Image":
-            #     if info.get("base_path"):
-            #         dashai_types[column] = DashAIImage(
-            #             dtype=info.get("dtype"), base_path=info.get("base_path")
-            #         )
-            #     else:
-            #         dashai_types[column] = DashAIImage(dtype=info.get("dtype"))
+            # Future implementation for images, modify as needed
             else:
                 dtype = info.get("dtype")
                 dashai_types[column] = arrow_to_dashai_types(dtype_arrow_map[dtype])
@@ -315,16 +309,19 @@ def is_image_path(value: Any) -> bool:
     match = re.search(r"(\.[a-z0-9]+)$", value.lower())
     return bool(match) and match.group(1) in IMAGE_EXTENSIONS
 
-#This function should be improved to detect complex situations
-#Like "1.234,56" or "1,234.56"
-#So it doesn't overwrite already good floats
+
+# This function should be improved to detect complex situations
+# Like "1.234,56" or "1,234.56"
+# So it doesn't overwrite already good floats
 def comma_float_to_float(array: pa.Array) -> pa.Array:
-    """Convert a PyArrow array of float strings with commas to a PyArrow float64 array."""
+    """Convert a PyArrow array of float strings with commas to a PyArrow float64 array."""  # noqa: E501
     # Remove commas and convert to float
-    try: 
+    try:
         if pa.types.is_floating(array.type):
             return array
         else:
-            return pa.array(array.to_pandas().str.replace(",", ".").astype(float), type=pa.float64())
+            return pa.array(
+                array.to_pandas().str.replace(",", ".").astype(float), type=pa.float64()
+            )
     except Exception as e:
         print("Unable to convert array to float:", e)

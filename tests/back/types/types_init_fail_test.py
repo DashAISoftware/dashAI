@@ -1,20 +1,19 @@
-import pytest
 import pyarrow as pa
+import pytest
+
 from DashAI.back.types.value_types import (
+    Binary,
+    Decimal,
+    Duration,
     Float,
     Integer,
     Text,
-    Date,
-    Time,
-    Timestamp,
-    Duration,
-    Decimal,
-    Binary
 )
 
+
 @pytest.mark.parametrize(
-    "da_type, bad_arrow_t",
-    [   
+    ("da_type", "bad_arrow_t"),
+    [
         (Integer, pa.float16()),
         (Integer, pa.float32()),
         (Integer, pa.float64()),
@@ -24,7 +23,6 @@ from DashAI.back.types.value_types import (
         (Integer, pa.decimal128(10, 2)),
         (Integer, pa.binary()),
         (Integer, pa.large_binary()),
-
         (Float, pa.int8()),
         (Float, pa.int16()),
         (Float, pa.int32()),
@@ -39,7 +37,6 @@ from DashAI.back.types.value_types import (
         (Float, pa.decimal128(10, 2)),
         (Float, pa.binary()),
         (Float, pa.large_binary()),
-        
         (Text, pa.int8()),
         (Text, pa.int16()),
         (Text, pa.int32()),
@@ -52,10 +49,10 @@ from DashAI.back.types.value_types import (
         (Text, pa.decimal128(10, 2)),
         (Text, pa.binary()),
         (Text, pa.large_binary()),
-
-        #Date, Time, Timestamp checks should be implemented when their pa.types are implemented
-        #Instead of using a string type (Unless it's decided to use string types + format for them)
-
+        # Date, Time, Timestamp checks should be implemented when their pa.types are
+        # implemented
+        # Instead of using a string type (Unless it's decided to use string types
+        # + format for them)
         (Duration, pa.int8()),
         (Duration, pa.int16()),
         (Duration, pa.int32()),
@@ -69,7 +66,6 @@ from DashAI.back.types.value_types import (
         (Duration, pa.decimal128(10, 2)),
         (Duration, pa.binary()),
         (Duration, pa.large_binary()),
-
         (Decimal, pa.int8()),
         (Decimal, pa.int16()),
         (Decimal, pa.int32()),
@@ -83,7 +79,6 @@ from DashAI.back.types.value_types import (
         (Decimal, pa.duration("s")),
         (Decimal, pa.binary()),
         (Decimal, pa.large_binary()),
-
         (Binary, pa.int8()),
         (Binary, pa.int16()),
         (Binary, pa.int32()),
@@ -107,7 +102,6 @@ from DashAI.back.types.value_types import (
         "Integer-decimal",
         "Integer-binary",
         "Integer-large_binary",
-
         "Float-int8",
         "Float-int16",
         "Float-int32",
@@ -122,7 +116,6 @@ from DashAI.back.types.value_types import (
         "Float-decimal",
         "Float-binary",
         "Float-large_binary",
-
         "Text-int8",
         "Text-int16",
         "Text-int32",
@@ -135,7 +128,6 @@ from DashAI.back.types.value_types import (
         "Text-decimal",
         "Text-binary",
         "Text-large_binary",
-
         "Duration-int8",
         "Duration-int16",
         "Duration-int32",
@@ -149,7 +141,6 @@ from DashAI.back.types.value_types import (
         "Duration-decimal",
         "Duration-binary",
         "Duration-large_binary",
-
         "Decimal-int8",
         "Decimal-int16",
         "Decimal-int32",
@@ -163,7 +154,6 @@ from DashAI.back.types.value_types import (
         "Decimal-duration",
         "Decimal-binary",
         "Decimal-large_binary",
-
         "Binary-int8",
         "Binary-int16",
         "Binary-int32",
@@ -176,8 +166,8 @@ from DashAI.back.types.value_types import (
         "Binary-large_string",
         "Binary-duration",
         "Binary-decimal",
-    ])
-
+    ],
+)
 def test_dashai_types_init_invalid(da_type, bad_arrow_t):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         da_type(bad_arrow_t)

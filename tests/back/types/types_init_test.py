@@ -1,19 +1,18 @@
-import pytest
 import pyarrow as pa
+import pytest
+
 from DashAI.back.types.value_types import (
+    Binary,
+    Decimal,
+    Duration,
     Float,
     Integer,
     Text,
-    Date,
-    Time,
-    Timestamp,
-    Duration,
-    Decimal,
-    Binary
 )
 
+
 @pytest.mark.parametrize(
-    "arrow_t, bit_width, is_unsigned, dtype_str",
+    ("arrow_t", "bit_width", "is_unsigned", "dtype_str"),
     [
         (pa.int8(), 8, False, "int8"),
         (pa.int16(), 16, False, "int16"),
@@ -33,9 +32,8 @@ from DashAI.back.types.value_types import (
         "uint16",
         "uint32",
         "uint64",
-    ]
+    ],
 )
-
 def test_dashai_types_init_valid(arrow_t, bit_width, is_unsigned, dtype_str):
     int_type = Integer(arrow_t)
     assert int_type.size == bit_width
@@ -46,8 +44,9 @@ def test_dashai_types_init_valid(arrow_t, bit_width, is_unsigned, dtype_str):
     assert int_str.get("type") == "Integer"
     assert int_str.get("dtype") == dtype_str
 
+
 @pytest.mark.parametrize(
-    "arrow_t, bit_width, dtype_str",
+    ("arrow_t", "bit_width", "dtype_str"),
     [
         (pa.float16(), 16, "float16"),
         (pa.float32(), 32, "float32"),
@@ -57,8 +56,8 @@ def test_dashai_types_init_valid(arrow_t, bit_width, is_unsigned, dtype_str):
         "float16",
         "float32",
         "float64",
-    ])
-
+    ],
+)
 def test_dashai_types_float_init_valid(arrow_t, bit_width, dtype_str):
     float_type = Float(arrow_t)
     assert float_type.size == bit_width
@@ -68,8 +67,9 @@ def test_dashai_types_float_init_valid(arrow_t, bit_width, dtype_str):
     assert float_str.get("type") == "Float"
     assert float_str.get("dtype") == dtype_str
 
+
 @pytest.mark.parametrize(
-    "arrow_t, encoding, is_large, dtype_str",
+    ("arrow_t", "encoding", "is_large", "dtype_str"),
     [
         (pa.string(), "utf-8", False, "string"),
         (pa.large_string(), "utf-8", True, "large_string"),
@@ -77,8 +77,8 @@ def test_dashai_types_float_init_valid(arrow_t, bit_width, dtype_str):
     ids=[
         "string",
         "large_string",
-    ])
-
+    ],
+)
 def test_dashai_types_text_init_valid(arrow_t, encoding, is_large, dtype_str):
     text_type = Text(arrow_t)
     assert text_type.encoding == encoding
@@ -89,25 +89,27 @@ def test_dashai_types_text_init_valid(arrow_t, encoding, is_large, dtype_str):
     assert text_str.get("type") == "Text"
     assert text_str.get("dtype") == dtype_str
 
-#Time, Timestamp and Date test should be implemented if the implementation changes
-#This means using pa time, timestamp and date types instead of default string.
-#Now it can be initialized with any arrow type as string is the default. BAD!
+
+# Time, Timestamp and Date test should be implemented if the implementation changes
+# This means using pa time, timestamp and date types instead of default string.
+# Now it can be initialized with any arrow type as string is the default. BAD!
+
 
 @pytest.mark.parametrize(
-    "arrow_t, dtype_str",
+    ("arrow_t", "dtype_str"),
     [
-        (pa.duration('s'), "duration[s]"),
-        (pa.duration('ms'), "duration[ms]"),
-        (pa.duration('us'), "duration[us]"),
-        (pa.duration('ns'), "duration[ns]"),
+        (pa.duration("s"), "duration[s]"),
+        (pa.duration("ms"), "duration[ms]"),
+        (pa.duration("us"), "duration[us]"),
+        (pa.duration("ns"), "duration[ns]"),
     ],
-    ids = [
+    ids=[
         "duration[s]",
         "duration[ms]",
         "duration[us]",
         "duration[ns]",
-    ])
-
+    ],
+)
 def test_dashai_types_duration_init_valid(arrow_t, dtype_str):
     duration_type = Duration(arrow_t)
     assert duration_type.dtype == dtype_str
@@ -116,17 +118,18 @@ def test_dashai_types_duration_init_valid(arrow_t, dtype_str):
     assert duration_str.get("type") == "Duration"
     assert duration_str.get("dtype") == dtype_str
 
+
 @pytest.mark.parametrize(
-    "arrow_t, size, precision, scale, dtype_str",
-    [ 
+    ("arrow_t", "size", "precision", "scale", "dtype_str"),
+    [
         (pa.decimal128(38, 10), 128, 38, 10, "decimal128(38, 10)"),
         (pa.decimal256(76, 20), 256, 76, 20, "decimal256(76, 20)"),
     ],
-    ids = [
+    ids=[
         "decimal128(38, 10)",
         "decimal256(76, 20)",
-    ])
-
+    ],
+)
 def test_dashai_types_decimal_init_valid(arrow_t, size, precision, scale, dtype_str):
     decimal_type = Decimal(arrow_t)
     assert decimal_type.size == size
@@ -138,17 +141,18 @@ def test_dashai_types_decimal_init_valid(arrow_t, size, precision, scale, dtype_
     assert decimal_str.get("type") == "Decimal"
     assert decimal_str.get("dtype") == dtype_str
 
+
 @pytest.mark.parametrize(
-    "arrow_t, dtype_str",
+    ("arrow_t", "dtype_str"),
     [
         (pa.binary(), "binary"),
         (pa.large_binary(), "large_binary"),
     ],
-    ids = [
+    ids=[
         "binary",
         "large_binary",
-    ])
-
+    ],
+)
 def test_dashai_types_binary_init_valid(arrow_t, dtype_str):
     binary_type = Binary(arrow_t)
     assert binary_type.dtype == dtype_str

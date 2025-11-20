@@ -4,7 +4,8 @@ from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
-#ABANDONED????? Hope so, ClassLabel and Value no moreeee
+
+# ABANDONED????? Hope so, ClassLabel and Value no moreeee
 class TabularDataLoader(BaseDataLoader):
     """Intermediate class for tabular dataloaders methods."""
 

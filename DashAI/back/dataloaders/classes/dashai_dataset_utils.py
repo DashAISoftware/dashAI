@@ -1,7 +1,5 @@
 from typing import Dict, Tuple
 
-import numpy as np
-import pandas as pd
 import pyarrow as pa
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, modify_table

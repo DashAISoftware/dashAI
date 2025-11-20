@@ -38,17 +38,13 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         # Add the new machine to the current_machines dictionary.
         # Add the new type to this list.
         # Add the new type to the PTYPE_TO_DASHAI mapping.
-        self.types.extend(
-            [
-                "time",
-                "float_comma"
-            ]
-        )
+        self.types.extend(["time", "float_comma"])
 
-        current_machines = {**MACHINES, 
-                            "time": Machine.Time(), 
-                            "float_comma": Machine.FloatComma()
-                        }
+        current_machines = {
+            **MACHINES,
+            "time": Machine.Time(),
+            "float_comma": Machine.FloatComma(),
+        }
 
         self.machines = Machines(self.types, current_machines)
         self.verbose = False
