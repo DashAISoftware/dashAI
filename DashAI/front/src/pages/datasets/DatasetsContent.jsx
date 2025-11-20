@@ -41,6 +41,7 @@ export default function DatasetsContent() {
   const [rightBarVisible, setRightBarVisible] = useState(true);
   const [leftBarWidth, setLeftBarWidth] = useState(20);
   const [rightBarWidth, setRightBarWidth] = useState(20);
+  const [rightBarContent, setRightBarContent] = useState(null);
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
@@ -677,9 +678,12 @@ export default function DatasetsContent() {
                         setStep(0);
                         setSelectedOption(null);
                         fetchDatasets();
+                        // clear right bar when exiting
+                        setRightBarContent(null);
                       }}
                       handleDatasetCreated={handleDatasetCreated}
                       existingDatasets={datasets}
+                      renderRightBar={setRightBarContent}
                     />
                   ) : step === 1 && selectedOption === "notebook" ? (
                     <UploadNotebookSteps
@@ -751,7 +755,11 @@ export default function DatasetsContent() {
                         zIndex: 10,
                       }}
                     />
-                    <RightBar notebook={null} onToggle={handleToggleRight} />
+                    {rightBarContent ? (
+                      rightBarContent
+                    ) : (
+                      <RightBar notebook={null} onToggle={handleToggleRight} />
+                    )}
                   </>
                 )}
               </Box>
