@@ -282,6 +282,14 @@ const RetrieverConfigurationStep = forwardRef(
 
     const handleRetrievalParadigmChange = (event, newValue) => {
       setSelectedRetrievalParadigm(newValue);
+      
+      // Clear current form values and retriever model when switching paradigms
+      currentFormValuesRef.current = null;
+      setRetrieverModel({
+        component: "",
+        params: {}
+      });
+      
       if (newValue?.name === "SparseRetriever") {
         setSelectedRetriever(null);
         setOpenConfig(false);
@@ -302,9 +310,11 @@ const RetrieverConfigurationStep = forwardRef(
         setOpenConfig(true);
         setNextEnabled(true);
 
+        // Clear previous form values and use only the new retriever's default parameters
+        currentFormValuesRef.current = null;
         setRetrieverModel({
           component: newValue.name,
-          params: retrieverModel?.params || {},
+          params: newValue.parameters || {},
         });
       } else {
         setOpenConfig(false);
