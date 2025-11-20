@@ -1,4 +1,0 @@
-from DashAI.back.models.RAG.prompts.generation.generation_prompt import GenerationPrompt
-from DashAI.back.models.RAG.prompts.generation.custom_generation_prompt import CustomGenerationPrompt
-from DashAI.back.models.RAG.prompts.generation.default_generation_prompt import DefaultGenerationPrompt
-from DashAI.back.models.RAG.prompts.generation.default_QnA_generation_prompt import DefaultQnAGenerationPrompt
