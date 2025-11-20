@@ -2,9 +2,10 @@
 import os
 import sys
 
+from sqlalchemy import create_engine
+
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
-from sqlalchemy import create_engine
 
 try:
     from DashAI.back.dependencies.database.models import Base
@@ -16,7 +17,7 @@ except Exception as e:
 
 database_url = os.environ.get("DATABASE_URL")
 if not database_url:
-    print("DATABASE_URL no está definido", file=sys.stderr)
+    print("DATABASE_URL is not defined", file=sys.stderr)
     sys.exit(2)
 
 engine = create_engine(database_url)
