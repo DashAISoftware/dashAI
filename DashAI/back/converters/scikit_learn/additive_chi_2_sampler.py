@@ -36,5 +36,6 @@ class AdditiveChi2Sampler(
         "Uses sampling the fourier transform of the kernel characteristic "
         "at regular intervals."
     )
+    CATEGORY = "Polynomial & Kernel Methods"
     DISPLAY_NAME = "Additive Chi² Sampler"
     IMAGE_PREVIEW = "additive_chi2_sampler.png"

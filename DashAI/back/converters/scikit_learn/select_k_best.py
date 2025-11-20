@@ -28,6 +28,7 @@ class SelectKBest(FeatureSelectionConverter, SklearnWrapper, SelectKBestOperatio
     DISPLAY_NAME = "Select K Best"
     IMAGE_PREVIEW = "select_k_best.png"
     metadata = {}
+    CATEGORY = "Feature Selection"
 
     def __init__(self, **kwargs):
         if callable(self._get_tags):

@@ -17,10 +17,8 @@ import HomeIcon from "@mui/icons-material/HomeOutlined";
 const pages = [
   { name: "Datasets", to: "/app/data", disabled: false },
   { name: "Experiments", to: "/app/experiments", disabled: false },
-  { name: "Predictions", to: "/app/predict", disabled: false },
   { name: "Explainability", to: "/app/explainers", disabled: false },
   { name: "Generative", to: "/app/generative", disabled: false },
-  { name: "Pipelines", to: "/app/pipelines", disabled: false },
   { name: "Plugins", to: "/app/plugins/browse", disabled: false },
 ];
 

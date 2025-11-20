@@ -277,7 +277,10 @@ class ModelJob(BaseJob):
                         # Generate hyperparameter plot
                         trials = optimizer.get_trials_values()
                         plot_filenames, plots = optimizer.create_plots(
-                            trials, run_id, n_params=len(run_optimizable_parameters)
+                            trials,
+                            run_id,
+                            n_params=len(run_optimizable_parameters),
+                            goal_metric=goal_metric,
                         )
                         for filename, plot in zip(plot_filenames, plots):
                             plot_path = os.path.join(config["RUNS_PATH"], filename)

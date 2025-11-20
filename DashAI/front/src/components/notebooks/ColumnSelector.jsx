@@ -299,6 +299,7 @@ function ColumnSelector({
 
       {/* Data Grid */}
       <DataGrid
+        data-tour="column-selector"
         key={`${datasetColumns.length}-${inputCardinality.exact}-${inputCardinality.max}`}
         autoHeight
         rows={rows}
@@ -316,7 +317,6 @@ function ColumnSelector({
         disableDensitySelector
         pageSizeOptions={[5, 10, 20]}
         checkboxSelection
-        disableRowSelectionOnClick
         onRowSelectionModelChange={handleSelection}
         rowSelectionModel={rowSelectionModel}
         isRowSelectable={isRowSelectable}

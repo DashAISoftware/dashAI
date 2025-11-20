@@ -165,8 +165,8 @@ class DatasetJob(BaseJob):
                         n_sample=n_sample,
                     )
 
-                # Calculate nan per column
-                new_dataset.nan_per_column()
+                # Calculate metadata
+                new_dataset.compute_metadata()
                 gc.collect()
 
                 dataset_save_path = folder_path / "dataset"

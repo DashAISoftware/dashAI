@@ -14,6 +14,7 @@ import RAGHomePage from "./RAG/RAGHomePage";
 
 import { getSessions, removeSession } from "../../api/session";
 import JobQueueWidget from "../../components/jobs/JobQueueWidget";
+import CenterBox from "../../components/threeSectionLayout/CenterBox";
 
 export default function Generative() {
   const location = useLocation();
@@ -123,8 +124,8 @@ export default function Generative() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="22%" mr={1}>
+    <Box height="calc(100vh - 74px)" width="100%" display="flex">
+      <Box width="20%">
         <SessionBar
           sessions={sessions}
           selectedSessionId={selectedSessionId}
@@ -134,9 +135,8 @@ export default function Generative() {
           stepIndex={stepIndex}
         />
       </Box>
-
-      <Box width="56%" mr={1}>
-        <MainGenerativeBox>
+      <Box width="60%">
+        <CenterBox>
           {selectedSessionId ? (
             showRAGSummary && isRAGTask() ? (
               <RAGSessionSummary
@@ -178,7 +178,7 @@ export default function Generative() {
               existingSessions={sessions}
             />
           )}
-        </MainGenerativeBox>
+        </CenterBox>
       </Box>
 
       <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>

@@ -23,6 +23,7 @@ class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     DISPLAY_NAME = "Select FDR"
     IMAGE_PREVIEW = "select_fdr.png"
     metadata = {}
+    CATEGORY = "Feature Selection"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

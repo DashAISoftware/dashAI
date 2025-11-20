@@ -19,15 +19,14 @@ export const generateYupSchema = (schemaObj) => {
 
 const generateInitialValues = (subSchema) => {
   let initialValues = {};
-  if (subSchema.type !== "object") {
+
+  // Special case for optimizable fields
+  if (subSchema.placeholder?.optimize !== undefined) {
     initialValues = subSchema.placeholder;
-    // case of recursive parameter
-  } else if (
-    subSchema.type === "object" &&
-    subSchema.placeholder?.optimize !== undefined
-  ) {
+  } else if (subSchema.type !== "object") {
     initialValues = subSchema.placeholder;
   } else if (subSchema.parent) {
+    // If the object has a parent, we need to create the initial values accordingly
     initialValues = {
       properties: {
         component: subSchema.properties.component,
@@ -59,12 +58,31 @@ const generateInitialValues = (subSchema) => {
 const generateField = (subSchema) => {
   let field;
 
+  // SPECIAL CASE: If it has placeholder.optimize, it is an optimizable field
+  // It must be validated as an object regardless of the declared type
+  if (subSchema.placeholder?.optimize !== undefined) {
+    field = Yup.object().shape({
+      fixed_value: Yup.number().nullable(),
+      lower_bound: Yup.number().nullable(),
+      upper_bound: Yup.number().nullable(),
+      optimize: Yup.boolean(),
+    });
+
+    // Apply required validation if necessary
+    if (subSchema.required) {
+      field = field.required();
+    }
+
+    return field;
+  }
+
+  // For normal fields (non-optimizable)
   if (subSchema.anyOf) {
     field = Yup.mixed().nullable();
   } else if (subSchema.type === "object") {
     field = Yup.object();
 
-    if (!subSchema.parent && !(subSchema.placeholder?.optimize !== undefined)) {
+    if (!subSchema.parent) {
       const properties = {};
       Object.keys(subSchema.properties).forEach((key) => {
         properties[key] = generateField(subSchema.properties[key]);
@@ -234,22 +252,18 @@ export const formattedSubform = ({ parent, model, params }) => ({
 });
 
 export const checkIfHaveOptimazers = (values) => {
-  if (!values?.params) {
-    return false;
-  }
+  if (!values) return false;
 
-  for (let key in values.params) {
-    const param = values.params[key];
-    if (!param) continue;
+  for (const key of Object.keys(values)) {
+    const param = values[key];
+    if (!param || typeof param !== "object") continue;
 
     if (param.optimize) {
       return true;
     }
 
-    if (
-      param.properties &&
-      checkIfHaveOptimazers(param.properties.params.comp.params)
-    ) {
+    // Only return true if a recursive check finds something
+    if (checkIfHaveOptimazers(param)) {
       return true;
     }
   }
@@ -260,24 +274,18 @@ export const checkIfHaveOptimazers = (values) => {
 export const checkHowManyOptimazers = (values) => {
   let count = 0;
 
-  if (!values?.params) {
-    return count;
-  }
+  if (!values) return count;
 
-  for (let key in values.params) {
-    const param = values.params[key];
-    if (!param) continue;
+  for (const key of Object.keys(values)) {
+    const param = values[key];
+    if (!param || typeof param !== "object") continue;
 
     if (param.optimize) {
       count += 1;
     }
 
-    if (
-      param.properties &&
-      checkIfHaveOptimazers(param.properties.params.comp.params)
-    ) {
-      count += checkHowManyOptimazers(param.properties.params.comp.params);
-    }
+    // Recursively count optimizers in nested objects
+    count += checkHowManyOptimazers(param);
   }
 
   return count;

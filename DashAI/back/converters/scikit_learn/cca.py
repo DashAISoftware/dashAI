@@ -46,3 +46,4 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
 
     SCHEMA = CCASchema
     DESCRIPTION = "Canonical Correlation Analysis, also known as 'Mode B' PLS."
+    CATEGORY = "Advanced"

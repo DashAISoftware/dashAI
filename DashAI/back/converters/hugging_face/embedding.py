@@ -63,6 +63,7 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     SCHEMA = EmbeddingSchema
     DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
+    CATEGORY = "Advanced"
     DISPLAY_NAME = "Embedding"
     IMAGE_PREVIEW = "embedding.png"
 

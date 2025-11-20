@@ -69,7 +69,7 @@ class SVCSchema(BaseSchema):
         placeholder={
             "optimize": False,
             "fixed_value": -1,
-            "lower_bound": 1,
+            "lower_bound": -1,
             "upper_bound": 10,
         },
         description="The 'max_iter' parameter determines the iteration limit for the "

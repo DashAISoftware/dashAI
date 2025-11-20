@@ -7,16 +7,37 @@ import {
   CircularProgress,
   Box,
   Chip,
+  Alert,
+  Divider,
+  Tabs,
+  Tab,
 } from "@mui/material";
-import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { getDatasetFile, getDatasetInfo } from "../../../api/datasets";
+import {
+  AddCircleOutline as AddIcon,
+  CheckCircle as CheckIcon,
+} from "@mui/icons-material";
+import {
+  getDatasetFile,
+  getDatasetInfo,
+  getDatasetFileFiltered,
+} from "../../../api/datasets";
 import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
+import { useTourContext } from "../../tour/TourProvider";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
 import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
+import { formatDate } from "../../../pages/results/constants/formatDate";
+import Header from "./header/Header";
+import Tooltip from "@mui/material/Tooltip";
+import OverviewTab from "./tabs/OverviewTab";
+import { NumericTab } from "./tabs/NumericTab";
+import { CategoricalTab } from "./tabs/CategoricalTab";
+import QualityTab from "./tabs/QualityTab";
+import CorrelationsTab from "./tabs/CorrelationsTab";
+import { QualityAlerts } from "./QualityAlerts";
 
 export default function DatasetVisualization({
   dataset,
@@ -36,28 +57,13 @@ export default function DatasetVisualization({
 
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
+  const [tab, setTab] = useState(0);
+  const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      });
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  // Fetch dataset info when component mounts or dataset changes
   useEffect(() => {
+    setTab(0);
     const fetchDatasetInfo = async () => {
       if (isProcessing) return;
 
@@ -65,7 +71,6 @@ export default function DatasetVisualization({
         const info = await getDatasetInfo(dataset.id);
         setDatasetInfo(info);
       } catch (error) {
-        console.error("Error fetching dataset info:", error);
         setDatasetInfo(null);
       }
     };
@@ -73,16 +78,29 @@ export default function DatasetVisualization({
     fetchDatasetInfo();
   }, [dataset.id, dataset.status]);
 
+  // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
-    async (page, pageSize) => {
-      // Don't try to fetch data if it's a temporary/processing dataset
+    async (page, pageSize, filterModel) => {
       if (isProcessing) return { rows: [], total: 0 };
-
       try {
-        const data = await getDatasetFile(dataset.file_path, page, pageSize);
+        // Use getDatasetFile if no filters, else use getDatasetFileFiltered
+        const hasFilters =
+          filterModel &&
+          Array.isArray(filterModel.items) &&
+          filterModel.items.length > 0;
+        let data;
+        if (hasFilters) {
+          data = await getDatasetFileFiltered(
+            dataset.file_path,
+            page,
+            pageSize,
+            filterModel,
+          );
+        } else {
+          data = await getDatasetFile(dataset.file_path, page, pageSize);
+        }
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
-        console.error("Error fetching dataset data:", error);
         return { rows: [], total: 0 };
       }
     },
@@ -109,7 +127,6 @@ export default function DatasetVisualization({
         onNotebookCreated(createdNotebook);
       }
     } catch (error) {
-      console.error("Error creating notebook:", error);
       enqueueSnackbar("Error creating notebook", {
         variant: "error",
       });
@@ -121,107 +138,242 @@ export default function DatasetVisualization({
 
   return (
     <>
-      {/* Dataset Info Section */}
-      {!isProcessing && datasetInfo && (
-        <Paper
-          sx={{
-            bgcolor: "#212121",
-            borderRadius: 2,
-            boxShadow: "none",
-            p: 2,
-            mb: 2,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              flexWrap: "wrap",
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              Dataset Info:
-            </Typography>
-            <Chip
-              label={`${datasetInfo.total_rows || 0} rows`}
-              size="small"
-              variant="outlined"
-              sx={{ color: "text.primary", borderColor: "divider" }}
+      <Box
+        sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2, mx: 1 }}
+      >
+        {/* Quick Stats Section */}
+        {!isProcessing && datasetInfo && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Dataset quality score */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography variant="h4">{dataset.name}</Typography>
+              </Box>
+              <Box>
+                <Tooltip
+                  title="Data Quality Score is calculated based on various factors including missing values, duplicate rows, and data consistency. A higher score indicates better data quality."
+                  arrow
+                >
+                  <Alert
+                    severity={
+                      datasetInfo?.quality_info?.data_quality_score >= 80
+                        ? "success"
+                        : datasetInfo?.quality_info?.data_quality_score >= 50
+                          ? "warning"
+                          : datasetInfo?.quality_info?.data_quality_score
+                            ? "error"
+                            : "info"
+                    }
+                    sx={{
+                      fontSize: "1rem",
+                      height: "45px",
+                      display: "flex",
+                      alignItems: "center",
+                      p: "0 12px",
+                    }}
+                  >
+                    Quality Score:{" "}
+                    {datasetInfo?.quality_info?.data_quality_score?.toFixed(
+                      2,
+                    ) ?? "N/A"}
+                    {datasetInfo?.quality_info?.data_quality_score ? "%" : ""}
+                  </Alert>
+                </Tooltip>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography variant="subtitle1" color="text.secondary">
+                  {formatDate(dataset.created)}
+                </Typography>
+              </Box>
+
+              {/* Buttons */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 2,
+                  flexDirection: "column",
+                }}
+              >
+                <Grid
+                  sx={{
+                    minHeight: "40px",
+                    display: "flex",
+                    gap: 2,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-start",
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    disabled={isProcessing}
+                    onClick={() => {
+                      navigate("../app/experiments", {
+                        state: { dataset: dataset },
+                      });
+                    }}
+                    endIcon={<AddIcon />}
+                    sx={{ height: "40px" }}
+                    data-tour="new-experiment-button-notebook"
+                  >
+                    New Experiment
+                  </Button>
+                  <Button
+                    variant="contained"
+                    endIcon={<AddIcon />}
+                    disabled={isProcessing}
+                    className="new-notebook-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCreateNotebookModal(true);
+                      if (tourContext && tourContext.run) {
+                        setTimeout(() => {
+                          tourContext.nextStep();
+                        }, 200);
+                      }
+                    }}
+                    sx={{ height: "40px" }}
+                  >
+                    New Notebook
+                  </Button>
+                </Grid>
+              </Box>
+            </Box>
+            <Header
+              totalRows={datasetInfo?.total_rows}
+              totalColumns={datasetInfo?.total_columns}
+              fileSize={datasetInfo?.general_info?.memory_usage_mb}
+              duplicateRows={datasetInfo?.general_info?.duplicate_rows}
+              missingValues={datasetInfo?.nan}
             />
-            <Chip
-              label={`${datasetInfo.total_columns || 0} columns`}
-              size="small"
-              variant="outlined"
-              sx={{ color: "text.primary", borderColor: "divider" }}
-            />
-            {dataset.created && (
-              <Chip
-                label={`Created: ${formatDate(dataset.created)}`}
-                size="small"
-                variant="outlined"
-                sx={{ color: "text.primary", borderColor: "divider" }}
+            {/* Data Quality Alerts */}
+            <Box>
+              <QualityAlerts
+                qualityInfo={datasetInfo?.quality_info}
+                generalInfo={datasetInfo?.general_info}
+                missingValues={datasetInfo?.nan}
+              />
+            </Box>
+            {/* Tabs */}
+            <Tabs
+              sx={{
+                bgcolor: "#2C2C2C",
+                borderRadius: 1,
+                minHeight: "48px",
+                "& .MuiTabs-indicator": {
+                  height: "2px",
+                },
+                "& .MuiTab-root": {
+                  minHeight: "48px",
+                  fontSize: "0.85rem",
+                  borderRadius: "4px",
+                  transition: "all 0.2s",
+                  border: "1px solid transparent",
+                  textTransform: "none",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.05)",
+                  },
+                  "&.Mui-disabled": {
+                    color: "rgb(150, 150, 150)",
+                    bgcolor: "rgb(32, 32, 32)",
+                    borderColor: "rgb(39, 39, 42)",
+                    opacity: 0.6,
+                    cursor: "not-allowed",
+                    filter: "grayscale(0.6)",
+                    position: "relative",
+                    "&::after": {
+                      content: '""',
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "4px",
+                      pointerEvents: "none",
+                      background:
+                        "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)",
+                    },
+                  },
+                },
+              }}
+              value={tab}
+              onChange={(_, newValue) => setTab(newValue)}
+            >
+              <Tab label="Overview" />
+              <Tab
+                label="Numerical Analysis"
+                disabled={
+                  !datasetInfo?.numeric_stats ||
+                  Object.keys(datasetInfo.numeric_stats).length === 0
+                }
+              />
+              <Tab
+                label="Categorical"
+                disabled={
+                  !datasetInfo?.categorical_stats ||
+                  Object.keys(datasetInfo.categorical_stats).length === 0
+                }
+              />
+              <Tab label="Data Quality" disabled={!datasetInfo?.quality_info} />
+              <Tab
+                label="Correlations"
+                disabled={
+                  !datasetInfo?.correlations ||
+                  Object.keys(datasetInfo.correlations).length === 0
+                }
+              />
+            </Tabs>
+
+            {/* Divider */}
+            <Divider sx={{ my: 2 }} />
+
+            {/* Content based on selected tab */}
+            {tab === 0 && (
+              <OverviewTab
+                dataset={dataset}
+                dtypes={datasetInfo?.general_info?.dtypes}
+                nan={datasetInfo?.nan}
+                total_rows={datasetInfo?.total_rows}
+                fetchDatasetPage={fetchDatasetPage}
               />
             )}
+            {tab === 1 && (
+              <NumericTab numericStats={datasetInfo?.numeric_stats} />
+            )}
+            {tab === 2 && (
+              <CategoricalTab
+                categoricalStats={datasetInfo?.categorical_stats}
+              />
+            )}
+            {tab === 3 && (
+              <QualityTab
+                qualityInfo={datasetInfo?.quality_info}
+                totalRows={datasetInfo?.total_rows}
+              />
+            )}
+            {tab === 4 && (
+              <CorrelationsTab correlations={datasetInfo?.correlations} />
+            )}
           </Box>
-        </Paper>
-      )}
-
-      {/* Main Dataset Visualization */}
-      <Paper
-        sx={{
-          bgcolor: "#212121",
-          borderRadius: 2,
-          boxShadow: "none",
-          p: 2,
-        }}
-      >
-        {/* Title and button */}
-        <Grid
-          container
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 4 }}
-        >
-          <Typography variant="h6">{dataset.name}</Typography>
-          <Grid sx={{ height: "35px" }}>
-            <Button
-              variant="contained"
-              disabled={isProcessing}
-              onClick={() => {
-                navigate("../app/experiments", {
-                  state: { dataset: dataset },
-                });
-              }}
-              endIcon={<AddIcon />}
-              sx={{ mr: 2, height: "100%" }}
-            >
-              New Experiment
-            </Button>
-            <Button
-              variant="contained"
-              endIcon={<AddIcon />}
-              disabled={isProcessing}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowCreateNotebookModal(true);
-              }}
-              sx={{ height: "100%" }}
-            >
-              New Notebook
-            </Button>
-          </Grid>
-        </Grid>
-
-        {/* Table - only show if not processing */}
-        {!isProcessing && (
-          <DatasetTable
-            fetchPage={fetchDatasetPage}
-            deps={[dataset.file_path]}
-            initialPageSize={10}
-            datasetPath={dataset.file_path}
-          />
         )}
 
         {/* Processing placeholder */}
@@ -247,15 +399,19 @@ export default function DatasetVisualization({
             </Typography>
           </Box>
         )}
+      </Box>
 
-        <CreateNotebookModal
-          open={showCreateNotebookModal}
-          onClose={() => setShowCreateNotebookModal(false)}
-          onCreateNotebook={handleCreateNotebook}
-          dataset={dataset}
-          existingNotebooks={existingNotebooks}
-        />
-      </Paper>
+      {/* Create Notebook Modal */}
+      <CreateNotebookModal
+        open={showCreateNotebookModal}
+        onClose={() => {
+          setShowCreateNotebookModal(false);
+        }}
+        onCreateNotebook={handleCreateNotebook}
+        dataset={dataset}
+        datasetInfo={datasetInfo}
+        existingNotebooks={existingNotebooks}
+      />
 
       <JobQueueWidget />
     </>

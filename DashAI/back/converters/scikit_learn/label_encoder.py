@@ -21,6 +21,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     SCHEMA = LabelEncoderSchema
     DESCRIPTION = "Encode target labels with value between 0 and n_classes-1."
     SHORT_DESCRIPTION = "Convert categorical labels to numeric values"
+    CATEGORY = "Encoding"
     DISPLAY_NAME = "Label Encoder"
     IMAGE_PREVIEW = "label_encoder.png"
 

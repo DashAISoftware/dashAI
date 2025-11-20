@@ -55,15 +55,16 @@ class HyperOptOptimizer(BaseOptimizer):
         """
         search_space = {}
 
-        for hyperparameter, values in hyperparams_data.items():
-            if isinstance(values[0], int):
+        for _, hyperparameter, values, dtype in hyperparams_data:
+            if dtype == "integer":
                 search_space[hyperparameter] = hp.quniform(
                     hyperparameter, values[0], values[1], 1
                 )
-            elif isinstance(values[0], float):
+            elif dtype == "number":
                 search_space[hyperparameter] = hp.uniform(
                     hyperparameter, values[0], values[1]
                 )
+
         return search_space
 
     def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
@@ -87,34 +88,20 @@ class HyperOptOptimizer(BaseOptimizer):
         self.output_dataset = output_dataset
         self.parameters = parameters
         self.metric = metric["class"]
+
+        param_mapping = {key: (obj, key) for obj, key, _, _ in self.parameters}
+
         search_space = self.search_space(self.parameters)
 
-        if task == "TextClassificationTask":
+        def objective(params):
+            for param_name, value in params.items():
+                obj, key = param_mapping[param_name]
+                setattr(obj, key, value)
 
-            def objective(params):
-                model_eval = self.model
-                for key, value in params.items():
-                    setattr(model_eval, key, value)
-                model_eval.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_eval.predict(input_dataset["validation"])
-                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
-                return score
-
-        else:
-
-            def objective(params):
-                model_eval = self.model
-                for key, value in params.items():
-                    int_value = int(value)
-                    setattr(model_eval, key, int_value)
-                model_eval.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_eval.predict(input_dataset["validation"])
-                score = 1 * self.metric.score(output_dataset["validation"], y_pred)
-                return score
+            self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
+            y_pred = self.model.predict(input_dataset["validation"])
+            score = self.metric.score(output_dataset["validation"], y_pred)
+            return -score if metric["metadata"]["maximize"] else score
 
         trials = Trials()
         fmin(

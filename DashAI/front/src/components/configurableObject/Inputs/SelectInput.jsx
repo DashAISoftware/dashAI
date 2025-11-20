@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { MenuItem, TextField } from "@mui/material";
+import { ListItemText, MenuItem } from "@mui/material";
 import FormInputWrapper from "./FormInputWrapper";
+import { Input } from "./InputStyles";
 /**
  * This component renders a dropdown form field, allowing users to select from a list of options.
  * @param {string} name name of the input to use as an identifier
@@ -14,13 +15,13 @@ import FormInputWrapper from "./FormInputWrapper";
  */
 function SelectInput({
   name,
-  value = null,
+  value,
   label,
   onChange,
-  error = undefined,
+  error,
   description,
   options,
-  optionNames = undefined,
+  optionNames,
 }) {
   const handleChange = (event) => {
     const inputValue = event.target.value;
@@ -30,7 +31,7 @@ function SelectInput({
 
   return (
     <FormInputWrapper name={name} description={description}>
-      <TextField
+      <Input
         select
         name={name}
         label={label}
@@ -39,14 +40,26 @@ function SelectInput({
         error={error !== undefined}
         helperText={error || " "}
         margin="dense"
-        fullWidth
       >
         {options.map((option, index) => (
           <MenuItem key={option} value={option}>
-            {optionNames !== undefined ? optionNames[index] : option}
+            <ListItemText
+              slotProps={{
+                primary: {
+                  sx: {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: "100%",
+                    display: "block",
+                  },
+                },
+              }}
+              primary={optionNames !== undefined ? optionNames[index] : option}
+            />
           </MenuItem>
         ))}
-      </TextField>
+      </Input>
     </FormInputWrapper>
   );
 }
@@ -59,6 +72,11 @@ SelectInput.propTypes = {
   error: PropTypes.string,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
   optionNames: PropTypes.arrayOf(PropTypes.string),
+};
+SelectInput.defaultProps = {
+  value: null,
+  error: undefined,
+  optionNames: undefined,
 };
 
 export default SelectInput;

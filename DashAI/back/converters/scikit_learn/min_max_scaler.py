@@ -39,6 +39,7 @@ class MinMaxScaler(
 
     SCHEMA = MinMaxScalerSchema
     DESCRIPTION = "Transform features by scaling each feature to a given range."
+    CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Min-Max Scaler"
     IMAGE_PREVIEW = "min_max_scaler.png"
 

@@ -12,17 +12,14 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.models.hugging_face.llama_utils import is_gpu_available_for_llama_cpp
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
-
-if Llama is not None and is_gpu_available_for_llama_cpp():
-    DEVICE_ENUM = ["gpu", "cpu"]
-    DEVICE_PLACEHOLDER = "gpu"
-else:
-    DEVICE_ENUM = ["cpu"]
-    DEVICE_PLACEHOLDER = "cpu"
+from DashAI.back.models.utils import (
+    LLAMA_DEVICE_ENUM,
+    LLAMA_DEVICE_PLACEHOLDER,
+    LLAMA_DEVICE_TO_IDX,
+)
 
 
 class QwenSchema(BaseSchema):
@@ -33,7 +30,7 @@ class QwenSchema(BaseSchema):
             enum=[
                 "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
                 "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
-                "Qwen/Qwen3-4B-GGUF",
+                # "Qwen/Qwen3-4B-GGUF", This one is not working on llama-cpp 0.3.4
             ]
         ),
         placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
@@ -74,8 +71,8 @@ class QwenSchema(BaseSchema):
     )  # type: ignore
 
     device: schema_field(
-        enum_field(enum=DEVICE_ENUM),
-        placeholder=DEVICE_PLACEHOLDER,
+        enum_field(enum=LLAMA_DEVICE_ENUM),
+        placeholder=LLAMA_DEVICE_PLACEHOLDER,
         description="The device to use for model inference.",
     )  # type: ignore
 
@@ -99,13 +96,15 @@ class QwenModel(TextToTextGenerationTaskModel):
         self.n_ctx = kwargs.pop("context_window", 512)
 
         self.filename = "*8_0.gguf"
+        use_gpu = LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
 
         self.model = Llama.from_pretrained(
             repo_id=self.model_name,
             filename=self.filename,
             verbose=True,
             n_ctx=self.n_ctx,
-            n_gpu_layers=-1 if kwargs.get("device", "gpu") == "gpu" else 0,
+            n_gpu_layers=-1 if use_gpu else 0,
+            main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) if use_gpu else 0,
         )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:

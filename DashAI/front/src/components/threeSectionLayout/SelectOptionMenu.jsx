@@ -13,7 +13,6 @@ export default function SelectOptionMenu({
   searchBar = false,
 }) {
   const [search, setSearch] = useState("");
-
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
@@ -45,16 +44,22 @@ export default function SelectOptionMenu({
           spacing={1}
           sx={{ mt: 2, mx: 0, maxWidth: "100%" }}
         >
-          {filteredOptions.map((option, index) => (
-            <Grid size={{ xl: 4, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
-              <OptionBox
-                optionName={option.display_name}
-                description={option.description}
-                onClick={() => goToNextStep(option.name)}
-                Icon={option.Icon}
-              />
-            </Grid>
-          ))}
+          {filteredOptions.map((option, index) => {
+            const { name, display_name, description, Icon, ...otherProps } =
+              option;
+
+            return (
+              <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+                <OptionBox
+                  optionName={display_name}
+                  description={description}
+                  onClick={() => goToNextStep(option.name)}
+                  Icon={Icon}
+                  {...otherProps}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
       </Box>
 
