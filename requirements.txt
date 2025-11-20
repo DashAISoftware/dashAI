@@ -37,7 +37,6 @@ opencv-python
 protobuf
 imblearn
 llama-cpp-python
-numba==0.58.1
 llvmlite==0.41.1
 numba
 llvmlite
