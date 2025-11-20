@@ -100,7 +100,7 @@ from DashAI.back.models.RAG import (
     DefaultGenerationPrompt,
     CustomGenerationPrompt,
     DefaultQnAGenerationPrompt,
-    DefaultAugmentationPrompt,
+    #DefaultAugmentationPrompt,
     CustomAugmentationPrompt,
     # Chunking Models
     CharacterChunkModel,
@@ -295,7 +295,7 @@ def get_initial_components():
         DefaultGenerationPrompt,
         CustomGenerationPrompt,
         DefaultQnAGenerationPrompt,
-        DefaultAugmentationPrompt,
+        #DefaultAugmentationPrompt,
         CustomAugmentationPrompt,
         # Retrievers
         DenseRetriever,

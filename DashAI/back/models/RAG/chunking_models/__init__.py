@@ -1,0 +1,3 @@
+from DashAI.back.models.RAG.chunking_models.character_chunk_model import CharacterChunkModel
+from DashAI.back.models.RAG.chunking_models.token_chunk_model import TokenChunkModel
+from DashAI.back.models.RAG.chunking_models.base_chunking_model import BaseChunkingModel

@@ -102,14 +102,14 @@ async def get_all_prompts(
                     name="Default QnA Prompt",
                     parameters={"template": DefaultQnAGenerationPrompt.template},
                 )
-                default_augmentation_prompt = RAGPrompt(
+                """ default_augmentation_prompt = RAGPrompt(
                     class_name=DefaultAugmentationPrompt.__name__,
                     name="Default Augmentation Prompt",
                     parameters={"template": DefaultAugmentationPrompt.template},
-                )
+                ) """
                 db.add(default_generation_prompt)
                 db.add(default_qa_prompt)
-                db.add(default_augmentation_prompt)
+                #db.add(default_augmentation_prompt)
                 db.commit()
                 prompts = db.query(RAGPrompt).all()
 
