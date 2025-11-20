@@ -25,13 +25,16 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import LeaderboardIcon from "@mui/icons-material/Leaderboard";
 import BoltIcon from "@mui/icons-material/Bolt";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useSnackbar } from "notistack";
 import { getGenerativeSession } from "../../../api/generativeTask";
 import { getRAGPrompts } from "../../../api/rag";
+import RAGBreadcrumbs from "./RAGBreadcrumbs";
 
 export default function RAGSessionSummary({ 
   sessionId, 
-  onStartChat 
+  onStartChat,
+  onNavigateToGenerative
 }) {
   const [sessionData, setSessionData] = useState(null);
   const [promptData, setPromptData] = useState(null);
@@ -73,6 +76,27 @@ export default function RAGSessionSummary({
     return String(value);
   };
 
+  // Helper function to check if parameter is an API key
+  const isApiKey = (key) => {
+    return key.toLowerCase().includes('api');
+  };
+
+  // Helper function to mask API key values
+  const maskApiKey = (value) => {
+    const stringValue = String(value);
+    if (stringValue.length <= 10) return stringValue;
+    return stringValue.substring(0, 15) + '...';
+  };
+
+  // Helper function to copy to clipboard
+  const handleCopyToClipboard = (value) => {
+    navigator.clipboard.writeText(String(value)).then(() => {
+      enqueueSnackbar("API key copied to clipboard", { variant: "success" });
+    }).catch(() => {
+      enqueueSnackbar("Failed to copy API key", { variant: "error" });
+    });
+  };
+
   // Helper function to open modal with complex parameter
   const handleParameterClick = (paramName, paramValue, componentName) => {
     setModalContent({
@@ -94,6 +118,7 @@ export default function RAGSessionSummary({
 
     return Object.entries(params).map(([key, value]) => {
       const isSimple = isSimpleParameter(value);
+      const isAPI = isApiKey(key);
       
       return (
         <Box key={key} display="flex" alignItems="center" sx={{ ml: 1, mb: 0.25 }}>
@@ -101,9 +126,29 @@ export default function RAGSessionSummary({
             • {key}: 
           </Typography>
           {isSimple ? (
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
-              {formatSimpleValue(value)}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {isAPI ? maskApiKey(value) : formatSimpleValue(value)}
+              </Typography>
+              {isAPI && (
+                <IconButton
+                  size="small"
+                  onClick={() => handleCopyToClipboard(value)}
+                  sx={{
+                    p: 0.25,
+                    minWidth: 'auto',
+                    color: 'text.secondary',
+                    '&:hover': {
+                      color: 'primary.main',
+                      backgroundColor: 'action.hover'
+                    }
+                  }}
+                  title="Copy API key"
+                >
+                  <ContentCopyIcon sx={{ fontSize: '0.75rem' }} />
+                </IconButton>
+              )}
+            </Box>
           ) : (
             <Button
               variant="text"
@@ -248,13 +293,25 @@ export default function RAGSessionSummary({
       display="flex"
       flexDirection="column"
       height="100%"
-      p={3}
+      px={3}
       gap={3}
       overflow="auto"
     >
+      {/* RAG Breadcrumbs */}
+      <RAGBreadcrumbs 
+        isEmbedded={true} 
+        onNavigateToGenerative={onNavigateToGenerative}
+        sessionName={sessionData?.name}
+      />
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
-        <Box>
+      <Box 
+        display="flex" 
+        width="100%"
+        justifyContent="space-between"
+        alignItems="center"
+        paddingBottom={2}
+        >
+        <Box flexGrow={1} mr={2}>
           <Typography variant="h4" gutterBottom>
             {sessionData.name}
           </Typography>
@@ -306,7 +363,7 @@ export default function RAGSessionSummary({
       {/* Main Content Grid */}
       <Grid container spacing={3} sx={{ flex: 1 }}>
         {/* Documents Card */}
-        <Grid item xs={12} md={6}>
+        {/* <Grid item xs={12} md={6}>
           <Card sx={{ height: '100%', backgroundColor: 'background.box' }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -323,7 +380,7 @@ export default function RAGSessionSummary({
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
+        </Grid> */}
 
         {/* Pipeline Configuration Card */}
         {
@@ -364,7 +421,7 @@ export default function RAGSessionSummary({
             )
         }
         {/* Detailed Configuration - Collapsible Cards */}
-    <Grid item xs={12} sx ={{ backgroundColor: 'background.box' }}>
+    <Grid item  sx ={{ backgroundColor: 'background.box', width: '100%'}}>
             <Card sx={{ height: '100%', backgroundColor: 'background.box' }}>
               <CardContent>
             <Box display="flex" alignItems="center" mb={3}>
@@ -414,7 +471,7 @@ export default function RAGSessionSummary({
         </Grid>
 
         {/* Prompt Configuration */}
-        <Grid item xs={12}>
+        <Grid item width="100%">
           <Paper elevation={1} sx={{ p: 3, backgroundColor: 'background.box' }}>
             <Box display="flex" alignItems="center" mb={2}>
                 <AutoFixHighIcon sx={{ mr: 1, color: 'primary.main' }} />

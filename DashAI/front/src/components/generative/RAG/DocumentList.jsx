@@ -36,7 +36,9 @@ export default function DocumentList({ documents }) {
           display: "flex",
           flexDirection: "column",
           gap: 1.5,
+          width: "100%",
           minWidth: 0,
+          maxWidth: "100%",
         }}
       >
         {documents.map((document) => (

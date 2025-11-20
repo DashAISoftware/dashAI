@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 import SelectOptionMenu from "../../../components/threeSectionLayout/SelectOptionMenu";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
+import SessionBar from "../../../components/generative/SessionBar";
+import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
+import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
+import { getSessions, removeSession } from "../../../api/session";
 
 function RAGHomePage({
   onSessionCreated,
@@ -10,8 +14,33 @@ function RAGHomePage({
   sessions,
   setSessions,
   onNavigateToGenerative,
+  isStandalone = false,
 }) {
   const navigate = useNavigate();
+  const [standaloneSessions, setStandaloneSessions] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
+
+  // Use sessions from props if available (embedded mode), otherwise manage own sessions (standalone mode)
+  const currentSessions = sessions || standaloneSessions;
+  const currentSetSessions = setSessions || setStandaloneSessions;
+
+  const loadSessions = useCallback(async () => {
+    if (isStandalone) {
+      try {
+        const allSessions = await getSessions();
+        setStandaloneSessions(allSessions);
+      } catch (error) {
+        console.error("RAGHomePage: Error loading sessions:", error);
+      }
+    }
+  }, [isStandalone]);
+
+  useEffect(() => {
+    if (isStandalone) {
+      loadSessions();
+    }
+  }, [loadSessions, isStandalone]);
 
   const goToNextStep = (option) => {
     navigate(`/app/generative/rag/${option}`);
@@ -25,6 +54,112 @@ function RAGHomePage({
     }
   };
 
+  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
+    if (isStandalone) {
+      setSelectedSessionId(sessionId);
+      // Navigate back to generative page with selected session
+      navigate("/app/generative", { state: { selectedSessionId: sessionId } });
+    } else if (onSessionSelect) {
+      onSessionSelect(sessionId, taskName, taskDisplayName);
+    }
+  };
+
+  const handleNewSessionButton = () => {
+    if (isStandalone) {
+      setSelectedSessionId(null);
+    }
+    // For embedded mode, this might be handled by parent
+  };
+
+  const handleSessionDelete = async (id) => {
+    if (isStandalone) {
+      setStandaloneSessions((prev) => prev.filter((s) => s.id !== id));
+      await removeSession(id);
+    }
+    // For embedded mode, this might be handled by parent
+  };
+
+  const handleDocumentChange = () => {
+    setDocumentRefreshTrigger((prev) => prev + 1);
+  };
+
+  if (isStandalone) {
+    // Standalone layout with sidebar
+    return (
+      <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={0} display="flex">
+        <Box width="22%" mr={1}>
+          <SessionBar
+            sessions={currentSessions}
+            selectedSessionId={selectedSessionId}
+            handleSessionClick={handleSessionClick}
+            handleNewSessionButton={handleNewSessionButton}
+            handleSessionDelete={handleSessionDelete}
+            stepIndex={0}
+          />
+        </Box>
+
+        <Box width="56%" mr={1}>
+          <MainGenerativeBox>
+            <Box
+              display={"flex"}
+              flexDirection={"column"}
+              justifyContent={"flex-start"}
+              gap={1}
+              width={"100%"}
+              height={"100%"}
+              overflow={"scroll"}
+              px={2}
+            >
+              <RAGBreadcrumbs />
+              <SelectOptionMenu
+                title="RAG Module"
+                subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
+                options={[
+                  {
+                    name: "sessions",
+                    display_name: "Sessions",
+                    description: "View existing RAG sessions and create new ones.",
+                    Icon: null,
+                  },
+                  {
+                    name: "prompts",
+                    display_name: "Prompts",
+                    description: "View existing prompts and create new ones.",
+                    Icon: null,
+                  },
+                ]}
+                searchBar={false}
+                goToNextStep={goToNextStep}
+              />
+            </Box>
+          </MainGenerativeBox>
+        </Box>
+
+        <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
+          <Box
+            width="100%"
+            height="100%"
+            sx={{ 
+              backgroundColor: "background.box", 
+              borderRadius: 2,
+              minWidth: 0,
+              maxWidth: "100%",
+              overflow: "hidden"
+            }}
+          >
+            <DocumentsBar
+              selectedSessionId={null}
+              taskName="RAGTask"
+              onDocumentChange={handleDocumentChange}
+              key={`documents-standalone-${documentRefreshTrigger}`}
+            />
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Embedded layout (original)
   return (
     <Box
       display={"flex"}
@@ -42,7 +177,7 @@ function RAGHomePage({
       />
       <SelectOptionMenu
         title="RAG Module"
-        subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, upload documents, and configure prompts for enhanced AI conversations."
+        subtitle="Manage your Retrieval-Augmented Generation workflows: Create sessions, manage documents, and configure prompts for enhanced AI conversations."
         options={[
           {
             name: "sessions",
@@ -53,7 +188,7 @@ function RAGHomePage({
           {
             name: "documents",
             display_name: "Documents",
-            description: "View existing documents and upload new ones.",
+            description: "Detailed view and management of all documents.",
             Icon: null,
           },
           {

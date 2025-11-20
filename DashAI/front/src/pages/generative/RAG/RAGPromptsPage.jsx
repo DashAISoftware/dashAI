@@ -4,6 +4,7 @@ import { Box, Typography } from "@mui/material";
 import SessionBar from "../../../components/generative/SessionBar";
 import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
+import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
 import { getSessions, removeSession } from "../../../api/session";
 
@@ -11,6 +12,7 @@ function RAGPromptsPage() {
   const navigate = useNavigate();
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
 
   const loadSessions = useCallback(async () => {
     try {
@@ -48,6 +50,10 @@ function RAGPromptsPage() {
 
   const handleRowSelectionModelChange = (newSelection) => {
     setRowSelectionModel(newSelection);
+  };
+
+  const handleDocumentChange = () => {
+    setDocumentRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -92,12 +98,24 @@ function RAGPromptsPage() {
         </MainGenerativeBox>
       </Box>
 
-      <Box width="22%">
+      <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
         <Box
           width="100%"
           height="100%"
-          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+          sx={{ 
+            backgroundColor: "background.box", 
+            borderRadius: 2,
+            minWidth: 0,
+            maxWidth: "100%",
+            overflow: "hidden"
+          }}
         >
+          <DocumentsBar
+            selectedSessionId={null}
+            taskName="RAGTask"
+            onDocumentChange={handleDocumentChange}
+            key={`documents-prompts-${documentRefreshTrigger}`}
+          />
         </Box>
       </Box>
     </Box>

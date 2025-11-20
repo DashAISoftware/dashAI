@@ -27,6 +27,7 @@ export default function Generative() {
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
   const [showRAGSummary, setShowRAGSummary] = useState(false);
+  const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
 
   const isRAGTask = () => selectedTaskName === "RAGTask";
 
@@ -52,6 +53,10 @@ export default function Generative() {
 
   const onParamsUpdate = (newParams) => {
     setParamsVersion((prev) => prev + 1);
+  };
+
+  const handleDocumentChange = () => {
+    setDocumentRefreshTrigger((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -137,12 +142,14 @@ export default function Generative() {
               <RAGSessionSummary
                 sessionId={selectedSessionId}
                 onStartChat={handleStartRAGChat}
+                onNavigateToGenerative={handleNavigateToGenerative}
               />
             ) : (
               <GenerativeChat
                 sessionId={selectedSessionId}
                 taskName={selectedTaskName}
                 paramsVersion={paramsVersion}
+                onNavigateToGenerative={handleNavigateToGenerative}
               />
             )
           ) : stepIndex === 0 ? (
@@ -174,17 +181,27 @@ export default function Generative() {
         </MainGenerativeBox>
       </Box>
 
-      <Box width="22%">
+      <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
         <Box
           width="100%"
           height="100%"
-          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+          sx={{ 
+            backgroundColor: "background.box", 
+            borderRadius: 2,
+            minWidth: 0,
+            maxWidth: "100%",
+            overflow: "hidden"
+          }}
         >
+          {console.log("Selected Session ID:", selectedSessionId)}
+          {console.log("Selected Task Name:", selectedTaskName)}
           {selectedSessionId && selectedTaskName ? (
             isRAGTask() ? (
               <DocumentsBar
                 selectedSessionId={selectedSessionId}
                 taskName={selectedTaskName}
+                onDocumentChange={handleDocumentChange}
+                key={`documents-${selectedSessionId}-${documentRefreshTrigger}`}
               />
             ) : (
               <ParamsBar
@@ -193,6 +210,13 @@ export default function Generative() {
                 taskName={selectedTaskName}
               />
             )
+          ) : isRAGTask() && selectedTaskName ? (
+            <DocumentsBar
+              selectedSessionId={null}
+              taskName={selectedTaskName}
+              onDocumentChange={handleDocumentChange}
+              key={`documents-no-session-${documentRefreshTrigger}`}
+            />
           ) : null}
         </Box>
       </Box>

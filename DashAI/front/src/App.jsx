@@ -20,7 +20,7 @@ import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import RAGSessionsPage from "./pages/generative/RAG/RAGSessionsPage";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
-import RAGStandaloneHomePage from "./pages/generative/RAG/RAGStandaloneHomePage";
+import RAGHomePage from "./pages/generative/RAG/RAGHomePage";
 
 function App() {
   return (
@@ -43,7 +43,7 @@ function App() {
           />
         </Route>
         <Route path="/app/generative" element={<Generative />} />
-        <Route path="/app/generative/rag" element={<RAGStandaloneHomePage />} />
+        <Route path="/app/generative/rag" element={<RAGHomePage isStandalone={true} />} />
         <Route path="/app/generative/rag/sessions" element={<RAGSessionsPage />} />
         <Route path="/app/generative/rag/documents" element={<RAGDocumentsPage />} />
         <Route path="/app/generative/rag/prompts" element={<RAGPromptsPage />} />

@@ -21,8 +21,9 @@ import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
 import TemplateModal from "../custom/TemplateModal";
 import SourcesDisplay from "./SourcesDisplay";
+import RAGBreadcrumbs from "./RAG/RAGBreadcrumbs";
 
-export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
+export default function GenerativeChat({ sessionId, taskName, paramsVersion, onNavigateToGenerative }) {
   const [history, setHistory] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
@@ -169,6 +170,8 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     console.log('Combining messages and history for display'); // Add here
     console.log('Messages:', messages);
     console.log('TASK NAME:', taskName);
+    console.log('session name:', sessionInfo?.name);
+    console.log('session description:', sessionInfo?.description);
     let messagesObject = messages.map((process) => {
       // Check if there's reference data in the output (only for RAGTask)
       let referenceOutput = null;
@@ -280,49 +283,65 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       height={"100%"}
       //bgcolor={"background.box"}
     >
-      {/* Model display */}
-      <Box
-        sx={{
-          width: "100%",
-          height: "30px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderRadius: 1,
-          opacity: 0.5,
-          mb: 1,
-        }}
-      >
-        <Box
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="space-between"
-          gap={0.5}
-          width={"100%"}
-        >
-          <Typography>
-            {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
-            {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
-          </Typography>
-
-          <Box>
-            <IconButton onClick={() => setSessionInfoVisible(true)}>
-              <InfoIcon
-                sx={{
-                  color: "#a0a0a0",
-                  "&:hover": {
-                    color: "#ffffff",
-                  },
-                }}
-              />
-            </IconButton>
-          </Box>
+      {/* RAG Breadcrumbs - only show for RAG tasks */}
+      {taskName === "RAGTask" && (
+        <Box sx={{ width: "100%", px: 2, pt: 2 }}>
+          <RAGBreadcrumbs 
+            isEmbedded={true} 
+            onNavigateToGenerative={onNavigateToGenerative}
+            sessionName={sessionInfo?.name}
+          />
         </Box>
-      </Box>
+      )}
+      {/* Model display - hide for RAG tasks since breadcrumbs show session info */}
+      {taskName !== "RAGTask" && (
+        <>
+          <Box
+            sx={{
+              width: "100%",
+              height: "30px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderRadius: 1,
+              opacity: 0.5,
+              mb: 1,
+            }}
+          >
+            <Box
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              justifyContent="space-between"
+              gap={0.5}
+              width={"100%"}
+            >
+              <Typography variant="title1" gutterBottom>
+                {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
+                {sessionInfo?.description ? ":" : null}
+                <br />
+                {sessionInfo?.description}
+              </Typography>
 
-      <Divider sx={{ width: "100%" }} />
+              <Box>
+                <IconButton onClick={() => setSessionInfoVisible(true)}>
+                  <InfoIcon
+                    sx={{
+                      color: "#a0a0a0",
+                      "&:hover": {
+                        color: "#ffffff",
+                      },
+                    }}
+                  />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+
+          <Divider sx={{ width: "100%" }} />
+        </>
+      )}
 
       {/* Chat display */}
       <Box

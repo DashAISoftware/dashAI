@@ -138,11 +138,17 @@ function RAGDocumentsPage() {
         </MainGenerativeBox>
       </Box>
 
-      <Box width="22%">
+      <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
         <Box
           width="100%"
           height="100%"
-          sx={{ backgroundColor: "background.box", borderRadius: 2 }}
+          sx={{ 
+            backgroundColor: "background.box", 
+            borderRadius: 2,
+            minWidth: 0,
+            maxWidth: "100%",
+            overflow: "hidden"
+          }}
         >
         </Box>
       </Box>

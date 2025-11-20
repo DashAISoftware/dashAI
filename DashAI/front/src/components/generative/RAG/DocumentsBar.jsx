@@ -1,26 +1,34 @@
 import { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button, Dialog, IconButton, Tooltip } from "@mui/material";
+import AddIcon from "@mui/icons-material/AddCircleOutline";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import { useNavigate } from "react-router-dom";
 import SearchBar from "../../threeSectionLayout/SearchBar";
 import DocumentList from "./DocumentList";
+import Upload from "../../shared/Upload";
 import { useSnackbar } from "notistack";
-import { getSessionDocuments } from "../../../api/rag";
+import { getSessionDocuments, addDocument, loadDocuments } from "../../../api/rag";
 
-export default function DocumentsBar({ selectedSessionId, taskName }) {
+export default function DocumentsBar({ selectedSessionId, taskName, onDocumentChange }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
-  // Fetch documents for the selected RAG session
+  // Fetch documents for the selected RAG session or all documents
   useEffect(() => {
     const fetchDocuments = async () => {
-      if (!selectedSessionId) {
-        setDocuments([]);
-        return;
-      }
-
       try {
-        const data = await getSessionDocuments(selectedSessionId);
+        let data;
+        if (selectedSessionId) {
+          // Fetch session-specific documents
+          data = await getSessionDocuments(selectedSessionId);
+        } else {
+          // Fetch all documents when no session is selected (e.g., on RAG home page)
+          data = await loadDocuments();
+        }
 
         // Transform API response to component format
         const transformedDocuments = data.map((doc) => ({
@@ -61,6 +69,62 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
     setFilteredDocuments(filtered);
   }, [searchQuery, documents]);
 
+  const handleFileUpload = async (files, url) => {
+    if (!files) return;
+    
+    const fileList = Array.isArray(files) ? files : [files];
+    
+    try {
+      for (const file of fileList) {
+        const docToAdd = {
+          file,
+          optional_metadata: {
+            name: file.name,
+            source: url || "local_upload",
+          },
+        };
+        
+        const savedDoc = await addDocument(docToAdd);
+        
+        // Add to local state immediately for UI feedback
+        const transformedDoc = {
+          id: savedDoc.id,
+          name: savedDoc.file_name,
+          type: savedDoc.file_type,
+          uploadedAt: savedDoc.created,
+          file_name: savedDoc.file_name,
+          file_type: savedDoc.file_type,
+          preview: savedDoc.file_url,
+          created: savedDoc.created,
+          optional_metadata: savedDoc.optional_metadata,
+        };
+        
+        setDocuments(prevDocs => [transformedDoc, ...prevDocs]);
+      }
+      
+      enqueueSnackbar(
+        `Successfully uploaded ${fileList.length} document${fileList.length > 1 ? 's' : ''}`,
+        { variant: "success" }
+      );
+      
+      // Notify parent component if callback provided
+      if (onDocumentChange) {
+        onDocumentChange();
+      }
+    } catch (error) {
+      enqueueSnackbar("Failed to upload document(s)", {
+        variant: "error",
+      });
+      console.error("Failed to upload document:", error);
+    } finally {
+      setUploadOpen(false);
+    }
+  };
+
+  const handleDetailedView = () => {
+    navigate("/app/generative/rag/documents");
+  };
+
   return (
     <Box
       sx={{
@@ -69,36 +133,75 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
         overflow: "hidden",
         height: "100%",
         width: "100%",
+        minWidth: 0, // Prevent flex shrinking issues
+        maxWidth: "100%", // Ensure consistent width
       }}
     >
       {/* Header */}
-      <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
-        <Typography variant="h6">Documents</Typography>
+      <Box sx={{ p: 2, flexShrink: 0 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>Documents</Typography>
         <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)" }}>
           {filteredDocuments.length} document
           {filteredDocuments.length !== 1 ? "s" : ""}
-          {selectedSessionId && ` in current session`}
+          {selectedSessionId ? ` in current session` : ` available`}
         </Typography>
       </Box>
-
-      {/* Search bar */}
-      <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
-        <SearchBar
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onClear={() => setSearchQuery("")}
-          placeholder="Search documents"
-        />
-      </Box>
+      {/* Add documents button - only show when no session is selected */}
+      {!selectedSessionId && (
+        <Box sx={{ flexShrink: 0, px: 2, pb: 2 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setUploadOpen(true)}
+          >
+            Add documents
+          </Button>
+        </Box>
+      )}
+      {/* Search bar - only show when documents are available */}
+      {documents.length >= 1 && (
+        <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ flex: 1 }}>
+              <SearchBar
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClear={() => setSearchQuery("")}
+                placeholder="Search documents"
+              />
+            </Box>
+            {/* Detailed view icon - only show when no session is selected */}
+            {!selectedSessionId && (
+              <Tooltip title="See detailed view" placement="top">
+                <IconButton
+                  size="medium"
+                  onClick={handleDetailedView}
+                  sx={{ 
+                    color: "text.secondary",
+                    "&:hover": { color: "primary.main" }
+                  }}
+                >
+                  <ViewListIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        </Box>
+      )}
 
       {/* Document list */}
       <Box
         sx={{
-          flex: 1,
+          flex: "0 1 45vh", // Take up to 40% of viewport height, but can shrink
           overflowY: "auto",
           overflowX: "hidden",
           p: 2,
+          width: "100%",
           minWidth: 0,
+          maxWidth: "100%",
+          minHeight: 0, // Allow shrinking when needed
         }}
       >
         {filteredDocuments.length > 0 ? (
@@ -119,11 +222,27 @@ export default function DocumentsBar({ selectedSessionId, taskName }) {
             >
               {searchQuery
                 ? "No documents found"
-                : "No documents in this session"}
+                : selectedSessionId
+                ? "No documents in this session"
+                : "No documents available"}
             </Typography>
           </Box>
         )}
       </Box>
+
+      {/* Upload Dialog */}
+      <Dialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <Upload
+          onFileUpload={handleFileUpload}
+          multiple={true}
+          emptyUploadText="Upload your document(s)"
+        />
+      </Dialog>
     </Box>
   );
 }
