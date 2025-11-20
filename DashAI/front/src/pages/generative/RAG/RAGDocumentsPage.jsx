@@ -10,6 +10,7 @@ import {
   deleteDocument,
 } from "../../../api/rag";
 import { getSessions, removeSession } from "../../../api/session";
+import CenterBox from "../../../components/threeSectionLayout/CenterBox";
 
 function RAGDocumentsPage() {
   const navigate = useNavigate();
@@ -81,8 +82,8 @@ function RAGDocumentsPage() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="22%" mr={1}>
+    <Box height="calc(100vh - 74px)" width="100%" display="flex">
+      <Box width="20%">
         <SessionBar
           sessions={sessions}
           handleSessionClick={handleSessionClick}
@@ -92,18 +93,8 @@ function RAGDocumentsPage() {
         />
       </Box>
 
-      <Box width="56%" mr={1}>
-        <MainGenerativeBox>
-          <Box
-            display={"flex"}
-            width={"100%"}
-            height={"100%"}
-            flexDirection={"column"}
-            justifyContent={"flex-start"}
-            overflow={"scroll"}
-            p={2}
-            gap={1}
-          >
+      <Box width="60%">
+        <CenterBox>
             <RAGBreadcrumbs />
             <Typography variant="h5" component="h1">
               RAG Documents
@@ -134,11 +125,10 @@ function RAGDocumentsPage() {
               isLoading={documentsLoading}
               showTableTitle={false}
             />
-          </Box>
-        </MainGenerativeBox>
+        </CenterBox>
       </Box>
 
-      <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
+      <Box width="20%" sx={{ flexShrink: 0, flexGrow: 0 }}>
         <Box
           width="100%"
           height="100%"

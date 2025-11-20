@@ -7,6 +7,7 @@ import SessionBar from "../../../components/generative/SessionBar";
 import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import { getSessions, removeSession } from "../../../api/session";
+import CenterBox from "../../../components/threeSectionLayout/CenterBox";
 
 function RAGHomePage({
   onSessionCreated,
@@ -86,8 +87,8 @@ function RAGHomePage({
   if (isStandalone) {
     // Standalone layout with sidebar
     return (
-      <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={0} display="flex">
-        <Box width="22%" mr={1}>
+      <Box height="calc(100vh - 74px)" width="100%" display="flex">
+        <Box width="20%">
           <SessionBar
             sessions={currentSessions}
             selectedSessionId={selectedSessionId}
@@ -98,18 +99,8 @@ function RAGHomePage({
           />
         </Box>
 
-        <Box width="56%" mr={1}>
-          <MainGenerativeBox>
-            <Box
-              display={"flex"}
-              flexDirection={"column"}
-              justifyContent={"flex-start"}
-              gap={1}
-              width={"100%"}
-              height={"100%"}
-              overflow={"scroll"}
-              px={2}
-            >
+        <Box width="60%">
+          <CenterBox>
               <RAGBreadcrumbs />
               <SelectOptionMenu
                 title="RAG Module"
@@ -131,11 +122,10 @@ function RAGHomePage({
                 searchBar={false}
                 goToNextStep={goToNextStep}
               />
-            </Box>
-          </MainGenerativeBox>
+          </CenterBox>
         </Box>
 
-        <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
+        <Box width="20%" sx={{ flexShrink: 0, flexGrow: 0 }}>
           <Box
             width="100%"
             height="100%"

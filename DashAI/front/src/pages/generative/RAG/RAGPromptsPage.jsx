@@ -7,6 +7,7 @@ import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
 import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
 import { getSessions, removeSession } from "../../../api/session";
+import CenterBox from "../../../components/threeSectionLayout/CenterBox";
 
 function RAGPromptsPage() {
   const navigate = useNavigate();
@@ -57,8 +58,8 @@ function RAGPromptsPage() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" p={1.5} pb={1} display="flex">
-      <Box width="22%" mr={1}>
+    <Box height="calc(100vh - 74px)" width="100%" display="flex">
+      <Box width="20%">
         <SessionBar
           sessions={sessions}
           handleSessionClick={handleSessionClick}
@@ -68,18 +69,8 @@ function RAGPromptsPage() {
         />
       </Box>
 
-      <Box width="56%" mr={1}>
-        <MainGenerativeBox>
-          <Box
-            display={"flex"}
-            flexDirection={"column"}
-            justifyContent={"flex-start"}
-            gap={1}
-            width={"100%"}
-            height={"100%"}
-            overflow={"scroll"}
-            p={2}
-          >
+      <Box width="60%">
+        <CenterBox>
             <RAGBreadcrumbs />
             <Typography variant="h5" component="h1">
               RAG Prompts
@@ -94,11 +85,10 @@ function RAGPromptsPage() {
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={handleRowSelectionModelChange}
             />
-          </Box>
-        </MainGenerativeBox>
+        </CenterBox>
       </Box>
 
-      <Box width="22%" sx={{ flexShrink: 0, flexGrow: 0 }}>
+      <Box width="20%" sx={{ flexShrink: 0, flexGrow: 0 }}>
         <Box
           width="100%"
           height="100%"
