@@ -20,5 +20,7 @@ class SklearnLikeRegressor(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
-        x_processed = self.prepare_dataset(x_pred, is_fit=False).to_pandas()
-        return super().predict(x_processed)
+
+        if isinstance(x_pred, DashAIDataset):
+            x_pred = self.prepare_dataset(x_pred, is_fit=False).to_pandas()
+        return super().predict(x_pred)

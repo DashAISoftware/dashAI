@@ -11,10 +11,10 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
-    split_dataset,
     prepare_for_experiment,
     select_columns,
-    )
+    split_dataset,
+)
 from DashAI.back.dependencies.database.models import (
     Dataset,
     Experiment,
@@ -203,7 +203,9 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 prepared_instance = task.prepare_for_task(
-                    loaded_instance, outputs_columns=self.output_columns
+                    loaded_instance,
+                    input_columns=self.input_columns,
+                    output_columns=self.output_columns,
                 )
 
                 split = self.explainer_db.scope.get("split")
@@ -394,9 +396,10 @@ class ExplainerJob(BaseJob):
                         val_indexes=splits["val_indexes"],
                     )
 
-                    prepared_dataset: DatasetDict = task.prepare_for_task(
-                        datasetdict=loaded_dataset,
-                        outputs_columns=self.output_columns,
+                    prepared_dataset = task.prepare_for_task(
+                        dataset=loaded_dataset,
+                        input_columns=self.input_columns,
+                        output_columns=self.output_columns,
                     )
                     data = select_columns(
                         prepared_dataset,
