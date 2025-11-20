@@ -145,6 +145,7 @@ export default function DatasetsContent() {
     setSelectedDatasetId(datasetId);
     setSelectedNotebookId(null);
     setSelectedOption("dataset");
+    setRightBarContent(null);
   };
 
   const handleNotebookClick = (notebookId) => {
@@ -248,6 +249,9 @@ export default function DatasetsContent() {
     setStep(0);
     setSelectedOption("dataset");
     setSelectedNotebookId(null);
+
+    // clear right bar content injected during dataset creation (e.g. dataloader config)
+    setRightBarContent(null);
 
     pollForDataset(
       { datasetId: newDataset.id, datasetName: newDataset.name },
