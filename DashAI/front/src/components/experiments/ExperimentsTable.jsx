@@ -138,6 +138,7 @@ function ExperimentsTable({
             experiment={params.row}
             expRunning={expRunning}
             setExpRunning={setExpRunning}
+            deleteExperiment={() => handleDeleteExperiment(params.id)}
           />,
           <Results key="runs-dialog" experiment={params.row} />,
           <DeleteItemModal

@@ -26,8 +26,16 @@ import { LoadingButton } from "@mui/lab";
 import { startJobPolling } from "../../utils/jobPoller";
 import { useTourContext } from "../tour/TourProvider";
 import { getComponents } from "../../api/component";
+import SingleRun from "./runButtons/SingleRun";
+import EditRunDialog from "./runButtons/EditRunDialog";
+import DeleteRun from "./runButtons/DeleteRun";
 
-function RunnerDialog({ experiment, expRunning, setExpRunning }) {
+function RunnerDialog({
+  experiment,
+  expRunning,
+  setExpRunning,
+  deleteExperiment,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState([]);
@@ -157,11 +165,44 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
     setFinishedRunning(false);
     let enqueueErrors = 0;
 
-    for (const runId of rowSelectionModel) {
+    // Filter runs to only include those that are not started or have "Delivered" status
+    const runsToExecute = rowSelectionModel.filter((runId) => {
+      const run = rows.find((r) => r.id === runId);
+      // Only execute if status is not started or delivered
+      return (
+        !run ||
+        !run.status ||
+        run.status === "Not Started" ||
+        run.status === "Error" ||
+        run.status === "Finished"
+      );
+    });
+
+    // If no runs to execute, show a message
+    if (runsToExecute.length === 0) {
+      enqueueSnackbar(
+        "No runs available to execute. Selected runs may already be running or completed.",
+        {
+          variant: "info",
+        },
+      );
+      setExpRunning({ ...expRunning, [experiment.id]: false });
+      return;
+    }
+
+    // Optimistically update all runs to "Started" status
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        runsToExecute.includes(row.id) ? { ...row, status: "Started" } : row,
+      ),
+    );
+
+    for (const runId of runsToExecute) {
       const error = await enqueueRunnerJob(runId);
       enqueueErrors = error ? enqueueErrors + 1 : enqueueErrors;
     }
-    if (enqueueErrors < rowSelectionModel.length) {
+
+    if (enqueueErrors < runsToExecute.length) {
       setTimeout(() => {
         getRuns({ showLoading: false });
       }, 100);
@@ -173,6 +214,57 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       }
     } else {
       setExpRunning({ ...expRunning, [experiment.id]: false });
+      // Refresh to get actual status if all failed
+      getRuns({ showLoading: false });
+    }
+  };
+
+  const handleSingleRun = async (run) => {
+    try {
+      // Optimistically update to "Started"
+      setRows((prevRows) =>
+        prevRows.map((row) =>
+          row.id === run.id ? { ...row, status: "Started" } : row,
+        ),
+      );
+
+      const response = await enqueueRunnerJobRequest(run.id);
+
+      if (response && response.id) {
+        enqueueSnackbar(`Run ${run.name} started successfully`, {
+          variant: "success",
+        });
+
+        setTrackedJobIds((prev) => new Set(prev).add(response.id));
+
+        // Start polling the job to track its progress
+        startJobPolling(
+          response.id,
+          (result) => {
+            // On success, refresh will happen from parent's polling
+            console.log(`Run job ${response.id} completed successfully`);
+            getRuns({ showLoading: false });
+          },
+          (result) => {
+            // On failure
+            console.error(`Run job ${response.id} failed:`, result);
+            enqueueSnackbar(
+              `Run ${run.name} failed: ${result.error || "Unknown error"}`,
+              {
+                variant: "error",
+              },
+            );
+            getRuns({ showLoading: false });
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Error enqueueing run:", error);
+      enqueueSnackbar(`Error starting run ${run.name}`, {
+        variant: "error",
+      });
+      // Revert the status on error by refreshing
+      getRuns({ showLoading: false });
     }
   };
 
@@ -231,6 +323,33 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
       minWidth: 150,
       editable: false,
     },
+    {
+      field: "actions",
+      headerName: "Actions",
+      type: "actions",
+      minWidth: 180,
+      getActions: (params) => [
+        <SingleRun key="single-run" run={params.row} onRun={handleSingleRun} />,
+        <EditRunDialog
+          key="edit-run-dialog"
+          run={params.row}
+          onRun={handleSingleRun}
+        />,
+        <DeleteRun
+          key="delete-run-dialog"
+          run={params.row}
+          onRunDelete={() => {
+            setRows((prevRows) =>
+              prevRows.filter((row) => row.id !== params.row.id),
+            );
+            if (rows.length === 1) {
+              setOpen(false);
+              deleteExperiment();
+            }
+          }}
+        />,
+      ],
+    },
   ];
 
   return (
@@ -256,7 +375,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
         open={open}
         onClose={() => setOpen(false)}
         fullWidth
-        maxWidth={"md"}
+        maxWidth={"lg"}
         data-tour="runner-dialog-progress"
       >
         <DialogTitle>
@@ -321,7 +440,7 @@ function RunnerDialog({ experiment, expRunning, setExpRunning }) {
                 finishedRunning ? handleCloseAndAdvance : handleExecuteRuns
               }
             >
-              {finishedRunning ? "Finished" : "Start"}
+              {finishedRunning ? "Finished" : "Run all"}
             </LoadingButton>
           </ButtonGroup>
         </DialogActions>
