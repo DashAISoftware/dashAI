@@ -94,10 +94,6 @@ export default function ConfigureAndUploadDatasetStep({
         const job = await enqueueDatasetRequest(data.id, file, url, params);
         handleDatasetCreated(data, job);
 
-        enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-          variant: "success",
-        });
-
         if (tourContext?.run) {
           setTimeout(() => {
             tourContext.nextStep();
