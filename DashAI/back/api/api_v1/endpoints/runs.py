@@ -313,7 +313,7 @@ async def update_run(
             if run_description:
                 setattr(run, "description", run_description)
             if parameters:
-                setattr(run, "parameters", parameters)
+                setattr(run, "parameters", parameters["parameters"])
             if run_name or run_description or parameters:
                 db.commit()
                 db.refresh(run)

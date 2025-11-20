@@ -52,3 +52,17 @@ export const createRun = async (
   const response = await api.post<IRun>("/v1/run/", data);
   return response.data;
 };
+
+export const deleteRun = async (runId: string): Promise<void> => {
+  await api.delete<void>(`/v1/run/${runId}`);
+};
+
+export const updateRunParameters = async (
+  runId: string,
+  parameters: object,
+): Promise<IRun> => {
+  const response = await api.patch<IRun>(`/v1/run/${runId}`, {
+    parameters,
+  });
+  return response.data;
+};
