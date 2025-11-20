@@ -2,6 +2,7 @@ import json
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import (
@@ -43,6 +44,13 @@ def dataset_id(dataset_1: Dataset) -> int:
 class DummyTask(BaseTask):
     name: str = "DummyTask"
 
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
+
     def prepare_for_task(self, datasetdict, outputs_columns):
         return datasetdict
 
@@ -65,7 +73,8 @@ class DummyModel(BaseModel):
 
     def fit(self, x, y):
         return
-    def prepare_dataset(self, dataset, is_fit = False):
+
+    def prepare_dataset(self, dataset, is_fit=False):
         return
 
 

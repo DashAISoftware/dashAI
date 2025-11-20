@@ -1,26 +1,42 @@
 import { useState, useEffect } from "react";
 import SideBar from "../threeSectionLayout/SideBar";
-import { Box, Typography, Tabs, Tab } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  ToggleButtonGroup,
+  ToggleButton,
+  IconButton,
+} from "@mui/material";
+import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import DescriptionPanel from "./DescriptionPanel";
-import ExplorerList from "./explorerCreation/ExplorerList";
-import ConverterList from "./converterCreation/ConverterList";
+import ToolList from "./tool/ToolList";
+import ToolGrid from "./tool/ToolGrid";
+import FormExplorerSection from "./explorerCreation/FormExplorerSection";
+import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
+import { useTourContext } from "../tour/TourProvider";
+import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
+import { ChevronRight } from "@mui/icons-material";
 
-export default function RightBar({ notebook }) {
+export default function RightBar({ notebook, onToggle }) {
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredTool, setHoveredTool] = useState(null);
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
   const [filteredConverters, setFilteredConverters] = useState([]);
   const [filteredExplorers, setFilteredExplorers] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const tourContext = useTourContext();
+  const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
+  const { explorersAndConverters } = useExplorersAndConverters();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,7 +92,7 @@ export default function RightBar({ notebook }) {
     return () => {
       isMounted = false;
     };
-  }, [notebook?.file_path]);
+  }, [notebook?.file_path, explorersAndConverters]);
 
   // Validate explorers based on dataset columns
   const validateExplorer = (explorer) => {
@@ -197,6 +213,17 @@ export default function RightBar({ notebook }) {
     setFilteredConverters(filteredConverters);
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
+  const handleChangeTab = (event, newValue) => {
+    setActiveTab(newValue);
+    setSearchQuery("");
+
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
+  };
+
   return (
     <SideBar>
       <Box
@@ -205,10 +232,29 @@ export default function RightBar({ notebook }) {
           flexDirection: "column",
           overflow: "hidden",
           height: "100%",
+          width: "100%",
         }}
+        className="right-bar-container"
       >
-        <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: "1px solid #333",
+            flexShrink: 0,
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Typography variant="h6">Analysis Tools</Typography>
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            sx={{ color: "text.secondary" }}
+          >
+            <ChevronRight />
+          </IconButton>
         </Box>
 
         {notebook ? (
@@ -216,11 +262,12 @@ export default function RightBar({ notebook }) {
             {/* Tabs Section */}
             <Tabs
               value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
+              onChange={handleChangeTab}
               centered
               sx={{ flexShrink: 0 }}
             >
               <Tab
+                data-tour="explorers-tab"
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
@@ -229,6 +276,7 @@ export default function RightBar({ notebook }) {
                 }
               />
               <Tab
+                data-tour="converters-tab"
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
@@ -245,6 +293,7 @@ export default function RightBar({ notebook }) {
                 flexDirection: "column",
                 overflow: "hidden",
               }}
+              className="explorer-converter-box"
             >
               {/* Search bar */}
               <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
@@ -255,6 +304,48 @@ export default function RightBar({ notebook }) {
                   placeholder="Search explorers/converters"
                 />
               </Box>
+              {/* View Mode Toggle */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderBottom: "1px solid #333",
+                  flexShrink: 0,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ color: "rgb(161, 161, 170)" }}
+                >
+                  View mode
+                </Typography>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, newMode) => newMode && setViewMode(newMode)}
+                  size="small"
+                  sx={{
+                    "& .MuiToggleButton-root": {
+                      color: "rgb(161, 161, 170)",
+                      border: "1px solid rgb(39, 39, 42)",
+                      "&.Mui-selected": {
+                        bgcolor: "rgb(39, 39, 42)",
+                        color: "rgb(6, 182, 212)",
+                      },
+                    },
+                  }}
+                >
+                  <ToggleButton value="list">
+                    <ViewList sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <ToggleButton value="grid">
+                    <ViewModule sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
 
               {/* Tool list and description */}
               <Box
@@ -263,29 +354,56 @@ export default function RightBar({ notebook }) {
                   flexDirection: "column",
                   flex: 1,
                   overflow: "hidden",
+                  minWidth: 0,
                 }}
               >
-                {/* Tool list */}
-                <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                  {activeTab === 0 && (
-                    <ExplorerList
-                      explorers={filteredExplorers}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                    />
-                  )}
-                  {activeTab === 1 && (
-                    <ConverterList
-                      converters={filteredConverters}
-                      hoveredTool={hoveredTool}
-                      setHoveredTool={setHoveredTool}
-                      notebook={notebook}
-                    />
-                  )}
-                </Box>
+                {/* Tool list - grid */}
+                {viewMode === "list" ? (
+                  <Box
+                    sx={{
+                      flex: 1,
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      p: 2,
+                      minWidth: 0,
+                    }}
+                  >
+                    {activeTab === 0 && (
+                      <ToolList
+                        tools={filteredExplorers}
+                        notebook={notebook}
+                        FormComponent={FormExplorerSection}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ToolList
+                        tools={filteredConverters}
+                        notebook={notebook}
+                        FormComponent={FormConverterSection}
+                      />
+                    )}
+                  </Box>
+                ) : (
+                  <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+                    {activeTab === 0 && (
+                      <ToolGrid
+                        tools={filteredExplorers}
+                        notebook={notebook}
+                        FormComponent={FormExplorerSection}
+                      />
+                    )}
+                    {activeTab === 1 && (
+                      <ToolGrid
+                        tools={filteredConverters}
+                        notebook={notebook}
+                        FormComponent={FormConverterSection}
+                      />
+                    )}
+                  </Box>
+                )}
 
                 {/* Description panel - Fixed height */}
-                <DescriptionPanel hoveredTool={hoveredTool} />
+                <DescriptionPanel />
               </Box>
             </Box>
           </>

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models import BaseModel
 from DashAI.back.types.categorical import Categorical
+
 
 class KernelShapSchema(BaseSchema):
     """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
@@ -67,6 +68,8 @@ class KernelShap(BaseLocalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    DISPLAY_NAME = "Kernel SHAP"
+    COLOR = "#008000"
     SCHEMA = KernelShapSchema
 
     def __init__(

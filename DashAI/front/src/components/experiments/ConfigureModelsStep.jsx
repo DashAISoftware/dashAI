@@ -8,6 +8,7 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
+import { useTourContext } from "../tour/TourProvider";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -21,6 +22,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const [selectedModel, setSelectedModel] = useState("");
   const [compatibleModels, setCompatibleModels] = useState([]);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
+  const tourContext = useTourContext();
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
 
@@ -81,6 +83,29 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     setHasUserTouchedName(false);
     setName("");
     setSelectedModel("");
+
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
+  };
+
+  const handleOnChangeModel = (event) => {
+    setSelectedModel(event.target.value);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
+  };
+
+  const handleOnOpenMenu = () => {
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
+    }
   };
 
   const getNameError = () => {
@@ -101,7 +126,6 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const nameError = getNameError();
 
   useEffect(() => {
-    // const allModelsHaveMetric = newExp.runs.every((model) => model.goal_metric);
     if (newExp.runs.length) {
       setNextEnabled(true);
     } else {
@@ -169,13 +193,17 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
 
           <Grid size={{ xs: 4, md: 12 }}>
             <TextField
+              data-tour="exp-model-selector"
               select
               label="Select a model to add"
               value={selectedModel}
-              onChange={(e) => {
-                setSelectedModel(e.target.value);
-              }}
+              onChange={handleOnChangeModel}
               fullWidth
+              slotProps={{
+                select: {
+                  onOpen: handleOnOpenMenu,
+                },
+              }}
             >
               {compatibleModels.length === 0 && (
                 <MenuItem value="" disabled>
@@ -184,8 +212,12 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               )}
               {compatibleModels.length > 0 &&
                 compatibleModels.map((model) => (
-                  <MenuItem key={model.name} value={model.name}>
-                    {model.name}
+                  <MenuItem
+                    key={model.name}
+                    value={model.name}
+                    data-tour={`exp-model-option-${model.name}`}
+                  >
+                    {model.display_name || model.name}
                   </MenuItem>
                 ))}
             </TextField>
@@ -193,6 +225,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
 
           <Grid size={{ xs: 1, md: 2 }}>
             <Button
+              data-tour="exp-add-model-button"
               variant="outlined"
               disabled={selectedModel === "" || name.trim() === ""}
               startIcon={<AddIcon />}
@@ -204,8 +237,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Grid>
-      {/* Models table */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12 }} data-tour="models-table">
         <ModelsTable newExp={newExp} setNewExp={setNewExp} />
       </Grid>
     </Grid>
@@ -218,8 +250,8 @@ ConfigureModelsStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

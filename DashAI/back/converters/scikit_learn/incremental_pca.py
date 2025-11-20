@@ -1,6 +1,9 @@
 import pyarrow as pa
 from sklearn.decomposition import IncrementalPCA as IncrementalPCAOperation
 
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -46,13 +49,24 @@ class IncrementalPCASchema(BaseSchema):
     )  # type: ignore
 
 
-class IncrementalPCA(SklearnWrapper, IncrementalPCAOperation):
+class IncrementalPCA(
+    DimensionalityReductionConverter, SklearnWrapper, IncrementalPCAOperation
+):
     """Scikit-learn's IncrementalPCA wrapper for DashAI."""
 
     SCHEMA = IncrementalPCASchema
-    DESCRIPTION = "Incremental principal components analysis (IPCA)."
+    CATEGORY = "Dimensionality Reduction"
+    DESCRIPTION = (
+        "Incremental principal component analysis (IPCA) is "
+        "typically used as a replacement for principal component analysis "
+        "(PCA) when the dataset to be decomposed "
+        "is too large to fit in memory."
+    )
+    SHORT_DESCRIPTION = "Dimensionality reduction using Incremental PCA."
     DISPLAY_NAME = "Incremental PCA"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""
         return Float(arrow_type=pa.float64())
+
+    IMAGE_PREVIEW = "incremental_pca.png"

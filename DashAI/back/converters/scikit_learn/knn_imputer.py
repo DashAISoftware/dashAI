@@ -1,17 +1,15 @@
 import pyarrow as pa
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
-from DashAI.back.api.utils import cast_string_to_type
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
-    float_field,
     int_field,
-    none_type,
     schema_field,
-    string_field,
-    union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -19,13 +17,6 @@ from DashAI.back.types.value_types import Float
 
 
 class KNNImputerSchema(BaseSchema):
-    missing_values: schema_field(
-        none_type(
-            union_type(int_field(), union_type(float_field(), string_field()))
-        ),  # int, float, str, np.nan or None
-        None,  # np.nan,
-        "The placeholder for the missing values.",
-    )  # type: ignore
     n_neighbors: schema_field(
         int_field(ge=1),
         5,
@@ -59,18 +50,16 @@ class KNNImputerSchema(BaseSchema):
     )  # type: ignore
 
 
-class KNNImputer(SklearnWrapper, KNNImputerOperation):
+class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperation):
     """Scikit-learn's KNNImputer wrapper for DashAI."""
 
     SCHEMA = KNNImputerSchema
     DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
+    CATEGORY = "Basic Preprocessing"
     DISPLAY_NAME = "KNN Imputer"
+    IMAGE_PREVIEW = "knn_imputer.png"
 
     def __init__(self, **kwargs):
-        self.missing_values = kwargs.pop("missing_values", None)
-        self.missing_values = cast_string_to_type(self.missing_values)
-        kwargs["missing_values"] = self.missing_values
-
         super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

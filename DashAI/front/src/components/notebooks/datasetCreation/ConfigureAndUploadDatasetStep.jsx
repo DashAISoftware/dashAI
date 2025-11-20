@@ -3,8 +3,11 @@ import { Grid, CircularProgress } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
-import { createDataset } from "../../../api/datasets";
+import DataloaderConfiguration from "./DataloaderConfiguration";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
+import { useTourContext } from "../../tour/TourProvider";
+
+import { createDataset } from "../../../api/datasets";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -21,6 +24,7 @@ export default function ConfigureAndUploadDatasetStep({
   const [previewError, setPreviewError] = useState(false);
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
   const [columnTypes, setColumnTypes] = useState(null);
+  const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -37,6 +41,16 @@ export default function ConfigureAndUploadDatasetStep({
       });
     }
   }, [previewError, enqueueSnackbar]);
+
+  useEffect(() => {
+    if (formSubmitRef.current && tourContext?.run) {
+      setTimeout(() => {
+        if (formSubmitRef.current?.setFieldValue) {
+          formSubmitRef.current.setFieldValue("name", "Personality Dataset");
+        }
+      }, 100);
+    }
+  }, [tourContext, selectedDataloader]);
 
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
@@ -61,12 +75,21 @@ export default function ConfigureAndUploadDatasetStep({
 
       const { file, url } = datasetFileToUpload;
 
-      // Create dataset
       const data = await createDataset(name);
+
+      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
+        variant: "success",
+      });
 
       try {
         const job = await enqueueDatasetRequest(data.id, file, url, params);
         handleDatasetCreated(data, job);
+
+        if (tourContext?.run) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 500);
+        }
       } catch {
         enqueueSnackbar("Error when trying to enqueue the dataset job.", {
           variant: "error",
@@ -90,6 +113,7 @@ export default function ConfigureAndUploadDatasetStep({
     handleDatasetCreated,
     backHome,
     enqueueSnackbar,
+    tourContext,
   ]);
 
   const handleFileUpload = (file, url) => {
@@ -148,7 +172,7 @@ export default function ConfigureAndUploadDatasetStep({
       </Grid>
 
       {/* Form buttons */}
-      <Grid sx={{ m: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
         {uploading ? (
           <CircularProgress />
         ) : (
@@ -162,6 +186,7 @@ export default function ConfigureAndUploadDatasetStep({
             }}
             saveButtonText="Upload"
             backButtonText="Back"
+            dataTour="dataset-step-upload-button"
           />
         )}
       </Grid>

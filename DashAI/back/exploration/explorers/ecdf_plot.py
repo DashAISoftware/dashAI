@@ -19,7 +19,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class ECDFNorm(enum.Enum):
@@ -51,7 +52,7 @@ class ECDFPlotSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class ECDFPlotExplorer(BaseExplorer):
+class ECDFPlotExplorer(DistributionExplorer):
     """
     ECDFPlotExplorer is an explorer that creates an Empirical Cumulative
     Distribution Plot. It shows the proportion or count of observations
@@ -64,6 +65,7 @@ class ECDFPlotExplorer(BaseExplorer):
         "variable. It shows the proportion or count of observations falling below "
         "each unique value in the dataset."
     )
+    IMAGE_PREVIEW = "ecdf_plot.png"
 
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {

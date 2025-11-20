@@ -19,6 +19,7 @@ class TabularClassificationTask(ClassificationTask):
     labels for structured data organized in tabular form (rows and columns).
     Models are trained to learn patterns and relationships in the data, enabling
     accurate classification of new instances."""
+    DISPLAY_NAME: str = "Tabular Classification"
     metadata: dict = {
         "inputs_types": [Float, Integer, Text, Categorical],
         "outputs_types": [Categorical],

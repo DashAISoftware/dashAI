@@ -1,7 +1,9 @@
 """Base Metric abstract class."""
 
-from typing import Final, Tuple, Union
+from typing import Any, Dict, Final, Tuple, Union
+
 import numpy as np
+
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -9,6 +11,23 @@ class BaseMetric:
     """Abstract class of all metrics."""
 
     TYPE: Final[str] = "Metric"
+    MAXIMIZE: Final[bool] = False
+    metadata: Dict[str, Any] = {}
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """
+        Get metadata values for the current metric.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with the metadata
+        """
+        meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
+        meta["maximize"] = cls.MAXIMIZE
+
+        return meta
 
 
 METRICS_MAP = {
@@ -16,6 +35,7 @@ METRICS_MAP = {
     "regression": ["RMSE", "MAE"],
     "translation": ["Bleu", "Ter"],
 }
+
 
 def validate_inputs(
     true: Union[np.ndarray, list], pred: Union[np.ndarray, list], metric_category: str
@@ -46,6 +66,7 @@ def validate_inputs(
                 f"given: len(true_values) = {len(true)} and "
                 f"len(pred_values) = {len(pred)}."
             )
+
 
 def prepare_to_metric(
     y: DashAIDataset,

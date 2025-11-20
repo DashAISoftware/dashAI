@@ -18,13 +18,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
-
-if torch.cuda.is_available():
-    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
-    DEVICE_PLACEHOLDER = "cuda:0"
-else:
-    DEVICE_ENUM = ["cpu"]
-    DEVICE_PLACEHOLDER = "cpu"
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
 class StableDiffusionXLV1ControlNetSchema(BaseSchema):
@@ -91,7 +85,10 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
     def __init__(self, **kwargs: Any):
         """Initialize the generative model."""
         kwargs = self.validate_and_transform(kwargs)
-        self.device = kwargs.get("device")
+        use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
+        self.device = (
+            f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
+        )
 
         self.controlnet = ControlNetModel.from_pretrained(
             "diffusers/controlnet-depth-sdxl-1.0-small",

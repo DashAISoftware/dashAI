@@ -41,6 +41,8 @@ class OptunaSchema(BaseSchema):
 
 
 class OptunaOptimizer(BaseOptimizer):
+    DISPLAY_NAME: str = "Optuna Optimizer"
+    COLOR: str = "#E91E63"
     SCHEMA = OptunaSchema
 
     COMPATIBLE_COMPONENTS = [
@@ -73,51 +75,30 @@ class OptunaOptimizer(BaseOptimizer):
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
-
-        if metric["name"] in ["Accuracy", "F1", "Precision", "Recall"]:
-            study = optuna.create_study(
-                direction="maximize", sampler=self.sampler(), pruner=self.pruner
-            )
-        else:
-            study = optuna.create_study(
-                direction="minimize", sampler=self.sampler(), pruner=self.pruner
-            )
+        direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
+        study = optuna.create_study(
+            direction=direction, sampler=self.sampler(), pruner=self.pruner
+        )
 
         self.metric = metric["class"]
 
-        if task == "TextClassificationTask":
+        def objective(trial):
+            # Set value for each hyperparameter and for each model
+            # (either self or submodels nested inside)
+            for obj, key, bounds, dtype in self.parameters:
+                if dtype == "number":
+                    value = trial.suggest_float(key, bounds[0], bounds[1], log=False)
+                elif dtype == "integer":
+                    value = trial.suggest_int(key, bounds[0], bounds[1], log=False)
+                else:
+                    raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
+                setattr(obj, key, value)
 
-            def objective(trial):
-                classifier_trial = self.model.classifier
-                for hyperparameter, values in self.parameters.items():
-                    value = trial.suggest_int(hyperparameter, values[0], values[-1])
-                    setattr(classifier_trial, hyperparameter, value)
+            self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
+            y_pred = self.model.predict(input_dataset["validation"])
+            score = self.metric.score(output_dataset["validation"], y_pred)
 
-                model_trial = self.model
-                model_trial.classifier = classifier_trial
-                model_trial.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_trial.predict(input_dataset["validation"])
-                score = self.metric.score(output_dataset["validation"], y_pred)
-
-                return score
-
-        else:
-
-            def objective(trial):
-                model_trial = self.model
-                for hyperparameter, values in self.parameters.items():
-                    value = trial.suggest_int(hyperparameter, values[0], values[-1])
-                    setattr(model_trial, hyperparameter, value)
-
-                model_trial.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_trial.predict(input_dataset["validation"])
-                score = self.metric.score(output_dataset["validation"], y_pred)
-
-                return score
+            return score
 
         study.optimize(objective, n_trials=self.n_trials)
 

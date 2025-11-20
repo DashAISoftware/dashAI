@@ -126,6 +126,7 @@ class ExcelDataLoader(BaseDataLoader):
     Data loader for tabular data in Excel files.
     Supports xls, xlsx, xlsm, xlsb, odf, ods and odt file extensions.
     """
+    DISPLAY_NAME: str = "Excel Data Loader"
 
     def _prepare_pandas_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare parameters for pandas.read_excel."""
@@ -176,6 +177,7 @@ class ExcelDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        n_sample: int | None = None,
     ) -> DashAIDataset:
         """Load the uploaded Excel files into a DatasetDict.
 
@@ -188,6 +190,8 @@ class ExcelDataLoader(BaseDataLoader):
             The temporary path where the files will be extracted and then uploaded.
         params : Dict[str, Any]
             Dict with the dataloader parameters.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------
@@ -202,8 +206,7 @@ class ExcelDataLoader(BaseDataLoader):
         if prepared_path[1] == "file":
             try:
                 dataset = pd.read_excel(
-                    io=prepared_path[0],
-                    **pandas_params,
+                    io=prepared_path[0], **pandas_params, nrows=n_sample
                 )
             except ValueError as e:
                 raise DatasetGenerationError from e
@@ -216,28 +219,19 @@ class ExcelDataLoader(BaseDataLoader):
             )
             try:
                 train_df_list = [
-                    pd.read_excel(
-                        io=file_path,
-                        **pandas_params,
-                    )
+                    pd.read_excel(io=file_path, **pandas_params, nrows=n_sample)
                     for file_path in sorted(train_files)
                 ]
 
                 train_df = pd.concat(train_df_list)
                 test_df_list = [
-                    pd.read_excel(
-                        io=file_path,
-                        **pandas_params,
-                    )
+                    pd.read_excel(io=file_path, **pandas_params, nrows=n_sample)
                     for file_path in sorted(test_files)
                 ]
                 test_df_list = pd.concat(test_df_list)
 
                 val_df_list = [
-                    pd.read_excel(
-                        io=file_path,
-                        **pandas_params,
-                    )
+                    pd.read_excel(io=file_path, **pandas_params, nrows=n_sample)
                     for file_path in sorted(val_files)
                 ]
                 val_df = pd.concat(val_df_list)

@@ -30,9 +30,11 @@ class BaseConverter(ConfigObject, ABC):
     DISPLAY_NAME: Final[str] = ""
     DESCRIPTION: Final[str] = ""
     SHORT_DESCRIPTION: Final[str] = ""
+    IMAGE_PREVIEW: Final[str] = ""
+    CATEGORY: Final[str] = "Other"
+    COLOR: Final[str] = "rgb(255, 255, 255)"
     SUPERVISED: bool = False
     SCHEMA: BaseConverterSchema
-    metadata: Dict[str, Any] = {}
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -44,16 +46,17 @@ class BaseConverter(ConfigObject, ABC):
         Dict[str, Any]
             Dictionary with the metadata
         """
-        metadata = cls.metadata
-        metadata["display_name"] = (
-            cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
-        )
-        metadata["short_description"] = (
+        meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
+        meta["display_name"] = cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
+        meta["short_description"] = (
             cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
-        metadata["supervised"] = cls.SUPERVISED
+        meta["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
+        meta["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
+        meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
+        meta["supervised"] = cls.SUPERVISED
 
-        return metadata
+        return meta
 
     def changes_row_count(self) -> bool:
         """

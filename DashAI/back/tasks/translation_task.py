@@ -4,9 +4,7 @@ from typing import List, Union
 
 from datasets import DatasetDict
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.value_types import Text
 
@@ -27,6 +25,7 @@ class TranslationTask(BaseTask):
     converting text or speech from one language into another language while
     preserving the meaning and context.
     """
+    DISPLAY_NAME: str = "Translation"
 
     def prepare_for_task(
         self,
@@ -52,3 +51,38 @@ class TranslationTask(BaseTask):
             dataset, input_columns, output_columns
         )
         return dashai_dataset
+
+    def process_predictions(self, dataset, predictions, output_column):
+        """Process the predictions
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        predictions : np.ndarray
+            Predictions from the model
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        Processed predictions
+        """
+        return predictions
+
+    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+        """Get the number of unique labels in the output column.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        int | None
+            Number of unique labels or None if not applicable
+        """
+        return None

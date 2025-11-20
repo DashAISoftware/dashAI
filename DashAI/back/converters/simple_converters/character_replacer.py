@@ -3,6 +3,9 @@ from typing import List, Union
 import pyarrow as pa
 
 from DashAI.back.converters.base_converter import BaseConverter
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
+)
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -26,17 +29,20 @@ class CharacterReplacerSchema(BaseSchema):
     )  # type: ignore
 
 
-class CharacterReplacer(BaseConverter):
+class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     """
     Converter that replaces specified characters or substrings in string columns.
     If 'replacement_char' is an empty string, 'char_to_replace' will be removed.
     """
 
+    CATEGORY = "Basic Preprocessing"
     SCHEMA = CharacterReplacerSchema
     DESCRIPTION = (
         "Replaces or removes specified characters/substrings "
         "in selected string columns."
     )
+    DISPLAY_NAME = "Character Replacer"
+    IMAGE_PREVIEW = "character_replacer.png"
 
     def __init__(self, char_to_replace: str, replacement_char: str):
         super().__init__()

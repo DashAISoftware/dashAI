@@ -3,6 +3,7 @@ import os
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -17,9 +18,18 @@ from DashAI.back.tasks import BaseTask
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, dataset, output_columns):
         return dataset
+
+    def num_labels(self, dataset, output_column):
+        return None
 
 
 class DummyModel(BaseModel):
@@ -36,9 +46,9 @@ class DummyModel(BaseModel):
 
     def fit(self, x, y):
         return
-    
-    def prepare_dataset(self, dataset, is_fit = False):
-        return 
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return
 
 
 class FailDummyModel(BaseModel):
@@ -55,7 +65,8 @@ class FailDummyModel(BaseModel):
 
     def fit(self, x, y):
         raise Exception("Always fails")
-    def prepare_dataset(self, dataset, is_fit = False):
+
+    def prepare_dataset(self, dataset, is_fit=False):
         return
 
 
@@ -108,8 +119,8 @@ def create_experiment(client: TestClient, dataset_id: int):
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
-            input_columns=[],
-            output_columns=[],
+            input_columns=["SepalLengthCm"],
+            output_columns=["Species"],
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -144,13 +155,13 @@ def create_run(client: TestClient, experiment_id: int):
             "model_name": "DummyModel",
             "name": "DummyRun",
             "parameters": {},
-            "optimizer_name": "OptunaOptimizer",
+            "optimizer_name": "",
             "optimizer_parameters": {
                 "n_trials": 10,
                 "sampler": "TPESampler",
                 "pruner": "None",
             },
-            "goal_metric": "Accuracy",
+            "goal_metric": "",
             "description": "This is a test run",
             "plot_history_path": "path/to/history.png",
             "plot_slice_path": "path/to/slice.png",
@@ -177,13 +188,13 @@ def create_failed_run(client: TestClient, experiment_id: int):
             experiment_id=experiment_id,
             model_name="FailDummyModel",
             parameters={},
-            optimizer_name="OptunaOptimizer",
+            optimizer_name="",
             optimizer_parameters={
                 "n_trials": 10,
                 "sampler": "TPESampler",
                 "pruner": "None",
             },
-            goal_metric="Accuracy",
+            goal_metric="",
             name="DummyRun2",
         )
         db.add(run)
@@ -293,4 +304,5 @@ def test_job_with_wrong_run(client: TestClient):
         "/api/v1/job/",
         data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": 31415})},
     )
+    assert response.status_code == 500, response.text
     assert response.status_code == 500, response.text

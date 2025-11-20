@@ -26,6 +26,7 @@ class TextClassificationTask(ClassificationTask):
     based on their content. It serves as the foundation for applications like sentiment
     analysis, spam filtering, topic classification, and document categorization.
     """
+    DISPLAY_NAME: str = "Text Classification"
 
     def prepare_for_task(
         self,

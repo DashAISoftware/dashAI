@@ -91,7 +91,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
         {itemsList.map((item, index) => {
           return (
             <ListItem
-              key={`list-button-${item.name}`}
+              key={`list-button-${item.display_name || item.name}`}
               disablePadding
               sx={{
                 display: itemsToShow[index] ? "show" : "none",
@@ -104,7 +104,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
                 selected={selectedIndex === index}
                 onClick={() => handleListItemClick(item, index)}
               >
-                <ListItemText primary={item.name} />
+                <ListItemText primary={item.display_name || item.name} />
               </ListItemButton>
             </ListItem>
           );

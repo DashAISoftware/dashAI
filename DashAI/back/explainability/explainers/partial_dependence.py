@@ -44,12 +44,14 @@ class PartialDependenceSchema(BaseSchema):
 
 
 class PartialDependence(BaseGlobalExplainer):
-    """PartialDependence is a model-agnostic explainability method that
+    """Partial Dependence is a model-agnostic explainability method that
     shows the average prediction of a machine learning model for each
     possible value of a feature.
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    DISPLAY_NAME = "Partial Dependence"
+    COLOR = "#FFA500"
     SCHEMA = PartialDependenceSchema
 
     def __init__(
@@ -76,9 +78,9 @@ class PartialDependence(BaseGlobalExplainer):
             feature. Defaults to 100.
         """
 
-        assert (
-            upper_percentile > lower_percentile
-        ), "upper_percentile value must be greater than lower_percentile"
+        assert upper_percentile > lower_percentile, (
+            "upper_percentile value must be greater than lower_percentile"
+        )
 
         super().__init__(model)
 
@@ -240,4 +242,3 @@ class PartialDependence(BaseGlobalExplainer):
                 dfs.append(data)
 
         return self._create_plot(dfs)
-

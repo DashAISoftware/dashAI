@@ -19,6 +19,8 @@ class Bleu(TranslationMetric):
     [1] https://en.wikipedia.org/wiki/BLEU
     """
 
+    MAXIMIZE: bool = True
+
     @staticmethod
     def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):
         """Calculate the BLEU score between source and target sentences.

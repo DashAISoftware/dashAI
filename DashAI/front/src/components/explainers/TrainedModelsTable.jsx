@@ -19,6 +19,19 @@ function TrainedModelsTable() {
   const [selectedTask, setSelectedTask] = useState("All Tasks");
   const [tasks, setTasks] = useState([]);
   const [originalRows, setOriginalRows] = useState([]);
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   const colums = [
     {
@@ -44,6 +57,10 @@ function TrainedModelsTable() {
       headerName: "Model",
       minWidth: 170,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "created",

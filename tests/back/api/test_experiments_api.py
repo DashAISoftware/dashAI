@@ -35,8 +35,13 @@ def create_experiment_1(client: TestClient, dataset_id: int):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentA",
-            "input_columns": [1, 2, 3, 4],
-            "output_columns": [5],
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
             "splits": splits,
         },
     )
@@ -51,8 +56,8 @@ def create_experiment_2(client: TestClient, dataset_id: int):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentB",
-            "input_columns": [1, 4],
-            "output_columns": [5],
+            "input_columns": ["SepalLengthCm", "PetalWidthCm"],
+            "output_columns": ["Species"],
             "splits": splits,
         },
     )
@@ -152,8 +157,13 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 200, response.text
@@ -167,8 +177,13 @@ def test_get_columns_validation_invalid(client: TestClient, dataset_id: int):
         json={
             "task_name": "ImageClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 200, response.text
@@ -182,8 +197,13 @@ def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: 
         json={
             "task_name": "TabularClassTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 404, response.text
@@ -198,8 +218,13 @@ def test_get_columns_validation_wrong_dataset(client: TestClient):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": 127,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 404, response.text

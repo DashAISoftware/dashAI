@@ -56,7 +56,7 @@ function ResultsTable({ experimentId }) {
         selectTypes: ["Metric"],
         relatedComponent: experiment.task_name,
       });
-      const rows = extractRows(runs);
+      const rows = await extractRows(runs);
       const rowsWithStringStatus = rows.map((run) => {
         return { ...run, status: getRunStatus(run.status) };
       });

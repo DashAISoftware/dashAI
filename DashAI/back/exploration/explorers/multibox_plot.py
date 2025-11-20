@@ -19,7 +19,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 
 
 class MultiColumnBoxPlotSchema(BaseExplorerSchema):
@@ -40,7 +41,7 @@ class MultiColumnBoxPlotSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class MultiColumnBoxPlotExplorer(BaseExplorer):
+class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     """
     MultiColumnBoxPlotExplorer is an explorer that returns a figure with a box plot
     of multiple columns of a dataset in a single axis.
@@ -54,6 +55,7 @@ class MultiColumnBoxPlotExplorer(BaseExplorer):
         "plot of multiple columns of a dataset in a single axis. "
         "The other axis is selected through the opposite_axis parameter."
     )
+    IMAGE_PREVIEW = "multi_column_box_plot.png"
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {

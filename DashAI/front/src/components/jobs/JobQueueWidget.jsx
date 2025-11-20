@@ -142,21 +142,13 @@ const JobQueueWidget = () => {
   const errorJobs = jobs.filter((job) => job.status === "error");
 
   useEffect(() => {
-    try {
-      localStorage.setItem("jobQueueWidgetExpanded", expanded.toString());
-    } catch (e) {}
-  }, [expanded]);
-
-  useEffect(() => {
     if (
       activeJobs.length > 0 &&
       activeJobs.length !== prevActiveJobsCount.current &&
       !expanded
     ) {
       setExpanded(true);
-      const toastTimeout = setTimeout(() => {
-        console.log("New active job");
-      }, 100);
+      const toastTimeout = setTimeout(() => {}, 100);
       return () => clearTimeout(toastTimeout);
     }
     prevActiveJobsCount.current = activeJobs.length;
@@ -175,7 +167,6 @@ const JobQueueWidget = () => {
   };
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered");
     setForceUpdate((prev) => prev + 1);
     refresh();
   };

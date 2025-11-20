@@ -11,7 +11,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class BoxPlotSchema(BaseExplorerSchema):
@@ -27,7 +28,7 @@ class BoxPlotSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class BoxPlotExplorer(BaseExplorer):
+class BoxPlotExplorer(DistributionExplorer):
     """
     BoxPlotExplorer is an explorer that returns a box plot
     of selected columns of a dataset.
@@ -38,6 +39,7 @@ class BoxPlotExplorer(BaseExplorer):
         "BoxPlotExplorer is an explorer that returns a box plot "
         "of selected columns of a dataset."
     )
+    IMAGE_PREVIEW = "box_plot.png"
 
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {

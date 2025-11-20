@@ -2,6 +2,9 @@ import pyarrow as pa
 from sklearn.decomposition import TruncatedSVD as TruncatedSVDOperation
 
 from DashAI.back.api.utils import create_random_state
+from DashAI.back.converters.category.dimensionality_reduction import (
+    DimensionalityReductionConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -59,7 +62,9 @@ class TruncatedSVDSchema(BaseSchema):
     )  # type: ignore
 
 
-class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
+class TruncatedSVD(
+    DimensionalityReductionConverter, SklearnWrapper, TruncatedSVDOperation
+):
     """Scikit-learn's TruncatedSVD wrapper for DashAI."""
 
     SCHEMA = TruncatedSVDSchema
@@ -72,7 +77,9 @@ class TruncatedSVD(SklearnWrapper, TruncatedSVDOperation):
     )
     SHORT_DESCRIPTION = "Dimensionality reduction using truncated SVD."
     DISPLAY_NAME = "Truncated SVD"
+    IMAGE_PREVIEW = "truncated_svd.png"
     metadata = {}
+    CATEGORY = "Dimensionality Reduction"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

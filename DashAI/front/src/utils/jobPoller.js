@@ -18,8 +18,6 @@ const state = {
  */
 export function startJobPoller() {
   if (state.active) return;
-
-  console.log("[JobPoller] Starting global polling");
   state.active = true;
 
   // Clear any existing interval
@@ -38,7 +36,6 @@ export function startJobPoller() {
 export function stopJobPoller() {
   if (!state.active) return;
 
-  console.log("[JobPoller] Stopping global polling");
   if (state.intervalId) {
     clearInterval(state.intervalId);
     state.intervalId = null;
@@ -60,20 +57,9 @@ function hasActiveJobs(jobs) {
  */
 async function pollJobs() {
   try {
-    console.log(
-      "[JobPoller] Polling jobs, subscribers:",
-      state.subscribers.size,
-      "watchers:",
-      state.jobWatchers.size,
-    );
-
     if (state.subscribers.size === 0 && state.jobWatchers.size === 0) {
       const isEmpty = await isQueueEmpty();
-      console.log("[JobPoller] Queue empty?", isEmpty);
       if (isEmpty) {
-        console.log(
-          "[JobPoller] No subscribers, no watchers, and queue is empty - stopping",
-        );
         stopJobPoller();
         return;
       }
@@ -85,16 +71,7 @@ async function pollJobs() {
 
     const jobsToProcess = changeData.all_jobs || [];
 
-    console.log(
-      "ALL JOBS:",
-      jobsToProcess.map((j) => ({ id: j.id, status: j.status })),
-      "Recently completed:",
-      changeData.recently_completed,
-    );
-
     const activeJobsExist = hasActiveJobs(jobsToProcess);
-    console.log("[JobPoller] Active jobs exist?", activeJobsExist);
-
     for (const subscriber of state.subscribers) {
       try {
         subscriber(jobsToProcess);
@@ -104,9 +81,7 @@ async function pollJobs() {
     }
 
     for (const [jobId, watcher] of state.jobWatchers.entries()) {
-      console.log(`Looking for job with ID: ${jobId}`);
       const job = jobsToProcess.find((j) => j.id === jobId);
-      console.log(`Found job? ${!!job}, status: ${job?.status}`);
 
       if (job) {
         if (job.status === "finished") {
@@ -121,9 +96,6 @@ async function pollJobs() {
 
     if (changeData.recently_completed) {
       state.lastCompletionTime = Date.now();
-      console.log(
-        "[JobPoller] Recently completed jobs detected, keeping polling active",
-      );
     }
 
     const MIN_POLLING_AFTER_COMPLETION = 5000; // 5 seconds
@@ -137,9 +109,6 @@ async function pollJobs() {
       !changeData.recently_completed &&
       timePassedSinceCompletion > MIN_POLLING_AFTER_COMPLETION
     ) {
-      console.log(
-        "[JobPoller] No active jobs, no watchers, nothing recently completed - stopping polling",
-      );
       stopJobPoller();
       return;
     }
@@ -157,8 +126,6 @@ async function pollJobs() {
 export function startJobPolling(jobId, onSuccess, onError) {
   if (!jobId) return;
 
-  console.log(`[JobPoller] Starting to watch job: ${jobId}`);
-
   // Stop existing polling for this job if any
   stopJobPolling(jobId);
 
@@ -166,7 +133,6 @@ export function startJobPolling(jobId, onSuccess, onError) {
   const intervalId = setInterval(async () => {
     try {
       const jobDetails = await getJobStatus(jobId);
-      console.log(`[JobPoller] Job ${jobId} status:`, jobDetails.status);
 
       if (jobDetails.status === "finished") {
         if (typeof onSuccess === "function") onSuccess(jobDetails);
@@ -205,7 +171,6 @@ export function stopJobPolling(jobId) {
   }
 
   state.jobWatchers.delete(jobId);
-  console.log(`[JobPoller] Stopped polling for job: ${jobId}`);
 }
 
 /**
@@ -253,13 +218,6 @@ export async function checkQueueAndMaybeStartPolling() {
       // Check if there are active jobs before starting polling
       const jobs = await getJobs();
       const activeJobsExist = hasActiveJobs(jobs);
-
-      console.log(
-        "[JobPoller] Queue empty?",
-        isEmpty,
-        "Active jobs?",
-        activeJobsExist,
-      );
 
       if (activeJobsExist && !state.active) {
         startJobPoller();

@@ -1,8 +1,9 @@
+import copy
+
+import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 
-import copy
-import pyarrow as pa
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -10,10 +11,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_dataset,
     split_indexes,
 )
-from DashAI.back.explainability import (
-    PartialDependence,
-    PermutationFeatureImportance,
-)
+from DashAI.back.explainability import PartialDependence, PermutationFeatureImportance
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
@@ -44,16 +42,18 @@ def tabular_model_fixture():
     datasetdict = dataloader.load_data(
         filepath_or_buffer=dataset_path,
         temp_path="tests/back/explainers",
-        params={"separator": ",",
-                "schema": {
-                    "SepalLengthCm": {"type": "Float", "dtype": "float64"},
-                    "SepalWidthCm": {"type": "Float", "dtype": "float64"},
-                    "PetalLengthCm": {"type": "Float", "dtype": "float64"},
-                    "PetalWidthCm": {"type": "Float", "dtype": "float64"},
-                    "Species": {"type": "Categorical", "dtype": "string"},
-                }}
-            )
-    #Since we're not saving to disk, we need to initialize the types manually
+        params={
+            "separator": ",",
+            "schema": {
+                "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                "Species": {"type": "Categorical", "dtype": "string"},
+            },
+        },
+    )
+    # Since we're not saving to disk, we need to initialize the types manually
     datasetdict.types = datasetdict.types = {
         "SepalLengthCm": Float(arrow_type=pa.float64()),
         "SepalWidthCm": Float(arrow_type=pa.float64()),
@@ -85,7 +85,7 @@ def tabular_model_fixture():
     )
 
     x, y = select_columns(split_dataset_dict, INPUT_COLUMNS, OUTPUT_COLUMNS)
-    
+
     y = split_dataset(y)
     x = split_dataset(x)
 
@@ -116,7 +116,9 @@ def test_partial_dependence(trained_model: BaseModel, dataset):
         "upper_percentile": 0.99,
     }
     explainer = PartialDependence(trained_model, **parameters)
-    explanation = explainer.explain(copy.deepcopy(dataset)) # use deepcopy to avoid modifying the original dataset
+    explanation = explainer.explain(
+        copy.deepcopy(dataset)
+    )  # use deepcopy to avoid modifying the original dataset
     plot = explainer.plot(explanation)
 
     metadata = explanation.pop("metadata")
@@ -148,7 +150,7 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         "scoring": "accuracy",
         "n_repeats": 5,
         "random_state": None,
-        "max_samples": 1,
+        "max_samples_fraction": 1.0,
     }
     explainer = PermutationFeatureImportance(trained_model, **parameters)
     explanation = explainer.explain(copy.deepcopy(dataset))
@@ -167,7 +169,7 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         "scoring": "balanced_accuracy",
         "n_repeats": 5,
         "random_state": None,
-        "max_samples": 1,
+        "max_samples_fraction": 1.0,
     }
     explainer = PermutationFeatureImportance(trained_model, **parameters)
     explanation = explainer.explain(copy.deepcopy(dataset))

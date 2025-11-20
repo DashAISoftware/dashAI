@@ -83,6 +83,8 @@ class DistilBertTransformer(TextClassificationModel):
     [1] https://huggingface.co/docs/transformers/model_doc/distilbert
     """
 
+    DISPLAY_NAME: str = "DistilBERT Transformer"
+    COLOR: str = "#96008E"
     SCHEMA = DistilBertTransformerSchema
 
     def __init__(self, model=None, **kwargs):

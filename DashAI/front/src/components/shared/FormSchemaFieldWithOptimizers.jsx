@@ -54,7 +54,7 @@ function FormSchemaFieldWithOptimizers({
           placeholder={paramJsonSchema.placeholder}
         />
       );
-    case "object":
+    case "number":
       return (
         <OptimizeNumberInput
           {...commonProps}

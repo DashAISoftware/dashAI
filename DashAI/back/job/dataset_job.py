@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from kink import inject
 from sqlalchemy import exc
@@ -102,6 +103,7 @@ class DatasetJob(BaseJob):
         dataset_id = self.kwargs.get("dataset_id")
         notebook_id = self.kwargs.get("notebook_id", None)
         params = self.kwargs.get("params", {})
+        n_sample = self.kwargs.get("n_sample", None)
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
         url = self.kwargs.get("url", "")
@@ -117,17 +119,20 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
-            random_name = str(uuid.uuid4())
-            folder_path = config["DATASETS_PATH"] / random_name
+            if n_sample and dataset.file_path != "":
+                folder_path = Path(dataset.file_path)
+            else:
+                random_name = str(uuid.uuid4())
+                folder_path: Path = config["DATASETS_PATH"] / random_name
 
-            try:
-                log.debug("Trying to create a new dataset path: %s", folder_path)
-                folder_path.mkdir(parents=True)
-            except FileExistsError as e:
-                log.exception(e)
-                raise JobError(
-                    f"A dataset with the name {random_name} already exists."
-                ) from e
+                try:
+                    log.debug("Trying to create a new dataset path: %s", folder_path)
+                    folder_path.mkdir(parents=True)
+                except FileExistsError as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"A dataset with the name {random_name} already exists."
+                    ) from e
 
             try:
                 if notebook_id is not None:
@@ -159,10 +164,11 @@ class DatasetJob(BaseJob):
                         ),
                         temp_path=str(temp_dir),
                         params=parsed_params.model_dump(),
+                        n_sample=n_sample,
                     )
 
-                # Calculate nan per column
-                new_dataset.nan_per_column()
+                # Calculate metadata
+                new_dataset.compute_metadata()
                 gc.collect()
                 if "inferred_types" in params:
                     schema = params["inferred_types"]

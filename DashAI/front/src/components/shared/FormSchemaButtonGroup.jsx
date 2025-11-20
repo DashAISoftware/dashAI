@@ -8,7 +8,18 @@ function FormSchemaButtonGroup({
   error,
   saveButtonText = "Save",
   backButtonText = "Back",
+  dataTour,
 }) {
+  const isCreateExplorer = saveButtonText === "Create Explorer";
+  const isCreateConverter = saveButtonText === "Create Converter";
+  const finalDataTour =
+    dataTour ||
+    (isCreateExplorer
+      ? "create-explorer-button"
+      : isCreateConverter
+        ? "create-converter-button"
+        : undefined);
+
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>
       {onCancel && (
@@ -21,6 +32,7 @@ function FormSchemaButtonGroup({
           variant="contained"
           onClick={onFormSubmit}
           disabled={Object.keys(formik?.errors ?? {}).length > 0 || error}
+          data-tour={finalDataTour}
         >
           {saveButtonText}
         </Button>

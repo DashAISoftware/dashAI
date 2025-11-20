@@ -1,6 +1,7 @@
 import pyarrow as pa
 from sklearn.feature_selection import SelectFdr as SelectFdrOperation
 
+from DashAI.back.converters.category.feature_selection import FeatureSelectionConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -16,14 +17,19 @@ class SelectFdrSchema(BaseSchema):
     )  # type: ignore
 
 
-class SelectFdr(SklearnWrapper, SelectFdrOperation):
+class SelectFdr(FeatureSelectionConverter, SklearnWrapper, SelectFdrOperation):
     """SciKit-Learn's SelectFdr wrapper for DashAI."""
 
     SCHEMA = SelectFdrSchema
     DESCRIPTION = "Filter: Select features according to a false discovery rate test."
     SUPERVISED = True
     DISPLAY_NAME = "Select FDR"
+    IMAGE_PREVIEW = "select_fdr.png"
+    CATEGORY = "Feature Selection"
     metadata = {}
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""

@@ -22,6 +22,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.translation_model import TranslationModel
+from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -45,10 +46,11 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
-        enum_field(enum=["gpu", "cpu"]),
-        placeholder="gpu",
+        enum_field(enum=GPU_OR_CPU),
+        placeholder=GPU_OR_CPU_PLACEHOLDER,
         description="Hardware on which the training is run. If available, GPU is "
-        "recommended for efficiency reasons. Otherwise, use CPU.",
+        "recommended for efficiency reasons. Otherwise, use CPU. "
+        "If GPU is selected then it will use all gpus available. ",
     )  # type: ignore
     weight_decay: schema_field(
         float_field(ge=0.0),
@@ -67,6 +69,8 @@ class OpusMtEnESTransformer(TranslationModel):
     """
 
     SCHEMA = OpusMtEnESTransformerSchema
+    DISPLAY_NAME: str = "Opus MT En-Es Transformer"
+    COLOR: str = "#FFA500"
 
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer.
@@ -80,7 +84,7 @@ class OpusMtEnESTransformer(TranslationModel):
         if model is None:
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
-            self.device = kwargs.pop("device", "gpu")
+            self.device = kwargs.pop("device")
         self.model = (
             model
             if model is not None
@@ -110,32 +114,31 @@ class OpusMtEnESTransformer(TranslationModel):
             y = DashAIDataset.from_list([{"foo": 0}] * len(x))
         dataset = []
         input_column_name = x.column_names[0]
-        output_column_name = y.column_names[0]
+        output_column_name = y.column_names[0] if is_y else None
 
-        for input_sample, output_sample in zip(x, y):
+        for i, input_sample in enumerate(x):
             tokenized_input = self.tokenizer(
                 input_sample[input_column_name],
                 truncation=True,
                 padding="max_length",
                 max_length=512,
             )
-            tokenized_output = (
-                self.tokenizer(
+
+            sample = {
+                "input_ids": tokenized_input["input_ids"],
+                "attention_mask": tokenized_input["attention_mask"],
+            }
+
+            if is_y:
+                output_sample = y[i]
+                tokenized_output = self.tokenizer(
                     output_sample[output_column_name],
                     truncation=True,
                     padding="max_length",
                     max_length=512,
                 )
-                if is_y
-                else None
-            )
-            sample = {
-                "input_ids": tokenized_input["input_ids"],
-                "attention_mask": tokenized_input["attention_mask"],
-                "labels": (
-                    tokenized_output["input_ids"] if is_y else y[output_column_name]
-                ),
-            }
+                sample["labels"] = tokenized_output["input_ids"]
+
             dataset.append(sample)
         return DashAIDataset.from_list(dataset)
 
@@ -160,7 +163,7 @@ class OpusMtEnESTransformer(TranslationModel):
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
-            no_cuda=self.device != "gpu",
+            use_cpu=self.device.lower() != "gpu",
             **self.training_args,
         )
 

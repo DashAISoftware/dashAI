@@ -15,6 +15,7 @@ import {
   Grid,
   Typography,
   IconButton,
+  Box,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
@@ -99,12 +100,9 @@ export default function NewGlobalExplainerModal({
       });
 
       if (response && response.id) {
-        console.log("Starting to track global explainer job:", response.id);
-
         startJobPolling(
           response.id,
           (result) => {
-            console.log("Global explainer job completed successfully:", result);
             enqueueSnackbar(
               `Explainer "${newGlobalExpl.name}" completed successfully`,
               {
@@ -187,7 +185,8 @@ export default function NewGlobalExplainerModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}}
+      disableEscapeKeyDown
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
@@ -229,7 +228,7 @@ export default function NewGlobalExplainerModal({
               </Grid>
             </Grid>
           </Grid>
-          <Grid size={{ xs: 12, md: 9 }}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -247,6 +246,22 @@ export default function NewGlobalExplainerModal({
                 </Step>
               ))}
             </Stepper>
+          </Grid>
+          <Grid
+            size={{ xs: 12, md: 1 }}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              justifyContent: "flex-end",
+            }}
+          >
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
           </Grid>
         </Grid>
       </DialogTitle>

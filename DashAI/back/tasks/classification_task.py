@@ -58,3 +58,21 @@ class ClassificationTask(BaseTask):
             if isinstance(column_type, Categorical):
                 continue
         return dashai_dataset
+
+    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+        """Get the number of unique labels in the output column.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        int | None
+            Number of unique labels or None if not applicable
+        """
+        class_labels = encode_labels(dataset, output_column)
+        return len(class_labels.names)

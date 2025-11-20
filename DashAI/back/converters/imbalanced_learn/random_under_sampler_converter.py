@@ -1,5 +1,6 @@
 from imblearn.under_sampling import RandomUnderSampler
 
+from DashAI.back.converters.category.sampling import SamplingConverter
 from DashAI.back.converters.imbalanced_learn_wrapper import ImbalancedLearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -26,15 +27,19 @@ class RUSchema(BaseSchema):
     )  # type: ignore
 
 
-class RandomUnderSamplerConverter(ImbalancedLearnWrapper, RandomUnderSampler):
+class RandomUnderSamplerConverter(
+    SamplingConverter, ImbalancedLearnWrapper, RandomUnderSampler
+):
     SCHEMA = RUSchema
     DESCRIPTION = (
         "Randomly remove samples from the majority class to balance the dataset."
     )
+    CATEGORY = "Resampling & Class Balancing"
     DISPLAY_NAME = "Random Under-Sampler"
+    IMAGE_PREVIEW = "random_under_sampler.png"
 
-    def __init___(self, **kwargs):
-        super(RandomUnderSamplerConverter, self).__init__(**kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """

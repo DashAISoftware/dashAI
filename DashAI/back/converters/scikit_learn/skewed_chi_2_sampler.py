@@ -2,6 +2,7 @@ import pyarrow as pa
 from sklearn.kernel_approximation import SkewedChi2Sampler as SkewedChi2SamplerOperation
 
 from DashAI.back.api.utils import create_random_state
+from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -43,7 +44,9 @@ class SkewedChi2SamplerSchema(BaseSchema):
     )  # type: ignore
 
 
-class SkewedChi2Sampler(SklearnWrapper, SkewedChi2SamplerOperation):
+class SkewedChi2Sampler(
+    PolynomialKernelConverter, SklearnWrapper, SkewedChi2SamplerOperation
+):
     """Scikit-learn's SkewedChi2Sampler wrapper for DashAI."""
 
     SCHEMA = SkewedChi2SamplerSchema
@@ -51,7 +54,9 @@ class SkewedChi2Sampler(SklearnWrapper, SkewedChi2SamplerOperation):
         "Approximates the feature map of a chi-squared kernel by Monte "
         "Carlo approximation of its Fourier transform."
     )
+    CATEGORY = "Polynomial & Kernel Methods"
     DISPLAY_NAME = "Skewed Chi² Sampler"
+    IMAGE_PREVIEW = "skewed_chi2_sampler.png"
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

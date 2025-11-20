@@ -26,6 +26,7 @@ class BaseDataLoader(ConfigObject):
         filepath_or_buffer: str,
         temp_path: str,
         params: Dict[str, Any],
+        n_sample: int | None = False,
     ) -> DashAIDataset:
         """Load data abstract method.
 
@@ -38,6 +39,8 @@ class BaseDataLoader(ConfigObject):
             The temporary path where the files will be extracted and then uploaded.
         params : Dict[str, Any]
             Dict with the dataloader parameters.
+        n_sample : int | None
+            Indicates how many rows load from the dataset, all rows if null.
 
         Returns
         -------

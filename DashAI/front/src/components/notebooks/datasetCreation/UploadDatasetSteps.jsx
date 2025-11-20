@@ -74,7 +74,7 @@ export default function UploadDatasetSteps({
       {step === 1 && Object.entries(selectedDataloader).length !== 0 && (
         <ConfigureAndUploadDatasetStep
           goToPrevStep={goToPrevStep}
-          selectedDataloader={selectedDataloader.name}
+          selectedDataloader={selectedDataloader}
           backHome={backHome}
           handleDatasetCreated={handleDatasetCreated}
           formSubmitRef={formSubmitRef}

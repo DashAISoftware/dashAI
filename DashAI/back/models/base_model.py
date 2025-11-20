@@ -14,6 +14,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "Model"
+    COLOR: str = "#795548"
 
     @abstractmethod
     def save(self, filename: str) -> None:

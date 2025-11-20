@@ -5,7 +5,7 @@ from beartype.typing import Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, select_columns
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 
 
@@ -45,6 +45,10 @@ class BaseExplorer(ConfigObject, ABC):
     TYPE: Final[str] = "Explorer"
     DISPLAY_NAME: Final[str] = ""
     DESCRIPTION: Final[str] = ""
+    SHORT_DESCRIPTION: Final[str] = ""
+    IMAGE_PREVIEW: Final[str] = ""
+    CATEGORY: Final[str] = "Other"
+    COLOR: Final[str] = "rgb(255, 255, 255)"
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
 
@@ -66,6 +70,12 @@ class BaseExplorer(ConfigObject, ABC):
         metadata["display_name"] = (
             cls.DISPLAY_NAME if cls.DISPLAY_NAME else cls.__name__
         )
+        metadata["short_description"] = (
+            cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
+        )
+        metadata["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
+        metadata["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
+        metadata["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented
         if metadata.get("allowed_value_types", None) is None:
@@ -185,7 +195,6 @@ class BaseExplorer(ConfigObject, ABC):
         columnNames = list({col["columnName"] for col in columns})
         loaded_dataset = loaded_dataset.select_columns(columnNames)
         return loaded_dataset
-
 
     @abstractmethod
     def launch_exploration(
