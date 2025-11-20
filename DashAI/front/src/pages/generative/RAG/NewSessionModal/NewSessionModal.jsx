@@ -11,6 +11,7 @@ import {
   DialogContent,
   Stepper,
   Typography,
+  DialogContentText,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
@@ -90,6 +91,8 @@ export default function NewSessionModal({
     new Array(steps.length).fill(false),
   );
   const [sessionData, setSessionData] = useState(session || defaultNewSession);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const retrieverStepRef = useRef(null);
 
   useEffect(() => {
@@ -146,11 +149,30 @@ export default function NewSessionModal({
     });
   }, []);
 
+  const handleClose = useCallback(() => {
+    if (hasUnsavedChanges && activeStep > 0) {
+      setShowConfirmDialog(true);
+    } else {
+      onClose();
+    }
+  }, [hasUnsavedChanges, activeStep, onClose]);
+
+  const handleConfirmClose = useCallback(() => {
+    setShowConfirmDialog(false);
+    setHasUnsavedChanges(false);
+    onClose();
+  }, [onClose]);
+
+  const handleCancelClose = useCallback(() => {
+    setShowConfirmDialog(false);
+  }, []);
+
   const updateSessionDocuments = useCallback((docs) => {
     setSessionData((prev) => ({
       ...prev,
       parameters: { ...prev.parameters, documents: docs },
     }));
+    setHasUnsavedChanges(true);
   }, []);
 
   const updateSessionName = useCallback((name) => {
@@ -158,6 +180,7 @@ export default function NewSessionModal({
       ...prev,
       name: name,
     }));
+    setHasUnsavedChanges(true);
   }, []);
 
   const updateSessionDescription = useCallback((description) => {
@@ -165,6 +188,7 @@ export default function NewSessionModal({
       ...prev,
       description: description,
     }));
+    setHasUnsavedChanges(true);
   }, []);
 
   const updateRetrieverModel = useCallback((model) => {
@@ -172,6 +196,7 @@ export default function NewSessionModal({
       ...prev,
       parameters: { ...prev.parameters, retriever_model: model },
     }));
+    setHasUnsavedChanges(true);
   }, []);
 
   const updateChunkingModel = useCallback((model) => {
@@ -179,6 +204,7 @@ export default function NewSessionModal({
       ...prev,
       parameters: { ...prev.parameters, chunking_model: model },
     }));
+    setHasUnsavedChanges(true);
   }, []);
 
   const updateGeneratorModel = useCallback((model) => {
@@ -186,6 +212,7 @@ export default function NewSessionModal({
       ...prev,
       parameters: { ...prev.parameters, generator_model: model },
     }));
+    setHasUnsavedChanges(true);
   }, []);
 
   const isNextOrFinishEnabled = () => {
@@ -233,6 +260,7 @@ export default function NewSessionModal({
       if (onSessionSelect) {
         onSessionSelect(savedSession.id);
       }
+      setHasUnsavedChanges(false);
       onClose();
     } catch (error) {
       console.error("NewSessionModal: Error saving session:", error);
@@ -245,7 +273,7 @@ export default function NewSessionModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth="lg"
-      onClose={onClose}
+      onClose={handleClose}
       aria-labelledby="new-session-dialog-title"
       PaperProps={{ sx: { minHeight: "80vh" } }}
     >
@@ -257,7 +285,7 @@ export default function NewSessionModal({
                 <IconButton
                   edge="start"
                   color="inherit"
-                  onClick={onClose}
+                  onClick={handleClose}
                   sx={{ display: { xs: "flex", sm: "none" } }}
                 >
                   <CloseIcon />
@@ -343,7 +371,7 @@ export default function NewSessionModal({
       <DialogActions>
         <Button
           onClick={() => {
-            activeStep === 0 ? onClose() : setActiveStep((prev) => prev - 1);
+            activeStep === 0 ? handleClose() : setActiveStep((prev) => prev - 1);
           }}
         >
           {activeStep === 0 ? "Cancel" : "Back"}
@@ -366,6 +394,31 @@ export default function NewSessionModal({
           {activeStep === steps.length - 1 ? "Finish" : "Next"}
         </Button>
       </DialogActions>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmDialog}
+        onClose={handleCancelClose}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+      >
+        <DialogTitle id="confirm-dialog-title">
+          Discard Changes?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-dialog-description">
+            You have unsaved changes in your RAG session configuration. Are you sure you want to close without saving? All changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelClose} color="primary">
+            Continue Editing
+          </Button>
+          <Button onClick={handleConfirmClose} color="error" autoFocus>
+            Discard Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }
