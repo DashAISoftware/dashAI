@@ -15,10 +15,14 @@ def _infer(client, file_path: Path, mime: str, params: dict):
     with file_path.open("rb") as f:
         files = {"file": (file_path.name, f, mime)}
         data = {"params": json.dumps(params)}
-        resp = client.post("/api/v1/dataset/infer_datatypes/", data=data, files=files)
+        resp = client.post(
+            "/api/v1/dataset/preview_with_types",
+            data=data,
+            files=files,
+        )
     assert resp.status_code == 200, resp.text
     payload = resp.json()
-    return payload
+    return payload.get("inferred_types", {})
 
 
 @pytest.fixture
