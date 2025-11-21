@@ -119,7 +119,7 @@ def test_prepare_task():
         "PetalWidthCm",
     ]
     outputs_columns = ["Species"]
-    dataset = tabular_task.prepare_for_task(dataset, outputs_columns)
+    dataset = tabular_task.prepare_for_task(dataset, inputs_columns, outputs_columns)
     try:
         tabular_task.validate_dataset_for_task(
             dataset=dataset,
@@ -136,7 +136,7 @@ def test_get_tabular_class_task_metadata():
     metadata = tabular_class_task.get_metadata()
 
     assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
+    assert metadata["inputs_types"] == ["Float", "Integer", "Text", "Categorical"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
     assert metadata["outputs_cardinality"] == 1
@@ -179,7 +179,7 @@ def test_validate_text_dataset(text_classification_dataset: DatasetDict):
     inputs_columns = ["text"]
     outputs_columns = ["class"]
     imbd_sentiment_dataset = text_class_task.prepare_for_task(
-        text_classification_dataset, outputs_columns
+        text_classification_dataset, inputs_columns, outputs_columns
     )
     try:
         text_class_task.validate_dataset_for_task(
@@ -239,7 +239,9 @@ def test_validate_translation_task(translation_dataset):
     translation_task = TranslationTask()
     inputs_columns = ["text"]
     outputs_columns = ["class"]
-    dataset = translation_task.prepare_for_task(translation_dataset, outputs_columns)
+    dataset = translation_task.prepare_for_task(
+        translation_dataset, inputs_columns, outputs_columns
+    )
     try:
         translation_task.validate_dataset_for_task(
             dataset=dataset,
