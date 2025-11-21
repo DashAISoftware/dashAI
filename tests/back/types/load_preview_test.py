@@ -30,7 +30,7 @@ def client(tmp_path: Path):
         (
             "iris.csv",
             ",",
-            150,
+            10,
             {
                 "SepalLengthCm",
                 "SepalWidthCm",
@@ -42,13 +42,13 @@ def client(tmp_path: Path):
         (
             "datos_comas_100.csv",
             ";",
-            100,
+            10,
             {"ID", "Producto", "Precio", "Descuento"},
         ),
         (
             "ds_3.csv",
             ";",
-            20,
+            10,
             {"ID", "Producto", "Precio", "Descuento"},
         ),
     ],
@@ -66,7 +66,7 @@ def test_load_preview_csv(client, file, sep, expected_nrows, expected_columns):
     with path.open("rb") as f:
         files = {"file": (file, f, "text/csv")}
         data = {"params": json.dumps({"separator": sep})}
-        resp = client.post("/api/v1/dataset/load_preview/", data=data, files=files)
+        resp = client.post("/api/v1/dataset/preview_with_types", data=data, files=files)
 
     assert resp.status_code == 200, resp.text
     payload = resp.json()
@@ -100,7 +100,7 @@ def test_load_preview_json(client, file, datakey, expected_columns):
     with path.open("rb") as f:
         files = {"file": (file, f, "application/json")}
         data = {"params": json.dumps({"data_key": datakey})}
-        resp = client.post("/api/v1/dataset/load_preview/", data=data, files=files)
+        resp = client.post("/api/v1/dataset/preview_with_types", data=data, files=files)
 
     assert resp.status_code == 200, resp.text
     payload = resp.json()
@@ -121,7 +121,7 @@ def test_schema_change(client: TestClient):
     with path.open("rb") as f:
         files = {"file": ("iris.csv", f, "text/csv")}
         data = {"params": json.dumps({"separator": ","})}
-        resp = client.post("/api/v1/dataset/load_preview/", data=data, files=files)
+        resp = client.post("/api/v1/dataset/preview_with_types", data=data, files=files)
 
     assert resp.status_code == 200, resp.text
     payload = resp.json()
