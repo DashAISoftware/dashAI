@@ -71,6 +71,10 @@ class SklearnLikeModel(BaseModel):
             an accepted format in the model.
         """
 
+        # Default to returning the original dataset unmodified. If fitting
+        # or encodings are present we'll transform it accordingly.
+        prepared = dataset
+
         if is_fit:
             prepared, encodings = categorical_label_encoder(dataset)
             self.encodings.update(encodings)
