@@ -135,6 +135,7 @@ function ResultsTable({
       columnVisibilityModel={columnVisibilityModel}
       columnGroupingModel={columnGroupingModel}
       handleExecuteRuns={handleExecuteRuns}
+      handleRun={handleRun}
     />
   );
 }

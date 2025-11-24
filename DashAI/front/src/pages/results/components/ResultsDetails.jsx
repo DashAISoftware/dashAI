@@ -7,7 +7,7 @@ import ResultsDetailsLayout from "./ResultsDetailsLayout";
 /**
  * Component that renders multiple tabs to visualize the results of a specific run.
  */
-function ResultsDetails({ run, onClose }) {
+function ResultsDetails({ run, onClose, handleRun }) {
   const [currentTab, setCurrentTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
@@ -20,6 +20,7 @@ function ResultsDetails({ run, onClose }) {
       currentTab={currentTab}
       handleTabChange={handleTabChange}
       handleCloseCustomLayout={onClose}
+      handleRun={handleRun}
     />
   );
 }

@@ -45,7 +45,7 @@ export const extractColumns = (
       title: "Details",
       Icon: InfoIcon,
       handleAction: handleRunResultsOpen,
-      requiresFinished: true,
+      requiresFinished: false,
     },
     {
       title: "Predict",

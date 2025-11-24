@@ -15,8 +15,8 @@ function ResultsDetailsLayout({
   currentTab,
   handleTabChange,
   handleCloseCustomLayout,
+  handleRun,
 }) {
-  console.log("Run Data in Layout:", runData);
   const optimizables = checkIfHaveOptimazers(runData.parameters);
   const updatedTabs = tabsResultsDetails.map((tab) => ({
     ...tab,
@@ -43,9 +43,11 @@ function ResultsDetailsLayout({
           ))}
         </Tabs>
         <Box sx={{ p: 3, height: "100%" }}>
-          {currentTab === 0 && <ResultsTabInfo runData={runData} />}
-          {currentTab === 1 && <ResultsTabParameters runData={runData} />}
-          {currentTab === 2 && <ResultsTabMetrics runData={runData} />}
+          {currentTab === 0 && (
+            <ResultsTabInfo runData={runData} handleRun={handleRun} />
+          )}
+          {/* {currentTab === 1 && <ResultsTabParameters runData={runData} />}
+          {currentTab === 2 && <ResultsTabMetrics runData={runData} />} */}
           {currentTab === 3 && <ResultsTabHyperparameters runData={runData} />}
           {currentTab === 4 && <Typography>TODO...</Typography>}
         </Box>

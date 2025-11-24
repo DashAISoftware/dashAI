@@ -21,7 +21,11 @@ import { useTimestamp } from "../../../hooks/useTimestamp";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../../api/job";
 import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../../utils/runStatus";
-import { getRuns as getRunsRequest } from "../../../api/run";
+import {
+  getRuns as getRunsRequest,
+  getRunById,
+  resetRunById,
+} from "../../../api/run";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { LoadingButton } from "@mui/lab";
 import { useTourContext } from "../../../components/tour/TourProvider";
@@ -141,12 +145,10 @@ function ResultsDialogLayout({
 
   const handleExecuteRuns = async () => {
     setFinishedRunning(false);
-    let enqueueErrors = 0;
 
-    // Filter runs to only include those that are not started or have "Delivered" status
+    // 1. Filter runs that are eligible to execute
     const runsToExecute = rowSelectionModel.filter((runId) => {
       const run = runs.find((r) => r.id === runId);
-      // Only execute if status is not started or delivered
       return (
         !run ||
         !run.status ||
@@ -156,90 +158,151 @@ function ResultsDialogLayout({
       );
     });
 
-    // If no runs to execute, show a message
     if (runsToExecute.length === 0) {
       enqueueSnackbar(
         "No runs available to execute. Selected runs may already be running or completed.",
-        {
-          variant: "info",
-        },
+        { variant: "info" },
       );
       return;
     }
 
-    // Optimistically update all runs to "Started" status
-    setRuns((prevRuns) =>
-      prevRuns.map((run) =>
-        runsToExecute.includes(run.id) ? { ...run, status: "Started" } : run,
-      ),
-    );
+    try {
+      // 2. Reset all selected runs before enqueueing
+      const updatedRuns = await Promise.all(
+        runsToExecute.map((runId) => resetRunById(runId)),
+      );
+      console.log("Updated runs after reset:", updatedRuns);
 
-    for (const runId of runsToExecute) {
-      const error = await enqueueRunnerJob(runId);
-      enqueueErrors = error ? enqueueErrors + 1 : enqueueErrors;
-    }
+      let enqueueErrors = 0;
 
-    if (enqueueErrors < runsToExecute.length) {
-      setTimeout(() => {
+      // 3. Enqueue each run (this triggers per-run polling)
+      for (const runId of runsToExecute) {
+        const error = await enqueueRunnerJob(runId);
+        if (error) enqueueErrors++;
+      }
+
+      // 4. Update only those runs in local state with status "Delivered"
+      setRuns((prevRuns) =>
+        prevRuns.map((r) => {
+          const updated = updatedRuns.find((u) => u.id === r.id);
+          return updated ? { ...updated, status: "Delivered" } : r;
+        }),
+      );
+
+      // 5. If at least one run started successfully → no need to fetch entire table
+      if (enqueueErrors < runsToExecute.length) {
+        // Polling for each run will update state individually
+        enqueueSnackbar(
+          `${runsToExecute.length - enqueueErrors} run(s) started successfully`,
+          { variant: "success" },
+        );
+      } else {
+        // 6. All failed → refresh fully
         getRuns({ showLoading: false });
-      }, 100);
+      }
+    } catch (error) {
+      console.error("Error executing runs:", error);
+      enqueueSnackbar("Error executing runs", { variant: "error" });
 
-      // if (tourContext && tourContext.run) {
-      //   setTimeout(() => {
-      //     tourContext.nextStep();
-      //   }, 1000);
-      // }
-    } else {
-      // Refresh to get actual status if all failed
+      // Ensure state stays consistent
       getRuns({ showLoading: false });
     }
   };
 
   const handleSingleRun = async (run) => {
     try {
-      // Optimistically update to "Delivered"
+      // Immediately reset the run state before enqueueing
+      const initialUpdatedRun = await resetRunById(run.id);
+
+      // Enqueue the run
+      const response = await enqueueRunnerJobRequest(run.id);
+
+      if (!response || !response.id) {
+        enqueueSnackbar(`Error starting run ${run.id}`, {
+          variant: "error",
+        });
+        return;
+      }
+
+      // Update run to "Delivered" status
+      initialUpdatedRun.status = 1;
+      enqueueSnackbar(`Run ${run.id} started successfully`, {
+        variant: "success",
+      });
+
+      // Track job ID
+      setTrackedJobIds((prev) => new Set(prev).add(response.id));
+
       setRuns((prevRuns) =>
         prevRuns.map((r) =>
-          r.id === run.id ? { ...r, status: "Delivered" } : r,
+          r.id === run.id
+            ? {
+                ...initialUpdatedRun,
+                status: getRunStatus(initialUpdatedRun.status),
+              }
+            : r,
         ),
       );
 
-      const response = await enqueueRunnerJobRequest(run.id);
-      if (response && response.id) {
-        enqueueSnackbar(`Run ${run.id} started successfully`, {
-          variant: "success",
-        });
+      // Start polling only this run
+      startJobPolling(
+        response.id,
+        async () => {
+          // Job completed, fetch only this run
+          const updated = await getRunById(run.id);
 
-        setTrackedJobIds((prev) => new Set(prev).add(response.id));
+          setRuns((prevRuns) =>
+            prevRuns.map((r) =>
+              r.id === run.id
+                ? {
+                    ...updated,
+                    status: getRunStatus(updated.status),
+                  }
+                : r,
+            ),
+          );
+        },
+        async (result) => {
+          // Job failed, still fetch only this run
+          enqueueSnackbar(
+            `Run ${run.id} failed: ${result.error || "Unknown error"}`,
+            { variant: "error" },
+          );
 
-        // Start polling the job to track its progress
-        startJobPolling(
-          response.id,
-          (result) => {
-            // On success, refresh will happen from parent's polling
-            console.log(`Run job ${response.id} completed successfully`);
-            getRuns({ showLoading: false });
-          },
-          (result) => {
-            // On failure
-            console.error(`Run job ${response.id} failed:`, result);
-            enqueueSnackbar(
-              `Run ${run.id} failed: ${result.error || "Unknown error"}`,
-              {
-                variant: "error",
-              },
-            );
-            getRuns({ showLoading: false });
-          },
-        );
-      }
+          const updated = await getRunById(run.id);
+
+          setRuns((prevRuns) =>
+            prevRuns.map((r) =>
+              r.id === run.id
+                ? {
+                    ...updated,
+                    status: getRunStatus(updated.status),
+                  }
+                : r,
+            ),
+          );
+        },
+      );
     } catch (error) {
       console.error("Error enqueueing run:", error);
-      enqueueSnackbar(`Error starting run ${runId}`, {
+
+      enqueueSnackbar(`Error starting run ${run.id}`, {
         variant: "error",
       });
-      // Revert the status on error by refreshing
-      getRuns({ showLoading: false });
+
+      // Fetch only the affected run to restore its real status
+      const updated = await getRunById(run.id);
+
+      setRuns((prevRuns) =>
+        prevRuns.map((r) =>
+          r.id === run.id
+            ? {
+                ...updated,
+                status: getRunStatus(updated.status),
+              }
+            : r,
+        ),
+      );
     }
   };
 

@@ -25,6 +25,7 @@ function ResultsTableLayout({
   columnVisibilityModel,
   columnGroupingModel,
   handleExecuteRuns,
+  handleRun,
 }) {
   return (
     <Paper
@@ -88,7 +89,11 @@ function ResultsTableLayout({
       )}
 
       {showRunResults && (
-        <ResultsDetails run={selectedRun} onClose={handleCloseRunResults} />
+        <ResultsDetails
+          run={selectedRun}
+          onClose={handleCloseRunResults}
+          handleRun={handleRun}
+        />
       )}
     </Paper>
   );
