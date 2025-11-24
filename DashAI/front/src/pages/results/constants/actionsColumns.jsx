@@ -25,13 +25,15 @@ export const actionsColumns = (actions) =>
           color="primary"
           size="small"
           disabled={
-            !action.requiresFinished
-              ? loading
-              : params.row.status !== "Finished"
+            action.alwaysEnabled
+              ? false
+              : !action.requiresFinished
+                ? loading
+                : params.row.status !== "Finished"
           }
-          loading={loading}
+          loading={action.alwaysEnabled ? false : loading}
         >
-          {loading ? null : <action.Icon />}
+          {action.alwaysEnabled || !loading ? <action.Icon /> : null}
         </IconButton>
       );
     },

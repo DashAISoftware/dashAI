@@ -40,24 +40,28 @@ export const extractColumns = (
       Icon: PlayArrow,
       handleAction: handleRun,
       requiresFinished: false,
+      alwaysEnabled: false,
     },
     {
       title: "Details",
       Icon: InfoIcon,
       handleAction: handleRunResultsOpen,
       requiresFinished: false,
+      alwaysEnabled: true,
     },
     {
       title: "Predict",
       Icon: TrendingUpIcon,
       handleAction: (runId) => handlePrediction(runId, datasetId),
       requiresFinished: true,
+      alwaysEnabled: false,
     },
     {
       title: "Explain",
       Icon: QueryStatsIcon,
       handleAction: handleExplainer,
       requiresFinished: true,
+      alwaysEnabled: false,
     },
     {
       title: "Delete",
@@ -66,6 +70,7 @@ export const extractColumns = (
       })),
       handleAction: handleDeleteRun,
       requiresFinished: false,
+      alwaysEnabled: false,
     },
   ]);
 
