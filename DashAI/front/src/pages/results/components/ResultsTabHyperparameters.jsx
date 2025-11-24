@@ -1,7 +1,14 @@
 import { React, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
-import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  Grid,
+  MenuItem,
+  Select,
+  CircularProgress,
+} from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../../utils/schema";
@@ -68,8 +75,11 @@ function ResultsTabHyperparameters({ runData }) {
 
   useEffect(() => {
     getHyperparameterPlot();
-  }, []);
-  return (
+  }, [runData.status]);
+
+  return runData.status === "Started" || runData.status === "Delivered" ? (
+    <CircularProgress />
+  ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">
         <Plot
