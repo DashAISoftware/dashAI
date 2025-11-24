@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import { Edit } from "@mui/icons-material";
 import { updateRunParameters } from "../../../api/run";
-import FormSchemaDialog from "../../shared/FormSchemaDialog";
-import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
-import { Box } from "@mui/system";
 
-export default function EditRunDialog({ run, onRun }) {
+import { Box } from "@mui/system";
+import RunInfoModal from "./RunInfoModal";
+
+export default function EditRunDialog({ experiment, run, setRun }) {
   const isRunning = run.status === "Started" || run.status === "Delivered";
   if (isRunning) {
     return null;
@@ -20,24 +20,15 @@ export default function EditRunDialog({ run, onRun }) {
         label="Edit Run"
         onClick={() => setOpen(true)}
       />
-      <FormSchemaDialog
-        modelToConfigure={run.model_name}
-        open={open}
-        setOpen={setOpen}
-        onFormSubmit={() => {}}
-      >
-        <FormSchemaWithSelectedModel
-          onFormSubmit={async (values) => {
-            const newRun = { ...run, parameters: values };
-            await updateRunParameters(run.id, values);
-            setOpen(false);
-            await onRun(newRun);
-          }}
-          modelToConfigure={run.model_name}
-          initialValues={run.parameters}
-          onCancel={() => setOpen(false)}
+      {open && (
+        <RunInfoModal
+          experiment={experiment}
+          run={run}
+          open={open}
+          onClose={() => setOpen(false)}
+          setRun={setRun}
         />
-      </FormSchemaDialog>
+      )}
     </>
   );
 }
