@@ -421,9 +421,7 @@ function ResultsDialogLayout({
                 handleExecuteRuns={handleExecuteRuns}
               />
             ) : null}
-            {!showTable ? (
-              <ResultsGraphs experimentId={experiment.id.toString()} />
-            ) : null}
+            {!showTable ? <ResultsGraphs runs={runs} /> : null}
           </CustomLayout>
         </Grid>
       )}
