@@ -8,6 +8,7 @@ import {
   MenuItem,
   Select,
   CircularProgress,
+  Box,
 } from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
@@ -74,11 +75,20 @@ function ResultsTabHyperparameters({ runData }) {
   };
 
   useEffect(() => {
+    if (runData.status !== "Finished") return;
     getHyperparameterPlot();
   }, [runData.status]);
 
   return runData.status === "Started" || runData.status === "Delivered" ? (
-    <CircularProgress />
+    <Box
+      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+    >
+      <CircularProgress />
+    </Box>
+  ) : runData.status === "Failed" ? (
+    <Box>Run Failed. No hyperparameter plots available.</Box>
+  ) : runData.status === "Not Started" ? (
+    <Box>Run Not Started. No hyperparameter plots available.</Box>
   ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">
