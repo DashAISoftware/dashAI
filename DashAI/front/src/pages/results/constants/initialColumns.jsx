@@ -39,10 +39,13 @@ export const initialColumns = [
         case "Not Started":
           color = "#626262";
           break;
+        case "Delivered":
+          color = "#FFEA00";
+          break;
         case "Finished":
           color = "#43A047";
           break;
-        case "Running":
+        case "Started":
           color = "#FFEA00";
           break;
         case "Error":
@@ -54,32 +57,32 @@ export const initialColumns = [
       return <StyledCell color={color}>{params.value}</StyledCell>;
     },
   },
-  {
-    field: "created",
-    headerName: "Created",
-    type: Date,
-    minWidth: 140,
-    valueGetter: (value) => formatDate(value),
-  },
-  {
-    field: "last_modified",
-    headerName: "Last modified",
-    type: Date,
-    minWidth: 140,
-    valueGetter: (value) => formatDate(value),
-  },
-  {
-    field: "start_time",
-    headerName: "Start",
-    type: Date,
-    minWidth: 140,
-    valueGetter: (value) => formatDate(value),
-  },
-  {
-    field: "end_time",
-    headerName: "End",
-    type: Date,
-    minWidth: 140,
-    valueGetter: (value) => formatDate(value),
-  },
+  // {
+  //   field: "created",
+  //   headerName: "Created",
+  //   type: Date,
+  //   minWidth: 140,
+  //   valueGetter: (value) => formatDate(value),
+  // },
+  // {
+  //   field: "last_modified",
+  //   headerName: "Last modified",
+  //   type: Date,
+  //   minWidth: 140,
+  //   valueGetter: (value) => formatDate(value),
+  // },
+  // {
+  //   field: "start_time",
+  //   headerName: "Start",
+  //   type: Date,
+  //   minWidth: 140,
+  //   valueGetter: (value) => formatDate(value),
+  // },
+  // {
+  //   field: "end_time",
+  //   headerName: "End",
+  //   type: Date,
+  //   minWidth: 140,
+  //   valueGetter: (value) => formatDate(value),
+  // },
 ];
