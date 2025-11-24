@@ -29,7 +29,7 @@ export const extractColumns = (
       const isRunning = status === "Started" || status === "Delivered";
 
       // If running → show "-", else → show metric value normally
-      return isRunning ? "-" : value ?? "-";
+      return isRunning ? "-" : (value ?? "-");
     },
   }));
 
