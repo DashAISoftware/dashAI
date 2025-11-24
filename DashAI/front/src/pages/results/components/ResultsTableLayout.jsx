@@ -1,11 +1,20 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Paper, Alert, AlertTitle, CircularProgress } from "@mui/material";
+import {
+  Paper,
+  Alert,
+  AlertTitle,
+  CircularProgress,
+  Button,
+  ButtonGroup,
+  Typography,
+} from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import ResultsDetails from "./ResultsDetails";
+import { PlayArrow } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
 
 function ResultsTableLayout({
-  experimentId,
   rows,
   columns,
   showRunResults,
@@ -14,6 +23,7 @@ function ResultsTableLayout({
   handleCloseRunResults,
   columnVisibilityModel,
   columnGroupingModel,
+  handleExecuteRuns,
 }) {
   return (
     <Paper
@@ -21,42 +31,60 @@ function ResultsTableLayout({
         p: 4,
       }}
     >
-      {experimentId === undefined && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          <AlertTitle>No experiment selected</AlertTitle>
-          Select an experiment to see the runs associated to it
-        </Alert>
-      )}
       {!loading ? (
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
+        <>
+          <ButtonGroup
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              pb: 4,
+              pt: 0,
+            }}
+          >
+            <Typography variant="h6">Models Results</Typography>
+            <LoadingButton
+              data-tour="runner-dialog-start"
+              variant="contained"
+              loading={rows.every(
+                (run) => run.status === "Delivered" || run.status === "Started",
+              )}
+              endIcon={<PlayArrow />}
+              onClick={handleExecuteRuns}
+              style={{ borderRadius: 4 }}
+            >
+              Run all Models
+            </LoadingButton>
+          </ButtonGroup>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: {
+                  pageSize: 10,
+                },
               },
-            },
-            columns: {
-              columnVisibilityModel,
-            },
-          }}
-          experimentalFeatures={{ columnGrouping: true }}
-          columnGroupingModel={columnGroupingModel}
-          slots={{
-            toolbar: GridToolbar,
-          }}
-          pageSizeOptions={[10]}
-          density="compact"
-          disableRowSelectionOnClick
-          autoHeight
-          sx={{
-            ".MuiDataGrid-cell:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-row:hover": {},
-          }}
-        />
+              columns: {
+                columnVisibilityModel,
+              },
+            }}
+            experimentalFeatures={{ columnGrouping: true }}
+            columnGroupingModel={columnGroupingModel}
+            slots={{
+              toolbar: GridToolbar,
+            }}
+            pageSizeOptions={[10]}
+            density="compact"
+            disableRowSelectionOnClick
+            autoHeight
+            sx={{
+              ".MuiDataGrid-cell:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-row:hover": {},
+            }}
+          />
+        </>
       ) : (
         <CircularProgress color="inherit" />
       )}
