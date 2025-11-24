@@ -17,6 +17,7 @@ import {
   Paper,
   Typography,
   IconButton,
+  Button,
 } from "@mui/material";
 import { getRuns as getRunsRequest } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
@@ -46,6 +47,10 @@ function RunnerDialog({
   const experimentNameRef = useRef(experiment.name);
   const tourContext = useTourContext();
   const [models, setModels] = useState([]);
+
+  const hasActiveRuns = rows.some(
+    (r) => r.status === "Delivered" || r.status === "Started",
+  );
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -291,14 +296,14 @@ function RunnerDialog({
   }, []);
 
   useEffect(() => {
-    if (open || expRunning[experiment.id]) {
+    if (hasActiveRuns) {
       const intervalId = setInterval(() => {
         getRuns({ showLoading: false });
       }, 2000);
 
       return () => clearInterval(intervalId);
     }
-  }, [open, expRunning[experiment.id]]);
+  }, [hasActiveRuns]);
 
   const columns = [
     {
@@ -332,8 +337,13 @@ function RunnerDialog({
         <SingleRun key="single-run" run={params.row} onRun={handleSingleRun} />,
         <EditRunDialog
           key="edit-run-dialog"
+          experiment={experiment}
           run={params.row}
-          onRun={handleSingleRun}
+          setRun={(updatedRun) =>
+            setRows((prev) =>
+              prev.map((r) => (r.id === updatedRun.id ? updatedRun : r)),
+            )
+          }
         />,
         <DeleteRun
           key="delete-run-dialog"
@@ -358,17 +368,15 @@ function RunnerDialog({
         key="runner-button"
         data-tour="run-experiment-button"
         icon={
-          expRunning[experiment.id] ? (
+          rows.some(
+            (row) => row.status === "Delivered" || row.status === "Started",
+          ) ? (
             <CircularProgress size={18} />
           ) : (
             <PlayArrowIcon />
           )
         }
         label="Run"
-        disabled={
-          !expRunning[experiment.id] &&
-          Object.values(expRunning).some((value) => value === true)
-        }
         onClick={handleOpenDialog}
       />
       <Dialog
@@ -431,16 +439,23 @@ function RunnerDialog({
         </DialogContent>
         <DialogActions>
           <ButtonGroup size="large" sx={{ justifyContent: "flex-end", p: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={handleCloseAndAdvance}
+              data-tour="runner-dialog-close"
+            >
+              Close
+            </Button>
             <LoadingButton
               data-tour="runner-dialog-start"
               variant="contained"
-              loading={expRunning[experiment.id]}
-              endIcon={finishedRunning ? <CheckIcon /> : <PlayArrowIcon />}
-              onClick={
-                finishedRunning ? handleCloseAndAdvance : handleExecuteRuns
-              }
+              loading={rows.every(
+                (row) => row.status === "Delivered" || row.status === "Started",
+              )}
+              endIcon={<PlayArrowIcon />}
+              onClick={handleExecuteRuns}
             >
-              {finishedRunning ? "Finished" : "Run all"}
+              Run all
             </LoadingButton>
           </ButtonGroup>
         </DialogActions>
