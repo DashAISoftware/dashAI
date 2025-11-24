@@ -20,7 +20,7 @@ export const actionsColumns = (actions) =>
 
       return (
         <IconButton
-          onClick={() => action.handleAction(params.id)}
+          onClick={() => action.handleAction(params.row)}
           title={action.title}
           color="primary"
           size="small"

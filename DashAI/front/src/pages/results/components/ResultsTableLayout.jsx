@@ -13,13 +13,14 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import ResultsDetails from "./ResultsDetails";
 import { PlayArrow } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
+import { json } from "react-router-dom";
 
 function ResultsTableLayout({
   rows,
   columns,
   showRunResults,
   loading,
-  selectedRunId,
+  selectedRun,
   handleCloseRunResults,
   columnVisibilityModel,
   columnGroupingModel,
@@ -70,9 +71,6 @@ function ResultsTableLayout({
             }}
             experimentalFeatures={{ columnGrouping: true }}
             columnGroupingModel={columnGroupingModel}
-            slots={{
-              toolbar: GridToolbar,
-            }}
             pageSizeOptions={[10]}
             density="compact"
             disableRowSelectionOnClick
@@ -90,11 +88,7 @@ function ResultsTableLayout({
       )}
 
       {showRunResults && (
-        <ResultsDetails
-          runId={selectedRunId}
-          onClose={handleCloseRunResults}
-          key={selectedRunId}
-        />
+        <ResultsDetails run={selectedRun} onClose={handleCloseRunResults} />
       )}
     </Paper>
   );

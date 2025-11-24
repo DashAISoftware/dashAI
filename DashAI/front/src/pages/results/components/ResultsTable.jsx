@@ -35,7 +35,7 @@ function ResultsTable({
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
   const [loading, setLoading] = useState(false);
   const [showRunResults, setShowRunResults] = useState(false);
-  const [selectedRunId, setSelectedRunId] = useState(null);
+  const [selectedRun, setSelectedRun] = useState(null);
   const [models, setModels] = useState(null);
   const [metrics, setMetrics] = useState(null);
 
@@ -43,21 +43,22 @@ function ResultsTable({
     return await getComponents({ selectTypes: ["Model"] });
   };
 
-  const handleRunResultsOpen = (runId) => {
-    setSelectedRunId(runId);
+  const handleRunResultsOpen = (run) => {
+    setSelectedRun(runs.find((r) => r.id === run.id));
     setShowRunResults(true);
   };
 
   const handleCloseRunResults = () => {
+    setSelectedRunId(null);
     setShowRunResults(false);
   };
 
-  const handlePrediction = (runId, trainedDatasetId) => {
-    navigate(`../app/predict`, { state: { runId, trainedDatasetId } });
+  const handlePrediction = (run, trainedDatasetId) => {
+    navigate(`../app/predict`, { state: { runId: run.id, trainedDatasetId } });
   };
 
-  const handleExplainer = (runId) => {
-    navigate(`../app/explainers/runs/${runId}`);
+  const handleExplainer = (run) => {
+    navigate(`../app/explainers/runs/${run.id}`);
   };
 
   const processRuns = () => {
@@ -96,6 +97,12 @@ function ResultsTable({
   }, [runs, models, metrics]);
 
   useEffect(() => {
+    if (selectedRun) {
+      setSelectedRun(runs.find((r) => r.id === selectedRun.id));
+    }
+  }, [runs, selectedRun]);
+
+  useEffect(() => {
     const fetchStaticData = async () => {
       const m = await getModels();
       setModels(m);
@@ -123,7 +130,7 @@ function ResultsTable({
       columns={columns}
       showRunResults={showRunResults}
       loading={loading}
-      selectedRunId={selectedRunId}
+      selectedRun={selectedRun}
       handleCloseRunResults={handleCloseRunResults}
       columnVisibilityModel={columnVisibilityModel}
       columnGroupingModel={columnGroupingModel}

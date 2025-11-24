@@ -195,18 +195,18 @@ function ResultsDialogLayout({
     }
   };
 
-  const handleSingleRun = async (runId) => {
+  const handleSingleRun = async (run) => {
     try {
       // Optimistically update to "Delivered"
       setRuns((prevRuns) =>
-        prevRuns.map((run) =>
-          run.id === runId ? { ...run, status: "Delivered" } : run,
+        prevRuns.map((r) =>
+          r.id === run.id ? { ...r, status: "Delivered" } : r,
         ),
       );
 
-      const response = await enqueueRunnerJobRequest(runId);
+      const response = await enqueueRunnerJobRequest(run.id);
       if (response && response.id) {
-        enqueueSnackbar(`Run ${runId} started successfully`, {
+        enqueueSnackbar(`Run ${run.id} started successfully`, {
           variant: "success",
         });
 
@@ -224,7 +224,7 @@ function ResultsDialogLayout({
             // On failure
             console.error(`Run job ${response.id} failed:`, result);
             enqueueSnackbar(
-              `Run ${run.name} failed: ${result.error || "Unknown error"}`,
+              `Run ${run.id} failed: ${result.error || "Unknown error"}`,
               {
                 variant: "error",
               },
@@ -243,8 +243,8 @@ function ResultsDialogLayout({
     }
   };
 
-  const handleDeleteRun = async (runId) => {
-    setRunToDelete(runId);
+  const handleDeleteRun = async (run) => {
+    setRunToDelete(run.id);
     setOpenDeleteModal(true);
   };
 
