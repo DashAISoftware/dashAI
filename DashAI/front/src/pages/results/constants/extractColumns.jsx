@@ -21,6 +21,16 @@ export const extractColumns = (
   // ===== METRICS (only test metrics) =====
   const metrics = rawMetrics.map((metric) => ({
     field: `test_${metric.name}`,
+    headerName: `test_${metric.name}`,
+    renderCell: (params) => {
+      const { status } = params.row;
+      const value = params.value;
+
+      const isRunning = status === "Started" || status === "Delivered";
+
+      // If running → show "-", else → show metric value normally
+      return isRunning ? "-" : value ?? "-";
+    },
   }));
 
   // ===== ACTIONS =====
