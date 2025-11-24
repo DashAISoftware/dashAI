@@ -30,21 +30,7 @@ import FormSchemaWithSelectedModel from "../../../components/shared/FormSchemaWi
 import { updateRunParameters } from "../../../api/run";
 import { useSnackbar } from "notistack";
 import OptimizationTableSelectOptimizer from "../../../components/experiments/OptimizationTableSelectOptimizer";
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case "Finished":
-      return "success";
-    case "Started":
-      return "info";
-    case "Delivered":
-      return "info";
-    case "Failed":
-      return "error";
-    default:
-      return "default";
-  }
-};
+import { getColorByStatus } from "../../../utils";
 
 /**
  * Component that displays general information associated with a run.
@@ -114,6 +100,9 @@ function ResultsTabInfo({ runData, handleRun }) {
     handleRun(localRun);
   };
 
+  const isLocked =
+    runData.status === "Started" || runData.status === "Delivered";
+
   return (
     <Grid container direction="column">
       {/* Run Details Section */}
@@ -137,7 +126,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                 <Box>
                   <Chip
                     label={runData.status}
-                    color={getStatusColor(runData.status)}
+                    sx={{ backgroundColor: getColorByStatus(runData.status) }}
                     size="medium"
                   />
                 </Box>
@@ -242,161 +231,170 @@ function ResultsTabInfo({ runData, handleRun }) {
       )}
 
       {/* Run edition */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-          Edit parameters and re-run the model
-        </Typography>
-        {(localRun.goal_metric === null || localRun.goal_metric === "") &&
-        optimizables ? (
-          <Alert severity="warning">Please select a metric to optimize.</Alert>
-        ) : null}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          {/* Edit Parameters Button */}
+      {isLocked && (
+        <Alert severity="info">
+          Run is currently in progress and cannot be edited.
+        </Alert>
+      )}
+      {!isLocked && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Edit parameters and re-run the model
+          </Typography>
+          {(localRun.goal_metric === null || localRun.goal_metric === "") &&
+          optimizables ? (
+            <Alert severity="warning">
+              Please select a metric to optimize.
+            </Alert>
+          ) : null}
           <Box
             sx={{
               display: "flex",
+              flexDirection: "column",
               gap: 2,
-              alignItems: "center",
             }}
           >
-            <Button
-              variant="contained"
-              startIcon={<EditIcon />}
-              onClick={onEditParameters}
-            >
-              Modify Parameters
-            </Button>
-          </Box>
-          {/* Optimization Section */}
-          {optimizables && (
+            {/* Edit Parameters Button */}
             <Box
               sx={{
                 display: "flex",
                 gap: 2,
+                alignItems: "center",
               }}
             >
-              <Box>
-                <FormControl sx={{ width: "300px" }}>
-                  <InputLabel>Metric to Optimize</InputLabel>
-                  <Select
-                    value={localRun.goal_metric || ""}
-                    label="Metric to Optimize"
-                    onChange={(e) =>
-                      setLocalRun({
-                        ...localRun,
-                        goal_metric: e.target.value,
-                      })
-                    }
-                  >
-                    {metrics.map((metric) => (
-                      <MenuItem key={metric.name} value={metric.name}>
-                        {metric.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box sx={{ width: "300px" }}>
-                  <OptimizationTableSelectOptimizer
-                    taskName={experiment.current?.task_name}
-                    optimizerName={localRun.optimizer_name}
-                    handleSelectedOptimizer={(
-                      optimizerName,
-                      optimizerParams,
-                    ) => {
-                      setLocalRun({
-                        ...localRun,
-                        optimizer_name: optimizerName,
-                        optimizer_parameters: optimizerParams,
-                      });
-                    }}
-                  />
-                </Box>
-
-                <IconButton
-                  color="primary"
-                  onClick={() => setOpenOptimizerParametersDialog(true)}
-                  disabled={!localRun.optimizer_name}
-                >
-                  <SettingsIcon />
-                </IconButton>
-              </Box>
+              <Button
+                variant="contained"
+                startIcon={<EditIcon />}
+                onClick={onEditParameters}
+              >
+                Modify Parameters
+              </Button>
             </Box>
-          )}
-        </Box>
-        {/* Parameters Form Dialog */}
-        <FormSchemaDialog
-          modelToConfigure={localRun.model_name}
-          open={openParametersDialog}
-          setOpen={setOpenParametersDialog}
-          onFormSubmit={() => {}}
-        >
-          <FormSchemaWithSelectedModel
-            onFormSubmit={(values) => {
-              setLocalRun({
-                ...localRun,
-                parameters: values,
-              });
-              setOpenParametersDialog(false);
-            }}
+            {/* Optimization Section */}
+            {optimizables && (
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <FormControl sx={{ width: "300px" }}>
+                    <InputLabel>Metric to Optimize</InputLabel>
+                    <Select
+                      value={localRun.goal_metric || ""}
+                      label="Metric to Optimize"
+                      onChange={(e) =>
+                        setLocalRun({
+                          ...localRun,
+                          goal_metric: e.target.value,
+                        })
+                      }
+                    >
+                      {metrics.map((metric) => (
+                        <MenuItem key={metric.name} value={metric.name}>
+                          {metric.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ width: "300px" }}>
+                    <OptimizationTableSelectOptimizer
+                      taskName={experiment.current?.task_name}
+                      optimizerName={localRun.optimizer_name}
+                      handleSelectedOptimizer={(
+                        optimizerName,
+                        optimizerParams,
+                      ) => {
+                        setLocalRun({
+                          ...localRun,
+                          optimizer_name: optimizerName,
+                          optimizer_parameters: optimizerParams,
+                        });
+                      }}
+                    />
+                  </Box>
+
+                  <IconButton
+                    color="primary"
+                    onClick={() => setOpenOptimizerParametersDialog(true)}
+                    disabled={!localRun.optimizer_name}
+                  >
+                    <SettingsIcon />
+                  </IconButton>
+                </Box>
+              </Box>
+            )}
+          </Box>
+          {/* Parameters Form Dialog */}
+          <FormSchemaDialog
             modelToConfigure={localRun.model_name}
-            initialValues={localRun.parameters}
-            onCancel={() => setOpenParametersDialog(false)}
-          />
-        </FormSchemaDialog>
+            open={openParametersDialog}
+            setOpen={setOpenParametersDialog}
+            onFormSubmit={() => {}}
+          >
+            <FormSchemaWithSelectedModel
+              onFormSubmit={(values) => {
+                setLocalRun({
+                  ...localRun,
+                  parameters: values,
+                });
+                setOpenParametersDialog(false);
+              }}
+              modelToConfigure={localRun.model_name}
+              initialValues={localRun.parameters}
+              onCancel={() => setOpenParametersDialog(false)}
+            />
+          </FormSchemaDialog>
 
-        {/* Optimizer Configuration Dialog */}
-        <FormSchemaDialog
-          modelToConfigure={localRun.optimizer_name}
-          open={openOptimizerParametersDialog}
-          setOpen={setOpenOptimizerParametersDialog}
-          onFormSubmit={() => {}}
-        >
-          <FormSchemaWithSelectedModel
-            onFormSubmit={(values) => {
-              setLocalRun({
-                ...localRun,
-                optimizer_parameters: values,
-              });
-              setOpenOptimizerParametersDialog(false);
-            }}
+          {/* Optimizer Configuration Dialog */}
+          <FormSchemaDialog
             modelToConfigure={localRun.optimizer_name}
-            initialValues={localRun.optimizer_parameters}
-            onCancel={() => setOpenOptimizerParametersDialog(false)}
-          />
-        </FormSchemaDialog>
+            open={openOptimizerParametersDialog}
+            setOpen={setOpenOptimizerParametersDialog}
+            onFormSubmit={() => {}}
+          >
+            <FormSchemaWithSelectedModel
+              onFormSubmit={(values) => {
+                setLocalRun({
+                  ...localRun,
+                  optimizer_parameters: values,
+                });
+                setOpenOptimizerParametersDialog(false);
+              }}
+              modelToConfigure={localRun.optimizer_name}
+              initialValues={localRun.optimizer_parameters}
+              onCancel={() => setOpenOptimizerParametersDialog(false)}
+            />
+          </FormSchemaDialog>
 
-        {/* Save and run button */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <Button
-            variant="outlined"
-            sx={{ mr: 2 }}
-            onClick={() => {
-              setLocalRun(structuredClone(runData));
-            }}
-            disabled={JSON.stringify(localRun) === JSON.stringify(runData)}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={updateParameters}
-            disabled={
-              localRun.goal_metric === null || localRun.goal_metric === ""
-            }
-          >
-            Save and Run
-          </Button>
+          {/* Save and run button */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+            <Button
+              variant="outlined"
+              sx={{ mr: 2 }}
+              onClick={() => {
+                setLocalRun(structuredClone(runData));
+              }}
+              disabled={JSON.stringify(localRun) === JSON.stringify(runData)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={updateParameters}
+              disabled={
+                localRun.goal_metric === null || localRun.goal_metric === ""
+              }
+            >
+              Save and Run
+            </Button>
+          </Box>
         </Box>
-      </Box>
+      )}
     </Grid>
   );
 }
