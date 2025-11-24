@@ -49,7 +49,7 @@ function ResultsTable({
   };
 
   const handleCloseRunResults = () => {
-    setSelectedRunId(null);
+    setSelectedRun(null);
     setShowRunResults(false);
   };
 
