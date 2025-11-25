@@ -163,17 +163,22 @@ function ResultsTabInfo({ runData, handleRun }) {
                   </Typography>
                 </Grid>
               )}
-              {runData.start_time && runData.end_time && (
+              {runData.start_time && (
                 <Grid item xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
                     Duration
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
-                    {(
-                      (new Date(runData.end_time) -
-                        new Date(runData.start_time)) /
-                      1000
-                    ).toFixed(2)}
+                    {runData.status === "Finished"
+                      ? (
+                          (new Date(runData.end_time) -
+                            new Date(runData.start_time)) /
+                          1000
+                        ).toFixed(2)
+                      : (
+                          (new Date() - new Date(runData.start_time)) /
+                          1000
+                        ).toFixed(2)}
                     s
                   </Typography>
                 </Grid>
