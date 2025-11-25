@@ -387,10 +387,14 @@ function ResultsTabInfo({ runData, handleRun }) {
               color="primary"
               onClick={updateParameters}
               disabled={
-                localRun.goal_metric === null || localRun.goal_metric === ""
+                optimizables
+                  ? localRun.goal_metric === null || localRun.goal_metric === ""
+                  : false
               }
             >
-              Save and Run
+              {JSON.stringify(localRun) === JSON.stringify(runData)
+                ? "Run Model"
+                : "Save and Run Model"}
             </Button>
           </Box>
         </Box>
