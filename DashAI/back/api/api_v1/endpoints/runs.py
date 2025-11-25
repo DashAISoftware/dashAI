@@ -405,17 +405,38 @@ def reset_run(run):
 
     # Delete files
     if run.run_path and os.path.exists(run.run_path):
-        shutil.rmtree(run.run_path)
+        remove_path(run.run_path)
         setattr(run, "run_path", None)
     if run.plot_history_path and os.path.exists(run.plot_history_path):
-        shutil.rmtree(run.plot_history_path)
+        remove_path(run.plot_history_path)
         setattr(run, "plot_history_path", None)
     if run.plot_slice_path and os.path.exists(run.plot_slice_path):
-        shutil.rmtree(run.plot_slice_path)
+        remove_path(run.plot_slice_path)
         setattr(run, "plot_slice_path", None)
     if run.plot_contour_path and os.path.exists(run.plot_contour_path):
-        shutil.rmtree(run.plot_contour_path)
+        remove_path(run.plot_contour_path)
         setattr(run, "plot_contour_path", None)
     if run.plot_importance_path and os.path.exists(run.plot_importance_path):
-        shutil.rmtree(run.plot_importance_path)
+        remove_path(run.plot_importance_path)
         setattr(run, "plot_importance_path", None)
+
+
+def remove_path(path):
+    """Removes a file or directory
+
+    Parameters
+    ----------
+    path : str
+        The path to the file or directory to remove.
+
+    Raises
+    ------
+    ValueError
+        Raised if the path is not a file, directory, or symbolic link.
+    """
+    if os.path.isfile(path) or os.path.islink(path):
+        os.remove(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        raise ValueError("file {} is not a file or dir.".format(path))
