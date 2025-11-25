@@ -163,7 +163,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                   </Typography>
                 </Grid>
               )}
-              {runData.start_time && (
+              {runData.start_time && runData.status !== "Error" && (
                 <Grid item xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
                     Duration
