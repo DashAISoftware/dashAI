@@ -9,6 +9,10 @@ import { checkIfHaveOptimazers } from "../../../utils/schema";
  * Component that renders multiple tabs to visualize the results of a specific run.
  */
 function ResultsDetails({ run, onClose, handleRun }) {
+  if (!run) {
+    onClose();
+    return null;
+  }
   const [currentTab, setCurrentTab] = useState(0);
   const optimizers = checkIfHaveOptimazers(run.parameters);
 
