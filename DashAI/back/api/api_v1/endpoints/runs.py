@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import shutil
 from typing import Union
 
 from fastapi import APIRouter, Depends, Response, status
@@ -398,20 +399,23 @@ def reset_run(run):
     setattr(run, "train_metrics", None)
     setattr(run, "validation_metrics", None)
     setattr(run, "test_metrics", None)
+    setattr(run, "start_time", None)
+    setattr(run, "delivery_time", None)
+    setattr(run, "end_time", None)
 
     # Delete files
     if run.run_path and os.path.exists(run.run_path):
-        os.remove(run.run_path)
+        shutil.rmtree(run.run_path)
         setattr(run, "run_path", None)
     if run.plot_history_path and os.path.exists(run.plot_history_path):
-        os.remove(run.plot_history_path)
+        shutil.rmtree(run.plot_history_path)
         setattr(run, "plot_history_path", None)
     if run.plot_slice_path and os.path.exists(run.plot_slice_path):
-        os.remove(run.plot_slice_path)
+        shutil.rmtree(run.plot_slice_path)
         setattr(run, "plot_slice_path", None)
     if run.plot_contour_path and os.path.exists(run.plot_contour_path):
-        os.remove(run.plot_contour_path)
+        shutil.rmtree(run.plot_contour_path)
         setattr(run, "plot_contour_path", None)
     if run.plot_importance_path and os.path.exists(run.plot_importance_path):
-        os.remove(run.plot_importance_path)
+        shutil.rmtree(run.plot_importance_path)
         setattr(run, "plot_importance_path", None)
