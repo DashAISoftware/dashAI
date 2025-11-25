@@ -226,7 +226,7 @@ class TFIDFRetrieverSchema(BaseSchema):
     )  # type: ignore
 
     top_k: schema_field(
-        int_field(ge=1), placeholder=5, description="Number of documents to retrieve."
+        int_field(ge=1), placeholder=5, description="Number of chunks to select."
     )  # type: ignore
 
     similarity_threshold: schema_field(

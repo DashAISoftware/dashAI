@@ -59,7 +59,7 @@ class DenseRetrieverSchema(BaseSchema):
     top_k: schema_field(
         int_field(gt=0),
         placeholder=5,
-        description="Number of top documents to retrieve."
+        description="Number of chunks to select."
     )  # type: ignore
 
 
