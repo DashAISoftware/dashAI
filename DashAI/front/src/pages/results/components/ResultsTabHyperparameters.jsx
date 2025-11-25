@@ -51,7 +51,7 @@ function ResultsTabHyperparameters({ runData }) {
         setSlicePlot(parsedSlicePlot);
         setContourPlot(parsedContourPlot);
         setImportancePlot(parsedImportancePlot);
-      } else {
+      } else if (optimizables === 1) {
         const historicalPlot = await getHyperparameterPlotRequest(
           runData.id,
           1,
@@ -77,7 +77,7 @@ function ResultsTabHyperparameters({ runData }) {
   useEffect(() => {
     if (runData.status !== "Finished") return;
     getHyperparameterPlot();
-  }, [runData.status]);
+  }, [runData]);
 
   return runData.status === "Started" || runData.status === "Delivered" ? (
     <Box
