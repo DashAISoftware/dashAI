@@ -82,6 +82,7 @@ function ResultsTableLayout({
               },
               "& .MuiDataGrid-row:hover": {},
             }}
+            data-tour="results-table"
           />
         </>
       ) : (

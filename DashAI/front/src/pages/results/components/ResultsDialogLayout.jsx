@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -55,6 +55,7 @@ function ResultsDialogLayout({
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [runToDelete, setRunToDelete] = useState(null);
   const tourContext = useTourContext();
+  const hasNotifiedRef = useRef(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const hasActiveRuns = runs.some(
@@ -91,12 +92,17 @@ function ResultsDialogLayout({
         selectedRuns.length > 0 &&
         selectedRuns.every((run) => run.status === 3 || run.status === 4);
 
-      if (allRunsFinished) {
-        if (!finishedRunning) {
-          enqueueSnackbar(`${experiment.name} has completed all runs`, {
-            variant: "success",
-          });
-          setFinishedRunning(true);
+      if (allRunsFinished && !hasNotifiedRef.current) {
+        hasNotifiedRef.current = true;
+
+        enqueueSnackbar(`${experiment.name} has completed all runs`, {
+          variant: "success",
+        });
+
+        setFinishedRunning(true);
+
+        if (tourContext && tourContext.run) {
+          tourContext.nextStep();
         }
       }
     } catch (error) {
@@ -145,6 +151,10 @@ function ResultsDialogLayout({
 
   const handleExecuteRuns = async () => {
     setFinishedRunning(false);
+    hasNotifiedRef.current = false;
+    if (tourContext && tourContext.run) {
+      tourContext.nextStep();
+    }
 
     // 1. Filter runs that are eligible to execute
     const runsToExecute = rowSelectionModel.filter((runId) => {
@@ -211,6 +221,7 @@ function ResultsDialogLayout({
 
   const handleSingleRun = async (run) => {
     try {
+      hasNotifiedRef.current = false;
       // Immediately reset the run state before enqueueing
       const initialUpdatedRun = await resetRunById(run.id);
 
