@@ -36,7 +36,7 @@ export function SaveDatasetModal({
       base: "Dataset",
       items: existingDatasets,
     });
-  }, [existingDatasets, tourContext]);
+  }, [existingDatasets, open]);
 
   useEffect(() => {
     if (open && defaultName) {
