@@ -5,7 +5,7 @@ from datasets import DatasetDict
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.classification_task import ClassificationTask
 from DashAI.back.types.categorical import Categorical
-from DashAI.back.types.value_types import Float, Integer, Text
+from DashAI.back.types.value_types import Float, Integer
 
 
 class TabularClassificationTask(ClassificationTask):
@@ -21,7 +21,7 @@ class TabularClassificationTask(ClassificationTask):
     accurate classification of new instances."""
     DISPLAY_NAME: str = "Tabular Classification"
     metadata: dict = {
-        "inputs_types": [Float, Integer, Text, Categorical],
+        "inputs_types": [Float, Integer, Categorical],
         "outputs_types": [Categorical],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
