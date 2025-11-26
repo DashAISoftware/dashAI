@@ -305,6 +305,10 @@ class DashAIDataset(Dataset):
         # --- Correlations ---
         if not numeric_cols.empty:
             corr_matrix = numeric_cols.corr(numeric_only=True)
+            # Drop columns and rows from correlation matrix that are all NaN
+            corr_matrix = corr_matrix.dropna(axis=0, how="all").dropna(
+                axis=1, how="all"
+            )
             correlations = {}
             for col1 in corr_matrix.columns:
                 col_corrs = {}
