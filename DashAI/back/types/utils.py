@@ -106,12 +106,27 @@ def arrow_to_dashai_types(arrow_type, format: str = None) -> DashAIValue:
             return Text(arrow_type)
         elif pa.types.is_boolean(arrow_type):
             return Categorical(values=["True", "False"])
+        elif pa.types.is_dictionary(arrow_type):
+            # Dictionary types (often produced by categorical columns in pandas)
+            # don't carry the actual category values at the schema level, so
+            # we return a Categorical placeholder with an empty categories list.
+            return Categorical(values=[])
+        elif pa.types.is_timestamp(arrow_type):
+            return Timestamp(arrow_type)
+        elif pa.types.is_date(arrow_type):
+            return Date(arrow_type)
+        elif pa.types.is_time(arrow_type):
+            return Time(arrow_type)
         elif pa.types.is_duration(arrow_type):
             return Duration(arrow_type)
         elif pa.types.is_decimal(arrow_type):
             return Decimal(arrow_type)
         elif pa.types.is_binary(arrow_type) or pa.types.is_large_binary(arrow_type):
             return Binary(arrow_type)
+
+    # Fallback: if we couldn't map the type explicitly, treat it as text/string
+    # to avoid returning None and causing AttributeError in callers.
+    return Text(pa.string())
 
 
 def arrow_to_dashai_schema(arrow_tbl):
