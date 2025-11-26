@@ -148,13 +148,9 @@ export const datasetsTourSteps = [
       <div>
         <h3>Upload Your File</h3>
         <p>Now it's time to upload the file you just downloaded!</p>
-        <p>You can either:</p>
         <ul>
           <li>
-            <strong>Drag and drop</strong> the file here
-          </li>
-          <li>
-            Or click <strong>"Upload a file"</strong> to browse for it
+            Click <strong>"Upload a file"</strong> to browse for it
           </li>
         </ul>
         <p style={{ fontSize: "0.9em", color: "#666", marginTop: "10px" }}>
