@@ -108,11 +108,9 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       setNewExp({ ...newExp, dataset });
       setNextEnabled(true);
       if (tourContext && tourContext.run) {
-        if (dataset.name === "Clean Personality Dataset") {
-          setTimeout(() => {
-            tourContext.nextStep();
-          }, 300);
-        }
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 300);
       }
     }
   }, [datasetsSelected]);

@@ -190,7 +190,7 @@ export default function NewExperimentModal({
       if (tourContext && tourContext.run) {
         setTimeout(() => {
           tourContext.nextStep();
-        }, 300);
+        }, 500);
       }
       return;
     }
