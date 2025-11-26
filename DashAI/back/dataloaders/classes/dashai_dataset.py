@@ -2,7 +2,6 @@
 
 import json
 import logging
-import math
 import os
 import uuid
 from typing import Dict, List, Literal, Tuple, Union
@@ -173,44 +172,34 @@ class DashAIDataset(Dataset):
         # TODO: Replace with categorical type from DashAI types when available
         numeric_cols = dataset_df.select_dtypes(include=[np.number])
         numeric_stats = {}
-
-        def _safe_float(x):
-            try:
-                v = float(x)
-                return v if math.isfinite(v) else None
-            except Exception:
-                return None
-
         for col in numeric_cols.columns:
             series = numeric_cols[col].dropna()
             if series.empty:
                 continue
-            # Calculate quartiles (use safe conversion to avoid NaN/Inf)
-            q1 = _safe_float(series.quantile(0.25))
-            q3 = _safe_float(series.quantile(0.75))
-            iqr = None if q1 is None or q3 is None else q3 - q1
 
-            # Detect outliers using IQR method (only if iqr is valid)
-            if iqr is None:
-                outliers_count = 0
-            else:
-                lower_bound = q1 - 1.5 * iqr
-                upper_bound = q3 + 1.5 * iqr
-                outliers_count = int(
-                    ((series < lower_bound) | (series > upper_bound)).sum()
-                )
+            # Calculate quartiles
+            q1 = float(series.quantile(0.25))
+            q3 = float(series.quantile(0.75))
+            iqr = q3 - q1
+
+            # Detect outliers using IQR method
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            outliers_count = int(
+                ((series < lower_bound) | (series > upper_bound)).sum()
+            )
 
             numeric_stats[col] = {
-                "mean": _safe_float(series.mean()),
-                "std": _safe_float(series.std()),
-                "min": _safe_float(series.min()),
-                "max": _safe_float(series.max()),
-                "median": _safe_float(series.median()),
+                "mean": float(series.mean()),
+                "std": float(series.std()),
+                "min": float(series.min()),
+                "max": float(series.max()),
+                "median": float(series.median()),
                 "q1": q1,
                 "q3": q3,
                 "n_unique": int(series.nunique()),
-                "skew": _safe_float(series.skew()),
-                "kurtosis": _safe_float(series.kurtosis()),
+                "skew": float(series.skew()),
+                "kurtosis": float(series.kurtosis()),
                 "outliers_count": outliers_count,
             }
 
@@ -290,7 +279,7 @@ class DashAIDataset(Dataset):
         # --- Correlations ---
         if not numeric_cols.empty:
             corr_matrix = numeric_cols.corr(numeric_only=True)
-            # Drop nan columns and rows from correlation matrix
+            # Drop columns and rows from correlation matrix that are all NaN
             corr_matrix = corr_matrix.dropna(axis=0, how="all").dropna(
                 axis=1, how="all"
             )
@@ -298,19 +287,8 @@ class DashAIDataset(Dataset):
             for col1 in corr_matrix.columns:
                 col_corrs = {}
                 for col2 in corr_matrix.columns:
-                    # Some correlation values can be NaN/Inf. Make them JSON-safe
-                    # by converting non-finite numbers to None and rounding
-                    # finite numbers to 4 decimals.
-                    try:
-                        corr_val = float(corr_matrix.loc[col1, col2])
-                    except Exception:
-                        corr_val = None
-
-                    if isinstance(corr_val, float) and math.isfinite(corr_val):
-                        col_corrs[col2] = round(corr_val, 4)
-                    else:
-                        col_corrs[col2] = None
-
+                    corr_val = float(corr_matrix.loc[col1, col2])
+                    col_corrs[col2] = round(corr_val, 4)
                 if col_corrs:
                     correlations[col1] = col_corrs
         else:
