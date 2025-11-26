@@ -30,13 +30,13 @@ export function SaveDatasetModal({
 
   const { defaultName } = useMemo(() => {
     if (tourContext && tourContext.run) {
-      return { defaultName: "Clean personality dataset" };
+      return { defaultName: "Clean Personality Dataset" };
     }
     return generateSequentialName({
       base: "Dataset",
       items: existingDatasets,
     });
-  }, [existingDatasets]);
+  }, [existingDatasets, tourContext]);
 
   useEffect(() => {
     if (open && defaultName) {
