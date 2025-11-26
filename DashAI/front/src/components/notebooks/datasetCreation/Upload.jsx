@@ -97,7 +97,7 @@ function Upload({ onFileUpload }) {
               <React.Fragment>
                 <Grid>
                   <Typography variant="subtitle1">
-                    Drag and drop a file here, or
+                    Click to upload your dataset file
                   </Typography>
                 </Grid>
                 <Grid>
