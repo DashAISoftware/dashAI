@@ -134,7 +134,7 @@ function SetNameAndTaskStep({
     if (tourContext && tourContext.run) {
       setNewExp((prev) => ({
         ...prev,
-        name: "Personality Classification Experiment",
+        name: "Exp actividad 2",
       }));
       setExpNameOk(true);
     } else if (defaultExperimentName && !newExp?.name) {

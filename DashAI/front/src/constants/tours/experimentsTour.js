@@ -113,10 +113,6 @@ export const experimentsTourSteps = [
       <div>
         <h3>Choose Your Dataset</h3>
         <p>Select the dataset you want to use for training your models.</p>
-        <p>
-          <strong>Find and select "Clean Personality Dataset"</strong> – the
-          dataset you processed earlier in the Notebook.
-        </p>
       </div>
     ),
     placement: "top",
@@ -220,7 +216,6 @@ export const experimentsTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
   },
