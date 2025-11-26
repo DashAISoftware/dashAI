@@ -1,7 +1,5 @@
 from typing import Dict, Tuple
 
-import numpy as np
-import pandas as pd
 import pyarrow as pa
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, modify_table
@@ -87,7 +85,7 @@ def apply_categorical_label_encoder(
 
     for col in table.column_names:
         array = table[col]
-        _type = types[col]
+        _type = types.get(col)
 
         if col in encodings and isinstance(_type, Categorical) and not _type.converted:
             # Apply the stored encodings to the categorical columns
@@ -105,7 +103,8 @@ def apply_categorical_label_encoder(
                     f"Value {e} not found in encoding for column '{col}'"
                 ) from e
         else:
-            # If no encoding is provided, keep the original column
+            # If no encoding is provided or the column has no type info,
+            # keep the original column
             new_columns[col] = array
     return modify_table(dataset, columns=new_columns, types=types)
 

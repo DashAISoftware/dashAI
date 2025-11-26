@@ -67,7 +67,6 @@ def tabular_model_fixture():
         new_table, splits=datasetdict.splits, types=datasetdict.types
     )
 
-
     total_rows = datasetdict.num_rows
     train_indexes, test_indexes, val_indexes = split_indexes(
         total_rows=total_rows, train_size=0.7, test_size=0.1, val_size=0.2

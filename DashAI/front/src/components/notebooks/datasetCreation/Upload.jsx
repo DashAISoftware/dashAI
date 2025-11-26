@@ -222,8 +222,6 @@ function Upload({
 
   // memoize datasetData object so its reference stays stable across renders
   const datasetDataMemo = useMemo(() => {
-    console.log(formValues);
-    // Build params but remove keys that don't apply to the selected dataloader
     const params = {
       ...formValues,
       inference_rows:
@@ -238,11 +236,15 @@ function Upload({
     };
   }, [file, formValues, selectedDataloader]);
 
-  // determine accepted file types for the file input based on the selected dataloader
   const acceptAttr = useMemo(() => {
-    if (!selectedDataloader || typeof selectedDataloader !== "string")
-      return undefined;
-    const s = selectedDataloader.toLowerCase();
+    if (!selectedDataloader) return undefined;
+
+    let s = selectedDataloader;
+    if (typeof selectedDataloader === "object") {
+      s = selectedDataloader.name || selectedDataloader.display_name || "";
+    }
+    if (!s || typeof s !== "string") return undefined;
+    s = s.toLowerCase();
     // CSV dataloader: accept .csv and .zip (zipped CSVs)
     if (s.includes("csv")) return ".csv,.zip";
     // JSON dataloader: accept .json and .zip

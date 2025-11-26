@@ -75,7 +75,10 @@ function PreviewDataset({
     };
 
     loadPreview();
-  }, [datasetData?.file]);
+    // Re-run preview when the file changes OR when params change. We stringify params to
+    // create a stable dependency so changes to configuration in the right sidebar
+    // trigger a new preview request.
+  }, [datasetData?.file, JSON.stringify(datasetData?.params || {})]);
 
   const handleTypeChange = useCallback(
     (typeChanges) => {

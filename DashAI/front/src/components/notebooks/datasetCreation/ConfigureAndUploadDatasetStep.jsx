@@ -63,11 +63,24 @@ export default function ConfigureAndUploadDatasetStep({
     setUploading(true);
 
     try {
-      const params = formSubmitRef.current.values;
-      const name = params.name || datasetFileToUpload.file.name;
+      // Safely read values from the form ref (may be undefined briefly)
+      const refValues =
+        formSubmitRef && formSubmitRef.current
+          ? formSubmitRef.current.values || {}
+          : {};
+      // Merge values coming from the form schema and the onValuesChange callback
+      const params = { ...refValues, ...(formValues || {}) };
 
+      const name = params.name || datasetFileToUpload.file.name;
       params["name"] = name;
-      params["dataloader"] = selectedDataloader;
+
+      // Ensure dataloader is passed as a string (backend expects the dataloader name)
+      let dataloaderName = selectedDataloader;
+      if (selectedDataloader && typeof selectedDataloader === "object") {
+        dataloaderName =
+          selectedDataloader.name || selectedDataloader.display_name || null;
+      }
+      params["dataloader"] = dataloaderName;
 
       if (columnTypes) {
         params["inferred_types"] = columnTypes;
@@ -76,10 +89,6 @@ export default function ConfigureAndUploadDatasetStep({
       const { file, url } = datasetFileToUpload;
 
       const data = await createDataset(name);
-
-      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-        variant: "success",
-      });
 
       try {
         const job = await enqueueDatasetRequest(data.id, file, url, params);
@@ -90,7 +99,8 @@ export default function ConfigureAndUploadDatasetStep({
             tourContext.nextStep();
           }, 500);
         }
-      } catch {
+      } catch (err) {
+        console.error("Error enqueuing dataset job:", err);
         enqueueSnackbar("Error when trying to enqueue the dataset job.", {
           variant: "error",
         });

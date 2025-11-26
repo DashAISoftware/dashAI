@@ -1,6 +1,6 @@
 # flake8: noqa: ERA001
-import pytest
 import pyarrow as pa
+import pytest
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -13,6 +13,7 @@ from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTra
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata
 from DashAI.back.types.value_types import Text
+
 
 @pytest.fixture(scope="module", name="splited_dataset")
 def splited_dataset_fixture():

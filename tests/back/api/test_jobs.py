@@ -25,7 +25,7 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, dataset, output_columns):
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
         return dataset
 
     def num_labels(self, dataset, output_column):

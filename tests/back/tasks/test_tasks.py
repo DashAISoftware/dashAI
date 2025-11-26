@@ -41,6 +41,7 @@ def load_csv_into_datasetdict_iris(file_name):
     datasetdict = transform_dataset_with_schema(datasetdict, schema)
     return datasetdict
 
+
 def load_csv_into_datasetdict_iris_extra(file_name):
     test_dataset_path = f"tests/back/tasks/{file_name}"
     csv_dataloader = CSVDataLoader()
@@ -86,8 +87,9 @@ def test_validate_tabular_task():
 
 
 def test_wrong_type_task():
-    dataset = to_dashai_dataset(load_csv_into_datasetdict_iris_extra("iris_extra_feature.csv"))
-
+    dataset = to_dashai_dataset(
+        load_csv_into_datasetdict_iris_extra("iris_extra_feature.csv")
+    )
 
     tabular_task = TabularClassificationTask()
 
@@ -117,7 +119,7 @@ def test_prepare_task():
         "PetalWidthCm",
     ]
     outputs_columns = ["Species"]
-    dataset = tabular_task.prepare_for_task(dataset, outputs_columns)
+    dataset = tabular_task.prepare_for_task(dataset, inputs_columns, outputs_columns)
     try:
         tabular_task.validate_dataset_for_task(
             dataset=dataset,
@@ -128,34 +130,13 @@ def test_prepare_task():
     except Exception as e:
         pytest.fail(f"Unexpected error in test_prepare_task: {repr(e)}")
 
-#Since the main objective is to stop using prepare_for_task before validate, this test is no longer needed.
-#DashAI types doesn't require some weird preparation cast step anymore.
-# def test_not_prepared_task():
-#     dataset = to_dashai_dataset(load_csv_into_datasetdict_iris("iris.csv"))
-#     tabular_task = TabularClassificationTask()
-#     inputs_columns = [
-#         "SepalLengthCm",
-#         "SepalWidthCm",
-#         "PetalLengthCm",
-#         "PetalWidthCm",
-#     ]
-#     outputs_columns = ["Species"]
-
-#     with pytest.raises(TypeError):
-#         tabular_task.validate_dataset_for_task(
-#             dataset=dataset,
-#             dataset_name="Iris",
-#             input_columns=inputs_columns,
-#             output_columns=outputs_columns,
-#         )
-
 
 def test_get_tabular_class_task_metadata():
     tabular_class_task = TabularClassificationTask()
     metadata = tabular_class_task.get_metadata()
 
     assert len(metadata.keys()) == 4
-    assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
+    assert metadata["inputs_types"] == ["Float", "Integer", "Text", "Categorical"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
     assert metadata["outputs_cardinality"] == 1
@@ -169,7 +150,9 @@ def text_classification_dataset_fixture():
     dataset = json_dataloader.load_data(
         filepath_or_buffer=test_dataset_path,
         temp_path="tests/back/tasks",
-        params={"data_key": "data",},
+        params={
+            "data_key": "data",
+        },
     )
     schema = {
         "text": {"type": "Text", "dtype": "string"},
@@ -196,7 +179,7 @@ def test_validate_text_dataset(text_classification_dataset: DatasetDict):
     inputs_columns = ["text"]
     outputs_columns = ["class"]
     imbd_sentiment_dataset = text_class_task.prepare_for_task(
-        text_classification_dataset, outputs_columns
+        text_classification_dataset, inputs_columns, outputs_columns
     )
     try:
         text_class_task.validate_dataset_for_task(
@@ -256,7 +239,9 @@ def test_validate_translation_task(translation_dataset):
     translation_task = TranslationTask()
     inputs_columns = ["text"]
     outputs_columns = ["class"]
-    dataset = translation_task.prepare_for_task(translation_dataset, outputs_columns)
+    dataset = translation_task.prepare_for_task(
+        translation_dataset, inputs_columns, outputs_columns
+    )
     try:
         translation_task.validate_dataset_for_task(
             dataset=dataset,

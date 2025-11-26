@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 from beartype import beartype
@@ -7,7 +7,7 @@ from beartype import beartype
 @beartype
 def validate_type_change(
     column_data: pd.Series, current_type: str, new_type: str, new_dtype: str = None
-) -> Tuple[bool, str, pd.Series]:
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """
     Validates if a column can be safely converted to a new type.
 
@@ -72,7 +72,9 @@ def validate_type_change(
         return False, f"Conversion failed: {str(e)}", None
 
 
-def _validate_categorical_conversion(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_categorical_conversion(
+    data: pd.Series,
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion to Categorical."""
     try:
         # Convert to string first
@@ -92,7 +94,9 @@ def _validate_categorical_conversion(data: pd.Series) -> Tuple[bool, str, pd.Ser
         return False, f"Cannot convert to Categorical: {str(e)}", None
 
 
-def _validate_numeric_conversion(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_numeric_conversion(
+    data: pd.Series,
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion between numeric types."""
     try:
         # Check if all values are numeric
@@ -103,7 +107,7 @@ def _validate_numeric_conversion(data: pd.Series) -> Tuple[bool, str, pd.Series]
         return False, f"Numeric conversion failed: {str(e)}", None
 
 
-def _validate_float_to_int(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_float_to_int(data: pd.Series) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Float to Integer."""
     try:
         # Check if values are effectively integers
@@ -121,7 +125,7 @@ def _validate_float_to_int(data: pd.Series) -> Tuple[bool, str, pd.Series]:
         return False, f"Float to Integer conversion failed: {str(e)}", None
 
 
-def _validate_text_to_int(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_text_to_int(data: pd.Series) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Text to Integer."""
     try:
         # Try to convert to int
@@ -152,7 +156,7 @@ def _validate_text_to_int(data: pd.Series) -> Tuple[bool, str, pd.Series]:
         return False, f"Text to Integer conversion failed: {str(e)}", None
 
 
-def _validate_text_to_float(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_text_to_float(data: pd.Series) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Text to Float."""
     try:
         converted = pd.to_numeric(data, errors="coerce")
@@ -173,7 +177,7 @@ def _validate_text_to_float(data: pd.Series) -> Tuple[bool, str, pd.Series]:
 
 def _validate_text_to_date(
     data: pd.Series, format_str: str = None
-) -> Tuple[bool, str, pd.Series]:
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Text to Date."""
     try:
         converted = pd.to_datetime(data, format=format_str, errors="coerce")
@@ -194,7 +198,7 @@ def _validate_text_to_date(
 
 def _validate_text_to_time(
     data: pd.Series, format_str: str = None
-) -> Tuple[bool, str, pd.Series]:
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Text to Time."""
     try:
         # For time, we might need custom parsing
@@ -216,7 +220,7 @@ def _validate_text_to_time(
 
 def _validate_text_to_timestamp(
     data: pd.Series, format_str: str = None
-) -> Tuple[bool, str, pd.Series]:
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Text to Timestamp."""
     try:
         converted = pd.to_datetime(data, format=format_str, errors="coerce")
@@ -235,7 +239,9 @@ def _validate_text_to_timestamp(
         return False, f"Text to Timestamp conversion failed: {str(e)}", None
 
 
-def _validate_categorical_to_int(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_categorical_to_int(
+    data: pd.Series,
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Categorical to Integer."""
     try:
         # Categorical might be string labels that can't convert to int
@@ -258,7 +264,9 @@ def _validate_categorical_to_int(data: pd.Series) -> Tuple[bool, str, pd.Series]
         return False, f"Categorical to Integer conversion failed: {str(e)}", None
 
 
-def _validate_categorical_to_float(data: pd.Series) -> Tuple[bool, str, pd.Series]:
+def _validate_categorical_to_float(
+    data: pd.Series,
+) -> Tuple[bool, str, Optional[pd.Series]]:
     """Validate conversion from Categorical to Float."""
     try:
         converted = pd.to_numeric(data, errors="coerce")

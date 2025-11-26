@@ -828,6 +828,7 @@ class Time(Machine):
 class ComplexText(Machine):
     pass
 
+
 class FloatComma(Machine):
     def __init__(self):
         super().__init__()
@@ -842,5 +843,3 @@ class FloatComma(Machine):
         if word == ",":
             return LOG_EPS
         return super().probability(word)
-    
-

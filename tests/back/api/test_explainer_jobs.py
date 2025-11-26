@@ -51,8 +51,8 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, datasetdict, outputs_columns):
-        return datasetdict
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
+        return dataset
 
 
 class DummyModel(BaseModel):

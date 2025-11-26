@@ -55,10 +55,10 @@ def create_dataset_1(client) -> Dataset:
 
     IRIS_SCHEMA = {
         "SepalLengthCm": {"type": "Float", "dtype": "float64"},
-        "SepalWidthCm":  {"type": "Float", "dtype": "float64"},
+        "SepalWidthCm": {"type": "Float", "dtype": "float64"},
         "PetalLengthCm": {"type": "Float", "dtype": "float64"},
-        "PetalWidthCm":  {"type": "Float", "dtype": "float64"},
-        "Species":       {"type": "Categorical", "dtype": "string"},
+        "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+        "Species": {"type": "Categorical", "dtype": "string"},
     }
 
     with session_factory() as db:
