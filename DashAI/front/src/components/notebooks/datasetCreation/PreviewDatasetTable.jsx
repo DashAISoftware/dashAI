@@ -9,13 +9,13 @@ const TYPE_TO_DEFAULT_DTYPE = {
   Float: "float64",
   Text: "string",
   Categorical: "string",
-  Date: "date32",
-  Time: "time32(s)",
-  Timestamp: "timestamp(us)",
-  Duration: "duration(us)",
+  // Date: "date32",
+  // Time: "time32(s)",
+  // Timestamp: "timestamp(us)",
+  // Duration: "duration(us)",
   Decimal: "decimal128(8, 0)",
   Binary: "binary",
-  Boolean: "bool",
+  // Boolean: "bool",  // Boolean is always Categorical
 };
 
 /**
@@ -131,10 +131,10 @@ export default function PreviewDatasetTable({
               <MenuItem value="Float">Float</MenuItem>
               <MenuItem value="Text">Text</MenuItem>
               <MenuItem value="Categorical">Categorical</MenuItem>
-              <MenuItem value="Date">Date</MenuItem>
-              <MenuItem value="Time">Time</MenuItem>
-              <MenuItem value="Timestamp">Timestamp</MenuItem>
-              <MenuItem value="Boolean">Boolean</MenuItem>
+              {/* <MenuItem value="Date">Date</MenuItem> */}
+              {/* <MenuItem value="Time">Time</MenuItem> */}
+              {/* <MenuItem value="Timestamp">Timestamp</MenuItem> */}
+              {/* <MenuItem value="Boolean">Boolean</MenuItem> */}
             </Select>
           </Box>
         ),

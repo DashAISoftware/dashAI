@@ -1,5 +1,6 @@
 # flake8: noqa
 
+import re
 from pathlib import Path
 
 import joblib
@@ -18,6 +19,45 @@ CAT_TRAINED_TYPES = [
     "date-non-std-subtype",
     "date-non-std",
 ]
+
+DATE_TYPES = [
+    "date-iso-8601",
+    "date-eu",
+    "date-non-std-subtype",
+    "date-non-std",
+    "time",
+]
+
+DATE_PATTERNS = [
+    # DD.MM.YYYY or DD.MM.YY
+    r"^\d{1,2}\.\d{1,2}\.\d{2,4}$",
+    # YYYY.MM.DD
+    r"^\d{4}\.\d{1,2}\.\d{1,2}$",
+    # DD/MM/YYYY, MM/DD/YYYY, YYYY/MM/DD
+    r"^\d{1,4}[/\-\.]\d{1,2}[/\-\.]\d{1,4}$",
+    # DD-MM-YYYY or similar
+    r"^\d{1,2}-\d{1,2}-\d{2,4}$",
+    # Time patterns HH:MM:SS or HH:MM
+    r"^\d{1,2}:\d{2}(:\d{2})?$",
+    # Datetime: YYYY-MM-DD HH:MM:SS
+    r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?$",
+]
+
+
+def _looks_like_date(series) -> bool:
+    """Check if most values in series look like dates/times."""
+    sample = series.dropna().astype(str).head(100)
+    if len(sample) == 0:
+        return False
+
+    match_count = 0
+    for val in sample:
+        val = val.strip()
+        for pattern in DATE_PATTERNS:
+            if re.match(pattern, val):
+                match_count += 1
+                break
+    return (match_count / len(sample)) > 0.8
 
 
 class PtypeCat(Ptype):
@@ -46,6 +86,10 @@ class PtypeCat(Ptype):
 
     def _is_categorical_candidate(self, series, inferred_type):
         """Check if column should be considered for categorical."""
+
+        if inferred_type in DATE_TYPES:
+            return False
+
         # Boolean is always categorical
         if inferred_type == "boolean":
             return True
@@ -57,28 +101,27 @@ class PtypeCat(Ptype):
         if total == 0:
             return False
 
+        if inferred_type == "string":
+            if _looks_like_date(series):
+                return False
+
         unique_count = series.nunique()
         unique_ratio = unique_count / total
 
-        # Too many unique values
         if unique_count > self.max_unique_count:
             return False
 
-        # High uniqueness ratio (skip for small datasets)
         if total >= 20 and unique_ratio > self.max_unique_ratio:
             return False
 
-        # String-specific: check for free text patterns
         if inferred_type == "string":
             lengths = series.astype(str).str.len()
-            if lengths.mean() > 50:  # Long strings = likely free text
+            if lengths.mean() > 50:
                 return False
             if lengths.std() > 20 and unique_ratio > 0.3:
                 return False
 
-        # Integer-specific: check for IDs
         if inferred_type == "integer":
-            # All unique values = likely IDs
             if unique_count == total:
                 return False
 
@@ -88,24 +131,19 @@ class PtypeCat(Ptype):
                     sorted_vals = np.sort(vals)
                     diffs = np.diff(sorted_vals)
 
-                    # Strictly sequential (1,2,3,4...)
                     if np.all(diffs == 1):
                         return False
 
-                    # Nearly sequential (small gaps, like 1,2,4,5,7)
-                    # If median diff is 1-2 and max diff < 5, likely IDs
                     if np.median(diffs) <= 2 and np.max(diffs) < 5:
                         return False
 
-                    # Large range with few values = likely codes, not IDs
                     value_range = sorted_vals[-1] - sorted_vals[0]
                     if value_range > 100 and unique_count < 20:
-                        return True  # Likely category codes (e.g., country codes)
+                        return True
 
             except (ValueError, TypeError):
                 pass
 
-        # Float-specific: check for discrete codes
         if inferred_type == "float":
             try:
                 vals = series.dropna().astype(float)
@@ -122,12 +160,10 @@ class PtypeCat(Ptype):
         col = super()._column(df, col_name, logP, counts)
         t_hat = col.inferred_type()
 
-        # Check heuristics first
         if not self._is_categorical_candidate(df[col_name], t_hat):
             col.set_p_t_cat(t_hat, 0.0)
             return col
 
-        # Compute ML probability for eligible types
         if t_hat in ["integer", "string", "float", "boolean"]:
             try:
                 feats = col._get_features(counts)
@@ -140,7 +176,6 @@ class PtypeCat(Ptype):
         else:
             p_cat = 0.0
 
-        # Apply threshold
         if p_cat >= self.cat_threshold:
             col.p_t = {k: 0.0 for k in col.p_t}
             col.p_t["categorical"] = 1.0

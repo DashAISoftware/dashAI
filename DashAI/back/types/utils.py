@@ -65,11 +65,12 @@ PTYPE_TO_DASHAI = {
     # For simplicity, we use categorical for booleans.
     "boolean": {"type": "Categorical", "dtype": "string"},
     "categorical": {"type": "Categorical", "dtype": "string"},
-    "date-iso-8601": {"type": "Date", "dtype": "date32"},
-    "date-eu": {"type": "Date", "dtype": "date32"},
-    "date-non-std": {"type": "Date", "dtype": "date32"},
-    "date-non-std-subtype": {"type": "Date", "dtype": "date32"},
-    "time": {"type": "Time", "dtype": "time32(s)"},
+    # Date types mapped to Text until date support is implemented
+    "date-iso-8601": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    "date-eu": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    "date-non-std": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    "date-non-std-subtype": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    "time": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
     "float_comma": {"type": "Float", "dtype": "float64"},
 }
 
@@ -78,10 +79,10 @@ value_types = [
     "Float",
     "Text",
     "Boolean",
-    "Time",
-    "Timestamp",
-    "Duration",
-    "Date",
+    # "Time",
+    # "Timestamp",
+    # "Duration",
+    # "Date",
     "Decimal",
     "Binary",
 ]

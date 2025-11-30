@@ -48,9 +48,10 @@ def validate_type_change(
         ("Float", "Text"): lambda x: (True, "", x.astype(str)),
         ("Text", "Integer"): _validate_text_to_int,
         ("Text", "Float"): _validate_text_to_float,
-        ("Text", "Date"): lambda x: _validate_text_to_date(x, new_dtype),
-        ("Text", "Time"): lambda x: _validate_text_to_time(x, new_dtype),
-        ("Text", "Timestamp"): lambda x: _validate_text_to_timestamp(x, new_dtype),
+        # Date/Time/Timestamp conversions disabled - uncomment when supported
+        # ("Text", "Date"): lambda x: _validate_text_to_date(x, new_dtype),
+        # ("Text", "Time"): lambda x: _validate_text_to_time(x, new_dtype),
+        # ("Text", "Timestamp"): lambda x: _validate_text_to_timestamp(x, new_dtype),
         ("Categorical", "Text"): lambda x: (True, "", x.astype(str)),
         ("Categorical", "Integer"): _validate_categorical_to_int,
         ("Categorical", "Float"): _validate_categorical_to_float,
