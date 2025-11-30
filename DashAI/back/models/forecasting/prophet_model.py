@@ -366,9 +366,11 @@ class ProphetModel(ForecastingModel):
     def predict(
         self,
         x_pred: Optional[Any] = None,
+        periods: Optional[int] = None,
         horizon: Optional[int] = None,
         exog_future: Optional[pd.DataFrame] = None,
         return_components: bool = False,
+        **kwargs,
     ) -> Union[np.ndarray, pd.DataFrame]:
         if self.model is None:
             raise ValueError("Prophet model is not fitted yet. Call fit() first.")
@@ -402,7 +404,7 @@ class ProphetModel(ForecastingModel):
 
         if x_pred is not None:
             if isinstance(x_pred, (int, np.integer)):
-                horizon = int(x_pred)
+                periods = int(x_pred)
             else:
                 if isinstance(x_pred, pd.DataFrame):
                     input_df = x_pred.copy()
@@ -525,15 +527,52 @@ class ProphetModel(ForecastingModel):
                 forecast = self.model.predict(future_df)
                 return _extract_predictions(forecast, input_df["ds"])
 
-        if horizon is None:
+        # Handle periods/horizon compatibility
+        if periods is None and horizon is not None:
+            periods = horizon
+
+        if periods is None:
             raise ValueError(
-                "Prophet predict requires either 'x_pred' data or a 'horizon' value."
+                "Prophet predict requires either 'x_pred' data or a 'periods' value."
             )
-        if horizon <= 0:
+        if periods <= 0:
             raise ValueError("Prediction horizon must be a positive integer.")
 
         frequency = self.frequency or "D"
-        future_df = self.model.make_future_dataframe(periods=horizon, freq=frequency)
+
+        # If x_pred is provided with periods, use it to determine start date
+        start_date = None
+        if x_pred is not None:
+            if isinstance(x_pred, pd.DataFrame):
+                input_df = x_pred.copy()
+            else:
+                input_df = to_dashai_dataset(x_pred).to_pandas()
+
+            # Find timestamp column
+            ts_col = None
+            if "ds" in input_df.columns:
+                ts_col = "ds"
+            elif self.timestamp_col in input_df.columns:
+                ts_col = self.timestamp_col
+
+            if ts_col:
+                start_date = pd.to_datetime(input_df[ts_col]).max()
+                print(f"[ProphetModel] Using input as start date: {start_date}")
+
+                # Also update last_ds for explainers
+                self.last_ds = start_date
+
+        if start_date:
+            # Generate future dataframe starting after start_date
+            future_dates = pd.date_range(
+                start=start_date, periods=periods + 1, freq=frequency
+            )[1:]
+            future_df = pd.DataFrame({"ds": future_dates})
+        else:
+            # Standard behavior (continue from training)
+            future_df = self.model.make_future_dataframe(
+                periods=periods, freq=frequency
+            )
 
         if self.exog_cols and exog_future is not None:
             missing_cols = [
@@ -543,7 +582,7 @@ class ProphetModel(ForecastingModel):
                 raise ValueError(
                     f"Missing exogenous columns for future prediction: {missing_cols}."
                 )
-            if len(exog_future) != horizon:
+            if len(exog_future) != periods:
                 raise ValueError(
                     "Missing exogenous values must match the prediction horizon length."
                 )
@@ -555,16 +594,16 @@ class ProphetModel(ForecastingModel):
             )
 
         forecast = self.model.predict(future_df)
-        print(f"[ProphetModel] Generated forecast for {horizon} periods")
+        print(f"[ProphetModel] Generated forecast for {periods} periods")
         print(
             "[ProphetModel] Forecast range: "
-            f"{forecast['ds'].iloc[-horizon:].min()} to "
-            f"{forecast['ds'].iloc[-horizon:].max()}"
+            f"{forecast['ds'].iloc[-periods:].min()} to "
+            f"{forecast['ds'].iloc[-periods:].max()}"
         )
 
         if return_components:
-            return forecast.tail(horizon)
-        return forecast["yhat"].tail(horizon).to_numpy()
+            return forecast.tail(periods)
+        return forecast["yhat"].tail(periods).to_numpy()
 
     def get_forecast_components(self, horizon: int) -> pd.DataFrame:
         """Get forecast decomposition (trend, seasonality, etc.).

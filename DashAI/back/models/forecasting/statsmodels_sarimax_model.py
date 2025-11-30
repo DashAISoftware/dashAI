@@ -283,6 +283,9 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
         # Create datetime index
         dates = pd.to_datetime(x_df[timestamp_col])
 
+        # Store last training date for forecast generation
+        self.last_ds = dates.max()
+
         # Get target series
         target_in_inputs = target_col in x_df.columns
         if target_in_inputs:
@@ -491,6 +494,7 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
             "timestamp_col": self.timestamp_col,
             "target_col": self.target_col,
             "frequency": self.frequency,
+            "last_ds": getattr(self, "last_ds", None),
             "config": {
                 "p": self.p,
                 "d": self.d,
@@ -534,6 +538,7 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
         self.timestamp_col = model_state.get("timestamp_col")
         self.target_col = model_state.get("target_col")
         self.frequency = model_state.get("frequency")
+        self.last_ds = model_state.get("last_ds")
 
         config = model_state["config"]
         for key, value in config.items():

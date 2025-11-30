@@ -112,26 +112,93 @@ class ForecastDecomposition(BaseGlobalExplainer):
 
         Uses simple predictions as "trend" component.
         """
-        x, _ = dataset
+        x, y = dataset
 
-        # Get predictions
-        predictions = self.model.predict(horizon=self.horizon)
+        # Construct history dataframe from dataset (x and y)
+        # This allows the model to predict continuing from this dataset
+        try:
+            # Convert to pandas with error handling
+            try:
+                x_df = x.to_pandas() if hasattr(x, "to_pandas") else pd.DataFrame(x)
+            except Exception as e:
+                print(f"Warning: Failed to convert x to DataFrame: {e}")
+                x_df = None
+
+            try:
+                y_df = y.to_pandas() if hasattr(y, "to_pandas") else pd.DataFrame(y)
+            except Exception as e:
+                print(f"Warning: Failed to convert y to DataFrame: {e}")
+                y_df = None
+
+            # Combine if possible
+            if x_df is not None and y_df is not None and len(x_df) == len(y_df):
+                history_df = x_df.copy()
+                for col in y_df.columns:
+                    history_df[col] = y_df[col].to_numpy()
+
+                # Get predictions using history context
+                predictions = self.model.predict(
+                    x_pred=history_df, periods=self.horizon
+                )
+            else:
+                if x_df is not None and y_df is not None:
+                    print(f"Warning: lengths differ (x={len(x_df)}, y={len(y_df)}).")
+                    history_df = x_df.copy()
+                    predictions = self.model.predict(
+                        x_pred=history_df, periods=self.horizon
+                    )
+                elif x_df is not None:
+                    print("Warning: Only x dataset available. Using x as history.")
+                    history_df = x_df.copy()
+                    predictions = self.model.predict(
+                        x_pred=history_df, periods=self.horizon
+                    )
+                else:
+                    print("Warning: Could not create history. Using standard predict.")
+                    predictions = self.model.predict(periods=self.horizon)
+
+        except Exception as e:
+            print(f"Warning: Could not use dataset as history context: {e}")
+            # Fallback to standard prediction
+            predictions = self.model.predict(periods=self.horizon)
+
+        # Handle case where model returns fewer predictions than requested
+        # (e.g. SklearnMultiStepForecaster with direct strategy)
+        actual_horizon = len(predictions)
+
+        # Determine start date
+        start_date = pd.Timestamp.now()
+        if (
+            hasattr(self.model, "last_timestamp")
+            and self.model.last_timestamp is not None
+        ):
+            start_date = self.model.last_timestamp
+        elif hasattr(self.model, "last_ds") and self.model.last_ds is not None:
+            start_date = self.model.last_ds
+
+        # Determine frequency
+        freq = "D"
+        if hasattr(self.model, "frequency") and self.model.frequency:
+            freq = self.model.frequency
+
+        # Generate dates (start from next period after last timestamp)
+        dates = pd.date_range(start=start_date, periods=actual_horizon + 1, freq=freq)[
+            1:
+        ]
 
         # Create simple dataframe with predictions as "trend"
-        df = pd.DataFrame(
+        components_df = pd.DataFrame(
             {
-                "ds": pd.date_range(
-                    start=pd.Timestamp.now(), periods=self.horizon, freq="D"
-                ),
+                "ds": dates,
                 "trend": predictions
                 if isinstance(predictions, np.ndarray)
                 else predictions.to_numpy(),
-                "seasonal": np.zeros(self.horizon),
-                "residual": np.zeros(self.horizon),
+                "seasonal": np.zeros(actual_horizon),
+                "residual": np.zeros(actual_horizon),
             }
         )
 
-        return df
+        return components_df
 
     def explain(self, dataset: Tuple[DatasetDict, DatasetDict]) -> dict:
         """Generate component decomposition explanation.
@@ -256,12 +323,12 @@ class ForecastDecomposition(BaseGlobalExplainer):
     def _create_stacked_plot(self, explanation: dict) -> go.Figure:
         """Create stacked area plot showing component contributions."""
 
-        df = pd.DataFrame(explanation)
+        explanation_df = pd.DataFrame(explanation)
 
         # Components to stack (exclude residuals/noise)
         stack_components = [
             col
-            for col in df.columns
+            for col in explanation_df.columns
             if col not in ["ds", "model_type", "horizon", "residual", "noise"]
             and not col.startswith("yhat")
         ]
@@ -271,8 +338,8 @@ class ForecastDecomposition(BaseGlobalExplainer):
         for component in stack_components:
             fig.add_trace(
                 go.Scatter(
-                    x=df["ds"],
-                    y=df[component],
+                    x=explanation_df["ds"],
+                    y=explanation_df[component],
                     name=component.replace("_", " ").title(),
                     mode="lines",
                     stackgroup="one",

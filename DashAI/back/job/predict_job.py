@@ -346,23 +346,53 @@ class PredictJob(BaseJob):
                     # ============ AUTO-GENERATE TIMESTAMPS ============
                     log.info(f"🔮 Auto-generating {forecast_periods} future timestamps")
 
-                    # Get timestamp column from metadata
-                    timestamp_col = exp.metadata.get("timestamp_column", "ds")
+                    # Get timestamp column (default to 'ds' for compatibility)
+                    timestamp_col = "ds"
 
-                    # Get frequency from model or metadata
-                    frequency = getattr(trained_model, "frequency", None)
+                    # Get frequency from model
+                    frequency = getattr(trained_model, "frequency", "D")
                     if frequency is None:
-                        frequency = exp.metadata.get("frequency", "D")
+                        frequency = "D"
 
-                    # Get last training date from metadata
-                    last_training_date_str = exp.metadata.get("last_training_date")
-                    if not last_training_date_str:
+                    # Get last training date from model
+                    # Try last_ds (Prophet, ARIMA, SARIMAX) or last_timestamp (Sklearn)
+                    last_ds = getattr(trained_model, "last_ds", None)
+                    if last_ds is None:
+                        last_ds = getattr(trained_model, "last_timestamp", None)
+
+                    if last_ds is None:
+                        # If not in model, try to get from training dataset
+                        try:
+                            train_dataset_path = Path(
+                                f"{exp.dataset.file_path}/dataset/"
+                            )
+                            if train_dataset_path.exists():
+                                train_ds = load_dataset(str(train_dataset_path))
+                                train_df = train_ds.to_pandas()
+
+                                # Try to find timestamp column
+                                if "ds" in train_df.columns:
+                                    last_ds = pd.to_datetime(train_df["ds"]).max()
+                                else:
+                                    # Try to auto-detect
+                                    for col in train_df.columns:
+                                        try:
+                                            ds_series = pd.to_datetime(train_df[col])
+                                            last_ds = ds_series.max()
+                                            timestamp_col = col
+                                            break
+                                        except Exception:
+                                            continue
+                        except Exception as e:
+                            log.warning(f"Could not load training dataset: {e}")
+
+                    if last_ds is None:
                         raise JobError(
-                            "Cannot auto-generate timestamps: 'last_training_date' "
-                            "not found in experiment metadata"
+                            "Cannot auto-generate timestamps: Unable to determine "
+                            "the last training date. Please use a dataset instead."
                         )
 
-                    last_training_date = pd.to_datetime(last_training_date_str)
+                    last_training_date = pd.to_datetime(last_ds)
 
                     # Check if model has exogenous regressors
                     exog_cols = getattr(trained_model, "exog_cols", [])

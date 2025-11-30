@@ -12,7 +12,7 @@ Works with models that provide uncertainty estimates:
 - Any model with prediction intervals
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -88,14 +88,27 @@ class ForecastUncertainty(BaseGlobalExplainer):
         self.horizon = horizon
         self.confidence_level = confidence_level
 
-    def _get_prophet_uncertainty(self) -> pd.DataFrame:
-        """Get uncertainty estimates from Prophet model.
+        # No exogenous variables - can make simple forecast
+        # We need to pass history context if available, but
+        # _get_prophet_uncertainty doesn't receive dataset argument directly.
+        # However, explain() calls this method. We should refactor to pass dataset.
+        # For now, we'll use standard predict but need to update explain()
+        # to call this with context.
+        # Since we can't easily change signature of _get_prophet_uncertainty
+        # without breaking things, we will rely on explain() handling the
+        # context for generic models, but for Prophet native intervals
+        # we need to be careful.
 
-        Note: This method requires the model to make future predictions.
-        If the model was trained with exogenous variables, future values
-        for those variables must be provided, which is not available in
-        this explainer context.
-        """
+        # Actually, explain() calls this method. We should update this method
+        # to accept dataset or handle it in explain().
+        # Let's update explain() to handle Prophet native intervals differently
+        # or update this method. Updating this method signature is safer
+        # if we update the call site.
+
+    def _get_prophet_uncertainty(
+        self, history_df: Optional[pd.DataFrame] = None
+    ) -> pd.DataFrame:
+        """Get uncertainty estimates from Prophet model."""
         if not hasattr(self.model, "predict"):
             raise AttributeError("Model must have predict() method")
 
@@ -119,7 +132,9 @@ class ForecastUncertainty(BaseGlobalExplainer):
             )
 
         # No exogenous variables - can make simple forecast
-        forecast = self.model.predict(horizon=self.horizon, return_components=True)
+        forecast = self.model.predict(
+            x_pred=history_df, periods=self.horizon, return_components=True
+        )
 
         if not isinstance(forecast, pd.DataFrame):
             raise TypeError(
@@ -140,13 +155,38 @@ class ForecastUncertainty(BaseGlobalExplainer):
 
         return forecast_df
 
-    def _get_generic_uncertainty(self) -> pd.DataFrame:
+    def _get_generic_uncertainty(
+        self, dataset: Tuple[DatasetDict, DatasetDict]
+    ) -> pd.DataFrame:
         """Fallback for models without native uncertainty quantification.
 
         Returns point predictions with placeholder intervals.
         """
-        # Get point predictions
-        predictions = self.model.predict(horizon=self.horizon)
+        x, y = dataset
+
+        # Construct history dataframe from dataset (x and y)
+        try:
+            # Convert to pandas
+            x_df = x.to_pandas() if hasattr(x, "to_pandas") else pd.DataFrame(x)
+
+            y_df = y.to_pandas() if hasattr(y, "to_pandas") else pd.DataFrame(y)
+
+            # Combine
+            if len(x_df) == len(y_df):
+                history_df = x_df.copy()
+                for col in y_df.columns:
+                    history_df[col] = y_df[col].to_numpy()
+            else:
+                print(f"Warning: lengths differ (x={len(x_df)}, y={len(y_df)}).")
+                history_df = x_df.copy()
+
+            # Get point predictions using history context
+            predictions = self.model.predict(x_pred=history_df, periods=self.horizon)
+
+        except Exception as e:
+            print(f"Warning: Could not use dataset as history context: {e}")
+            # Fallback
+            predictions = self.model.predict(periods=self.horizon)
 
         if hasattr(predictions, "to_numpy"):
             y_pred = predictions.to_numpy()
@@ -155,14 +195,35 @@ class ForecastUncertainty(BaseGlobalExplainer):
         else:
             y_pred = np.array(predictions)
 
+        # Handle case where model returns fewer predictions than requested
+        actual_horizon = len(y_pred)
+
         # Create placeholder intervals (±10% of prediction)
         uncertainty_pct = 0.10
 
-        df = pd.DataFrame(
+        # Determine start date
+        start_date = pd.Timestamp.now()
+        if (
+            hasattr(self.model, "last_timestamp")
+            and self.model.last_timestamp is not None
+        ):
+            start_date = self.model.last_timestamp
+        elif hasattr(self.model, "last_ds") and self.model.last_ds is not None:
+            start_date = self.model.last_ds
+
+        # Determine frequency
+        freq = "D"
+        if hasattr(self.model, "frequency") and self.model.frequency:
+            freq = self.model.frequency
+
+        # Generate dates (start from next period after last timestamp)
+        dates = pd.date_range(start=start_date, periods=actual_horizon + 1, freq=freq)[
+            1:
+        ]
+
+        uncertainty_df = pd.DataFrame(
             {
-                "ds": pd.date_range(
-                    start=pd.Timestamp.now(), periods=self.horizon, freq="D"
-                ),
+                "ds": dates,
                 "yhat": y_pred,
                 "yhat_lower": y_pred * (1 - uncertainty_pct),
                 "yhat_upper": y_pred * (1 + uncertainty_pct),
@@ -170,7 +231,7 @@ class ForecastUncertainty(BaseGlobalExplainer):
             }
         )
 
-        return df
+        return uncertainty_df
 
     def explain(self, dataset: Tuple[DatasetDict, DatasetDict]) -> dict:
         """Generate uncertainty analysis explanation.
@@ -196,15 +257,30 @@ class ForecastUncertainty(BaseGlobalExplainer):
         model_name = type(self.model).__name__
 
         try:
+            # Construct history dataframe
+            history_df = None
+            try:
+                x, y = dataset
+                x_df = x.to_pandas() if hasattr(x, "to_pandas") else pd.DataFrame(x)
+                y_df = y.to_pandas() if hasattr(y, "to_pandas") else pd.DataFrame(y)
+                if len(x_df) == len(y_df):
+                    history_df = x_df.copy()
+                    for col in y_df.columns:
+                        history_df[col] = y_df[col].to_numpy()
+                else:
+                    history_df = x_df.copy()
+            except Exception:
+                pass
+
             if hasattr(self.model, "predict") and model_name == "ProphetModel":
                 # Prophet with native intervals
-                forecast_df = self._get_prophet_uncertainty()
+                forecast_df = self._get_prophet_uncertainty(history_df)
                 model_type = "Prophet"
                 has_native_intervals = True
 
             else:
                 # Generic fallback
-                forecast_df = self._get_generic_uncertainty()
+                forecast_df = self._get_generic_uncertainty(dataset)
                 model_type = "Generic"
                 has_native_intervals = False
 
@@ -258,7 +334,7 @@ class ForecastUncertainty(BaseGlobalExplainer):
     def _create_forecast_plot(self, explanation: dict) -> go.Figure:
         """Create main forecast plot with confidence intervals."""
 
-        df = pd.DataFrame(
+        forecast_plot_df = pd.DataFrame(
             {
                 "ds": pd.to_datetime(explanation["ds"]),
                 "yhat": explanation["yhat"],
@@ -272,8 +348,8 @@ class ForecastUncertainty(BaseGlobalExplainer):
         # Add confidence interval band
         fig.add_trace(
             go.Scatter(
-                x=df["ds"],
-                y=df["yhat_upper"],
+                x=forecast_plot_df["ds"],
+                y=forecast_plot_df["yhat_upper"],
                 mode="lines",
                 line={"width": 0},
                 showlegend=False,
@@ -283,8 +359,8 @@ class ForecastUncertainty(BaseGlobalExplainer):
 
         fig.add_trace(
             go.Scatter(
-                x=df["ds"],
-                y=df["yhat_lower"],
+                x=forecast_plot_df["ds"],
+                y=forecast_plot_df["yhat_lower"],
                 mode="lines",
                 line={"width": 0},
                 fillcolor="rgba(68, 68, 68, 0.2)",
@@ -298,8 +374,8 @@ class ForecastUncertainty(BaseGlobalExplainer):
         # Add point forecast
         fig.add_trace(
             go.Scatter(
-                x=df["ds"],
-                y=df["yhat"],
+                x=forecast_plot_df["ds"],
+                y=forecast_plot_df["yhat"],
                 mode="lines",
                 name="Forecast",
                 line={"color": "blue", "width": 2},
@@ -327,7 +403,7 @@ class ForecastUncertainty(BaseGlobalExplainer):
     def _create_uncertainty_growth_plot(self, explanation: dict) -> go.Figure:
         """Create plot showing how uncertainty grows over horizon."""
 
-        df = pd.DataFrame(
+        growth_plot_df = pd.DataFrame(
             {
                 "ds": pd.to_datetime(explanation["ds"]),
                 "uncertainty": explanation["uncertainty"],
@@ -349,8 +425,8 @@ class ForecastUncertainty(BaseGlobalExplainer):
         # Absolute uncertainty
         fig.add_trace(
             go.Scatter(
-                x=df["ds"],
-                y=df["uncertainty"],
+                x=growth_plot_df["ds"],
+                y=growth_plot_df["uncertainty"],
                 mode="lines+markers",
                 name="Uncertainty",
                 line={"color": "red", "width": 2},
@@ -363,8 +439,8 @@ class ForecastUncertainty(BaseGlobalExplainer):
         # Relative uncertainty
         fig.add_trace(
             go.Scatter(
-                x=df["ds"],
-                y=df["uncertainty_pct"],
+                x=growth_plot_df["ds"],
+                y=growth_plot_df["uncertainty_pct"],
                 mode="lines+markers",
                 name="Uncertainty %",
                 line={"color": "orange", "width": 2},

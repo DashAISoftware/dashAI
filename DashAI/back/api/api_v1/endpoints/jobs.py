@@ -164,6 +164,8 @@ async def get_job_details(
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/start", status_code=status.HTTP_201_CREATED)
+@router.post("/start/", status_code=status.HTTP_201_CREATED)
 @inject
 async def enqueue_job(
     request: Request,

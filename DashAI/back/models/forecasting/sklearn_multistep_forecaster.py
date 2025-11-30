@@ -119,7 +119,9 @@ class SklearnMultiStepForecaster(ForecastingModel):
         self.training_exog_history: Optional[pd.DataFrame] = None
         self.training_full_series: Optional[pd.Series] = None
         self.training_full_exog: Optional[pd.DataFrame] = None
+        self.training_full_exog: Optional[pd.DataFrame] = None
         self.max_horizon: int = 1
+        self.last_timestamp: Optional[pd.Timestamp] = None
 
     def _get_base_estimator(self):
         """Get instance of base estimator."""
@@ -207,11 +209,20 @@ class SklearnMultiStepForecaster(ForecastingModel):
         print(f"  - Timestamp: '{self.timestamp_col}'")
         print(f"  - Target: '{self.target_col}'")
         print(f"  - Exogenous: {self.exog_cols}")
+        print(f"  - Exogenous: {self.exog_cols}")
         print(f"  - Frequency: {self.frequency}")
 
         # Convert to pandas
         x_df = x_train.to_pandas()
         y_df = y.to_pandas()
+
+        # Store last timestamp for future predictions
+        if self.timestamp_col in x_df.columns:
+            self.last_timestamp = pd.to_datetime(x_df[self.timestamp_col]).max()
+            print(f"[SklearnMultiStepForecaster] Last timestamp: {self.last_timestamp}")
+        else:
+            self.last_timestamp = pd.Timestamp.now()
+            print("[SklearnMultiStepForecaster] ⚠️ No timestamp col, default to now()")
 
         # Get target series
         target_in_inputs = self.target_col in x_df.columns
@@ -319,7 +330,7 @@ class SklearnMultiStepForecaster(ForecastingModel):
         exog_future : pd.DataFrame, optional
             Future exogenous variable values
         **kwargs
-            Additional parameters
+            Additional parameters (can include 'horizon' as alias for 'periods')
 
         Returns
         -------
@@ -329,10 +340,16 @@ class SklearnMultiStepForecaster(ForecastingModel):
         if not self.models:
             raise ValueError("Model not fitted. Call fit() first.")
 
+        # Handle horizon alias
+        if periods is None and "horizon" in kwargs:
+            periods = kwargs["horizon"]
+
         # Handle different input types (compatibility with ForecastingTask)
         if x_pred is not None and isinstance(x_pred, (int, np.integer)):
             periods = int(x_pred)
             x_pred = None
+
+        # Note: If x_pred is provided with periods, use x_pred as history context
 
         # In-sample predictions (for metrics calculation)
         if x_pred is not None and periods is None:
@@ -442,39 +459,103 @@ class SklearnMultiStepForecaster(ForecastingModel):
                         f"least {periods} for the requested forecast horizon."
                     )
 
+            # Prepare history for prediction
+            # If x_pred is provided, use it as history (context)
+            # Otherwise, use training history
+            history_series = self.training_history
+
+            if x_pred is not None:
+                # Convert x_pred to pandas if needed
+                if isinstance(x_pred, pd.DataFrame):
+                    input_df = x_pred.copy()
+                else:
+                    from DashAI.back.dataloaders.classes.dashai_dataset import (
+                        to_dashai_dataset,
+                    )
+
+                    input_df = to_dashai_dataset(x_pred).to_pandas()
+
+                # Check if target column is present
+                if self.target_col in input_df.columns:
+                    print(
+                        f"[SklearnMultiStepForecaster] Using input as context "
+                        f"({len(input_df)} rows)"
+                    )
+                    history_series = input_df[self.target_col]
+
+                    # Also update last_timestamp if available
+                    if self.timestamp_col in input_df.columns:
+                        self.last_timestamp = pd.to_datetime(
+                            input_df[self.timestamp_col]
+                        ).max()
+                else:
+                    print(
+                        f"[SklearnMultiStepForecaster] ⚠️ No target col "
+                        f"'{self.target_col}', using training history"
+                    )
+
+            # Ensure we have enough history
+            if len(history_series) < self.window_size:
+                raise ValueError(
+                    f"History length ({len(history_series)}) is less than "
+                    f"window size ({self.window_size}). Provide more context data."
+                )
+
+            # Direct strategy: use pre-trained models
             # Direct strategy: use pre-trained models
             if self.forecast_strategy == "direct":
                 predictions = []
-                num_models = min(len(self.models), periods)
 
-                for h in range(num_models):
-                    # Create features from training history
-                    lags = self.training_history.iloc[-self.window_size :].to_numpy()
+                # We need to maintain current_window for recursive fallback
+                # Initialize with history
+                current_window = list(history_series.to_numpy())
 
-                    # Add exog if needed
-                    if self.exog_cols and exog_future is not None:
-                        exog_h = exog_future.iloc[h][self.exog_cols].to_numpy()
-                        features = np.concatenate([lags, exog_h])
+                # Determine how many steps we can predict directly
+                max_direct_horizon = len(self.models)
+
+                for h in range(periods):
+                    # Step h is 0-indexed (0 = 1st step, 1 = 2nd step, etc.)
+
+                    # Case 1: Within direct horizon - use specific model
+                    if h < max_direct_horizon:
+                        # Create features from history
+                        lags = history_series.iloc[-self.window_size :].to_numpy()
+
+                        # Add exog if needed
+                        if self.exog_cols and exog_future is not None:
+                            exog_h = exog_future.iloc[h][self.exog_cols].to_numpy()
+                            features = np.concatenate([lags, exog_h])
+                        else:
+                            features = lags
+
+                        # Predict using the specific model for this horizon
+                        pred = self.models[h].predict(features.reshape(1, -1))[0, 0]
+
+                    # Case 2: Beyond direct horizon - fallback to recursive
                     else:
-                        features = lags
+                        # Use the first model (1-step ahead) recursively
+                        # Create features from CURRENT window (updated with predictions)
+                        lags = np.array(current_window[-self.window_size :])
 
-                    pred = self.models[h].predict(features.reshape(1, -1))[0, 0]
+                        # Add exog if needed
+                        if self.exog_cols and exog_future is not None:
+                            exog_h = exog_future.iloc[h][self.exog_cols].to_numpy()
+                            features = np.concatenate([lags, exog_h])
+                        else:
+                            features = lags
+
+                        # Predict next step using model[0]
+                        pred = self.models[0].predict(features.reshape(1, -1))[0, 0]
+
                     predictions.append(pred)
-
-                # If more periods requested than trained models, warn user
-                if periods > num_models:
-                    print(
-                        f"⚠️  Warning: Requested {periods} periods but only "
-                        f"{num_models} models trained. Returning {num_models} "
-                        "predictions."
-                    )
+                    current_window.append(pred)
 
                 return np.array(predictions)
 
             # Recursive strategy: iterative predictions
             else:
                 predictions = []
-                current_window = list(self.training_history.to_numpy())
+                current_window = list(history_series.to_numpy())
 
                 for h in range(periods):
                     # Create features
@@ -522,6 +603,7 @@ class SklearnMultiStepForecaster(ForecastingModel):
             "target_col": self.target_col,
             "frequency": self.frequency,
             "max_horizon": self.max_horizon,
+            "last_timestamp": self.last_timestamp,
             "config": {
                 "base_estimator": self.base_estimator,
                 "window_size": self.window_size,
@@ -561,6 +643,7 @@ class SklearnMultiStepForecaster(ForecastingModel):
         self.target_col = model_state.get("target_col")
         self.frequency = model_state.get("frequency")
         self.max_horizon = model_state.get("max_horizon", 1)
+        self.last_timestamp = model_state.get("last_timestamp")
 
         config = model_state["config"]
         for key, value in config.items():

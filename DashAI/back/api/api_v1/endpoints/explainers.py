@@ -240,8 +240,24 @@ async def upload_global_explainer(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
 
+            # Check if name exists and append suffix if needed
+            base_name = params.name
+            counter = 1
+            new_name = base_name
+
+            while True:
+                existing = db.scalars(
+                    select(GlobalExplainer).where(GlobalExplainer.name == new_name)
+                ).first()
+
+                if not existing:
+                    break
+
+                counter += 1
+                new_name = f"{base_name}_{counter}"
+
             explainer = GlobalExplainer(
-                name=params.name,
+                name=new_name,
                 run_id=params.run_id,
                 explainer_name=params.explainer_name,
                 parameters=params.parameters,
