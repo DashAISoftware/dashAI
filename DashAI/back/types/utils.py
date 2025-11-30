@@ -8,9 +8,8 @@ from pyarrow.lib import Schema
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import (
+from DashAI.back.types.value_types import (  # Boolean,
     Binary,
-    # Boolean,
     DashAIValue,
     Date,
     Decimal,

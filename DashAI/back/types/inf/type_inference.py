@@ -5,7 +5,6 @@ import pandas as pd
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.inf.inference_methods import (
-    DashAIImageInference,
     DashAIPtype,
     DummyCategoricalInference,
 )
@@ -22,7 +21,6 @@ AcceptedDataInput = Union[
 AcceptedMethods = {
     "DashAIPtype": DashAIPtype,
     "Dummy": DummyCategoricalInference,
-    "Image": DashAIImageInference,
 }
 
 

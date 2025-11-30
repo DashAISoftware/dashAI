@@ -671,7 +671,7 @@ def load_dataset(dataset_path: Union[str, os.PathLike]) -> DashAIDataset:
         data = reader.read_all()
     metadata_filepath = os.path.join(dataset_path, "splits.json")
     if os.path.exists(metadata_filepath):
-        with open(metadata_filepath, "r") as f:
+        with open(metadata_filepath, "r", encoding="utf-8") as f:
             splits = json.load(f)
     else:
         splits = {}

@@ -4,24 +4,37 @@ import joblib
 import pandas as pd
 
 import DashAI.back.types.inf.ptype.Machine as Machine
-from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.inf.Inference import InferenceMethod
 from DashAI.back.types.inf.ptype.Machines import MACHINES, Machines
 from DashAI.back.types.inf.ptype.PtypeCat import PtypeCat
-from DashAI.back.types.utils import PTYPE_TO_DASHAI, is_image_path
+from DashAI.back.types.utils import PTYPE_TO_DASHAI
 
 
-# DashAI Ptype inference method for type inference in DashAI applications.
 class DashAIPtype(PtypeCat, InferenceMethod):
     """
-
     A class to represent a DashAI Ptype inference method.
+
     This class extends the InferenceMethod and PtypeCat classes to provide
     functionality for inferring types in DashAI applications.
 
+    Parameters
+    ----------
+    cat_threshold : float
+        Probability threshold for categorical classification.
+        Default is 0.7 (stricter than before).
+    max_unique_ratio : float
+        Maximum ratio of unique values for categorical detection.
+    max_unique_count : int
+        Maximum number of unique categories allowed.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        cat_threshold: float = 0.7,
+        max_unique_ratio: float = 0.05,
+        max_unique_count: int = 50,
+    ):
+        # Initialize types before calling parent
         self.types = [
             "integer",
             "string",
@@ -33,11 +46,7 @@ class DashAIPtype(PtypeCat, InferenceMethod):
             "date-non-std",
         ]
 
-        # In case of wanting to add a new type:
-        # Create the machine in ptype/Machine.py file
-        # Add the new machine to the current_machines dictionary.
-        # Add the new type to this list.
-        # Add the new type to the PTYPE_TO_DASHAI mapping.
+        # Add extended types
         self.types.extend(["time", "float_comma"])
 
         current_machines = {
@@ -48,9 +57,15 @@ class DashAIPtype(PtypeCat, InferenceMethod):
 
         self.machines = Machines(self.types, current_machines)
         self.verbose = False
+
+        # Load ML models
         self.lr_clf = joblib.load(Path(__file__).parent / "ptype" / "LR.sav")
         self.scaler = joblib.load(Path(__file__).parent / "ptype" / "scaler.pkl")
-        self.cat_threshold = 0.48
+
+        # Categorical detection thresholds
+        self.cat_threshold = cat_threshold
+        self.max_unique_ratio = max_unique_ratio
+        self.max_unique_count = max_unique_count
 
     def infer_types(self, data) -> dict:
         """
@@ -66,14 +81,25 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         dict
             A dictionary mapping column names to inferred types.
         """
-
         schema = self.schema_fit(data)
-        # Convert the schema to a dashai format
+
         inferred_types = {}
         for col_name, col_object in schema.cols.items():
-            inferred_types[col_name] = PTYPE_TO_DASHAI[
-                max(col_object.p_t, key=col_object.p_t.get)
-            ]
+            ptype_type = col_object.inferred_type()
+
+            # Map ptype type to DashAI type
+            if ptype_type in PTYPE_TO_DASHAI:
+                dashai_info = PTYPE_TO_DASHAI[ptype_type].copy()
+            else:
+                # Fallback to text for unknown types
+                dashai_info = {"type": "Text", "dtype": "string"}
+
+            # Handle categorical specially - include categories
+            if ptype_type == "categorical":
+                unique_vals = col_object.get_normal_values()
+                dashai_info["categories"] = unique_vals
+
+            inferred_types[col_name] = dashai_info
 
         return inferred_types
 
@@ -126,43 +152,4 @@ class DummyCategoricalInference(InferenceMethod):
                 inferred_types[col] = PTYPE_TO_DASHAI["date-iso-8601"]
             else:
                 inferred_types[col] = PTYPE_TO_DASHAI["string"]
-        return inferred_types
-
-
-class DashAIImageInference:
-    """
-    Represents a proposed DashAIImage inference method.
-
-    """
-
-    def __init__(self, threshold: float = 0.8):
-        self.threshold = threshold  # Threshold for image detection confidence
-
-    def infer_types(self, data) -> dict:
-        """
-        Infer if types in the provided data are images based on a threshold.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The input data for type inference.
-        Returns
-        -------
-        dict
-            A dictionary mapping detected image columns to DashAIImage type.
-            The other columns are left unchanged.
-        """
-
-        inferred_types = {}
-        for col in data.columns:
-            series = data[col].dropna().astype(str)
-
-            image_like_count = sum(is_image_path(value) for value in series)
-            ratio = image_like_count / len(series)
-
-            if ratio >= self.threshold:
-                inferred_types[col] = DashAIImage()
-            else:
-                pass
-
         return inferred_types

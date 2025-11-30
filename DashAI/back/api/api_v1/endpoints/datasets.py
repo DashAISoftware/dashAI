@@ -1212,7 +1212,7 @@ async def preview_with_types(
                     n_rows=inference_rows,
                 )
 
-            sample_df = loaded_dataset.head(10)
+            sample_df = loaded_dataset.head(100)
 
             table = pa.Table.from_pandas(loaded_dataset)
             arrow_schema = arrow_to_dashai_schema(table)
