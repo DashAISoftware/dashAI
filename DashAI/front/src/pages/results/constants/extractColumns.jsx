@@ -8,6 +8,7 @@ export const extractColumns = (
   rawMetrics,
   rawRuns,
   datasetId,
+  taskName,
   handleRunResultsOpen,
   handlePrediction,
   handleExplainer,
@@ -46,7 +47,9 @@ export const extractColumns = (
     {
       title: "Explain",
       Icon: QueryStatsIcon,
-      handleAction: handleExplainer,
+      handleAction: (runId, modelName) =>
+        handleExplainer(runId, modelName, taskName),
+      useRowData: true,
     },
   ]);
 

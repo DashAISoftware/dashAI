@@ -1,5 +1,16 @@
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import {
+  Button,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+  Alert,
+  Box,
+  Chip,
+  Collapse,
+} from "@mui/material";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
 import React, { useEffect, useState, useMemo } from "react";
@@ -8,6 +19,48 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
+
+// Model hints for forecasting models - helps users understand model requirements
+const FORECASTING_MODEL_HINTS = {
+  ProphetModel: {
+    minDataPoints: 30,
+    description: "Facebook's Prophet model for business time series",
+    strengths: [
+      "Handles missing data",
+      "Automatic seasonality",
+      "Good for daily/weekly patterns",
+    ],
+    limitations: [
+      "Needs consistent frequency",
+      "Better with >2 years of data for yearly seasonality",
+    ],
+    smallDatasetNote:
+      "Works with small datasets but yearly seasonality detection may be limited.",
+  },
+  StatsmodelsSARIMAXModel: {
+    minDataPoints: 20,
+    description: "Statistical ARIMA/SARIMAX model",
+    strengths: [
+      "Classic statistical approach",
+      "Interpretable parameters",
+      "Good for stationary data",
+    ],
+    limitations: ["Requires parameter tuning", "Sensitive to non-stationarity"],
+    smallDatasetNote:
+      "With small datasets, seasonality will be auto-disabled and simpler ARIMA will be used.",
+  },
+  SklearnMultiStepForecaster: {
+    minDataPoints: 10,
+    description: "Machine learning-based forecaster using sklearn regressors",
+    strengths: ["Flexible", "Works with small datasets", "Fast training"],
+    limitations: [
+      "May overfit with very few samples",
+      "No built-in seasonality",
+    ],
+    smallDatasetNote:
+      "Recommended for small datasets. Window size auto-adjusts based on available data.",
+  },
+};
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -124,6 +177,24 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     }
   }, [selectedModel, defaultName]);
 
+  // Check if this is a forecasting task
+  const isForecastingTask = newExp.task_name === "ForecastingTask";
+
+  // Get dataset size from splits info (approximate)
+  const datasetSize = useMemo(() => {
+    if (newExp.splits && newExp.splits.train) {
+      // If we have percentage splits, we can estimate from the dataset
+      // This is a rough estimate - the actual size comes from the dataset
+      return newExp.dataset?.total_rows || null;
+    }
+    return null;
+  }, [newExp.splits, newExp.dataset]);
+
+  // Get model hint if available
+  const selectedModelHint = selectedModel
+    ? FORECASTING_MODEL_HINTS[selectedModel]
+    : null;
+
   return (
     <Grid
       container
@@ -204,6 +275,70 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
           </Grid>
         </Grid>
       </Grid>
+
+      {/* Model Info Panel for Forecasting */}
+      <Collapse
+        in={isForecastingTask && selectedModel && selectedModelHint}
+        sx={{ width: "100%" }}
+      >
+        <Grid size={{ xs: 12 }}>
+          <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ mt: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              {selectedModelHint?.description}
+            </Typography>
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Strengths:
+                </Typography>
+                <Box
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}
+                >
+                  {selectedModelHint?.strengths.map((s, i) => (
+                    <Chip
+                      key={i}
+                      label={s}
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Limitations:
+                </Typography>
+                <Box
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}
+                >
+                  {selectedModelHint?.limitations.map((l, i) => (
+                    <Chip
+                      key={i}
+                      label={l}
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+
+            {selectedModelHint?.smallDatasetNote && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                💡 <strong>Small dataset tip:</strong>{" "}
+                {selectedModelHint.smallDatasetNote}
+              </Typography>
+            )}
+          </Alert>
+        </Grid>
+      </Collapse>
+
       {/* Models table */}
       <Grid size={{ xs: 12 }}>
         <ModelsTable newExp={newExp} setNewExp={setNewExp} />

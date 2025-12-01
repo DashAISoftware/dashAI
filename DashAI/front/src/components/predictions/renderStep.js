@@ -18,6 +18,7 @@ export const renderStep = (
   setSelectedTaskName,
   forecastPeriods,
   setForecastPeriods,
+  temporalInfo,
 ) => {
   switch (stepName) {
     case "selectModel":
@@ -47,6 +48,7 @@ export const renderStep = (
           selectedTaskName={selectedTaskName}
           forecastPeriods={forecastPeriods}
           setForecastPeriods={setForecastPeriods}
+          temporalInfo={temporalInfo}
         />
       );
     default:

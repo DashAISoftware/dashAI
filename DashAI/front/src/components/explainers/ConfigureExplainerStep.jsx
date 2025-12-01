@@ -11,6 +11,7 @@ import PropTypes from "prop-types";
 import FormSchema from "../shared/FormSchema";
 import FormSchemaLayout from "../shared/FormSchemaLayout";
 import useSchema from "../../hooks/useSchema";
+import ForecastingExplainerInfo from "./ForecastingExplainerInfo";
 
 function ConfigureExplainerStep({
   newExpl,
@@ -18,6 +19,10 @@ function ConfigureExplainerStep({
   setNextEnabled,
   formSubmitRef,
   scope,
+  temporalInfo,
+  temporalInfoLoading,
+  modelName,
+  isForecastingTask,
 }) {
   const { defaultValues } = useSchema({ modelName: newExpl.explainer_name });
   const [error, setError] = useState(false);
@@ -86,6 +91,20 @@ function ConfigureExplainerStep({
           Configure your Explainer
         </Typography>
       </Grid>
+
+      {/* Forecasting explainer temporal info */}
+      {isForecastingTask && (
+        <Grid size={{ xs: 12 }}>
+          <ForecastingExplainerInfo
+            temporalInfo={temporalInfo}
+            loading={temporalInfoLoading}
+            explainerName={newExpl.explainer_name}
+            modelName={modelName}
+            horizon={newExpl.parameters?.horizon}
+          />
+        </Grid>
+      )}
+
       {/* Configure dataloader parameters */}
       <Grid size={{ xs: 12, md: 6 }}>
         <Paper
@@ -124,6 +143,18 @@ ConfigureExplainerStep.propTypes = {
   setNewExpl: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }).isRequired,
+  scope: PropTypes.string,
+  temporalInfo: PropTypes.object,
+  temporalInfoLoading: PropTypes.bool,
+  modelName: PropTypes.string,
+  isForecastingTask: PropTypes.bool,
+};
+
+ConfigureExplainerStep.defaultProps = {
+  temporalInfo: null,
+  temporalInfoLoading: false,
+  modelName: null,
+  isForecastingTask: false,
 };
 
 export default ConfigureExplainerStep;

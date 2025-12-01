@@ -1,7 +1,22 @@
+import math
+
 import torch
 from sklearn.exceptions import NotFittedError
 
 from DashAI.back.metrics.classification_metric import ClassificationMetric
+
+
+def sanitize_metric_value(value):
+    """Convert non-JSON-serializable float values to None.
+
+    JSON doesn't support NaN, Infinity, or -Infinity, so we convert
+    these to None which becomes null in JSON.
+    """
+    if value is None:
+        return None
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return None
+    return value
 
 
 class ModelFactory:
@@ -122,20 +137,48 @@ class ModelFactory:
         results = {}
         for split in ["train", "validation", "test"]:
             split_results = {}
-            predictions = self.model.predict(x[split])
-            for metric in metrics:
-                if (
-                    isinstance(metric, type)
-                    and issubclass(metric, ClassificationMetric)
-                    and "multiclass" in metric.score.__code__.co_varnames
-                    and multiclass is not None
-                ):
-                    score = metric.score(y[split], predictions, multiclass=multiclass)
-                else:
-                    # For metrics that don't accept the multiclass parameter
-                    score = metric.score(y[split], predictions)
+            try:
+                predictions = self.model.predict(x[split])
+            except Exception as e:
+                # If prediction fails for this split (e.g., too small for window_size),
+                # return None for all metrics (JSON-serializable)
+                print(
+                    f"[ModelFactory] ⚠️  Prediction failed for {split} split: {e}. "
+                    f"Setting all metrics to null."
+                )
+                for metric in metrics:
+                    split_results[metric.__name__] = None
+                results[split] = split_results
+                continue
 
-                split_results[metric.__name__] = score
+            for metric in metrics:
+                try:
+                    if (
+                        isinstance(metric, type)
+                        and issubclass(metric, ClassificationMetric)
+                        and "multiclass" in metric.score.__code__.co_varnames
+                        and multiclass is not None
+                    ):
+                        score = metric.score(
+                            y[split], predictions, multiclass=multiclass
+                        )
+                    else:
+                        # For metrics that don't accept the multiclass parameter
+                        score = metric.score(y[split], predictions)
+
+                    # Sanitize score to ensure JSON compatibility
+                    split_results[metric.__name__] = sanitize_metric_value(score)
+                except ValueError as e:
+                    # Handle case where all predictions are NaN
+                    if "All values are NaN" in str(e):
+                        print(
+                            f"[ModelFactory] ⚠️  {split}/{metric.__name__}: "
+                            f"All predictions are NaN (split too small?). "
+                            f"Setting metric to null."
+                        )
+                        split_results[metric.__name__] = None
+                    else:
+                        raise
 
             results[split] = split_results
 

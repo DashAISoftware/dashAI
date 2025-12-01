@@ -43,12 +43,13 @@ class SklearnMultiStepForecasterSchema(BaseSchema):
 
     window_size: schema_field(
         int_field(ge=1, le=365),
-        placeholder=7,
+        placeholder=3,
         description=(
             "Number of past time steps (lags) to use as features. "
-            "Larger values capture longer-term patterns but require more data."
+            "Smaller values work better for small datasets. "
+            "Will be auto-adjusted if dataset is too small."
         ),
-    ) = 7  # type: ignore
+    ) = 3  # type: ignore
 
     forecast_strategy: schema_field(
         enum_field(enum=["direct", "recursive"]),
@@ -90,7 +91,7 @@ class SklearnMultiStepForecaster(ForecastingModel):
     def __init__(
         self,
         base_estimator: str = "linear",
-        window_size: int = 7,
+        window_size: int = 3,
         forecast_strategy: str = "direct",
         **kwargs,
     ) -> None:
@@ -209,12 +210,15 @@ class SklearnMultiStepForecaster(ForecastingModel):
         print(f"  - Timestamp: '{self.timestamp_col}'")
         print(f"  - Target: '{self.target_col}'")
         print(f"  - Exogenous: {self.exog_cols}")
-        print(f"  - Exogenous: {self.exog_cols}")
         print(f"  - Frequency: {self.frequency}")
 
         # Convert to pandas
         x_df = x_train.to_pandas()
         y_df = y.to_pandas()
+
+        # Get horizon from fit_params (default to 1)
+        horizon = fit_params.get("horizon", 1)
+        self.max_horizon = horizon
 
         # Store last timestamp for future predictions
         if self.timestamp_col in x_df.columns:
@@ -241,16 +245,50 @@ class SklearnMultiStepForecaster(ForecastingModel):
             exog_df = x_df[self.exog_cols]
             print(f"[SklearnMultiStepForecaster] Exogenous variables: {self.exog_cols}")
 
-        # Create lag features
-        X_with_lags = self._create_lag_features(target_series, exog_df)
+        n_target_samples = len(target_series)
 
-        # Get horizon from fit_params (default to 1)
-        horizon = fit_params.get("horizon", 1)
+        # Auto-adjust window_size for small datasets
+        # Need: window_size lags + horizon shifts + at least 2 samples to train
+        min_required = self.window_size + horizon + 2
+
+        if n_target_samples < min_required:
+            # Try to fit within constraints by reducing window size
+            # The available space for window is samples minus horizon minus margin
+            available_for_window = n_target_samples - horizon - 2
+
+            if available_for_window < 1:
+                # Even with window_size=1, we can't fit. Reduce horizon too.
+                # Minimum setup: window=1, horizon=1, need at least 4 samples
+                if n_target_samples >= 4:
+                    self.window_size = 1
+                    horizon = max(1, n_target_samples - 3)
+                    print(
+                        f"[SklearnMultiStepForecaster] ⚠️  Very small dataset "
+                        f"({n_target_samples} samples). "
+                        f"Forced window_size=1, horizon={horizon}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Dataset too small for forecasting. Need at least 4 samples, "
+                        f"got {n_target_samples}. Please use more training data."
+                    )
+            else:
+                old_window = self.window_size
+                self.window_size = max(1, available_for_window)
+                print(
+                    f"[SklearnMultiStepForecaster] ⚠️  Auto-adjusted window_size: "
+                    f"{old_window} → {self.window_size} "
+                    f"(target series has {n_target_samples} samples)"
+                )
+
         self.max_horizon = horizon
 
         print(f"[SklearnMultiStepForecaster] Training for horizon: {horizon}")
         print(f"[SklearnMultiStepForecaster] Window size: {self.window_size}")
         print(f"[SklearnMultiStepForecaster] Strategy: {self.forecast_strategy}")
+
+        # Create lag features
+        X_with_lags = self._create_lag_features(target_series, exog_df)
 
         # For direct strategy: train one model per horizon
         if self.forecast_strategy == "direct":
@@ -413,11 +451,14 @@ class SklearnMultiStepForecaster(ForecastingModel):
             X_clean = X_subset[mask]
 
             if len(X_clean) == 0:
-                raise ValueError(
-                    f"No valid samples for prediction. Need at least "
-                    f"{self.window_size} historical values before the first "
-                    "prediction point."
+                # For very small validation/test sets, return NaN predictions
+                # instead of raising an error - this allows metrics to handle gracefully
+                print(
+                    f"[SklearnMultiStepForecaster] ⚠️  No valid samples for in-sample "
+                    f"prediction (need {self.window_size} historical values). "
+                    f"Returning NaN predictions for {len(input_df)} points."
                 )
+                return np.full(len(input_df), np.nan)
 
             # Use first model (1-step ahead) for in-sample predictions
             # This is standard practice in time series - we're predicting t+1
@@ -495,13 +536,15 @@ class SklearnMultiStepForecaster(ForecastingModel):
                     )
 
             # Ensure we have enough history
-            if len(history_series) < self.window_size:
-                raise ValueError(
-                    f"History length ({len(history_series)}) is less than "
-                    f"window size ({self.window_size}). Provide more context data."
+            if history_series is None or len(history_series) < self.window_size:
+                history_len = 0 if history_series is None else len(history_series)
+                print(
+                    f"[SklearnMultiStepForecaster] ⚠️  History length ({history_len}) "
+                    f"is less than window size ({self.window_size}). "
+                    f"Returning NaN predictions for {periods} periods."
                 )
+                return np.full(periods, np.nan)
 
-            # Direct strategy: use pre-trained models
             # Direct strategy: use pre-trained models
             if self.forecast_strategy == "direct":
                 predictions = []

@@ -58,30 +58,31 @@ class StatsmodelsSARIMAXModelSchema(BaseSchema):
 
     P: schema_field(
         int_field(ge=0, le=5),
-        placeholder=1,
+        placeholder=0,
         description="Order of seasonal autoregressive component. "
-        "Seasonal lag observations.",
-    ) = 1  # type: ignore
+        "Seasonal lag observations. Set to 0 to disable seasonality.",
+    ) = 0  # type: ignore
 
     D: schema_field(
         int_field(ge=0, le=2),
-        placeholder=1,
-        description="Degree of seasonal differencing. Seasonal differencing order.",
-    ) = 1  # type: ignore
+        placeholder=0,
+        description="Degree of seasonal differencing. Seasonal differencing order. "
+        "Set to 0 to disable seasonal differencing.",
+    ) = 0  # type: ignore
 
     Q: schema_field(
         int_field(ge=0, le=5),
-        placeholder=1,
+        placeholder=0,
         description="Order of seasonal moving average component. "
-        "Seasonal moving average window.",
-    ) = 1  # type: ignore
+        "Seasonal moving average window. Set to 0 to disable.",
+    ) = 0  # type: ignore
 
     s: schema_field(
         int_field(ge=1, le=365),
-        placeholder=12,
-        description="Seasonal period (number of observations per cycle). "
-        "12=monthly, 4=quarterly, 7=weekly, 365=daily with yearly seasonality.",
-    ) = 12  # type: ignore
+        placeholder=1,
+        description="Seasonal period (observations per cycle). "
+        "12=monthly, 4=quarterly, 7=weekly. Set to 1 to disable seasonality.",
+    ) = 1  # type: ignore
 
     trend: schema_field(
         enum_field(enum=["n", "c", "t", "ct"]),
@@ -127,10 +128,10 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
         p: int = 1,
         d: int = 1,
         q: int = 1,
-        P: int = 1,  # noqa: N803
-        D: int = 1,  # noqa: N803
-        Q: int = 1,  # noqa: N803
-        s: int = 12,
+        P: int = 0,  # noqa: N803
+        D: int = 0,  # noqa: N803
+        Q: int = 0,  # noqa: N803
+        s: int = 1,
         trend: str = "n",
         enforce_stationarity: bool = True,
         enforce_invertibility: bool = True,
@@ -337,22 +338,124 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
         )
         print(f"[StatsmodelsSARIMAXModel] Date range: {dates.min()} to {dates.max()}")
 
-        # Fit SARIMAX model
-        self.model = SARIMAX(
-            endog=endog_series,
-            exog=exog,
-            order=self.order,
-            seasonal_order=self.seasonal_order,
-            trend=self.trend,
-            enforce_stationarity=self.enforce_stationarity,
-            enforce_invertibility=self.enforce_invertibility,
-        )
+        # Auto-adjust parameters for small datasets
+        n_samples = len(endog_series)
 
-        self.model_fit = self.model.fit(disp=False)
+        # Check if seasonality is enabled (s>1 and any seasonal param > 0)
+        has_seasonality = self.s > 1 and (self.P > 0 or self.D > 0 or self.Q > 0)
 
-        print("✅ SARIMAX model training completed")
-        print(f"[StatsmodelsSARIMAXModel] AIC: {self.model_fit.aic:.2f}")
-        print(f"[StatsmodelsSARIMAXModel] BIC: {self.model_fit.bic:.2f}")
+        if has_seasonality:
+            # SARIMAX needs: s + d + D + max(p, P) + max(q, Q) samples
+            min_required = (
+                self.s + self.d + self.D + max(self.p, self.P) + max(self.q, self.Q) + 2
+            )
+
+            if n_samples < min_required:
+                print(
+                    f"[StatsmodelsSARIMAXModel] ⚠️  Dataset too small "
+                    f"({n_samples} samples) for seasonal params "
+                    f"(need {min_required}). Disabling seasonality..."
+                )
+                # Disable seasonality entirely for small datasets
+                self.P = 0
+                self.D = 0
+                self.Q = 0
+                self.s = 1
+                has_seasonality = False
+
+        # For non-seasonal ARIMA, check basic requirements
+        min_arima_samples = self.p + self.d + self.q + 3
+        if n_samples < min_arima_samples:
+            print("[StatsmodelsSARIMAXModel] ⚠️  Adjusting ARIMA orders...")
+            # Reduce AR/MA orders if needed
+            max_order = max(1, (n_samples - self.d - 2) // 2)
+            if self.p > max_order:
+                old_p = self.p
+                self.p = max(0, max_order)
+                print(f"  - Reduced p (AR order): {old_p} → {self.p}")
+            if self.q > max_order:
+                old_q = self.q
+                self.q = max(0, max_order)
+                print(f"  - Reduced q (MA order): {old_q} → {self.q}")
+            if self.d > 1 and n_samples < 10:
+                old_d = self.d
+                self.d = min(1, self.d)
+                print(f"  - Reduced d (differencing): {old_d} → {self.d}")
+
+        self.order = (self.p, self.d, self.q)
+
+        # Set seasonal_order: None if no seasonality, otherwise tuple
+        if has_seasonality:
+            self.seasonal_order = (self.P, self.D, self.Q, self.s)
+            print(
+                f"[StatsmodelsSARIMAXModel] Final parameters: "
+                f"SARIMAX{self.order}x{self.seasonal_order}"
+            )
+        else:
+            self.seasonal_order = (0, 0, 0, 0)  # Disable seasonality
+            print(
+                f"[StatsmodelsSARIMAXModel] Final parameters: "
+                f"ARIMA{self.order} (no seasonality)"
+            )
+
+        # Fit SARIMAX model (use ARIMA when no seasonality for stability)
+        try:
+            if has_seasonality:
+                self.model = SARIMAX(
+                    endog=endog_series,
+                    exog=exog,
+                    order=self.order,
+                    seasonal_order=self.seasonal_order,
+                    trend=self.trend,
+                    enforce_stationarity=self.enforce_stationarity,
+                    enforce_invertibility=self.enforce_invertibility,
+                )
+                self.model_fit = self.model.fit()
+            else:
+                # Use ARIMA (no seasonal component) for small datasets or when s <= 1
+                # SARIMAX doesn't accept seasonal_order with s <= 1
+                from statsmodels.tsa.arima.model import ARIMA
+
+                print("[StatsmodelsSARIMAXModel] Using ARIMA (no seasonal component)")
+                self.model = ARIMA(
+                    endog=endog_series,
+                    exog=exog,
+                    order=self.order,
+                    trend=self.trend,
+                    enforce_stationarity=self.enforce_stationarity,
+                    enforce_invertibility=self.enforce_invertibility,
+                )
+                self.model_fit = self.model.fit()
+
+            print("✅ SARIMAX model training completed")
+            print(f"[StatsmodelsSARIMAXModel] AIC: {self.model_fit.aic:.2f}")
+            print(f"[StatsmodelsSARIMAXModel] BIC: {self.model_fit.bic:.2f}")
+        except ValueError as e:
+            # Fallback: if SARIMAX fails due to seasonality issues, try ARIMA
+            if "Seasonal periodicity" in str(e) or "seasonal" in str(e).lower():
+                print(f"[StatsmodelsSARIMAXModel] ⚠️  SARIMAX seasonality error: {e}")
+                print("[StatsmodelsSARIMAXModel] Falling back to ARIMA")
+                from statsmodels.tsa.arima.model import ARIMA
+
+                self.model = ARIMA(
+                    endog=endog_series,
+                    exog=exog,
+                    order=self.order,
+                    trend=self.trend,
+                    enforce_stationarity=self.enforce_stationarity,
+                    enforce_invertibility=self.enforce_invertibility,
+                )
+                self.model_fit = self.model.fit()
+                self.seasonal_order = (0, 0, 0, 0)
+                print("✅ ARIMA model training completed (fallback)")
+                print(f"[StatsmodelsSARIMAXModel] AIC: {self.model_fit.aic:.2f}")
+                print(f"[StatsmodelsSARIMAXModel] BIC: {self.model_fit.bic:.2f}")
+            else:
+                print(f"[StatsmodelsSARIMAXModel] ❌ Training failed: {e}")
+                raise
+        except Exception as e:
+            print(f"[StatsmodelsSARIMAXModel] ❌ Training failed: {e}")
+            raise
 
         return self
 
@@ -467,9 +570,16 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
             start_idx = 0
             end_idx = len(dates) - 1
 
+            print(
+                f"[StatsmodelsSARIMAXModel] In-sample prediction: {len(dates)} points "
+                f"({dates.min()} to {dates.max()})"
+            )
+
             predictions = self.model_fit.predict(
                 start=start_idx, end=end_idx, exog=exog
             )
+
+            print(f"[StatsmodelsSARIMAXModel] Generated {len(predictions)} predictions")
 
             return predictions.to_numpy()
 

@@ -22,6 +22,7 @@ import { startJobPolling } from "../../utils/jobPoller";
 import { enqueuePredictionJob } from "../../api/job";
 import { getRunById } from "../../api/run";
 import { getExperimentById } from "../../api/experiment";
+import { getDatasetTemporalInfo } from "../../api/datasets";
 import { renderStep } from "./renderStep";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
@@ -49,6 +50,7 @@ function PredictionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTaskName, setSelectedTaskName] = useState("");
   const [forecastPeriods, setForecastPeriods] = useState(null);
+  const [temporalInfo, setTemporalInfo] = useState(null);
 
   const { defaultName } = useMemo(
     () =>
@@ -68,9 +70,9 @@ function PredictionModal({
     { name: "selectDataset", label: "Select Dataset" },
   ];
 
-  // Fetch task_name when modal opens with preselected model
+  // Fetch task_name and temporal info when modal opens with preselected model
   useEffect(() => {
-    const fetchTaskName = async () => {
+    const fetchTaskNameAndTemporalInfo = async () => {
       if (preselectedModelId && !selectedTaskName) {
         try {
           const run = await getRunById(preselectedModelId.toString());
@@ -78,14 +80,79 @@ function PredictionModal({
             run.experiment_id.toString(),
           );
           setSelectedTaskName(experiment.task_name);
+
+          // If it's a forecasting task, fetch temporal info using the first input column (timestamp)
+          if (experiment.task_name === "ForecastingTask") {
+            try {
+              const inputCols = experiment.input_columns || [];
+              // In forecasting, the first input column is the timestamp column
+              if (inputCols.length > 0 && experiment.dataset_id) {
+                const timestampColumn = inputCols[0];
+                console.log(
+                  "[PredictionModal] Using timestamp column from experiment:",
+                  timestampColumn,
+                );
+
+                const info = await getDatasetTemporalInfo(
+                  experiment.dataset_id,
+                  timestampColumn,
+                );
+                setTemporalInfo(info);
+              }
+            } catch (error) {
+              console.error("Error fetching temporal info:", error);
+            }
+          }
         } catch (error) {
           console.error("Error fetching task name:", error);
         }
       }
     };
 
-    fetchTaskName();
+    fetchTaskNameAndTemporalInfo();
   }, [preselectedModelId, selectedTaskName]);
+
+  // Fetch temporal info when user manually selects a model (not preselected)
+  useEffect(() => {
+    const fetchTemporalInfoForSelectedModel = async () => {
+      // Only run when: model was selected manually AND it's a forecasting task
+      if (
+        !preselectedModelId &&
+        selectedModelId &&
+        selectedTaskName === "ForecastingTask" &&
+        trainDataset
+      ) {
+        try {
+          const run = await getRunById(selectedModelId.toString());
+          const experiment = await getExperimentById(
+            run.experiment_id.toString(),
+          );
+
+          const inputCols = experiment.input_columns || [];
+          if (inputCols.length > 0 && experiment.dataset_id) {
+            const timestampColumn = inputCols[0];
+            console.log(
+              "[PredictionModal] Fetching temporal info for manually selected model, timestamp column:",
+              timestampColumn,
+            );
+
+            const info = await getDatasetTemporalInfo(
+              experiment.dataset_id,
+              timestampColumn,
+            );
+            setTemporalInfo(info);
+          }
+        } catch (error) {
+          console.error(
+            "Error fetching temporal info for selected model:",
+            error,
+          );
+        }
+      }
+    };
+
+    fetchTemporalInfoForSelectedModel();
+  }, [preselectedModelId, selectedModelId, selectedTaskName, trainDataset]);
 
   const resetModal = () => {
     setActiveStep(0);
@@ -99,6 +166,7 @@ function PredictionModal({
     setIsSubmitting(false);
     setSelectedTaskName("");
     setForecastPeriods(null);
+    setTemporalInfo(null);
   };
 
   const handleCloseDialog = () => {
@@ -303,6 +371,7 @@ function PredictionModal({
           setSelectedTaskName,
           forecastPeriods,
           setForecastPeriods,
+          temporalInfo,
         )}
       </DialogContent>
       <DialogActions>

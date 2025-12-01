@@ -84,6 +84,27 @@ export const deleteDataset = async (id: string): Promise<object> => {
   return response.data;
 };
 
+export const getDatasetTemporalInfo = async (
+  id: number,
+  timestampColumn: string,
+): Promise<{
+  frequency_code: string;
+  frequency_label: string;
+  frequency_description: string;
+  frequency_example: string;
+  average_interval: string;
+  start_date: string;
+  end_date: string;
+  total_periods: number;
+  detected_gaps: number;
+  timestamp_column: string;
+}> => {
+  const response = await api.get(`${datasetEndpoint}/${id}/temporal-info`, {
+    params: { timestamp_column: timestampColumn },
+  });
+  return response.data;
+};
+
 export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
   const response = await api.get(`${datasetEndpoint}/file/`, {
     params: { path, page, page_size: pageSize },

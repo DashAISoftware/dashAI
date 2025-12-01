@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 from pathlib import Path
 
@@ -13,6 +14,20 @@ from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.tasks.classification_task import ClassificationTask
+
+
+def sanitize_for_json(value):
+    """Convert NaN/Inf float values to None for JSON serialization."""
+    if isinstance(value, dict):
+        return {k: sanitize_for_json(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [sanitize_for_json(item) for item in value]
+    elif isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return value
+    return value
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -232,15 +247,22 @@ async def get_predict_summary(
                     class_distribution.append(distribution)
                 summary["class_distribution"] = class_distribution
 
+            # Sanitize sample data to handle NaN values
             sample_data = [
-                {"id": idx, "value": value} for idx, value in enumerate(data[:50], 1)
+                {
+                    "id": idx,
+                    "value": sanitize_for_json(value)
+                    if isinstance(value, float)
+                    else value,
+                }
+                for idx, value in enumerate(data[:50], 1)
             ]
             summary["sample_data"] = sample_data
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail="Prediction not found") from e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
-    return summary
+    return sanitize_for_json(summary)
 
 
 @router.get("/filter_datasets")
@@ -320,7 +342,8 @@ async def download_prediction(
         if os.path.exists(predict_path):
             with open(predict_path, "r") as json_file:
                 data = json.load(json_file)
-                return data["prediction"]
+                # Sanitize predictions to ensure JSON compliance (NaN -> None)
+                return sanitize_for_json(data["prediction"])
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

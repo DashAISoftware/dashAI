@@ -334,6 +334,184 @@ async def get_info(
     return info
 
 
+@router.get("/{dataset_id}/temporal-info")
+@inject
+async def get_temporal_info(
+    dataset_id: int,
+    timestamp_column: str,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get temporal information about a dataset for forecasting tasks.
+
+    This endpoint analyzes a timestamp column to detect frequency, date range,
+    and other temporal characteristics useful for time series forecasting.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to analyze.
+    timestamp_column : str
+        Name of the column containing timestamps.
+
+    Returns
+    -------
+    dict
+        Dictionary with temporal information including:
+        - frequency_code: Short code (D, H, M, W, A, T)
+        - frequency_label: Human-readable label
+        - frequency_description: Detailed description
+        - start_date: First timestamp in the series
+        - end_date: Last timestamp in the series
+        - total_periods: Number of data points
+        - detected_gaps: Number of missing periods detected
+    """
+    import pandas as pd
+
+    with session_factory() as db:
+        try:
+            dataset = db.get(Dataset, dataset_id)
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found",
+                )
+
+            if dataset.status != DatasetStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Dataset is not in finished state",
+                )
+
+            # Load the dataset
+            dataset_path = f"{dataset.file_path}/dataset"
+            data_filepath = os.path.join(dataset_path, "data.arrow")
+
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = ipc.open_file(source)
+                table = reader.read_all()
+
+            data_frame = table.to_pandas()
+
+            if timestamp_column not in data_frame.columns:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Column '{timestamp_column}' not found in dataset",
+                )
+
+            # Convert to datetime
+            try:
+                timestamps = pd.to_datetime(data_frame[timestamp_column])
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot parse '{timestamp_column}' as datetime: {str(e)}",
+                ) from e
+
+            # Sort and analyze
+            sorted_ts = timestamps.sort_values()
+            diffs = sorted_ts.diff().dropna()
+
+            if len(diffs) == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Not enough data points to detect frequency",
+                )
+
+            # Get most common difference (mode)
+            mode_diff = (
+                diffs.mode().iloc[0] if len(diffs.mode()) > 0 else diffs.median()
+            )
+
+            # Frequency mapping with detailed info
+            frequency_map = {
+                "T": {
+                    "code": "T",
+                    "label": "Minutely",
+                    "description": "Each row represents one minute",
+                    "example": "e.g., 10:00, 10:01, 10:02...",
+                },
+                "H": {
+                    "code": "H",
+                    "label": "Hourly",
+                    "description": "Each row represents one hour",
+                    "example": "e.g., 10:00, 11:00, 12:00...",
+                },
+                "D": {
+                    "code": "D",
+                    "label": "Daily",
+                    "description": "Each row represents one day",
+                    "example": "e.g., Jan 1, Jan 2, Jan 3...",
+                },
+                "W": {
+                    "code": "W",
+                    "label": "Weekly",
+                    "description": "Each row represents one week",
+                    "example": "e.g., Week 1, Week 2, Week 3...",
+                },
+                "M": {
+                    "code": "M",
+                    "label": "Monthly",
+                    "description": "Each row represents one month",
+                    "example": "e.g., Jan, Feb, Mar...",
+                },
+                "A": {
+                    "code": "A",
+                    "label": "Yearly",
+                    "description": "Each row represents one year",
+                    "example": "e.g., 2022, 2023, 2024...",
+                },
+            }
+
+            # Detect frequency
+            if mode_diff >= pd.Timedelta(days=365):
+                freq_code = "A"
+            elif mode_diff >= pd.Timedelta(days=28):
+                freq_code = "M"
+            elif mode_diff >= pd.Timedelta(days=7):
+                freq_code = "W"
+            elif mode_diff >= pd.Timedelta(days=1):
+                freq_code = "D"
+            elif mode_diff >= pd.Timedelta(hours=1):
+                freq_code = "H"
+            else:
+                freq_code = "T"
+
+            freq_info = frequency_map[freq_code]
+
+            # Calculate average difference in human-readable format
+            avg_diff = diffs.mean()
+            if avg_diff >= pd.Timedelta(days=1):
+                avg_diff_str = f"{avg_diff.days} days"
+            elif avg_diff >= pd.Timedelta(hours=1):
+                avg_diff_str = f"{avg_diff.seconds // 3600} hours"
+            else:
+                avg_diff_str = f"{avg_diff.seconds // 60} minutes"
+
+            # Detect gaps (periods where diff is significantly larger than mode)
+            gap_threshold = mode_diff * 1.5
+            gaps = (diffs > gap_threshold).sum()
+
+            return {
+                "frequency_code": freq_info["code"],
+                "frequency_label": freq_info["label"],
+                "frequency_description": freq_info["description"],
+                "frequency_example": freq_info["example"],
+                "average_interval": avg_diff_str,
+                "start_date": sorted_ts.min().isoformat(),
+                "end_date": sorted_ts.max().isoformat(),
+                "total_periods": len(data_frame),
+                "detected_gaps": int(gaps),
+                "timestamp_column": timestamp_column,
+            }
+
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
 @router.get("/{dataset_id}/experiments-exist")
 @inject
 async def get_experiments_exist(

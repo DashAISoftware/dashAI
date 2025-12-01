@@ -64,11 +64,28 @@ class ProphetModelSchema(BaseSchema):
     ) = "auto"  # type: ignore
 
     growth: schema_field(
-        enum_field(enum=["linear", "logistic"]),
+        enum_field(enum=["linear", "logistic", "flat"]),
         placeholder="linear",
         description="Growth model. 'linear' for unlimited growth, "
-        "'logistic' for growth that saturates at a carrying capacity.",
+        "'logistic' for growth that saturates at a carrying capacity "
+        "(requires cap_multiplier), 'flat' for no trend.",
     ) = "linear"  # type: ignore
+
+    cap_multiplier: schema_field(
+        float_field(ge=1.0, le=10.0),
+        placeholder=1.5,
+        description="For logistic growth: multiplier applied to max(y) to set "
+        "the carrying capacity. E.g., 1.5 means cap = 1.5 * max(y). "
+        "Only used when growth='logistic'.",
+    ) = 1.5  # type: ignore
+
+    floor_ratio: schema_field(
+        float_field(ge=0.0, le=1.0),
+        placeholder=0.0,
+        description="For logistic growth: floor as ratio of min(y). "
+        "E.g., 0.5 means floor = 0.5 * min(y). "
+        "Only used when growth='logistic'.",
+    ) = 0.0  # type: ignore
 
     changepoint_prior_scale: schema_field(
         float_field(ge=0.001, le=1.0),
@@ -127,6 +144,8 @@ class ProphetModel(ForecastingModel):
         weekly_seasonality: str = "auto",
         daily_seasonality: str = "auto",
         growth: str = "linear",
+        cap_multiplier: float = 1.5,
+        floor_ratio: float = 0.0,
         changepoint_prior_scale: float = 0.05,
         seasonality_prior_scale: float = 10.0,
         holidays_prior_scale: float = 10.0,
@@ -141,11 +160,17 @@ class ProphetModel(ForecastingModel):
         self.weekly_seasonality = self._parse_bool_setting(weekly_seasonality)
         self.daily_seasonality = self._parse_bool_setting(daily_seasonality)
         self.growth = growth
+        self.cap_multiplier = cap_multiplier
+        self.floor_ratio = floor_ratio
         self.changepoint_prior_scale = changepoint_prior_scale
         self.seasonality_prior_scale = seasonality_prior_scale
         self.holidays_prior_scale = holidays_prior_scale
         self.interval_width = interval_width
         self.uncertainty_samples = uncertainty_samples
+
+        # Store cap/floor for predictions when using logistic growth
+        self._cap_value: Optional[float] = None
+        self._floor_value: Optional[float] = None
 
         self.model = None
         # exog_cols, timestamp_col, target_col are inherited from ForecastingModel
@@ -329,6 +354,27 @@ class ProphetModel(ForecastingModel):
                     "(type: {})".format(col, x_df[col].dtype)
                 )
 
+        # Handle logistic growth - requires 'cap' (and optionally 'floor') columns
+        if self.growth == "logistic":
+            y_max = prophet_df["y"].max()
+            y_min = prophet_df["y"].min()
+
+            # Calculate cap and floor based on multipliers
+            self._cap_value = y_max * self.cap_multiplier
+            self._floor_value = y_min * self.floor_ratio
+
+            # Add cap column (required for logistic growth)
+            prophet_df["cap"] = self._cap_value
+
+            # Add floor column if floor_ratio > 0
+            if self.floor_ratio > 0:
+                prophet_df["floor"] = self._floor_value
+
+            print(
+                f"[ProphetModel] Logistic growth: cap={self._cap_value:.2f} "
+                f"(max*{self.cap_multiplier}), floor={self._floor_value:.2f}"
+            )
+
         # Store additional metadata
         self.last_ds = prophet_df["ds"].max()
 
@@ -362,6 +408,32 @@ class ProphetModel(ForecastingModel):
 
         print("✅ Prophet model training completed")
         return self
+
+    def _add_cap_floor_columns(self, dataframe: pd.DataFrame) -> pd.DataFrame:
+        """Add cap and floor columns for logistic growth predictions.
+
+        Parameters
+        ----------
+        dataframe : pd.DataFrame
+            DataFrame to add cap/floor columns to
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with cap (and optionally floor) columns added
+        """
+        if self.growth != "logistic":
+            return dataframe
+
+        result_df = dataframe.copy()
+
+        if self._cap_value is not None:
+            result_df["cap"] = self._cap_value
+
+        if self._floor_value is not None and self.floor_ratio > 0:
+            result_df["floor"] = self._floor_value
+
+        return result_df
 
     def predict(
         self,
@@ -524,6 +596,8 @@ class ProphetModel(ForecastingModel):
                             axis=1,
                         )
 
+                # Add cap/floor for logistic growth
+                future_df = self._add_cap_floor_columns(future_df)
                 forecast = self.model.predict(future_df)
                 return _extract_predictions(forecast, input_df["ds"])
 
@@ -593,6 +667,8 @@ class ProphetModel(ForecastingModel):
                 f"Future exogenous values required for columns: {self.exog_cols}."
             )
 
+        # Add cap/floor for logistic growth
+        future_df = self._add_cap_floor_columns(future_df)
         forecast = self.model.predict(future_df)
         print(f"[ProphetModel] Generated forecast for {periods} periods")
         print(
@@ -646,6 +722,8 @@ class ProphetModel(ForecastingModel):
         future_df = self.model.make_future_dataframe(
             periods=horizon, freq=self.frequency or "D"
         )
+        # Add cap/floor for logistic growth
+        future_df = self._add_cap_floor_columns(future_df)
         forecast = self.model.predict(future_df)
 
         # Return components for the forecast period
@@ -670,6 +748,11 @@ class ProphetModel(ForecastingModel):
             # Prophet-specific metadata
             "last_ds": self.last_ds,
             "frequency": self.frequency,
+            # Logistic growth parameters
+            "_cap_value": self._cap_value,
+            "_floor_value": self._floor_value,
+            "cap_multiplier": self.cap_multiplier,
+            "floor_ratio": self.floor_ratio,
             "config": {
                 "seasonality_mode": self.seasonality_mode,
                 "yearly_seasonality": self.yearly_seasonality,
@@ -718,6 +801,12 @@ class ProphetModel(ForecastingModel):
         # Restore Prophet-specific metadata
         self.last_ds = model_state["last_ds"]
         self.frequency = model_state["frequency"]
+
+        # Restore logistic growth parameters (may not exist in old models)
+        self._cap_value = model_state.get("_cap_value")
+        self._floor_value = model_state.get("_floor_value")
+        self.cap_multiplier = model_state.get("cap_multiplier", 1.5)
+        self.floor_ratio = model_state.get("floor_ratio", 0.0)
 
         # Restore configuration
         config = model_state["config"]

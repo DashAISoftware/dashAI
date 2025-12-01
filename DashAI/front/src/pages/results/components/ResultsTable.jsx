@@ -43,8 +43,10 @@ function ResultsTable({ experimentId }) {
     navigate(`../app/predict`, { state: { runId, trainedDatasetId } });
   };
 
-  const handleExplainer = (runId) => {
-    navigate(`../app/explainers/runs/${runId}`);
+  const handleExplainer = (runId, modelName, taskName) => {
+    navigate(`../app/explainers/runs/${runId}`, {
+      state: { modelName, taskName },
+    });
   };
 
   const getRuns = async () => {
@@ -65,6 +67,7 @@ function ResultsTable({ experimentId }) {
           metrics,
           runs,
           experiment.dataset_id,
+          experiment.task_name,
           handleRunResultsOpen,
           handlePrediction,
           handleExplainer,

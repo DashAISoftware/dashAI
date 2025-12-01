@@ -5,7 +5,10 @@ import { Grid, CircularProgress, Box, Alert, AlertTitle } from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
 import SplitDatasetTemporal from "./SplitDatasetTemporal";
-import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
+import {
+  getDatasetInfo as getDatasetInfoRequest,
+  getDatasetTemporalInfo,
+} from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../api/experiment";
 import { useSnackbar } from "notistack";
@@ -39,6 +42,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState();
   const [gap, setGap] = useState(0);
+  const [temporalInfo, setTemporalInfo] = useState(null);
+  const [temporalInfoLoading, setTemporalInfoLoading] = useState(false);
 
   const defaultParitionsIndex = {
     train: [],
@@ -360,10 +365,46 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     }
   }, [isForecastingTask, taskRequirements]);
 
+  // Fetch temporal info when input columns change for forecasting tasks
+  useEffect(() => {
+    const fetchTemporalInfo = async () => {
+      if (
+        !isForecastingTask ||
+        inputColumnNames.length === 0 ||
+        !newExp.dataset?.id
+      ) {
+        setTemporalInfo(null);
+        return;
+      }
+
+      // Use the first input column as the timestamp column
+      const timestampColumn = inputColumnNames[0];
+
+      setTemporalInfoLoading(true);
+      try {
+        const info = await getDatasetTemporalInfo(
+          newExp.dataset.id,
+          timestampColumn,
+        );
+        setTemporalInfo(info);
+      } catch (error) {
+        console.error("Error fetching temporal info:", error);
+        setTemporalInfo(null);
+      } finally {
+        setTemporalInfoLoading(false);
+      }
+    };
+
+    fetchTemporalInfo();
+  }, [isForecastingTask, inputColumnNames, newExp.dataset?.id]);
+
   const parseListOfStrings = (stringsList) => {
     if (!stringsList || stringsList.length === 0) return "any";
     return stringsList.join(" or ");
   };
+
+  // Determine if the issue is with splits rather than column validation
+  const splitIssue = columnsReady && !splitsReady && !columnsAreValid;
 
   return (
     <React.Fragment>
@@ -371,27 +412,40 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         <AlertTitle>
           {columnsAreValid
             ? "Current Input and Output columns match"
-            : "Current Input and Output columns doesn't match"}{" "}
-          {taskRequirements.name} requirements
+            : splitIssue
+              ? "Dataset split configuration is incomplete"
+              : "Current Input and Output columns doesn't match"}{" "}
+          {!splitIssue && taskRequirements.name}{" "}
+          {columnsAreValid ? "requirements" : splitIssue ? "" : "requirements"}
         </AlertTitle>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12 }}>
-            The input columns must be of the types{" "}
-            {taskRequirements
-              ? parseListOfStrings(taskRequirements.metadata.inputs_types)
-              : null}
-            , and they should have a cardinality of{" "}
-            {taskRequirements.metadata.inputs_cardinality}.
+        {splitIssue ? (
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              Please configure valid train/validation/test splits below before
+              proceeding. Make sure the dataset has enough rows for the
+              configured split proportions.
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12 }}>
-            The output columns must be of the types{" "}
-            {taskRequirements
-              ? parseListOfStrings(taskRequirements.metadata.outputs_types)
-              : null}
-            , and they should have a cardinality of{" "}
-            {taskRequirements.metadata.outputs_cardinality}.
+        ) : (
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              The input columns must be of the types{" "}
+              {taskRequirements
+                ? parseListOfStrings(taskRequirements.metadata.inputs_types)
+                : null}
+              , and they should have a cardinality of{" "}
+              {taskRequirements.metadata.inputs_cardinality}.
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              The output columns must be of the types{" "}
+              {taskRequirements
+                ? parseListOfStrings(taskRequirements.metadata.outputs_types)
+                : null}
+              , and they should have a cardinality of{" "}
+              {taskRequirements.metadata.outputs_cardinality}.
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Alert>
       {!infoLoading && datasetInfo.nan ? (
         Object.values(datasetInfo.nan).some((v) => v > 0) ? (
@@ -437,6 +491,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               setSplitsReady={setSplitsReady}
               gap={gap}
               setGap={setGap}
+              temporalInfo={temporalInfo}
+              temporalInfoLoading={temporalInfoLoading}
             />
           ) : (
             <SplitDatasetRows

@@ -23,6 +23,9 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { createLocalExplainer as createLocalExplainerRequest } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 import { getExplainers } from "../../api/explainer";
+import { getRunById } from "../../api/run";
+import { getExperimentById } from "../../api/experiment";
+import { getDatasetTemporalInfo } from "../../api/datasets";
 
 import { startJobPolling } from "../../utils/jobPoller";
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
@@ -75,6 +78,11 @@ export default function NewLocalExplainerModal({
   const [newLocalExpl, setNewLocalExpl] = useState(defaultNewLocalExpl);
   const [existingLocalExplainers, setExistingLocalExplainers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [temporalInfo, setTemporalInfo] = useState(null);
+  const [temporalInfoLoading, setTemporalInfoLoading] = useState(false);
+  const [modelName, setModelName] = useState(null);
+
+  const isForecastingTask = taskName === "ForecastingTask";
 
   const { updateFlag: updateExplainers } = useUpdateFlag({
     flag: flags.EXPLAINERS,
@@ -90,11 +98,47 @@ export default function NewLocalExplainerModal({
     }
   };
 
+  // Fetch temporal info for forecasting tasks
+  const fetchTemporalInfo = async () => {
+    if (!isForecastingTask || !runId) return;
+
+    setTemporalInfoLoading(true);
+    try {
+      const run = await getRunById(runId.toString());
+      setModelName(run.name);
+
+      const experiment = await getExperimentById(run.experiment_id.toString());
+
+      // For forecasting, the first input column is the timestamp column
+      const inputCols = experiment.input_columns || [];
+      if (inputCols.length > 0 && experiment.dataset_id) {
+        const timestampColumn = inputCols[0];
+        console.log(
+          "[NewLocalExplainerModal] Fetching temporal info with timestamp column:",
+          timestampColumn,
+        );
+
+        const info = await getDatasetTemporalInfo(
+          experiment.dataset_id,
+          timestampColumn,
+        );
+        setTemporalInfo(info);
+      }
+    } catch (error) {
+      console.error("Error fetching temporal info for explainer:", error);
+    } finally {
+      setTemporalInfoLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       loadExistingExplainers();
+      if (isForecastingTask) {
+        fetchTemporalInfo();
+      }
     }
-  }, [open]);
+  }, [open, isForecastingTask]);
 
   const enqueueLocalExplainerJob = async (explainerId) => {
     try {
@@ -166,6 +210,8 @@ export default function NewLocalExplainerModal({
     setOpen(false);
     setNewLocalExpl(defaultNewLocalExpl);
     setNextEnabled(false);
+    setTemporalInfo(null);
+    setModelName(null);
   };
 
   const handleStepButton = (stepIndex) => () => {
@@ -285,6 +331,10 @@ export default function NewLocalExplainerModal({
             setNextEnabled={setNextEnabled}
             formSubmitRef={formSubmitRef}
             scope={"Local"}
+            temporalInfo={temporalInfo}
+            temporalInfoLoading={temporalInfoLoading}
+            modelName={modelName}
+            isForecastingTask={isForecastingTask}
           />
         )}
       </DialogContent>

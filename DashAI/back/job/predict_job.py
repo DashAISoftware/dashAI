@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,35 @@ from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks import BaseTask
+
+
+def sanitize_for_json(value):
+    """Convert NaN/Inf float values to None for JSON serialization.
+
+    Parameters
+    ----------
+    value : Any
+        Value to sanitize (can be list, dict, float, etc.)
+
+    Returns
+    -------
+    Any
+        Sanitized value with NaN/Inf replaced by None
+    """
+    if isinstance(value, dict):
+        return {k: sanitize_for_json(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [sanitize_for_json(item) for item in value]
+    elif isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        return value
+    elif isinstance(value, np.floating):
+        if np.isnan(value) or np.isinf(value):
+            return None
+        return float(value)
+    return value
+
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -408,11 +438,58 @@ class PredictJob(BaseJob):
 
                     # Generate future timestamps
                     try:
+                        # Use DateOffset for frequencies that don't work with Timedelta
+                        # (like 'M' for months, 'Y' for years)
+                        freq_offset_map = {
+                            "D": pd.DateOffset(days=1),
+                            "H": pd.DateOffset(hours=1),
+                            "W": pd.DateOffset(weeks=1),
+                            "M": pd.DateOffset(months=1),
+                            "MS": pd.DateOffset(months=1),
+                            "ME": pd.DateOffset(months=1),
+                            "Y": pd.DateOffset(years=1),
+                            "YS": pd.DateOffset(years=1),
+                            "YE": pd.DateOffset(years=1),
+                            "A": pd.DateOffset(years=1),
+                            "AS": pd.DateOffset(years=1),
+                            "Q": pd.DateOffset(months=3),
+                            "QS": pd.DateOffset(months=3),
+                            "QE": pd.DateOffset(months=3),
+                        }
+
+                        # Get the appropriate offset for this frequency
+                        first_offset = freq_offset_map.get(frequency)
+                        if first_offset is None:
+                            # Fallback: try using Timedelta for simple frequencies
+                            try:
+                                first_offset = pd.Timedelta(1, unit=frequency[0])
+                            except ValueError:
+                                # If that fails too, default to 1 day
+                                log.warning(
+                                    "Unknown frequency '%s', defaulting to 1 day",
+                                    frequency,
+                                )
+                                first_offset = pd.DateOffset(days=1)
+
+                        start_date = last_training_date + first_offset
+
+                        # For date_range, also need to handle frequency aliases
+                        # Use Month Start (MS) instead of Month End (ME)
+                        freq_alias_map = {
+                            "M": "MS",  # Month start (more compatible)
+                            "Y": "YS",  # Year start
+                            "A": "YS",  # Year start (alias)
+                            "Q": "QS",  # Quarter start
+                            "ME": "MS",  # Convert month end to month start
+                            "YE": "YS",  # Convert year end to year start
+                            "QE": "QS",  # Convert quarter end to quarter start
+                        }
+                        safe_freq = freq_alias_map.get(frequency, frequency)
+
                         future_dates = pd.date_range(
-                            start=last_training_date
-                            + pd.Timedelta(1, unit=frequency[0]),
+                            start=start_date,
                             periods=forecast_periods,
-                            freq=frequency,
+                            freq=safe_freq,
                         )
                         future_df = pd.DataFrame({timestamp_col: future_dates})
                         available_cols = [
@@ -558,6 +635,9 @@ class PredictJob(BaseJob):
 
                 json_name = f"{json_filename}.json"
 
+                # Sanitize predictions for JSON serialization (convert NaN/Inf to None)
+                sanitized_predictions = sanitize_for_json(y_pred.tolist())
+
                 json_data = {
                     "metadata": {
                         "id": next_id,
@@ -569,12 +649,12 @@ class PredictJob(BaseJob):
                         else f"auto_forecast_{forecast_periods}_periods",
                         "task_name": exp.task_name,
                     },
-                    "prediction": y_pred.tolist(),
+                    "prediction": sanitized_predictions,
                 }
 
                 # Add forecast-specific metadata if available
                 if forecast_metadata:
-                    json_data["forecast"] = forecast_metadata
+                    json_data["forecast"] = sanitize_for_json(forecast_metadata)
 
                 with open(os.path.join(path, json_name), "w") as json_file:
                     json.dump(json_data, json_file, indent=4)
