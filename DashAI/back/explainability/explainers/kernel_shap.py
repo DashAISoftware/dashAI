@@ -171,12 +171,12 @@ class KernelShap(BaseLocalExplainer):
 
         x, y = background_dataset
 
-        x["train"] = self.model.prepare_dataset(x["train"])
-        y["train"] = self.model.prepare_dataset(y["train"])
+        x_train = x["train"]
+        y_train = y["train"]
 
-        background_data = x["train"].to_pandas()
-        features = x["train"].column_names
-        types = x["train"].types
+        background_data = x_train.to_pandas()
+        features = x_train.column_names
+        types = x_train.types
         feature_names = list(features)
 
         categorical_features = False
@@ -201,8 +201,8 @@ class KernelShap(BaseLocalExplainer):
         )
 
         # Metadata
-        output_column = y["train"].column_names[0]
-        target_names = y["train"].types[output_column].categories
+        output_column = y_train.column_names[0]
+        target_names = y_train.types[output_column].categories
         self.metadata = {"feature_names": feature_names, "target_names": target_names}
 
         return self
@@ -226,9 +226,15 @@ class KernelShap(BaseLocalExplainer):
         """
 
         dataset_dashai = to_dashai_dataset(instances)
-        X = self.model.prepare_dataset(dataset_dashai).to_pandas()
 
-        predictions = self.model.predict(x_pred=X)
+        if hasattr(self.model, "prepare_dataset"):
+            dataset_prepared = self.model.prepare_dataset(dataset_dashai, is_fit=False)
+        else:
+            dataset_prepared = dataset_dashai
+
+        X = dataset_prepared.to_pandas()
+
+        predictions = self.model.predict(x_pred=dataset_dashai)
 
         # TODO: evaluate args nsamples y l1_reg
         shap_values = self.explainer.shap_values(X=X)

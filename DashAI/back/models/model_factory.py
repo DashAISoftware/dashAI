@@ -197,7 +197,10 @@ class ModelFactory:
                 results[split] = split_results
                 continue
             predictions = self.model.predict(x[split])
-            transformed_y = self.model.prepare_dataset(y[split])
+            if hasattr(self.model, "prepare_output"):
+                transformed_y = self.model.prepare_output(y[split])
+            else:
+                transformed_y = self.model.prepare_dataset(y[split])
             for metric in metrics:
                 if (
                     isinstance(metric, type)

@@ -65,8 +65,10 @@ class DummyModel(BaseModel):
     def save(self, filename):
         joblib.dump(self, filename)
 
-    def load(self, filename):
-        return
+    @staticmethod
+    def load(filename):
+        # Return a new DummyModel instance for testing
+        return DummyModel()
 
     def predict(self, x):
         return {}
@@ -75,7 +77,10 @@ class DummyModel(BaseModel):
         return
 
     def prepare_dataset(self, dataset, is_fit=False):
-        return
+        return dataset
+
+    def prepare_output(self, dataset, is_fit=False):
+        return dataset
 
 
 class DummyGlobalExplainer(BaseGlobalExplainer):

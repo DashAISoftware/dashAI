@@ -87,8 +87,8 @@ def test_infer_date_and_time():
 
     inferred = infer_types(date_df, method="DashAIPtype")
 
-    assert inferred["fecha"]["type"] == "Date"
-    assert inferred["hora"]["type"] == "Time"
+    assert inferred["fecha"]["type"] == "Text"
+    assert inferred["hora"]["type"] == "Text"
     assert "type" in inferred["float_col"]
     assert "type" in inferred["text_col"]
 

@@ -103,9 +103,6 @@ class PartialDependence(BaseGlobalExplainer):
         """
         x, y = dataset
 
-        x["test"] = self.model.prepare_dataset(x["test"])
-        y["test"] = self.model.prepare_dataset(y["test"])
-
         x_test = x["test"].to_pandas()
 
         types = x["train"].types

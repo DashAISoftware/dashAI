@@ -57,7 +57,7 @@ class DashAIDataset(Dataset):
         self,
         table: pa.Table,
         splits: dict = None,
-        types: Dict[str, DashAIDataType] = None,
+        types: Optional[Dict[str, DashAIDataType]] = None,
         *args,
         **kwargs,
     ):
@@ -923,6 +923,7 @@ def split_dataset(
 
 def to_dashai_dataset(
     dataset: Union[DatasetDict, Dataset, DashAIDataset, DataFrame],
+    types: Optional[Dict[str, DashAIDataType]] = None,
 ) -> DashAIDataset:
     """
     Converts various data formats into a unified DashAIDataset.
@@ -933,28 +934,27 @@ def to_dashai_dataset(
             - Dataset: A Hugging Face Dataset
             - DashAIDataset: Already a DashAIDataset (will be returned as is)
             - pd.DataFrame: A pandas DataFrame
+        types: Optional dictionary of column types to preserve.
 
     Returns:
         DashAIDataset: A unified dataset containing all data.
     """
 
     if isinstance(dataset, DashAIDataset):
-        # If is already a DashAIDataset, return it
         return dataset
 
     if isinstance(dataset, Dataset):
-        # If is a Dataset, convert it to DashAIDataset
         arrow_tbl = get_arrow_table(dataset)
-        return DashAIDataset(arrow_tbl)
+        return DashAIDataset(arrow_tbl, types=types)
     if isinstance(dataset, DataFrame):
-        hf_dataset = Dataset.from_pandas(dataset)
+        hf_dataset = Dataset.from_pandas(dataset, preserve_index=False)
         arrow_tbl = get_arrow_table(hf_dataset)
-        return DashAIDataset(arrow_tbl)
+        return DashAIDataset(arrow_tbl, types=types)
     if isinstance(dataset, DatasetDict) and len(dataset) == 1:
         key = list(dataset.keys())[0]
         ds = dataset[key]
         arrow_tbl = get_arrow_table(ds)
-        return DashAIDataset(arrow_tbl)
+        return DashAIDataset(arrow_tbl, types=types)
     if isinstance(dataset, DatasetDict):
         return merge_splits_with_metadata(dataset)
     else:
@@ -1237,12 +1237,9 @@ def prepare_for_experiment(
         labels = None
         if splits.get("stratify", False) and output_columns:
             output_column = output_columns[0]
-            print("Stratifying by column:", output_column)
             column_type = dataset.types[output_column]
-            print("Column type:", column_type)
             try:
                 column_values = dataset[output_column]
-                # Check column type and convert to numerical indices if needed
                 if isinstance(column_type, Categorical):
                     with suppress(Exception):
                         labels = (

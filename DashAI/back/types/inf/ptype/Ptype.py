@@ -42,7 +42,7 @@ class Ptype:
         :param df: dataframe loaded by reading values as strings.
         :return: Schema object with information about each column.
         """
-        df = df.applymap(str)
+        df = df.map(str)
         self.machines.normalize_params()
         self.machines.update_values(np.unique(df.values))
 

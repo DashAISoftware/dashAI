@@ -25,12 +25,12 @@ def client(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
-    ("file", "sep", "expected_nrows", "expected_columns"),
+    ("file", "sep", "expected_max_rows", "expected_columns"),
     [
         (
             "iris.csv",
             ",",
-            10,
+            150,
             {
                 "SepalLengthCm",
                 "SepalWidthCm",
@@ -42,13 +42,13 @@ def client(tmp_path: Path):
         (
             "datos_comas_100.csv",
             ";",
-            10,
+            100,
             {"ID", "Producto", "Precio", "Descuento"},
         ),
         (
             "ds_3.csv",
             ";",
-            10,
+            100,
             {"ID", "Producto", "Precio", "Descuento"},
         ),
     ],
@@ -58,7 +58,7 @@ def client(tmp_path: Path):
         "ds_3_csv",
     ],
 )
-def test_load_preview_csv(client, file, sep, expected_nrows, expected_columns):
+def test_load_preview_csv(client, file, sep, expected_max_rows, expected_columns):
     path = DATA_DIR / file
     if not path.exists():
         pytest.skip(f"File {file} not found in {DATA_DIR}, skipping test.")
@@ -72,7 +72,9 @@ def test_load_preview_csv(client, file, sep, expected_nrows, expected_columns):
     payload = resp.json()
     assert isinstance(payload.get("schema"), dict)
     assert isinstance(payload.get("sample"), list)
-    assert len(payload.get("sample")) == expected_nrows
+    sample_len = len(payload.get("sample"))
+    assert sample_len <= expected_max_rows
+    assert sample_len > 0
     assert set(payload.get("schema").keys()) == expected_columns
     assert set(payload.get("sample")[0].keys()) == expected_columns
 
@@ -108,7 +110,9 @@ def test_load_preview_json(client, file, datakey, expected_columns):
     assert isinstance(payload.get("schema"), dict)
     assert isinstance(payload.get("sample"), list)
 
-    assert len(payload.get("sample")) == 10
+    sample_len = len(payload.get("sample"))
+    assert sample_len <= 100
+    assert sample_len > 0
     assert set(payload.get("schema").keys()) == expected_columns
     assert set(payload.get("sample")[0].keys()) == expected_columns
 

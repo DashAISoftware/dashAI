@@ -11,6 +11,9 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.sklearn_like_model import (
+    CategoricalEncodingStrategy,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -91,6 +94,8 @@ class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
     SCHEMA = RidgeRegressionSchema
     DISPLAY_NAME: str = "Ridge Regression"
     COLOR: str = "#2196F3"
+
+    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

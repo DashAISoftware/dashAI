@@ -36,7 +36,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     def prepare_dataset(
         self, dataset: DashAIDataset, is_fit: bool = False
     ) -> DashAIDataset:
-        """Hook for model-specific preprocessing.
+        """Hook for model-specific preprocessing of input features.
 
         Override in subclasses needing
         custom tokenization/encoding. Must not mutate input in-place.
@@ -55,3 +55,22 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             an accepted format in the model.
         """
         return dataset
+
+    def prepare_output(
+        self, dataset: DashAIDataset, is_fit: bool = False
+    ) -> DashAIDataset:
+        """Hook for model-specific preprocessing of output targets.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The output dataset to be transformed.
+        is_fit : bool
+            Whether the dataset is for fitting or not.
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared output dataset.
+        """
+        return self.prepare_dataset(dataset, is_fit)

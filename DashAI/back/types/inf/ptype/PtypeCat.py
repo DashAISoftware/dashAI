@@ -148,7 +148,8 @@ class PtypeCat(Ptype):
             try:
                 vals = series.dropna().astype(float)
                 is_whole = np.allclose(vals, vals.astype(int))
-                if not is_whole and unique_count > 10:
+                # Real floats (with decimals) should never be categorical
+                if not is_whole:
                     return False
             except (ValueError, TypeError):
                 pass
