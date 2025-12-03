@@ -12,15 +12,16 @@ import {
   Grid,
   Typography,
   IconButton,
+  Box,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
+import { startJobPolling } from "../../utils/jobPoller";
+import { enqueuePredictionJob } from "../../api/job";
 import { renderStep } from "./renderStep";
-
-import { enqueuePredictionJob, startJobQueue } from "../../api/job";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
 function PredictionModal({
@@ -131,8 +132,29 @@ function PredictionModal({
         finalPredictionName,
       );
 
-      console.log("Prediction job response:", response);
       if (response?.id) {
+        startJobPolling(
+          response.id,
+          (result) => {
+            console.log("Prediction job completed successfully:", result);
+            enqueueSnackbar(
+              `Prediction "${predictName}" completed successfully`,
+              {
+                variant: "success",
+              },
+            );
+            updatePredictions();
+          },
+          (result) => {
+            console.error("Prediction job failed:", result);
+            enqueueSnackbar(
+              `Error processing prediction: ${result.error || "Unknown error"}`,
+              { variant: "error" },
+            );
+            updatePredictions();
+          },
+        );
+
         enqueueSnackbar("Prediction job enqueued successfully", {
           autoHideDuration: 2000,
           variant: "success",
@@ -145,8 +167,6 @@ function PredictionModal({
       }
 
       updatePredictions();
-
-      await startJobQueue();
     } catch (error) {
       console.error("Error submitting prediction job:", error);
       if (error.response) {
@@ -177,7 +197,7 @@ function PredictionModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}} // No cerrar automáticamente
       aria-labelledby="new-predict-dialog-title"
       aria-describedby="new-predict-dialog-description"
       scroll="paper"
@@ -188,56 +208,77 @@ function PredictionModal({
       }}
     >
       <DialogTitle>
-        <Grid container direction={"row"} alignItems={"center"}>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Grid
-              container
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Grid size={{ xs: 1 }}>
-                <IconButton
-                  edge="start"
-                  color="inherit"
-                  onClick={handleCloseDialog}
-                  sx={{ display: { xs: "flex", sm: "none" } }}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </Grid>
-              <Grid size={{ xs: 11 }}>
-                <Typography
-                  variant="h6"
-                  component="h3"
-                  align={matches ? "center" : "left"}
-                  sx={{ mb: { sm: 2, md: 0 } }}
-                >
-                  Create a New Prediction
-                </Typography>
+        <Box sx={{ position: "relative" }}>
+          <Grid container direction={"row"} alignItems={"center"}>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Grid
+                container
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Grid size={{ xs: 1 }}>
+                  <IconButton
+                    edge="start"
+                    color="inherit"
+                    onClick={handleCloseDialog}
+                    sx={{ display: { xs: "flex", sm: "none" } }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Grid>
+                <Grid size={{ xs: 11 }}>
+                  <Typography
+                    variant="h6"
+                    component="h3"
+                    align={matches ? "center" : "left"}
+                    sx={{ mb: { sm: 2, md: 0 } }}
+                  >
+                    Create a New Prediction
+                  </Typography>
+                </Grid>
               </Grid>
             </Grid>
-          </Grid>
-          <Grid size={{ xs: 12, md: 9 }}>
-            <Stepper
-              nonLinear
-              activeStep={activeStep}
-              sx={{ maxWidth: "100%" }}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Stepper
+                nonLinear
+                activeStep={activeStep}
+                sx={{ maxWidth: "100%" }}
+              >
+                {steps.map((step, index) => (
+                  <Step
+                    key={`${step.name}`}
+                    completed={activeStep > index}
+                    disabled={activeStep < index}
+                  >
+                    <StepButton
+                      color="inherit"
+                      onClick={handleStepButton(index)}
+                    >
+                      {step.label}
+                    </StepButton>
+                  </Step>
+                ))}
+              </Stepper>
+            </Grid>
+            <Grid
+              size={{ xs: 12, md: 1 }}
+              sx={{
+                display: { xs: "none", sm: "flex" },
+                justifyContent: "flex-end",
+              }}
             >
-              {steps.map((step, index) => (
-                <Step
-                  key={`${step.name}`}
-                  completed={activeStep > index}
-                  disabled={activeStep < index}
-                >
-                  <StepButton color="inherit" onClick={handleStepButton(index)}>
-                    {step.label}
-                  </StepButton>
-                </Step>
-              ))}
-            </Stepper>
+              <IconButton
+                onClick={handleCloseDialog}
+                sx={{
+                  color: (theme) => theme.palette.grey[500],
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Grid>
           </Grid>
-        </Grid>
+        </Box>
       </DialogTitle>
       <DialogContent dividers>
         {renderStep(

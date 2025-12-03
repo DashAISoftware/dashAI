@@ -1,6 +1,7 @@
 from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type, parse_string_to_list
+from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -63,12 +64,14 @@ class OneHotEncoderSchema(BaseSchema):
     )  # type: ignore
 
 
-class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
+class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     """Scikit-learn's OneHotEncoder wrapper for DashAI."""
 
     SCHEMA = OneHotEncoderSchema
     DESCRIPTION = "Encode categorical integer features as a one-hot numeric array."
+    CATEGORY = "Encoding"
     DISPLAY_NAME = "One-Hot Encoder"
+    IMAGE_PREVIEW = "one_hot_encoder.png"
 
     def __init__(self, **kwargs):
         self.categories = kwargs.pop("categories", "auto")

@@ -221,6 +221,8 @@ class MLPRegression(RegressionModel, SklearnLikeRegressor, _MLPregressor):
     """Scikit-learn's MLP Regression wrapper for DashAI."""
 
     SCHEMA = MLPRegressorSchema
+    DISPLAY_NAME: str = "Multi-layer Perceptron (MLP) Regression"
+    COLOR: str = "#FF7043"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

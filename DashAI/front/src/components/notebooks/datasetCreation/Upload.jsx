@@ -97,7 +97,7 @@ function Upload({ onFileUpload }) {
               <React.Fragment>
                 <Grid>
                   <Typography variant="subtitle1">
-                    Drag and drop a file here, or
+                    Click to upload your dataset file
                   </Typography>
                 </Grid>
                 <Grid>
@@ -154,6 +154,7 @@ function Upload({ onFileUpload }) {
               overflow: "auto",
               position: "relative",
             }}
+            data-tour="upload-area"
             // blocks the upload of a new file if the file state is not empty
             onClick={datasetState === EMPTY ? handleButtonClick : null}
             onDragEnter={datasetState === EMPTY ? handleDrag : null}

@@ -17,10 +17,6 @@ import { ExplorerStatus } from "../../types/explorer";
 import { getExplorersByExplorationId as getExplorersRequest } from "../../api/explorer";
 import { useExplorationsContext } from "./context";
 
-import {
-  enqueueExplorerJob as enqueueJobRequest,
-  startJobQueue as startJobQueueRequest,
-} from "../../api/job";
 import { formatDate } from "../../utils";
 
 /**
@@ -81,7 +77,6 @@ function ExplorationRunner({
     submitExecutions()
       .then(() => {
         getExplorers();
-        startJobQueueRequest(true); // true to stop when queue empties
       })
       .catch((error) => {
         console.log(error);
@@ -189,7 +184,7 @@ function ExplorationRunner({
         field: "last_modified",
         headerName: "Last Modified",
         flex: 1,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
     ],
     [explorerTypes],

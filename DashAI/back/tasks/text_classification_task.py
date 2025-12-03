@@ -6,13 +6,11 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.classification_task import ClassificationTask
 
 
-class TextClassificationTask(BaseTask):
+class TextClassificationTask(ClassificationTask):
     """Base class for Text Classification Task."""
-
-    COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
 
     metadata: dict = {
         "inputs_types": [Value],
@@ -27,6 +25,7 @@ class TextClassificationTask(BaseTask):
     based on their content. It serves as the foundation for applications like sentiment
     analysis, spam filtering, topic classification, and document categorization.
     """
+    DISPLAY_NAME: str = "Text Classification"
 
     def prepare_for_task(
         self, datasetdict: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]

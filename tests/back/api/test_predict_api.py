@@ -1,10 +1,10 @@
-import asyncio
 import json
 import os
 from pathlib import Path
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
@@ -17,10 +17,17 @@ from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
 from DashAI.back.optimizers import OptunaOptimizer
 from DashAI.back.tasks import BaseTask
+from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, dataset, output_columns):
         return dataset
@@ -64,6 +71,7 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             JSONDataLoader,
             ModelJob,
             OptunaOptimizer,
+            TabularClassificationTask,
         ]
     )
 
@@ -103,7 +111,7 @@ def create_dataset(client: TestClient):
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(json_dataset_entry)
 
@@ -150,7 +158,7 @@ def create_dataset_2(client: TestClient):
             "file_path": abs_file_path,
         }
         job = DatasetJob(job_type="DatasetJob", kwargs=kwargs, db=db)
-        asyncio.run(job.run())
+        job.run()
 
         db.refresh(csv_dataset_entry)
 
@@ -244,8 +252,9 @@ def create_trained_run(client: TestClient, run_id: int):
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Model job failed: {job_status}"
 
     return run_id
 
@@ -266,8 +275,9 @@ def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset)
     )
     assert response.status_code == 201, response.text
 
-    response = client.post("/api/v1/job/start/?stop_when_queue_empties=True")
-    assert response.status_code == 202, response.text
+    job_id = response.json()["id"]
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", f"Predict job failed: {job_status}"
 
     return kwargs["json_filename"] + ".json"
 

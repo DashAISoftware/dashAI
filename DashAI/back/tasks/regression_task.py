@@ -20,6 +20,8 @@ class RegressionTask(BaseTask):
     structured data organized in tabular form (rows and columns).
     Models are trained to learn patterns and relationships in the data,
     enabling accurate prediction of new instances."""
+    DISPLAY_NAME: str = "Regression"
+
     metadata: dict = {
         "inputs_types": [Value],
         "outputs_types": [Value],
@@ -45,3 +47,38 @@ class RegressionTask(BaseTask):
             Dataset with the new types
         """
         return to_dashai_dataset(datasetdict)
+
+    def process_predictions(self, dataset, predictions, output_column):
+        """Process the predictions
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        predictions : np.ndarray
+            Predictions from the model
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        Processed predictions
+        """
+        return predictions
+
+    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+        """Get the number of unique labels in the output column.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset used for training
+        output_column : str
+            Output column
+
+        Returns
+        -------
+        int | None
+            Number of unique labels or None if not applicable
+        """
+        return None

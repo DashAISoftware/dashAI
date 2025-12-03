@@ -13,6 +13,8 @@ import { deleteExperiment as deleteExperimentRequest } from "../../api/experimen
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
+import { useTourContext } from "../tour/TourProvider";
+import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
 
@@ -25,6 +27,8 @@ function ExperimentsTable({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
+  const tourContext = useTourContext();
+  const [tasks, setTasks] = useState([]);
 
   const datasetMap = React.useMemo(() => {
     return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
@@ -43,6 +47,18 @@ function ExperimentsTable({
     }
   };
 
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const components = await getComponents({ selectTypes: ["Task"] });
+        setTasks(components);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
+
   // Initialize running state when experiments change
   useEffect(() => {
     const initialRunningState = experiments.reduce((accumulator, current) => {
@@ -53,6 +69,15 @@ function ExperimentsTable({
 
   const handleDeleteExperiment = (id) => {
     deleteExperiment(id);
+  };
+
+  const handleNewExperiment = () => {
+    handleOpenNewExperimentModal();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
   };
 
   const columns = React.useMemo(
@@ -74,6 +99,10 @@ function ExperimentsTable({
         headerName: "Task",
         minWidth: 200,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "dataset_id",
@@ -138,8 +167,9 @@ function ExperimentsTable({
           <Grid container spacing={2}>
             <Grid>
               <Button
+                data-tour="new-experiment-button"
                 variant="contained"
-                onClick={handleOpenNewExperimentModal}
+                onClick={handleNewExperiment}
                 endIcon={<AddIcon />}
               >
                 New Experiment
@@ -160,6 +190,7 @@ function ExperimentsTable({
 
       {/* Experiments Table */}
       <DataGrid
+        data-tour="experiments-table"
         rows={experiments}
         columns={columns}
         initialState={{

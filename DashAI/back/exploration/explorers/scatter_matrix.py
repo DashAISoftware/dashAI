@@ -17,7 +17,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
 
 
 class ScatterMatrixSchema(BaseExplorerSchema):
@@ -33,7 +34,7 @@ class ScatterMatrixSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class ScatterMatrixExplorer(BaseExplorer):
+class ScatterMatrixExplorer(RelationshipExplorer):
     """
     ScatterMatrixExplorer is an explorer that returns a scatter matrix plot
     of selected columns of a dataset.
@@ -45,6 +46,7 @@ class ScatterMatrixExplorer(BaseExplorer):
         "of selected columns of a dataset. Multiple scatter plots are generated "
         "for each pair of columns. The diagonal plots are histograms of the columns. "
     )
+    IMAGE_PREVIEW = "scatter_matrix.png"
 
     SHORT_DESCRIPTION = "Display a scatter matrix plot of selected columns."
 

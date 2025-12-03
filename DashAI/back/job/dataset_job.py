@@ -4,17 +4,16 @@ import logging
 import os
 import shutil
 import uuid
-from typing import Any, Dict
+from pathlib import Path
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
 from DashAI.back.dependencies.database.models import Dataset, Notebook
-from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.base_job import BaseJob, JobError
 
 log = logging.getLogger(__name__)
@@ -37,37 +36,73 @@ class DatasetJob(BaseJob):
         - db: Database session
     """
 
-    def set_status_as_delivered(self) -> None:
+    @inject
+    def set_status_as_delivered(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+    ) -> None:
         """Set the status of the dataset as delivered."""
         dataset_id: int = self.kwargs["dataset_id"]
-        db: Session = self.kwargs["db"]
+        with session_factory() as db:
+            dataset: Dataset = db.get(Dataset, dataset_id)
 
-        dataset: Dataset = db.get(Dataset, dataset_id)
+            if dataset is None:
+                raise JobError(f"Dataset with id {dataset_id} not found.")
 
-        if dataset is None:
-            raise JobError(f"Dataset with id {dataset_id} not found.")
-
-        try:
-            dataset.set_status_as_delivered()
-            db.commit()
-        except exc.SQLAlchemyError as e:
-            log.exception(e)
-            raise JobError(
-                "Error while setting the status of the dataset as delivered."
-            ) from e
+            try:
+                dataset.set_status_as_delivered()
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+                raise JobError(
+                    "Error while setting the status of the dataset as delivered."
+                ) from e
 
     @inject
-    async def run(
-        self,
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
-        session_factory: sessionmaker = lambda di: di["session_factory"],
-        config: Dict[str, Any] = lambda di: di["config"],
+    def set_status_as_error(
+        self, session_factory: sessionmaker = lambda di: di["session_factory"]
     ) -> None:
-        log.debug("Starting dataset creation process.")
+        """Set the job status as error."""
+        dataset_id: int = self.kwargs["dataset_id"]
+        with session_factory() as db:
+            dataset: Dataset = db.get(Dataset, dataset_id)
+
+            if dataset is None:
+                raise JobError(f"Dataset with id {dataset_id} not found.")
+
+            try:
+                dataset.set_status_as_error()
+                db.commit()
+            except exc.SQLAlchemyError as e:
+                log.exception(e)
+                raise JobError(
+                    "Error while setting the status of the dataset as error."
+                ) from e
+
+    def get_job_name(self) -> str:
+        """Get a descriptive name for the job."""
+        name = self.kwargs.get("name", "")
+        if name:
+            return f"Dataset: {name}"
+
+        params = self.kwargs.get("params", {})
+        if params and isinstance(params, dict) and "name" in params:
+            return f"Dataset: {params['name']}"
+        return "Dataset load"
+
+    @inject
+    def run(
+        self,
+    ) -> None:
+        from kink import di
+
+        component_registry = di["component_registry"]
+        session_factory = di["session_factory"]
+        config = di["config"]
 
         dataset_id = self.kwargs.get("dataset_id")
         notebook_id = self.kwargs.get("notebook_id", None)
         params = self.kwargs.get("params", {})
+        n_sample = self.kwargs.get("n_sample", None)
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
         url = self.kwargs.get("url", "")
@@ -82,17 +117,20 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
-            random_name = str(uuid.uuid4())
-            folder_path = config["DATASETS_PATH"] / random_name
+            if n_sample and dataset.file_path != "":
+                folder_path = Path(dataset.file_path)
+            else:
+                random_name = str(uuid.uuid4())
+                folder_path: Path = config["DATASETS_PATH"] / random_name
 
-            try:
-                log.debug("Trying to create a new dataset path: %s", folder_path)
-                folder_path.mkdir(parents=True)
-            except FileExistsError as e:
-                log.exception(e)
-                raise JobError(
-                    f"A dataset with the name {random_name} already exists."
-                ) from e
+                try:
+                    log.debug("Trying to create a new dataset path: %s", folder_path)
+                    folder_path.mkdir(parents=True)
+                except FileExistsError as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"A dataset with the name {random_name} already exists."
+                    ) from e
 
             try:
                 if notebook_id is not None:
@@ -124,10 +162,11 @@ class DatasetJob(BaseJob):
                         ),
                         temp_path=str(temp_dir),
                         params=parsed_params.model_dump(),
+                        n_sample=n_sample,
                     )
 
-                # Calculate nan per column
-                new_dataset.nan_per_column()
+                # Calculate metadata
+                new_dataset.compute_metadata()
                 gc.collect()
 
                 dataset_save_path = folder_path / "dataset"

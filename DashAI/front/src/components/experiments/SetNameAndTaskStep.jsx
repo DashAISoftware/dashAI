@@ -8,6 +8,8 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 
+import { useTourContext } from "../tour/TourProvider";
+
 function SetNameAndTaskStep({
   newExp,
   setNewExp,
@@ -21,14 +23,11 @@ function SetNameAndTaskStep({
   const [nModifications, setNModifications] = useState(0);
   const [expNameOk, setExpNameOk] = useState(true);
   const [expNameError, setExpNameError] = useState(false);
+  const tourContext = useTourContext();
 
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
   const [taskNameOk, setTaskNameOk] = useState(false);
-
-  // useEffect(() => {
-  //   handleNameInputChange({ target: { value: defaultExperimentName } });
-  // }, [defaultExperimentName]);
 
   const getTasks = async () => {
     setLoading(true);
@@ -120,11 +119,25 @@ function SetNameAndTaskStep({
         runs: [],
       });
       setTaskNameOk(true);
+
+      if (tourContext && tourContext.run) {
+        if (selectedTask.name === "TabularClassificationTask") {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 300);
+        }
+      }
     }
   }, [selectedTask]);
 
   useEffect(() => {
-    if (defaultExperimentName && !newExp?.name) {
+    if (tourContext && tourContext.run) {
+      setNewExp((prev) => ({
+        ...prev,
+        name: "Exp actividad 2",
+      }));
+      setExpNameOk(true);
+    } else if (defaultExperimentName && !newExp?.name) {
       setNewExp((prev) => ({ ...prev, name: defaultExperimentName }));
       setExpNameOk(true);
     }
@@ -158,6 +171,7 @@ function SetNameAndTaskStep({
 
         <TextField
           id="experiment-name-input"
+          data-tour="experiment-name-input"
           label="Experiment name"
           value={newExp.name}
           fullWidth
@@ -171,7 +185,7 @@ function SetNameAndTaskStep({
         />
       </Grid>
       {/* Tasks Subcomponent */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12 }} data-tour="exp-task-selector">
         <Grid>
           {/* Tasks list and description */}
           {!loading ? (
@@ -195,8 +209,8 @@ SetNameAndTaskStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

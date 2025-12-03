@@ -19,7 +19,7 @@ test_requirements = load_requirements("requirements-dev.txt")
 
 setup(
     name="DashAI",
-    version="0.2.6",
+    version="0.3.0",
     license="MIT",
     description=(
         "DashAI: a graphical toolbox for training, evaluating and deploying "
@@ -39,9 +39,6 @@ setup(
     python_requires=">=3.10",
     install_requires=requirements,
     test_require=test_requirements,
-    extras_require={
-        "full": ["llama-cpp-python==0.2.90"],
-    },
     classifiers=[
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -50,8 +47,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "dashai = DashAI:run",
-            "DashAI = DashAI:run",
+            "dashai = DashAI.runner:main",
+            "DashAI = DashAI.runner:main",
         ]
     },
 )

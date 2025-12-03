@@ -2,6 +2,7 @@ from sklearn.kernel_approximation import (
     AdditiveChi2Sampler as AdditiveChi2SamplerOperation,
 )
 
+from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     float_field,
@@ -25,7 +26,9 @@ class AdditiveChi2SamplerSchema(BaseSchema):
     )  # type: ignore
 
 
-class AdditiveChi2Sampler(SklearnWrapper, AdditiveChi2SamplerOperation):
+class AdditiveChi2Sampler(
+    PolynomialKernelConverter, SklearnWrapper, AdditiveChi2SamplerOperation
+):
     """Scikit-learn's AdditiveChi2Sampler wrapper for DashAI."""
 
     SCHEMA = AdditiveChi2SamplerSchema
@@ -33,4 +36,6 @@ class AdditiveChi2Sampler(SklearnWrapper, AdditiveChi2SamplerOperation):
         "Uses sampling the fourier transform of the kernel characteristic "
         "at regular intervals."
     )
+    CATEGORY = "Polynomial & Kernel Methods"
     DISPLAY_NAME = "Additive Chi² Sampler"
+    IMAGE_PREVIEW = "additive_chi2_sampler.png"

@@ -13,13 +13,14 @@ function ItemSelectorWithInfo({
   selectedItem,
   setSelectedItem,
   disabled,
+  ...props
 }) {
   // Display images that help to describe the item selected by the user
   const displayImages = (images) => {
     const imageElements = images.map((img, i) => (
       <img
         src={img}
-        alt={`${selectedItem.name} info ${i}`}
+        alt={`${selectedItem.display_name || selectedItem.name} info ${i}`}
         key={img}
         style={{ borderRadius: "10px", maxWidth: "400px" }}
       />
@@ -72,7 +73,7 @@ function ItemSelectorWithInfo({
               <>
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" sx={{ mb: 4 }}>
-                    {selectedItem.name}
+                    {selectedItem.display_name || selectedItem.name}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12 }}>

@@ -2,7 +2,6 @@ import os
 import pathlib
 
 import plotly.express as px
-import plotly.io as pio
 from beartype.typing import Any, Dict
 from plotly.graph_objs import Figure
 
@@ -11,7 +10,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.relationship_explorer import RelationshipExplorer
 
 
 class DensityHeatmapSchema(BaseExplorerSchema):
@@ -27,7 +27,7 @@ class DensityHeatmapSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class DensityHeatmapExplorer(BaseExplorer):
+class DensityHeatmapExplorer(RelationshipExplorer):
     """
     DensityHeatmapExplorer is an explorer that returns a density heatmap
     of selected columns of a dataset.
@@ -38,6 +38,7 @@ class DensityHeatmapExplorer(BaseExplorer):
         "DensityHeatmapExplorer is an explorer that returns a density heatmap "
         "of selected columns of a dataset."
     )
+    IMAGE_PREVIEW = "density_heatmap.png"
 
     SCHEMA = DensityHeatmapSchema
     metadata: Dict[str, Any] = {
@@ -88,7 +89,7 @@ class DensityHeatmapExplorer(BaseExplorer):
         resultType = "plotly_json"
         config = {}
 
-        result = pio.read_json(exploration_path)
-        result = result.to_json()
+        with open(exploration_path, "r", encoding="utf-8") as f:
+            result = f.read()
 
         return {"data": result, "type": resultType, "config": config}

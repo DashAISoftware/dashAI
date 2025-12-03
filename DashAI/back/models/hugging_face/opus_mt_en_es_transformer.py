@@ -4,7 +4,6 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
-import torch
 from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from transformers import (
@@ -23,13 +22,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.models.translation_model import TranslationModel
-
-if torch.cuda.is_available():
-    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
-    DEVICE_PLACEHOLDER = "cuda:0"
-else:
-    DEVICE_ENUM = ["cpu"]
-    DEVICE_PLACEHOLDER = "cpu"
+from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -53,10 +46,11 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         description="The initial learning rate for AdamW optimizer",
     )  # type: ignore
     device: schema_field(
-        enum_field(enum=DEVICE_ENUM),
-        placeholder=DEVICE_PLACEHOLDER,
+        enum_field(enum=GPU_OR_CPU),
+        placeholder=GPU_OR_CPU_PLACEHOLDER,
         description="Hardware on which the training is run. If available, GPU is "
-        "recommended for efficiency reasons. Otherwise, use CPU.",
+        "recommended for efficiency reasons. Otherwise, use CPU. "
+        "If GPU is selected then it will use all gpus available. ",
     )  # type: ignore
     weight_decay: schema_field(
         float_field(ge=0.0),
@@ -75,6 +69,8 @@ class OpusMtEnESTransformer(TranslationModel):
     """
 
     SCHEMA = OpusMtEnESTransformerSchema
+    DISPLAY_NAME: str = "Opus MT En-Es Transformer"
+    COLOR: str = "#FFA500"
 
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer.
@@ -88,7 +84,7 @@ class OpusMtEnESTransformer(TranslationModel):
         if model is None:
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
-            self.device = kwargs.pop("device", "gpu")
+            self.device = kwargs.pop("device")
         self.model = (
             model
             if model is not None
@@ -111,38 +107,36 @@ class OpusMtEnESTransformer(TranslationModel):
         Dataset
             Dataset with the processed data.
         """
-        is_y = bool(y)
-        if not y:
-            y = Dataset.from_list([{"foo": 0}] * len(x))
+        is_y = y is not None
         dataset = []
         input_column_name = x.column_names[0]
-        output_column_name = y.column_names[0]
+        output_column_name = y.column_names[0] if is_y else None
 
-        for input_sample, output_sample in zip(x, y):
+        for i, input_sample in enumerate(x):
             tokenized_input = self.tokenizer(
                 input_sample[input_column_name],
                 truncation=True,
                 padding="max_length",
                 max_length=512,
             )
-            tokenized_output = (
-                self.tokenizer(
+
+            sample = {
+                "input_ids": tokenized_input["input_ids"],
+                "attention_mask": tokenized_input["attention_mask"],
+            }
+
+            if is_y:
+                output_sample = y[i]
+                tokenized_output = self.tokenizer(
                     output_sample[output_column_name],
                     truncation=True,
                     padding="max_length",
                     max_length=512,
                 )
-                if is_y
-                else None
-            )
-            sample = {
-                "input_ids": tokenized_input["input_ids"],
-                "attention_mask": tokenized_input["attention_mask"],
-                "labels": (
-                    tokenized_output["input_ids"] if is_y else y[output_column_name]
-                ),
-            }
+                sample["labels"] = tokenized_output["input_ids"]
+
             dataset.append(sample)
+
         return Dataset.from_list(dataset)
 
     def fit(self, x_train: Dataset, y_train: Dataset):
@@ -166,7 +160,7 @@ class OpusMtEnESTransformer(TranslationModel):
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
-            use_cpu=self.device != "gpu",
+            use_cpu=self.device.lower() != "gpu",
             **self.training_args,
         )
 

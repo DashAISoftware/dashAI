@@ -1,6 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Dialog, DialogTitle, Divider, Grid } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  Box,
+} from "@mui/material";
+import { Close } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import CustomLayout from "../../../components/custom/CustomLayout";
@@ -46,7 +54,25 @@ function ResultsDialogLayout({
         },
       }}
     >
-      <DialogTitle>{`Experiment ${experiment.name} results`}</DialogTitle>
+      <DialogTitle>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {`Experiment ${experiment.name} results`}
+          <IconButton
+            onClick={handleOnClose}
+            sx={{
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <Close />
+          </IconButton>
+        </Box>
+      </DialogTitle>
       <Divider />
       <ResultsDialogViews
         showTable={showTable}
@@ -54,7 +80,7 @@ function ResultsDialogLayout({
         handleShowGraphs={handleShowGraphs}
       />
       <Divider />
-      <Grid size={{ xs: 10 }}>
+      <Grid size={{ xs: 10 }} data-tour="exp-results-metrics">
         <CustomLayout>
           {showTable ? (
             <ResultsTable experimentId={experiment.id.toString()} />

@@ -13,6 +13,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 
+import { useTourContext } from "../tour/TourProvider";
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 import { formatDate } from "../../utils";
 
@@ -49,6 +50,11 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [loading, setLoading] = useState(true);
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
+  const tourContext = useTourContext();
+
+  useEffect(() => {
+    setNewExp({ ...newExp, input_columns: [], output_columns: [] });
+  }, []);
 
   const getDatasets = async () => {
     setLoading(true);
@@ -101,6 +107,11 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       );
       setNewExp({ ...newExp, dataset });
       setNextEnabled(true);
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 300);
+      }
     }
   }, [datasetsSelected]);
 
@@ -134,7 +145,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           <Typography></Typography>
         </React.Fragment>
       )}
-      <Paper>
+      <Paper data-tour="exp-dataset-selector">
         <DataGrid
           rows={datasets}
           columns={columns}
@@ -166,8 +177,8 @@ SelectDatasetStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

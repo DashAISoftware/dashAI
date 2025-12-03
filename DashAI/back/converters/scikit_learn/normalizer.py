@@ -1,5 +1,8 @@
 from sklearn.preprocessing import Normalizer as NormalizerOperation
 
+from DashAI.back.converters.category.scaling_and_normalization import (
+    ScalingAndNormalizationConverter,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import bool_field, enum_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -19,9 +22,11 @@ class NormalizerSchema(BaseSchema):
     )  # type: ignore
 
 
-class Normalizer(SklearnWrapper, NormalizerOperation):
+class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOperation):
     """Scikit-learn's Normalizer wrapper for DashAI."""
 
     SCHEMA = NormalizerSchema
     DESCRIPTION = "Normalize samples individually to unit norm."
+    CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Normalizer"
+    IMAGE_PREVIEW = "normalizer.png"

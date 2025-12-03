@@ -97,25 +97,23 @@ function FormSchemaFieldsWithOptions({
   }, [selectedType, field.value, fieldProps.paramJsonSchema]);
 
   return (
-    <>
-      <Box display="flex" gap={2}>
-        <Box flex={1}>
-          <FormSchemaField {...fieldProps} error={errorField} />
-        </Box>
-        <Box pt={2.5}>
-          {selectedType && (
-            <SingleSelectChipGroup
-              options={options.map(({ type }) => ({
-                key: type,
-                label: typesLabels[type],
-              }))}
-              onChange={(type) => handleTypeChange(type)}
-              selected={selectedType}
-            />
-          )}
-        </Box>
+    <Box display="flex" gap={2} width={"100%"}>
+      <Box flex={1}>
+        <FormSchemaField {...fieldProps} error={errorField} />
       </Box>
-    </>
+      <Box pt={2.5}>
+        {selectedType && (
+          <SingleSelectChipGroup
+            options={options.map(({ type }) => ({
+              key: type,
+              label: typesLabels[type],
+            }))}
+            onChange={(type) => handleTypeChange(type)}
+            selected={selectedType}
+          />
+        )}
+      </Box>
+    </Box>
   );
 }
 

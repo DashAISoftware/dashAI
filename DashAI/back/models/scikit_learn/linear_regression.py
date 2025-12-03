@@ -47,6 +47,8 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     """Scikit-learn's Linear Regression wrapper for DashAI."""
 
     SCHEMA = LinearRegressionSchema
+    DISPLAY_NAME: str = "Linear Regression"
+    COLOR: str = "#3F51B5"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

@@ -7,20 +7,30 @@ import {
   Chip,
   IconButton,
   CircularProgress,
+  Button,
 } from "@mui/material";
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
 import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
+import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
+import { useExplorerResults } from "./useExplorerResults";
 
 export default function ExplorerBox({
   explorer,
-  handleExplorerDetailsClick,
   handleExplorerDeleteClick,
   onStatusChange,
 }) {
   const [explorerComponent, setExplorerComponent] = useState({});
+  const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
+  const { loading, data, dataType, setData } = useExplorerResults(explorer);
+
+  const statusLabel = getExplorerStatus(explorer.status);
+
+  const handleExplorerDetailsClick = () => {
+    setOpenExplorerDetails(true);
+  };
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -65,12 +75,11 @@ export default function ExplorerBox({
     return () => clearInterval(intervalId);
   }, [explorer.id, explorer.status, onStatusChange]);
 
-  const statusLabel = getExplorerStatus(explorer.status);
-
   return (
     <Card
       key={explorer.id}
       sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      className="explorer-box"
     >
       <CardContent
         sx={{
@@ -100,21 +109,22 @@ export default function ExplorerBox({
               color={statusLabel === "Finished" ? "primary" : "default"}
               size="small"
             />
-            {statusLabel === "Finished" && (
-              <>
-                <IconButton
-                  size="small"
+            <>
+              {statusLabel === "Finished" && (
+                <Chip
+                  label={dataType === "plotly_json" ? "Info/Edit" : "Info"}
                   onClick={() => handleExplorerDetailsClick(explorer)}
+                  size="small"
+                  icon={<Info sx={{ color: "white !important" }} />}
                   sx={{
-                    color: "white",
-                    width: 24,
-                    height: 24,
                     bgcolor: "primary.main",
-                    "&:hover": { bgcolor: "primary.dark" },
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                    },
                   }}
-                >
-                  <Info sx={{ fontSize: 16 }} />
-                </IconButton>
+                />
+              )}
+              {(statusLabel === "Error" || statusLabel === "Finished") && (
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDeleteClick(explorer)}
@@ -127,8 +137,8 @@ export default function ExplorerBox({
                 >
                   <Delete sx={{ fontSize: 16 }} />
                 </IconButton>
-              </>
-            )}
+              )}
+            </>
           </Box>
         </Box>
 
@@ -143,7 +153,14 @@ export default function ExplorerBox({
               overflow: "hidden",
             }}
           >
-            <TabResults id={explorer.id} minimalist height={300} />
+            <TabResults
+              id={explorer.id}
+              minimalist
+              height={300}
+              data={data}
+              loading={loading}
+              dataType={dataType}
+            />
           </Box>
         ) : statusLabel === "Error" ? (
           <Box
@@ -178,6 +195,19 @@ export default function ExplorerBox({
             <CircularProgress size={24} sx={{ mr: 1 }} />
             <Typography>Processing...</Typography>
           </Box>
+        )}
+        {openExplorerDetails && (
+          <ExplorerDetailsModal
+            open={openExplorerDetails}
+            onClose={() => {
+              setOpenExplorerDetails(false);
+            }}
+            explorer={explorer}
+            data={data}
+            dataType={dataType}
+            loading={loading}
+            setData={setData}
+          />
         )}
       </CardContent>
     </Card>

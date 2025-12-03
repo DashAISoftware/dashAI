@@ -9,6 +9,8 @@ from DashAI.back.metrics.base_metric import BaseMetric
 class ClassificationMetric(BaseMetric):
     """Class for metrics associated to classification models."""
 
+    MAXIMIZE: bool = True
+
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "ImageClassificationTask",

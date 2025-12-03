@@ -3,8 +3,11 @@ from sklearn.tree import DecisionTreeClassifier as _DecisionTreeClassifier
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
+    float_field,
+    none_type,
     optimizer_int_field,
     schema_field,
+    union_type,
 )
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
@@ -57,10 +60,13 @@ class DecisionTreeClassifierSchema(BaseSchema):
         description="The minimum number of samples required to be at a leaf node.",
     )  # type: ignore
     max_features: schema_field(
-        enum_field(enum=["auto", "sqrt", "log2"]),
+        none_type(
+            union_type(enum_field(enum=["sqrt", "log2"]), float_field(gt=0.0, le=1.0))
+        ),
         placeholder=None,
         description="The number of features to consider when looking for the best "
-        "split.",
+        "split. If float, then max_features is a percentage of "
+        "the total number of features.",
     )  # type: ignore
 
 
@@ -70,6 +76,8 @@ class DecisionTreeClassifier(
     """Scikit-learn's Decision Tree Classifier wrapper for DashAI."""
 
     SCHEMA = DecisionTreeClassifierSchema
+    DISPLAY_NAME: str = "Decision Tree"
+    COLOR: str = "#4CAF50"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

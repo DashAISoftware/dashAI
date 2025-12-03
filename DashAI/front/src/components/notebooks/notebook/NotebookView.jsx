@@ -7,16 +7,15 @@ import {
 } from "../../../api/notebook";
 import ExplorerBox from "../explorer/ExplorerBox";
 import ConverterBox from "../converter/ConverterBox";
-import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 import ItemsToDeleteList from "../converter/ItemsToDeleteList";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { deleteExplorer } from "../../../api/explorer";
 import { deleteConverterById } from "../../../api/converter";
+import { startJobPolling } from "../../../utils/jobPoller";
 
 const RowItem = React.memo(function RowItem({
   item,
-  handleExplorerDetailsClick,
   handleExplorerDeleteClick,
   handleConverterDeleteClick,
   handleStatusChange,
@@ -31,7 +30,6 @@ const RowItem = React.memo(function RowItem({
       {item.type === "explorer" ? (
         <ExplorerBox
           explorer={item}
-          handleExplorerDetailsClick={handleExplorerDetailsClick}
           handleExplorerDeleteClick={handleExplorerDeleteClick}
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
@@ -64,8 +62,6 @@ export default function NotebookView({ notebook }) {
 
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
-  const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
-  const [selectedExplorer, setSelectedExplorer] = useState(null);
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -108,7 +104,6 @@ export default function NotebookView({ notebook }) {
 
       if (converterIndex === -1) return [];
 
-      // Todos los items desde el converter en adelante (incluyendo el converter)
       return explorersAndConverters.slice(converterIndex);
     },
     [explorersAndConverters],
@@ -117,11 +112,6 @@ export default function NotebookView({ notebook }) {
   useEffect(() => {
     fetchExplorersAndConverters();
   }, [fetchExplorersAndConverters]);
-
-  const handleExplorerDetailsClick = useCallback((explorer) => {
-    setSelectedExplorer(explorer);
-    setOpenExplorerDetails(true);
-  }, []);
 
   const handleExplorerDeleteClick = useCallback((explorer) => {
     setExplorerToDelete(explorer);
@@ -167,21 +157,26 @@ export default function NotebookView({ notebook }) {
   }, [explorerToDelete, setExplorersAndConverters]);
 
   const handleConfirmConverterDelete = useCallback(async () => {
-    if (converterToDelete) {
-      try {
-        await deleteConverterById(converterToDelete.id);
-
-        await fetchExplorersAndConverters();
-
-        setOpenDeleteConverterConfirmation(false);
-        setConverterToDelete(null);
-        setDeleteModalContent("");
-        setItemsToDelete([]);
-      } catch (error) {
-        console.error("Failed to delete converter:", error);
+    if (!converterToDelete) return;
+    try {
+      const jobId = await deleteConverterById(converterToDelete.id);
+      setOpenDeleteConverterConfirmation(false);
+      setConverterToDelete(null);
+      setDeleteModalContent("");
+      setItemsToDelete([]);
+      if (jobId) {
+        startJobPolling(
+          jobId,
+          () => fetchExplorersAndConverters(),
+          () => fetchExplorersAndConverters(),
+        );
+      } else {
+        fetchExplorersAndConverters();
       }
+    } catch (error) {
+      console.error("Failed to delete converter:", error);
     }
-  }, [converterToDelete, setExplorersAndConverters]);
+  }, [converterToDelete, fetchExplorersAndConverters]);
 
   const handleCancelDelete = useCallback(() => {
     setOpenDeleteExplorerConfirmation(false);
@@ -221,9 +216,11 @@ export default function NotebookView({ notebook }) {
   return (
     <Box
       sx={{
+        className: "explorer-converter-box",
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        overflow: "auto",
       }}
     >
       {explorersAndConverters.length === 0 ? (
@@ -247,7 +244,6 @@ export default function NotebookView({ notebook }) {
           itemContent={(index, item) => (
             <RowItem
               item={item}
-              handleExplorerDetailsClick={handleExplorerDetailsClick}
               handleExplorerDeleteClick={handleExplorerDeleteClick}
               handleConverterDeleteClick={handleConverterDeleteClick}
               handleStatusChange={handleStatusChange}
@@ -255,14 +251,7 @@ export default function NotebookView({ notebook }) {
           )}
         />
       )}
-      <ExplorerDetailsModal
-        open={openExplorerDetails}
-        onClose={() => {
-          setOpenExplorerDetails(false);
-          setSelectedExplorer(null);
-        }}
-        explorer={selectedExplorer}
-      />
+
       <DeleteConfirmationModal
         open={openDeleteExplorerConfirmation}
         onClose={handleCancelDelete}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 
 import NewExperimentModal from "../../components/experiments/NewExperimentModal";
@@ -7,6 +7,9 @@ import CustomLayout from "../../components/custom/CustomLayout";
 import { useLocation } from "react-router-dom";
 import { getExperiments as getExperimentsRequest } from "../../api/experiment";
 import { getDatasets } from "../../api/datasets";
+import { TourProvider } from "../../components/tour/TourProvider";
+import { TourButton } from "../../components/tour/TourButton";
+import { TOUR_KEYS } from "../../constants/tours";
 
 function ExperimentsPage() {
   const location = useLocation();
@@ -56,33 +59,36 @@ function ExperimentsPage() {
   }, [updateTableFlag]);
 
   return (
-    <CustomLayout
-      title="Experiments Module"
-      subtitle="Configure experiments to train models"
-    >
-      {/* New experiment Modal */}
-      {!loading && (
-        <NewExperimentModal
-          open={showNewExperimentModal}
-          setOpen={setShowNewExperimentModal}
-          updateExperiments={() => setUpdateTableFlag(true)}
-          preselectedDataset={dataset}
-          setPreselectedDataset={setDataset}
-          existingExperiments={experiments}
-        />
-      )}
+    <TourProvider tourKey={TOUR_KEYS.EXPERIMENTS}>
+      <CustomLayout
+        title="Experiments Module"
+        subtitle="Configure experiments to train models"
+      >
+        {/* New experiment Modal */}
+        {!loading && (
+          <NewExperimentModal
+            open={showNewExperimentModal}
+            setOpen={setShowNewExperimentModal}
+            updateExperiments={() => setUpdateTableFlag(true)}
+            preselectedDataset={dataset}
+            setPreselectedDataset={setDataset}
+            existingExperiments={experiments}
+          />
+        )}
 
-      {/* Experiment table */}
-      <ExperimentsTable
-        handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
-        updateTableFlag={updateTableFlag}
-        setUpdateTableFlag={setUpdateTableFlag}
-        experiments={experiments}
-        datasets={datasets}
-        loading={loading}
-        onUpdateExperiments={getExperiments}
-      />
-    </CustomLayout>
+        <ExperimentsTable
+          handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
+          updateTableFlag={updateTableFlag}
+          setUpdateTableFlag={setUpdateTableFlag}
+          experiments={experiments}
+          datasets={datasets}
+          loading={loading}
+          onUpdateExperiments={getExperiments}
+        />
+      </CustomLayout>
+
+      <TourButton tourKey={TOUR_KEYS.EXPERIMENTS} />
+    </TourProvider>
   );
 }
 

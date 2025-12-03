@@ -7,6 +7,7 @@ import {
   Typography,
   Button,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
@@ -17,11 +18,13 @@ import { getDatasetFile } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetPreviewNotebook({
   notebook,
   handleAddDatasetFromNotebook,
   existingDatasets = [],
+  onAccordionChange,
 }) {
   if (!notebook) {
     return (
@@ -38,11 +41,21 @@ export default function DatasetPreviewNotebook({
       </Box>
     );
   }
+
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
+  const tourContext = useTourContext();
+
+  const getDatasetName = () => {
+    if (!notebook.dataset_id || !existingDatasets.length) {
+      return "Dataset";
+    }
+    const dataset = existingDatasets.find((d) => d.id === notebook.dataset_id);
+    return dataset ? dataset.name : "Dataset";
+  };
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -60,45 +73,45 @@ export default function DatasetPreviewNotebook({
         const response = await getConvertersByNotebookId(notebook.id);
         setConverters(response);
 
-        // Check if any converters are in a pending state (status < 3)
         const isPollingNeeded = response.some(
           (converter) => converter.status < 3,
         );
 
         if (isPollingNeeded) {
-          // If polling is needed, start the interval
           if (!intervalId) {
-            intervalId = setInterval(fetchConverters, 2000); // Poll every 2 seconds
+            intervalId = setInterval(fetchConverters, 2000);
           }
         } else {
-          // If all converters are in a final state, clear the interval
           clearInterval(intervalId);
         }
       } catch (error) {
         console.error("Error fetching converters:", error);
-        clearInterval(intervalId); // Clear interval on error
+        clearInterval(intervalId);
       }
     };
 
     fetchConverters();
 
-    // Cleanup function to clear the interval when the component unmounts
-    // or when the dependencies change
     return () => {
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
 
   return (
-    <Box
-      sx={{
-        mb: 2,
-      }}
-    >
+    <Box>
       <Accordion
-        width="100%"
-        sx={{ bgcolor: "#212121", borderRadius: 2, boxShadow: "none" }}
+        data-tour="dataset-preview-section"
+        sx={{
+          bgcolor: "#212121",
+          borderRadius: 2,
+          boxShadow: "none",
+        }}
         defaultExpanded={true}
+        onChange={(event, expanded) => {
+          if (onAccordionChange) {
+            onAccordionChange(expanded);
+          }
+        }}
       >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
@@ -106,6 +119,10 @@ export default function DatasetPreviewNotebook({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            transition: "background-color 0.2s ease",
+            "&:hover": {
+              bgcolor: "rgba(255, 255, 255, 0.05)",
+            },
             "& .MuiAccordionSummary-content": {
               flexGrow: 1,
               display: "flex",
@@ -115,9 +132,10 @@ export default function DatasetPreviewNotebook({
             },
           }}
         >
-          <Typography variant="h6">Dataset Preview</Typography>
+          <Typography variant="h6">
+            Notebook: {getDatasetName()} Preview
+          </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* Save Dataset Button */}
             <Button
               variant="contained"
               size="small"
@@ -125,8 +143,12 @@ export default function DatasetPreviewNotebook({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSaveDatasetModal(true);
+                if (tourContext && tourContext.run) {
+                  setTimeout(() => {
+                    tourContext.nextStep();
+                  }, 500);
+                }
               }}
-              disabled={false}
               sx={{
                 fontSize: "0.7rem",
                 px: 1.5,
@@ -134,6 +156,7 @@ export default function DatasetPreviewNotebook({
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
+              className="save-dataset-button"
             >
               Save as new Dataset
             </Button>
@@ -149,58 +172,47 @@ export default function DatasetPreviewNotebook({
             </IconButton>
           </Box>
         </AccordionSummary>
+
         <AccordionDetails>
-          <Box sx={{ height: 345, width: "100%" }}>
-            {" "}
-            {/* Table */}
+          <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}
               deps={[notebook.file_path]}
               initialPageSize={5}
               density="compact"
               datasetPath={notebook.file_path}
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 5,
-                  },
-                },
-              }}
-              pageSizeOptions={[5]}
-              autoHeight={false}
+              pageSizeOptions={[5, 10, 25]}
+              autoHeight={true}
+              disableColumnSelector
               disableDensitySelector
-              componentsProps={{
-                noRowsOverlay: {
-                  style: { height: "100%" },
-                },
-              }}
               sx={{
-                height: "100%",
-                "& .MuiDataGrid-virtualScroller": {
-                  "overflow-y": "hidden",
+                "& .MuiTablePagination-select": {
+                  display: "none",
                 },
-                "& .MuiDataGrid-overlay": {
-                  height: "100%",
+                "& .MuiTablePagination-selectLabel": {
+                  display: "none",
                 },
               }}
-            />{" "}
+            />
           </Box>
         </AccordionDetails>
       </Accordion>
+
       <SaveDatasetModal
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
         onSaveDataset={handleAddDatasetFromNotebook}
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,
-        )} // Only show finished converters
+        )}
         existingDatasets={existingDatasets}
       />
+
       <NotebookHistoryModal
         open={showNotebookHistoryModal}
         onClose={() => setShowNotebookHistoryModal(false)}
         notebook={notebook}
-        converters={converters.filter((converter) => converter.status === 3)} // Only show finished converters
+        converters={converters.filter((converter) => converter.status === 3)}
       />
     </Box>
   );

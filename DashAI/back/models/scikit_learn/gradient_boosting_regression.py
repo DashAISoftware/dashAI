@@ -4,6 +4,7 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
     enum_field,
+    float_field,
     none_type,
     optimizer_float_field,
     optimizer_int_field,
@@ -24,7 +25,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     learning_rate: schema_field(
-        optimizer_float_field(gt=0.0),
+        optimizer_float_field(ge=0.01),
         placeholder={
             "optimize": False,
             "fixed_value": 0.1,
@@ -46,7 +47,7 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     subsample: schema_field(
-        optimizer_float_field(gt=0.0, le=1.0),
+        optimizer_float_field(ge=0.1, le=1.0),
         placeholder={
             "optimize": False,
             "fixed_value": 1.0,
@@ -86,13 +87,8 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     min_weight_fraction_leaf: schema_field(
-        optimizer_float_field(ge=0.0, le=0.5),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.0,
-            "lower_bound": 0.0,
-            "upper_bound": 0.5,
-        },
+        float_field(ge=0.0, le=0.5),
+        placeholder=0.0,
         description="The minimum weighted fraction of the sum total of weights"
         " (of all the input samples) required to be at a leaf node.",
     )  # type: ignore
@@ -104,13 +100,8 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     min_impurity_decrease: schema_field(
-        optimizer_float_field(ge=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.0,
-            "lower_bound": 0.0,
-            "upper_bound": 0.5,
-        },
+        float_field(ge=0.0),
+        placeholder=0.0,
         description="A node will be split if this split induces a decrease of "
         "the impurity greater than or equal to this value.",
     )  # type: ignore
@@ -214,6 +205,8 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
     """Scikit-learn's Ridge Regression wrapper for DashAI."""
 
     SCHEMA = GradientBoostingRSchema
+    DISPLAY_NAME: str = "Gradient Boosting Regression"
+    COLOR: str = "#4CAF50"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

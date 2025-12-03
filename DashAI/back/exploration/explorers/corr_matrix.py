@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
-import plotly.io as pio
 from beartype.typing import Any, Dict, Union
 
 from DashAI.back.core.schema_fields import (
@@ -19,7 +18,8 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Valu
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 
 
 class Method(enum.Enum):
@@ -60,7 +60,7 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
     )  # type: ignore
 
 
-class CorrelationMatrixExplorer(BaseExplorer):
+class CorrelationMatrixExplorer(StatisticalExplorer):
     """
     CorrelationMatrixExplorer is an explorer that returns a correlation matrix
     of a dataset.
@@ -76,6 +76,7 @@ class CorrelationMatrixExplorer(BaseExplorer):
         "Its result is a heatmap by default, "
         "but can also be returned as a tabular result."
     )
+    IMAGE_PREVIEW = "correlation_matrix.png"
 
     SCHEMA = CorrelationMatrixExplorerSchema
     metadata: Dict[str, Any] = {
@@ -139,16 +140,13 @@ class CorrelationMatrixExplorer(BaseExplorer):
     ) -> Dict[str, Any]:
         if self.plot:
             resultType = "plotly_json"
-            path = pathlib.Path(exploration_path)
-            result = pio.read_json(path).to_json()
+            with open(exploration_path, "r", encoding="utf-8") as f:
+                result = f.read()
             return {"type": resultType, "data": result, "config": {}}
 
         resultType = "tabular"
-        orientation = options.get("orientation", "dict")
-        config = {"orient": orientation}
+        config = {"orient": "dict"}
 
         path = pathlib.Path(exploration_path)
-        result = (
-            pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)
-        )
+        result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}

@@ -1,10 +1,11 @@
 import { Grid, Paper, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import PropTypes from "prop-types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import EditOptimizerDialog from "./EditOptimizerDialog";
 import OptimizationTableSelectOptimizer from "./OptimizationTableSelectOptimizer";
 import { checkIfHaveOptimazers } from "../../utils/schema";
+import { getComponents } from "../../api/component";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -13,6 +14,19 @@ import { checkIfHaveOptimazers } from "../../utils/schema";
  */
 function OptimizationTable({ newExp, setNewExp }) {
   const [selectedOptimizer, setSelectedOptimizer] = useState({});
+  const [models, setModels] = useState([]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   const handleUpdateParameters = (id) => (newValues) => {
     setNewExp((prevExp) => {
@@ -22,7 +36,8 @@ function OptimizationTable({ newExp, setNewExp }) {
           if (run.id === id) {
             return {
               ...run,
-              optimizer_name: selectedOptimizer[id],
+              optimizer_name: newExp.runs.find((r) => r.id === id)
+                .optimizer_name,
               optimizer_parameters: newValues,
             };
           }
@@ -77,6 +92,10 @@ function OptimizationTable({ newExp, setNewExp }) {
       headerName: "Model",
       minWidth: 300,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "optimizer",
@@ -85,7 +104,7 @@ function OptimizationTable({ newExp, setNewExp }) {
       renderCell: (params) => (
         <OptimizationTableSelectOptimizer
           taskName={newExp.task_name}
-          optimizerName={selectedOptimizer[params.row.id]}
+          optimizerName={params.row.optimizer_name}
           handleSelectedOptimizer={(optimizerName, defaultValues) =>
             handleSelectedOptimizer(optimizerName, defaultValues, params.row.id)
           }
@@ -97,14 +116,14 @@ function OptimizationTable({ newExp, setNewExp }) {
       type: "actions",
       minWidth: 100,
       getActions: (params) => {
-        if (!selectedOptimizer[params.row.id]) {
+        if (!params.row.optimizer_name) {
           return [];
         }
 
         return [
           <EditOptimizerDialog
             key="edit-component"
-            optimizerToConfigure={selectedOptimizer[params.row.id]}
+            optimizerToConfigure={params.row.optimizer_name}
             updateParameters={handleUpdateParameters(params.row.id)}
             paramsInitialValues={params.row.optimizer_parameters}
           />,
