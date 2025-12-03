@@ -40,3 +40,4 @@ numba
 llvmlite
 huey
 xlrd
+filetype
