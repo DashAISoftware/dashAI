@@ -18,6 +18,7 @@ function EditOptimizerDialog({
   paramsInitialValues,
 }) {
   const [open, setOpen] = useState(false);
+  console.log(paramsInitialValues);
 
   return (
     <React.Fragment>

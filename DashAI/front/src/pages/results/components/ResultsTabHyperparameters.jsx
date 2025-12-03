@@ -1,7 +1,15 @@
 import { React, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
-import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  Grid,
+  MenuItem,
+  Select,
+  CircularProgress,
+  Box,
+} from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../../utils/schema";
@@ -43,7 +51,7 @@ function ResultsTabHyperparameters({ runData }) {
         setSlicePlot(parsedSlicePlot);
         setContourPlot(parsedContourPlot);
         setImportancePlot(parsedImportancePlot);
-      } else {
+      } else if (optimizables === 1) {
         const historicalPlot = await getHyperparameterPlotRequest(
           runData.id,
           1,
@@ -67,9 +75,21 @@ function ResultsTabHyperparameters({ runData }) {
   };
 
   useEffect(() => {
+    if (runData.status !== "Finished") return;
     getHyperparameterPlot();
-  }, []);
-  return (
+  }, [runData]);
+
+  return runData.status === "Started" || runData.status === "Delivered" ? (
+    <Box
+      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+    >
+      <CircularProgress />
+    </Box>
+  ) : runData.status === "Failed" ? (
+    <Box>Run Failed. No hyperparameter plots available.</Box>
+  ) : runData.status === "Not Started" ? (
+    <Box>Run Not Started. No hyperparameter plots available.</Box>
+  ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">
         <Plot
