@@ -489,17 +489,17 @@ export const experimentsTourSteps = [
     disableBeacon: true,
   },
   {
-    target: '[data-tour="run-experiment-button"]',
+    target: '[data-tour="exp-view-results-button"]',
     content: (
       <div>
         <h3>Run Your Experiment</h3>
         <p>
-          Click the <strong>Play icon (▶️)</strong> to start training your
+          Click the <strong>Eye Icon (👁️)</strong> to start training your
           models.
         </p>
         <p>
-          This will train all three models on your dataset and evaluate their
-          performance.
+          This will open the results view where you can start the training
+          process.
         </p>
       </div>
     ),
@@ -537,7 +537,7 @@ export const experimentsTourSteps = [
     hideFooter: true,
   },
   {
-    target: '[data-tour="runner-dialog-progress"]',
+    target: '[data-tour="exp-results-metrics"]',
     content: (
       <div>
         <h3>Training in Progress</h3>
@@ -547,7 +547,7 @@ export const experimentsTourSteps = [
           <li>⏳ Progress indicators for models currently training</li>
           <li>📊 Real-time status updates</li>
         </ul>
-        <p>Wait until all models finish training, then click "Finished".</p>
+        <p>Wait until all models finish training.</p>
       </div>
     ),
     disableBeacon: true,
@@ -560,51 +560,13 @@ export const experimentsTourSteps = [
     },
   },
   {
-    target: '[data-tour="exp-view-results-button"]',
+    target: '[data-tour="results-table"]',
     content: (
       <div>
         <h3>View Your Results</h3>
         <p>
           Now that training is complete, let's see how your models performed!
         </p>
-        <p>
-          <strong>Click the Eye icon (👁️) to open the results view.</strong>
-        </p>
-      </div>
-    ),
-    placement: "left",
-    disableBeacon: true,
-    spotlightClicks: true,
-    hideFooter: true,
-  },
-  {
-    target: '[data-tour="exp-results-view-tabs"]',
-    content: (
-      <div>
-        <h3>Results Overview</h3>
-        <p>
-          The results view lets you analyze and compare your models'
-          performance.
-        </p>
-        <p>You can switch between two views:</p>
-        <ul style={{ marginTop: "10px", marginBottom: "10px" }}>
-          <li>
-            <strong>Columns</strong> – see metrics in a table format
-          </li>
-          <li>
-            <strong>Graphs</strong> – visualize performance with charts
-          </li>
-        </ul>
-      </div>
-    ),
-    placement: "bottom",
-    disableBeacon: true,
-  },
-  {
-    target: '[data-tour="exp-results-metrics"]',
-    content: (
-      <div>
-        <h3>Understanding Metrics</h3>
         <p>Each model is evaluated using several metrics:</p>
         <ul style={{ marginTop: "7px", marginBottom: "7px" }}>
           <li>
@@ -628,13 +590,31 @@ export const experimentsTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
+    placement: "left",
     disableBeacon: true,
-    styles: {
-      tooltip: {
-        width: "auto",
-      },
-    },
+  },
+  {
+    target: '[data-tour="exp-results-view-tabs"]',
+    content: (
+      <div>
+        <h3>Results Overview</h3>
+        <p>
+          The results view lets you analyze and compare your models'
+          performance.
+        </p>
+        <p>You can switch between two views:</p>
+        <ul style={{ marginTop: "10px", marginBottom: "10px" }}>
+          <li>
+            <strong>Columns</strong> – see metrics in a table format
+          </li>
+          <li>
+            <strong>Graphs</strong> – visualize performance with charts
+          </li>
+        </ul>
+      </div>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
   },
   {
     target: "body",

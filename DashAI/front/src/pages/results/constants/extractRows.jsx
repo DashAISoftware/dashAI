@@ -1,5 +1,3 @@
-import { getComponents } from "../../../api/component";
-
 // name of the properties in the run object that contain objects
 const runObjectProperties = [
   "train_metrics",
@@ -22,13 +20,8 @@ const getPrefix = (property) => {
   }
 };
 
-const getModels = async () => {
-  return await getComponents({ selectTypes: ["Model"] });
-};
-
-export const extractRows = async (rawRuns) => {
+export const extractRows = (rawRuns, models) => {
   let rows = [];
-  const models = await getModels();
   rawRuns.forEach((run) => {
     let newRun = {
       ...run,
