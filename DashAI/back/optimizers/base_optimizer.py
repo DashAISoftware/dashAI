@@ -311,7 +311,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             importances = evaluator.evaluate(study)
         except RuntimeError:
             importances = {
-                param: 1.0 / len(self.parameters) for _, param, _ in self.parameters
+                param: 1.0 / len(self.parameters) for _, param, _, _ in self.parameters
             }
             log.warning(
                 "Could not calculate parameter importance using FANOVA. "
