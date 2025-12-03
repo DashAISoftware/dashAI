@@ -43,6 +43,7 @@ function SelectDatasetStep({
   trainDataset,
   defaultPredictionName,
   onPredictNameInput,
+  manualInputData,
   setManualInputData,
 }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -119,6 +120,7 @@ function SelectDatasetStep({
           requestError={requestError}
           setDatasetsSelected={setDatasetsSelected}
           datasetsSelected={datasetsSelected}
+          manualInputData={manualInputData}
           setManualInputData={setManualInputData}
         />
       )}

@@ -19,6 +19,7 @@ export default function PredictionType({
   requestError,
   setDatasetsSelected,
   datasetsSelected,
+  manualInputData,
   setManualInputData,
 }) {
   const [manualInput, setManualInput] = useState(false);
@@ -42,7 +43,7 @@ export default function PredictionType({
             onChange={(e) => {
               setManualInput(e.target.value === "mi");
               if (e.target.value === "ds") {
-                setManualInputData(null);
+                setManualInput(null);
               }
             }}
           >
@@ -61,7 +62,11 @@ export default function PredictionType({
       </FormControl>
 
       {manualInput ? (
-        <ManualInput runId={runId} />
+        <ManualInput
+          runId={runId}
+          manualInputData={manualInputData}
+          setManualInputData={setManualInputData}
+        />
       ) : (
         <DatasetSelector
           datasets={datasets}

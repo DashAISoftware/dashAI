@@ -6,7 +6,11 @@ import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { Box } from "@mui/system";
 import ManualInputForm from "./ManualInputForm";
 
-export default function ManualInput({ runId }) {
+export default function ManualInput({
+  runId,
+  manualInputData,
+  setManualInputData,
+}) {
   const [experiment, setExperiment] = React.useState(null);
   const [types, setTypes] = React.useState({});
   const [loading, setLoading] = React.useState(true);
@@ -47,6 +51,8 @@ export default function ManualInput({ runId }) {
           sample={sample}
           inputColumns={experiment.input_columns}
           onSubmit={(values) => console.log("Form submitted:", values)}
+          manualInputData={manualInputData}
+          setManualInputData={setManualInputData}
         />
       ) : (
         <div>No experiment data available.</div>

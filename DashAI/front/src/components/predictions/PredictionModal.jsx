@@ -130,6 +130,7 @@ function PredictionModal({
         selectedModelId,
         selectedDatasetId,
         finalPredictionName,
+        manualInputData,
       );
 
       if (response?.id) {
@@ -293,6 +294,7 @@ function PredictionModal({
           trainDataset,
           predictName,
           defaultName,
+          manualInputData,
           setManualInputData,
         )}
       </DialogContent>
@@ -306,7 +308,7 @@ function PredictionModal({
             autoFocus
             variant="contained"
             color="primary"
-            disabled={!nextEnabled || isSubmitting}
+            disabled={isSubmitting} // TODO: Add logic to disable based dataset selected or manual input
           >
             {activeStep === 1
               ? isSubmitting

@@ -20,9 +20,17 @@ export default function ManualInputForm({
   sample,
   inputColumns,
   onSubmit,
+  manualInputData,
+  setManualInputData,
 }) {
-  const [rows, setRows] = useState([createEmptyRow()]);
-  console.log(sample);
+  const [rows, setRows] = useState(createInitialRows());
+
+  function createInitialRows() {
+    if (manualInputData && manualInputData.length > 0) {
+      return manualInputData;
+    }
+    return [createEmptyRow()];
+  }
 
   function createEmptyRow() {
     const row = {};
@@ -30,21 +38,23 @@ export default function ManualInputForm({
     return row;
   }
 
-  useEffect(() => {
-    console.log("rows updated:", rows);
-  }, [rows]);
-
   const handleChange = (rowIndex, col, value) => {
     const newRows = [...rows];
     newRows[rowIndex][col] = value;
     setRows(newRows);
+    setManualInputData(newRows);
   };
 
-  const handleAddRow = () => setRows([...rows, createEmptyRow()]);
+  const handleAddRow = () => {
+    const newRows = [...rows, createEmptyRow()];
+    setRows(newRows);
+    setManualInputData(newRows);
+  };
 
   const handleDeleteRow = (index) => {
     const newRows = rows.filter((_, i) => i !== index);
     setRows(newRows);
+    setManualInputData(newRows);
   };
 
   const handleSubmit = (e) => {
