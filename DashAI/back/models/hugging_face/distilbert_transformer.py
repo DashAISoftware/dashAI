@@ -89,7 +89,7 @@ class DistilBertTransformer(TextClassificationModel):
         associated tokenizer.
         """
 
-        self.num_labels = kwargs.pop("num_labels_from_factory", None)
+        self.num_labels = kwargs.pop("num_labels", None)
 
         kwargs = self.validate_and_transform(kwargs)
 
