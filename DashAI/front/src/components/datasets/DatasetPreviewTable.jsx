@@ -64,12 +64,6 @@ function DatasetPreviewTable({
     }
 
     setColumnsSpec(updateColumns);
-
-    console.log(`Columna ${columnName} actualizada:`, {
-      field,
-      newValue,
-      currentSpec: updateColumns[columnName],
-    });
   };
 
   const renderSelectCell = (params) => {

@@ -52,7 +52,7 @@ export const TypeChangeValidator = ({
 
   useEffect(() => {
     if (open) {
-      setValidationResult(null); // Reset al abrir
+      setValidationResult(null);
       validateChanges();
     }
   }, [open]);

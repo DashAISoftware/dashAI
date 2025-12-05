@@ -54,7 +54,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
   const [requestError, setRequestError] = useState(false);
   const [columnsSpec, setColumnsSpec] = useState({});
   const [previewData, setPreviewData] = useState({});
-  const [showSummary, setShowSummary] = useState(false);
   const [loading, setLoading] = useState(false);
   const [inferenceDialogOpen, setInferenceDialogOpen] = useState(false);
   const [selectedInferenceMethods, setSelectedInferenceMethods] = useState([]);
@@ -94,7 +93,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       const preview = await loadPreview(formData);
 
       setPreviewData(preview);
-      setShowSummary(true);
 
       //Save the columns spec to be used in the preview table
       const initialColumnsSpec = {};
@@ -113,7 +111,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       );
       setRequestError(true);
       setPreviewData(null);
-      setShowSummary(false);
       setNextEnabled(false);
     }
   };
@@ -307,7 +304,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
                   size="large"
                   variant="contained"
                   color="primary"
-                  //sx={{ mt: 2 }}
                   onClick={() => setInferenceDialogOpen(true)}
                 >
                   Infer column Data Types

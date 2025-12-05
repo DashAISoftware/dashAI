@@ -43,17 +43,8 @@ export const columnTypesList = [
 ];
 
 export const dataTypesbyColumnType = {
-  Integer: [
-    //"int8",
-    //"int16",
-    "int32",
-    "int64",
-    //"uint8",
-    //"uint16",
-    "uint32",
-    "uint64",
-  ],
-  Float: [/*"float16",*/ "float32", "float64"],
+  Integer: ["int32", "int64", "uint32", "uint64"],
+  Float: ["float32", "float64"],
   Text: ["string", "large_string"],
   Time: ["time32(s)", "time32(ms)", "time64(us)", "time64(ns)"],
   Boolean: ["bool"],
