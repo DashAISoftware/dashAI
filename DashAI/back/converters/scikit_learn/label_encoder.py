@@ -28,14 +28,16 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     DISPLAY_NAME = "Label Encoder"
     IMAGE_PREVIEW = "label_encoder.png"
 
+    metadata = {
+        "changes_data_types": True,
+        "allowed_dtypes": ["string", "int64", "float64"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         super().__init__()
         self.encoders = {}
         self.fitted_columns = []
-        self.metadata = {
-            "changes_data_types": True,
-            "allowed_dtypes": ["string"],
-        }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """
