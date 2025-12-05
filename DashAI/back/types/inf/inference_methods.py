@@ -94,10 +94,22 @@ class DashAIPtype(PtypeCat, InferenceMethod):
                 # Fallback to text for unknown types
                 dashai_info = {"type": "Text", "dtype": "string"}
 
-            # Handle categorical specially - include categories
+            # Handle categorical specially
+            # include categories and preserve original dtype
             if ptype_type == "categorical":
                 unique_vals = col_object.get_normal_values()
                 dashai_info["categories"] = unique_vals
+
+                # Preserve original dtype from pandas DataFrame
+                original_dtype = data[col_name].dtype
+                if pd.api.types.is_integer_dtype(original_dtype):
+                    dashai_info["dtype"] = "int64"
+                elif pd.api.types.is_float_dtype(original_dtype):
+                    dashai_info["dtype"] = "float64"
+                elif pd.api.types.is_bool_dtype(original_dtype):
+                    dashai_info["dtype"] = "bool"
+                else:
+                    dashai_info["dtype"] = "string"
 
             inferred_types[col_name] = dashai_info
 
@@ -134,14 +146,18 @@ class DummyCategoricalInference(InferenceMethod):
             if dtype == "object" or isinstance(series.dropna().iloc[0], str):
                 n_unique = series.nunique(dropna=True)
                 if n_unique < 10:
-                    inferred_types[col] = PTYPE_TO_DASHAI["categorical"]
+                    result = PTYPE_TO_DASHAI["categorical"].copy()
+                    result["dtype"] = "string"
+                    inferred_types[col] = result
                 else:
                     inferred_types[col] = PTYPE_TO_DASHAI["string"]
 
             elif pd.api.types.is_integer_dtype(dtype):
                 n_unique = series.nunique(dropna=True)
                 if n_unique < 10:
-                    inferred_types[col] = PTYPE_TO_DASHAI["categorical"]
+                    result = PTYPE_TO_DASHAI["categorical"].copy()
+                    result["dtype"] = "int64"
+                    inferred_types[col] = result
                 else:
                     inferred_types[col] = PTYPE_TO_DASHAI["integer"]
             elif pd.api.types.is_float_dtype(dtype):

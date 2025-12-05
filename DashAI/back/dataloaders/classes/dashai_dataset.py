@@ -565,11 +565,15 @@ def transform_dataset_with_schema(
         pa_type = to_arrow_types(dtype)
         if _type == "Categorical":
             base_col = table.column(column_name)
-            str_col = pa.array([str(x) for x in base_col.to_pylist()], type=pa.string())
-            values = sorted(set(str_col.to_pylist()))
-            dashai_types[column_name] = Categorical(values=values)
-            dai_table[column_name] = str_col
-            pa_type = to_arrow_types("string")
+            # Get unique values while preserving original type
+            unique_values = sorted(set(base_col.to_pylist()))
+            values_array = pa.array(unique_values)
+            dashai_types[column_name] = Categorical(values=values_array)
+            # Keep the column data as-is without converting to string
+            dai_table[column_name] = base_col
+            # Use the inferred dtype from Categorical for pa_type
+            inferred_dtype = dashai_types[column_name].dtype
+            pa_type = to_arrow_types(inferred_dtype)
         # DashAIImage is currently not fully implemented
         # This step should be formalized after solving that.
         # elif _type == "Image": # noqa: ERA001

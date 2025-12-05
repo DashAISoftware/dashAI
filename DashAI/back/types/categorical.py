@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Union
 
 import pyarrow as pa
 
@@ -23,12 +24,27 @@ class Categorical(DashAIDataType):
     # But should't be hard to change if needed.
     categories: pa.Array
     converted: bool = False
+    dtype: str = None
 
     def __init__(
-        self, values: pa.Array, encoding: dict = None, converted: bool = False
+        self,
+        values: Union[pa.Array, list],
+        encoding: dict = None,
+        converted: bool = False,
+        dtype: str = None,
     ):
+        # Convert list to pa.Array if needed
+        if isinstance(values, list):
+            values = pa.array(values)
+
         self.categories = values
         self.converted = converted
+
+        # Infer dtype from values if not explicitly provided
+        if dtype is None:
+            self.dtype = self._infer_dtype(values)
+        else:
+            self.dtype = dtype
 
         if encoding is not None:
             sample_key = next(iter(encoding))
@@ -50,6 +66,45 @@ class Categorical(DashAIDataType):
     def int2str(self, value):
         return self._int2str[value]
 
+    def _infer_dtype(self, values: pa.Array) -> str:
+        """Infer the dtype from the values array.
+
+        Parameters
+        ----------
+        values : pa.Array
+            Array of category values.
+
+        Returns
+        -------
+        str
+            The inferred dtype: 'int64', 'float64', or 'string'.
+        """
+        if len(values) == 0:
+            return "string"
+
+        # Check the PyArrow type
+        arrow_type = values.type
+
+        # Map PyArrow types to string representations
+        if pa.types.is_integer(arrow_type):
+            return "int64"
+        elif pa.types.is_floating(arrow_type):
+            return "float64"
+        elif pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
+            return "string"
+        else:
+            # For other types, try to infer from the first non-null value
+            for val in values:
+                if val.is_valid:
+                    py_val = val.as_py()
+                    if isinstance(py_val, int):
+                        return "int64"
+                    elif isinstance(py_val, float):
+                        return "float64"
+                    else:
+                        return "string"
+            return "string"
+
     def num_categories(self):
         """Get the number of unique categories."""
         return len(self.categories)
@@ -59,6 +114,7 @@ class Categorical(DashAIDataType):
         # so convert them to strings for representation
         return {
             "type": "Categorical",
+            "dtype": self.dtype,
             "categories": [str(c) for c in self.categories],
             "num_categories": self.num_categories(),
             "converted": self.converted,
