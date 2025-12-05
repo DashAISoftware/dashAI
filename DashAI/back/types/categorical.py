@@ -57,8 +57,14 @@ class Categorical(DashAIDataType):
                 self._str2int = encoding
                 self._int2str = {v: k for k, v in encoding.items()}
         else:
-            self._str2int = {cat: idx for idx, cat in enumerate(self.categories)}  # noqa: C416
-            self._int2str = {idx: cat for idx, cat in enumerate(self.categories)}  # noqa: C416
+            categories_list = (
+                self.categories.to_pylist()
+                if isinstance(self.categories, pa.Array)
+                else list(self.categories)
+            )
+            enum_dict = dict(enumerate(categories_list))
+            self._int2str = enum_dict
+            self._str2int = {v: k for k, v in enum_dict.items()}
 
     def str2int(self, value):
         return self._str2int[value]

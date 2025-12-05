@@ -84,7 +84,7 @@ def test_get_types(
         "SepalWidthCm": {"type": "Float", "dtype": "float64"},
         "PetalLengthCm": {"type": "Float", "dtype": "float64"},
         "PetalWidthCm": {"type": "Float", "dtype": "float64"},
-        "Species": {"type": "Categorical", "dtype": None},
+        "Species": {"type": "Categorical", "dtype": "string"},
     }
 
     response = client.get(f"/api/v1/dataset/{dataset_not_started.id}/types")

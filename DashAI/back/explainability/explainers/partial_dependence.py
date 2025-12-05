@@ -115,7 +115,13 @@ class PartialDependence(BaseGlobalExplainer):
         ]
 
         output_column = list(y["test"].column_names)[0]
-        target_names = y["test"].types[output_column].categories
+        categories = y["test"].types[output_column].categories
+        # Convert pa.Array to Python list
+        target_names = (
+            categories.to_pylist()
+            if hasattr(categories, "to_pylist")
+            else list(categories)
+        )
 
         explanation = {"metadata": {"target_names": target_names}}
 

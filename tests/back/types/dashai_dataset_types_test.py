@@ -247,6 +247,7 @@ def test_modify_table_types(tmp_path):
         "categories": ["A", "B", "C"],
         "num_categories": 3,
         "converted": False,
+        "dtype": "string",
     }
     assert mod_ds_2.types["text_col"].to_string() == {
         "type": "Text",

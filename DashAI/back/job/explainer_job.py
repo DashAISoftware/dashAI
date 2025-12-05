@@ -253,10 +253,7 @@ class ExplainerJob(BaseJob):
                     self.input_columns,
                     self.output_columns,
                 )
-                for split_name in X:
-                    X[split_name] = trained_model.prepare_dataset(
-                        X[split_name], is_fit=False
-                    )
+                X = trained_model.prepare_dataset(X, is_fit=False)
 
             except Exception as e:
                 log.exception(e)
