@@ -68,8 +68,8 @@ class CovarianceMatrixExplorer(StatisticalExplorer):
 
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_value_types": ["*"],
-        "restricted_value_types": [],
+        "allowed_dtypes": ["*"],
+        "restricted_dtypes": [],
         "input_cardinality": {"min": 2},
     }
 

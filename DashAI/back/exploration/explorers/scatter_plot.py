@@ -54,8 +54,8 @@ class ScatterPlotExplorer(RelationshipExplorer):
 
     SCHEMA = ScatterPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_value_types": ["Integer", "Float", "Decimal"],
-        "restricted_value_types": [],
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
         "input_cardinality": {"exact": 2},
     }
 

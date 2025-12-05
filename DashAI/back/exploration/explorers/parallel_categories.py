@@ -46,8 +46,8 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
 
     SCHEMA = ParallelCategoriesSchema
     metadata: Dict[str, Any] = {
-        "allowed_value_types": ["Text", "Categorical"],
-        "restricted_value_types": [],
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
         "input_cardinality": {"min": 2},
     }
 

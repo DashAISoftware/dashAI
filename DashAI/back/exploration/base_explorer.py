@@ -78,10 +78,10 @@ class BaseExplorer(ConfigObject, ABC):
         metadata["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented
-        if metadata.get("allowed_value_types", None) is None:
-            metadata["allowed_value_types"] = ["*"]
-        if metadata.get("restricted_value_types", None) is None:
-            metadata["restricted_value_types"] = []
+        if metadata.get("allowed_dtypes", None) is None:
+            metadata["allowed_dtypes"] = ["*"]
+        if metadata.get("restricted_dtypes", None) is None:
+            metadata["restricted_dtypes"] = []
         if metadata.get("input_cardinality", None) is None:
             metadata["input_cardinality"] = {"min": 1}
         return metadata
@@ -152,13 +152,13 @@ class BaseExplorer(ConfigObject, ABC):
 
             # Check if the column's type is allowed
             if (
-                "*" not in metadata["allowed_value_types"]
-                and column_type not in metadata["allowed_value_types"]
+                "*" not in metadata["allowed_dtypes"]
+                and column_type not in metadata["allowed_dtypes"]
             ):
                 return False
 
             # Check if the column's type is restricted
-            if column_type in metadata["restricted_value_types"]:
+            if column_type in metadata["restricted_dtypes"]:
                 return False
 
         return True

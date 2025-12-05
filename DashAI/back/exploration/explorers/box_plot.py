@@ -45,8 +45,8 @@ class BoxPlotExplorer(DistributionExplorer):
     metadata: Dict[str, Any] = {
         # It should be added, maybe in a own validate_columns method,
         # that in this case at least one column should be numeric
-        "allowed_value_types": ["Integer", "Float", "Decimal", "Categorical"],
-        "restricted_value_types": [],
+        "allowed_dtypes": ["int64", "float64"],
+        "restricted_dtypes": [],
         "input_cardinality": {"min": 1, "max": 2},
     }
 

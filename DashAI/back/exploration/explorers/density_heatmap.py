@@ -43,8 +43,8 @@ class DensityHeatmapExplorer(RelationshipExplorer):
 
     SCHEMA = DensityHeatmapSchema
     metadata: Dict[str, Any] = {
-        "allowed_value_types": ["*"],
-        "restricted_value_types": [],
+        "allowed_dtypes": ["*"],
+        "restricted_dtypes": [],
         "input_cardinality": {"exact": 2},
     }
 
