@@ -160,11 +160,14 @@ def test_get_wrong_runs(client: TestClient):
 
 def test_modify_run(client: TestClient):
     response = client.patch(
-        "/api/v1/run/1?run_name=RunA",
+        "/api/v1/run/1",
         json={
-            "n_neighbors": 3,
-            "weights": "uniform",
-            "algorithm": "kd_tree",
+            "parameters": {
+                "n_neighbors": 3,
+                "weights": "uniform",
+                "algorithm": "kd_tree",
+            },
+            "run_name": "RunA",
         },
     )
     assert response.status_code == 200
@@ -183,12 +186,16 @@ def test_modify_run(client: TestClient):
 
 
 def test_modify_run_model(client: TestClient):
+    # Send an empty request body (no valid parameters)
+    # This should return 304 since no parameters are being updated
     response = client.patch(
-        "/api/v1/run/2?model_name=UnknownModel",
+        "/api/v1/run/2",
+        json={},
     )
     assert response.status_code == 304
 
 
+@pytest.mark.order(-1)
 def test_delete_run(client: TestClient):
     # Delete all the runs in the db
     response = client.delete("/api/v1/run/1")

@@ -27,12 +27,7 @@ class ModelFactory:
         self.model, self.fixed_parameters, self.optimizable_parameters = (
             self._extract_parameters(model, params)
         )
-
         self.num_labels = n_labels
-
-        if self.num_labels is not None:
-            self.model.num_labels_from_factory = self.num_labels
-
         self.fitted = False
 
     def _extract_parameters(self, model_class, parameters: dict):

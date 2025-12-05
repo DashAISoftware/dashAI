@@ -7,7 +7,6 @@ import {
 } from "../../../api/notebook";
 import ExplorerBox from "../explorer/ExplorerBox";
 import ConverterBox from "../converter/ConverterBox";
-import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 import ItemsToDeleteList from "../converter/ItemsToDeleteList";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
@@ -17,7 +16,6 @@ import { startJobPolling } from "../../../utils/jobPoller";
 
 const RowItem = React.memo(function RowItem({
   item,
-  handleExplorerDetailsClick,
   handleExplorerDeleteClick,
   handleConverterDeleteClick,
   handleStatusChange,
@@ -32,7 +30,6 @@ const RowItem = React.memo(function RowItem({
       {item.type === "explorer" ? (
         <ExplorerBox
           explorer={item}
-          handleExplorerDetailsClick={handleExplorerDetailsClick}
           handleExplorerDeleteClick={handleExplorerDeleteClick}
           onStatusChange={(id, newStatus) =>
             handleStatusChange(id, newStatus, "explorer")
@@ -65,8 +62,6 @@ export default function NotebookView({ notebook }) {
 
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
-  const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
-  const [selectedExplorer, setSelectedExplorer] = useState(null);
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
     useState(false);
   const [openDeleteConverterConfirmation, setOpenDeleteConverterConfirmation] =
@@ -117,11 +112,6 @@ export default function NotebookView({ notebook }) {
   useEffect(() => {
     fetchExplorersAndConverters();
   }, [fetchExplorersAndConverters]);
-
-  const handleExplorerDetailsClick = useCallback((explorer) => {
-    setSelectedExplorer(explorer);
-    setOpenExplorerDetails(true);
-  }, []);
 
   const handleExplorerDeleteClick = useCallback((explorer) => {
     setExplorerToDelete(explorer);
@@ -254,7 +244,6 @@ export default function NotebookView({ notebook }) {
           itemContent={(index, item) => (
             <RowItem
               item={item}
-              handleExplorerDetailsClick={handleExplorerDetailsClick}
               handleExplorerDeleteClick={handleExplorerDeleteClick}
               handleConverterDeleteClick={handleConverterDeleteClick}
               handleStatusChange={handleStatusChange}
@@ -262,14 +251,7 @@ export default function NotebookView({ notebook }) {
           )}
         />
       )}
-      <ExplorerDetailsModal
-        open={openExplorerDetails}
-        onClose={() => {
-          setOpenExplorerDetails(false);
-          setSelectedExplorer(null);
-        }}
-        explorer={selectedExplorer}
-      />
+
       <DeleteConfirmationModal
         open={openDeleteExplorerConfirmation}
         onClose={handleCancelDelete}

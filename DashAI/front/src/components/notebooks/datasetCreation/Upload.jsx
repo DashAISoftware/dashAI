@@ -274,7 +274,7 @@ function Upload({
               {dragActive ? (
                 <Grid>
                   <Typography variant="subtitle1">
-                    Drop the files here ...
+                    Click to upload your dataset file
                   </Typography>
                 </Grid>
               ) : (

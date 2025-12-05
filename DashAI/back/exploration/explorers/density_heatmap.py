@@ -2,7 +2,6 @@ import os
 import pathlib
 
 import plotly.express as px
-import plotly.io as pio
 from beartype.typing import Any, Dict
 from plotly.graph_objs import Figure
 
@@ -90,7 +89,7 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         resultType = "plotly_json"
         config = {}
 
-        result = pio.read_json(exploration_path)
-        result = result.to_json()
+        with open(exploration_path, "r", encoding="utf-8") as f:
+            result = f.read()
 
         return {"data": result, "type": resultType, "config": config}

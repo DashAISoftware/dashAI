@@ -1,3 +1,4 @@
+import json
 import logging
 import pathlib
 
@@ -314,3 +315,33 @@ async def get_explorer_results(
         ) from e
 
     return results
+
+
+@router.put("/{explorer_id}/results/")
+@inject
+async def update_explorer_results(
+    params: dict,
+    explorer_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    db: Session
+    with session_factory() as db:
+        explorer = db.query(Explorer).get(explorer_id)
+        if explorer is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Explorer not found",
+            )
+
+    # update results
+    try:
+        exploration_path = explorer.exploration_path
+        with open(f"{exploration_path}", "w") as f:
+            json.dump(params, f)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error while updating explorer results",
+        ) from e
+
+    return {"message": "Explorer results updated successfully"}
