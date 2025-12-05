@@ -107,7 +107,6 @@ class DatasetJob(BaseJob):
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
         url = self.kwargs.get("url", "")
-        schema = self.kwargs.get("params", {}).get("schema", {})
 
         try:
             with session_factory() as db:

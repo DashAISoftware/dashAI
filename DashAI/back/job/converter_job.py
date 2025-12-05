@@ -60,7 +60,6 @@ def _rebuild_dataset_with_transformed_columns(
     transformed_cols = transformed.column_names
 
     replacement_cols = transformed_cols[: len(scope_column_indexes)]
-    new_cols = transformed_cols[len(scope_column_indexes) :]
 
     index_to_replacement = dict(zip(scope_column_indexes, scope_column_names))
     index_to_replacement = {

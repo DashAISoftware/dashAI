@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { Paper, Grid, Typography, CircularProgress } from "@mui/material";
 import PropTypes from "prop-types";
 import DatasetPreviewTable from "./DatasetPreviewTable";
-import { Button } from "@mui/material";
 
 function DatasetPreviewStep({
   previewData, // preview data from the API

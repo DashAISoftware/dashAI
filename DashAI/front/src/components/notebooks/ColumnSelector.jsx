@@ -213,11 +213,6 @@ function ColumnSelector({
 
   const valid = isValidSelection(rowSelectionModel);
 
-  const shouldShowInfoBox =
-    Object.keys(inputCardinality).length > 0 ||
-    (allowedDtypes?.length > 0 && !allowedDtypes.includes("*")) ||
-    restrictedDtypes?.length > 0;
-
   return (
     <Box>
       {/* Selected count - always shown */}

@@ -576,8 +576,6 @@ def transform_dataset_with_schema(
             pa_type = to_arrow_types(inferred_dtype)
         # DashAIImage is currently not fully implemented
         # This step should be formalized after solving that.
-        # elif _type == "Image": # noqa: ERA001
-        #    pass # noqa: ERA001
         else:
             if _type in ["Date", "Time", "Timestamp"]:
                 # Since DashAI is not using date, time or timestamp types for its models

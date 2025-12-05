@@ -217,7 +217,9 @@ class OpusMtEnESTransformer(TranslationModel):
 
         return translations
 
-    def prepare_dataset(self, dataset: DashAIDataset) -> DashAIDataset:
+    def prepare_dataset(
+        self, dataset: DashAIDataset, is_fit: bool = False
+    ) -> DashAIDataset:
         """Apply the model transformations to the dataset.
 
         Parameters

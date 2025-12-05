@@ -6,7 +6,6 @@ import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import FormInputWrapper from "../../configurableObject/Inputs/FormInputWrapper";
 import InputWithDebounce from "../../shared/InputWithDebounce";
-import FormTooltip from "../../configurableObject/FormTooltip";
 
 /**
  * Right sidebar component for configuring dataloader parameters

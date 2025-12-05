@@ -1,6 +1,3 @@
-from pathlib import Path
-
-import joblib
 import pandas as pd
 
 import DashAI.back.types.inf.ptype.Machine as Machine
@@ -34,19 +31,11 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         max_unique_ratio: float = 0.05,
         max_unique_count: int = 50,
     ):
-        # Initialize types before calling parent
-        self.types = [
-            "integer",
-            "string",
-            "float",
-            "boolean",
-            "date-iso-8601",
-            "date-eu",
-            "date-non-std-subtype",
-            "date-non-std",
-        ]
-
-        # Add extended types
+        super().__init__(
+            cat_threshold=cat_threshold,
+            max_unique_ratio=max_unique_ratio,
+            max_unique_count=max_unique_count,
+        )
         self.types.extend(["time", "float_comma"])
 
         current_machines = {
@@ -56,16 +45,6 @@ class DashAIPtype(PtypeCat, InferenceMethod):
         }
 
         self.machines = Machines(self.types, current_machines)
-        self.verbose = False
-
-        # Load ML models
-        self.lr_clf = joblib.load(Path(__file__).parent / "ptype" / "LR.sav")
-        self.scaler = joblib.load(Path(__file__).parent / "ptype" / "scaler.pkl")
-
-        # Categorical detection thresholds
-        self.cat_threshold = cat_threshold
-        self.max_unique_ratio = max_unique_ratio
-        self.max_unique_count = max_unique_count
 
     def infer_types(self, data) -> dict:
         """

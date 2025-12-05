@@ -95,12 +95,11 @@ class Schema:
         }
         for col_name in df:
             new_dtype = ptype_pandas_mapping[self._cols[col_name].type]
-            # print(f"Transforming column '{col_name}' detected as '{self.cols[col_name].type}' to dtype '{new_dtype}'")
             if new_dtype == "boolean":
                 df[col_name] = df[col_name].apply(
-                    lambda x: False
-                    if str(x) in ["F"]
-                    else (True if str(x) in ["T"] else x)
+                    lambda x: (
+                        False if str(x) in ["F"] else (True if str(x) in ["T"] else x)
+                    )
                 )
 
             elif new_dtype == "time":
@@ -109,9 +108,6 @@ class Schema:
                 )
                 continue
 
-            # elif (new_dtype == "datetime64[ms]"):
-            #     df[col_name] = pd.to_datetime(df[col_name], errors="coerce")
-            #     continue
             try:
                 df[col_name] = df[col_name].astype(new_dtype)
             except TypeError:

@@ -20,12 +20,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
-import { updateDataset as updateDatasetRequest } from "../../api/datasets";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetPreviewStep from "./DatasetPreviewStep";
 import { loadPreview } from "../../api/datasets";
-
-import DatasetSummaryStep from "./DatasetSummaryStep";
 
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },

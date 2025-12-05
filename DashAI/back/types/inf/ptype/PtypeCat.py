@@ -64,6 +64,7 @@ class PtypeCat(Ptype):
     """Ptype with categorical detection."""
 
     def __init__(self, cat_threshold=0.7, max_unique_ratio=0.05, max_unique_count=50):
+        super().__init__()
         self.types = [
             "integer",
             "string",

@@ -26,7 +26,6 @@ report_being_str2 = (
 # https://stackoverflow.com/questions/25389095/python-get-path-of-root-project-structure
 def project_root():
     return os.path.dirname(os.path.abspath(__file__))
-    return Path(__file__).parent.parent
 
 
 # TEXT MANIPULATION METHODS #######################
@@ -133,10 +132,9 @@ def multi_logdot(Xs):
 ###############################################################
 # writing data
 def write_data(data, filepath="../../automata/example.dat"):
-    f = open(filepath, "w")
-    for line in data:
-        f.write(str(line) + "\n")
-    f.close()
+    with open(filepath, "w") as f:
+        for line in data:
+            f.write(str(line) + "\n")
 
 
 def print_to_file(txt, filename="output.txt"):
@@ -288,36 +286,6 @@ def _blob(x, y, area, colour):
     xcorners = np.array([x - hs, x + hs, x + hs, x - hs])
     ycorners = np.array([y - hs, y - hs, y + hs, y + hs])
     plt.fill(xcorners, ycorners, colour, edgecolor=colour)
-
-
-# def plot_hinton(W, method=None, _max_value=None, xticklabels=None, yticklabels=None, path=None):
-#     """
-#     Draws a Hinton diagram for visualizing a weight matrix.
-#     Temporarily disables matplotlib interactive mode if it is on,
-#     otherwise this takes forever.
-#     """
-#
-#     reenable = False
-#     if plt.isinteractive():
-#         plt.ioff()
-#     plt.clf()
-#
-#     if reenable:
-#         plt.ion()
-#
-#     special.hinton(W, max_value=_max_value)
-#     if xticklabels is not None:
-#         plt.xticks(np.arange(len(xticklabels)), xticklabels, rotation=90, fontsize=13)
-#     if yticklabels is not None:
-#         plt.yticks(np.arange(len(xticklabels)), yticklabels, fontsize=13)
-#
-#     plt.xlabel('true type', fontsize=17)
-#     plt.ylabel('predicted type', fontsize=17)
-#
-#     if path is not None:
-#         plt.savefig(path, dpi=1000, bbox_inches="tight")
-#
-#     # plt.show()
 
 
 ###############################################################

@@ -1,12 +1,7 @@
 // DatasetPreviewTable.js
 import React, { useEffect, useMemo, useState } from "react";
-import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
-import {
-  getDatasetSample as getDatasetSampleRequest,
-  getDatasetTypes as getDatasetTypesRequest,
-} from "../../api/datasets";
 import { dataTypesbyColumnType, columnTypesList } from "../../utils/typesLists";
 import SelectTypeCell from "../custom/SelectTypeCell";
 
@@ -17,7 +12,6 @@ function DatasetPreviewTable({
   setColumnsSpec,
 }) {
   const [loading, setLoading] = useState(true);
-  const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
   const apiRef = useGridApiRef();
 
@@ -117,8 +111,7 @@ function DatasetPreviewTable({
     {
       field: "columnType",
       headerName: "Column type",
-      renderEditCell: (params) =>
-        isEditable && renderSelectCell(params, columnTypesList),
+      renderEditCell: (params) => isEditable && renderSelectCell(params),
       minWidth: 200,
       editable: isEditable,
     },
