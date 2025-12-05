@@ -14,6 +14,7 @@ from DashAI.back.core.enums.status import (
     ExplainerStatus,
     ExplorerStatus,
     PluginStatus,
+    PredictionStatus,
     RunStatus,
 )
 
@@ -146,6 +147,9 @@ class Run(Base):
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     experiment = relationship("Experiment", back_populates="runs")
+    predictions = relationship(
+        "Prediction", cascade="all, delete-orphan", back_populates="run"
+    )
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the run to delivered and set delivery_time to now."""
@@ -165,6 +169,52 @@ class Run(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the run to error."""
         self.status = RunStatus.ERROR
+
+
+class Prediction(Base):
+    __tablename__ = "prediction"
+    """
+    Table to store all the information about a specific prediction.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("run.id", ondelete="CASCADE"))
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+    results_path: Mapped[str] = mapped_column(String, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(PredictionStatus), nullable=False, default=PredictionStatus.NOT_STARTED
+    )
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+
+    # Relationships
+    run: Mapped["Run"] = relationship("Run", back_populates="predictions")
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status of the prediction to delivered and set
+        delivery_time to now."""
+        self.status = PredictionStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the prediction to started and set start_time to now."""
+        self.status = PredictionStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the prediction to finished and set end_time to now."""
+        self.status = PredictionStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """Update the status of the prediction to error."""
+        self.status = PredictionStatus.ERROR
 
 
 class Plugin(Base):

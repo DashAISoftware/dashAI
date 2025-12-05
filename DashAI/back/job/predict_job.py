@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import uuid
 from pathlib import Path
 from typing import Any, List
 
@@ -12,7 +13,11 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, load_dataset
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    Experiment,
+    Prediction,
+)
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks import BaseTask
@@ -29,40 +34,58 @@ class PredictJob(BaseJob):
         self, session_factory: sessionmaker = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
-        log.debug("Prediction job marked as delivered")
+        prediction_id = self.kwargs.get("prediction_id")
+
+        try:
+            with session_factory() as db:
+                prediction: Prediction = db.get(Prediction, prediction_id)
+                if prediction:
+                    prediction.set_status_as_delivered()
+                    db.commit()
+                else:
+                    log.error(f"Prediction with id {prediction_id} not found.")
+        except exc.SQLAlchemyError as e:
+            log.exception(f"Database error while setting prediction status: {e}")
 
     @inject
     def set_status_as_error(
         self, session_factory: sessionmaker = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the prediction job as error."""
-        log.error(f"Prediction job failed: {self.kwargs}")
+        prediction_id = self.kwargs.get("prediction_id")
+
+        try:
+            with session_factory() as db:
+                prediction: Prediction = db.get(Prediction, prediction_id)
+                if prediction:
+                    prediction.set_status_as_error()
+                    db.commit()
+                else:
+                    log.error(f"Prediction with id {prediction_id} not found.")
+        except exc.SQLAlchemyError as e:
+            log.exception(f"Database error while setting prediction status: {e}")
 
     @inject
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
-        run_id = self.kwargs.get("run_id")
-        dataset_id = self.kwargs.get("id")
-        json_filename = self.kwargs.get("json_filename", "")
+        prediction_id = self.kwargs.get("prediction_id")
+        dataset_id = self.kwargs.get("dataset_id")
 
-        if json_filename:
-            return f"Predict: {json_filename}"
-
-        if run_id and dataset_id:
+        if prediction_id:
             from kink import di
 
             session_factory = di["session_factory"]
 
             try:
                 with session_factory() as db:
-                    run = db.get(Run, run_id)
+                    prediction = db.get(Prediction, prediction_id)
                     dataset = db.get(Dataset, dataset_id)
-                    if run and dataset:
-                        return f"Predict: {run.name} on {dataset.name}"
+                    if prediction and dataset:
+                        return f"Predict: {prediction.run.name} on {dataset.name}"
             except Exception:
                 pass
 
-        return f"Prediction (Run:{run_id}, Dataset:{dataset_id})"
+        return f"Prediction (Prediction:{prediction_id}, Dataset:{dataset_id})"
 
     @inject
     def run(
@@ -74,9 +97,8 @@ class PredictJob(BaseJob):
         session_factory = di["session_factory"]
         config = di["config"]
 
-        run_id: int = self.kwargs["run_id"]
-        dataset_id: int = self.kwargs["id"]
-        json_filename: str = self.kwargs["json_filename"]
+        prediction_id: int = self.kwargs["prediction_id"]
+        dataset_id: int = self.kwargs.get("dataset_id")
         manual_input_data: List[dict] = self.kwargs.get("manual_input_data", [])
         print("PredictJob manual_input_data:", manual_input_data)
 
@@ -85,18 +107,31 @@ class PredictJob(BaseJob):
 
         with session_factory() as db:
             try:
-                run: Run = db.get(Run, run_id)
-                if not run:
+                # Retrieve Prediction
+                prediction: Prediction = db.get(Prediction, prediction_id)
+                if not prediction:
                     raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Prediction not found for id {prediction_id}",
                     )
 
-                exp: Experiment = db.get(Experiment, run.experiment_id)
+                # Set huey_id and update status to STARTED
+                prediction.huey_id = self.kwargs.get("huey_id", None)
+                prediction.set_status_as_started()
+                db.commit()
+
+                # Retrieve Experiment
+                exp: Experiment = db.get(Experiment, prediction.run.experiment_id)
                 if not exp:
+                    prediction.set_status_as_error()
+                    db.commit()
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Experiment not found",
                     )
+
+                # Retrieve Dataset if dataset_id is provided
+                dataset: Dataset = None
                 if dataset_id:
                     dataset: Dataset = db.get(Dataset, dataset_id)
 
@@ -106,22 +141,31 @@ class PredictJob(BaseJob):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
                 ) from e
+
+            # Retrieve Task
             try:
                 task: BaseTask = component_registry[exp.task_name]["class"]()
             except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
                 log.exception(e)
                 raise JobError(
                     f"Task {exp.task_name} not found in the registry",
                 ) from e
+
+            # Load Model
             try:
-                model = component_registry[run.model_name]["class"]
-                trained_model: BaseModel = model.load(run.run_path)
+                model = component_registry[prediction.run.model_name]["class"]
+                trained_model: BaseModel = model.load(prediction.run.run_path)
             except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
                 log.exception(e)
                 raise JobError(
-                    f"Model {run.model_name} not found in the registry"
+                    f"Model {prediction.run.model_name} not found in the registry"
                 ) from e
 
+            # Load Dataset and make Predictions
             try:
                 if dataset_id:
                     loaded_dataset: DashAIDataset = load_dataset(
@@ -138,26 +182,33 @@ class PredictJob(BaseJob):
                     y_pred = np.argmax(y_pred_proba, axis=1)
 
             except ValueError as ve:
+                prediction.set_status_as_error()
+                db.commit()
                 log.error(f"Validation Error: {ve}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Invalid columns selected: {str(ve)}",
                 ) from ve
             except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
                 log.error(e)
                 raise JobError(
                     "Model prediction failed",
                 ) from e
+
+            # Process Predictions
             try:
                 train_dataset: DashAIDataset = load_dataset(
                     str(Path(f"{exp.dataset.file_path}/dataset/"))
                 )
             except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
                 log.exception(e)
                 raise JobError(
                     "Can not load dataset from path {exp.dataset.file_path}/dataset/"
                 ) from e
-
             try:
                 prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
                 y_pred_proba = np.array(trained_model.predict(prepared_dataset))
@@ -166,10 +217,14 @@ class PredictJob(BaseJob):
                     train_dataset, y_pred_proba, exp.output_columns[0]
                 )
             except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
                 log.exception(e)
                 raise JobError(
                     "Processing predictions failed",
                 ) from e
+
+            # Save Predictions to JSON
             try:
                 path = str(Path(f"{config['DATASETS_PATH']}/predictions/"))
                 os.makedirs(path, exist_ok=True)
@@ -183,14 +238,13 @@ class PredictJob(BaseJob):
                             existing_ids.append(data["metadata"]["id"])
                 next_id = max(existing_ids, default=0) + 1
 
+                json_filename = str(uuid.uuid4())
                 json_name = f"{json_filename}.json"
 
                 json_data = {
                     "metadata": {
                         "id": next_id,
                         "pred_name": json_name,
-                        "run_name": run.model_name,
-                        "model_name": run.name,
                         "dataset_name": dataset.name if dataset_id else "manual_input",
                         "task_name": exp.task_name,
                     },
@@ -200,7 +254,13 @@ class PredictJob(BaseJob):
 
                 with open(os.path.join(path, json_name), "w") as json_file:
                     json.dump(json_data, json_file, indent=4)
+                # Update Prediction record
+                prediction.results_path = os.path.join(path, json_name)
+                prediction.set_status_as_finished()
+                db.commit()
             except Exception as e:
+                prediction.set_status_as_error()
+                db.commit()
                 log.exception(e)
                 raise JobError(
                     "Can not save prediction to json file",

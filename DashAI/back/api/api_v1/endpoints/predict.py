@@ -6,11 +6,17 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
+from DashAI.back.api.api_v1.schemas import prediction_params
 from DashAI.back.api.api_v1.schemas.predict_params import RenameRequest
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    Experiment,
+    Prediction,
+    Run,
+)
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.tasks.classification_task import ClassificationTask
 
@@ -18,6 +24,47 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.post("/")
+@inject
+async def create_prediction(
+    params: prediction_params.PredictionCreationParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """
+    Creates a prediction for a given trained model/run.
+
+    Parameters
+    ----------
+    run_id : int
+        The ID of the trained model/run.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the prediction result.
+
+    Raises
+    ------
+    HTTPException
+        If the run or experiment is not found.
+    """
+    db: Session
+    with session_factory() as db:
+        run: Run = db.get(Run, params.run_id)
+        if not run:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+            )
+
+        prediction = Prediction(
+            run_id=run.id,
+        )
+        db.add(prediction)
+        db.commit()
+        db.refresh(prediction)
+        return prediction
 
 
 @router.get("/metadata_json/")
