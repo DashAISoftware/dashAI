@@ -45,6 +45,11 @@ class StandardScaler(
     CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Standard Scaler"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for standardized data."""
         return Float(arrow_type=pa.float64())

@@ -44,6 +44,11 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     DISPLAY_NAME = "Character Replacer"
     IMAGE_PREVIEW = "character_replacer.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, char_to_replace: str, replacement_char: str):
         super().__init__()
         if not isinstance(char_to_replace, str) or not char_to_replace:

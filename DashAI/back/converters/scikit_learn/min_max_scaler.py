@@ -46,6 +46,11 @@ class MinMaxScaler(
     DISPLAY_NAME = "Min-Max Scaler"
     IMAGE_PREVIEW = "min_max_scaler.png"
 
+    metadata = {
+        "allowed_dtypes": ["int64", "float64", "float32"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         self.min_range = kwargs.pop("min_range", 0)
         self.max_range = kwargs.pop("max_range", 1)

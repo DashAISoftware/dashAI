@@ -213,9 +213,14 @@ function ColumnSelector({
 
   const valid = isValidSelection(rowSelectionModel);
 
+  const shouldShowInfoBox =
+    Object.keys(inputCardinality).length > 0 ||
+    (allowedDtypes?.length > 0 && !allowedDtypes.includes("*")) ||
+    restrictedDtypes?.length > 0;
+
   return (
     <Box>
-      {Object.keys(inputCardinality).length > 0 && (
+      {shouldShowInfoBox && (
         <Box
           sx={{
             mb: 2,
@@ -227,19 +232,21 @@ function ColumnSelector({
           }}
         >
           {/* Column requirement info */}
-          <Typography
-            variant="body1"
-            sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
-          >
-            Required columns:
-            {inputCardinality.exact
-              ? ` exactly ${inputCardinality.exact}`
-              : inputCardinality.max
-                ? ` between ${inputCardinality.min || 0} and ${
-                    inputCardinality.max
-                  }`
-                : ` at least ${inputCardinality.min || 0}`}
-          </Typography>
+          {Object.keys(inputCardinality).length > 0 && (
+            <Typography
+              variant="body1"
+              sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
+            >
+              Required columns:
+              {inputCardinality.exact
+                ? ` exactly ${inputCardinality.exact}`
+                : inputCardinality.max
+                  ? ` between ${inputCardinality.min || 0} and ${
+                      inputCardinality.max
+                    }`
+                  : ` at least ${inputCardinality.min || 0}`}
+            </Typography>
+          )}
 
           {/* Selected count */}
           <Typography

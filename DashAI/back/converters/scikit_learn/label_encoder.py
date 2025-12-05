@@ -34,7 +34,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         self.fitted_columns = []
         self.metadata = {
             "changes_data_types": True,
-            "supported_dtypes": ["object", "category", "string"],
+            "allowed_dtypes": ["string"],
         }
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
@@ -58,7 +58,16 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         x_pandas = x.to_pandas()
 
         for col in x_pandas.columns:
-            if x_pandas[col].dtype.name in self.metadata["supported_dtypes"]:
+            # Check if column type is in allowed_dtypes using DashAI types
+            col_type = x.types.get(col)
+            col_dtype = col_type.dtype if hasattr(col_type, "dtype") else None
+
+            # Allow string dtype or if it's a string-like pandas dtype
+            is_allowed = col_dtype in self.metadata["allowed_dtypes"] or x_pandas[
+                col
+            ].dtype.name in ["object", "category", "string"]
+
+            if is_allowed:
                 mask = x_pandas[col].notna()
                 if mask.any():
                     encoder = LabelEncoderOperation()

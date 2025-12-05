@@ -51,6 +51,11 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     CATEGORY = "Basic Preprocessing"
     IMAGE_PREVIEW = "nan_remover.png"
 
+    metadata = {
+        "allowed_dtypes": ["*"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self):
         super().__init__()
         self.columns = []

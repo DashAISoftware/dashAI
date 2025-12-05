@@ -67,6 +67,11 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     DISPLAY_NAME = "Ordinal Encoder"
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, **kwargs):
         self.dtype = kwargs.pop("dtype", "np.float64")
         self.dtype = cast_string_to_type(self.dtype)
