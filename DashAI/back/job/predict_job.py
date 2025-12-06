@@ -75,8 +75,14 @@ class PredictJob(BaseJob):
         config = di["config"]
 
         run_id: int = self.kwargs["run_id"]
-        id: int = self.kwargs["id"]
+        dataset_id: int = self.kwargs["id"]
         json_filename: str = self.kwargs["json_filename"]
+        manual_input_data: List[dict] = self.kwargs.get("manual_input_data", [])
+        print("PredictJob manual_input_data:", manual_input_data)
+
+        if not manual_input_data and not dataset_id:
+            raise JobError("Either dataset_id or manual_input_data must be provided.")
+
         with session_factory() as db:
             try:
                 run: Run = db.get(Run, run_id)
@@ -91,27 +97,21 @@ class PredictJob(BaseJob):
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Experiment not found",
                     )
-                dataset: Dataset = db.get(Dataset, id)
-                if not dataset:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Dataset not found",
-                    )
+                if dataset_id:
+                    dataset: Dataset = db.get(Dataset, dataset_id)
+
             except exc.SQLAlchemyError as e:
                 log.exception(e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
                 ) from e
-
             try:
-                loaded_dataset: DashAIDataset = load_dataset(
-                    str(Path(f"{dataset.file_path}/dataset/"))
-                )
+                task: BaseTask = component_registry[exp.task_name]["class"]()
             except Exception as e:
                 log.exception(e)
                 raise JobError(
-                    "Can not load dataset from path {dataset.file_path}/dataset/"
+                    f"Task {exp.task_name} not found in the registry",
                 ) from e
             try:
                 model = component_registry[run.model_name]["class"]
@@ -123,6 +123,13 @@ class PredictJob(BaseJob):
                 ) from e
 
             try:
+                if dataset_id:
+                    loaded_dataset: DashAIDataset = load_dataset(
+                        str(Path(f"{dataset.file_path}/dataset/"))
+                    )
+                else:
+                    loaded_dataset = task.process_manual_input(manual_input_data)
+
                 prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
                 y_pred_proba = np.array(trained_model.predict(prepared_dataset))
                 if isinstance(y_pred_proba[0], str):
@@ -149,13 +156,6 @@ class PredictJob(BaseJob):
                 log.exception(e)
                 raise JobError(
                     "Can not load dataset from path {exp.dataset.file_path}/dataset/"
-                ) from e
-            try:
-                task: BaseTask = component_registry[exp.task_name]["class"]()
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    f"Task {exp.task_name} not found in the registry",
                 ) from e
 
             try:
@@ -191,9 +191,10 @@ class PredictJob(BaseJob):
                         "pred_name": json_name,
                         "run_name": run.model_name,
                         "model_name": run.name,
-                        "dataset_name": dataset.name,
+                        "dataset_name": dataset.name if dataset_id else "manual_input",
                         "task_name": exp.task_name,
                     },
+                    "input": prepared_dataset.to_dict(),
                     "prediction": y_pred.tolist(),
                 }
 

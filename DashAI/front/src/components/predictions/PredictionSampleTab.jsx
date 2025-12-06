@@ -1,65 +1,54 @@
-import React, { useEffect, useState } from "react";
-import { Search } from "@mui/icons-material";
-import PropTypes from "prop-types";
-import { GridActionsCellItem } from "@mui/x-data-grid";
-import {
-  Dialog,
-  Paper,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  Button,
-  DialogActions,
-  Tabs,
-  Typography,
-  Tab,
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
+import React, { useState } from "react";
+import { Grid, Paper } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import CustomLayout from "../custom/CustomLayout";
-import ResultsTabInfo from "../../pages/results/components/ResultsTabInfo";
-import handleCloseCustomLayout from "../../pages/results/components/ResultsTabInfo";
-import { useSnackbar } from "notistack";
 
 function PredictionSampleTab({ summary, type }) {
-  const [open, setOpen] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const [error, setError] = useState(false);
-  const handleCloseContent = () => {
-    setOpen(false);
-  };
-
   const columns = React.useMemo(() => {
-    const commonColumns = [
+    const rows = summary["sample_data"] || [];
+
+    // Dynamically generate columns from input fields
+    const inputColumns = [];
+    if (rows.length > 0 && rows[0].input) {
+      Object.keys(rows[0].input).forEach((key) => {
+        inputColumns.push({
+          field: key,
+          headerName: key,
+          minWidth: 150,
+          editable: false,
+          valueGetter: (value, row) => row.input?.[key],
+        });
+      });
+    }
+
+    const typeSpecificColumn = {
+      field: "value",
+      headerName: "Value",
+      minWidth: 100,
+      editable: false,
+    };
+
+    return [...inputColumns, typeSpecificColumn];
+  }, [type, summary]);
+
+  // Create column grouping model
+  const columnGroupingModel = React.useMemo(() => {
+    const rows = summary["sample_data"] || [];
+    const inputColumnFields = [];
+
+    if (rows.length > 0 && rows[0].input) {
+      Object.keys(rows[0].input).forEach((key) => {
+        inputColumnFields.push(key);
+      });
+    }
+
+    return [
       {
-        field: "id",
-        headerName: "Row",
-        minWidth: 30,
-        editable: false,
+        groupId: "inputColumns",
+        headerName: "Input Columns",
+        children: inputColumnFields.map((field) => ({ field })),
       },
     ];
-
-    const typeSpecificColumn =
-      type === "numeric"
-        ? {
-            field: "value",
-            headerName: "Value",
-            minWidth: 100,
-            editable: false,
-          }
-        : {
-            field: "value",
-            headerName: "Text",
-            minWidth: 500,
-            editable: false,
-          };
-
-    return [...commonColumns, typeSpecificColumn];
-  }, [type]);
+  }, [summary]);
 
   const rows = summary["sample_data"] || [];
 
@@ -73,7 +62,12 @@ function PredictionSampleTab({ summary, type }) {
     >
       <Grid size={{ xs: 12 }}>
         <Paper sx={{ mt: 2, height: 400 }}>
-          <DataGrid rows={rows} columns={columns} disableRowSelectionOnClick />
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            disableRowSelectionOnClick
+            columnGroupingModel={columnGroupingModel}
+          />
         </Paper>
       </Grid>
     </Grid>

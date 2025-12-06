@@ -194,6 +194,7 @@ async def get_predict_summary(
             try:
                 json_file = json.load(f)
                 data = json_file["prediction"]
+                inputs = json_file.get("input", {})
                 metadata = json_file["metadata"]
             except json.JSONDecodeError as e:
                 raise HTTPException(
@@ -232,9 +233,25 @@ async def get_predict_summary(
                     class_distribution.append(distribution)
                 summary["class_distribution"] = class_distribution
 
-            sample_data = [
-                {"id": idx, "value": value} for idx, value in enumerate(data[:50], 1)
+            # Build sample_data including input fields
+            sample_data = []
+            max_samples = min(50, len(data))
+
+            # Convert column-based inputs to row-based inputs
+            input_rows = [
+                {key: values[i] for key, values in inputs.items()}
+                for i in range(len(data))
             ]
+
+            for idx in range(max_samples):
+                sample_data.append(
+                    {
+                        "id": idx + 1,
+                        "value": data[idx],
+                        "input": input_rows[idx],
+                    }
+                )
+
             summary["sample_data"] = sample_data
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail="Prediction not found") from e

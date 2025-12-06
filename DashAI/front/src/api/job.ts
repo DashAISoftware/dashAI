@@ -125,10 +125,23 @@ export const enqueuePredictionJob = async (
   run_id: number,
   id: number,
   json_filename: string,
+  manual_input_data?: object[],
 ): Promise<object> => {
+  const simpleManualData = manual_input_data?.map((obj, i) => {
+    const cleanObj: any = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(`file_${i}_${key}`, value); // attach file
+      } else {
+        cleanObj[key] = value;
+      }
+    });
+    return cleanObj;
+  });
+
   const data = {
     job_type: "PredictJob",
-    kwargs: { run_id, id, json_filename },
+    kwargs: { run_id, id, json_filename, manual_input_data: simpleManualData },
   };
 
   const formData = new FormData();

@@ -42,6 +42,7 @@ function PredictionModal({
   const [activeStep, setActiveStep] = useState(0);
   const [selectedModelId, setSelectedModelId] = useState(preselectedModelId);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
+  const [manualInputData, setManualInputData] = useState(null);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [predictName, setPredictName] = useState("");
   const [trainDataset, setTrainDataset] = useState(preselectedTrainedDatasetId);
@@ -129,6 +130,7 @@ function PredictionModal({
         selectedModelId,
         selectedDatasetId,
         finalPredictionName,
+        manualInputData,
       );
 
       if (response?.id) {
@@ -292,6 +294,8 @@ function PredictionModal({
           trainDataset,
           predictName,
           defaultName,
+          manualInputData,
+          setManualInputData,
         )}
       </DialogContent>
       <DialogActions>
@@ -304,7 +308,7 @@ function PredictionModal({
             autoFocus
             variant="contained"
             color="primary"
-            disabled={!nextEnabled || isSubmitting}
+            disabled={isSubmitting} // TODO: Add logic to disable based dataset selected or manual input
           >
             {activeStep === 1
               ? isSubmitting

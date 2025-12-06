@@ -1082,17 +1082,33 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     Dict
         Dict with the columns and types
     """
-    dataset = load_dataset(dataset_path)
+    data_filepath = os.path.join(dataset_path, "data.arrow")
+
+    with pa.OSFile(data_filepath, "rb") as source:
+        reader = ipc.open_file(source)
+        schema = reader.schema
+
+    types_dict = get_types_from_arrow_metadata(schema)
 
     column_types = {}
-    for column in dataset.types:
-        column_spec = dataset.types[column]
-        dtype = column_spec.to_string().get("dtype", None)
-        _format = column_spec.to_string().get("format", None)
-        column_types[column] = {
-            "type": column_spec.to_string().get("type", None),
+    for column_name, column_type in types_dict.items():
+        spec_dict = column_type.to_string()
+
+        dtype = spec_dict.get("dtype")
+        _format = spec_dict.get("format")
+
+        column_info = {
+            "type": spec_dict.get("type"),
             "dtype": _format if _format else dtype,
         }
+
+        if spec_dict.get("type") == "Categorical":
+            column_info["categories"] = spec_dict.get("categories", [])
+            column_info["num_categories"] = spec_dict.get("num_categories", 0)
+            column_info["converted"] = spec_dict.get("converted", False)
+
+        column_types[column_name] = column_info
+
     return column_types
 
 

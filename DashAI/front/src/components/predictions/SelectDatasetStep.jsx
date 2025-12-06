@@ -1,23 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
-import {
-  Alert,
-  AlertTitle,
-  Grid,
-  Link,
-  Paper,
-  Typography,
-} from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { Grid, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 import PredictionNameInput from "./PredictionNameInput";
 
-import { getDatasets as getDatasetsRequest } from "../../api/datasets";
-
 import { filter_datasets as filterDatasetsRequest } from "../../api/predict";
 import { formatDate } from "../../utils";
+import PredictionType from "./PredictionType";
 
 const columns = [
   {
@@ -52,6 +43,8 @@ function SelectDatasetStep({
   trainDataset,
   defaultPredictionName,
   onPredictNameInput,
+  manualInputData,
+  setManualInputData,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -118,52 +111,19 @@ function SelectDatasetStep({
           />
         </Grid>
       )}
-      <Grid
-        container
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 4 }}
-      >
-        <Typography variant="subtitle1" component="h3">
-          Select a dataset for the selected task
-        </Typography>
-      </Grid>
-      {datasets.length === 0 && !loading && !requestError && (
-        <React.Fragment>
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            <AlertTitle>There is no datasets available.</AlertTitle>
-            Go to{" "}
-            <Link component={RouterLink} to="/app/data">
-              data tab
-            </Link>{" "}
-            to upload one first.
-          </Alert>
-          <Typography></Typography>
-        </React.Fragment>
-      )}
-      <Paper>
-        <DataGrid
-          rows={datasets}
+      {!loading && (
+        <PredictionType
+          runId={preselectedModelId ?? selectedModelId}
+          datasets={datasets}
           columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 10,
-              },
-            },
-          }}
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setDatasetsSelected(newRowSelectionModel);
-          }}
-          rowSelectionModel={datasetsSelected}
-          density="compact"
-          pageSizeOptions={[10]}
           loading={loading}
-          autoHeight
-          hideFooterSelectedRowCount
+          requestError={requestError}
+          setDatasetsSelected={setDatasetsSelected}
+          datasetsSelected={datasetsSelected}
+          manualInputData={manualInputData}
+          setManualInputData={setManualInputData}
         />
-      </Paper>
+      )}
     </React.Fragment>
   );
 }
