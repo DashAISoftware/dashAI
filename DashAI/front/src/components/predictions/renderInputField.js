@@ -1,5 +1,5 @@
 import React from "react";
-import { TextField, Typography } from "@mui/material";
+import { TextField, Select, MenuItem, FormControl } from "@mui/material";
 
 export const renderInputField = (
   handleChange,
@@ -9,117 +9,119 @@ export const renderInputField = (
   value,
   placeholder,
 ) => {
-  const { dtype, type } = typeInfo || {};
-  const effectiveType = dtype || type || "string";
+  const { dtype, type, categories } = typeInfo || {};
+  const effectiveType = type || dtype || "string";
 
-  switch (effectiveType.toLowerCase()) {
-    case "float":
-    case "float64":
-    case "float32":
-    case "number":
-      return (
-        <TextField
-          size="small"
-          type="number"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) =>
-            handleChange(
-              rowIndex,
-              col,
-              e.target.value === "" ? "" : parseFloat(e.target.value),
-            )
-          }
-          sx={{
-            input: { color: "white" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#555" },
-              "&:hover fieldset": { borderColor: "#888" },
-            },
-          }}
-        />
-      );
-
-    case "int":
-    case "int32":
-    case "int64":
-      return (
-        <TextField
-          size="small"
-          type="number"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) =>
-            handleChange(
-              rowIndex,
-              col,
-              e.target.value === "" ? "" : parseInt(e.target.value),
-            )
-          }
-          sx={{
-            input: { color: "white" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#555" },
-              "&:hover fieldset": { borderColor: "#888" },
-            },
-          }}
-        />
-      );
-
-    case "sequence":
-      return (
-        <TextField
-          size="small"
-          value={Array.isArray(value) ? value.join(",") : value}
-          placeholder={
-            Array.isArray(placeholder) ? placeholder.join(",") : placeholder
-          }
-          onChange={(e) =>
-            handleChange(
-              rowIndex,
-              col,
-              e.target.value
-                .split(",")
-                .map((x) => x.trim())
-                .filter(Boolean),
-            )
-          }
-          sx={{
-            input: { color: "white" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#555" },
-              "&:hover fieldset": { borderColor: "#888" },
-            },
-          }}
-        />
-      );
-
-    case "image":
-      return (
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
-          style={{ color: "white" }}
-        />
-      );
-
-    case "string":
-    default:
-      return (
-        <TextField
-          size="small"
-          value={value}
-          placeholder={placeholder}
+  if (effectiveType === "Categorical" && categories && categories.length > 0) {
+    return (
+      <FormControl fullWidth size="small">
+        <Select
+          value={value || ""}
           onChange={(e) => handleChange(rowIndex, col, e.target.value)}
+          displayEmpty
           sx={{
-            input: { color: "white" },
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#555" },
-              "&:hover fieldset": { borderColor: "#888" },
-            },
+            color: "white",
+            ".MuiOutlinedInput-notchedOutline": { borderColor: "#555" },
+            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#888" },
+            ".MuiSvgIcon-root": { color: "white" },
           }}
-        />
-      );
+        >
+          <MenuItem value="" disabled>
+            Select a category
+          </MenuItem>
+          {categories.map((cat, idx) => (
+            <MenuItem key={idx} value={cat}>
+              {cat}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
   }
+
+  if (
+    effectiveType === "Float" ||
+    effectiveType === "Integer" ||
+    dtype?.startsWith("float") ||
+    dtype?.startsWith("int")
+  ) {
+    const isInteger = effectiveType === "Integer" || dtype?.startsWith("int");
+
+    return (
+      <TextField
+        size="small"
+        type="number"
+        value={value}
+        placeholder={placeholder}
+        inputProps={{
+          step: isInteger ? 1 : "any",
+        }}
+        onChange={(e) => {
+          const val =
+            e.target.value === ""
+              ? ""
+              : isInteger
+                ? parseInt(e.target.value)
+                : parseFloat(e.target.value);
+          handleChange(rowIndex, col, val);
+        }}
+        sx={{
+          input: { color: "white" },
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "#555" },
+            "&:hover fieldset": { borderColor: "#888" },
+          },
+        }}
+      />
+    );
+  }
+
+  if (
+    effectiveType === "Text" ||
+    effectiveType === "string" ||
+    dtype === "string"
+  ) {
+    return (
+      <TextField
+        size="small"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => handleChange(rowIndex, col, e.target.value)}
+        sx={{
+          input: { color: "white" },
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "#555" },
+            "&:hover fieldset": { borderColor: "#888" },
+          },
+        }}
+      />
+    );
+  }
+
+  if (effectiveType === "Image" || dtype === "image") {
+    return (
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
+        style={{ color: "white" }}
+      />
+    );
+  }
+
+  return (
+    <TextField
+      size="small"
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => handleChange(rowIndex, col, e.target.value)}
+      sx={{
+        input: { color: "white" },
+        "& .MuiOutlinedInput-root": {
+          "& fieldset": { borderColor: "#555" },
+          "&:hover fieldset": { borderColor: "#888" },
+        },
+      }}
+    />
+  );
 };
