@@ -198,11 +198,10 @@ def get_types_from_arrow_metadata(
         If the metadata does not contain DashAI types.
     """
 
-    metadata = (
-        pa_table.schema.metadata
-        if isinstance(pa_table, Schema)
-        else pa_table.schema.metadata
-    ) or {}
+    if isinstance(pa_table, Schema):
+        metadata = pa_table.metadata or {}
+    else:
+        metadata = pa_table.schema.metadata or {}
     types_serialized = metadata.get(b"dashai_types", b"{}").decode("utf-8")
 
     try:
