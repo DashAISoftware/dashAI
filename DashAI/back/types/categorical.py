@@ -19,10 +19,7 @@ class Categorical(DashAIDataType):
         experimented changes via converters(e.g., encoded).
     """
 
-    # Array of unique category values. Maybe could be a list.
-    # I think I overcomplicated it by using pa.Array
-    # But should't be hard to change if needed.
-    categories: pa.Array
+    categories: list
     converted: bool = False
     dtype: str = None
 
@@ -33,9 +30,25 @@ class Categorical(DashAIDataType):
         converted: bool = False,
         dtype: str = None,
     ):
-        # Convert list to pa.Array if needed
-        if isinstance(values, list):
-            values = pa.array(values)
+        # Convert pa.Array to list if needed
+        if isinstance(values, pa.Array):
+            values = values.to_pylist()
+
+        if isinstance(values, list) and dtype:
+            if dtype == "bool":
+
+                def to_bool(v):
+                    if v is None:
+                        return None
+                    if isinstance(v, str):
+                        return v == "True"
+                    return bool(v)
+
+                values = [to_bool(v) for v in values]
+            elif dtype.startswith("int"):
+                values = [int(v) if v is not None else None for v in values]
+            elif dtype.startswith("float"):
+                values = [float(v) if v is not None else None for v in values]
 
         self.categories = values
         self.converted = converted
@@ -57,12 +70,7 @@ class Categorical(DashAIDataType):
                 self._str2int = encoding
                 self._int2str = {v: k for k, v in encoding.items()}
         else:
-            categories_list = (
-                self.categories.to_pylist()
-                if isinstance(self.categories, pa.Array)
-                else list(self.categories)
-            )
-            enum_dict = dict(enumerate(categories_list))
+            enum_dict = dict(enumerate(self.categories))
             self._int2str = enum_dict
             self._str2int = {v: k for k, v in enum_dict.items()}
 
@@ -72,52 +80,42 @@ class Categorical(DashAIDataType):
     def int2str(self, value):
         return self._int2str[value]
 
-    def _infer_dtype(self, values: pa.Array) -> str:
-        """Infer the dtype from the values array.
+    def _infer_dtype(self, values: list) -> str:
+        """Infer the dtype from the values list.
 
         Parameters
         ----------
-        values : pa.Array
-            Array of category values.
+        values : list
+            List of category values.
 
         Returns
         -------
         str
-            The inferred dtype: 'int64', 'float64', or 'string'.
+            The inferred dtype: 'int64', 'float64', 'bool', or 'string'.
         """
         if len(values) == 0:
             return "string"
 
-        # Check the PyArrow type
-        arrow_type = values.type
+        # Check the type of the first non-None value
+        for val in values:
+            if val is not None:
+                if isinstance(val, bool):
+                    return "bool"
+                elif isinstance(val, int):
+                    return "int64"
+                elif isinstance(val, float):
+                    return "float64"
+                else:
+                    return "string"
 
-        # Map PyArrow types to string representations
-        if pa.types.is_integer(arrow_type):
-            return "int64"
-        elif pa.types.is_floating(arrow_type):
-            return "float64"
-        elif pa.types.is_string(arrow_type) or pa.types.is_large_string(arrow_type):
-            return "string"
-        else:
-            # For other types, try to infer from the first non-null value
-            for val in values:
-                if val.is_valid:
-                    py_val = val.as_py()
-                    if isinstance(py_val, int):
-                        return "int64"
-                    elif isinstance(py_val, float):
-                        return "float64"
-                    else:
-                        return "string"
-            return "string"
+        return "string"
 
     def num_categories(self):
         """Get the number of unique categories."""
         return len(self.categories)
 
     def to_string(self):
-        # categories might contain non-string values,
-        # so convert them to strings for representation
+        # categories might contain non-string values
         return {
             "type": "Categorical",
             "dtype": self.dtype,

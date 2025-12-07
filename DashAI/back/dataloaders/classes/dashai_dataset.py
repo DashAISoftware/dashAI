@@ -566,9 +566,9 @@ def transform_dataset_with_schema(
         if _type == "Categorical":
             base_col = table.column(column_name)
             # Get unique values while preserving original type
-            unique_values = sorted(set(base_col.to_pylist()))
-            values_array = pa.array(unique_values)
-            dashai_types[column_name] = Categorical(values=values_array)
+            col_list = base_col.to_pylist()
+            unique_values = sorted({v for v in col_list if v is not None})
+            dashai_types[column_name] = Categorical(values=unique_values)
             # Keep the column data as-is without converting to string
             dai_table[column_name] = base_col
             # Use the inferred dtype from Categorical for pa_type
@@ -912,11 +912,12 @@ def split_dataset(
     test_table = table.filter(pa.array(test_mask))
     val_table = table.filter(pa.array(val_mask))
 
+    # Preserve types from the original dataset to maintain categorical mappings
     separate_dataset_dict = DatasetDict(
         {
-            "train": DashAIDataset(train_table),
-            "test": DashAIDataset(test_table),
-            "validation": DashAIDataset(val_table),
+            "train": DashAIDataset(train_table, types=dataset.types),
+            "test": DashAIDataset(test_table, types=dataset.types),
+            "validation": DashAIDataset(val_table, types=dataset.types),
         }
     )
 
@@ -947,15 +948,24 @@ def to_dashai_dataset(
 
     if isinstance(dataset, Dataset):
         arrow_tbl = get_arrow_table(dataset)
+        if types:
+            types_serialized = {col: types[col].to_string() for col in types}
+            arrow_tbl = save_types_in_arrow_metadata(arrow_tbl, types_serialized)
         return DashAIDataset(arrow_tbl, types=types)
     if isinstance(dataset, DataFrame):
         hf_dataset = Dataset.from_pandas(dataset, preserve_index=False)
         arrow_tbl = get_arrow_table(hf_dataset)
+        if types:
+            types_serialized = {col: types[col].to_string() for col in types}
+            arrow_tbl = save_types_in_arrow_metadata(arrow_tbl, types_serialized)
         return DashAIDataset(arrow_tbl, types=types)
     if isinstance(dataset, DatasetDict) and len(dataset) == 1:
         key = list(dataset.keys())[0]
         ds = dataset[key]
         arrow_tbl = get_arrow_table(ds)
+        if types:
+            types_serialized = {col: types[col].to_string() for col in types}
+            arrow_tbl = save_types_in_arrow_metadata(arrow_tbl, types_serialized)
         return DashAIDataset(arrow_tbl, types=types)
     if isinstance(dataset, DatasetDict):
         return merge_splits_with_metadata(dataset)
@@ -1071,6 +1081,8 @@ def select_columns(
 def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     """Return the column with their respective types.
 
+    This function reads only the schema metadata from the Arrow file without
+    loading the entire dataset into memory, making it much more efficient.
 
     Parameters
     ----------
@@ -1084,8 +1096,9 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     """
     data_filepath = os.path.join(dataset_path, "data.arrow")
 
+    # Read only the schema without loading data
     with pa.OSFile(data_filepath, "rb") as source:
-        reader = ipc.open_file(source)
+        reader = pa.ipc.open_file(source)
         schema = reader.schema
 
     types_dict = get_types_from_arrow_metadata(schema)
