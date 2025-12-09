@@ -5,6 +5,7 @@ import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 
 import { Box } from "@mui/system";
 import ManualInputForm from "./ManualInputForm";
+import { CircularProgress } from "@mui/material";
 
 export default function ManualInput({
   experiment,
@@ -15,9 +16,9 @@ export default function ManualInput({
   setManualInputData,
 }) {
   return (
-    <Box sx={{ p: 2, border: "1px solid #ccc", borderRadius: 1 }}>
+    <Box>
       {loading ? (
-        <div>Loading...</div>
+        <CircularProgress />
       ) : experiment && Object.keys(types).length > 0 && sample ? (
         <ManualInputForm
           types={types}
