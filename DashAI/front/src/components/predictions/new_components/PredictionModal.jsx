@@ -293,7 +293,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
 
       <Divider />
 
-      <DialogContent sx={{ height: 600, minHeight: "unset", overflow: "auto" }}>
+      <DialogContent sx={{ height: 800, minHeight: "unset", overflow: "auto" }}>
         {activeTab === 0 && (
           <>
             {viewMode === "input" ? (
