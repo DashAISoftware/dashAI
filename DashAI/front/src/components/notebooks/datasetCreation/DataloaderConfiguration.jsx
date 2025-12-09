@@ -11,12 +11,14 @@ import { generateSequentialName } from "../../../utils/nameGenerator";
  * @param {object} formSubmitRef - The reference to the form submit function
  * @param {function} setError - The function to set the error state
  * @param {array} existingDatasets - Array of existing datasets to avoid name conflicts
+ * @param {function} onValuesChange - Callback function called when form values change
  */
 function DataloaderConfiguration({
   selectedDataloader,
   formSubmitRef,
   setError,
   existingDatasets = [],
+  onValuesChange,
 }) {
   const { defaultName } = useMemo(
     () =>
@@ -28,29 +30,23 @@ function DataloaderConfiguration({
   );
 
   return (
-    <Paper
-      sx={{ p: 4, height: "100%" }}
-      borderRadius={2}
-      data-tour="dataloader-config"
-    >
-      <Stack spacing={3}>
-        {/* Form title */}
-        <DialogContentText sx={{ alignSelf: "center" }}>
-          {selectedDataloader.display_name ?? selectedDataloader.name}{" "}
-          configuration
-        </DialogContentText>
+    <Stack spacing={3}>
+      {/* Form title */}
+      <DialogContentText sx={{ alignSelf: "center" }}>
+        {selectedDataloader} configuration
+      </DialogContentText>
 
-        <FormSchemaLayout>
-          <FormSchema
-            autoSave
-            model={selectedDataloader.name}
-            formSubmitRef={formSubmitRef}
-            setError={setError}
-            initialValues={{ name: defaultName }}
-          />
-        </FormSchemaLayout>
-      </Stack>
-    </Paper>
+      <FormSchemaLayout>
+        <FormSchema
+          autoSave
+          model={selectedDataloader}
+          formSubmitRef={formSubmitRef}
+          setError={setError}
+          initialValues={{ name: defaultName }}
+          onValuesChange={onValuesChange}
+        />
+      </FormSchemaLayout>
+    </Stack>
   );
 }
 
@@ -59,6 +55,7 @@ DataloaderConfiguration.propTypes = {
   formSubmitRef: PropTypes.shape({ current: PropTypes.any }),
   setError: PropTypes.func,
   existingDatasets: PropTypes.array,
+  onValuesChange: PropTypes.func,
 };
 
 export default DataloaderConfiguration;

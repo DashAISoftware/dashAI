@@ -2,9 +2,6 @@ import logging
 from pathlib import Path
 from typing import List
 
-import pyarrow as pa
-from datasets.arrow_dataset import update_metadata_with_features
-from datasets.features import Features
 from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
@@ -13,6 +10,7 @@ from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
+    modify_table,
     save_dataset,
 )
 from DashAI.back.dependencies.database.models import ConverterList
@@ -59,9 +57,9 @@ def _rebuild_dataset_with_transformed_columns(
     """
 
     original_columns = base.column_names
-    original_without_scope = base.remove_columns(scope_column_names)
-
     transformed_cols = transformed.column_names
+
+    replacement_cols = transformed_cols[: len(scope_column_indexes)]
 
     index_to_replacement = dict(zip(scope_column_indexes, scope_column_names))
     index_to_replacement = {
@@ -79,40 +77,26 @@ def _rebuild_dataset_with_transformed_columns(
             new_columns_order.append(col)
     new_columns_order.extend(new_cols)
 
-    original_table = original_without_scope.arrow_table
-    transformed_table = transformed.arrow_table
+    updated_arrays = {
+        col: transformed.arrow_table[col]
+        for col in replacement_cols + new_cols
+        if col in transformed.arrow_table.column_names
+    }
 
-    new_arrays = []
-    final_names = new_columns_order.copy()
-    for col in new_columns_order:
-        if col in original_table.column_names:
-            new_arrays.append(original_table[col])
-        elif col in transformed_table.column_names:
-            new_arrays.append(transformed_table[col])
-        else:
-            final_names.remove(col)
-    new_columns_order = final_names
-
-    new_table = pa.Table.from_arrays(new_arrays, names=new_columns_order)
-    new_dataset = DashAIDataset(new_table, splits=base.splits)
-
-    features = base.features.copy()
-    features.update(
+    updated_types = base.types.copy()
+    updated_types.update(
         {
-            col: transformed.features[col]
-            for col in transformed.column_names
-            if col in new_columns_order and col in transformed.features
+            col: transformed.types[col]
+            for col in replacement_cols + new_cols
+            if col in transformed.types
         }
     )
-    new_dataset._info.features = Features(
-        {col: features[col] for col in new_columns_order if col in features}
-    )
 
-    new_dataset._data = update_metadata_with_features(
-        new_dataset._data, new_dataset.features
-    )
+    modified_dataset = modify_table(base, updated_arrays, types=updated_types)
 
-    return new_dataset
+    modified_dataset = modified_dataset.select_columns(new_columns_order)
+
+    return modified_dataset
 
 
 class ConverterListJob(BaseJob):

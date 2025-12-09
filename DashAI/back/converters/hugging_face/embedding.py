@@ -1,3 +1,4 @@
+import pyarrow as pa
 import torch
 from datasets import Dataset, concatenate_datasets
 from transformers import AutoModel, AutoTokenizer
@@ -9,6 +10,8 @@ from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class EmbeddingSchema(BaseSchema):
@@ -76,6 +79,10 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.batch_size = kwargs.get("batch_size", 32)
         self.model = None
         self.tokenizer = None
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float32 as the output type for embeddings."""
+        return Float(arrow_type=pa.float32())
 
     def _load_model(self):
         """Load the embedding model and tokenizer."""

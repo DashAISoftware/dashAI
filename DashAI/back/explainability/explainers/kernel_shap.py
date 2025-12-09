@@ -17,6 +17,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models import BaseModel
+from DashAI.back.types.categorical import Categorical
 
 
 class KernelShapSchema(BaseSchema):
@@ -170,13 +171,17 @@ class KernelShap(BaseLocalExplainer):
 
         x, y = background_dataset
 
-        background_data = x["train"].to_pandas()
-        features = x["train"].features
+        x_train = x["train"]
+        y_train = y["train"]
+
+        background_data = x_train.to_pandas()
+        features = x_train.column_names
+        types = x_train.types
         feature_names = list(features)
 
         categorical_features = False
         for feature in features:
-            if features[feature]._type == "ClassLabel":
+            if isinstance(types[feature], Categorical):
                 categorical_features = True
 
         if sample_background_data:
@@ -196,8 +201,8 @@ class KernelShap(BaseLocalExplainer):
         )
 
         # Metadata
-        output_column = list(y["train"].features)[0]
-        target_names = y["train"].features[output_column].names
+        output_column = y_train.column_names[0]
+        target_names = y_train.types[output_column].categories
         self.metadata = {"feature_names": feature_names, "target_names": target_names}
 
         return self
@@ -221,9 +226,15 @@ class KernelShap(BaseLocalExplainer):
         """
 
         dataset_dashai = to_dashai_dataset(instances)
-        X = dataset_dashai.to_pandas()
 
-        predictions = self.model.predict(x_pred=X)
+        if hasattr(self.model, "prepare_dataset"):
+            dataset_prepared = self.model.prepare_dataset(dataset_dashai, is_fit=False)
+        else:
+            dataset_prepared = dataset_dashai
+
+        X = dataset_prepared.to_pandas()
+
+        predictions = self.model.predict(x_pred=dataset_dashai)
 
         # TODO: evaluate args nsamples y l1_reg
         shap_values = self.explainer.shap_values(X=X)

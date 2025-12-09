@@ -6,6 +6,7 @@ from typing import Any, Dict, Final, Type, Union
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class BaseConverterSchema(BaseSchema):
@@ -63,6 +64,28 @@ class BaseConverter(ConfigObject, ABC):
         Samplers typically do, while most other transformers do not.
         """
         return False
+
+    @abstractmethod
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Get the output type for a specific column after transformation.
+
+        This method must be implemented by each converter to specify what type
+        of data it produces. The converter should determine the output type based
+        on its transformation logic.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The name of the column to get the output type for.
+            Useful for converters that may produce different types per column.
+
+        Returns
+        -------
+        DashAIDataType
+            The output type after transformation for the specified column.
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def fit(

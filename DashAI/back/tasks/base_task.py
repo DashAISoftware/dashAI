@@ -3,7 +3,10 @@ from typing import Any, Dict, Final, List, Union
 
 from datasets import DatasetDict
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 
 
 class BaseTask:
@@ -61,10 +64,11 @@ class BaseTask:
         allowed_output_types = tuple(metadata["outputs_types"])
         inputs_cardinality = metadata["inputs_cardinality"]
         outputs_cardinality = metadata["outputs_cardinality"]
-
+        types = dataset._types
         # Check input types
         for input_col in input_columns:
-            input_col_type = dataset.features[input_col]
+            input_col_type = types[input_col]
+
             if not isinstance(input_col_type, allowed_input_types):
                 raise TypeError(
                     f"{input_col_type} is not an allowed type for input columns."
@@ -72,7 +76,8 @@ class BaseTask:
 
         # Check output types
         for output_col in output_columns:
-            output_col_type = dataset.features[output_col]
+            output_col_type = types[output_col]
+
             if not isinstance(output_col_type, allowed_output_types):
                 raise TypeError(
                     f"{output_col_type} is not an allowed type for output columns."
@@ -93,45 +98,27 @@ class BaseTask:
                 f"match task cardinality ({outputs_cardinality})"
             )
 
-    @abstractmethod
     def prepare_for_task(
-        self, dataset: Union[DatasetDict, DashAIDataset], outputs_columns: List[str]
+        self,
+        dataset: Union[DatasetDict, DashAIDataset],
+        input_columns: List[str],
+        output_columns: List[str],
     ) -> DashAIDataset:
-        """Change column types to suit the task requirements.
-
-        Parameters
-        ----------
-        dataset : Union[DatasetDict, DashAIDataset]
-            Dataset to be changed
-
-        Returns
-        -------
-        DashAIDataset
-            Dataset with the new types
         """
-        raise NotImplementedError
+        Default preparation shared by every task.
 
-    @abstractmethod
-    def process_predictions(
-        self, dataset: DashAIDataset, predictions: Any, target_column: str
-    ) -> Any:
-        """Process the predictions to suit the task requirements.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset to be changed
-        predictions : Any
-            Predictions to be processed
-        target_column : str
-            Target column for the task
-
-        Returns
-        -------
-        Any
-            Processed predictions
+        - Ensures DashAIDataset instance.
+        - Validates types against task metadata.
+        - Returns dataset ready for the taks.
         """
-        raise NotImplementedError
+        dashai_dataset = to_dashai_dataset(dataset)
+        self.validate_dataset_for_task(
+            dashai_dataset,
+            dataset_name=getattr(dashai_dataset, "name", "dataset"),
+            input_columns=input_columns,
+            output_columns=output_columns,
+        )
+        return dashai_dataset
 
     @abstractmethod
     def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:

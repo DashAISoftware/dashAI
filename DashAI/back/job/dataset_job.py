@@ -15,6 +15,7 @@ from DashAI.back.api.utils import parse_params
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
 from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.types.inf.type_inference import infer_types
 
 log = logging.getLogger(__name__)
 
@@ -168,10 +169,14 @@ class DatasetJob(BaseJob):
                 # Calculate metadata
                 new_dataset.compute_metadata()
                 gc.collect()
+                if "inferred_types" in params:
+                    schema = params["inferred_types"]
+                else:
+                    schema = infer_types(new_dataset.to_pandas(), method="DashAIPtype")
 
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))
-                save_dataset(new_dataset, dataset_save_path)
+                save_dataset(new_dataset, dataset_save_path, schema)
             except Exception as e:
                 log.exception(e)
                 shutil.rmtree(folder_path, ignore_errors=True)

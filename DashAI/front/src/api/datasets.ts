@@ -106,6 +106,48 @@ export const exportDatasetCsvByPath = async (path: string): Promise<Blob> => {
   return response.data;
 };
 
+export const loadPreview = async (formData: FormData): Promise<object> => {
+  const response = await api.post(`${datasetEndpoint}/load_preview`, formData);
+  return response.data;
+};
+
+export const inferDataTypes = async (formData: FormData): Promise<object> => {
+  const response = await api.post(
+    `${datasetEndpoint}/infer_datatypes`,
+    formData,
+  );
+  return response.data;
+};
+
+export const previewWithTypes = async (
+  formData: FormData,
+): Promise<{
+  sample: Array<Record<string, any>>;
+  schema: Record<string, { type: string; dtype: string; encoding?: string }>;
+  inferred_types: Record<string, { type: string; dtype: string }>;
+  preview_row_count: number;
+}> => {
+  const response = await api.post(
+    `${datasetEndpoint}/preview_with_types`,
+    formData,
+  );
+  return response.data;
+};
+
+export const validateTypeChanges = async (
+  formData: FormData,
+): Promise<{
+  valid: boolean;
+  errors: Record<string, string>;
+  warnings: Record<string, string>;
+}> => {
+  const response = await api.post(
+    `${datasetEndpoint}/validate_type_changes`,
+    formData,
+  );
+  return response.data;
+};
+
 export const getDatasetFileFiltered = async (
   path: string,
   page = 0,

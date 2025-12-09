@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from datasets import Value
+import pyarrow as pa
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
@@ -9,6 +9,8 @@ from DashAI.back.converters.category.basic_preprocessing import (
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer, Text
 
 
 class CharacterReplacerSchema(BaseSchema):
@@ -42,6 +44,11 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     DISPLAY_NAME = "Character Replacer"
     IMAGE_PREVIEW = "character_replacer.png"
 
+    metadata = {
+        "allowed_dtypes": ["string"],
+        "restricted_dtypes": [],
+    }
+
     def __init__(self, char_to_replace: str, replacement_char: str):
         super().__init__()
         if not isinstance(char_to_replace, str) or not char_to_replace:
@@ -64,18 +71,16 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             return self
 
         for col_name in x.column_names:
-            if col_name in x.features and x.features[col_name] == Value(
-                dtype="string", id=None
-            ):
+            if col_name in x.types and isinstance(x.types[col_name], Text):
                 self._target_columns.append(col_name)
             else:
                 print(
-                    f"Warning: Column '{col_name}' in scope is not of string type "
+                    f"Warning: Column '{col_name}' in scope is not of Text type "
                     "and will be ignored by CharacterReplacer."
                 )
         if not self._target_columns:
             print(
-                "Warning: CharacterReplacer did not find any valid string columns "
+                "Warning: CharacterReplacer did not find any valid Text columns "
                 "in the provided scope."
             )
         return self
@@ -98,11 +103,13 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             except (ValueError, TypeError):
                 return value
 
+        new_types = x.types.copy()
+
         def replace_function(batch):
             processed_batch = {}
             for column_name, values in batch.items():
                 if column_name in self._target_columns:
-                    if x.features[column_name] == Value(dtype="string", id=None):
+                    if isinstance(x.types[column_name], Text):
                         replaced_values = [
                             (
                                 val.replace(self.char_to_replace, self.replacement_char)
@@ -122,8 +129,10 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
                             processed_batch[column_name] = [
                                 try_convert_to_int(val) for val in replaced_values
                             ]
+                            new_types[column_name] = Integer(arrow_type=pa.int64())
                         else:
                             processed_batch[column_name] = replaced_values
+                            new_types[column_name] = Text(arrow_type=pa.string())
                     else:
                         processed_batch[column_name] = values
                 else:
@@ -134,9 +143,18 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
 
         return DashAIDataset(
             transformed_hf_dataset.data.table,
+            types=new_types,
             splits=x.splits,
         )
 
     def changes_row_count(self) -> bool:
         """This converter does not change the number of rows."""
         return False
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Returns Text or Integer depending on whether values can be converted
+        to int. Since this is determined dynamically during transform, we
+        return Text as default.
+        """
+        return Text(arrow_type=pa.string())

@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.preprocessing import PolynomialFeatures as PolynomialFeaturesOperation
 
 from DashAI.back.converters.category.polynomial_kernel import PolynomialKernelConverter
@@ -9,6 +10,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class PolynomialFeaturesSchema(BaseSchema):
@@ -59,4 +62,9 @@ class PolynomialFeatures(
         "the degree-2 polynomial features are [1, a, b, a^2, ab, b^2]"
     )
     DISPLAY_NAME = "Polynomial Features"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for polynomial features."""
+        return Float(arrow_type=pa.float64())
+
     IMAGE_PREVIEW = "polynomial_features.png"

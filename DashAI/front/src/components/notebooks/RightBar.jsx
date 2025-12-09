@@ -163,12 +163,49 @@ export default function RightBar({ notebook, onToggle }) {
       tooltip += `\n\nThis dataset does not have any columns with the required data types.`;
     }
 
-    if (!allowedDtypes.includes("*") && allowedDtypes.length > 0) {
-      tooltip += `\n\nAccepts: ${allowedDtypes.join(", ")}`;
+    return { disabled, tooltip, validColumns };
+  };
+
+  // Validate converters based on dataset columns
+  const validateConverter = (converter) => {
+    if (!datasetColumns.length) return { disabled: false, tooltip: "" };
+
+    const allowedDtypes = converter?.metadata?.allowed_dtypes || ["*"];
+    const restrictedDtypes = converter?.metadata?.restricted_dtypes || [];
+
+    let validColumns = datasetColumns;
+    let disabled = false;
+    let tooltip =
+      converter.description || converter.metadata?.short_description || "";
+
+    // Filter by allowed dtypes
+    if (!allowedDtypes.includes("*")) {
+      validColumns = datasetColumns.filter((col) =>
+        allowedDtypes.includes(col.dataType),
+      );
     }
 
-    if (restrictedDtypes.length > 0) {
-      tooltip += `\n\nRestricted: ${restrictedDtypes.join(", ")}`;
+    // Filter out restricted dtypes
+    if (
+      restrictedDtypes.some((dtype) =>
+        datasetColumns.some((col) => col.dataType === dtype),
+      )
+    ) {
+      validColumns = validColumns.filter(
+        (col) => !restrictedDtypes.includes(col.dataType),
+      );
+    }
+
+    // Check if there are no valid columns at all
+    if (
+      validColumns.length === 0 &&
+      allowedDtypes.length > 0 &&
+      !allowedDtypes.includes("*")
+    ) {
+      disabled = true;
+      tooltip += `\n\nThis dataset does not have any columns with the required data types (${allowedDtypes.join(
+        ", ",
+      )}).`;
     }
 
     return { disabled, tooltip, validColumns };
@@ -200,17 +237,30 @@ export default function RightBar({ notebook, onToggle }) {
 
     setFilteredExplorers(filteredAndValidatedExplorers);
 
-    const filteredConverters = converters.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.metadata.short_description
-          ? item.metadata.short_description
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())
-          : item.description.toLowerCase().includes(searchQuery.toLowerCase())),
-    );
+    const filteredAndValidatedConverters = converters
+      .filter(
+        (item) =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (item.metadata.short_description
+            ? item.metadata.short_description
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())
+            : item.description
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase())),
+      )
+      .map((converter) => {
+        const validation = validateConverter(converter);
+        return {
+          ...converter,
+          disabled: validation.disabled,
+          tooltip: validation.tooltip,
+          validColumns: validation.validColumns,
+          notebook,
+        };
+      });
 
-    setFilteredConverters(filteredConverters);
+    setFilteredConverters(filteredAndValidatedConverters);
   }, [searchQuery, explorers, converters, datasetColumns, notebook]);
 
   const handleChangeTab = (event, newValue) => {

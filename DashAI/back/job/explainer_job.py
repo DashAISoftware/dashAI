@@ -179,6 +179,7 @@ class ExplainerJob(BaseJob):
         splits: Dict[str, Any],
         task: BaseTask,
         same_dataset: bool,
+        trained_model: BaseModel,
     ) -> None:
         from kink import di
 
@@ -203,7 +204,9 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 prepared_instance = task.prepare_for_task(
-                    loaded_instance, outputs_columns=self.output_columns
+                    loaded_instance,
+                    input_columns=self.input_columns,
+                    output_columns=self.output_columns,
                 )
 
                 split = self.explainer_db.scope.get("split")
@@ -212,18 +215,24 @@ class ExplainerJob(BaseJob):
 
                 if split != "all":
                     if not same_dataset:
-                        prepared_instance, splits = prepare_for_experiment(
+                        if isinstance(splits, str):
+                            splits = json.loads(splits)
+                        prepared_dataset_dict, splits = prepare_for_experiment(
                             dataset=prepared_instance,
                             splits=splits,
                             output_columns=self.output_columns,
                         )
-
-                    prepared_instance = split_dataset(
-                        prepared_instance,
-                        train_indexes=splits["train_indexes"],
-                        test_indexes=splits["test_indexes"],
-                        val_indexes=splits["val_indexes"],
-                    )[split]
+                        split_key = "validation" if split == "val" else split
+                        prepared_instance = prepared_dataset_dict[split_key]
+                    else:
+                        prepared_instance = split_dataset(
+                            prepared_instance,
+                            train_indexes=splits["train_indexes"],
+                            test_indexes=splits["test_indexes"],
+                            val_indexes=splits["val_indexes"],
+                        )
+                        split_key = "validation" if split == "val" else split
+                        prepared_instance = prepared_instance[split_key]
 
                 prepared_instance = prepared_instance.select(
                     range(
@@ -244,6 +253,8 @@ class ExplainerJob(BaseJob):
                     self.input_columns,
                     self.output_columns,
                 )
+                X = trained_model.prepare_dataset(X, is_fit=False)
+
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -394,9 +405,10 @@ class ExplainerJob(BaseJob):
                         val_indexes=splits["val_indexes"],
                     )
 
-                    prepared_dataset: DatasetDict = task.prepare_for_task(
-                        datasetdict=loaded_dataset,
-                        outputs_columns=self.output_columns,
+                    prepared_dataset = task.prepare_for_task(
+                        dataset=loaded_dataset,
+                        input_columns=self.input_columns,
+                        output_columns=self.output_columns,
                     )
                     data = select_columns(
                         prepared_dataset,
@@ -416,6 +428,13 @@ class ExplainerJob(BaseJob):
                         test_indexes=splits["test_indexes"],
                         val_indexes=splits["val_indexes"],
                     )
+                    for split_name in data_x:
+                        data_x[split_name] = trained_model.prepare_dataset(
+                            data_x[split_name], is_fit=False
+                        )
+                        data_y[split_name] = trained_model.prepare_output(
+                            data_y[split_name], is_fit=False
+                        )
 
                 except Exception as e:
                     log.exception(e)
@@ -430,7 +449,6 @@ class ExplainerJob(BaseJob):
                     raise JobError(
                         "Connection with the database failed",
                     ) from e
-
                 if explainer_scope == "global":
                     self._generate_global_explanation(
                         explainer=explainer, dataset=(data_x, data_y)
@@ -447,6 +465,7 @@ class ExplainerJob(BaseJob):
                         splits=splits,
                         task=task,
                         same_dataset=same_dataset,
+                        trained_model=trained_model,
                     )
                 else:
                     raise JobError(f"{explainer_scope} is an invalid explainer type")
