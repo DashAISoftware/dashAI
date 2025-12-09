@@ -76,7 +76,7 @@ export default function ManualInputForm({
         backgroundColor: "#1e1e1e",
         color: "white",
         boxShadow: 3,
-        maxWidth: "90%",
+        maxWidth: "100%",
         mx: "auto",
       }}
       component="form"
