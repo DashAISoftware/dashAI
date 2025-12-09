@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
   Box,
   Typography,
@@ -9,8 +9,22 @@ import {
   InputLabel,
   Alert,
 } from "@mui/material";
+import DatasetTable from "../../notebooks/dataset/DatasetTable";
+import { getDatasetFile } from "../../../api/datasets";
 
 function DatasetSelector({ datasets, selectedDataset, setSelectedDataset }) {
+  const fetchDatasetPage = useCallback(
+    async (page, pageSize) => {
+      const data = await getDatasetFile(
+        selectedDataset.file_path,
+        page,
+        pageSize,
+      );
+      return { rows: data.rows ?? [], total: data.total ?? 0 };
+    },
+    [selectedDataset],
+  );
+
   return (
     <Box sx={{ mb: 3 }}>
       <FormControl fullWidth>
@@ -31,10 +45,19 @@ function DatasetSelector({ datasets, selectedDataset, setSelectedDataset }) {
         </Select>
       </FormControl>
       {selectedDataset && (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          This dataset will be used to generate predictions for all{" "}
-          {selectedDataset.total_rows} rows.
-        </Alert>
+        <>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            This dataset will be used to generate predictions for all{" "}
+            {selectedDataset.total_rows} rows.
+          </Alert>
+          <DatasetTable
+            fetchPage={fetchDatasetPage}
+            initialPageSize={10}
+            autoHeight={true}
+            datasetPath={selectedDataset.file_path}
+            sx={{ mt: 2 }}
+          />
+        </>
       )}
     </Box>
   );
