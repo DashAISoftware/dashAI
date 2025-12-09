@@ -7,40 +7,13 @@ import { Box } from "@mui/system";
 import ManualInputForm from "./ManualInputForm";
 
 export default function ManualInput({
-  runId,
+  experiment,
+  loading,
+  types,
+  sample,
   manualInputData,
   setManualInputData,
 }) {
-  const [experiment, setExperiment] = React.useState(null);
-  const [types, setTypes] = React.useState({});
-  const [loading, setLoading] = React.useState(true);
-  const [sample, setSample] = React.useState(null);
-
-  useEffect(() => {
-    const fetchExperiment = async () => {
-      setLoading(true);
-      try {
-        const run = await getRunById(runId);
-        if (run && run.experiment_id) {
-          const experimentData = await getExperimentById(run.experiment_id);
-          setExperiment(experimentData);
-          const datasetTypes = await getDatasetTypes(experimentData.dataset_id);
-          setTypes(datasetTypes);
-          const datasetSample = await getDatasetSample(
-            experimentData.dataset_id,
-          );
-          setSample(datasetSample);
-        }
-      } catch (error) {
-        console.error("Error fetching experiment:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchExperiment();
-  }, [runId]);
-
   return (
     <Box sx={{ p: 2, border: "1px solid #ccc", borderRadius: 1 }}>
       {loading ? (

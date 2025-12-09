@@ -11,6 +11,7 @@ import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";
 import { useNavigate } from "react-router-dom";
 import { getComponents } from "../../../api/component";
+import PredictionModal from "../../../components/predictions/new_components/PredictionModal";
 
 // constants
 import { extractRows } from "../constants/extractRows";
@@ -38,6 +39,9 @@ function ResultsTable({
   const [selectedRun, setSelectedRun] = useState(null);
   const [models, setModels] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [predictionModalOpen, setPredictionModalOpen] = useState(false);
+  const [selectedRunForPrediction, setSelectedRunForPrediction] =
+    useState(null);
 
   const getModels = async () => {
     return await getComponents({ selectTypes: ["Model"] });
@@ -54,7 +58,8 @@ function ResultsTable({
   };
 
   const handlePrediction = (run, trainedDatasetId) => {
-    navigate(`../app/predict`, { state: { runId: run.id, trainedDatasetId } });
+    setSelectedRunForPrediction(run);
+    setPredictionModalOpen(true);
   };
 
   const handleExplainer = (run) => {
@@ -119,24 +124,34 @@ function ResultsTable({
   }, [experiment]);
 
   return (
-    <ResultsTableLayout
-      rows={
-        experiment.id
-          ? rows.filter(
-              (run) => String(run.experiment_id) === String(experiment.id),
-            )
-          : []
-      }
-      columns={columns}
-      showRunResults={showRunResults}
-      loading={loading}
-      selectedRun={selectedRun}
-      handleCloseRunResults={handleCloseRunResults}
-      columnVisibilityModel={columnVisibilityModel}
-      columnGroupingModel={columnGroupingModel}
-      handleExecuteRuns={handleExecuteRuns}
-      handleRun={handleRun}
-    />
+    <>
+      <ResultsTableLayout
+        rows={
+          experiment.id
+            ? rows.filter(
+                (run) => String(run.experiment_id) === String(experiment.id),
+              )
+            : []
+        }
+        columns={columns}
+        showRunResults={showRunResults}
+        loading={loading}
+        selectedRun={selectedRun}
+        handleCloseRunResults={handleCloseRunResults}
+        columnVisibilityModel={columnVisibilityModel}
+        columnGroupingModel={columnGroupingModel}
+        handleExecuteRuns={handleExecuteRuns}
+        handleRun={handleRun}
+      />
+      <PredictionModal
+        isOpen={predictionModalOpen}
+        onClose={() => {
+          setPredictionModalOpen(false);
+          setSelectedRunForPrediction(null);
+        }}
+        run={selectedRunForPrediction}
+      />
+    </>
   );
 }
 

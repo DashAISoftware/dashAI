@@ -1,0 +1,84 @@
+import { useState } from "react";
+import { Box, Card, CardContent, Typography, Paper } from "@mui/material";
+import StorageIcon from "@mui/icons-material/Storage";
+import UploadIcon from "@mui/icons-material/Upload";
+
+function ModeSelector({ predictionMode, setPredictionMode }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+        Prediction Mode
+      </Typography>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+        <Paper
+          elevation={predictionMode === "dataset" ? 3 : 0}
+          sx={{
+            p: 2,
+            cursor: "pointer",
+            border: 2,
+            borderColor:
+              predictionMode === "dataset" ? "primary.main" : "divider",
+            bgcolor:
+              predictionMode === "dataset"
+                ? "primary.light"
+                : "background.paper",
+            "&:hover": {
+              bgcolor:
+                predictionMode === "dataset" ? "primary.light" : "action.hover",
+            },
+          }}
+          onClick={() => setPredictionMode("dataset")}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <StorageIcon
+              color={predictionMode === "dataset" ? "primary" : "action"}
+            />
+            <Box>
+              <Typography variant="body2" fontWeight={600}>
+                Use Existing Dataset
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Select a dataset from the platform
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+        <Paper
+          elevation={predictionMode === "manual" ? 3 : 0}
+          sx={{
+            p: 2,
+            cursor: "pointer",
+            border: 2,
+            borderColor:
+              predictionMode === "manual" ? "primary.main" : "divider",
+            bgcolor:
+              predictionMode === "manual"
+                ? "primary.light"
+                : "background.paper",
+            "&:hover": {
+              bgcolor:
+                predictionMode === "manual" ? "primary.light" : "action.hover",
+            },
+          }}
+          onClick={() => setPredictionMode("manual")}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <UploadIcon
+              color={predictionMode === "manual" ? "primary" : "action"}
+            />
+            <Box>
+              <Typography variant="body2" fontWeight={600}>
+                Manual Prediction
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Enter values manually
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Box>
+  );
+}
+
+export default ModeSelector;
