@@ -34,7 +34,7 @@ function HomeButton({ title, description, to, Icon }) {
               <Icon color="primary" fontSize="large" sx={{ width: "100%" }} />
             </Grid>
 
-            <Grid size={{ md: 9 }} sx={{ height: "100%" }}>
+            <Grid size={{ md: 9 }} sx={{ height: "100%", pr: 1 }}>
               <Grid
                 container
                 direction="column"
