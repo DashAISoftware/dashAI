@@ -43,6 +43,10 @@ class Dataset(Base):
     experiments: Mapped[List["Experiment"]] = relationship(
         "Experiment", cascade="all, delete-orphan", back_populates="dataset"
     )
+    predictions: Mapped[List["Prediction"]] = relationship(
+        "Prediction", cascade="all, delete-orphan", back_populates="dataset"
+    )
+
     status: Mapped[Enum] = mapped_column(
         Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
     )
@@ -178,6 +182,7 @@ class Prediction(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     run_id: Mapped[int] = mapped_column(ForeignKey("run.id", ondelete="CASCADE"))
+    dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"), nullable=True)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
@@ -195,6 +200,7 @@ class Prediction(Base):
 
     # Relationships
     run: Mapped["Run"] = relationship("Run", back_populates="predictions")
+    dataset: Mapped["Dataset"] = relationship("Dataset", back_populates="predictions")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the prediction to delivered and set

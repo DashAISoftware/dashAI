@@ -264,15 +264,14 @@ def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset)
         "/api/v1/predict/",
         json={
             "run_id": trained_run_id,
+            "dataset_id": dataset["id"],
         },
     )
     assert response.status_code == 200, response.text
 
     form_data = {
         "job_type": "PredictJob",
-        "kwargs": json.dumps(
-            {"prediction_id": response.json()["id"], "dataset_id": dataset["id"]}
-        ),
+        "kwargs": json.dumps({"prediction_id": response.json()["id"]}),
     }
 
     enqueued_response = client.post(

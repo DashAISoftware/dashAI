@@ -134,12 +134,14 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     setIsLoading(true);
 
     // 2.- Create a prediction in database
-    const prediction = await createPrediction(run.id);
+    const prediction = await createPrediction(
+      run.id,
+      predictionMode === "dataset" ? selectedDataset.id : null,
+    );
 
     // 3.- Enqueue prediction job
     await enqueuePredictionJob(
       prediction.id,
-      predictionMode === "dataset" ? selectedDataset.id : null,
       predictionMode === "manual" ? manualRows : null,
     );
 
@@ -211,7 +213,6 @@ export default function PredictionModal({ isOpen, onClose, run }) {
   }, [predictions]);
 
   const handleDownload = async (selectedPrediction) => {
-    console.log("Downloading results:", selectedPrediction);
     const data = await downloadPredict(selectedPrediction.id);
     const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -351,7 +352,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
               </Box>
             ) : (
               <PredictionsTable
-                history={predictions}
+                predictions={predictions}
                 onItemClick={(item) => {
                   setSelectedPrediction(item);
                 }}

@@ -39,6 +39,8 @@ async def create_prediction(
     ----------
     run_id : int
         The ID of the trained model/run.
+    dataset_id : int | None
+        The ID of the dataset to use for prediction (optional).
 
     Returns
     -------
@@ -60,6 +62,7 @@ async def create_prediction(
 
         prediction = Prediction(
             run_id=run.id,
+            dataset_id=params.dataset_id,
         )
         db.add(prediction)
         db.commit()

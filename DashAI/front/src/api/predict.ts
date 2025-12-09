@@ -59,9 +59,13 @@ export const downloadPredict = async (prediction_id: string) => {
   return response.data;
 };
 
-export const createPrediction = async (run_id: number): Promise<object> => {
+export const createPrediction = async (
+  run_id: number,
+  dataset_id?: number,
+): Promise<object> => {
   const response = await api.post<object>(`${predictEndpoint}/`, {
     run_id,
+    dataset_id,
   });
   return response.data;
 };

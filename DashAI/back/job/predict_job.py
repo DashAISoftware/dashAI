@@ -94,9 +94,7 @@ class PredictJob(BaseJob):
         config = di["config"]
 
         prediction_id: int = self.kwargs["prediction_id"]
-        dataset_id: int = self.kwargs.get("dataset_id")
         manual_input_data: List[dict] = self.kwargs.get("manual_input_data", [])
-        print("PredictJob manual_input_data:", manual_input_data)
 
         with session_factory() as db:
             try:
@@ -112,6 +110,8 @@ class PredictJob(BaseJob):
                 prediction.huey_id = self.kwargs.get("huey_id", None)
                 prediction.set_status_as_started()
                 db.commit()
+
+                dataset_id = prediction.dataset_id
 
                 # Validate input data
                 if not manual_input_data and not dataset_id:

@@ -123,9 +123,10 @@ export const enqueueExplorerJob = async (
 
 export const enqueuePredictionJob = async (
   prediction_id: number,
-  dataset_id: number,
   manual_input_data?: object[],
 ): Promise<object> => {
+  const formData = new FormData();
+
   const simpleManualData = manual_input_data?.map((obj, i) => {
     const cleanObj: any = {};
     Object.entries(obj).forEach(([key, value]) => {
@@ -140,10 +141,9 @@ export const enqueuePredictionJob = async (
 
   const data = {
     job_type: "PredictJob",
-    kwargs: { prediction_id, dataset_id, manual_input_data: simpleManualData },
+    kwargs: { prediction_id, manual_input_data: simpleManualData },
   };
 
-  const formData = new FormData();
   formData.append("job_type", data.job_type);
   formData.append("kwargs", JSON.stringify(data.kwargs));
 

@@ -17,8 +17,8 @@ import { getPredictionStatus } from "../../../utils/predictionStatus";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
-function PredictionsTable({ history, onItemClick }) {
-  if (!history || history.length === 0) {
+function PredictionsTable({ predictions, onItemClick }) {
+  if (!predictions || predictions.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
         <Typography color="text.secondary">No predictions yet</Typography>
@@ -56,29 +56,29 @@ function PredictionsTable({ history, onItemClick }) {
         </TableHead>
 
         <TableBody>
-          {history.map((item) => {
-            const statusText = getPredictionStatus(item.status);
+          {predictions.map((prediction) => {
+            const statusText = getPredictionStatus(prediction.status);
 
             return (
               <TableRow
-                key={item.id}
+                key={prediction.id}
                 hover
-                onClick={() => onItemClick(item)}
+                onClick={() => onItemClick(prediction)}
                 sx={{ cursor: "pointer" }}
               >
                 {/* TYPE */}
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>
-                    {item.type ?? "—"}
+                    {prediction.dataset_id ? "Dataset" : "Manual Input"}
                   </Typography>
                 </TableCell>
 
                 {/* CREATED */}
-                <TableCell>{formatDate(item.created)}</TableCell>
+                <TableCell>{formatDate(prediction.created)}</TableCell>
 
                 {/* TIME (end - start) */}
                 <TableCell>
-                  {computeDuration(item.start_time, item.end_time)}
+                  {computeDuration(prediction.start_time, prediction.end_time)}
                 </TableCell>
 
                 {/* STATUS */}
