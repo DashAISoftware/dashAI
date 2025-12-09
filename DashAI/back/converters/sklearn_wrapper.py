@@ -1,14 +1,17 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import Type, Union
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
@@ -23,6 +26,13 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             self.set_output(
                 transform="pandas"
             )  # Cast the output from numpy ndarray to pandas DataFrame
+
+    @abstractmethod
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Each sklearn converter must implement this method to specify its output type.
+        """
+        raise NotImplementedError
 
     def fit(
         self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
@@ -60,4 +70,25 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             columns = x_pandas.columns if hasattr(x_pandas, "columns") else None
             x_new = pd.DataFrame(x_new, columns=columns)
 
-        return to_dashai_dataset(x_new)
+        converted_dataset = to_dashai_dataset(x_new)
+
+        for col in converted_dataset.column_names:
+            try:
+                output_type = self.get_output_type(col)
+
+                # Special handling for categorical types that need class information
+                if isinstance(output_type, Categorical) and hasattr(self, "classes_"):
+                    values = pa.array(self.classes_.tolist())
+                    encoding = {v: i for i, v in enumerate(self.classes_)}
+                    converted_dataset.types[col] = Categorical(
+                        values=values, encoding=encoding, converted=True
+                    )
+                else:
+                    converted_dataset.types[col] = output_type
+            except NotImplementedError:
+                print(
+                    f"Warning: Converter {self.__class__.__name__} does not implement "
+                    f"get_output_type. Column {col} type may not be properly set."
+                )
+
+        return converted_dataset

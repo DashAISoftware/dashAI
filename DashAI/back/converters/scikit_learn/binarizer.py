@@ -1,9 +1,12 @@
+import pyarrow as pa
 from sklearn.preprocessing import Binarizer as BinarizerOperation
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 
 class BinarizerSchema(BaseSchema):
@@ -29,4 +32,9 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     )
     CATEGORY = "Encoding"
     DISPLAY_NAME = "Binarizer"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Integer64 as the output type for binarized data."""
+        return Integer(arrow_type=pa.int64())
+
     IMAGE_PREVIEW = "binarizer.png"

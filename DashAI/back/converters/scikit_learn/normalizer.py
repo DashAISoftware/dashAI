@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.preprocessing import Normalizer as NormalizerOperation
 
 from DashAI.back.converters.category.scaling_and_normalization import (
@@ -6,6 +7,8 @@ from DashAI.back.converters.category.scaling_and_normalization import (
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import bool_field, enum_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class NormalizerSchema(BaseSchema):
@@ -29,4 +32,9 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
     DESCRIPTION = "Normalize samples individually to unit norm."
     CATEGORY = "Scaling & Normalization"
     DISPLAY_NAME = "Normalizer"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for normalized data."""
+        return Float(arrow_type=pa.float64())
+
     IMAGE_PREVIEW = "normalizer.png"

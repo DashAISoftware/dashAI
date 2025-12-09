@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.sklearn_like_model import (
+    CategoricalEncodingStrategy,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -49,6 +52,8 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     SCHEMA = LinearRegressionSchema
     DISPLAY_NAME: str = "Linear Regression"
     COLOR: str = "#3F51B5"
+
+    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

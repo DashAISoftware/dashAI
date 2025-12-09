@@ -10,6 +10,9 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
+from DashAI.back.models.scikit_learn.sklearn_like_model import (
+    CategoricalEncodingStrategy,
+)
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
 
@@ -65,6 +68,8 @@ class LogisticRegression(
     SCHEMA = LogisticRegressionSchema
     DISPLAY_NAME: str = "Logistic Regression"
     COLOR: str = "#64B5F6"
+
+    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

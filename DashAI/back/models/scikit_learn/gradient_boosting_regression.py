@@ -68,9 +68,9 @@ class GradientBoostingRSchema(BaseSchema):
         optimizer_float_field(gt=0.0, le=1.0),
         placeholder={
             "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 2,
-            "upper_bound": 20,
+            "fixed_value": 0.5,
+            "lower_bound": 0.1,
+            "upper_bound": 1.0,
         },
         description="The minimum number of samples required to split an internal node.",
     )  # type: ignore

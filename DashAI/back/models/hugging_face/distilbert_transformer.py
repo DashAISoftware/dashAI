@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Union
 
 import torch
-from datasets import Dataset
 from sklearn.exceptions import NotFittedError
 from torch.utils.data import DataLoader
 from transformers import (
@@ -24,7 +23,13 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
+    apply_categorical_label_encoder,
+    categorical_label_encoder,
+)
 from DashAI.back.models.text_classification_model import TextClassificationModel
+from DashAI.back.types.categorical import Categorical
 
 
 class DistilBertTransformerSchema(BaseSchema):
@@ -89,7 +94,7 @@ class DistilBertTransformer(TextClassificationModel):
         associated tokenizer.
         """
 
-        self.num_labels = kwargs.pop("num_labels_from_factory", None)
+        self.num_labels = kwargs.pop("num_labels", None)
 
         kwargs = self.validate_and_transform(kwargs)
 
@@ -123,31 +128,9 @@ class DistilBertTransformer(TextClassificationModel):
             )
 
         self.fitted = False
+        self.encodings = {}  # Store encodings for categorical columns
 
-    def tokenize_data(self, dataset: Dataset) -> Dataset:
-        """Tokenize the input data.
-
-        Parameters
-        ----------
-        dataset : Dataset
-            Dataset with the input data to preprocess.
-
-        Returns
-        -------
-        Dataset
-            Dataset with the tokenized input data.
-        """
-        text_columns = [col for col in dataset.column_names if col != "label"]
-        if len(text_columns) != 1:
-            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
-        return dataset.map(
-            lambda examples: self.tokenizer(
-                examples[text_columns[0]], truncation=True, padding=True, max_length=512
-            ),
-            batched=True,
-        )
-
-    def fit(self, x_train: Dataset, y_train: Dataset):
+    def fit(self, x_train: DashAIDataset, y_train: DashAIDataset):
         """Fine-tune the pre-trained model.
 
         Parameters
@@ -171,8 +154,10 @@ class DistilBertTransformer(TextClassificationModel):
                 self.model_name, config=config
             )
 
-        train_dataset = self.tokenize_data(x_train)
-        train_dataset = train_dataset.add_column("label", y_train[output_column_name])
+        x_train = self.prepare_dataset(x_train, is_fit=True)
+        y_train = self.prepare_dataset(y_train, is_fit=True)
+
+        train_dataset = x_train.add_column("label", y_train[output_column_name])
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args_obj = TrainingArguments(
@@ -201,12 +186,12 @@ class DistilBertTransformer(TextClassificationModel):
         )
         return self
 
-    def predict(self, x_pred: Dataset):
+    def predict(self, x_pred: DashAIDataset):
         """Predict with the fine-tuned model.
 
         Parameters
         ----------
-        x_pred : Dataset
+        x_pred : DashAIDataset
             Dataset with text data.
 
         Returns
@@ -221,7 +206,7 @@ class DistilBertTransformer(TextClassificationModel):
                 " with appropriate arguments before using this estimator."
             )
 
-        pred_dataset = self.tokenize_data(x_pred)
+        pred_dataset = self.prepare_dataset(x_pred)
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
         text_columns = [col for col in x_pred.column_names if col != "label"]
@@ -246,6 +231,66 @@ class DistilBertTransformer(TextClassificationModel):
             probabilities.extend(probs.detach().cpu().numpy())
 
         return probabilities
+
+    def prepare_dataset(
+        self, dataset: DashAIDataset, is_fit: bool = False
+    ) -> DashAIDataset:
+        """Apply the model transformations to the dataset.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be transformed.
+        is_fit : bool
+            Whether this is for fitting (True) or prediction (False).
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
+        """
+        has_categorical = any(
+            isinstance(col_type, Categorical) for col_type in dataset.types.values()
+        )
+
+        if has_categorical:
+            if is_fit:
+                dataset, encodings = categorical_label_encoder(dataset)
+                self.encodings.update(encodings)
+            else:
+                dataset = apply_categorical_label_encoder(dataset, self.encodings)
+            return dataset
+        else:
+            return self.tokenize_data(dataset)
+
+    def tokenize_data(self, dataset: DashAIDataset) -> DashAIDataset:
+        """Tokenize the input data.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            Dataset with the input data to preprocess.
+
+        Returns
+        -------
+        DashAIDataset
+            Dataset with the tokenized input data.
+        """
+        text_columns = [
+            col
+            for col in dataset.column_names
+            if not isinstance(dataset.types.get(col), Categorical)
+        ]
+        if len(text_columns) != 1:
+            raise ValueError(f"Expected exactly one text column, found: {text_columns}")
+
+        return dataset.map(
+            lambda batch: self.tokenizer(
+                batch[text_columns[0]], truncation=True, padding=True, max_length=512
+            ),
+            batched=True,
+        )
 
     def save(self, filename: Union[str, Path]) -> None:
         self.model.save_pretrained(filename)

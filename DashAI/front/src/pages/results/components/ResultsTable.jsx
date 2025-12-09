@@ -63,7 +63,12 @@ function ResultsTable({
   };
 
   const handleExplainer = (run) => {
-    navigate(`../app/explainers/runs/${run.id}`);
+    navigate(`../app/explainers/runs/${run.id}`, {
+      state: {
+        modelName: run.name,
+        taskName: experiment.task_name,
+      },
+    });
   };
 
   const processRuns = () => {

@@ -51,8 +51,8 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, datasetdict, outputs_columns):
-        return datasetdict
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
+        return dataset
 
 
 class DummyModel(BaseModel):
@@ -65,14 +65,22 @@ class DummyModel(BaseModel):
     def save(self, filename):
         joblib.dump(self, filename)
 
-    def load(self, filename):
-        return
+    @staticmethod
+    def load(filename):
+        # Return a new DummyModel instance for testing
+        return DummyModel()
 
     def predict(self, x):
         return {}
 
     def fit(self, x, y):
         return
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return dataset
+
+    def prepare_output(self, dataset, is_fit=False):
+        return dataset
 
 
 class DummyGlobalExplainer(BaseGlobalExplainer):

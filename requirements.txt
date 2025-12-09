@@ -39,5 +39,7 @@ imblearn
 numba
 llvmlite
 huey
+ijson
+greenery==3.2
 xlrd
 filetype

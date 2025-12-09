@@ -43,7 +43,9 @@ class BoxPlotExplorer(DistributionExplorer):
 
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
+        # It should be added, maybe in a own validate_columns method,
+        # that in this case at least one column should be numeric
+        "allowed_dtypes": ["int64", "float64"],
         "restricted_dtypes": [],
         "input_cardinality": {"min": 1, "max": 2},
     }

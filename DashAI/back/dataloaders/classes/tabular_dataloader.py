@@ -1,10 +1,11 @@
 from typing import List, Tuple, Union
 
-from datasets import ClassLabel, DatasetDict
+from datasets import DatasetDict
 
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
 
 
+# ABANDONED????? Hope so, ClassLabel and Value no moreeee
 class TabularDataLoader(BaseDataLoader):
     """Intermediate class for tabular dataloaders methods."""
 
@@ -67,7 +68,6 @@ class TabularDataLoader(BaseDataLoader):
                 else:
                     label = dataset[split].column_names[class_column]
                 new_features = dataset[split].features.copy()
-                new_features[label] = ClassLabel(names=list(set(dataset[split][label])))
                 dataset[split] = dataset[split].cast(new_features)
         return dataset, label
 

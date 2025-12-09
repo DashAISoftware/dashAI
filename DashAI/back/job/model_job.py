@@ -173,7 +173,9 @@ class ModelJob(BaseJob):
 
                 try:
                     prepared_dataset = task.prepare_for_task(
-                        loaded_dataset, experiment.output_columns
+                        dataset=loaded_dataset,
+                        input_columns=experiment.input_columns,
+                        output_columns=experiment.output_columns,
                     )
                     n_labels = task.num_labels(
                         prepared_dataset, experiment.output_columns[0]

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Grid } from "@mui/material";
+import { useState, useEffect, useCallback } from "react";
+import { Grid, CircularProgress } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
@@ -9,31 +9,38 @@ import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
 
-/**
- * This component combines in a single step the process of uploading a file and configuring the dataloader parameters.
- * It creates the dataset entry in the database and then enqueues a job to process the uploaded file.
- *
- * @param {string} selectedDataloader - The dataloader type to configure
- * @param {function} goToPrevStep - Function to navigate back to the previous step in the dataset creation flow.
- * @param {function} backHome - Function to navigate back to the home/initial state, typically called on error.
- * @param {function} handleDatasetCreated - Callback function called when dataset is successfully created, receives the created dataset data.
- * @param {array} existingDatasets - Array of existing datasets to avoid name conflicts
- */
-
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
   goToPrevStep,
   backHome,
   handleDatasetCreated,
-  existingDatasets = [],
+  formSubmitRef,
+  formValues,
+  onPreviewError,
+  formHasErrors,
 }) {
-  const [error, setError] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-  const [nextEnabled, setNextEnabled] = useState(false);
+  const [uploadEnabled, setUploadEnabled] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
+  const [columnTypes, setColumnTypes] = useState(null);
   const tourContext = useTourContext();
 
-  const formSubmitRef = useRef(null);
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    if (onPreviewError) {
+      onPreviewError(previewError);
+    }
+  }, [previewError, onPreviewError]);
+
+  useEffect(() => {
+    if (previewError) {
+      enqueueSnackbar("Error loading dataset preview", {
+        variant: "error",
+      });
+    }
+  }, [previewError, enqueueSnackbar]);
 
   useEffect(() => {
     if (formSubmitRef.current && tourContext?.run) {
@@ -46,23 +53,45 @@ export default function ConfigureAndUploadDatasetStep({
   }, [tourContext, selectedDataloader]);
 
   const submitNewDataset = useCallback(async () => {
-    const params = formSubmitRef.current.values;
-    const name = params.name || datasetFileToUpload.file.name;
-
-    params["name"] = name;
-    params["dataloader"] = selectedDataloader.name;
-
-    createDataset(name).then(async (data) => {
-      enqueueSnackbar(`Dataset ${data.name} created successfully`, {
-        variant: "success",
+    if (!datasetFileToUpload || !datasetFileToUpload.file) {
+      enqueueSnackbar("No dataset file available", {
+        variant: "error",
       });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Safely read values from the form ref (may be undefined briefly)
+      const refValues =
+        formSubmitRef && formSubmitRef.current
+          ? formSubmitRef.current.values || {}
+          : {};
+      // Merge values coming from the form schema and the onValuesChange callback
+      const params = { ...refValues, ...(formValues || {}) };
+
+      const name = params.name || datasetFileToUpload.file.name;
+      params["name"] = name;
+
+      // Ensure dataloader is passed as a string (backend expects the dataloader name)
+      let dataloaderName = selectedDataloader;
+      if (selectedDataloader && typeof selectedDataloader === "object") {
+        dataloaderName =
+          selectedDataloader.name || selectedDataloader.display_name || null;
+      }
+      params["dataloader"] = dataloaderName;
+
+      if (columnTypes) {
+        params["inferred_types"] = columnTypes;
+      }
+
+      const { file, url } = datasetFileToUpload;
+
+      const data = await createDataset(name);
+
       try {
-        const job = await enqueueDatasetRequest(
-          data.id,
-          datasetFileToUpload.file,
-          datasetFileToUpload.url,
-          params,
-        );
+        const job = await enqueueDatasetRequest(data.id, file, url, params);
         handleDatasetCreated(data, job);
 
         if (tourContext?.run) {
@@ -70,20 +99,30 @@ export default function ConfigureAndUploadDatasetStep({
             tourContext.nextStep();
           }, 500);
         }
-      } catch {
+      } catch (err) {
+        console.error("Error enqueuing dataset job:", err);
         enqueueSnackbar("Error when trying to enqueue the dataset job.", {
           variant: "error",
         });
         backHome();
       }
-    });
+    } catch (error) {
+      console.error("Error creating dataset:", error);
+      enqueueSnackbar("Error creating dataset", {
+        variant: "error",
+      });
+      backHome();
+    } finally {
+      setUploading(false);
+    }
   }, [
-    backHome,
     selectedDataloader,
     datasetFileToUpload,
-    enqueueSnackbar,
-    handleDatasetCreated,
+    columnTypes,
     formSubmitRef,
+    handleDatasetCreated,
+    backHome,
+    enqueueSnackbar,
     tourContext,
   ]);
 
@@ -91,51 +130,75 @@ export default function ConfigureAndUploadDatasetStep({
     setDatasetFileToUpload({ file, url });
   };
 
+  const handleTypesChanged = useCallback((types) => {
+    setColumnTypes(types);
+  }, []);
+
+  const isFormValid = () => {
+    if (!formSubmitRef.current) return false;
+
+    const formik = formSubmitRef.current;
+    const hasErrors = formik.errors && Object.keys(formik.errors).length > 0;
+
+    return !hasErrors && !formHasErrors;
+  };
+
   useEffect(() => {
-    if (datasetFileToUpload && datasetFileToUpload.file !== null && !error) {
-      setNextEnabled(true);
+    if (
+      datasetFileToUpload &&
+      datasetFileToUpload.file !== null &&
+      !previewError &&
+      isFormValid()
+    ) {
+      setUploadEnabled(true);
     } else {
-      setNextEnabled(false);
+      setUploadEnabled(false);
     }
-  }, [error, datasetFileToUpload]);
+  }, [datasetFileToUpload, previewError, formHasErrors, formValues]);
 
   return (
-    <Grid sx={{ p: 4 }}>
+    <Grid sx={{ width: "100%", height: "100%" }}>
       <Grid
         container
-        direction="row"
-        justifyContent="space-around"
+        direction="column"
+        justifyContent="flex-start"
         alignItems="stretch"
-        spacing={3}
+        spacing={2}
+        sx={{
+          width: "100%",
+          backgroundColor: "#212121",
+          padding: 4,
+          borderRadius: 2,
+        }}
       >
-        {/* Upload file */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Upload onFileUpload={handleFileUpload} />
-        </Grid>
-
-        {/* Configure dataloader parameters */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          <DataloaderConfiguration
-            selectedDataloader={selectedDataloader}
-            formSubmitRef={formSubmitRef}
-            setError={setError}
-            existingDatasets={existingDatasets}
-          />
-        </Grid>
+        <Upload
+          onFileUpload={handleFileUpload}
+          formSubmitRef={formSubmitRef}
+          formValues={formValues}
+          selectedDataloader={selectedDataloader}
+          onPreviewError={setPreviewError}
+          onTypesChanged={handleTypesChanged}
+        />
       </Grid>
 
       {/* Form buttons */}
       <Grid sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-        <FormSchemaButtonGroup
-          onCancel={goToPrevStep}
-          onFormSubmit={submitNewDataset}
-          formik={{
-            errors: nextEnabled ? {} : { dataset: "Required fields missing" },
-          }}
-          saveButtonText="Upload"
-          backButtonText="Back"
-          dataTour="dataset-step-upload-button"
-        />
+        {uploading ? (
+          <CircularProgress />
+        ) : (
+          <FormSchemaButtonGroup
+            onCancel={goToPrevStep}
+            onFormSubmit={submitNewDataset}
+            formik={{
+              errors: uploadEnabled
+                ? {}
+                : { dataset: "Required fields missing" },
+            }}
+            saveButtonText="Upload"
+            backButtonText="Back"
+            dataTour="dataset-step-upload-button"
+          />
+        )}
       </Grid>
     </Grid>
   );

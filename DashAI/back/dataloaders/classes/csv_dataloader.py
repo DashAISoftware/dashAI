@@ -1,8 +1,10 @@
 """DashAI CSV Dataloader."""
 
 import shutil
+from itertools import islice
 from typing import Any, Dict
 
+import pandas as pd
 from beartype import beartype
 from datasets import Dataset, IterableDatasetDict, load_dataset
 
@@ -210,9 +212,7 @@ class CSVDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
-        print("parameters are", params)
         clean_params = self._check_params(params)
-        print("cleaned parameters are", clean_params)
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
             dataset = load_dataset(
@@ -234,3 +234,42 @@ class CSVDataLoader(BaseDataLoader):
                 dataset = dataset["train"]
             dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)
+
+    def load_preview(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 100,
+    ) -> pd.DataFrame:
+        """
+        Load a preview of the CSV dataset using streaming.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to the CSV file.
+        params : Dict[str, Any]
+            Parameters for loading the CSV (separator, encoding, etc.).
+        n_rows : int, optional
+            Number of rows to preview. Default is 100.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the preview rows.
+        """
+        clean_params = self._check_params(params)
+
+        dataset_stream = load_dataset(
+            "csv",
+            data_files=filepath_or_buffer,
+            streaming=True,
+            split="train",
+            **clean_params,
+        )
+
+        sample_rows = list(islice(dataset_stream, n_rows))
+
+        df_preview = pd.DataFrame(sample_rows)
+
+        return df_preview

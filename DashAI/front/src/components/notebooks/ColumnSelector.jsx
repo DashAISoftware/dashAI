@@ -215,18 +215,19 @@ function ColumnSelector({
 
   return (
     <Box>
-      {Object.keys(inputCardinality).length > 0 && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 2,
-            borderRadius: 2,
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
-            textAlign: "center",
-          }}
-        >
-          {/* Column requirement info */}
+      {/* Selected count - always shown */}
+      <Box
+        sx={{
+          mb: 2,
+          p: 2,
+          borderRadius: 2,
+          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          textAlign: "center",
+        }}
+      >
+        {/* Column requirement info */}
+        {Object.keys(inputCardinality).length > 0 && (
           <Typography
             variant="body1"
             sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
@@ -240,63 +241,66 @@ function ColumnSelector({
                   }`
                 : ` at least ${inputCardinality.min || 0}`}
           </Typography>
+        )}
 
-          {/* Selected count */}
+        {/* Selected count */}
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            color: valid ? "success.main" : "error.main",
+            letterSpacing: 0.3,
+            mb:
+              (allowedDtypes?.length > 0 && !allowedDtypes.includes("*")) ||
+              restrictedDtypes?.length > 0
+                ? 1
+                : 0,
+          }}
+        >
+          {`Selected ${rowSelectionModel.length} column${
+            rowSelectionModel.length !== 1 ? "s" : ""
+          }`}
+        </Typography>
+
+        {/* Allowed data types */}
+        {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
           <Typography
-            variant="h6"
+            variant="body2"
             sx={{
-              fontWeight: 700,
-              color: valid ? "success.main" : "error.main",
-              letterSpacing: 0.3,
-              mb: allowedDtypes?.length > 0 ? 1 : 0,
+              color: "rgba(255, 255, 255, 0.5)",
+              fontStyle: "italic",
+              mt: 1,
             }}
           >
-            {`Selected ${rowSelectionModel.length} column${
-              rowSelectionModel.length !== 1 ? "s" : ""
-            }`}
+            Allowed data types:{" "}
+            <Box
+              component="span"
+              sx={{ color: "secondary.main", fontWeight: 500 }}
+            >
+              {allowedDtypes.join(", ")}
+            </Box>
           </Typography>
-
-          {/* Allowed data types */}
-          {allowedDtypes?.length > 0 && !allowedDtypes.includes("*") && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "rgba(255, 255, 255, 0.5)",
-                fontStyle: "italic",
-                mt: 1,
-              }}
+        )}
+        {/* Restricted data types */}
+        {restrictedDtypes?.length > 0 && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.5)",
+              fontStyle: "italic",
+              mt: 1,
+            }}
+          >
+            Restricted data types:{" "}
+            <Box
+              component="span"
+              sx={{ color: "secondary.main", fontWeight: 500 }}
             >
-              Allowed data types:{" "}
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {allowedDtypes.join(", ")}
-              </Box>
-            </Typography>
-          )}
-          {/* Restricted data types */}
-          {restrictedDtypes?.length > 0 && (
-            <Typography
-              variant="body2"
-              sx={{
-                color: "rgba(255, 255, 255, 0.5)",
-                fontStyle: "italic",
-                mt: 1,
-              }}
-            >
-              Restricted data types:{" "}
-              <Box
-                component="span"
-                sx={{ color: "secondary.main", fontWeight: 500 }}
-              >
-                {restrictedDtypes.join(", ")}
-              </Box>
-            </Typography>
-          )}
-        </Box>
-      )}
-
+              {restrictedDtypes.join(", ")}
+            </Box>
+          </Typography>
+        )}
+      </Box>{" "}
       {/* Data Grid */}
       <DataGrid
         data-tour="column-selector"

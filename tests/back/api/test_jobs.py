@@ -25,7 +25,7 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, dataset, output_columns):
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
         return dataset
 
     def num_labels(self, dataset, output_column):
@@ -47,6 +47,9 @@ class DummyModel(BaseModel):
     def fit(self, x, y):
         return
 
+    def prepare_dataset(self, dataset, is_fit=False):
+        return
+
 
 class FailDummyModel(BaseModel):
     COMPATIBLE_COMPONENTS = ["DummyTask"]
@@ -62,6 +65,9 @@ class FailDummyModel(BaseModel):
 
     def fit(self, x, y):
         raise Exception("Always fails")
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return
 
 
 class DummyMetric(BaseMetric):
