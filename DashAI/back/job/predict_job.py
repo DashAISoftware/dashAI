@@ -13,11 +13,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, load_dataset
-from DashAI.back.dependencies.database.models import (
-    Dataset,
-    Experiment,
-    Prediction,
-)
+from DashAI.back.dependencies.database.models import Dataset, Experiment, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks import BaseTask
@@ -102,9 +98,6 @@ class PredictJob(BaseJob):
         manual_input_data: List[dict] = self.kwargs.get("manual_input_data", [])
         print("PredictJob manual_input_data:", manual_input_data)
 
-        if not manual_input_data and not dataset_id:
-            raise JobError("Either dataset_id or manual_input_data must be provided.")
-
         with session_factory() as db:
             try:
                 # Retrieve Prediction
@@ -119,6 +112,14 @@ class PredictJob(BaseJob):
                 prediction.huey_id = self.kwargs.get("huey_id", None)
                 prediction.set_status_as_started()
                 db.commit()
+
+                # Validate input data
+                if not manual_input_data and not dataset_id:
+                    prediction.set_status_as_error()
+                    db.commit()
+                    raise JobError(
+                        "Either dataset_id or manual_input_data must be provided."
+                    )
 
                 # Retrieve Experiment
                 exp: Experiment = db.get(Experiment, prediction.run.experiment_id)
