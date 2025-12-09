@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import logging
 import os
@@ -5,6 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.exceptions import HTTPException
+from fastapi.responses import PlainTextResponse
 from kink import di, inject
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -65,6 +68,120 @@ async def create_prediction(
         db.commit()
         db.refresh(prediction)
         return prediction
+
+
+@router.get("/")
+@inject
+async def get_all_predictions(
+    run_id: int = Query(None, description="The ID of the trained model/run"),
+    prediction_id: int = Query(None, description="The ID of the prediction"),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """
+    Fetches all predictions, optionally filtered by run_id.
+
+    Parameters
+    ----------
+    run_id : int, optional
+        The ID of the trained model/run to filter predictions.
+    session_factory : sessionmaker
+        SQLAlchemy session factory injected automatically.
+
+    Returns
+    -------
+    List[Prediction]
+        A list of Prediction objects.
+    """
+    print("Fetching predictions with run_id:", run_id)
+
+    db: Session
+    with session_factory() as db:
+        query = db.query(Prediction)
+        if run_id is not None:
+            query = query.filter(Prediction.run_id == run_id)
+        if prediction_id is not None:
+            query = query.filter(Prediction.id == prediction_id)
+
+        predictions = query.all()
+        return predictions
+
+
+@router.get("/summary")
+@inject
+async def get_predict(
+    prediction_id: int = Query(..., description="The ID of the prediction"),
+    config: dict = Depends(lambda: di["config"]),
+    component_registry: dict = Depends(lambda: di["component_registry"]),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """
+    Fetches prediction summary from JSON files.
+
+    Parameters
+    ----------
+    prediction_id : int
+        The ID of the prediction.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the prediction summary.
+
+    Raises
+    ------
+    HTTPException
+        If the prediction file cannot be found or read.
+    """
+
+    # 1. Get prediction from DB
+    with session_factory() as session:
+        prediction: Prediction | None = session.get(Prediction, prediction_id)
+
+        if not prediction:
+            raise HTTPException(status_code=404, detail="Prediction not found")
+
+        if not prediction.results_path:
+            raise HTTPException(
+                status_code=400, detail="Prediction exists but has no results_path"
+            )
+
+        path = Path(prediction.results_path)
+
+    # 2. Read the JSON file
+    try:
+        with open(path, "r") as f:
+            json_file = json.load(f)
+            data = json_file.get("prediction", [])
+            inputs = json_file.get("input", {})
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail="Results file not found") from e
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=400, detail="Invalid JSON format") from e
+
+    # 3. Build sample data (max 50 rows)
+    max_samples = min(50, len(data))
+
+    # Convert column-based input dict → row-based list
+    # inputs = {"col1": [...], "col2": [...]} → [{"col1": x, "col2": y}, ...]
+    input_rows = []
+    if inputs:
+        input_rows = [
+            {key: values[i] for key, values in inputs.items()} for i in range(len(data))
+        ]
+    else:
+        # No input data exists
+        input_rows = [{} for _ in range(len(data))]
+
+    sample_data = [
+        {
+            "id": i + 1,
+            "value": data[i],
+            "input": input_rows[i],
+        }
+        for i in range(max_samples)
+    ]
+
+    return {"sample_data": sample_data}
 
 
 @router.get("/metadata_json/")
@@ -359,43 +476,72 @@ async def filter_datasets_endpoint(
         ) from e
 
 
-@router.get("/download/{predict_name}")
+@router.get("/download/{prediction_id}")
 @inject
 async def download_prediction(
-    predict_name: str,
+    prediction_id: str,
     config: dict = Depends(lambda: di["config"]),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """
     Downloads a prediction file based on the provided predict_name.
 
     Parameters
     ----------
-    predict_name : str
-        The name of the prediction file to download.
+    prediction_id : str
+        The ID of the prediction file to download.
 
     Raises
     ------
     HTTPException
         If the file cannot be found.
     """
-    logger.debug("Downloading prediction file with name %s", predict_name)
-    predict_path = os.path.join(config["DATASETS_PATH"], "predictions", predict_name)
-    try:
-        if os.path.exists(predict_path):
-            with open(predict_path, "r") as json_file:
-                data = json.load(json_file)
-                return data["prediction"]
-        else:
+
+    # Load prediction row from DB
+    with session_factory() as db:
+        prediction: Prediction | None = db.get(Prediction, int(prediction_id))
+
+        if not prediction or not prediction.results_path:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found",
+                detail="Prediction not found",
             )
-    except Exception as e:
-        logger.exception("Error downloading file %s: %s", predict_name, str(e))
+
+        file_path = prediction.results_path
+
+    if not os.path.exists(file_path):
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while downloading the prediction file",
-        ) from e
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Prediction file not found",
+        )
+
+    # Read JSON content
+    with open(file_path, "r") as f:
+        data = json.load(f)
+
+    input_data = data.get("input", {})
+    predictions = data.get("prediction", [])
+
+    # Extract input columns
+    input_columns = list(input_data.keys())
+
+    # Number of rows (same length for all values)
+    row_count = len(predictions)
+
+    # Prepare CSV buffer
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow(input_columns + ["prediction"])
+
+    # Write rows
+    for i in range(row_count):
+        row_inputs = [input_data[col][i] for col in input_columns]
+        row_pred = predictions[i]
+        writer.writerow(row_inputs + [row_pred])
+
+    return PlainTextResponse(output.getvalue())
 
 
 @router.delete("/{predict_name}")

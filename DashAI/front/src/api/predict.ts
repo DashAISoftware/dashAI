@@ -52,7 +52,40 @@ export const get_predict_summary = async (predictionId: string) => {
   return response.data;
 };
 
-export const download_predict = async (predict_name: string) => {
-  const response = await api.get(`${predictEndpoint}/download/${predict_name}`);
+export const downloadPredict = async (prediction_id: string) => {
+  const response = await api.get(
+    `${predictEndpoint}/download/${prediction_id}`,
+  );
+  return response.data;
+};
+
+export const createPrediction = async (run_id: number): Promise<object> => {
+  const response = await api.post<object>(`${predictEndpoint}/`, {
+    run_id,
+  });
+  return response.data;
+};
+
+export const getPredictions = async (
+  run_id?: number,
+  prediction_id?: string,
+): Promise<object[]> => {
+  const response = await api.get<object[]>(`${predictEndpoint}/`, {
+    params: {
+      run_id,
+      prediction_id,
+    },
+  });
+  return response.data;
+};
+
+export const getPredictionSummary = async (
+  prediction_id: string,
+): Promise<object[]> => {
+  const response = await api.get<object[]>(`${predictEndpoint}/summary/`, {
+    params: {
+      prediction_id,
+    },
+  });
   return response.data;
 };
