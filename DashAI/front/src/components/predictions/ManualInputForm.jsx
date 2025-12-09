@@ -29,12 +29,17 @@ export default function ManualInputForm({
     if (manualInputData && manualInputData.length > 0) {
       return manualInputData;
     }
+    setManualInputData([createEmptyRow()]);
     return [createEmptyRow()];
   }
 
   function createEmptyRow() {
     const row = {};
-    inputColumns.forEach((col) => (row[col] = sample[col][0]));
+    inputColumns.forEach(
+      (col) =>
+        (row[col] =
+          sample[col][Math.floor(Math.random() * sample[col].length)]),
+    );
     return row;
   }
 
