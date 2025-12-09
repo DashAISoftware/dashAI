@@ -49,7 +49,7 @@ export default function SelectOptionMenu({
               option;
 
             return (
-              <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+              <Grid size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
                 <OptionBox
                   optionName={display_name}
                   description={description}

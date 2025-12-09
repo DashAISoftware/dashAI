@@ -1,19 +1,48 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
 import LeftBar from "../../components/models/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/models/RightBar";
+import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
+import { getComponents } from "../../api/component";
 
 export default function ModelsContent() {
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
   const [leftBarWidth, setLeftBarWidth] = useState(20);
   const [rightBarWidth, setRightBarWidth] = useState(20);
+  const [tasks, setTasks] = useState([]);
+  const [selectedTask, setSelectedTask] = useState(null);
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const data = await getComponents({
+          selectTypes: ["Task"],
+          hasRelatedOfType: "Model",
+        });
+        setTasks(data);
+      } catch (error) {
+        enqueueSnackbar("Failed to fetch tasks", {
+          variant: "error",
+        });
+        console.error("Failed to fetch tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  const handleTaskSelect = (taskName) => {
+    const task = tasks.find((t) => t.name === taskName);
+    setSelectedTask(task);
+  };
 
   const handleMouseMove = useCallback((e) => {
     if (isResizingLeft.current) {
@@ -153,17 +182,39 @@ export default function ModelsContent() {
         }}
       >
         <CenterBox>
-          <Box sx={{ p: 3 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              Models
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Configure tasks, train and compare models in organized sessions.
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              This section is under development.
-            </Typography>
-          </Box>
+          {selectedTask ? (
+            <Box sx={{ p: 3 }}>
+              <Typography variant="h4" component="h1" gutterBottom>
+                {selectedTask.metadata?.display_name || selectedTask.name}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                {selectedTask.description ||
+                  selectedTask.metadata?.short_description}
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Model configuration will appear here.
+              </Typography>
+            </Box>
+          ) : (
+            <SelectOptionMenu
+              title="Models Module"
+              subtitle="Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
+              options={tasks.map((task) => ({
+                name: task.name,
+                display_name:
+                  task.metadata?.display_name ||
+                  task.name
+                    .replace("Task", "")
+                    .replace(/([A-Z])/g, " $1")
+                    .trim(),
+                description:
+                  task.description || task.metadata?.short_description || "",
+                Icon: null,
+              }))}
+              searchBar={true}
+              goToNextStep={handleTaskSelect}
+            />
+          )}
         </CenterBox>
       </Box>
 
