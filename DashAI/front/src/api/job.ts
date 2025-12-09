@@ -122,9 +122,8 @@ export const enqueueExplorerJob = async (
 };
 
 export const enqueuePredictionJob = async (
-  run_id: number,
-  id: number,
-  json_filename: string,
+  prediction_id: number,
+  dataset_id: number,
   manual_input_data?: object[],
 ): Promise<object> => {
   const simpleManualData = manual_input_data?.map((obj, i) => {
@@ -141,7 +140,7 @@ export const enqueuePredictionJob = async (
 
   const data = {
     job_type: "PredictJob",
-    kwargs: { run_id, id, json_filename, manual_input_data: simpleManualData },
+    kwargs: { prediction_id, dataset_id, manual_input_data: simpleManualData },
   };
 
   const formData = new FormData();
