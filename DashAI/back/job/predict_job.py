@@ -133,6 +133,13 @@ class PredictJob(BaseJob):
 
                 # Retrieve Dataset if dataset_id is provided
                 dataset: Dataset = None
+                dataset_trained: Dataset = db.get(Dataset, exp.dataset_id)
+                if not dataset_trained:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Training dataset not found",
+                    )
+
                 if dataset_id:
                     dataset: Dataset = db.get(Dataset, dataset_id)
 
@@ -168,19 +175,39 @@ class PredictJob(BaseJob):
 
             # Load Dataset and make Predictions
             try:
+                # Load training dataset for type info and label processing
+                train_dataset: DashAIDataset = load_dataset(
+                    str(Path(f"{dataset_trained.file_path}/dataset/"))
+                )
+            except Exception as e:
+                log.exception(e)
+                raise JobError(
+                    f"Cannot load training dataset from "
+                    f"{dataset_trained.file_path}/dataset/"
+                ) from e
+
+            try:
+                # Load or create prediction dataset
                 if dataset_id:
                     loaded_dataset: DashAIDataset = load_dataset(
                         str(Path(f"{dataset.file_path}/dataset/"))
                     )
                 else:
-                    loaded_dataset = task.process_manual_input(manual_input_data)
+                    dataset_trained_path = str(
+                        Path(f"{dataset_trained.file_path}/dataset/")
+                    )
+                    loaded_dataset = task.process_manual_input(
+                        manual_input_data, dataset_trained_path
+                    )
 
+                # Select input columns and make prediction
                 prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
                 y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-                if isinstance(y_pred_proba[0], str):
-                    y_pred = y_pred_proba
-                else:
-                    y_pred = np.argmax(y_pred_proba, axis=1)
+
+                # Process predictions (convert to labels for classification)
+                y_pred = task.process_predictions(
+                    train_dataset, y_pred_proba, exp.output_columns[0]
+                )
 
             except ValueError as ve:
                 prediction.set_status_as_error()
@@ -188,8 +215,14 @@ class PredictJob(BaseJob):
                 log.error(f"Validation Error: {ve}")
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid columns selected: {str(ve)}",
+                    detail=f"Invalid input data: {str(ve)}",
                 ) from ve
+            except TypeError as te:
+                log.error(f"Type Error: {te}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Type validation failed: {str(te)}",
+                ) from te
             except Exception as e:
                 prediction.set_status_as_error()
                 db.commit()

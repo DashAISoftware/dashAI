@@ -1,12 +1,14 @@
 from abc import abstractmethod
 from typing import Any, Dict, Final, List, Union
 
+import numpy as np
 import pandas as pd
 from datasets import DatasetDict
 from starlette.datastructures import UploadFile
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
+    get_columns_spec,
     to_dashai_dataset,
 )
 from DashAI.back.tasks.utils import get_bytes_with_type_filetype
@@ -141,53 +143,219 @@ class BaseTask:
         """
         raise NotImplementedError
 
-    def process_manual_input(self, manual_input: List[dict]) -> DashAIDataset:
-        """Process manual input data into a DashAIDataset.
+    def _validate_and_normalize_value(
+        self,
+        value: Any,
+        column_spec: Dict[str, Any],
+        column_name: str,
+        row_idx: int,
+    ) -> Any:
+        """Validate and normalize a value against expected column specification.
+
+        Parameters
+        ----------
+        value : Any
+            Value to validate
+        column_spec : Dict[str, Any]
+            Column specification with 'type', 'dtype', 'categories', etc.
+        column_name : str
+            Name of the column being validated
+        row_idx : int
+            Index of the row being validated
+
+        Returns
+        -------
+        Any
+            Normalized value
+
+        Raises
+        ------
+        ValueError
+            If categorical value is not in allowed categories
+        TypeError
+            If value doesn't match expected type
+        """
+        col_type = column_spec.get("type")
+        dtype = column_spec.get("dtype")
+
+        if col_type == "Categorical":
+            categories = column_spec.get("categories", [])
+
+            if dtype and dtype.startswith("int"):
+                if isinstance(value, bool):
+                    raise TypeError(
+                        f"Row {row_idx}, column '{column_name}': "
+                        f"Boolean cannot be converted to integer categorical"
+                    )
+                try:
+                    normalized_value = int(float(value))
+                except (TypeError, ValueError) as e:
+                    raise TypeError(
+                        f"Row {row_idx}, column '{column_name}': "
+                        f"Cannot convert '{value}' to integer categorical"
+                    ) from e
+
+            elif dtype and dtype.startswith("float"):
+                if isinstance(value, bool):
+                    raise TypeError(
+                        f"Row {row_idx}, column '{column_name}': "
+                        f"Boolean cannot be converted to float categorical"
+                    )
+                try:
+                    normalized_value = float(value)
+                except (TypeError, ValueError) as e:
+                    raise TypeError(
+                        f"Row {row_idx}, column '{column_name}': "
+                        f"Cannot convert '{value}' to float categorical"
+                    ) from e
+
+            elif dtype == "bool":
+                if isinstance(value, bool):
+                    normalized_value = value
+                elif isinstance(value, str):
+                    if value.lower() in ("true", "1", "yes"):
+                        normalized_value = True
+                    elif value.lower() in ("false", "0", "no"):
+                        normalized_value = False
+                    else:
+                        raise ValueError(
+                            f"Row {row_idx}, column '{column_name}': "
+                            f"Cannot convert '{value}' to boolean"
+                        )
+                else:
+                    raise TypeError(
+                        f"Row {row_idx}, column '{column_name}': "
+                        f"Expected boolean categorical, got {type(value).__name__}"
+                    )
+
+            else:
+                # String categorical
+                normalized_value = str(value)
+
+            if str(normalized_value) not in [str(cat) for cat in categories]:
+                raise ValueError(
+                    f"Row {row_idx}, column '{column_name}': "
+                    f"Value '{value}' is not valid. "
+                    f"Allowed: {categories}"
+                )
+
+            return normalized_value
+
+        if col_type == "Float":
+            if isinstance(value, bool):
+                raise TypeError(
+                    f"Row {row_idx}, column '{column_name}': "
+                    f"Boolean cannot be converted to Float"
+                )
+            try:
+                return float(value)
+            except (TypeError, ValueError) as e:
+                raise TypeError(
+                    f"Row {row_idx}, column '{column_name}': "
+                    f"Cannot convert '{value}' to Float"
+                ) from e
+
+        if col_type == "Integer":
+            if isinstance(value, bool):
+                raise TypeError(
+                    f"Row {row_idx}, column '{column_name}': "
+                    f"Boolean cannot be converted to Integer"
+                )
+            try:
+                int_val = int(value)
+                if isinstance(value, float) and not np.isclose(value, int_val):
+                    raise TypeError(
+                        f"Row {row_idx}, column '{column_name}': "
+                        f"Float value '{value}' has decimals, cannot convert to Integer"
+                    )
+                return int_val
+            except (TypeError, ValueError) as e:
+                raise TypeError(
+                    f"Row {row_idx}, column '{column_name}': "
+                    f"Cannot convert '{value}' to Integer"
+                ) from e
+
+        if col_type == "Text":
+            return str(value)
+
+        # Unknown type
+        return value
+
+    def process_manual_input(
+        self, manual_input: List[dict], dataset_path: str
+    ) -> DashAIDataset:
+        """Process manual input data into a DashAIDataset with type validation.
 
         Parameters
         ----------
         manual_input : List[dict]
             List of dictionaries representing manual input data.
+        dataset_path : str
+            Path to the training dataset (used to get column specs for validation)
 
         Returns
         -------
         DashAIDataset
             Processed DashAIDataset from manual input.
-        """
-        inputs_types = self.get_metadata()["inputs_types"]
-        inputs_cardinality = self.get_metadata()["inputs_cardinality"]
-        print("inputs_types:", inputs_types)
 
-        # Check that manual input cardinality matches task cardinality
+        Raises
+        ------
+        ValueError
+            If input cardinality doesn't match or categorical value is invalid
+        TypeError
+            If input types don't match expected types
+        """
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            transform_dataset_with_schema,
+        )
+
+        columns_spec = get_columns_spec(dataset_path)
+        inputs_cardinality = self.get_metadata()["inputs_cardinality"]
+
         if inputs_cardinality != "n" and len(manual_input[0]) != inputs_cardinality:
             raise ValueError(
-                f"Input cardinality ({len(manual_input[0])}) does not"
-                f" match task cardinality ({inputs_cardinality})"
+                f"Input cardinality ({len(manual_input[0])}) does not "
+                f"match task cardinality ({inputs_cardinality})"
             )
 
-        # Verrify each input type is correct
         mapped_inputs = []
-        for input_dict in manual_input:
+        for row_idx, input_dict in enumerate(manual_input):
             row = {}
-            for key, value in input_dict.items():
+            for col_name, value in input_dict.items():
+                column_spec = columns_spec.get(col_name)
+                if not column_spec:
+                    raise ValueError(
+                        f"Column '{col_name}' not found in training dataset"
+                    )
+
                 # File case (image, audio, video, etc.)
                 if isinstance(value, UploadFile):
                     file_bytes = value.file.read()
                     data, detected_type = get_bytes_with_type_filetype(file_bytes)
-                    if detected_type not in inputs_types:
+
+                    if detected_type != column_spec.get("type"):
                         raise TypeError(
-                            f"Detected type '{detected_type}' "
-                            f"for file '{value.filename}'"
-                            f" is not an allowed type for input columns."
+                            f"Row {row_idx}, column '{col_name}': "
+                            f"File type '{detected_type}' doesn't match "
+                            f"expected type '{column_spec.get('type')}'"
                         )
-                    row[key] = data
-                # Primitive case (value)
-                # TODO: Verify primitive types match expected input types with new types
+                    row[col_name] = data
+
+                # Primitive value
                 else:
-                    row[key] = value
+                    normalized_value = self._validate_and_normalize_value(
+                        value, column_spec, col_name, row_idx
+                    )
+                    row[col_name] = normalized_value
+
             mapped_inputs.append(row)
 
-        # Convert to DashAIDataset
-        print("Mapped inputs:", mapped_inputs)
+        # Convert to DataFrame first
         mapped_inputs_df = pd.DataFrame(mapped_inputs)
-        return to_dashai_dataset(mapped_inputs_df)
+
+        # Convert to DashAIDataset and apply schema transformation
+        # This ensures categorical encoding is applied
+        dashai_dataset = to_dashai_dataset(mapped_inputs_df)
+        dashai_dataset = transform_dataset_with_schema(dashai_dataset, columns_spec)
+
+        return dashai_dataset

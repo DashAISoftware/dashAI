@@ -30,18 +30,25 @@ class ClassificationTask(BaseTask):
         dataset : DashAIDataset
             Dataset used for training
         predictions : np.ndarray
-            Predictions from the model
+            Predictions from the model (probabilities for each class)
         output_column : str
             Output column
 
         Returns
         -------
         np.ndarray
-            Processed predictions
+            Processed predictions with class labels
         """
         predictions = np.argmax(predictions, axis=1)
-        class_labels = encode_labels(dataset, output_column)
-        return np.array(class_labels.int2str(predictions))
+
+        output_type = dataset.types.get(output_column)
+
+        if isinstance(output_type, Categorical):
+            return np.array([output_type.int2str(idx) for idx in predictions])
+        else:
+            # Fallback to old method if not categorical
+            class_labels = encode_labels(dataset, output_column)
+            return np.array(class_labels.int2str(predictions))
 
     def prepare_for_task(
         self,

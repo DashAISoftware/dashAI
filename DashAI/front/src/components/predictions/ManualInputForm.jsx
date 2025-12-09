@@ -35,11 +35,17 @@ export default function ManualInputForm({
 
   function createEmptyRow() {
     const row = {};
-    inputColumns.forEach(
-      (col) =>
-        (row[col] =
-          sample[col][Math.floor(Math.random() * sample[col].length)]),
-    );
+    inputColumns.forEach((col) => {
+      const typeInfo = types[col];
+      if (
+        typeInfo?.type === "Categorical" &&
+        typeInfo?.categories?.length > 0
+      ) {
+        row[col] = typeInfo.categories[0];
+      } else {
+        row[col] = sample[col][0];
+      }
+    });
     return row;
   }
 
