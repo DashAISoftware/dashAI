@@ -1,23 +1,71 @@
-import React from "react";
-import {
-  Box,
-  Chip,
-  CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
-} from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Paper, styled } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
 import { formatDate, getColorByStatus } from "../../../utils";
 import { getPredictionStatus } from "../../../utils/predictionStatus";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 function PredictionsTable({ predictions, onItemClick }) {
+  const StyledCell = styled("div")(({ theme, color }) => ({
+    display: "inline-block",
+    padding: theme.spacing(0.5),
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: color,
+  }));
+
+  const computeDuration = (start, end) => {
+    if (!start || !end) return "-";
+
+    const startTime = new Date(start);
+    const endTime = end ? new Date(end) : new Date();
+    const diffMs = endTime - startTime;
+
+    if (diffMs < 0) return "-";
+
+    const seconds = Math.floor(diffMs / 1000);
+    return `${seconds}s`;
+  };
+
+  const columns = [
+    {
+      field: "type",
+      headerName: "Type",
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params) => {
+        return params?.row?.dataset_id ? "Dataset" : "Manual Input";
+      },
+    },
+    {
+      field: "created",
+      headerName: "Created",
+      flex: 1.2,
+      minWidth: 150,
+      renderCell: (params) => formatDate(params?.row?.created),
+    },
+    {
+      field: "duration",
+      headerName: "Time",
+      flex: 0.8,
+      minWidth: 80,
+      renderCell: (params) =>
+        computeDuration(params?.row?.start_time, params?.row?.end_time),
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      flex: 1,
+      minWidth: 100,
+      renderCell: (params) => {
+        const statusText = getPredictionStatus(params?.row?.status);
+        return (
+          <StyledCell color={getColorByStatus(statusText)}>
+            {statusText}
+          </StyledCell>
+        );
+      },
+    },
+  ];
+
   if (!predictions || predictions.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
@@ -29,81 +77,38 @@ function PredictionsTable({ predictions, onItemClick }) {
     );
   }
 
-  const computeDuration = (start, end) => {
-    if (!start || !end) return "–";
-
-    const startTime = new Date(start);
-
-    const endTime = end ? new Date(end) : new Date();
-    const diffMs = endTime - startTime;
-
-    if (diffMs < 0) return "–";
-
-    const seconds = Math.floor(diffMs / 1000);
-    return `${seconds}s`;
-  };
+  const rows = predictions.map((prediction) => ({
+    id: prediction.id,
+    ...prediction,
+  }));
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Type</TableCell>
-            <TableCell>Created</TableCell>
-            <TableCell>Time</TableCell>
-            <TableCell>Status</TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {predictions.map((prediction) => {
-            const statusText = getPredictionStatus(prediction.status);
-
-            return (
-              <TableRow
-                key={prediction.id}
-                hover
-                onClick={() => onItemClick(prediction)}
-                sx={{ cursor: "pointer" }}
-              >
-                {/* TYPE */}
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {prediction.dataset_id ? "Dataset" : "Manual Input"}
-                  </Typography>
-                </TableCell>
-
-                {/* CREATED */}
-                <TableCell>{formatDate(prediction.created)}</TableCell>
-
-                {/* TIME (end - start) */}
-                <TableCell>
-                  {computeDuration(prediction.start_time, prediction.end_time)}
-                </TableCell>
-
-                {/* STATUS */}
-                <TableCell>
-                  <Chip
-                    icon={
-                      statusText === "Finished" ? (
-                        <CheckCircleIcon />
-                      ) : statusText === "Failed" ? (
-                        <ErrorOutlineIcon />
-                      ) : (
-                        <CircularProgress size={12} />
-                      )
-                    }
-                    label={statusText}
-                    size="small"
-                    sx={{ bgcolor: getColorByStatus(statusText) }}
-                  />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <Paper sx={{ width: "100%" }}>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        disableRowSelectionOnClick
+        onRowClick={(params) => onItemClick(params.row)}
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize: 10, page: 0 },
+          },
+        }}
+        pageSizeOptions={[5, 10, 25, 50]}
+        density="compact"
+        sx={{
+          "& .MuiDataGrid-row": {
+            cursor: "pointer",
+          },
+          "& .MuiDataGrid-cell:focus": {
+            outline: "none",
+          },
+          "& .MuiDataGrid-row:hover": {
+            backgroundColor: "action.hover",
+          },
+        }}
+      />
+    </Paper>
   );
 }
 
