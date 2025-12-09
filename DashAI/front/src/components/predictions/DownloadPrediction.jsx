@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Download, FileDownload } from "@mui/icons-material";
 import { GridActionsCellItem } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
-import { download_predict as downloadPredictionRequest } from "../../api/predict";
+import { downloadPredict as downloadPredictionRequest } from "../../api/predict";
 import {
   Dialog,
   DialogContent,
