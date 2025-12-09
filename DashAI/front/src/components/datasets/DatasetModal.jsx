@@ -140,7 +140,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
       );
 
       setColumnsSpec(updatedTypes);
-      console.log("columnsSpec", columnsSpec);
       enqueueSnackbar("Inferred datatypes successfully", {
         variant: "success",
       });
