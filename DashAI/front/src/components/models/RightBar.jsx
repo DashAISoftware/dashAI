@@ -25,7 +25,7 @@ export default function ModelsRightBar({ session, onToggle }) {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">Models</Typography>
+          <Typography variant="h6">Available Models</Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -50,7 +50,7 @@ export default function ModelsRightBar({ session, onToggle }) {
           >
             {session
               ? "Model details will appear here"
-              : "Select a session to view model details."}
+              : "Select a session to access available models."}
           </Typography>
         </Box>
       </Box>
