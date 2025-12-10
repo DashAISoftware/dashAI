@@ -77,8 +77,8 @@ export default function ManualInputForm({
   return (
     <Box
       sx={{
-        p: 3,
-        borderRadius: 2,
+        p: 2,
+        borderRadius: 1,
         backgroundColor: "#1e1e1e",
         color: "white",
         boxShadow: 3,
@@ -90,6 +90,10 @@ export default function ManualInputForm({
     >
       <Typography variant="h6" mb={2} fontWeight={600}>
         Manual Input
+      </Typography>
+      <Typography variant="body2" mb={3} color="text.secondary">
+        Enter data manually for prediction. Fill in the fields below and submit
+        when ready.
       </Typography>
 
       <TableContainer component={Paper} sx={{ backgroundColor: "#2a2a2a" }}>
