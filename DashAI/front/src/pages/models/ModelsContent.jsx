@@ -9,6 +9,7 @@ import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMe
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import { getComponents } from "../../api/component";
 import { getDatasets } from "../../api/datasets";
+import { getExperiments } from "../../api/experiment";
 
 export default function ModelsContent() {
   const [step, setStep] = useState(0);
@@ -59,6 +60,21 @@ export default function ModelsContent() {
       }
     };
     fetchDatasets();
+  }, []);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const data = await getExperiments();
+        setSessions(data);
+      } catch (error) {
+        enqueueSnackbar("Failed to fetch sessions", {
+          variant: "error",
+        });
+        console.error("Failed to fetch sessions:", error);
+      }
+    };
+    fetchSessions();
   }, []);
 
   const handleTaskSelect = (taskName) => {

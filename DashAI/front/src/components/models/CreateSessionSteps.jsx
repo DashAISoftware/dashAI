@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
 import { Box, Stepper, Step, StepLabel } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { useFormik } from "formik";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import { createExperiment } from "../../api/experiment";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 function CreateSessionSteps({
   backHome,
@@ -15,11 +17,9 @@ function CreateSessionSteps({
   existingSessions = [],
 }) {
   const [activeStep, setActiveStep] = useState(0);
-  const [nextEnabled, setNextEnabled] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   // Step 1 state: Name and Dataset
-  const [sessionName, setSessionName] = useState("");
   const [selectedDataset, setSelectedDataset] = useState(null);
 
   // Step 2 state: Prepare Dataset
@@ -33,38 +33,100 @@ function CreateSessionSteps({
     runs: [],
   });
 
+  const [nextEnabled, setNextEnabled] = useState(false);
+
   const steps = ["Select Dataset", "Prepare Dataset"];
 
-  const handleNext = async () => {
-    if (activeStep === 0) {
-      // Moving from step 0 to step 1
-      setNewExp({
-        name: sessionName,
-        dataset: selectedDataset,
-        task_name: selectedTask?.name || "",
-        input_columns: [],
-        output_columns: [],
-        splits: {},
-        runs: [],
-      });
-      setActiveStep(1);
-      setNextEnabled(false);
-    } else if (activeStep === 1) {
-      // Create session (experiment)
-      await createSession();
+  const { defaultName } = useMemo(() => {
+    if (!selectedTask) {
+      return { defaultName: "" };
     }
+
+    const taskDisplayName =
+      selectedTask.metadata?.display_name ||
+      selectedTask.name
+        .replace("Task", "")
+        .replace(/([A-Z])/g, " $1")
+        .trim();
+
+    return generateSequentialName({
+      base: `Session_${taskDisplayName}`,
+      items: existingSessions,
+      filter: (session) => session.task_name === selectedTask.name,
+    });
+  }, [selectedTask, existingSessions]);
+
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+    },
+    enableReinitialize: true,
+    onSubmit: async (values) => {
+      if (activeStep === 0) {
+        // Moving to step 2
+        setNewExp({
+          name: values.name.trim(),
+          dataset: selectedDataset,
+          task_name: selectedTask?.name || "",
+          input_columns: [],
+          output_columns: [],
+          splits: {},
+          runs: [],
+        });
+        setActiveStep(1);
+        setNextEnabled(false);
+      } else if (activeStep === 1) {
+        // Create session
+        await createSession();
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (selectedTask && defaultName && !formik.values.name.trim()) {
+      formik.setFieldValue("name", defaultName);
+    }
+  }, [selectedTask, defaultName]);
+
+  // Calculate if next button should be enabled based on current step
+  const isNextEnabled = (() => {
+    if (activeStep === 0) {
+      const isNameValid = formik.values.name.trim().length >= 4;
+      const isDatasetValid = selectedDataset !== null;
+      return isNameValid && isDatasetValid;
+    }
+    return nextEnabled;
+  })();
+
+  const getNameError = () => {
+    if (!selectedDataset) {
+      return null;
+    }
+
+    const currentName = formik.values.name.trim();
+    if (!currentName) {
+      return "Name is required";
+    }
+
+    const nameExists = existingSessions.some(
+      (session) =>
+        session.name &&
+        session.name.toLowerCase() === currentName.toLowerCase(),
+    );
+    if (nameExists) {
+      return "A session with this name already exists";
+    }
+
+    return null;
   };
+
+  const nameError = getNameError();
 
   const handleBack = () => {
     if (activeStep === 0) {
       backHome();
     } else {
       setActiveStep(activeStep - 1);
-      if (activeStep === 1) {
-        const isNameValid = sessionName.trim().length >= 4;
-        const isDatasetValid = selectedDataset !== null;
-        setNextEnabled(isNameValid && isDatasetValid);
-      }
     }
   };
 
@@ -115,13 +177,11 @@ function CreateSessionSteps({
       <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
         {activeStep === 0 && (
           <SetNameAndDatasetStep
-            sessionName={sessionName}
-            setSessionName={setSessionName}
+            formik={formik}
             selectedDataset={selectedDataset}
             setSelectedDataset={setSelectedDataset}
             datasets={datasets}
-            setNextEnabled={setNextEnabled}
-            existingSessions={existingSessions}
+            nameError={nameError}
             selectedTask={selectedTask}
           />
         )}
@@ -138,11 +198,17 @@ function CreateSessionSteps({
       <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
         <FormSchemaButtonGroup
           onCancel={handleBack}
-          onFormSubmit={handleNext}
+          onFormSubmit={formik.handleSubmit}
           formik={{
-            errors: !nextEnabled
-              ? { validation: "Complete required fields" }
-              : {},
+            errors: {
+              ...(nameError ? { name: nameError } : {}),
+              ...(selectedDataset || activeStep === 1
+                ? {}
+                : { dataset: "Dataset is required" }),
+              ...(!isNextEnabled && activeStep === 1
+                ? { validation: "Complete required fields" }
+                : {}),
+            },
           }}
           saveButtonText={
             activeStep === steps.length - 1 ? "Create Session" : "Next"
