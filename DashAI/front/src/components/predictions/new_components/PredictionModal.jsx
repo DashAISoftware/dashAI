@@ -27,11 +27,10 @@ import PredictionsTable from "./PredictionsTable";
 import ManualInput from "../ManualInput";
 import {
   createPrediction,
-  downloadPredict,
   filter_datasets,
   getPredictions,
 } from "../../../api/predict";
-import { getDatasetInfo } from "../../../api/datasets";
+import { getDatasetInfo, exportDatasetCsvByPath } from "../../../api/datasets";
 import { enqueuePredictionJob } from "../../../api/job";
 import { getExperimentById } from "../../../api/experiment";
 import { getDatasetTypes, getDatasetSample } from "../../../api/datasets";
@@ -141,7 +140,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
 
   // Handle prediction execution
   const submitPredictionJob = async () => {
-    // 1.- set loading to true
+    // 1.- Set loading to true
     setIsLoading(true);
 
     try {
@@ -242,7 +241,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
   }, [predictions]);
 
   const handleDownload = async (selectedPrediction) => {
-    const data = await downloadPredict(selectedPrediction.id);
+    const data = await exportDatasetCsvByPath(selectedPrediction.results_path);
     const blob = new Blob([data], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -358,25 +357,6 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           <>
             {selectedPrediction ? (
               <Box>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight={600}>
-                      {selectedPrediction.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {selectedPrediction.mode === "dataset"
-                        ? `Dataset: ${selectedPrediction.datasetName}`
-                        : "Manual prediction"}{" "}
-                      - {selectedPrediction.rowCount} rows
-                    </Typography>
-                  </Box>
-                </Box>
                 <ResultsTable selectedPrediction={selectedPrediction} />
               </Box>
             ) : (
