@@ -46,16 +46,18 @@ function ResultsTable({ selectedPrediction }) {
 
   return (
     <Box>
-      <Typography variant="subtitle2" fontWeight={600}>
+      <Typography variant="subtitle1" fontWeight={600}>
         Prediction Results
       </Typography>
 
       <Typography
-        variant="caption"
+        variant="subtitle2"
         color="text.secondary"
-        sx={{ mb: 2, display: "block" }}
+        sx={{ mb: 1, display: "block" }}
       >
-        View of the entire prediction results once the prediction is completed.
+        {loadingExecution
+          ? "The prediction is still running. Results will be available once it is finished."
+          : 'The table below displays a preview of the prediction results. You can download the full results as a CSV file using the "Download CSV" buttonbelow.'}
       </Typography>
 
       {/* Show loading indicator if prediction is running */}
@@ -77,15 +79,22 @@ function ResultsTable({ selectedPrediction }) {
       {!loadingExecution &&
         selectedPrediction &&
         getPredictionStatus(selectedPrediction?.status) === "Finished" && (
-          <Paper>
-            <DatasetTable
-              fetchPage={fetchPage}
-              initialPageSize={10}
-              autoHeight={true}
-              slots={{ toolbar: null }}
-              datasetPath={selectedPrediction.results_path}
-            />
-          </Paper>
+          <>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {selectedPrediction.dataset
+                ? `Based on dataset: ${selectedPrediction.dataset.name}`
+                : "Manually provided input data."}
+            </Typography>
+            <Paper>
+              <DatasetTable
+                fetchPage={fetchPage}
+                initialPageSize={10}
+                autoHeight={true}
+                slots={{ toolbar: null }}
+                datasetPath={selectedPrediction.results_path}
+              />
+            </Paper>
+          </>
         )}
     </Box>
   );
