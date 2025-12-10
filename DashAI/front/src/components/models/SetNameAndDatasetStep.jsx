@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import { Grid, TextField, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
-import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
+import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 function SetNameAndDatasetStep({
   sessionName,
@@ -12,6 +13,7 @@ function SetNameAndDatasetStep({
   datasets,
   setNextEnabled,
   existingSessions = [],
+  selectedTask,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
@@ -19,11 +21,50 @@ function SetNameAndDatasetStep({
   const [nameOk, setNameOk] = useState(false);
   const [nameError, setNameError] = useState(false);
   const [datasetOk, setDatasetOk] = useState(false);
+  const [hasUserModifiedName, setHasUserModifiedName] = useState(false);
+
+  const { defaultName } = useMemo(() => {
+    if (!selectedTask) {
+      return { defaultName: "" };
+    }
+
+    const taskDisplayName =
+      selectedTask.metadata?.display_name ||
+      selectedTask.name
+        .replace("Task", "")
+        .replace(/([A-Z])/g, " $1")
+        .trim();
+
+    return generateSequentialName({
+      base: `Session_${taskDisplayName}`,
+      items: existingSessions,
+      filter: (session) => session.task_name === selectedTask.name,
+    });
+  }, [selectedTask, existingSessions]);
+
+  useEffect(() => {
+    if (
+      selectedTask &&
+      defaultName &&
+      !sessionName.trim() &&
+      !hasUserModifiedName
+    ) {
+      setSessionName(defaultName);
+      setNameOk(true);
+    }
+  }, [
+    selectedTask,
+    defaultName,
+    sessionName,
+    setSessionName,
+    hasUserModifiedName,
+  ]);
 
   const handleNameInputChange = (event) => {
     const inputValue = event.target.value;
     setSessionName(inputValue);
     setNModifications(nModifications + 1);
+    setHasUserModifiedName(true);
 
     const isEmpty = !inputValue.trim();
     const isTooShort =
@@ -95,12 +136,34 @@ function SetNameAndDatasetStep({
       }}
     >
       <Grid item>
-        <Typography variant="h6" gutterBottom>
-          Set Session Name and Select Dataset
+        <Typography
+          variant="h6"
+          sx={{
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            mb: 2,
+          }}
+        >
+          Select dataset for your session
         </Typography>
+        <DatasetAutocomplete
+          datasets={datasets}
+          selectedDataset={selectedDataset}
+          setSelectedDataset={setSelectedDataset}
+        />
       </Grid>
 
       <Grid item>
+        <Typography
+          variant="h6"
+          sx={{
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            my: 2,
+          }}
+        >
+          Name your Session
+        </Typography>
         <TextField
           id="session-name"
           label="Session Name"
@@ -110,28 +173,6 @@ function SetNameAndDatasetStep({
           onChange={handleNameInputChange}
           error={Boolean(displayNameError)}
           helperText={displayNameError}
-          required
-        />
-      </Grid>
-
-      <Grid item sx={{ flexGrow: 1, minHeight: 0 }}>
-        <ItemSelectorWithInfo
-          itemsList={datasets.map((dataset) => ({
-            name: dataset.name,
-            description: dataset.description || "No description",
-          }))}
-          setSelectedItem={(datasetItem) => {
-            const dataset = datasets.find((d) => d.name === datasetItem.name);
-            setSelectedDataset(dataset);
-          }}
-          selectedItem={
-            selectedDataset
-              ? {
-                  name: selectedDataset.name,
-                  description: selectedDataset.description || "No description",
-                }
-              : {}
-          }
         />
       </Grid>
     </Grid>
@@ -146,6 +187,7 @@ SetNameAndDatasetStep.propTypes = {
   datasets: PropTypes.array.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   existingSessions: PropTypes.array,
+  selectedTask: PropTypes.object,
 };
 
 export default SetNameAndDatasetStep;
