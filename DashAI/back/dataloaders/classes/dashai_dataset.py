@@ -165,6 +165,25 @@ class DashAIDataset(Dataset):
         dataset = self.cast(new_features)
         return dataset
 
+    def compute_base_metadata(self) -> "DashAIDataset":
+        """Compute basic metadata for the dataset and store it in self.splits.
+
+        Includes column names, total rows, and NaN counts.
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset with updated basic metadata in self.splits.
+        """
+
+        dataset_df = self.to_pandas()
+
+        self.splits["column_names"] = dataset_df.columns.tolist()
+        self.splits["total_rows"] = len(dataset_df)
+        self.splits["nan"] = dataset_df.isna().sum().to_dict()
+
+        return self
+
     def compute_metadata(self) -> "DashAIDataset":
         """Compute extended metadata for the dataset and store it in self.splits.
 
@@ -181,9 +200,7 @@ class DashAIDataset(Dataset):
         dataset_df = self.to_pandas()
 
         # --- Base ---
-        self.splits["column_names"] = dataset_df.columns.tolist()
-        self.splits["total_rows"] = len(dataset_df)
-        self.splits["nan"] = dataset_df.isna().sum().to_dict()
+        self.compute_base_metadata()
 
         # --- General info ---
         general_info = {

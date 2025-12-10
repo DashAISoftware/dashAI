@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -13,55 +13,41 @@ import {
 } from "@mui/material";
 import { getPredictionSummary } from "../../../api/predict";
 import { getPredictionStatus } from "../../../utils/predictionStatus";
+import DatasetTable from "../../notebooks/dataset/DatasetTable";
+import { getDatasetFile } from "../../../api/datasets";
+
+const RUNNING_STATUSES = ["Delivered", "Started"];
 
 function ResultsTable({ selectedPrediction }) {
-  const [results, setResults] = useState([]);
-  const [inputColumns, setInputColumns] = useState([]);
-  const [loadingExecution, setLoadingExecution] = useState(false);
+  const [loadingExecution, setLoadingExecution] = useState(
+    RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
+  );
 
-  const title = "Prediction Results";
-  const subtitle = "Sample of up to 50 prediction rows";
-
-  const RUNNING_STATUSES = ["Delivered", "Started"];
+  const fetchPage = useCallback(
+    async (page, pageSize) => {
+      const data = await getDatasetFile(
+        selectedPrediction.results_path,
+        page,
+        pageSize,
+      );
+      return { rows: data.rows ?? [], total: data.total ?? 0 };
+    },
+    [selectedPrediction],
+  );
 
   useEffect(() => {
     if (!selectedPrediction) return;
-    console.log("Selected Prediction changed:", selectedPrediction);
-
-    // If prediction is running, show loading
-    if (
-      RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction.status))
-    ) {
-      setLoadingExecution(true);
-      setResults([]);
-      return;
-    }
-
-    setLoadingExecution(false);
-
-    const fetchData = async () => {
-      try {
-        const response = await getPredictionSummary(selectedPrediction.id);
-
-        const sampleData = response.sample_data || [];
-        setResults(sampleData);
-
-        if (sampleData.length > 0) {
-          const firstInput = sampleData[0].input || {};
-          setInputColumns(Object.keys(firstInput));
-        }
-      } catch (error) {
-        console.error("Error fetching prediction summary:", error);
-      }
-    };
-
-    fetchData();
+    setLoadingExecution(
+      RUNNING_STATUSES.includes(
+        getPredictionStatus(selectedPrediction?.status),
+      ),
+    );
   }, [selectedPrediction]);
 
   return (
     <Box>
       <Typography variant="subtitle2" fontWeight={600}>
-        {title}
+        Prediction Results
       </Typography>
 
       <Typography
@@ -69,7 +55,7 @@ function ResultsTable({ selectedPrediction }) {
         color="text.secondary"
         sx={{ mb: 2, display: "block" }}
       >
-        {subtitle}
+        View of the entire prediction results once the prediction is completed.
       </Typography>
 
       {/* Show loading indicator if prediction is running */}
@@ -88,55 +74,18 @@ function ResultsTable({ selectedPrediction }) {
         </Box>
       )}
 
-      {!loadingExecution && (
-        <TableContainer component={Paper} sx={{ maxHeight: 500 }}>
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>#</TableCell>
-
-                {inputColumns.map((column) => (
-                  <TableCell key={column}>{column}</TableCell>
-                ))}
-
-                <TableCell
-                  sx={{
-                    bgcolor: "success.light",
-                    color: "success.dark",
-                    fontWeight: 600,
-                  }}
-                >
-                  Prediction
-                </TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {results.map((result, index) => (
-                <TableRow key={index} hover>
-                  <TableCell>{index + 1}</TableCell>
-
-                  {inputColumns.map((column) => (
-                    <TableCell key={column}>
-                      {result.input?.[column] ?? "-"}
-                    </TableCell>
-                  ))}
-
-                  <TableCell
-                    sx={{
-                      bgcolor: "success.light",
-                      fontWeight: 600,
-                      color: "success.dark",
-                    }}
-                  >
-                    {result.value}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      {!loadingExecution &&
+        selectedPrediction &&
+        getPredictionStatus(selectedPrediction?.status) === "Finished" && (
+          <Paper>
+            <DatasetTable
+              fetchPage={fetchPage}
+              initialPageSize={10}
+              autoHeight={true}
+              slots={{ toolbar: null }}
+            />
+          </Paper>
+        )}
     </Box>
   );
 }

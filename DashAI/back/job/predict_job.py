@@ -1,6 +1,4 @@
-import json
 import logging
-import os
 import uuid
 from pathlib import Path
 from typing import Any, List
@@ -12,7 +10,12 @@ from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, load_dataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    load_dataset,
+    save_dataset,
+    to_dashai_dataset,
+)
 from DashAI.back.dependencies.database.models import Dataset, Experiment, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
@@ -231,65 +234,39 @@ class PredictJob(BaseJob):
                     "Model prediction failed",
                 ) from e
 
-            # Process Predictions
+            # Save Predictions to Arrow file
             try:
-                train_dataset: DashAIDataset = load_dataset(
-                    str(Path(f"{exp.dataset.file_path}/dataset/"))
-                )
-            except Exception as e:
-                prediction.set_status_as_error()
-                db.commit()
-                log.exception(e)
-                raise JobError(
-                    "Can not load dataset from path {exp.dataset.file_path}/dataset/"
-                ) from e
-            try:
-                prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
-                y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-                # CHECKKKK
-                y_pred = task.process_predictions(
-                    train_dataset, y_pred_proba, exp.output_columns[0]
-                )
-            except Exception as e:
-                prediction.set_status_as_error()
-                db.commit()
-                log.exception(e)
-                raise JobError(
-                    "Processing predictions failed",
-                ) from e
-
-            # Save Predictions to JSON
-            try:
+                # Create unique folder for predictions
                 path = str(Path(f"{config['DATASETS_PATH']}/predictions/"))
-                os.makedirs(path, exist_ok=True)
-                existing_files = os.listdir(path)
-                existing_ids = []
-                for f in existing_files:
-                    if f.endswith(".json"):
-                        file_path = os.path.join(path, f)
-                        with open(file_path, "r") as json_file:
-                            data = json.load(json_file)
-                            existing_ids.append(data["metadata"]["id"])
-                next_id = max(existing_ids, default=0) + 1
+                folder_name = str(uuid.uuid4())
+                full_path = Path(path) / folder_name
+                full_path.mkdir(parents=True, exist_ok=True)
 
-                json_filename = str(uuid.uuid4())
-                json_name = f"{json_filename}.json"
+                # Add predictions to loaded dataset
+                dataset_with_prediction = to_dashai_dataset(
+                    prepared_dataset.add_column(exp.output_columns[0], y_pred)
+                )
 
-                json_data = {
-                    "metadata": {
-                        "id": next_id,
-                        "pred_name": json_name,
-                        "dataset_name": dataset.name if dataset_id else "manual_input",
-                        "task_name": exp.task_name,
-                    },
-                    "input": prepared_dataset.to_dict(),
-                    "prediction": y_pred.tolist(),
+                # Filter schema from trained dataset
+                trained_schema = train_dataset.types
+                filtered_schema = {
+                    key: value.to_string()
+                    for key, value in trained_schema.items()
+                    if key in exp.input_columns + exp.output_columns
                 }
 
-                with open(os.path.join(path, json_name), "w") as json_file:
-                    json.dump(json_data, json_file, indent=4)
+                # Store num of rows, columns, and column names
+                dataset_with_prediction.compute_base_metadata()
+
+                # Save dataset with predictions
+                save_dataset(
+                    dataset_with_prediction,
+                    str(full_path / "dataset"),
+                    filtered_schema,
+                )
+
                 # Update Prediction record
-                prediction.results_path = os.path.join(path, json_name)
+                prediction.results_path = str(full_path)
                 prediction.set_status_as_finished()
                 db.commit()
             except Exception as e:
