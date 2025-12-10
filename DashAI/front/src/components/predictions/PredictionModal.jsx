@@ -218,7 +218,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           // If prediction is completed or failed, stop polling
           if (statusText === "Finished" || statusText === "Error") {
             enqueueSnackbar(
-              `Prediction ${updated.name} ${statusText.toLowerCase()}.`,
+              `Prediction ${updated.id} ${statusText.toLowerCase()}.`,
               {
                 variant: statusText === "Finished" ? "success" : "error",
               },
@@ -256,9 +256,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     document.body.removeChild(link);
   };
 
-  const handleDeletePrediction = (predictionId) => {
+  const handleDeletePrediction = async (predictionId) => {
     try {
-      deletePrediction(predictionId);
+      await deletePrediction(predictionId);
       setPredictions((prev) =>
         prev.filter((prediction) => prediction.id !== predictionId),
       );
