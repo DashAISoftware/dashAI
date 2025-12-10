@@ -6,6 +6,7 @@ import { useFormik } from "formik";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
+import JobQueueWidget from "../jobs/JobQueueWidget";
 import { createExperiment } from "../../api/experiment";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
@@ -161,65 +162,78 @@ function CreateSessionSteps({
   };
 
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {/* Stepper */}
-      <Box sx={{ p: 2 }}>
-        <Stepper activeStep={activeStep}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+    <>
+      <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        {/* Stepper */}
+        <Box sx={{ p: 2 }}>
+          <Stepper activeStep={activeStep}>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+
+        {/* Step content */}
+        <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
+          {activeStep === 0 && (
+            <SetNameAndDatasetStep
+              formik={formik}
+              selectedDataset={selectedDataset}
+              setSelectedDataset={setSelectedDataset}
+              datasets={datasets}
+              nameError={nameError}
+              selectedTask={selectedTask}
+            />
+          )}
+          {activeStep === 1 && (
+            <PrepareDatasetStep
+              newExp={newExp}
+              setNewExp={setNewExp}
+              setNextEnabled={setNextEnabled}
+            />
+          )}
+        </Box>
+
+        {/* Footer with navigation buttons */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+          <FormSchemaButtonGroup
+            onCancel={handleBack}
+            onFormSubmit={formik.handleSubmit}
+            formik={{
+              errors: {
+                ...(nameError ? { name: nameError } : {}),
+                ...(selectedDataset || activeStep === 1
+                  ? {}
+                  : { dataset: "Dataset is required" }),
+                ...(!isNextEnabled && activeStep === 1
+                  ? { validation: "Complete required fields" }
+                  : {}),
+              },
+            }}
+            saveButtonText={
+              activeStep === steps.length - 1 ? "Create Session" : "Next"
+            }
+            backButtonText="Back"
+          />
+        </Box>
       </Box>
 
-      {/* Step content */}
-      <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
-        {activeStep === 0 && (
-          <SetNameAndDatasetStep
-            formik={formik}
-            selectedDataset={selectedDataset}
-            setSelectedDataset={setSelectedDataset}
-            datasets={datasets}
-            nameError={nameError}
-            selectedTask={selectedTask}
-          />
-        )}
-        {activeStep === 1 && (
-          <PrepareDatasetStep
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-          />
-        )}
+      {/* Job Queue Widget */}
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          zIndex: 1000,
+        }}
+      >
+        <JobQueueWidget />
       </Box>
-
-      {/* Footer with navigation buttons */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
-        <FormSchemaButtonGroup
-          onCancel={handleBack}
-          onFormSubmit={formik.handleSubmit}
-          formik={{
-            errors: {
-              ...(nameError ? { name: nameError } : {}),
-              ...(selectedDataset || activeStep === 1
-                ? {}
-                : { dataset: "Dataset is required" }),
-              ...(!isNextEnabled && activeStep === 1
-                ? { validation: "Complete required fields" }
-                : {}),
-            },
-          }}
-          saveButtonText={
-            activeStep === steps.length - 1 ? "Create Session" : "Next"
-          }
-          backButtonText="Back"
-        />
-      </Box>
-    </Box>
+    </>
   );
 }
-
 CreateSessionSteps.propTypes = {
   backHome: PropTypes.func.isRequired,
   selectedTask: PropTypes.object.isRequired,
