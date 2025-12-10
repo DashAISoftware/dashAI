@@ -10,7 +10,7 @@ import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/models/DatasetVisualization";
 import { getComponents } from "../../api/component";
-import { getDatasets } from "../../api/datasets";
+import { getDatasets, getDatasetInfo } from "../../api/datasets";
 import { getExperiments } from "../../api/experiment";
 
 export default function ModelsContent() {
@@ -50,11 +50,50 @@ export default function ModelsContent() {
     fetchTasks();
   }, []);
 
+  const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
+    const enrichedDatasets = await Promise.all(
+      newDatasets.map(async (dataset) => {
+        const existingDataset = existingDatasets.find(
+          (d) => d.id === dataset.id,
+        );
+        if (
+          existingDataset &&
+          existingDataset.description &&
+          existingDataset.description.includes("rows,")
+        ) {
+          return {
+            ...dataset,
+            description: existingDataset.description,
+          };
+        }
+
+        try {
+          const info = await getDatasetInfo(dataset.id);
+          return {
+            ...dataset,
+            description: `${info.total_rows} rows, ${info.total_columns} columns`,
+          };
+        } catch (error) {
+          console.warn(
+            `Failed to fetch info for dataset ${dataset.id}:`,
+            error,
+          );
+          return {
+            ...dataset,
+            description: dataset.description || "",
+          };
+        }
+      }),
+    );
+    return enrichedDatasets;
+  };
+
   useEffect(() => {
     const fetchDatasets = async () => {
       try {
         const data = await getDatasets();
-        setDatasets(data);
+        const enrichedData = await enrichDatasetsWithInfo(data, datasets);
+        setDatasets(enrichedData);
       } catch (error) {
         enqueueSnackbar("Failed to fetch datasets", {
           variant: "error",
