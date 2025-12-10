@@ -160,39 +160,48 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
   }));
 
   return (
-    <Paper sx={{ width: "100%" }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        disableRowSelectionOnClick
-        onRowClick={(params) => onItemClick(params.row)}
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10, page: 0 },
-          },
-        }}
-        pageSizeOptions={[5, 10, 25, 50]}
-        density="compact"
-        sx={{
-          fontSize: "0.75rem",
-          "& .MuiDataGrid-cell": {
+    <Box>
+      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+        Predictions
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Click on a prediction to view details or delete it using the delete
+        icon.
+      </Typography>
+      <Paper sx={{ width: "100%" }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          disableRowSelectionOnClick
+          onRowClick={(params) => onItemClick(params.row)}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 10, page: 0 },
+            },
+          }}
+          pageSizeOptions={[5, 10, 25, 50]}
+          density="compact"
+          sx={{
             fontSize: "0.75rem",
-          },
-          "& .MuiDataGrid-columnHeaders": {
-            fontSize: "0.75rem",
-          },
-          "& .MuiDataGrid-row": {
-            cursor: "pointer",
-          },
-          "& .MuiDataGrid-cell:focus": {
-            outline: "none",
-          },
-          "& .MuiDataGrid-row:hover": {
-            backgroundColor: "action.hover",
-          },
-        }}
-      />
-    </Paper>
+            "& .MuiDataGrid-cell": {
+              fontSize: "0.75rem",
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              fontSize: "0.75rem",
+            },
+            "& .MuiDataGrid-row": {
+              cursor: "pointer",
+            },
+            "& .MuiDataGrid-cell:focus": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "action.hover",
+            },
+          }}
+        />
+      </Paper>
+    </Box>
   );
 }
 

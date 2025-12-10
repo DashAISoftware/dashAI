@@ -6,8 +6,11 @@ import CreateIcon from "@mui/icons-material/Create";
 function ModeSelector({ predictionMode, setPredictionMode }) {
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-        Prediction Mode
+      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+        Select Prediction Mode
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Choose how you would like to provide input data for the prediction.
       </Typography>
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
         <Paper
