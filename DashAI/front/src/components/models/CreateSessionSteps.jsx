@@ -133,8 +133,6 @@ function CreateSessionSteps({
       <Box
         sx={{
           p: 2,
-          borderTop: 1,
-          borderColor: "divider",
           display: "flex",
           justifyContent: "space-between",
         }}
