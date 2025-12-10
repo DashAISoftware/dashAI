@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, styled, Tooltip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  styled,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { formatDate, getColorByStatus } from "../../utils";
 import { getPredictionStatus } from "../../utils/predictionStatus";
+import { Delete } from "@mui/icons-material";
 
-function PredictionsTable({ predictions, onItemClick }) {
+function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
   const StyledCell = styled("div")(({ theme, color }) => ({
     display: "inline-block",
     padding: theme.spacing(0.5),
@@ -114,6 +122,24 @@ function PredictionsTable({ predictions, onItemClick }) {
           </StyledCell>
         );
       },
+    },
+    {
+      field: "delete",
+      headerName: "Delete",
+      flex: 0.5,
+      minWidth: 80,
+      sortable: false,
+      renderCell: (params) => (
+        <IconButton
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            onItemDelete(params.row.id);
+          }}
+        >
+          <Delete fontSize="small" color="error" />
+        </IconButton>
+      ),
     },
   ];
 

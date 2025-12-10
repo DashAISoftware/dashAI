@@ -27,8 +27,9 @@ import PredictionsTable from "./PredictionsTable";
 import ManualInput from "./ManualInput";
 import {
   createPrediction,
-  filter_datasets,
+  filterDatasets,
   getPredictions,
+  deletePrediction,
 } from "../../api/predict";
 import { getDatasetInfo, exportDatasetCsvByPath } from "../../api/datasets";
 import { enqueuePredictionJob } from "../../api/job";
@@ -78,7 +79,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     const fetchDatasets = async () => {
       if (run) {
         try {
-          const availableDatasets = await filter_datasets({ run_id: run.id });
+          const availableDatasets = await filterDatasets({ run_id: run.id });
           const availableDatasetsWithInfo = await Promise.all(
             availableDatasets.map(async (dataset) => {
               // Fetch additional info about the datasets
@@ -255,6 +256,26 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     document.body.removeChild(link);
   };
 
+  const handleDeletePrediction = (predictionId) => {
+    try {
+      deletePrediction(predictionId);
+      setPredictions((prev) =>
+        prev.filter((prediction) => prediction.id !== predictionId),
+      );
+      if (selectedPrediction && selectedPrediction.id === predictionId) {
+        setSelectedPrediction(null);
+      }
+      enqueueSnackbar("Prediction deleted successfully.", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting prediction:", error);
+      enqueueSnackbar("Error deleting prediction.", {
+        variant: "error",
+      });
+    }
+  };
+
   const canPredict = () => {
     if (predictionMode === "dataset") {
       return selectedDataset !== null;
@@ -366,6 +387,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                 onItemClick={(item) => {
                   setSelectedPrediction(item);
                 }}
+                onItemDelete={handleDeletePrediction}
               />
             )}
           </>
