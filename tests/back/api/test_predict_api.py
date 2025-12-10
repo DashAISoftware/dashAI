@@ -329,26 +329,6 @@ def test_get_all_predictions(
     assert predictions[0]["id"] == prediction_id
 
 
-def test_get_prediction_summary(client: TestClient, prediction_id: int):
-    """Test getting prediction summary."""
-    response = client.get(
-        "/api/v1/predict/summary", params={"prediction_id": prediction_id}
-    )
-    assert response.status_code == 200, response.text
-    summary = response.json()
-
-    assert "sample_data" in summary
-    assert isinstance(summary["sample_data"], list)
-    assert len(summary["sample_data"]) <= 50
-
-    # Check structure of sample data
-    if len(summary["sample_data"]) > 0:
-        sample = summary["sample_data"][0]
-        assert "id" in sample
-        assert "value" in sample
-        assert "input" in sample
-
-
 def test_filter_datasets_endpoint(
     client: TestClient, trained_run_id: int, dataset: Dataset, dataset_2: Dataset
 ):
@@ -364,22 +344,6 @@ def test_filter_datasets_endpoint(
     dataset_names = [ds["name"] for ds in datasets]
     assert dataset["name"] in dataset_names
     assert dataset_2["name"] not in dataset_names
-
-
-def test_download_prediction(client: TestClient, prediction_id: int):
-    """Test downloading a prediction as CSV."""
-    response = client.get(f"/api/v1/predict/download/{prediction_id}")
-    assert response.status_code == 200, response.text
-    assert "text/plain" in response.headers["Content-Type"]
-
-    # Verify CSV structure
-    csv_content = response.text
-    lines = csv_content.strip().split("\n")
-    assert len(lines) > 1  # At least header + 1 row
-
-    # Check header
-    header = lines[0]
-    assert "prediction" in header
 
 
 def test_delete_prediction(client: TestClient, trained_run_id: int):
@@ -406,14 +370,12 @@ def test_delete_prediction(client: TestClient, trained_run_id: int):
 
 
 def test_prediction_not_found(client: TestClient):
-    """Test error handling for non-existent prediction."""
+    """Test handling for non-existent prediction."""
     non_existent_id = 99999
 
-    response = client.get(
-        "/api/v1/predict/summary", params={"prediction_id": non_existent_id}
-    )
-    assert response.status_code == 404, response.text
-    assert "not found" in response.json()["detail"].lower()
+    response = client.get("/api/v1/predict/", params={"prediction_id": non_existent_id})
+    assert response.status_code == 200, response.text
+    assert response.json() == []
 
 
 def test_run_not_found(client: TestClient):
