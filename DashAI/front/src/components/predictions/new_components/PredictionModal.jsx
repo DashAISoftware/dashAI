@@ -416,6 +416,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
             </Button>
             <Button
               variant="contained"
+              disabled={
+                getPredictionStatus(selectedPrediction?.status) !== "Finished"
+              }
               startIcon={<DownloadIcon />}
               onClick={() => handleDownload(selectedPrediction)}
             >
