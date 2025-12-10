@@ -8,8 +8,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import PredictionSummaryTab from "../../../components/predictions/PredictionSummaryTab";
-import PredictionSampleTab from "../../../components/predictions/PredictionSampleTab";
 import { getPipelinePredictionSummary } from "../../../api/pipeline";
 
 function PredictionSummary({ predictName }) {
@@ -64,14 +62,9 @@ function PredictionSummary({ predictName }) {
             </Box>
           )}
           {tab === 1 && summary.data_type !== "string" && (
-            <PredictionSummaryTab summary={summary} />
+            <>Prediction Summary Tab Placeholder</>
           )}
-          {tab === 2 && (
-            <PredictionSampleTab
-              summary={summary}
-              type={summary.data_type === "string" ? undefined : "numeric"}
-            />
-          )}
+          {tab === 2 && <>Prediction Sample Table Placeholder</>}
         </Box>
       </Paper>
     </Box>
