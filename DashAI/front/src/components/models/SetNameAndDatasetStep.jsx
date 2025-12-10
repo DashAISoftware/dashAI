@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Grid, TextField, Typography } from "@mui/material";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
