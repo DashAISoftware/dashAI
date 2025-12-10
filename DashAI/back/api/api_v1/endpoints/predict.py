@@ -110,10 +110,7 @@ async def get_all_predictions(
         # Concatenate datasets to predictions
         dataset_dict = {dataset.id: dataset for dataset in datasets}
         for prediction in predictions:
-            if prediction.dataset_id in dataset_dict:
-                prediction.dataset = dataset_dict[prediction.dataset_id]
-            else:
-                prediction.dataset = None
+            prediction.dataset = dataset_dict.get(prediction.dataset_id, None)
 
         return predictions
 
