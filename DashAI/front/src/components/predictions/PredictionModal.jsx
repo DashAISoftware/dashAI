@@ -276,7 +276,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         >
           <Box>
             <Typography variant="h6">Model Prediction</Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               {run.model_name.display_name ?? run.model_name.name}
             </Typography>
           </Box>
