@@ -241,6 +241,7 @@ export default function ModelsContent() {
               selectedDatasetId={selectedDatasetId}
               sessions={sessions}
               selectedSessionId={selectedSessionId}
+              tasks={tasks}
               onDatasetClick={handleDatasetClick}
               onSessionClick={handleSessionClick}
               onSessionDelete={handleSessionDelete}
