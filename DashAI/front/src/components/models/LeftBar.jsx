@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Divider,
   Typography,
   IconButton,
   Collapse,
-  List,
   ListItemButton,
   ListItemText,
+  TextField,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -16,13 +16,13 @@ import {
 } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
-import DeleteIcon from "@mui/icons-material/Delete";
 import Footer from "../threeSectionLayout/Footer";
 import BarHeader from "../threeSectionLayout/BarHeader";
 import SideBar from "../threeSectionLayout/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
+import ItemMenu from "../threeSectionLayout/ItemMenu";
 
 export default function ModelsLeftBar({
   datasets = [],
@@ -33,6 +33,7 @@ export default function ModelsLeftBar({
   onDatasetClick,
   onSessionClick,
   onSessionDelete,
+  onSessionEdit,
   onToggle,
   handleNewSessionButton,
 }) {
@@ -40,6 +41,8 @@ export default function ModelsLeftBar({
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [openSections, setOpenSections] = useState({});
+  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [editedName, setEditedName] = useState("");
 
   // Helper function to get display name from task
   const getTaskDisplayName = (taskName) => {
@@ -90,6 +93,41 @@ export default function ModelsLeftBar({
       ...prev,
       [taskName]: !prev[taskName],
     }));
+  };
+
+  const handleEditSession = (sessionId, sessionName) => {
+    setEditingSessionId(sessionId);
+    setEditedName(sessionName);
+  };
+
+  const handleSaveEdit = async (sessionId) => {
+    if (
+      editedName.trim() &&
+      editedName.trim() !== sessions.find((s) => s.id === sessionId)?.name
+    ) {
+      try {
+        if (onSessionEdit) {
+          await onSessionEdit(sessionId, editedName.trim());
+        }
+      } catch (error) {
+        console.error("Error editing session:", error);
+      }
+    }
+    setEditingSessionId(null);
+    setEditedName("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSessionId(null);
+    setEditedName("");
+  };
+
+  const handleKeyDown = (e, sessionId) => {
+    if (e.key === "Enter") {
+      handleSaveEdit(sessionId);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
   };
 
   const getDatasetDescription = (dataset) => {
@@ -278,58 +316,85 @@ export default function ModelsLeftBar({
                 {/* Sessions List */}
                 <Collapse in={openSections[taskName]} timeout="auto">
                   <Box pl={2}>
-                    {taskSessions.map((session) => (
-                      <ListItemButton
-                        key={session.id}
-                        selected={session.id === selectedSessionId}
-                        onClick={() => onSessionClick(session.id)}
-                        sx={{
-                          py: 0.75,
-                          borderRadius: 1,
-                          mb: 0.5,
-                          "&.Mui-selected": {
-                            bgcolor: "rgba(22, 255, 255, 0.15)",
-                            "&:hover": {
-                              bgcolor: "rgba(22, 255, 255, 0.2)",
-                            },
-                          },
-                          "&:hover": {
-                            bgcolor: "rgba(255, 255, 255, 0.05)",
-                          },
-                        }}
-                      >
-                        <ListItemText
-                          primary={session.name}
-                          secondary={getSessionDescription(session)}
-                          primaryTypographyProps={{
-                            variant: "body2",
-                            noWrap: true,
-                          }}
-                          secondaryTypographyProps={{
-                            variant: "caption",
-                            noWrap: true,
-                          }}
-                        />
-                        {onSessionDelete && (
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSessionDelete(session.id);
-                            }}
-                            sx={{
-                              opacity: 0,
-                              transition: "opacity 0.2s",
-                              ".MuiListItemButton-root:hover &": {
-                                opacity: 1,
+                    {taskSessions.map((session) => {
+                      const isEditing = editingSessionId === session.id;
+
+                      const handleEditClick = () => {
+                        handleEditSession(session.id, session.name);
+                      };
+
+                      return (
+                        <ListItemButton
+                          key={session.id}
+                          selected={session.id === selectedSessionId}
+                          onClick={
+                            isEditing
+                              ? undefined
+                              : () => onSessionClick(session.id)
+                          }
+                          sx={{
+                            py: 0.75,
+                            borderRadius: 1,
+                            mb: 0.5,
+                            cursor: isEditing ? "default" : "pointer",
+                            "&.Mui-selected": {
+                              bgcolor: "rgba(22, 255, 255, 0.15)",
+                              "&:hover": {
+                                bgcolor: "rgba(22, 255, 255, 0.2)",
                               },
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        )}
-                      </ListItemButton>
-                    ))}
+                            },
+                            "&:hover": {
+                              bgcolor: "rgba(255, 255, 255, 0.05)",
+                            },
+                          }}
+                        >
+                          {isEditing ? (
+                            <TextField
+                              autoFocus
+                              value={editedName}
+                              onChange={(e) => setEditedName(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, session.id)}
+                              onBlur={() => handleSaveEdit(session.id)}
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                flex: 1,
+                                "& .MuiInputBase-input": {
+                                  fontSize: 14,
+                                  padding: "4px 8px",
+                                },
+                              }}
+                            />
+                          ) : (
+                            <ListItemText
+                              primary={session.name}
+                              secondary={getSessionDescription(session)}
+                              primaryTypographyProps={{
+                                variant: "body2",
+                                noWrap: true,
+                              }}
+                              secondaryTypographyProps={{
+                                variant: "caption",
+                                noWrap: true,
+                              }}
+                            />
+                          )}
+                          {!isEditing && (
+                            <ItemMenu
+                              itemId={session.id}
+                              onDelete={
+                                onSessionDelete
+                                  ? () => onSessionDelete(session.id)
+                                  : undefined
+                              }
+                              onEdit={
+                                onSessionEdit ? handleEditClick : undefined
+                              }
+                            />
+                          )}
+                        </ListItemButton>
+                      );
+                    })}
                   </Box>
                 </Collapse>
               </Box>

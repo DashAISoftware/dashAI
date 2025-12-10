@@ -11,7 +11,7 @@ import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/models/DatasetVisualization";
 import { getComponents } from "../../api/component";
 import { getDatasets, getDatasetInfo } from "../../api/datasets";
-import { getExperiments } from "../../api/experiment";
+import { getExperiments, updateExperiment } from "../../api/experiment";
 
 export default function ModelsContent() {
   const [step, setStep] = useState(0);
@@ -149,6 +149,25 @@ export default function ModelsContent() {
     console.log("Delete session:", sessionId);
   };
 
+  const handleSessionEdit = async (sessionId, newName) => {
+    try {
+      const result = await updateExperiment({
+        id: sessionId,
+        formData: { name: newName },
+      });
+      console.log("Update result:", result);
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId ? { ...session, name: newName } : session,
+        ),
+      );
+      enqueueSnackbar("Session renamed successfully", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar("Failed to rename session", { variant: "error" });
+      console.error("Failed to rename session:", error);
+    }
+  };
+
   const handleNewSessionButton = () => {
     setSelectedSessionId(null);
     setSelectedDatasetId(null);
@@ -245,6 +264,7 @@ export default function ModelsContent() {
               onDatasetClick={handleDatasetClick}
               onSessionClick={handleSessionClick}
               onSessionDelete={handleSessionDelete}
+              onSessionEdit={handleSessionEdit}
               onToggle={handleToggleLeft}
               handleNewSessionButton={handleNewSessionButton}
             />
