@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, Card, CardContent, Typography, Paper } from "@mui/material";
 import StorageIcon from "@mui/icons-material/Storage";
-import UploadIcon from "@mui/icons-material/Upload";
+import CreateIcon from "@mui/icons-material/Create";
 
 function ModeSelector({ predictionMode, setPredictionMode }) {
   return (
@@ -63,7 +63,7 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
           onClick={() => setPredictionMode("manual")}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <UploadIcon
+            <CreateIcon
               color={predictionMode === "manual" ? "primary" : "action"}
             />
             <Box>
