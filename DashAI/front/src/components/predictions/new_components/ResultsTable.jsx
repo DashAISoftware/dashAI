@@ -83,6 +83,7 @@ function ResultsTable({ selectedPrediction }) {
               initialPageSize={10}
               autoHeight={true}
               slots={{ toolbar: null }}
+              datasetPath={selectedPrediction.results_path}
             />
           </Paper>
         )}
