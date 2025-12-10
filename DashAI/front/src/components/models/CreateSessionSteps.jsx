@@ -59,7 +59,11 @@ function CreateSessionSteps({
       backHome();
     } else {
       setActiveStep(activeStep - 1);
-      setNextEnabled(true);
+      if (activeStep === 1) {
+        const isNameValid = sessionName.trim().length >= 4;
+        const isDatasetValid = selectedDataset !== null;
+        setNextEnabled(isNameValid && isDatasetValid);
+      }
     }
   };
 
