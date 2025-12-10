@@ -8,11 +8,17 @@ import {
   Paper,
   InputLabel,
   Alert,
+  Chip,
 } from "@mui/material";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
 
-function DatasetSelector({ datasets, selectedDataset, setSelectedDataset }) {
+function DatasetSelector({
+  experiment,
+  datasets,
+  selectedDataset,
+  setSelectedDataset,
+}) {
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       const data = await getDatasetFile(
@@ -47,9 +53,36 @@ function DatasetSelector({ datasets, selectedDataset, setSelectedDataset }) {
       {selectedDataset && (
         <>
           <Alert severity="info" sx={{ mt: 2 }}>
-            This dataset will be used to generate predictions for all{" "}
-            {selectedDataset.total_rows} rows.
+            <Box sx={{ fontWeight: 600, mb: 1, fontSize: "1rem" }}>
+              Prediction Configuration
+            </Box>
+
+            <Box sx={{ mb: 1 }}>
+              <strong>Input columns:</strong>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+                {experiment.input_columns.map((col) => (
+                  <Chip
+                    key={col}
+                    label={col}
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontSize: "0.75rem" }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <strong>Target column:</strong>
+              <Chip
+                label={experiment.output_columns[0]}
+                size="small"
+                color="primary"
+                sx={{ ml: 1, fontSize: "0.75rem" }}
+              />
+            </Box>
           </Alert>
+
           <Paper>
             <DatasetTable
               fetchPage={fetchDatasetPage}

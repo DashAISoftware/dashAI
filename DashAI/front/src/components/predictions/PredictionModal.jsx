@@ -332,6 +332,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                 />
                 {predictionMode === "dataset" ? (
                   <DatasetSelector
+                    experiment={experiment}
                     datasets={datasets}
                     selectedDataset={selectedDataset}
                     setSelectedDataset={setSelectedDataset}
