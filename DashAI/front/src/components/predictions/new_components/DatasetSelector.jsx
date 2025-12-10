@@ -50,13 +50,16 @@ function DatasetSelector({ datasets, selectedDataset, setSelectedDataset }) {
             This dataset will be used to generate predictions for all{" "}
             {selectedDataset.total_rows} rows.
           </Alert>
-          <DatasetTable
-            fetchPage={fetchDatasetPage}
-            initialPageSize={10}
-            autoHeight={true}
-            datasetPath={selectedDataset.file_path}
-            sx={{ mt: 2 }}
-          />
+          <Paper>
+            <DatasetTable
+              fetchPage={fetchDatasetPage}
+              initialPageSize={10}
+              autoHeight={true}
+              datasetPath={selectedDataset.file_path}
+              sx={{ mt: 2 }}
+              slots={{ toolbar: null }}
+            />
+          </Paper>
         </>
       )}
     </Box>
