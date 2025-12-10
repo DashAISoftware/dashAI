@@ -94,6 +94,26 @@ export default function ModelsContent() {
     setSelectedSessionId(newSession.id);
   };
 
+  const handleSessionClick = (sessionId) => {
+    setSelectedSessionId(sessionId);
+  };
+
+  const handleDatasetClick = (datasetId) => {
+    // Optional: handle dataset selection if needed
+    console.log("Dataset clicked:", datasetId);
+  };
+
+  const handleSessionDelete = (sessionId) => {
+    // TODO: Implement session deletion
+    console.log("Delete session:", sessionId);
+  };
+
+  const handleNewSessionButton = () => {
+    setSelectedSessionId(null);
+    setSelectedTask(null);
+    setStep(0);
+  };
+
   const handleMouseMove = useCallback((e) => {
     if (isResizingLeft.current) {
       const container = document.querySelector('[data-container="models"]');
@@ -174,7 +194,17 @@ export default function ModelsContent() {
       >
         {leftBarVisible && (
           <>
-            <LeftBar onToggle={handleToggleLeft} />
+            <LeftBar
+              datasets={datasets}
+              selectedDatasetId={null}
+              sessions={sessions}
+              selectedSessionId={selectedSessionId}
+              onDatasetClick={handleDatasetClick}
+              onSessionClick={handleSessionClick}
+              onSessionDelete={handleSessionDelete}
+              onToggle={handleToggleLeft}
+              handleNewSessionButton={handleNewSessionButton}
+            />
             <Box
               onMouseDown={() => {
                 isResizingLeft.current = true;
