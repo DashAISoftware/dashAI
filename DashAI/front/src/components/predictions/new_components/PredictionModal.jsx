@@ -44,11 +44,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
   const [viewMode, setViewMode] = useState("input");
   const [datasets, setDatasets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [predictionResults, setPredictionResults] = useState([]);
 
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [manualRows, setManualRows] = useState([]);
-  const [inputColumns, setInputColumns] = useState(null);
 
   const [predictions, setPredictions] = useState([]);
   const [selectedPrediction, setSelectedPrediction] = useState(null);
@@ -71,7 +69,6 @@ export default function PredictionModal({ isOpen, onClose, run }) {
       setSelectedDataset(null);
       setPredictions([]);
       setIsLoading(false);
-      setInputColumns(null);
       setManualRows([]);
       setSelectedPrediction(null);
     }
@@ -81,24 +78,38 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     // Fetch available datasets for prediction
     const fetchDatasets = async () => {
       if (run) {
-        const availableDatasets = await filter_datasets({ run_id: run.id });
-        const availableDatasetsWithInfo = await Promise.all(
-          availableDatasets.map(async (dataset) => {
-            // Fetch additional info about the datasets
-            const datasetInfo = await getDatasetInfo(dataset.id);
-            return { ...dataset, ...datasetInfo };
-          }),
-        );
+        try {
+          const availableDatasets = await filter_datasets({ run_id: run.id });
+          const availableDatasetsWithInfo = await Promise.all(
+            availableDatasets.map(async (dataset) => {
+              // Fetch additional info about the datasets
+              const datasetInfo = await getDatasetInfo(dataset.id);
+              return { ...dataset, ...datasetInfo };
+            }),
+          );
 
-        setDatasets(availableDatasetsWithInfo);
+          setDatasets(availableDatasetsWithInfo);
+        } catch (error) {
+          console.error("Error fetching datasets:", error);
+          enqueueSnackbar("Error fetching datasets for prediction.", {
+            variant: "error",
+          });
+        }
       }
     };
 
     // Fetch previous predictions for this run
     const fetchPredictions = async () => {
       if (run) {
-        const preds = await getPredictions(run.id);
-        setPredictions(preds);
+        try {
+          const preds = await getPredictions(run.id);
+          setPredictions(preds);
+        } catch (error) {
+          console.error("Error fetching predictions:", error);
+          enqueueSnackbar("Error fetching previous predictions.", {
+            variant: "error",
+          });
+        }
       }
     };
 
@@ -133,30 +144,40 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     // 1.- set loading to true
     setIsLoading(true);
 
-    // 2.- Create a prediction in database
-    const prediction = await createPrediction(
-      run.id,
-      predictionMode === "dataset" ? selectedDataset.id : null,
-    );
+    try {
+      // 2.- Create a prediction in database
+      const prediction = await createPrediction(
+        run.id,
+        predictionMode === "dataset" ? selectedDataset.id : null,
+      );
 
-    // 3.- Enqueue prediction job
-    await enqueuePredictionJob(
-      prediction.id,
-      predictionMode === "manual" ? manualRows : null,
-    );
+      // 3.- Enqueue prediction job
+      await enqueuePredictionJob(
+        prediction.id,
+        predictionMode === "manual" ? manualRows : null,
+      );
+      enqueueSnackbar("Prediction job submitted successfully.", {
+        variant: "success",
+      });
 
-    // 4.- Change prection status to Delivered
-    prediction.status = 1; // Delivered
+      // 4.- Change prediction status to Delivered
+      prediction.status = 1; // Delivered
 
-    // 5.- Add prediction to the list
-    setPredictions([prediction, ...predictions]);
+      // 5.- Add prediction to the list
+      setPredictions([prediction, ...predictions]);
 
-    // 6.- Set selected prediction to the new one and switch tab
-    setSelectedPrediction(prediction);
-    setActiveTab(1);
-
-    // 7.- Set loading to false
-    setIsLoading(false);
+      // 6.- Set selected prediction to the new one and switch tab
+      setSelectedPrediction(prediction);
+      setActiveTab(1);
+    } catch (error) {
+      console.error("Error submitting prediction job:", error);
+      enqueueSnackbar("Error submitting prediction job.", {
+        variant: "error",
+      });
+    } finally {
+      // 7.- Set loading to false
+      setIsLoading(false);
+    }
   };
 
   // Polling for running prediction results
@@ -193,15 +214,23 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           });
 
           const statusText = getPredictionStatus(updated.status);
-          console.log(`Prediction ${prediction.id} status: ${statusText}`);
 
           // If prediction is completed or failed, stop polling
           if (statusText === "Finished" || statusText === "Error") {
+            enqueueSnackbar(
+              `Prediction ${updated.name} ${statusText.toLowerCase()}.`,
+              {
+                variant: statusText === "Finished" ? "success" : "error",
+              },
+            );
             clearInterval(intervals[prediction.id]);
             delete intervals[prediction.id];
           }
         } catch (error) {
           console.error("Error polling prediction:", error);
+          enqueueSnackbar("Error updating prediction status.", {
+            variant: "error",
+          });
         }
       }, 2000); // Every 2 seconds
     });
@@ -380,16 +409,17 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         ) : selectedPrediction ? (
           <>
             <Button
-              startIcon={<DownloadIcon />}
-              onClick={() => handleDownload(selectedPrediction)}
-            >
-              Download CSV
-            </Button>
-            <Button
               variant="outlined"
               onClick={() => setSelectedPrediction(null)}
             >
               Back
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<DownloadIcon />}
+              onClick={() => handleDownload(selectedPrediction)}
+            >
+              Download CSV
             </Button>
           </>
         ) : (
