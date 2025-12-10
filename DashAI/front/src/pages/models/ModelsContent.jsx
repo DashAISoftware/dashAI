@@ -1,20 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import LeftBar from "../../components/models/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
+import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import { getComponents } from "../../api/component";
+import { getDatasets } from "../../api/datasets";
 
 export default function ModelsContent() {
+  const [step, setStep] = useState(0);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
   const [leftBarWidth, setLeftBarWidth] = useState(20);
   const [rightBarWidth, setRightBarWidth] = useState(20);
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [datasets, setDatasets] = useState([]);
+  const [sessions, setSessions] = useState([]);
+
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
@@ -39,9 +46,35 @@ export default function ModelsContent() {
     fetchTasks();
   }, []);
 
+  useEffect(() => {
+    const fetchDatasets = async () => {
+      try {
+        const data = await getDatasets();
+        setDatasets(data);
+      } catch (error) {
+        enqueueSnackbar("Failed to fetch datasets", {
+          variant: "error",
+        });
+        console.error("Failed to fetch datasets:", error);
+      }
+    };
+    fetchDatasets();
+  }, []);
+
   const handleTaskSelect = (taskName) => {
     const task = tasks.find((t) => t.name === taskName);
     setSelectedTask(task);
+    setStep(1);
+  };
+
+  const handleBackToTaskSelection = () => {
+    setSelectedTask(null);
+    setStep(0);
+  };
+
+  const handleSessionCreated = (newSession) => {
+    setSessions((prev) => [...prev, newSession]);
+    setSelectedSessionId(newSession.id);
   };
 
   const handleMouseMove = useCallback((e) => {
@@ -182,20 +215,7 @@ export default function ModelsContent() {
         }}
       >
         <CenterBox>
-          {selectedTask ? (
-            <Box sx={{ p: 3 }}>
-              <Typography variant="h4" component="h1" gutterBottom>
-                {selectedTask.metadata?.display_name || selectedTask.name}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph>
-                {selectedTask.description ||
-                  selectedTask.metadata?.short_description}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Model configuration will appear here.
-              </Typography>
-            </Box>
-          ) : (
+          {step === 0 ? (
             <SelectOptionMenu
               title="Models Module"
               subtitle="Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
@@ -214,7 +234,15 @@ export default function ModelsContent() {
               searchBar={true}
               goToNextStep={handleTaskSelect}
             />
-          )}
+          ) : step === 1 && selectedTask ? (
+            <CreateSessionSteps
+              backHome={handleBackToTaskSelection}
+              selectedTask={selectedTask}
+              datasets={datasets}
+              handleSessionCreated={handleSessionCreated}
+              existingSessions={sessions}
+            />
+          ) : null}
         </CenterBox>
       </Box>
 
