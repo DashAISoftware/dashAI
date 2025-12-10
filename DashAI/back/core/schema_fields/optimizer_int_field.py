@@ -1,6 +1,7 @@
-from typing import Annotated, Optional, Type
+from typing import Optional, Type
 
 from pydantic import Field
+from typing_extensions import Annotated
 
 
 def optimizer_int_field(
