@@ -7,6 +7,7 @@ import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
+import SessionVisualization from "../../components/models/SessionVisualization";
 import { getComponents } from "../../api/component";
 import { getDatasets } from "../../api/datasets";
 import { getExperiments } from "../../api/experiment";
@@ -231,7 +232,11 @@ export default function ModelsContent() {
         }}
       >
         <CenterBox>
-          {step === 0 ? (
+          {selectedSessionId ? (
+            <SessionVisualization
+              session={sessions.find((s) => s.id === selectedSessionId)}
+            />
+          ) : step === 0 ? (
             <SelectOptionMenu
               title="Models Module"
               subtitle="Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
