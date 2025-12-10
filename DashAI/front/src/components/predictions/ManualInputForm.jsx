@@ -35,15 +35,19 @@ export default function ManualInputForm({
 
   function createEmptyRow() {
     const row = {};
+    const randomIndex = Math.floor(
+      Math.random() * sample[inputColumns[0]].length,
+    );
     inputColumns.forEach((col) => {
       const typeInfo = types[col];
       if (
         typeInfo?.type === "Categorical" &&
         typeInfo?.categories?.length > 0
       ) {
-        row[col] = typeInfo.categories[0];
+        row[col] =
+          typeInfo.categories[randomIndex % typeInfo.categories.length];
       } else {
-        row[col] = sample[col][0];
+        row[col] = sample[col][randomIndex];
       }
     });
     return row;
@@ -77,13 +81,11 @@ export default function ManualInputForm({
   return (
     <Box
       sx={{
-        p: 2,
         borderRadius: 1,
-        backgroundColor: "#1e1e1e",
         color: "white",
-        boxShadow: 3,
         maxWidth: "100%",
         mx: "auto",
+        height: "100%",
       }}
       component="form"
       onSubmit={handleSubmit}
@@ -96,7 +98,7 @@ export default function ManualInputForm({
         when ready.
       </Typography>
 
-      <TableContainer component={Paper} sx={{ backgroundColor: "#2a2a2a" }}>
+      <TableContainer component={Paper} sx={{ p: 1 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -106,7 +108,7 @@ export default function ManualInputForm({
                 </TableCell>
               ))}
               <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
-                Actions
+                Remove
               </TableCell>
             </TableRow>
           </TableHead>
