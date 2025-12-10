@@ -1,9 +1,10 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { Box, Button, Stepper, Step, StepLabel } from "@mui/material";
+import { Box, Stepper, Step, StepLabel } from "@mui/material";
 import { useSnackbar } from "notistack";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
+import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import { createExperiment } from "../../api/experiment";
 
 function CreateSessionSteps({
@@ -134,23 +135,20 @@ function CreateSessionSteps({
       </Box>
 
       {/* Footer with navigation buttons */}
-      <Box
-        sx={{
-          p: 2,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <Button onClick={handleBack} variant="outlined">
-          Back
-        </Button>
-        <Button
-          onClick={handleNext}
-          variant="contained"
-          disabled={!nextEnabled}
-        >
-          {activeStep === steps.length - 1 ? "Create Session" : "Next"}
-        </Button>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+        <FormSchemaButtonGroup
+          onCancel={handleBack}
+          onFormSubmit={handleNext}
+          formik={{
+            errors: !nextEnabled
+              ? { validation: "Complete required fields" }
+              : {},
+          }}
+          saveButtonText={
+            activeStep === steps.length - 1 ? "Create Session" : "Next"
+          }
+          backButtonText="Back"
+        />
       </Box>
     </Box>
   );
