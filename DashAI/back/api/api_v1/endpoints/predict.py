@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query, status
@@ -209,7 +210,7 @@ async def delete_prediction(
 
     try:
         if predict_path and os.path.exists(predict_path):
-            os.remove(predict_path)
+            shutil.rmtree(predict_path)
             logger.debug("File %s deleted successfully", predict_path)
     except HTTPException as e:
         raise e
