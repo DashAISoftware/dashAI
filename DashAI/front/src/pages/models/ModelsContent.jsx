@@ -8,6 +8,7 @@ import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
+import DatasetVisualization from "../../components/models/DatasetVisualization";
 import { getComponents } from "../../api/component";
 import { getDatasets } from "../../api/datasets";
 import { getExperiments } from "../../api/experiment";
@@ -21,6 +22,7 @@ export default function ModelsContent() {
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [datasets, setDatasets] = useState([]);
   const [sessions, setSessions] = useState([]);
 
@@ -99,8 +101,8 @@ export default function ModelsContent() {
   };
 
   const handleDatasetClick = (datasetId) => {
-    // Optional: handle dataset selection if needed
-    console.log("Dataset clicked:", datasetId);
+    setSelectedDatasetId(datasetId);
+    setSelectedSessionId(null);
   };
 
   const handleSessionDelete = (sessionId) => {
@@ -110,6 +112,7 @@ export default function ModelsContent() {
 
   const handleNewSessionButton = () => {
     setSelectedSessionId(null);
+    setSelectedDatasetId(null);
     setSelectedTask(null);
     setStep(0);
   };
@@ -196,7 +199,7 @@ export default function ModelsContent() {
           <>
             <LeftBar
               datasets={datasets}
-              selectedDatasetId={null}
+              selectedDatasetId={selectedDatasetId}
               sessions={sessions}
               selectedSessionId={selectedSessionId}
               onDatasetClick={handleDatasetClick}
@@ -265,6 +268,10 @@ export default function ModelsContent() {
           {selectedSessionId ? (
             <SessionVisualization
               session={sessions.find((s) => s.id === selectedSessionId)}
+            />
+          ) : selectedDatasetId ? (
+            <DatasetVisualization
+              dataset={datasets.find((d) => d.id === selectedDatasetId)}
             />
           ) : step === 0 ? (
             <SelectOptionMenu
