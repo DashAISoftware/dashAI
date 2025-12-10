@@ -2,7 +2,7 @@ import { Box, Typography, IconButton } from "@mui/material";
 import { ChevronRight } from "@mui/icons-material";
 import SideBar from "../threeSectionLayout/SideBar";
 
-export default function ModelsRightBar({ onToggle }) {
+export default function ModelsRightBar({ session, onToggle }) {
   return (
     <SideBar>
       <Box
@@ -25,7 +25,7 @@ export default function ModelsRightBar({ onToggle }) {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">Properties</Typography>
+          <Typography variant="h6">Models</Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -48,7 +48,9 @@ export default function ModelsRightBar({ onToggle }) {
             variant="body2"
             sx={{ color: "text.secondary", textAlign: "center" }}
           >
-            Model details will appear here
+            {session
+              ? "Model details will appear here"
+              : "Select a session to view model details."}
           </Typography>
         </Box>
       </Box>

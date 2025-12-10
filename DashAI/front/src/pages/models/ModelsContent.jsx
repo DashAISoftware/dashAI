@@ -323,7 +323,10 @@ export default function ModelsContent() {
                 zIndex: 10,
               }}
             />
-            <RightBar onToggle={handleToggleRight} />
+            <RightBar
+              session={sessions.find((s) => s.id === selectedSessionId)}
+              onToggle={handleToggleRight}
+            />
           </>
         )}
       </Box>
