@@ -117,6 +117,7 @@ function CreateSessionSteps({
             datasets={datasets}
             setNextEnabled={setNextEnabled}
             existingSessions={existingSessions}
+            selectedTask={selectedTask}
           />
         )}
         {activeStep === 1 && (
