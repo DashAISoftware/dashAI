@@ -61,19 +61,18 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               Dataset
             </Typography>
 
-            <Tooltip placement="left" title={dataset.name}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                noWrap
-                sx={{
-                  maxWidth: "100%",
-                  fontSize: "inherit",
-                }}
-              >
-                {dataset.name}
-              </Typography>
-            </Tooltip>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              noWrap
+              sx={{
+                lineHeight: 1.1,
+                mt: 0.2,
+                fontSize: "95%",
+              }}
+            >
+              {dataset.name}
+            </Typography>
           </Box>
         ) : (
           <Box
