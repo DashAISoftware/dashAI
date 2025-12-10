@@ -24,18 +24,18 @@ import ModeSelector from "./ModeSelector";
 import DatasetSelector from "./DatasetSelector";
 import ResultsTable from "./ResultsTable";
 import PredictionsTable from "./PredictionsTable";
-import ManualInput from "../ManualInput";
+import ManualInput from "./ManualInput";
 import {
   createPrediction,
   filter_datasets,
   getPredictions,
-} from "../../../api/predict";
-import { getDatasetInfo, exportDatasetCsvByPath } from "../../../api/datasets";
-import { enqueuePredictionJob } from "../../../api/job";
-import { getExperimentById } from "../../../api/experiment";
-import { getDatasetTypes, getDatasetSample } from "../../../api/datasets";
+} from "../../api/predict";
+import { getDatasetInfo, exportDatasetCsvByPath } from "../../api/datasets";
+import { enqueuePredictionJob } from "../../api/job";
+import { getExperimentById } from "../../api/experiment";
+import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { useSnackbar } from "notistack";
-import { getPredictionStatus } from "../../../utils/predictionStatus";
+import { getPredictionStatus } from "../../utils/predictionStatus";
 
 export default function PredictionModal({ isOpen, onClose, run }) {
   const [activeTab, setActiveTab] = useState(0);

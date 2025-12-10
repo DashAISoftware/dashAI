@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Paper, styled } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import { formatDate, getColorByStatus } from "../../../utils";
-import { getPredictionStatus } from "../../../utils/predictionStatus";
+import { formatDate, getColorByStatus } from "../../utils";
+import { getPredictionStatus } from "../../utils/predictionStatus";
 
 function PredictionsTable({ predictions, onItemClick }) {
   const StyledCell = styled("div")(({ theme, color }) => ({

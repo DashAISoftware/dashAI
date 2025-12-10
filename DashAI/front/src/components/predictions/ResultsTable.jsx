@@ -11,10 +11,9 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
-import { getPredictionSummary } from "../../../api/predict";
-import { getPredictionStatus } from "../../../utils/predictionStatus";
-import DatasetTable from "../../notebooks/dataset/DatasetTable";
-import { getDatasetFile } from "../../../api/datasets";
+import { getPredictionStatus } from "../../utils/predictionStatus";
+import DatasetTable from "../notebooks/dataset/DatasetTable";
+import { getDatasetFile } from "../../api/datasets";
 
 const RUNNING_STATUSES = ["Delivered", "Started"];
 

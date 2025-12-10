@@ -9,8 +9,8 @@ import {
   InputLabel,
   Alert,
 } from "@mui/material";
-import DatasetTable from "../../notebooks/dataset/DatasetTable";
-import { getDatasetFile } from "../../../api/datasets";
+import DatasetTable from "../notebooks/dataset/DatasetTable";
+import { getDatasetFile } from "../../api/datasets";
 
 function DatasetSelector({ datasets, selectedDataset, setSelectedDataset }) {
   const fetchDatasetPage = useCallback(

@@ -11,7 +11,7 @@ import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";
 import { useNavigate } from "react-router-dom";
 import { getComponents } from "../../../api/component";
-import PredictionModal from "../../../components/predictions/new_components/PredictionModal";
+import PredictionModal from "../../../components/predictions/PredictionModal";
 
 // constants
 import { extractRows } from "../constants/extractRows";
