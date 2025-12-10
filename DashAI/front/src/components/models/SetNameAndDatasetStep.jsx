@@ -59,12 +59,8 @@ function SetNameAndDatasetStep({
           fullWidth
           value={formik.values.name}
           onChange={formik.handleChange}
-          error={Boolean(selectedDataset && nameError)}
-          helperText={selectedDataset ? nameError : ""}
-          disabled={!selectedDataset}
-          placeholder={
-            !selectedDataset ? "Select a dataset first" : "Session Name"
-          }
+          error={Boolean(nameError)}
+          helperText={nameError}
           slotProps={{
             inputLabel: { shrink: true },
           }}
