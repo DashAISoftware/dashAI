@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, styled } from "@mui/material";
+import { Box, Typography, Paper, styled, Tooltip } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { formatDate, getColorByStatus } from "../../utils";
 import { getPredictionStatus } from "../../utils/predictionStatus";
@@ -32,7 +32,58 @@ function PredictionsTable({ predictions, onItemClick }) {
       flex: 1,
       minWidth: 150,
       renderCell: (params) => {
-        return params?.row?.dataset_id ? "Dataset" : "Manual Input";
+        const dataset = params?.row?.dataset;
+
+        return dataset ? (
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              height: "100%",
+              overflow: "hidden",
+              fontSize: "0.75rem",
+            }}
+          >
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              sx={{ lineHeight: 1.1, fontSize: "inherit" }}
+            >
+              Dataset
+            </Typography>
+
+            <Tooltip placement="left" title={dataset.name}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+                sx={{
+                  maxWidth: "100%",
+                  fontSize: "inherit",
+                }}
+              >
+                {dataset.name}
+              </Typography>
+            </Tooltip>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              sx={{ lineHeight: 1.1, fontSize: "0.75rem" }}
+            >
+              Manual Input
+            </Typography>
+          </Box>
+        );
       },
     },
     {
@@ -97,6 +148,13 @@ function PredictionsTable({ predictions, onItemClick }) {
         pageSizeOptions={[5, 10, 25, 50]}
         density="compact"
         sx={{
+          fontSize: "0.75rem",
+          "& .MuiDataGrid-cell": {
+            fontSize: "0.75rem",
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            fontSize: "0.75rem",
+          },
           "& .MuiDataGrid-row": {
             cursor: "pointer",
           },
