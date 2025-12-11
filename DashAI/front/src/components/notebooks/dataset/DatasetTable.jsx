@@ -58,7 +58,7 @@ export default function DatasetTable({
     };
 
     fetchColumnTypes();
-  }, [datasetPath]);
+  }, [datasetPath, ...deps]);
 
   useEffect(() => {
     let alive = true;
