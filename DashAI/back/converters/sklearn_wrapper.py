@@ -15,6 +15,8 @@ from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
+    """Abstract class to define generic rules for sklearn transformers."""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -23,11 +25,39 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Each sklearn converter must implement this method to specify its output type.
+
+        Parameters
+        ----------
+        column_name : str, optional
+            The name of the column for which to get the output type.
+
+        Returns
+        -------
+        DashAIDataType
+            The DashAI data type for the output column.
+        """
         raise NotImplementedError
 
     def fit(
         self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
     ) -> Type[BaseConverter]:
+        """
+        Fit the sklearn transformer to the data.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The input dataset to fit the transformer on.
+        y : DashAIDataset or None, optional
+            Target values for supervised transformers.
+
+        Returns
+        -------
+        Type[BaseConverter]
+            The fitted transformer instance.
+        """
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
         y_pandas = y.to_pandas() if y is not None and hasattr(y, "to_pandas") else y
 
@@ -61,6 +91,21 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
     def transform(
         self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
     ) -> DashAIDataset:
+        """
+        Transform the data using the fitted sklearn transformer.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The input dataset to transform.
+        y : DashAIDataset or None, optional
+            Not used, present for API consistency.
+
+        Returns
+        -------
+        DashAIDataset
+            The transformed dataset with proper DashAI types.
+        """
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
 
         sklearn_cls = next(
