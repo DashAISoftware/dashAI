@@ -32,10 +32,6 @@ export const TextTab = ({ textStats }) => (
         { label: "Max", value: stats.max_length, color: "#ff7c7c" },
       ];
 
-      const totalCount = stats.total_count || 0;
-      const validCount =
-        totalCount - (stats.empty_count || 0) - (stats.whitespace_only || 0);
-
       const uniquePercentage = stats.unique_ratio
         ? (stats.unique_ratio * 100).toFixed(1)
         : null;
@@ -61,8 +57,8 @@ export const TextTab = ({ textStats }) => (
                         uniquePercentage > 90
                           ? "#4caf50"
                           : uniquePercentage > 30
-                            ? "#ff9800"
-                            : "#f44336",
+                          ? "#ff9800"
+                          : "#f44336",
                       color: "white",
                       cursor: "default",
                     }}
@@ -106,9 +102,8 @@ export const TextTab = ({ textStats }) => (
               </Box>
             </Box>
 
-            {/* Two-column metric grouping (like NumericTab) */}
+            {/* Two-column metric grouping */}
             <Box display="flex" flexWrap="wrap" gap={4}>
-              {/* Length Metrics */}
               <Box flex="1 1 300px" minWidth="250px">
                 <Typography
                   variant="subtitle2"
@@ -117,46 +112,26 @@ export const TextTab = ({ textStats }) => (
                 >
                   Length Metrics
                 </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
-                  <MetricRow label="Min Length" value={stats.min_length} />
-                  <MetricRow label="Median" value={stats.median_length} />
-                  <MetricRow
-                    label="Mean"
-                    value={stats.avg_length?.toFixed(1)}
-                  />
-                  <MetricRow label="Max Length" value={stats.max_length} />
-                  <MetricRow
-                    label="Range"
-                    value={stats.max_length - stats.min_length}
-                  />
-                </Box>
-              </Box>
 
-              {/* Data Quality Metrics */}
-              <Box flex="1 1 300px" minWidth="250px">
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Data Quality
-                </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
-                  <MetricRow label="Empty" value={stats.empty_count || 0} />
-                  {stats.whitespace_only !== undefined && (
+                <Box display="flex" gap={4}>
+                  {/* Column 1 */}
+                  <Box display="flex" flexDirection="column" gap={1} flex="1">
+                    <MetricRow label="Min Length" value={stats.min_length} />
+                    <MetricRow label="Median" value={stats.median_length} />
                     <MetricRow
-                      label="Whitespace Only"
-                      value={stats.whitespace_only}
+                      label="Mean"
+                      value={stats.avg_length?.toFixed(1)}
                     />
-                  )}
-                  <MetricRow label="Valid" value={validCount} />
+                  </Box>
 
-                  {stats.duplicate_count !== undefined && (
+                  {/* Column 2 */}
+                  <Box display="flex" flexDirection="column" gap={1} flex="1">
+                    <MetricRow label="Max Length" value={stats.max_length} />
                     <MetricRow
-                      label="Duplicates"
-                      value={stats.duplicate_count}
+                      label="Range"
+                      value={stats.max_length - stats.min_length}
                     />
-                  )}
+                  </Box>
                 </Box>
               </Box>
             </Box>

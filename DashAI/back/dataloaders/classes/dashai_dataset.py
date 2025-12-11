@@ -368,10 +368,6 @@ class DashAIDataset(Dataset):
                 "median_length": float(lengths.median()),
                 "min_length": int(lengths.min()),
                 "max_length": int(lengths.max()),
-                "empty_count": int(
-                    (dataset_df[col].isna() | (dataset_df[col] == "")).sum()
-                ),
-                "whitespace_only": int(series.str.strip().eq("").sum()),
                 "unique_count": int(series.nunique()),
                 "unique_ratio": float(series.nunique() / len(series)),
                 "avg_word_count": float(series.str.split().str.len().mean()),
