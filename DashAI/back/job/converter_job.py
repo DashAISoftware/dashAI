@@ -61,19 +61,20 @@ def _rebuild_dataset_with_transformed_columns(
 
     replacement_cols = transformed_cols[: len(scope_column_indexes)]
 
-    index_to_replacement = dict(zip(scope_column_indexes, scope_column_names))
-    index_to_replacement = {
-        key: value
-        for key, value in index_to_replacement.items()
-        if value in transformed_cols and value in original_columns
-    }
+    # Map scope indexes to their column names if they exist in transformed dataset
+    # If a column was removed, it won't be in transformed_cols, so we skip it
+    index_to_replacement = {}
+    for idx, col_name in zip(scope_column_indexes, scope_column_names):
+        if col_name in transformed_cols:
+            index_to_replacement[idx] = col_name
+
     new_cols = [col for col in transformed_cols if col not in scope_column_names]
 
     new_columns_order = []
     for i, col in enumerate(original_columns):
         if i in index_to_replacement:
             new_columns_order.append(index_to_replacement[i])
-        else:
+        elif i not in scope_column_indexes:
             new_columns_order.append(col)
     new_columns_order.extend(new_cols)
 
