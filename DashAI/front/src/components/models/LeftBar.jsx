@@ -68,7 +68,13 @@ export default function ModelsLeftBar({
     displayNames.forEach((displayName) => {
       initialOpenState[displayName] = false;
     });
-    setOpenSections(initialOpenState);
+    setOpenSections((prev) => {
+      // Only update if display names have changed
+      const prevKeys = Object.keys(prev).sort().join(",");
+      const newKeys = Object.keys(initialOpenState).sort().join(",");
+      if (prevKeys === newKeys) return prev;
+      return initialOpenState;
+    });
   }, [sessions, tasks]);
 
   useEffect(() => {

@@ -9,9 +9,24 @@ import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMe
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/models/DatasetVisualization";
+import AddModelDialog from "../../components/models/AddModelDialog";
 import { getComponents } from "../../api/component";
 import { getDatasets, getDatasetInfo } from "../../api/datasets";
-import { getExperiments, updateExperiment } from "../../api/experiment";
+import {
+  getExperiments,
+  updateExperiment,
+  deleteExperiment,
+} from "../../api/experiment";
+import {
+  getRuns,
+  deleteRun,
+  updateRunParameters,
+  resetRunById,
+  getRunById,
+} from "../../api/run";
+import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
+import { startJobPolling } from "../../utils/jobPoller";
+import { getRunStatus } from "../../utils/runStatus";
 
 export default function ModelsContent() {
   const [step, setStep] = useState(0);
@@ -22,9 +37,14 @@ export default function ModelsContent() {
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [datasets, setDatasets] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [runs, setRuns] = useState([]);
+  const [addModelDialogOpen, setAddModelDialogOpen] = useState(false);
+  const [preselectedModel, setPreselectedModel] = useState(null);
+  const [trackedJobIds, setTrackedJobIds] = useState(new Set());
 
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
@@ -92,7 +112,7 @@ export default function ModelsContent() {
     const fetchDatasets = async () => {
       try {
         const data = await getDatasets();
-        const enrichedData = await enrichDatasetsWithInfo(data, datasets);
+        const enrichedData = await enrichDatasetsWithInfo(data, []);
         setDatasets(enrichedData);
       } catch (error) {
         enqueueSnackbar("Failed to fetch datasets", {
@@ -119,6 +139,44 @@ export default function ModelsContent() {
     fetchSessions();
   }, []);
 
+  const fetchRuns = useCallback(async () => {
+    if (!selectedSessionId) return;
+    try {
+      const data = await getRuns(selectedSessionId.toString());
+      const runsWithStatus = data.map((run) => ({
+        ...run,
+        status:
+          typeof run.status === "number"
+            ? run.status
+            : getRunStatus(run.status),
+      }));
+      setRuns(runsWithStatus);
+    } catch (error) {
+      enqueueSnackbar("Failed to fetch runs", {
+        variant: "error",
+      });
+      console.error("Failed to fetch runs:", error);
+    }
+  }, [selectedSessionId, enqueueSnackbar]);
+
+  // Fetch runs when session is selected
+  useEffect(() => {
+    if (selectedSessionId) {
+      fetchRuns();
+    } else {
+      setRuns([]);
+      setSelectedSession(null);
+    }
+  }, [selectedSessionId, fetchRuns]);
+
+  // Update selected session object when sessions or selectedSessionId changes
+  useEffect(() => {
+    if (selectedSessionId && sessions.length > 0) {
+      const session = sessions.find((s) => s.id === selectedSessionId);
+      setSelectedSession(session || null);
+    }
+  }, [selectedSessionId, sessions]);
+
   const handleTaskSelect = (taskName) => {
     const task = tasks.find((t) => t.name === taskName);
     setSelectedTask(task);
@@ -144,9 +202,123 @@ export default function ModelsContent() {
     setSelectedSessionId(null);
   };
 
-  const handleSessionDelete = (sessionId) => {
-    // TODO: Implement session deletion
-    console.log("Delete session:", sessionId);
+  const handleSessionDelete = async (sessionId) => {
+    try {
+      await deleteExperiment(sessionId.toString());
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      if (selectedSessionId === sessionId) {
+        setSelectedSessionId(null);
+        setSelectedSession(null);
+      }
+      enqueueSnackbar("Session deleted successfully", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar("Failed to delete session", { variant: "error" });
+      console.error("Failed to delete session:", error);
+    }
+  };
+
+  const handleModelClick = (model) => {
+    if (!selectedSession) {
+      enqueueSnackbar("Please select a session first", { variant: "warning" });
+      return;
+    }
+    setPreselectedModel(model.name);
+    setAddModelDialogOpen(true);
+  };
+
+  const handleRunCreated = (newRun) => {
+    setRuns((prev) => [...prev, newRun]);
+    enqueueSnackbar(`Run "${newRun.name}" added to session`, {
+      variant: "success",
+    });
+  };
+
+  const handleTrainRun = async (run) => {
+    try {
+      // Reset the run first
+      const updatedRun = await resetRunById(run.id.toString());
+
+      // Enqueue the training job
+      const response = await enqueueRunnerJobRequest(run.id);
+
+      if (!response || !response.id) {
+        enqueueSnackbar(`Error starting run ${run.name}`, {
+          variant: "error",
+        });
+        return;
+      }
+
+      enqueueSnackbar(`Training started for "${run.name}"`, {
+        variant: "success",
+      });
+
+      // Update local state to show running status
+      setRuns((prevRuns) =>
+        prevRuns.map((r) =>
+          r.id === run.id
+            ? { ...updatedRun, status: 1 } // 1 = Delivered
+            : r,
+        ),
+      );
+
+      // Track job and start polling
+      setTrackedJobIds((prev) => new Set(prev).add(response.id));
+
+      startJobPolling(
+        response.id,
+        async () => {
+          // Job completed - fetch updated run
+          const updated = await getRunById(run.id.toString());
+          setRuns((prevRuns) =>
+            prevRuns.map((r) => (r.id === run.id ? updated : r)),
+          );
+          enqueueSnackbar(`Run "${run.name}" completed`, {
+            variant: "success",
+          });
+        },
+        async (result) => {
+          // Job failed - fetch updated run
+          const updated = await getRunById(run.id.toString());
+          setRuns((prevRuns) =>
+            prevRuns.map((r) => (r.id === run.id ? updated : r)),
+          );
+          enqueueSnackbar(
+            `Run "${run.name}" failed: ${result.error || "Unknown error"}`,
+            { variant: "error" },
+          );
+        },
+      );
+    } catch (error) {
+      console.error("Error training run:", error);
+      enqueueSnackbar(`Error starting run "${run.name}"`, {
+        variant: "error",
+      });
+    }
+  };
+
+  const handleEditRun = async (run) => {
+    // TODO: Open edit dialog with run parameters
+    console.log("Edit run:", run);
+    enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
+  };
+
+  const handleRetryRun = async (run) => {
+    await handleTrainRun(run);
+  };
+
+  const handleDeleteRun = async (run) => {
+    try {
+      await deleteRun(run.id.toString());
+      setRuns((prev) => prev.filter((r) => r.id !== run.id));
+      enqueueSnackbar(`Run "${run.name}" deleted successfully`, {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting run:", error);
+      enqueueSnackbar(`Error deleting run "${run.name}"`, {
+        variant: "error",
+      });
+    }
   };
 
   const handleSessionEdit = async (sessionId, newName) => {
@@ -327,7 +499,12 @@ export default function ModelsContent() {
         <CenterBox>
           {selectedSessionId ? (
             <SessionVisualization
-              session={sessions.find((s) => s.id === selectedSessionId)}
+              session={selectedSession}
+              runs={runs}
+              onTrain={handleTrainRun}
+              onEditRun={handleEditRun}
+              onRetryRun={handleRetryRun}
+              onDeleteRun={handleDeleteRun}
             />
           ) : selectedDatasetId ? (
             <DatasetVisualization
@@ -421,12 +598,26 @@ export default function ModelsContent() {
               }}
             />
             <RightBar
-              session={sessions.find((s) => s.id === selectedSessionId)}
+              session={selectedSession}
               onToggle={handleToggleRight}
+              onModelClick={handleModelClick}
             />
           </>
         )}
       </Box>
+
+      {/* Add Model Dialog */}
+      <AddModelDialog
+        open={addModelDialogOpen}
+        onClose={() => {
+          setAddModelDialogOpen(false);
+          setPreselectedModel(null);
+        }}
+        session={selectedSession}
+        preselectedModel={preselectedModel}
+        existingRuns={runs}
+        onRunCreated={handleRunCreated}
+      />
     </Box>
   );
 }
