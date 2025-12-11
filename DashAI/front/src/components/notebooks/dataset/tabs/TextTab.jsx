@@ -72,7 +72,7 @@ export const TextTab = ({ textStats }) => (
             </Box>
 
             {parseFloat(uniquePercentage) <= 30 && (
-              <Alert severity="error" sx={{ mb: 3 }}>
+              <Alert severity="warning" sx={{ mb: 3 }}>
                 Warning: This text column has a very low uniqueness ratio. This
                 may be a categorical variable misclassified as text, which could
                 lead to analysis issues.
