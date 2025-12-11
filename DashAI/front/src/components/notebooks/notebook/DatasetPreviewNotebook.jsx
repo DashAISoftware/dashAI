@@ -177,7 +177,7 @@ export default function DatasetPreviewNotebook({
           <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path]}
+              deps={[notebook.file_path, converters, explorersAndConverters]}
               initialPageSize={5}
               density="compact"
               datasetPath={notebook.file_path}
