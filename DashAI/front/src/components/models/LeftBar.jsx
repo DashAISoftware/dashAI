@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
-import { Box, Divider, Typography, IconButton } from "@mui/material";
-import { ChevronLeft } from "@mui/icons-material";
+import { Box, Divider, Typography, IconButton, Collapse } from "@mui/material";
+import {
+  ChevronLeft,
+  KeyboardArrowDown,
+  KeyboardArrowRight,
+} from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import Footer from "../threeSectionLayout/Footer";
@@ -9,6 +13,7 @@ import SideBar from "../threeSectionLayout/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
+import ItemBox from "../threeSectionLayout/ItemBox";
 
 export default function ModelsLeftBar({
   datasets = [],
@@ -28,6 +33,7 @@ export default function ModelsLeftBar({
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
+  const [openSections, setOpenSections] = useState({});
 
   // Helper function to get display name from task
   const getTaskDisplayName = (taskName) => {
@@ -41,6 +47,20 @@ export default function ModelsLeftBar({
         .trim()
     );
   };
+
+  useEffect(() => {
+    // Initialize all task sections as closed
+    const displayNames = [
+      ...new Set(
+        sessions.map((session) => getTaskDisplayName(session.task_name)),
+      ),
+    ];
+    const initialOpenState = {};
+    displayNames.forEach((displayName) => {
+      initialOpenState[displayName] = false;
+    });
+    setOpenSections(initialOpenState);
+  }, [sessions, tasks]);
 
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -58,6 +78,13 @@ export default function ModelsLeftBar({
   }, [searchQuery, datasets, sessions]);
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const toggleSection = (taskName) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [taskName]: !prev[taskName],
+    }));
+  };
 
   const getDatasetDescription = (dataset) => {
     return (
@@ -157,30 +184,110 @@ export default function ModelsLeftBar({
             flex: 1,
             minHeight: 0,
             overflow: "auto",
-            display: "flex",
-            flexDirection: "column",
+            px: 2,
+            pt: 2,
           }}
         >
+          {/* Header */}
+          <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
+            <ModelTrainingIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
+            <Typography>Sessions</Typography>
+            <Box
+              sx={{
+                ml: 1,
+                bgcolor: "#374151",
+                color: "white",
+                borderRadius: "50%",
+                width: 20,
+                height: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+              }}
+            >
+              {filteredSessions?.length}
+            </Box>
+          </Box>
+
+          {/* Sessions grouped by task */}
           {Object.entries(groupedSessions || {}).map(
             ([taskName, taskSessions]) => (
-              <Box key={taskName}>
-                <CollapsibleList
-                  items={taskSessions}
-                  selectedItemId={selectedSessionId}
-                  onItemClick={onSessionClick}
-                  onItemDelete={onSessionDelete}
-                  onItemEdit={onSessionEdit}
-                  defaultOpen={false}
-                  title={`${taskName} Sessions`}
-                  Icon={ModelTrainingIcon}
-                  getItemDescription={getSessionDescription}
-                />
-                {Object.keys(groupedSessions).indexOf(taskName) <
-                  Object.keys(groupedSessions).length - 1 && (
-                  <Divider
-                    sx={{ width: "90%", bgcolor: "#252836", mx: "auto", my: 1 }}
-                  />
-                )}
+              <Box key={taskName} mb={1}>
+                {/* Task Header */}
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  sx={{
+                    cursor: "pointer",
+                    py: 0.5,
+                    px: 1,
+                    borderRadius: 1,
+                    "&:hover": {
+                      bgcolor: "rgba(255, 255, 255, 0.05)",
+                    },
+                  }}
+                  onClick={() => toggleSection(taskName)}
+                >
+                  {openSections[taskName] ? (
+                    <KeyboardArrowDown
+                      sx={{ fontSize: 20, color: "#16FFFF" }}
+                    />
+                  ) : (
+                    <KeyboardArrowRight
+                      sx={{ fontSize: 20, color: "#16FFFF" }}
+                    />
+                  )}
+                  <Typography
+                    sx={{
+                      ml: 1,
+                      fontSize: "0.9rem",
+                      fontWeight: "medium",
+                      textTransform: "capitalize",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      wordBreak: "break-all",
+                      whiteSpace: "nowrap",
+                      flex: 1,
+                    }}
+                  >
+                    {taskName}
+                  </Typography>
+                  <Box
+                    sx={{
+                      ml: 1,
+                      bgcolor: "#374151",
+                      color: "white",
+                      borderRadius: "50%",
+                      width: 20,
+                      height: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                    }}
+                  >
+                    {taskSessions.length}
+                  </Box>
+                </Box>
+
+                {/* Sessions List using ItemBox directly */}
+                <Collapse in={openSections[taskName]} timeout="auto">
+                  <Box pl={2}>
+                    {taskSessions.map((session) => (
+                      <ItemBox
+                        key={session.id}
+                        isSelected={session.id === selectedSessionId}
+                        name={session.name}
+                        description={getSessionDescription(session)}
+                        id={session.id}
+                        onClick={() => onSessionClick(session.id)}
+                        onDelete={() => onSessionDelete(session.id)}
+                        onEdit={(name) => onSessionEdit(session.id, name)}
+                      />
+                    ))}
+                  </Box>
+                </Collapse>
               </Box>
             ),
           )}
