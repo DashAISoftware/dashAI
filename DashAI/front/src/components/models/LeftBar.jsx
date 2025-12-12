@@ -14,6 +14,7 @@ import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import ItemBox from "../threeSectionLayout/ItemBox";
+import InfoSessionModal from "./InfoSessionModal";
 
 export default function ModelsLeftBar({
   datasets = [],
@@ -34,6 +35,7 @@ export default function ModelsLeftBar({
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [openSections, setOpenSections] = useState({});
+  const [selectedInfoSession, setSelectedInfoSession] = useState(null);
 
   // Helper function to get display name from task
   const getTaskDisplayName = (taskName) => {
@@ -78,6 +80,13 @@ export default function ModelsLeftBar({
   }, [searchQuery, datasets, sessions]);
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const handleSessionInfo = (sessionId) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (session) {
+      setSelectedInfoSession(session);
+    }
+  };
 
   const toggleSection = (taskName) => {
     setOpenSections((prev) => ({
@@ -284,6 +293,7 @@ export default function ModelsLeftBar({
                         onClick={() => onSessionClick(session.id)}
                         onDelete={() => onSessionDelete(session.id)}
                         onEdit={(name) => onSessionEdit(session.id, name)}
+                        onInfo={() => handleSessionInfo(session.id)}
                       />
                     ))}
                   </Box>
@@ -296,6 +306,17 @@ export default function ModelsLeftBar({
 
       {/* Footer */}
       <Footer />
+
+      {/* Session Info Modal */}
+      {selectedInfoSession && (
+        <InfoSessionModal
+          sessionData={selectedInfoSession}
+          datasets={datasets}
+          tasks={tasks}
+          open={!!selectedInfoSession}
+          onClose={() => setSelectedInfoSession(null)}
+        />
+      )}
     </SideBar>
   );
 }
