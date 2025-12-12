@@ -29,6 +29,19 @@ export default function ModelsLeftBar({
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
 
+  // Helper function to get display name from task
+  const getTaskDisplayName = (taskName) => {
+    if (!taskName) return "Other";
+    const task = tasks.find((t) => t.name === taskName);
+    return (
+      task?.metadata?.display_name ||
+      taskName
+        .replace("Task", "")
+        .replace(/([A-Z])/g, " $1")
+        .trim()
+    );
+  };
+
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
 
@@ -64,6 +77,16 @@ export default function ModelsLeftBar({
     }
     return session.description || "";
   };
+
+  // Group sessions by task
+  const groupedSessions = filteredSessions?.reduce((groups, session) => {
+    const displayName = getTaskDisplayName(session.task_name);
+    if (!groups[displayName]) {
+      groups[displayName] = [];
+    }
+    groups[displayName].push(session);
+    return groups;
+  }, {});
 
   return (
     <SideBar>
@@ -128,17 +151,40 @@ export default function ModelsLeftBar({
 
         <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
 
-        <CollapsibleList
-          items={filteredSessions}
-          selectedItemId={selectedSessionId}
-          onItemClick={onSessionClick}
-          onItemDelete={onSessionDelete}
-          onItemEdit={onSessionEdit}
-          defaultOpen={true}
-          title="Sessions"
-          Icon={ModelTrainingIcon}
-          getItemDescription={getSessionDescription}
-        />
+        {/* Sessions grouped by task */}
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {Object.entries(groupedSessions || {}).map(
+            ([taskName, taskSessions]) => (
+              <Box key={taskName}>
+                <CollapsibleList
+                  items={taskSessions}
+                  selectedItemId={selectedSessionId}
+                  onItemClick={onSessionClick}
+                  onItemDelete={onSessionDelete}
+                  onItemEdit={onSessionEdit}
+                  defaultOpen={false}
+                  title={`${taskName} Sessions`}
+                  Icon={ModelTrainingIcon}
+                  getItemDescription={getSessionDescription}
+                />
+                {Object.keys(groupedSessions).indexOf(taskName) <
+                  Object.keys(groupedSessions).length - 1 && (
+                  <Divider
+                    sx={{ width: "90%", bgcolor: "#252836", mx: "auto", my: 1 }}
+                  />
+                )}
+              </Box>
+            ),
+          )}
+        </Box>
       </Box>
 
       {/* Footer */}
