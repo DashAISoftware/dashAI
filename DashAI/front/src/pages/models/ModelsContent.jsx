@@ -10,7 +10,12 @@ import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/models/DatasetVisualization";
 import { getComponents } from "../../api/component";
-import { getDatasets, getDatasetInfo } from "../../api/datasets";
+import {
+  getDatasets,
+  getDatasetInfo,
+  updateDataset,
+  deleteDataset,
+} from "../../api/datasets";
 import { getExperiments, updateExperiment } from "../../api/experiment";
 
 export default function ModelsContent() {
@@ -149,22 +154,104 @@ export default function ModelsContent() {
     console.log("Delete session:", sessionId);
   };
 
+  const handleDatasetEdit = async (id, newName) => {
+    try {
+      const updatedDataset = await updateDataset(id, { name: newName });
+      setDatasets((prevDatasets) =>
+        prevDatasets.map((dataset) =>
+          dataset.id === id
+            ? { ...dataset, name: updatedDataset.name }
+            : dataset,
+        ),
+      );
+      enqueueSnackbar("Dataset updated successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update dataset:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A dataset with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Dataset name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update dataset", {
+          variant: "error",
+        });
+      }
+      throw error;
+    }
+  };
+
+  const handleDatasetDelete = (id) => {
+    if (id === selectedDatasetId) {
+      setSelectedDatasetId(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+
+    setDatasets((prevDatasets) =>
+      prevDatasets.filter((dataset) => dataset.id !== id),
+    );
+
+    setSessions((prevSessions) => {
+      const filteredSessions = prevSessions.filter(
+        (session) => session.dataset_id !== id,
+      );
+
+      if (
+        selectedSessionId &&
+        prevSessions.find(
+          (session) =>
+            session.id === selectedSessionId && session.dataset_id === id,
+        )
+      ) {
+        setSelectedSessionId(null);
+        setStep(0);
+        setSelectedTask(null);
+      }
+
+      return filteredSessions;
+    });
+
+    deleteDataset(id);
+  };
+
   const handleSessionEdit = async (sessionId, newName) => {
     try {
       const result = await updateExperiment({
         id: sessionId,
         formData: { name: newName },
       });
-      console.log("Update result:", result);
       setSessions((prev) =>
         prev.map((session) =>
-          session.id === sessionId ? { ...session, name: newName } : session,
+          session.id === sessionId
+            ? { ...session, name: result.name }
+            : session,
         ),
       );
-      enqueueSnackbar("Session renamed successfully", { variant: "success" });
+      enqueueSnackbar("Session updated successfully", {
+        variant: "success",
+      });
     } catch (error) {
-      enqueueSnackbar("Failed to rename session", { variant: "error" });
-      console.error("Failed to rename session:", error);
+      console.error("Failed to update session:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A session with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Session name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update session", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
@@ -262,6 +349,8 @@ export default function ModelsContent() {
               selectedSessionId={selectedSessionId}
               tasks={tasks}
               onDatasetClick={handleDatasetClick}
+              onDatasetDelete={handleDatasetDelete}
+              onDatasetEdit={handleDatasetEdit}
               onSessionClick={handleSessionClick}
               onSessionDelete={handleSessionDelete}
               onSessionEdit={handleSessionEdit}
