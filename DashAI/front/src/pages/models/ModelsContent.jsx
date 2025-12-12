@@ -16,7 +16,11 @@ import {
   updateDataset,
   deleteDataset,
 } from "../../api/datasets";
-import { getExperiments, updateExperiment } from "../../api/experiment";
+import {
+  getExperiments,
+  updateExperiment,
+  deleteExperiment,
+} from "../../api/experiment";
 
 export default function ModelsContent() {
   const [step, setStep] = useState(0);
@@ -149,9 +153,25 @@ export default function ModelsContent() {
     setSelectedSessionId(null);
   };
 
-  const handleSessionDelete = (sessionId) => {
-    // TODO: Implement session deletion
-    console.log("Delete session:", sessionId);
+  const handleSessionDelete = async (sessionId) => {
+    if (sessionId === selectedSessionId) {
+      setSelectedSessionId(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session.id !== sessionId),
+    );
+
+    try {
+      await deleteExperiment(sessionId);
+    } catch (error) {
+      console.error("Failed to delete session:", error);
+      enqueueSnackbar("Failed to delete session", {
+        variant: "error",
+      });
+    }
   };
 
   const handleDatasetEdit = async (id, newName) => {
