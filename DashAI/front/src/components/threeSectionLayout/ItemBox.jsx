@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Box, Typography, TextField, Tooltip } from "@mui/material";
+import { Box, Typography, TextField } from "@mui/material";
 import ItemMenu from "./ItemMenu";
 
 export default function ItemBox({
@@ -125,17 +125,13 @@ export default function ItemBox({
               }}
             />
           ) : (
-            <Tooltip title={editedName} placement="top" arrow>
-              <Typography variant="body2" noWrap sx={{ fontSize: 14 }}>
-                {editedName}
-              </Typography>
-            </Tooltip>
-          )}
-          <Tooltip title={description || ""} placement="bottom" arrow>
-            <Typography variant="caption" noWrap sx={{ fontSize: 10, pl: 1 }}>
-              {description ? description : ""}
+            <Typography variant="body2" noWrap sx={{ fontSize: 14 }}>
+              {editedName}
             </Typography>
-          </Tooltip>
+          )}
+          <Typography variant="caption" noWrap sx={{ fontSize: 10, pl: 1 }}>
+            {description ? description : ""}
+          </Typography>
         </Box>
       </Box>
       <ItemMenu
