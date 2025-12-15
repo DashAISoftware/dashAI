@@ -1,14 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  Box,
-  Divider,
-  Typography,
-  IconButton,
-  Collapse,
-  ListItemButton,
-  ListItemText,
-  TextField,
-} from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Divider, Typography, IconButton, Collapse } from "@mui/material";
 import {
   ChevronLeft,
   KeyboardArrowDown,
@@ -22,7 +13,8 @@ import SideBar from "../threeSectionLayout/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import ItemMenu from "../threeSectionLayout/ItemMenu";
+import ItemBox from "../threeSectionLayout/ItemBox";
+import InfoSessionModal from "./InfoSessionModal";
 
 export default function ModelsLeftBar({
   datasets = [],
@@ -31,6 +23,8 @@ export default function ModelsLeftBar({
   selectedSessionId,
   tasks = [],
   onDatasetClick,
+  onDatasetDelete,
+  onDatasetEdit,
   onSessionClick,
   onSessionDelete,
   onSessionEdit,
@@ -41,8 +35,7 @@ export default function ModelsLeftBar({
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [openSections, setOpenSections] = useState({});
-  const [editingSessionId, setEditingSessionId] = useState(null);
-  const [editedName, setEditedName] = useState("");
+  const [selectedInfoSession, setSelectedInfoSession] = useState(null);
 
   // Helper function to get display name from task
   const getTaskDisplayName = (taskName) => {
@@ -94,46 +87,18 @@ export default function ModelsLeftBar({
 
   const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
+  const handleSessionInfo = (sessionId) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (session) {
+      setSelectedInfoSession(session);
+    }
+  };
+
   const toggleSection = (taskName) => {
     setOpenSections((prev) => ({
       ...prev,
       [taskName]: !prev[taskName],
     }));
-  };
-
-  const handleEditSession = (sessionId, sessionName) => {
-    setEditingSessionId(sessionId);
-    setEditedName(sessionName);
-  };
-
-  const handleSaveEdit = async (sessionId) => {
-    if (
-      editedName.trim() &&
-      editedName.trim() !== sessions.find((s) => s.id === sessionId)?.name
-    ) {
-      try {
-        if (onSessionEdit) {
-          await onSessionEdit(sessionId, editedName.trim());
-        }
-      } catch (error) {
-        console.error("Error editing session:", error);
-      }
-    }
-    setEditingSessionId(null);
-    setEditedName("");
-  };
-
-  const handleCancelEdit = () => {
-    setEditingSessionId(null);
-    setEditedName("");
-  };
-
-  const handleKeyDown = (e, sessionId) => {
-    if (e.key === "Enter") {
-      handleSaveEdit(sessionId);
-    } else if (e.key === "Escape") {
-      handleCancelEdit();
-    }
   };
 
   const getDatasetDescription = (dataset) => {
@@ -155,7 +120,7 @@ export default function ModelsLeftBar({
     return session.description || "";
   };
 
-  // Group sessions by display_name
+  // Group sessions by task
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
     const displayName = getTaskDisplayName(session.task_name);
     if (!groups[displayName]) {
@@ -218,6 +183,8 @@ export default function ModelsLeftBar({
           items={filteredDatasets}
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
+          onItemDelete={onDatasetDelete}
+          onItemEdit={onDatasetEdit}
           defaultOpen={true}
           title="Available Datasets"
           Icon={StorageIcon}
@@ -296,7 +263,7 @@ export default function ModelsLeftBar({
                       textOverflow: "ellipsis",
                       wordBreak: "break-all",
                       whiteSpace: "nowrap",
-                      width: "100%",
+                      flex: 1,
                     }}
                   >
                     {taskName}
@@ -319,88 +286,22 @@ export default function ModelsLeftBar({
                   </Box>
                 </Box>
 
-                {/* Sessions List */}
+                {/* Sessions List using ItemBox directly */}
                 <Collapse in={openSections[taskName]} timeout="auto">
                   <Box pl={2}>
-                    {taskSessions.map((session) => {
-                      const isEditing = editingSessionId === session.id;
-
-                      const handleEditClick = () => {
-                        handleEditSession(session.id, session.name);
-                      };
-
-                      return (
-                        <ListItemButton
-                          key={session.id}
-                          selected={session.id === selectedSessionId}
-                          onClick={
-                            isEditing
-                              ? undefined
-                              : () => onSessionClick(session.id)
-                          }
-                          sx={{
-                            py: 0.75,
-                            borderRadius: 1,
-                            mb: 0.5,
-                            cursor: isEditing ? "default" : "pointer",
-                            "&.Mui-selected": {
-                              bgcolor: "rgba(22, 255, 255, 0.15)",
-                              "&:hover": {
-                                bgcolor: "rgba(22, 255, 255, 0.2)",
-                              },
-                            },
-                            "&:hover": {
-                              bgcolor: "rgba(255, 255, 255, 0.05)",
-                            },
-                          }}
-                        >
-                          {isEditing ? (
-                            <TextField
-                              autoFocus
-                              value={editedName}
-                              onChange={(e) => setEditedName(e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, session.id)}
-                              onBlur={() => handleSaveEdit(session.id)}
-                              size="small"
-                              variant="outlined"
-                              sx={{
-                                flex: 1,
-                                "& .MuiInputBase-input": {
-                                  fontSize: 14,
-                                  padding: "4px 8px",
-                                },
-                              }}
-                            />
-                          ) : (
-                            <ListItemText
-                              primary={session.name}
-                              secondary={getSessionDescription(session)}
-                              primaryTypographyProps={{
-                                variant: "body2",
-                                noWrap: true,
-                              }}
-                              secondaryTypographyProps={{
-                                variant: "caption",
-                                noWrap: true,
-                              }}
-                            />
-                          )}
-                          {!isEditing && (
-                            <ItemMenu
-                              itemId={session.id}
-                              onDelete={
-                                onSessionDelete
-                                  ? () => onSessionDelete(session.id)
-                                  : undefined
-                              }
-                              onEdit={
-                                onSessionEdit ? handleEditClick : undefined
-                              }
-                            />
-                          )}
-                        </ListItemButton>
-                      );
-                    })}
+                    {taskSessions.map((session) => (
+                      <ItemBox
+                        key={session.id}
+                        isSelected={session.id === selectedSessionId}
+                        name={session.name}
+                        description={getSessionDescription(session)}
+                        id={session.id}
+                        onClick={() => onSessionClick(session.id)}
+                        onDelete={() => onSessionDelete(session.id)}
+                        onEdit={(name) => onSessionEdit(session.id, name)}
+                        onInfo={() => handleSessionInfo(session.id)}
+                      />
+                    ))}
                   </Box>
                 </Collapse>
               </Box>
@@ -411,6 +312,17 @@ export default function ModelsLeftBar({
 
       {/* Footer */}
       <Footer />
+
+      {/* Session Info Modal */}
+      {selectedInfoSession && (
+        <InfoSessionModal
+          sessionData={selectedInfoSession}
+          datasets={datasets}
+          tasks={tasks}
+          open={!!selectedInfoSession}
+          onClose={() => setSelectedInfoSession(null)}
+        />
+      )}
     </SideBar>
   );
 }

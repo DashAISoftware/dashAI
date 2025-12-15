@@ -96,6 +96,8 @@ export default function ItemBox({
           alignItems: "center",
           justifyContent: "flex-start",
           width: "100%",
+          minWidth: 0,
+          flex: 1,
         }}
       >
         <Box
@@ -104,6 +106,7 @@ export default function ItemBox({
             flexDirection: "column",
             justifyContent: "flex-start",
             width: "100%",
+            minWidth: 0, // Permite que el contenido se encoja
           }}
         >
           {isEditing ? (
@@ -116,25 +119,17 @@ export default function ItemBox({
               size="small"
               variant="outlined"
               sx={{
-                maxWidth: 180,
+                width: "100%",
                 fontSize: 14,
                 "& .MuiInputBase-input": { fontSize: 14, padding: "2px 6px" },
               }}
             />
           ) : (
-            <Typography
-              variant="body2"
-              noWrap
-              sx={{ maxWidth: 180, fontSize: 14 }}
-            >
+            <Typography variant="body2" noWrap sx={{ fontSize: 14 }}>
               {editedName}
             </Typography>
           )}
-          <Typography
-            variant="caption"
-            noWrap
-            sx={{ maxWidth: 150, fontSize: 10, pl: 1 }}
-          >
+          <Typography variant="caption" noWrap sx={{ fontSize: 10, pl: 1 }}>
             {description ? description : ""}
           </Typography>
         </Box>

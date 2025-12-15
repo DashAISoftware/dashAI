@@ -11,7 +11,12 @@ import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/models/DatasetVisualization";
 import AddModelDialog from "../../components/models/AddModelDialog";
 import { getComponents } from "../../api/component";
-import { getDatasets, getDatasetInfo } from "../../api/datasets";
+import {
+  getDatasets,
+  getDatasetInfo,
+  updateDataset,
+  deleteDataset,
+} from "../../api/datasets";
 import {
   getExperiments,
   updateExperiment,
@@ -203,18 +208,92 @@ export default function ModelsContent() {
   };
 
   const handleSessionDelete = async (sessionId) => {
+    if (sessionId === selectedSessionId) {
+      setSelectedSessionId(null);
+      setSelectedSession(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => session.id !== sessionId),
+    );
+
     try {
       await deleteExperiment(sessionId.toString());
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      if (selectedSessionId === sessionId) {
-        setSelectedSessionId(null);
-        setSelectedSession(null);
-      }
       enqueueSnackbar("Session deleted successfully", { variant: "success" });
     } catch (error) {
-      enqueueSnackbar("Failed to delete session", { variant: "error" });
       console.error("Failed to delete session:", error);
+      enqueueSnackbar("Failed to delete session", {
+        variant: "error",
+      });
     }
+  };
+
+  const handleDatasetEdit = async (id, newName) => {
+    try {
+      const updatedDataset = await updateDataset(id, { name: newName });
+      setDatasets((prevDatasets) =>
+        prevDatasets.map((dataset) =>
+          dataset.id === id
+            ? { ...dataset, name: updatedDataset.name }
+            : dataset,
+        ),
+      );
+      enqueueSnackbar("Dataset updated successfully", {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update dataset:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A dataset with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Dataset name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update dataset", {
+          variant: "error",
+        });
+      }
+      throw error;
+    }
+  };
+
+  const handleDatasetDelete = (id) => {
+    if (id === selectedDatasetId) {
+      setSelectedDatasetId(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+
+    setDatasets((prevDatasets) =>
+      prevDatasets.filter((dataset) => dataset.id !== id),
+    );
+
+    setSessions((prevSessions) => {
+      const filteredSessions = prevSessions.filter(
+        (session) => session.dataset_id !== id,
+      );
+
+      if (
+        selectedSessionId &&
+        prevSessions.find(
+          (session) =>
+            session.id === selectedSessionId && session.dataset_id === id,
+        )
+      ) {
+        setSelectedSessionId(null);
+        setStep(0);
+        setSelectedTask(null);
+      }
+
+      return filteredSessions;
+    });
+
+    deleteDataset(id);
   };
 
   const handleModelClick = (model) => {
@@ -235,10 +314,8 @@ export default function ModelsContent() {
 
   const handleTrainRun = async (run) => {
     try {
-      // Reset the run first
       const updatedRun = await resetRunById(run.id.toString());
 
-      // Enqueue the training job
       const response = await enqueueRunnerJobRequest(run.id);
 
       if (!response || !response.id) {
@@ -252,20 +329,17 @@ export default function ModelsContent() {
         variant: "success",
       });
 
-      // Update local state to show running status
       setRuns((prevRuns) =>
         prevRuns.map((r) =>
           r.id === run.id ? { ...updatedRun, status: 1 } : r,
         ),
       );
 
-      // Track job and start polling
       setTrackedJobIds((prev) => new Set(prev).add(response.id));
 
       startJobPolling(
         response.id,
         async () => {
-          // Job completed - fetch updated run
           const updated = await getRunById(run.id.toString());
           setRuns((prevRuns) =>
             prevRuns.map((r) => (r.id === run.id ? updated : r)),
@@ -275,7 +349,6 @@ export default function ModelsContent() {
           });
         },
         async (result) => {
-          // Job failed - fetch updated run
           const updated = await getRunById(run.id.toString());
           setRuns((prevRuns) =>
             prevRuns.map((r) => (r.id === run.id ? updated : r)),
@@ -295,7 +368,6 @@ export default function ModelsContent() {
   };
 
   const handleEditRun = async (run) => {
-    // TODO: Open edit dialog with run parameters
     console.log("Edit run:", run);
     enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
   };
@@ -321,16 +393,32 @@ export default function ModelsContent() {
         id: sessionId,
         formData: { name: newName },
       });
-      console.log("Update result:", result);
       setSessions((prev) =>
         prev.map((session) =>
-          session.id === sessionId ? { ...session, name: newName } : session,
+          session.id === sessionId
+            ? { ...session, name: result.name }
+            : session,
         ),
       );
-      enqueueSnackbar("Session renamed successfully", { variant: "success" });
+      enqueueSnackbar("Session updated successfully", {
+        variant: "success",
+      });
     } catch (error) {
-      enqueueSnackbar("Failed to rename session", { variant: "error" });
-      console.error("Failed to rename session:", error);
+      console.error("Failed to update session:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar("A session with this name already exists", {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar("Session name cannot be empty", {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar("Failed to update session", {
+          variant: "error",
+        });
+      }
+      throw error;
     }
   };
 
@@ -428,6 +516,8 @@ export default function ModelsContent() {
               selectedSessionId={selectedSessionId}
               tasks={tasks}
               onDatasetClick={handleDatasetClick}
+              onDatasetDelete={handleDatasetDelete}
+              onDatasetEdit={handleDatasetEdit}
               onSessionClick={handleSessionClick}
               onSessionDelete={handleSessionDelete}
               onSessionEdit={handleSessionEdit}
