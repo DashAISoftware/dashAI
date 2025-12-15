@@ -10,7 +10,6 @@ import {
   Step,
   StepLabel,
   TextField,
-  MenuItem,
   Box,
   IconButton,
   Typography,
@@ -24,7 +23,6 @@ import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
-import { getComponents } from "../../api/component";
 
 /**
  * Dialog for adding a new model run to a session
@@ -50,7 +48,6 @@ function AddModelDialog({
     sampler: "TPESampler",
     pruner: "None",
   });
-  const [compatibleModels, setCompatibleModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
@@ -61,6 +58,20 @@ function AddModelDialog({
   const { defaultValues: defaultOptimizerParams } = useSchema({
     modelName: selectedOptimizer,
   });
+
+  useEffect(() => {
+    if (open && selectedModel) {
+      const generated = generateSequentialName({
+        base: selectedModel,
+        items: existingRuns,
+        getName: (run) => run.name,
+        filter: (run) => run.model_name === selectedModel,
+      });
+      if (!hasUserTouchedName) {
+        setName(generated.defaultName);
+      }
+    }
+  }, [open, selectedModel, existingRuns, hasUserTouchedName]);
 
   const hasOptimizableParams = useMemo(() => {
     return Object.values(modelParameters).some(
@@ -84,53 +95,11 @@ function AddModelDialog({
     setOptimizerParameters((prevParams) => ({ ...prevParams, ...values }));
   }, []);
 
-  // Generate default name
-  const { defaultName } = useMemo(() => {
-    if (!selectedModel) {
-      return { defaultName: "" };
-    }
-
-    return generateSequentialName({
-      base: selectedModel,
-      items: existingRuns,
-      getName: (run) => run.name,
-      filter: (run) => run.model_name === selectedModel,
-    });
-  }, [selectedModel, existingRuns]);
-
-  useEffect(() => {
-    if (open && session?.task_name) {
-      const fetchModels = async () => {
-        try {
-          const models = await getComponents({
-            selectTypes: ["Model"],
-            relatedComponent: session.task_name,
-          });
-          setCompatibleModels(models);
-        } catch (error) {
-          console.error("Error fetching models:", error);
-          enqueueSnackbar("Error fetching compatible models", {
-            variant: "error",
-          });
-        }
-      };
-      fetchModels();
-    } else if (!open) {
-      setCompatibleModels([]);
-    }
-  }, [open, session?.task_name, enqueueSnackbar]);
-
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
       setSelectedModel(preselectedModel);
     }
   }, [preselectedModel, selectedModel]);
-
-  useEffect(() => {
-    if (defaultName && !hasUserTouchedName) {
-      setName(defaultName);
-    }
-  }, [defaultName, hasUserTouchedName]);
 
   useEffect(() => {
     if (defaultModelParams && Object.keys(defaultModelParams).length > 0) {
@@ -158,25 +127,35 @@ function AddModelDialog({
   }, [defaultOptimizerParams]);
 
   const handleClose = () => {
-    setActiveStep(0);
-    setName("");
-    setSelectedModel(preselectedModel || "");
-    setModelParameters({});
-    setSelectedOptimizer("OptunaOptimizer");
-    setOptimizerParameters({
-      n_trials: 10,
-      sampler: "TPESampler",
-      pruner: "None",
-    });
-    setGoalMetric("");
-    setHasUserTouchedName(false);
+    setTimeout(() => {
+      setActiveStep(0);
+      setName("");
+      setSelectedModel("");
+      setModelParameters({});
+      setSelectedOptimizer("OptunaOptimizer");
+      setOptimizerParameters({
+        n_trials: 10,
+        sampler: "TPESampler",
+        pruner: "None",
+      });
+      setGoalMetric("");
+      setHasUserTouchedName(false);
+    }, 100);
     onClose();
   };
 
   const handleNext = () => {
     if (activeStep === 0) {
-      if (!selectedModel || name.trim() === "") {
-        enqueueSnackbar("Please select a model and enter a name", {
+      if (!selectedModel) {
+        enqueueSnackbar("No model selected", {
+          variant: "error",
+        });
+        handleClose();
+        return;
+      }
+
+      if (name.trim() === "") {
+        enqueueSnackbar("Please enter a run name", {
           variant: "warning",
         });
         return;
@@ -217,14 +196,14 @@ function AddModelDialog({
         session.id.toString(),
         selectedModel,
         name.trim(),
-        modelParameters,
-        selectedOptimizer,
-        optimizerParameters,
+        modelParameters || {},
+        selectedOptimizer || "",
+        optimizerParameters || {},
         "",
         "",
         "",
         "",
-        hasOptimizableParams ? goalMetric : "",
+        goalMetric || "",
         "",
       );
 
@@ -239,7 +218,18 @@ function AddModelDialog({
       handleClose();
     } catch (error) {
       console.error("Error creating run:", error);
-      enqueueSnackbar("Error creating run", { variant: "error" });
+
+      if (error.response) {
+        console.error("Response error:", error.message);
+      } else if (error.request) {
+        console.error("Request error", error.request);
+      } else {
+        console.error("Unknown Error", error.message);
+      }
+
+      enqueueSnackbar(`Error while trying to create a new run: ${name}`, {
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -252,8 +242,13 @@ function AddModelDialog({
     }
   };
 
-  const isStep1Valid = selectedModel && name.trim() !== "";
-  const isStep2Valid = selectedOptimizer && optimizerParameters && goalMetric;
+  const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
+  const isStep2Valid = Boolean(
+    selectedOptimizer &&
+      optimizerParameters &&
+      Object.keys(optimizerParameters).length > 0 &&
+      goalMetric,
+  );
 
   return (
     <Dialog
@@ -305,6 +300,7 @@ function AddModelDialog({
               fullWidth
               required
               placeholder="Run Name"
+              helperText={selectedModel ? `Model: ${selectedModel}` : ""}
             />
 
             {selectedModel && (

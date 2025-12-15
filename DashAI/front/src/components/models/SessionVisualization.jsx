@@ -20,38 +20,39 @@ export default function SessionVisualization({
   const [tableHeight, setTableHeight] = useState(280);
   const isResizing = React.useRef(false);
 
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const response = await getComponents({ selectTypes: ["Model"] });
-        setModels(response);
-      } catch (error) {
-        console.error("Error fetching models:", error);
-      }
-    };
-    fetchModels();
+  const fetchModels = React.useCallback(async () => {
+    try {
+      const response = await getComponents({ selectTypes: ["Model"] });
+      setModels(response);
+    } catch (error) {
+      console.error("Error fetching models:", error);
+    }
   }, []);
 
-  const handleRowClick = (runId) => {
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
+
+  const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
-    // Scroll to the run card
     const element = document.getElementById(`run-card-${runId}`);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  };
+  }, []);
 
-  const handleViewDetails = (run) => {
+  const handleViewDetails = React.useCallback((run) => {
+    if (!run?.id) return;
     setSelectedRunId(run.id);
     const element = document.getElementById(`run-card-${run.id}`);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  };
+  }, []);
 
-  // Sort runs in ascending order (oldest first, newest last)
-  const sortedRuns = [...runs].sort(
-    (a, b) => new Date(a.created) - new Date(b.created),
+  const sortedRuns = React.useMemo(
+    () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
+    [runs],
   );
 
   const handleMouseMove = React.useCallback((e) => {

@@ -87,7 +87,7 @@ function CreateSessionSteps({
     if (selectedTask && defaultName && !formik.values.name.trim()) {
       formik.setFieldValue("name", defaultName);
     }
-  }, [selectedTask, defaultName]);
+  }, [selectedTask, defaultName, formik]);
 
   // Calculate if next button should be enabled based on current step
   const isNextEnabled = (() => {
@@ -133,6 +133,7 @@ function CreateSessionSteps({
 
   const createSession = async () => {
     try {
+      setNextEnabled(false);
       const response = await createExperiment(
         newExp.dataset.id,
         newExp.task_name,

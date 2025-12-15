@@ -28,34 +28,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
-  // Fetch compatible models when session changes
-  useEffect(() => {
-    if (session) {
-      fetchModels();
-    } else {
-      setModels([]);
-      setFilteredModels([]);
-      setSearchQuery("");
-    }
-  }, [session]);
-
-  // Filter models based on search
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredModels(models);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredModels(
-        models.filter(
-          (model) =>
-            (model.display_name || model.name).toLowerCase().includes(query) ||
-            (model.metadata?.description || "").toLowerCase().includes(query),
-        ),
-      );
-    }
-  }, [searchQuery, models]);
-
-  const fetchModels = async () => {
+  const fetchModels = React.useCallback(async () => {
     try {
       setLoading(true);
       const response = await getComponents({
@@ -72,7 +45,33 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.task_name, enqueueSnackbar]);
+
+  useEffect(() => {
+    if (session) {
+      fetchModels();
+    } else {
+      setModels([]);
+      setFilteredModels([]);
+      setSearchQuery("");
+    }
+  }, [session, fetchModels]);
+
+  // Filter models based on search
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredModels(models);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredModels(
+        models.filter(
+          (model) =>
+            (model.display_name || model.name).toLowerCase().includes(query) ||
+            (model.metadata?.description || "").toLowerCase().includes(query),
+        ),
+      );
+    }
+  }, [searchQuery, models]);
 
   const handleModelClick = (model) => {
     if (onModelClick) {
