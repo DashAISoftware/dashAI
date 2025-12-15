@@ -5,21 +5,13 @@ import {
   Typography,
   IconButton,
   TextField,
-  List,
-  ListItemButton,
-  ListItemText,
-  ListItemIcon,
   CircularProgress,
-  Divider,
 } from "@mui/material";
-import {
-  ChevronRight,
-  Science as ScienceIcon,
-  Search as SearchIcon,
-} from "@mui/icons-material";
+import { ChevronRight, Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/SideBar";
 import { getComponents } from "../../api/component";
+import ModelListItem from "./model/ModelListItem";
 
 export default function ModelsRightBar({ session, onToggle, onModelClick }) {
   const [models, setModels] = useState([]);
@@ -150,10 +142,8 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
               />
             </Box>
 
-            <Divider />
-
             {/* Models List */}
-            <Box sx={{ flex: 1, overflow: "auto" }}>
+            <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
               {loading ? (
                 <Box
                   sx={{
@@ -161,7 +151,6 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
                     justifyContent: "center",
                     alignItems: "center",
                     height: "100%",
-                    p: 2,
                   }}
                 >
                   <CircularProgress size={32} />
@@ -173,60 +162,27 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
                     justifyContent: "center",
                     alignItems: "center",
                     height: "100%",
-                    p: 2,
                   }}
                 >
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary", textAlign: "center" }}
+                  >
                     {searchQuery
                       ? "No models match your search"
                       : "No compatible models found"}
                   </Typography>
                 </Box>
               ) : (
-                <List sx={{ p: 0 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {filteredModels.map((model) => (
-                    <React.Fragment key={model.name}>
-                      <ListItemButton
-                        onClick={() => handleModelClick(model)}
-                        sx={{
-                          py: 1.5,
-                          "&:hover": {
-                            backgroundColor: "action.hover",
-                          },
-                        }}
-                      >
-                        <ListItemIcon sx={{ minWidth: 40 }}>
-                          <ScienceIcon color="primary" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body2" fontWeight="medium">
-                              {model.display_name || model.name}
-                            </Typography>
-                          }
-                          secondary={
-                            model.metadata?.description ? (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {model.metadata.description}
-                              </Typography>
-                            ) : null
-                          }
-                        />
-                      </ListItemButton>
-                      <Divider />
-                    </React.Fragment>
+                    <ModelListItem
+                      key={model.name}
+                      model={model}
+                      onClick={() => handleModelClick(model)}
+                    />
                   ))}
-                </List>
+                </Box>
               )}
             </Box>
           </>

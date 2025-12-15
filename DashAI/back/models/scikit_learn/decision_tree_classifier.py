@@ -77,7 +77,9 @@ class DecisionTreeClassifier(
 
     SCHEMA = DecisionTreeClassifierSchema
     DISPLAY_NAME: str = "Decision Tree"
+    DESCRIPTION: str = "Decision tree classifier using CART algorithm."
     COLOR: str = "#4CAF50"
+    ICON: str = "AccountTree"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

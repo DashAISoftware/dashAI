@@ -52,7 +52,11 @@ class KNeighborsClassifier(
 
     SCHEMA = KNeighborsClassifierSchema
     DISPLAY_NAME: str = "K-Nearest Neighbors (KNN)"
+    DESCRIPTION: str = (
+        "Classification based on k nearest training examples in feature space."
+    )
     COLOR: str = "#FFD54F"
+    ICON: str = "ScatterPlot"
 
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 

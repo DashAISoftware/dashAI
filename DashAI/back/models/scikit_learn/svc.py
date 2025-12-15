@@ -114,7 +114,9 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
 
     SCHEMA = SVCSchema
     DISPLAY_NAME: str = "Support Vector Machine (SVM)"
+    DESCRIPTION: str = "Support Vector Classification with various kernel functions."
     COLOR: str = "#FF80AB"
+    ICON: str = "Timeline"
 
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 

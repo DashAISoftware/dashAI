@@ -206,7 +206,11 @@ class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
 
     SCHEMA = GradientBoostingRSchema
     DISPLAY_NAME: str = "Gradient Boosting Regression"
+    DESCRIPTION: str = (
+        "Ensemble method that builds trees sequentially to correct previous errors."
+    )
     COLOR: str = "#4CAF50"
+    ICON: str = "AutoGraph"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

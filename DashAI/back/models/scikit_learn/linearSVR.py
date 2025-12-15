@@ -125,7 +125,9 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
 
     SCHEMA = LinearSVRSchema
     DISPLAY_NAME: str = "Linear Support Vector Regression"
+    DESCRIPTION: str = "Support Vector Regression with linear kernel."
     COLOR: str = "#2196F3"
+    ICON: str = "Timeline"
 
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
