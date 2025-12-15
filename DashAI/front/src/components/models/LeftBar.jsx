@@ -15,7 +15,7 @@ import {
   KeyboardArrowRight,
 } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
-import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
+import Biotech from "@mui/icons-material/Biotech";
 import Footer from "../threeSectionLayout/Footer";
 import BarHeader from "../threeSectionLayout/BarHeader";
 import SideBar from "../threeSectionLayout/SideBar";
@@ -238,7 +238,7 @@ export default function ModelsLeftBar({
         >
           {/* Header */}
           <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
-            <ModelTrainingIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
+            <Biotech sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
             <Typography>Sessions</Typography>
             <Box
               sx={{

@@ -19,7 +19,9 @@ function FormSchemaWithSelectedModel({
   initialValues,
   onFormSubmit,
   onCancel,
-  saveButtonText, // New prop
+  saveButtonText,
+  hideButtons,
+  onValuesChange,
 }) {
   const {
     formValues,
@@ -56,8 +58,6 @@ function FormSchemaWithSelectedModel({
 
   return (
     <Stack spacing={4} sx={{ py: 2 }} transition="ease">
-      {/* Dropdown to select a configurable object to render a subform */}
-
       {Boolean(propertyData?.parent) && (
         <>
           <FormSchemaBreadScrumbs />
@@ -75,6 +75,8 @@ function FormSchemaWithSelectedModel({
         onFormSubmit={() => onFormSubmit(formValues)}
         setError={setErrorForm}
         saveButtonText={saveButtonText}
+        hideButtons={hideButtons}
+        onValuesChange={onValuesChange}
         onCancel={() => {
           if (properties.length > 0) {
             removeLastProperty();
@@ -93,6 +95,8 @@ FormSchemaWithSelectedModel.propTypes = {
   onFormSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   saveButtonText: PropTypes.string,
+  hideButtons: PropTypes.bool,
+  onValuesChange: PropTypes.func,
 };
 
 export default FormSchemaWithSelectedModel;

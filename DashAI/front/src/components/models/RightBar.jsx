@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import {
   ChevronRight,
-  ModelTraining,
+  Science as ScienceIcon,
   Search as SearchIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
@@ -197,7 +197,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
                         }}
                       >
                         <ListItemIcon sx={{ minWidth: 40 }}>
-                          <ModelTraining color="primary" />
+                          <ScienceIcon color="primary" />
                         </ListItemIcon>
                         <ListItemText
                           primary={

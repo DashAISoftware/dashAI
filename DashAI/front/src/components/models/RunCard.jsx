@@ -23,7 +23,6 @@ import {
   PlayArrow,
   Stop,
   Edit,
-  Replay,
   Delete,
   ExpandMore,
   ExpandLess,
@@ -34,7 +33,7 @@ import { getRunStatus } from "../../utils/runStatus";
 /**
  * Card component displaying a model run with actions and details
  */
-function RunCard({ run, models = [], onTrain, onEdit, onRetry, onDelete }) {
+function RunCard({ run, models = [], onTrain, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
 
   // Get display status from numeric code
@@ -198,7 +197,7 @@ function RunCard({ run, models = [], onTrain, onEdit, onRetry, onDelete }) {
                   <Typography variant="subtitle2" gutterBottom>
                     Model Parameters
                   </Typography>
-                  <TableContainer component={Paper} variant="outlined">
+                  <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
@@ -231,7 +230,7 @@ function RunCard({ run, models = [], onTrain, onEdit, onRetry, onDelete }) {
                   </Typography>
                   {run.optimizer_parameters &&
                     Object.keys(run.optimizer_parameters).length > 0 && (
-                      <TableContainer component={Paper} variant="outlined">
+                      <TableContainer component={Paper}>
                         <Table size="small">
                           <TableHead>
                             <TableRow>
@@ -304,18 +303,6 @@ function RunCard({ run, models = [], onTrain, onEdit, onRetry, onDelete }) {
           <Edit fontSize="small" />
         </IconButton>
 
-        {/* Retry button */}
-        {(statusText === "Error" || statusText === "Finished") && (
-          <IconButton
-            size="small"
-            onClick={() => onRetry(run)}
-            color="info"
-            title="Retry run"
-          >
-            <Replay fontSize="small" />
-          </IconButton>
-        )}
-
         {/* Delete button */}
         <IconButton
           size="small"
@@ -348,7 +335,6 @@ RunCard.propTypes = {
   models: PropTypes.array,
   onTrain: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
-  onRetry: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
 

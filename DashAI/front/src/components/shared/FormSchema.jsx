@@ -32,6 +32,7 @@ function FormSchema({
   saveButtonText,
   onValuesChange,
   showBorder = true,
+  hideButtons = false,
 }) {
   const { formik, modelSchema, loading, handleUpdateSchema } = useFormSchema({
     model,
@@ -55,14 +56,16 @@ function FormSchema({
         />
       </FormSchemaParameterContainer>
 
-      <FormSchemaButtonGroup
-        onCancel={onCancel}
-        onFormSubmit={onFormSubmit}
-        autoSave={autoSave}
-        formik={formik}
-        error={error}
-        saveButtonText={saveButtonText}
-      />
+      {!hideButtons && (
+        <FormSchemaButtonGroup
+          onCancel={onCancel}
+          onFormSubmit={onFormSubmit}
+          autoSave={autoSave}
+          formik={formik}
+          error={error}
+          saveButtonText={saveButtonText}
+        />
+      )}
     </>
   );
 }
@@ -80,6 +83,7 @@ FormSchema.propTypes = {
   saveButtonText: PropTypes.string,
   onValuesChange: PropTypes.func,
   showBorder: PropTypes.bool,
+  hideButtons: PropTypes.bool,
 };
 
 export default FormSchema;

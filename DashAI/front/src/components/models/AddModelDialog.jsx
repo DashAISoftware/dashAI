@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import { useSnackbar } from "notistack";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
 import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSelectOptimizer";
+import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
@@ -52,6 +53,7 @@ function AddModelDialog({
   const [compatibleModels, setCompatibleModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
+  const [goalMetric, setGoalMetric] = useState("");
 
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: selectedModel,
@@ -60,7 +62,27 @@ function AddModelDialog({
     modelName: selectedOptimizer,
   });
 
-  const steps = ["Configure Model", "Configure Optimizer"];
+  const hasOptimizableParams = useMemo(() => {
+    return Object.values(modelParameters).some(
+      (value) =>
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        value.optimize === true,
+    );
+  }, [modelParameters]);
+
+  const steps = hasOptimizableParams
+    ? ["Configure Model", "Configure Optimizer"]
+    : ["Configure Model"];
+
+  const handleModelParametersChange = useCallback((values) => {
+    setModelParameters(values);
+  }, []);
+
+  const handleOptimizerParametersChange = useCallback((values) => {
+    setOptimizerParameters((prevParams) => ({ ...prevParams, ...values }));
+  }, []);
 
   // Generate default name
   const { defaultName } = useMemo(() => {
@@ -76,7 +98,6 @@ function AddModelDialog({
     });
   }, [selectedModel, existingRuns]);
 
-  // Fetch compatible models when dialog opens
   useEffect(() => {
     if (open && session?.task_name) {
       const fetchModels = async () => {
@@ -95,51 +116,34 @@ function AddModelDialog({
       };
       fetchModels();
     } else if (!open) {
-      // Reset models when dialog closes
       setCompatibleModels([]);
     }
   }, [open, session?.task_name, enqueueSnackbar]);
 
-  // Set preselected model if provided
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
       setSelectedModel(preselectedModel);
     }
   }, [preselectedModel, selectedModel]);
 
-  // Update default name when model changes
   useEffect(() => {
     if (defaultName && !hasUserTouchedName) {
       setName(defaultName);
     }
   }, [defaultName, hasUserTouchedName]);
 
-  // Set default model parameters when model is selected
   useEffect(() => {
     if (defaultModelParams && Object.keys(defaultModelParams).length > 0) {
-      setModelParameters((prev) => {
-        // Only update if params have actually changed
-        const prevKeys = Object.keys(prev).sort().join(",");
-        const newKeys = Object.keys(defaultModelParams).sort().join(",");
-        if (
-          prevKeys === newKeys &&
-          JSON.stringify(prev) === JSON.stringify(defaultModelParams)
-        ) {
-          return prev;
-        }
-        return defaultModelParams;
-      });
+      setModelParameters(defaultModelParams);
     }
-  }, [defaultModelParams]);
+  }, [selectedModel]);
 
-  // Set default optimizer parameters when optimizer is selected
   useEffect(() => {
     if (
       defaultOptimizerParams &&
       Object.keys(defaultOptimizerParams).length > 0
     ) {
       setOptimizerParameters((prev) => {
-        // Only update if params have actually changed
         const prevKeys = Object.keys(prev).sort().join(",");
         const newKeys = Object.keys(defaultOptimizerParams).sort().join(",");
         if (
@@ -164,13 +168,13 @@ function AddModelDialog({
       sampler: "TPESampler",
       pruner: "None",
     });
+    setGoalMetric("");
     setHasUserTouchedName(false);
     onClose();
   };
 
   const handleNext = () => {
     if (activeStep === 0) {
-      // Validate step 1
       if (!selectedModel || name.trim() === "") {
         enqueueSnackbar("Please select a model and enter a name", {
           variant: "warning",
@@ -178,7 +182,6 @@ function AddModelDialog({
         return;
       }
 
-      // Check for duplicate names
       const nameExists = existingRuns.some(
         (run) =>
           run.name && run.name.toLowerCase() === name.trim().toLowerCase(),
@@ -190,9 +193,12 @@ function AddModelDialog({
         return;
       }
 
-      setActiveStep(1);
+      if (hasOptimizableParams) {
+        setActiveStep(1);
+      } else {
+        handleCreateRun();
+      }
     } else {
-      // Step 2: Create the run
       handleCreateRun();
     }
   };
@@ -214,12 +220,12 @@ function AddModelDialog({
         modelParameters,
         selectedOptimizer,
         optimizerParameters,
-        "", // plot_history_path
-        "", // plot_slice_path
-        "", // plot_contour_path
-        "", // plot_importance_path
-        "", // goal_metric (can be set later)
-        "", // description
+        "",
+        "",
+        "",
+        "",
+        hasOptimizableParams ? goalMetric : "",
+        "",
       );
 
       enqueueSnackbar(`Run "${name}" created successfully`, {
@@ -239,10 +245,6 @@ function AddModelDialog({
     }
   };
 
-  const handleModelParametersSubmit = (values) => {
-    setModelParameters(values);
-  };
-
   const handleOptimizerSelected = (optimizerName, defaultValues) => {
     setSelectedOptimizer(optimizerName);
     if (defaultValues && Object.keys(defaultValues).length > 0) {
@@ -251,7 +253,7 @@ function AddModelDialog({
   };
 
   const isStep1Valid = selectedModel && name.trim() !== "";
-  const isStep2Valid = selectedOptimizer && optimizerParameters;
+  const isStep2Valid = selectedOptimizer && optimizerParameters && goalMetric;
 
   return (
     <Dialog
@@ -294,29 +296,6 @@ function AddModelDialog({
         {activeStep === 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <TextField
-              select
-              label="Select Model"
-              value={selectedModel}
-              onChange={(e) => {
-                setSelectedModel(e.target.value);
-                setHasUserTouchedName(false);
-              }}
-              fullWidth
-              required
-            >
-              {compatibleModels.length === 0 && (
-                <MenuItem value="" disabled>
-                  No models available
-                </MenuItem>
-              )}
-              {compatibleModels.map((model) => (
-                <MenuItem key={model.name} value={model.name}>
-                  {model.display_name || model.name}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
               label="Run Name"
               value={name}
               onChange={(e) => {
@@ -325,8 +304,7 @@ function AddModelDialog({
               }}
               fullWidth
               required
-              disabled={!selectedModel}
-              placeholder={!selectedModel ? "Select a model first" : "Run Name"}
+              placeholder="Run Name"
             />
 
             {selectedModel && (
@@ -334,11 +312,13 @@ function AddModelDialog({
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   Model Parameters
                 </Typography>
-                <FormSchemaContainer>
+                <FormSchemaContainer key={selectedModel}>
                   <FormSchemaWithSelectedModel
                     modelToConfigure={selectedModel}
                     initialValues={modelParameters}
-                    onFormSubmit={handleModelParametersSubmit}
+                    onFormSubmit={handleModelParametersChange}
+                    onValuesChange={handleModelParametersChange}
+                    onCancel={() => {}}
                     hideButtons
                   />
                 </FormSchemaContainer>
@@ -352,6 +332,18 @@ function AddModelDialog({
             <Typography variant="subtitle2">
               Configure Hyperparameter Optimizer
             </Typography>
+
+            <Box>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Goal Metric *
+              </Typography>
+              <ModelsTableSelectMetric
+                taskName={session?.task_name}
+                metricName={goalMetric}
+                handleSelectedMetric={setGoalMetric}
+                required
+              />
+            </Box>
 
             <OptimizationTableSelectOptimizer
               taskName={session?.task_name}
@@ -369,6 +361,8 @@ function AddModelDialog({
                     modelToConfigure={selectedOptimizer}
                     initialValues={optimizerParameters}
                     onFormSubmit={(values) => setOptimizerParameters(values)}
+                    onValuesChange={handleOptimizerParametersChange}
+                    onCancel={() => {}}
                     hideButtons
                   />
                 </FormSchemaContainer>

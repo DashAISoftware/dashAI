@@ -255,9 +255,7 @@ export default function ModelsContent() {
       // Update local state to show running status
       setRuns((prevRuns) =>
         prevRuns.map((r) =>
-          r.id === run.id
-            ? { ...updatedRun, status: 1 } // 1 = Delivered
-            : r,
+          r.id === run.id ? { ...updatedRun, status: 1 } : r,
         ),
       );
 
@@ -300,10 +298,6 @@ export default function ModelsContent() {
     // TODO: Open edit dialog with run parameters
     console.log("Edit run:", run);
     enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
-  };
-
-  const handleRetryRun = async (run) => {
-    await handleTrainRun(run);
   };
 
   const handleDeleteRun = async (run) => {
@@ -503,7 +497,6 @@ export default function ModelsContent() {
               runs={runs}
               onTrain={handleTrainRun}
               onEditRun={handleEditRun}
-              onRetryRun={handleRetryRun}
               onDeleteRun={handleDeleteRun}
             />
           ) : selectedDatasetId ? (

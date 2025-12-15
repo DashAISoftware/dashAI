@@ -213,22 +213,31 @@ function ModelComparisonTable({
   const rows = getRows();
 
   return (
-    <Box sx={{ height: "100%", width: "100%" }}>
+    <Box sx={{ height: "100%", width: "100%", pb: 1 }}>
       <DataGrid
         rows={rows}
         columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5, 10, 25]}
-        disableSelectionOnClick
+        disableRowSelectionOnClick
         density="compact"
+        hideFooter
         onRowClick={(params) => {
           if (onRowClick) {
             onRowClick(params.row.id);
           }
         }}
+        initialState={{
+          density: "compact",
+        }}
         sx={{
+          backgroundColor: "background.box",
           "& .MuiDataGrid-row": {
             cursor: onRowClick ? "pointer" : "default",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            marginBottom: "8px",
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: "background.box",
           },
         }}
       />
