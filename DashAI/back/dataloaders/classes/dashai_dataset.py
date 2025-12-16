@@ -11,6 +11,7 @@ import pyarrow.ipc as ipc
 from beartype import beartype
 from beartype.typing import Dict, List, Literal, Optional, Tuple, Union
 from datasets import ClassLabel, Dataset, DatasetDict, Value, concatenate_datasets
+from datasets.table import InMemoryTable
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 
@@ -55,7 +56,7 @@ class DashAIDataset(Dataset):
     @beartype
     def __init__(
         self,
-        table: pa.Table,
+        table: Union[pa.Table, InMemoryTable],
         splits: dict = None,
         types: Optional[Dict[str, DashAIDataType]] = None,
         *args,
