@@ -1,7 +1,7 @@
 """Base Model abstract class."""
 
 from abc import ABCMeta, abstractmethod
-from typing import Any, Final
+from typing import Any, Dict, Final
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -14,7 +14,24 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "Model"
+    DISPLAY_NAME: str = ""
+    DESCRIPTION: str = ""
     COLOR: str = "#795548"
+    ICON: str = "Science"
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Get metadata values for the current model.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with the metadata including icon.
+        """
+        metadata: Dict[str, Any] = {}
+        metadata["icon"] = cls.ICON if cls.ICON else "Science"
+
+        return metadata
 
     @abstractmethod
     def save(self, filename: str) -> None:

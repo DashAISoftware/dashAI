@@ -93,7 +93,9 @@ class RidgeRegression(RegressionModel, SklearnLikeRegressor, _Ridge):
 
     SCHEMA = RidgeRegressionSchema
     DISPLAY_NAME: str = "Ridge Regression"
+    DESCRIPTION: str = "Linear regression with L2 regularization."
     COLOR: str = "#2196F3"
+    ICON: str = "ShowChart"
 
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 

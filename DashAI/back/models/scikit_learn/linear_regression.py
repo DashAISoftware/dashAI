@@ -51,7 +51,9 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
 
     SCHEMA = LinearRegressionSchema
     DISPLAY_NAME: str = "Linear Regression"
+    DESCRIPTION: str = "Ordinary least squares linear regression."
     COLOR: str = "#3F51B5"
+    ICON: str = "ShowChart"
 
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 

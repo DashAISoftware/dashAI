@@ -24,7 +24,9 @@ class DummyClassifier(
 
     SCHEMA = DummyClassifierSchema
     DISPLAY_NAME: str = "Dummy Classifier"
+    DESCRIPTION: str = "Baseline classifier using simple rules for comparison."
     COLOR: str = "#4DB6AC"
+    ICON: str = "Science"
 
     def __init__(self, **kwargs) -> None:
         kwargs = self.validate_and_transform(kwargs)

@@ -96,7 +96,9 @@ class RandomForestClassifier(
 
     SCHEMA = RandomForestClassifierSchema
     DISPLAY_NAME: str = "Random Forest"
+    DESCRIPTION: str = "An ensemble learning method using multiple decision trees."
     COLOR: str = "#FF8A65"
+    ICON: str = "Forest"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

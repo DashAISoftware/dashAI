@@ -67,7 +67,9 @@ class LogisticRegression(
 
     SCHEMA = LogisticRegressionSchema
     DISPLAY_NAME: str = "Logistic Regression"
+    DESCRIPTION: str = "Linear model for classification using logistic function."
     COLOR: str = "#64B5F6"
+    ICON: str = "TrendingUp"
 
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
