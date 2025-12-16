@@ -51,6 +51,7 @@ function AddModelDialog({
   const [loading, setLoading] = useState(false);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
+  const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
 
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: selectedModel,
@@ -98,14 +99,23 @@ function AddModelDialog({
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
       setSelectedModel(preselectedModel);
+      setModelParameters({});
+      setHasUserTouchedName(false);
+      setHasLoadedInitialParams(false);
     }
   }, [preselectedModel, selectedModel]);
 
   useEffect(() => {
-    if (defaultModelParams && Object.keys(defaultModelParams).length > 0) {
+    if (
+      selectedModel &&
+      defaultModelParams &&
+      Object.keys(defaultModelParams).length > 0 &&
+      !hasLoadedInitialParams
+    ) {
       setModelParameters(defaultModelParams);
+      setHasLoadedInitialParams(true);
     }
-  }, [selectedModel]);
+  }, [selectedModel, defaultModelParams, hasLoadedInitialParams]);
 
   useEffect(() => {
     if (
@@ -140,6 +150,7 @@ function AddModelDialog({
       });
       setGoalMetric("");
       setHasUserTouchedName(false);
+      setHasLoadedInitialParams(false);
     }, 100);
     onClose();
   };
