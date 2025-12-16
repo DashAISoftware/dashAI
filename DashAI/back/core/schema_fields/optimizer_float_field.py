@@ -1,4 +1,6 @@
-from typing import Optional, Type
+from typing import Annotated, Optional, Type
+
+from pydantic import Field
 
 
 def optimizer_float_field(
@@ -40,4 +42,4 @@ def optimizer_float_field(
     ValidationError
         If the value of the field is greater or equal than the exclusive maximum.
     """
-    return float
+    return Annotated[float, Field(ge=ge, gt=gt, le=le, lt=lt)]
