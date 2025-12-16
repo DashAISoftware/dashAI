@@ -105,7 +105,7 @@ function AddModelDialog({
     if (defaultModelParams && Object.keys(defaultModelParams).length > 0) {
       setModelParameters(defaultModelParams);
     }
-  }, [selectedModel]);
+  }, [defaultModelParams]);
 
   useEffect(() => {
     if (
