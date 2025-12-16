@@ -148,6 +148,13 @@ export default function ModelsContent() {
     if (!selectedSessionId) return;
     try {
       const data = await getRuns(selectedSessionId.toString());
+      console.log("🔍 Runs data from API:", data);
+      console.log(
+        "🔍 First run metrics:",
+        data[0]?.test_metrics,
+        data[0]?.train_metrics,
+        data[0]?.validation_metrics,
+      );
       const runsWithStatus = data.map((run) => ({
         ...run,
         status:

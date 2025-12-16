@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Stack, Paper, Divider, Button } from "@mui/material";
-import { PlayArrow } from "@mui/icons-material";
+import {
+  Box,
+  Typography,
+  Stack,
+  Paper,
+  Divider,
+  Button,
+  ButtonGroup,
+} from "@mui/material";
+import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
+import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 
 export default function SessionVisualization({
   session,
@@ -18,6 +27,7 @@ export default function SessionVisualization({
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
+  const [showTable, setShowTable] = useState(true);
   const isResizing = React.useRef(false);
 
   const fetchModels = React.useCallback(async () => {
@@ -143,22 +153,43 @@ export default function SessionVisualization({
             }}
           >
             <Typography variant="h6">Model Comparison</Typography>
-            {runs.length > 0 &&
-              runs.some((r) => getRunStatus(r.status) === "Not Started") && (
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {/* Toggle between Table and Graphs */}
+              <ButtonGroup size="small" variant="outlined">
                 <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<PlayArrow />}
-                  onClick={() => {
-                    const notStartedRuns = runs.filter(
-                      (r) => getRunStatus(r.status) === "Not Started",
-                    );
-                    notStartedRuns.forEach((run) => onTrain(run));
-                  }}
+                  variant={showTable ? "contained" : "outlined"}
+                  onClick={() => setShowTable(true)}
+                  startIcon={<TableChart />}
                 >
-                  Run All
+                  Table
                 </Button>
-              )}
+                <Button
+                  variant={!showTable ? "contained" : "outlined"}
+                  onClick={() => setShowTable(false)}
+                  startIcon={<BarChart />}
+                >
+                  Graphs
+                </Button>
+              </ButtonGroup>
+
+              {/* Run All Button */}
+              {runs.length > 0 &&
+                runs.some((r) => getRunStatus(r.status) === "Not Started") && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<PlayArrow />}
+                    onClick={() => {
+                      const notStartedRuns = runs.filter(
+                        (r) => getRunStatus(r.status) === "Not Started",
+                      );
+                      notStartedRuns.forEach((run) => onTrain(run));
+                    }}
+                  >
+                    Run All
+                  </Button>
+                )}
+            </Box>
           </Box>
           {runs.length === 0 ? (
             <Box
@@ -174,15 +205,27 @@ export default function SessionVisualization({
               </Typography>
             </Box>
           ) : (
-            <Box sx={{ height: "calc(100% - 40px)" }}>
-              <ModelComparisonTable
-                runs={runs}
-                session={session}
-                onTrain={onTrain}
-                onViewDetails={handleViewDetails}
-                onDelete={onDeleteRun}
-                onRowClick={handleRowClick}
-              />
+            <Box sx={{ height: "calc(100% - 40px)", overflow: "auto" }}>
+              {showTable ? (
+                <ModelComparisonTable
+                  runs={runs}
+                  session={session}
+                  onTrain={onTrain}
+                  onViewDetails={handleViewDetails}
+                  onDelete={onDeleteRun}
+                  onRowClick={handleRowClick}
+                />
+              ) : (
+                <ResultsGraphs
+                  runs={runs.map((run) => ({
+                    ...run,
+                    status:
+                      typeof run.status === "number"
+                        ? getRunStatus(run.status)
+                        : run.status,
+                  }))}
+                />
+              )}
             </Box>
           )}
 
