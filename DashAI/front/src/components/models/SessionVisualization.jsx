@@ -28,7 +28,24 @@ export default function SessionVisualization({
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
+  const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const isResizing = React.useRef(false);
+
+  // Auto-expand when switching to graphs
+  const handleToggleView = React.useCallback(
+    (isTable) => {
+      if (!isTable && showTable) {
+        // Switching from Table to Graphs
+        setPreviousTableHeight(tableHeight);
+        setTableHeight(Math.max(tableHeight, 600));
+      } else if (isTable && !showTable) {
+        // Switching from Graphs to Table
+        setTableHeight(previousTableHeight);
+      }
+      setShowTable(isTable);
+    },
+    [showTable, tableHeight, previousTableHeight],
+  );
 
   const fetchModels = React.useCallback(async () => {
     try {
@@ -158,14 +175,14 @@ export default function SessionVisualization({
               <ButtonGroup size="small" variant="outlined">
                 <Button
                   variant={showTable ? "contained" : "outlined"}
-                  onClick={() => setShowTable(true)}
+                  onClick={() => handleToggleView(true)}
                   startIcon={<TableChart />}
                 >
                   Table
                 </Button>
                 <Button
                   variant={!showTable ? "contained" : "outlined"}
-                  onClick={() => setShowTable(false)}
+                  onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}
                 >
                   Graphs
