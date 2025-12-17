@@ -218,7 +218,6 @@ export default function ModelsLeftBar({
               position: "sticky",
               top: 0,
               zIndex: 10,
-              borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
             }}
           >
             <Biotech sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
