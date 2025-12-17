@@ -18,7 +18,6 @@ import {
 } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../jobs/JobQueueWidget";
-import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../utils/datasetStatus";
 import { formatDate } from "../../pages/results/constants/formatDate";
 import Header from "../notebooks/dataset/header/Header";
@@ -29,8 +28,14 @@ import { CategoricalTab } from "../notebooks/dataset/tabs/CategoricalTab";
 import QualityTab from "../notebooks/dataset/tabs/QualityTab";
 import CorrelationsTab from "../notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "../notebooks/dataset/QualityAlerts";
+import { CreateSessionModal } from "./CreateSessionModal";
 
-export default function DatasetVisualization({ dataset }) {
+export default function DatasetVisualization({
+  dataset,
+  onSessionCreated,
+  existingSessions = [],
+  tasks = [],
+}) {
   if (!dataset) {
     return (
       <Box
@@ -44,8 +49,8 @@ export default function DatasetVisualization({ dataset }) {
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
+  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
 
   useEffect(() => {
     setTab(0);
@@ -167,7 +172,7 @@ export default function DatasetVisualization({ dataset }) {
                 </Typography>
               </Box>
 
-              {/* Buttons - Only New Experiment for Models module */}
+              {/* Buttons - Only New Session for Models module */}
               <Box
                 sx={{
                   display: "flex",
@@ -188,15 +193,11 @@ export default function DatasetVisualization({ dataset }) {
                   <Button
                     variant="contained"
                     disabled={isProcessing}
-                    onClick={() => {
-                      navigate("../app/experiments", {
-                        state: { dataset: dataset },
-                      });
-                    }}
+                    onClick={() => setShowCreateSessionModal(true)}
                     endIcon={<AddIcon />}
                     sx={{ height: "40px" }}
                   >
-                    New Experiment
+                    New Session
                   </Button>
                 </Grid>
               </Box>
@@ -340,6 +341,17 @@ export default function DatasetVisualization({ dataset }) {
           </Box>
         )}
       </Box>
+
+      {/* Create Session Modal */}
+      <CreateSessionModal
+        open={showCreateSessionModal}
+        onClose={() => setShowCreateSessionModal(false)}
+        onSessionCreated={onSessionCreated}
+        dataset={dataset}
+        datasetInfo={datasetInfo}
+        existingSessions={existingSessions}
+        tasks={tasks}
+      />
 
       <JobQueueWidget />
     </>
