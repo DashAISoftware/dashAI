@@ -205,6 +205,10 @@ export default function ModelsLeftBar({
             minHeight: 0,
             display: "flex",
             flexDirection: "column",
+            pl: 2,
+            pr: 2,
+            pt: 2,
+            pb: 1,
           }}
         >
           {/* Header - Sticky */}
@@ -212,12 +216,15 @@ export default function ModelsLeftBar({
             display="flex"
             alignItems="center"
             py={0.5}
-            px={3}
+            px={1}
             mb={0.5}
             sx={{
               position: "sticky",
               top: 0,
               zIndex: 10,
+              cursor: "pointer",
+              borderRadius: 1,
+              "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
             }}
           >
             <Biotech sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
@@ -245,7 +252,14 @@ export default function ModelsLeftBar({
             sx={{
               flex: 1,
               overflow: "auto",
-              px: 2,
+              "&::-webkit-scrollbar": { width: "6px" },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#374151",
+                borderRadius: "3px",
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "#4B5563",
+              },
             }}
           >
             {Object.entries(groupedSessions || {}).map(
