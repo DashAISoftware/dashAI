@@ -156,6 +156,15 @@ export function CreateSessionModal({
 
   const createSession = async () => {
     try {
+      console.log("Creating session with data:", {
+        dataset_id: newSession.dataset.id,
+        task_name: newSession.task_name,
+        name: newSession.name,
+        input_columns: newSession.input_columns,
+        output_columns: newSession.output_columns,
+        splits: newSession.splits,
+      });
+
       const response = await createExperiment(
         newSession.dataset.id,
         newSession.task_name,

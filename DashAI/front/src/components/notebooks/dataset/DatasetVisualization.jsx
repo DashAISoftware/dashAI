@@ -21,9 +21,12 @@ import {
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../../../api/datasets";
+import { getExperiments } from "../../../api/experiment";
 import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
+import { CreateSessionModal } from "../../models/CreateSessionModal";
+import { getComponents } from "../../../api/component";
 import { useTourContext } from "../../tour/TourProvider";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
@@ -56,11 +59,41 @@ export default function DatasetVisualization({
   }
 
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
+  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
+  const [tasks, setTasks] = useState([]);
+  const [existingSessions, setExistingSessions] = useState([]);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const data = await getComponents({
+          selectTypes: ["Task"],
+          hasRelatedOfType: "Model",
+        });
+        setTasks(data);
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const data = await getExperiments();
+        setExistingSessions(data);
+      } catch (error) {
+        console.error("Failed to fetch sessions:", error);
+      }
+    };
+    fetchSessions();
+  }, []);
 
   useEffect(() => {
     setTab(0);
@@ -230,15 +263,13 @@ export default function DatasetVisualization({
                     variant="contained"
                     disabled={isProcessing}
                     onClick={() => {
-                      navigate("../app/experiments", {
-                        state: { dataset: dataset },
-                      });
+                      setShowCreateSessionModal(true);
                     }}
                     endIcon={<AddIcon />}
                     sx={{ height: "40px" }}
-                    data-tour="new-experiment-button-notebook"
+                    data-tour="new-session-button-notebook"
                   >
-                    New Experiment
+                    New Session
                   </Button>
                   <Button
                     variant="contained"
@@ -411,6 +442,22 @@ export default function DatasetVisualization({
         dataset={dataset}
         datasetInfo={datasetInfo}
         existingNotebooks={existingNotebooks}
+      />
+
+      {/* Create Session Modal */}
+      <CreateSessionModal
+        open={showCreateSessionModal}
+        onClose={() => setShowCreateSessionModal(false)}
+        onSessionCreated={(session) => {
+          setShowCreateSessionModal(false);
+          navigate("../app/models", {
+            state: { openSessionId: session.id },
+          });
+        }}
+        dataset={dataset}
+        datasetInfo={datasetInfo}
+        existingSessions={existingSessions}
+        tasks={tasks}
       />
 
       <JobQueueWidget />
