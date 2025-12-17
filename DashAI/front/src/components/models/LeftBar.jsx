@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Box, Divider, Typography, IconButton, Collapse } from "@mui/material";
-import {
-  ChevronLeft,
-  KeyboardArrowDown,
-  KeyboardArrowRight,
-} from "@mui/icons-material";
+import { Box, Divider, Typography, IconButton } from "@mui/material";
+import { ChevronLeft } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
 import Footer from "../threeSectionLayout/Footer";
 import BarHeader from "../threeSectionLayout/BarHeader";
 import SideBar from "../threeSectionLayout/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
+import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import ItemBox from "../threeSectionLayout/ItemBox";
 import InfoSessionModal from "./InfoSessionModal";
 
 export default function ModelsLeftBar({
@@ -198,153 +194,18 @@ export default function ModelsLeftBar({
 
         <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
 
-        {/* Sessions grouped by task */}
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            display: "flex",
-            flexDirection: "column",
-            pl: 2,
-            pr: 2,
-            pt: 2,
-            pb: 1,
-          }}
-        >
-          {/* Header - Sticky */}
-          <Box
-            display="flex"
-            alignItems="center"
-            py={0.5}
-            px={1}
-            mb={0.5}
-            sx={{
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-              cursor: "pointer",
-              borderRadius: 1,
-              "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
-            }}
-          >
-            <Biotech sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
-            <Typography>Sessions</Typography>
-            <Box
-              sx={{
-                ml: 1,
-                bgcolor: "#374151",
-                color: "white",
-                borderRadius: "50%",
-                width: 20,
-                height: 20,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-              }}
-            >
-              {filteredSessions?.length}
-            </Box>
-          </Box>
-
-          {/* Sessions grouped by task - Scrollable */}
-          <Box
-            sx={{
-              flex: 1,
-              overflow: "auto",
-              "&::-webkit-scrollbar": { width: "6px" },
-              "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "#374151",
-                borderRadius: "3px",
-              },
-              "&::-webkit-scrollbar-thumb:hover": {
-                backgroundColor: "#4B5563",
-              },
-            }}
-          >
-            {Object.entries(groupedSessions || {}).map(
-              ([taskName, taskSessions]) => (
-                <Box key={taskName} mb={1}>
-                  {/* Task Header */}
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    sx={{
-                      cursor: "pointer",
-                      py: 0.5,
-                      px: 1,
-                      borderRadius: 1,
-                      "&:hover": {
-                        bgcolor: "rgba(255, 255, 255, 0.05)",
-                      },
-                    }}
-                    onClick={() => toggleSection(taskName)}
-                  >
-                    {openSections[taskName] ? (
-                      <KeyboardArrowDown
-                        sx={{ fontSize: 20, color: "#16FFFF" }}
-                      />
-                    ) : (
-                      <KeyboardArrowRight
-                        sx={{ fontSize: 20, color: "#16FFFF" }}
-                      />
-                    )}
-                    <Typography
-                      sx={{
-                        ml: 1,
-                        fontSize: "0.9rem",
-                        fontWeight: "medium",
-                        textTransform: "capitalize",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        wordBreak: "break-all",
-                        whiteSpace: "nowrap",
-                        flex: 1,
-                      }}
-                    >
-                      {taskName}
-                    </Typography>
-                    <Box
-                      sx={{
-                        ml: 1,
-                        bgcolor: "#374151",
-                        color: "white",
-                        borderRadius: "50%",
-                        width: 20,
-                        height: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 12,
-                      }}
-                    >
-                      {taskSessions.length}
-                    </Box>
-                  </Box>
-
-                  {/* Sessions List using ItemBox directly */}
-                  <Collapse in={openSections[taskName]} timeout="auto">
-                    <Box pl={2}>
-                      {taskSessions.map((session) => (
-                        <ItemBox
-                          key={session.id}
-                          isSelected={session.id === selectedSessionId}
-                          name={session.name}
-                          description={getSessionDescription(session)}
-                          id={session.id}
-                          onClick={() => onSessionClick(session.id)}
-                          onDelete={() => onSessionDelete(session.id)}
-                          onEdit={(name) => onSessionEdit(session.id, name)}
-                          onInfo={() => handleSessionInfo(session.id)}
-                        />
-                      ))}
-                    </Box>
-                  </Collapse>
-                </Box>
-              ),
-            )}
-          </Box>
-        </Box>
+        <GroupedCollapsibleList
+          groups={groupedSessions}
+          selectedItemId={selectedSessionId}
+          onItemClick={onSessionClick}
+          onItemDelete={onSessionDelete}
+          onItemEdit={onSessionEdit}
+          onItemInfo={handleSessionInfo}
+          title="Sessions"
+          Icon={Biotech}
+          getItemDescription={getSessionDescription}
+          initialOpenGroups={openSections}
+        />
       </Box>
 
       {/* Footer */}
