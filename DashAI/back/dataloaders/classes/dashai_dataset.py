@@ -166,6 +166,25 @@ class DashAIDataset(Dataset):
         dataset = self.cast(new_features)
         return dataset
 
+    def compute_base_metadata(self) -> "DashAIDataset":
+        """Compute basic metadata for the dataset and store it in self.splits.
+
+        Includes column names, total rows, and NaN counts.
+
+        Returns
+        -------
+        DashAIDataset
+            The dataset with updated basic metadata in self.splits.
+        """
+
+        dataset_df = self.to_pandas()
+
+        self.splits["column_names"] = dataset_df.columns.tolist()
+        self.splits["total_rows"] = len(dataset_df)
+        self.splits["nan"] = dataset_df.isna().sum().to_dict()
+
+        return self
+
     def compute_metadata(self) -> "DashAIDataset":
         """Compute extended metadata for the dataset and store it in self.splits.
 
@@ -182,9 +201,7 @@ class DashAIDataset(Dataset):
         dataset_df = self.to_pandas()
 
         # --- Base ---
-        self.splits["column_names"] = dataset_df.columns.tolist()
-        self.splits["total_rows"] = len(dataset_df)
-        self.splits["nan"] = dataset_df.isna().sum().to_dict()
+        self.compute_base_metadata()
 
         # --- General info ---
         general_info = {
@@ -561,20 +578,31 @@ def transform_dataset_with_schema(
     dashai_types = {}
 
     for column_name, info in schema.items():
+        # Skip columns that don't exist in the dataset
+        if column_name not in dataset.column_names:
+            continue
+
         _type = info.get("type")
         dtype = info.get("dtype")
         pa_type = to_arrow_types(dtype)
         if _type == "Categorical":
             base_col = table.column(column_name)
-            # Get unique values while preserving original type
-            col_list = base_col.to_pylist()
-            unique_values = sorted({v for v in col_list if v is not None})
-            dashai_types[column_name] = Categorical(values=unique_values)
+            # Use categories from schema
+            categories = info.get("categories", [])
+            converted = info.get("converted", False)
+
+            # If no categories in schema, infer from data
+            if not categories:
+                col_list = base_col.to_pylist()
+                categories = sorted({v for v in col_list if v is not None})
+
+            dashai_types[column_name] = Categorical(
+                values=categories, converted=converted, dtype=dtype
+            )
             # Keep the column data as-is without converting to string
             dai_table[column_name] = base_col
-            # Use the inferred dtype from Categorical for pa_type
-            inferred_dtype = dashai_types[column_name].dtype
-            pa_type = to_arrow_types(inferred_dtype)
+            # Use the dtype from schema for pa_type
+            pa_type = to_arrow_types(dtype)
         # DashAIImage is currently not fully implemented
         # This step should be formalized after solving that.
         else:
@@ -1106,13 +1134,23 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
 
     column_types = {}
     for column_name, column_type in types_dict.items():
-        column_spec_dict = column_type.to_string()
-        dtype = column_spec_dict.get("dtype", None)
-        _format = column_spec_dict.get("format", None)
-        column_types[column_name] = {
-            "type": column_spec_dict.get("type", None),
+        spec_dict = column_type.to_string()
+
+        dtype = spec_dict.get("dtype")
+        _format = spec_dict.get("format")
+
+        column_info = {
+            "type": spec_dict.get("type"),
             "dtype": _format if _format else dtype,
         }
+
+        if spec_dict.get("type") == "Categorical":
+            column_info["categories"] = spec_dict.get("categories", [])
+            column_info["num_categories"] = spec_dict.get("num_categories", 0)
+            column_info["converted"] = spec_dict.get("converted", False)
+
+        column_types[column_name] = column_info
+
     return column_types
 
 
