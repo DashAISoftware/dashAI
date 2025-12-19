@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Type, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
     def fit(
         self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
-    ) -> Type[BaseConverter]:
+    ) -> BaseConverter:
         """
         Fit the sklearn transformer to the data.
 
@@ -55,7 +55,7 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
         Returns
         -------
-        Type[BaseConverter]
+        BaseConverter
             The fitted transformer instance.
         """
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
@@ -79,12 +79,16 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             None,
         )
 
-        if sklearn_cls:
-            fit_method = sklearn_cls.__dict__["fit"]
-            if requires_y:
-                fit_method(self, x_pandas, y_pandas)
-            else:
-                fit_method(self, x_pandas)
+        if sklearn_cls is None:
+            raise RuntimeError(
+                "No sklearn class with a 'fit' method found in the MRO. "
+                "Ensure that your transformer inherits from a valid sklearn class."
+            )
+        fit_method = sklearn_cls.__dict__["fit"]
+        if requires_y:
+            fit_method(self, x_pandas, y_pandas)
+        else:
+            fit_method(self, x_pandas)
 
         return self
 
@@ -119,11 +123,12 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             None,
         )
 
-        x_new = (
-            sklearn_cls.__dict__["transform"](self, x_pandas)
-            if sklearn_cls
-            else x_pandas
-        )
+        if sklearn_cls is None:
+            raise RuntimeError(
+                "No sklearn class with a 'transform' method found in the "
+                "inheritance hierarchy. Transformation cannot be performed."
+            )
+        x_new = sklearn_cls.__dict__["transform"](self, x_pandas)
 
         if isinstance(x_new, np.ndarray):
             columns = x_pandas.columns if hasattr(x_pandas, "columns") else None

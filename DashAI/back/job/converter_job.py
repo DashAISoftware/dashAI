@@ -66,11 +66,7 @@ def _rebuild_dataset_with_transformed_columns(
     for _i, col in enumerate(original_columns):
         if col in removed_cols:
             continue
-        elif col in replacement_cols:
-            new_columns_order.append(col)
-        else:
-            new_columns_order.append(col)
-
+        new_columns_order.append(col)
     new_columns_order.extend(new_cols)
 
     updated_arrays = {}
@@ -362,9 +358,7 @@ class ConverterListJob(BaseJob):
                     except ValueError as e:
                         log.error(f"Validation error in {converter_name}: {e}")
                         raise JobError(
-                            f"Invalid parameters for {converter_name}: {e}. "
-                            f"Check that n_components <= number of selected "
-                            f"columns ({len(scope_column_names)})"
+                            f"Validation error fitting {converter_name}: {e}"
                         ) from e
                     except Exception as e:
                         log.exception(e)
