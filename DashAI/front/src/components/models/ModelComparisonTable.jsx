@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Chip, IconButton, Tooltip } from "@mui/material";
-import { PlayArrow, Info, Delete, Visibility } from "@mui/icons-material";
+import {
+  PlayArrow,
+  Info,
+  Delete,
+  Visibility,
+  TrendingUp,
+} from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
 
@@ -15,6 +21,7 @@ function ModelComparisonTable({
   session,
   onTrain,
   onViewDetails,
+  onPrediction,
   onDelete,
   onRowClick,
 }) {
@@ -189,6 +196,22 @@ function ModelComparisonTable({
               </IconButton>
             </Tooltip>
 
+            <Tooltip title="Predict">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPrediction(runs.find((r) => r.id === params.row.id));
+                  }}
+                  disabled={params.row.status !== "Finished"}
+                  color="primary"
+                >
+                  <TrendingUp fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+
             <Tooltip title="Delete">
               <span>
                 <IconButton
@@ -254,6 +277,7 @@ ModelComparisonTable.propTypes = {
   }),
   onTrain: PropTypes.func.isRequired,
   onViewDetails: PropTypes.func.isRequired,
+  onPrediction: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
 };

@@ -16,6 +16,7 @@ import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
+import PredictionModal from "../predictions/PredictionModal";
 
 export default function SessionVisualization({
   session,
@@ -29,6 +30,9 @@ export default function SessionVisualization({
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
+  const [predictionModalOpen, setPredictionModalOpen] = useState(false);
+  const [selectedRunForPrediction, setSelectedRunForPrediction] =
+    useState(null);
   const isResizing = React.useRef(false);
 
   // Auto-expand when switching to graphs
@@ -75,6 +79,11 @@ export default function SessionVisualization({
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  }, []);
+
+  const handlePrediction = React.useCallback((run) => {
+    setSelectedRunForPrediction(run);
+    setPredictionModalOpen(true);
   }, []);
 
   const sortedRuns = React.useMemo(
@@ -229,6 +238,7 @@ export default function SessionVisualization({
                   session={session}
                   onTrain={onTrain}
                   onViewDetails={handleViewDetails}
+                  onPrediction={handlePrediction}
                   onDelete={onDeleteRun}
                   onRowClick={handleRowClick}
                 />
@@ -322,6 +332,14 @@ export default function SessionVisualization({
           )}
         </Box>
       </Box>
+      <PredictionModal
+        isOpen={predictionModalOpen}
+        onClose={() => {
+          setPredictionModalOpen(false);
+          setSelectedRunForPrediction(null);
+        }}
+        run={selectedRunForPrediction}
+      />
       <JobQueueWidget />
     </>
   );
