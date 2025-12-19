@@ -27,13 +27,21 @@ import {
   ExpandMore,
   ExpandLess,
   Settings,
+  TrendingUp,
 } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 
 /**
  * Card component displaying a model run with actions and details
  */
-function RunCard({ run, models = [], onTrain, onEdit, onDelete }) {
+function RunCard({
+  run,
+  models = [],
+  onTrain,
+  onEdit,
+  onPrediction,
+  onDelete,
+}) {
   const [expanded, setExpanded] = useState(false);
 
   // Get display status from numeric code
@@ -303,6 +311,17 @@ function RunCard({ run, models = [], onTrain, onEdit, onDelete }) {
           <Edit fontSize="small" />
         </IconButton>
 
+        {/* Predict button */}
+        <IconButton
+          size="small"
+          onClick={() => onPrediction(run)}
+          color="primary"
+          disabled={statusText !== "Finished"}
+          title="Make predictions"
+        >
+          <TrendingUp fontSize="small" />
+        </IconButton>
+
         {/* Delete button */}
         <IconButton
           size="small"
@@ -335,6 +354,7 @@ RunCard.propTypes = {
   models: PropTypes.array,
   onTrain: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
+  onPrediction: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
 };
 

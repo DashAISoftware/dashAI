@@ -324,6 +324,7 @@ export default function SessionVisualization({
                     models={models}
                     onTrain={onTrain}
                     onEdit={onEditRun}
+                    onPrediction={handlePrediction}
                     onDelete={onDeleteRun}
                   />
                 </Box>
