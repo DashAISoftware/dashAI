@@ -1,9 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Grid, Typography, Autocomplete, TextField } from "@mui/material";
+import {
+  Grid,
+  Typography,
+  Autocomplete,
+  TextField,
+  Box,
+  Chip,
+} from "@mui/material";
 
 function DivideDatasetColumns({
   allColumnNames,
+  columnTypes = {},
   selectedInputColumnNames,
   onInputColumnNamesChange,
   selectedOutputColumnNames,
@@ -20,6 +28,57 @@ function DivideDatasetColumns({
 
   const handleOutputAutocompleteChange = (event, newValue) => {
     onOutputColumnNamesChange(newValue);
+  };
+
+  const getColumnLabel = (columnName) => {
+    const columnType = columnTypes[columnName];
+    if (columnType && columnType.type) {
+      return `${columnName} (${columnType.type})`;
+    }
+    return columnName;
+  };
+
+  const renderColumnOption = (props, option) => {
+    const { key, ...otherProps } = props;
+    const columnType = columnTypes[option];
+    return (
+      <Box component="li" key={key} {...otherProps}>
+        <span>{option}</span>
+        {columnType && columnType.type && (
+          <span
+            style={{ marginLeft: "8px", fontSize: "0.85em", color: "#757575" }}
+          >
+            ({columnType.type})
+          </span>
+        )}
+      </Box>
+    );
+  };
+
+  const renderTags = (value, getTagProps) => {
+    return value.map((option, index) => {
+      const { key, ...tagProps } = getTagProps({ index });
+      const columnType = columnTypes[option];
+      const label =
+        columnType && columnType.type ? (
+          <span>
+            {option}
+            <span
+              style={{
+                marginLeft: "4px",
+                fontSize: "0.85em",
+                color: "#9e9e9e",
+              }}
+            >
+              ({columnType.type})
+            </span>
+          </span>
+        ) : (
+          option
+        );
+
+      return <Chip key={key} label={label} size="small" {...tagProps} />;
+    });
   };
 
   return (
@@ -47,7 +106,9 @@ function DivideDatasetColumns({
         options={allColumnNames}
         value={selectedInputColumnNames}
         onChange={handleInputAutocompleteChange}
-        getOptionLabel={(option) => option} // Assuming allColumnNames are strings
+        getOptionLabel={(option) => option}
+        renderOption={renderColumnOption}
+        renderTags={renderTags}
         filterSelectedOptions
         disableCloseOnSelect
         fullWidth
@@ -77,6 +138,8 @@ function DivideDatasetColumns({
         value={selectedOutputColumnNames}
         onChange={handleOutputAutocompleteChange}
         getOptionLabel={(option) => option}
+        renderOption={renderColumnOption}
+        renderTags={renderTags}
         filterSelectedOptions
         fullWidth
         renderInput={(params) => (
@@ -102,6 +165,7 @@ function DivideDatasetColumns({
 
 DivideDatasetColumns.propTypes = {
   allColumnNames: PropTypes.arrayOf(PropTypes.string).isRequired,
+  columnTypes: PropTypes.object,
   selectedInputColumnNames: PropTypes.arrayOf(PropTypes.string).isRequired,
   onInputColumnNamesChange: PropTypes.func.isRequired,
   selectedOutputColumnNames: PropTypes.arrayOf(PropTypes.string).isRequired,
