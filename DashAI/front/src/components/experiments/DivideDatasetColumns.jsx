@@ -77,7 +77,7 @@ function DivideDatasetColumns({
           option
         );
 
-      return <Chip key={key} label={label} size="small" {...tagProps} />;
+      return <Chip key={key} label={label} {...tagProps} />;
     });
   };
 
