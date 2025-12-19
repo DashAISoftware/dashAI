@@ -15,7 +15,6 @@ import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import NewPipeline from "./pages/pipelines/NewPipeline";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
-import PredictionPage from "./pages/predictions/PredictionPage";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 
@@ -27,7 +26,6 @@ function App() {
       <ResponsiveAppBar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/app/predict" element={<PredictionPage />} />
         <Route path="/app" element={<Home />} />
         <Route path="/app/data/" element={<DatasetsPage />} />
         <Route path="/app/experiments" element={<ExperimentsPage />} />

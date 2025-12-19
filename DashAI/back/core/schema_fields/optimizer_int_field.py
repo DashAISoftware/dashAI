@@ -1,4 +1,6 @@
-from typing import Optional, Type
+from typing import Annotated, Optional, Type
+
+from pydantic import Field
 
 
 def optimizer_int_field(
@@ -40,4 +42,4 @@ def optimizer_int_field(
     ValidationError
         If the value of the field is greater or equal than the exclusive maximum.
     """
-    return int
+    return Annotated[int, Field(ge=ge, gt=gt, le=le, lt=lt)]

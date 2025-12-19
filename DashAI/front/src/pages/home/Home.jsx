@@ -60,14 +60,6 @@ function Home() {
               Icon={ScienceIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="predictions-button">
-            <HomeButton
-              title="Predictions"
-              description="Make predictions using your trained models."
-              to="/app/predict"
-              Icon={TimelineIcon}
-            />
-          </Grid>
           <Grid
             size={{ md: 4, sm: 6, xs: 12 }}
             data-tour="explainability-button"
