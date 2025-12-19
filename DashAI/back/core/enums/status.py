@@ -45,3 +45,11 @@ class DatasetStatus(Enum):
     STARTED = 2
     FINISHED = 3
     ERROR = 4
+
+
+class PredictionStatus(Enum):
+    NOT_STARTED = 0
+    DELIVERED = 1
+    STARTED = 2
+    FINISHED = 3
+    ERROR = 4

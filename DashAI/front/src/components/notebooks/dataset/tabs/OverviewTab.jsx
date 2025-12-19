@@ -32,18 +32,14 @@ const OverviewTab = ({
     percentage: ((count / total_rows) * 100).toFixed(1),
   }));
 
-  const typeCounts = Object.entries(
-    Object.values(dtypes ?? {}).reduce((acc, type) => {
-      const category =
-        type.includes("float") || type.includes("int")
-          ? "Numeric"
-          : type.includes("object")
-            ? "Text"
-            : "Other";
-      acc[category] = (acc[category] || 0) + 1;
-      return acc;
-    }, {}),
-  );
+  // Get all unique dtype values
+  const dtypeValues = new Set(Object.values(dtypes ?? {}));
+
+  // Count occurrences of each dtype
+  const typeCounts = Array.from(dtypeValues).map((dtype) => [
+    dtype,
+    Object.values(dtypes).filter((v) => v === dtype).length,
+  ]);
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
