@@ -4,7 +4,10 @@ import PropTypes from "prop-types";
 import { Grid, CircularProgress, Box, Alert, AlertTitle } from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
-import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
+import {
+  getDatasetInfo as getDatasetInfoRequest,
+  getDatasetTypes as getDatasetTypesRequest,
+} from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../api/experiment";
 import { useSnackbar } from "notistack";
@@ -17,6 +20,7 @@ import { useSnackbar } from "notistack";
  */
 function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [datasetInfo, setDatasetInfo] = useState({});
+  const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const [infoLoading, setInfoLoading] = useState(true);
 
@@ -74,8 +78,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const getDatasetInfo = async () => {
     setInfoLoading(true);
     try {
-      const fetchedDatasetInfo = await getDatasetInfoRequest(newExp.dataset.id);
+      const [fetchedDatasetInfo, fetchedDatasetTypes] = await Promise.all([
+        getDatasetInfoRequest(newExp.dataset.id),
+        getDatasetTypesRequest(newExp.dataset.id),
+      ]);
       setDatasetInfo(fetchedDatasetInfo);
+      setDatasetTypes(fetchedDatasetTypes);
 
       if (fetchedDatasetInfo) {
         setDatasetPartitionsIndex({
@@ -345,6 +353,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         <Grid container spacing={1}>
           <DivideDatasetColumns
             allColumnNames={datasetInfo.column_names || []}
+            columnTypes={datasetTypes}
             selectedInputColumnNames={inputColumnNames}
             onInputColumnNamesChange={setInputColumnNames}
             selectedOutputColumnNames={outputColumnNames}
