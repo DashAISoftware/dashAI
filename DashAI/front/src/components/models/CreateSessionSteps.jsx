@@ -16,12 +16,17 @@ function CreateSessionSteps({
   datasets,
   handleSessionCreated,
   existingSessions = [],
+  preselectedDatasetId = null,
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
 
   // Step 1 state: Name and Dataset
-  const [selectedDataset, setSelectedDataset] = useState(null);
+  const [selectedDataset, setSelectedDataset] = useState(
+    preselectedDatasetId
+      ? datasets.find((d) => d.id === preselectedDatasetId) || null
+      : null,
+  );
 
   // Step 2 state: Prepare Dataset
   const [newExp, setNewExp] = useState({
@@ -241,6 +246,7 @@ CreateSessionSteps.propTypes = {
   datasets: PropTypes.array.isRequired,
   handleSessionCreated: PropTypes.func,
   existingSessions: PropTypes.array,
+  preselectedDatasetId: PropTypes.number,
 };
 
 export default CreateSessionSteps;

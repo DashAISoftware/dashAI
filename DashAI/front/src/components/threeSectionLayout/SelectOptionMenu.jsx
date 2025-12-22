@@ -67,11 +67,11 @@ export default function SelectOptionMenu({
         sx={{
           display: "flex",
           justifyContent: "flex-end",
-          mt: 2,
+          mt: 4,
         }}
       >
         {goToPrevStep && (
-          <Button variant="outlined" onClick={goToPrevStep} sx={{ mr: 1 }}>
+          <Button variant="outlined" onClick={goToPrevStep}>
             Back
           </Button>
         )}
