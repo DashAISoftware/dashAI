@@ -242,6 +242,12 @@ export default function DatasetsContent() {
     setSelectedDatasetId(null);
   };
 
+  const handleNewNotebookFromDataset = () => {
+    // Keep selectedDatasetId but go to notebook creation
+    setSelectedOption("notebook");
+    setStep(1);
+  };
+
   const handleDatasetCreated = async (newDataset, datasetJob) => {
     setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
     setSelectedDatasetId(newDataset.id);
@@ -645,10 +651,36 @@ export default function DatasetsContent() {
                 }}
               >
                 <CenterBox>
-                  {selectedDatasetId ? (
+                  {step === 1 && selectedOption === "dataset" ? (
+                    <UploadDatasetSteps
+                      backHome={() => {
+                        setStep(0);
+                        setSelectedOption(null);
+                        fetchDatasets();
+                        // clear right bar when exiting
+                        setRightBarContent(null);
+                      }}
+                      handleDatasetCreated={handleDatasetCreated}
+                      existingDatasets={datasets}
+                      renderRightBar={setRightBarContent}
+                    />
+                  ) : step === 1 && selectedOption === "notebook" ? (
+                    <UploadNotebookSteps
+                      backHome={() => {
+                        setStep(0);
+                        setSelectedOption(null);
+                        fetchNotebooks();
+                      }}
+                      datasets={datasets}
+                      handleNotebookCreated={handleNotebookCreated}
+                      existingNotebooks={notebooks}
+                      preselectedDatasetId={selectedDatasetId}
+                    />
+                  ) : selectedDatasetId ? (
                     <DatasetVisualization
                       dataset={selectedDataset}
                       onNotebookCreated={handleNotebookCreated}
+                      onNewNotebook={handleNewNotebookFromDataset}
                       existingNotebooks={notebooks}
                     />
                   ) : step === 0 ? (
@@ -675,30 +707,6 @@ export default function DatasetsContent() {
                       ]}
                       searchBar={false}
                       goToNextStep={goToNextStep}
-                    />
-                  ) : step === 1 && selectedOption === "dataset" ? (
-                    <UploadDatasetSteps
-                      backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
-                        fetchDatasets();
-                        // clear right bar when exiting
-                        setRightBarContent(null);
-                      }}
-                      handleDatasetCreated={handleDatasetCreated}
-                      existingDatasets={datasets}
-                      renderRightBar={setRightBarContent}
-                    />
-                  ) : step === 1 && selectedOption === "notebook" ? (
-                    <UploadNotebookSteps
-                      backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
-                        fetchNotebooks();
-                      }}
-                      datasets={datasets}
-                      handleNotebookCreated={handleNotebookCreated}
-                      existingNotebooks={notebooks}
                     />
                   ) : null}
                 </CenterBox>
