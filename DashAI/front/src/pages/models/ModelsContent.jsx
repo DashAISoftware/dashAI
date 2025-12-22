@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import LeftBar from "../../components/models/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/models/RightBar";
@@ -36,6 +36,7 @@ import { getRunStatus } from "../../utils/runStatus";
 
 export default function ModelsContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
@@ -469,6 +470,10 @@ export default function ModelsContent() {
     setStep(2);
   };
 
+  const handleGoToDatasets = () => {
+    navigate("/app/data");
+  };
+
   const handleMouseMove = useCallback((e) => {
     if (isResizingLeft.current) {
       const container = document.querySelector('[data-container="models"]');
@@ -675,6 +680,8 @@ export default function ModelsContent() {
               searchBar={true}
               goToNextStep={handleTaskSelect}
               goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
+              showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}
+              onGoToDatasets={handleGoToDatasets}
             />
           ) : null}
         </CenterBox>
