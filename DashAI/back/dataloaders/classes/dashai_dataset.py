@@ -1252,7 +1252,6 @@ def get_columns_spec(dataset_path: str) -> Dict[str, Dict]:
     """
     data_filepath = os.path.join(dataset_path, "data.arrow")
 
-    # Read only the schema without loading data
     with pa.OSFile(data_filepath, "rb") as source:
         reader = pa.ipc.open_file(source)
         schema = reader.schema
@@ -1496,7 +1495,7 @@ def modify_table(
             updated_columns[name] = columns[name]
         else:
             updated_columns[name] = original_table[name]
-    # In case new columns are added. Added purposely to deal with converters.
+
     for name in columns:
         if name not in dataset.column_names:
             if types is None or name not in types:
