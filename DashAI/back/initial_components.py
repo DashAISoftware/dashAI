@@ -106,7 +106,6 @@ from DashAI.back.pipeline import (
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks import (
     ControlNetTask,
-    ImageClassificationTask,
     RegressionTask,
     TabularClassificationTask,
     TextClassificationTask,
@@ -135,7 +134,6 @@ def get_initial_components():
         TabularClassificationTask,
         TextClassificationTask,
         TranslationTask,
-        ImageClassificationTask,
         RegressionTask,
         TextToImageGenerationTask,
         TextToTextGenerationTask,

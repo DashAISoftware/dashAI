@@ -12,7 +12,7 @@ joblib
 pydantic
 pydantic-settings
 starlette
-scikit-learn
+scikit-learn<1.8.0
 datasets
 diffusers
 evaluate
@@ -39,4 +39,7 @@ imblearn
 numba
 llvmlite
 huey
+ijson
+greenery==3.2
 xlrd
+filetype

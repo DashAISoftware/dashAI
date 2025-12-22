@@ -171,26 +171,6 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
     assert json["dataset_status"] == "valid"
 
 
-def test_get_columns_validation_invalid(client: TestClient, dataset_id: int):
-    response = client.post(
-        "/api/v1/experiment/validation",
-        json={
-            "task_name": "ImageClassificationTask",
-            "dataset_id": dataset_id,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
-        },
-    )
-    assert response.status_code == 200, response.text
-    json = response.json()
-    assert json["dataset_status"] == "invalid"
-
-
 def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: int):
     response = client.post(
         "/api/v1/experiment/validation",

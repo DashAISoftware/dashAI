@@ -46,7 +46,7 @@ class ParallelCordinatesExplorer(MultidimensionalExplorer):
 
     SCHEMA = ParallelCordinatesSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["float64", "float32"],
+        "allowed_dtypes": ["float64", "float32", "int64"],
         "restricted_dtypes": [],
         "input_cardinality": {"min": 2},
     }

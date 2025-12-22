@@ -150,13 +150,8 @@ async def validate_columns(
     validation_response = {}
 
     try:
-        prepared_dataset = task.prepare_for_task(
-            datasetdict=minimal_dataset,
-            outputs_columns=outputs_names,
-        )
-        task.validate_dataset_for_task(
-            dataset=prepared_dataset,
-            dataset_name=dataset.name,
+        task.prepare_for_task(
+            dataset=minimal_dataset,
             input_columns=inputs_names,
             output_columns=outputs_names,
         )

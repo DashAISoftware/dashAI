@@ -9,24 +9,8 @@ import ResultsTabMetricsRuns from "./ResultsTabMetricsRuns";
  * Component that displays the metrics associated with a run.
  * @param {object} runData object that contains all the necesary info of the
  */
-function ResultsTabMetrics({ runData, setUpdateDataFlag }) {
+function ResultsTabMetrics({ runData }) {
   const [displaySet, setDisplaySet] = useState("test_metrics");
-
-  // on mount, polling to update the sate of the data
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Check the condition to update the state or stop the interval
-      if (runData.status === 3 && runData[displaySet] === null) {
-        setUpdateDataFlag(true);
-      } else {
-        // Stop the interval when the condition is no longer met
-        clearInterval(intervalId);
-      }
-    }, 1000);
-
-    // Cleanup the interval when the component is unmounted or the dependency array changes
-    return () => clearInterval(intervalId);
-  }, [runData.status, runData[displaySet]]);
 
   return (
     <Grid container direction="column" rowSpacing={2}>

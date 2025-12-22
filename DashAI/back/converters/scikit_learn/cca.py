@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.cross_decomposition import CCA as CCAOPERATION
 
 from DashAI.back.converters.category.advanced_preprocessing import (
@@ -11,6 +12,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class CCASchema(BaseSchema):
@@ -46,4 +49,10 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
 
     SCHEMA = CCASchema
     DESCRIPTION = "Canonical Correlation Analysis, also known as 'Mode B' PLS."
+    DISPLAY_NAME = "CCA"
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for transformed data."""
+        return Float(arrow_type=pa.float64())
+
     CATEGORY = "Advanced"

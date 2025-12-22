@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.decomposition import PCA as PCAOPERATION
 
 from DashAI.back.api.utils import create_random_state
@@ -15,6 +16,8 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class PCASchema(BaseSchema):
@@ -120,3 +123,7 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
         kwargs["random_state"] = self.random_state
 
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for PCA components."""
+        return Float(arrow_type=pa.float64())

@@ -26,6 +26,8 @@ export default function ScopeStepConverter({
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
+  const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
+  const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
 
   const handleSubmit = () => {
     nextStep();
@@ -104,6 +106,8 @@ export default function ScopeStepConverter({
         {/* Scope selection UI */}
         <ColumnSelector
           file_path={notebook.file_path}
+          allowedDtypes={allowedDtypes}
+          restrictedDtypes={restrictedDtypes}
           onSelectionChange={(columnsInfo) => {
             const processedColumns = columnsInfo.map((col) => ({
               idx: col.id + 1,
@@ -135,6 +139,7 @@ export default function ScopeStepConverter({
           alignItems: "center",
           justifyContent: "flex-end",
           gap: 1,
+          mb: 4,
         }}
       >
         {supervised && (

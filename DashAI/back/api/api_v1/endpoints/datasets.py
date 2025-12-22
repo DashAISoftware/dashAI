@@ -1,15 +1,19 @@
+import contextlib
 import io
 import json
 import logging
 import os
 import shutil
+import tempfile
+import zipfile
 from typing import Any, Dict
 
+import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.csv as csv
 import pyarrow.ipc as ipc
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -24,6 +28,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_dataset_info,
 )
 from DashAI.back.dependencies.database.models import Dataset, Experiment
+from DashAI.back.types.inf.type_inference import infer_types
+from DashAI.back.types.type_validation import validate_multiple_type_changes
+from DashAI.back.types.utils import arrow_to_dashai_schema
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -1061,3 +1068,247 @@ async def export_dataset_csv_by_id(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error exporting dataset as CSV",
             ) from e
+
+
+@router.post("/preview_with_types")
+@inject
+async def preview_with_types(
+    file: UploadFile = File(...),
+    params: str = Form(None),
+    component_registry: Dict = Depends(lambda: di["component_registry"]),
+):
+    """
+    Load preview AND infer types in a single call.
+
+    Parameters
+    ----------
+    file : UploadFile
+        The file uploaded by the user.
+    params : str
+        JSON string with parameters for the dataloader.
+    component_registry : Dict
+        Registry of available dataloaders.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing:
+        - sample: First 10 rows of the dataset
+        - schema: Column types from Arrow
+        - inferred_types: Detailed type inference (DashAI types)
+        - preview_row_count: Number of rows used for inference
+    """
+    try:
+        parsed_params = json.loads(params) if params else {}
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file.filename
+        ) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+
+        try:
+            inference_rows = parsed_params.get("inference_rows", 1000)
+            if file.filename.endswith(".zip"):
+                extract_dir = tempfile.mkdtemp()
+                try:
+                    with zipfile.ZipFile(tmp_file_path, "r") as zf:
+                        zf.extractall(extract_dir)
+
+                    supported_map = {
+                        ".csv": "CSVDataLoader",
+                        ".json": "JSONDataLoader",
+                        ".xlsx": "ExcelDataLoader",
+                        ".xls": "ExcelDataLoader",
+                    }
+                    dataloader_name = None
+                    matched_file = None
+                    for root, _, files in os.walk(extract_dir):
+                        for f in files:
+                            ext = os.path.splitext(f)[1].lower()
+                            if ext in supported_map:
+                                dataloader_name = supported_map[ext]
+                                matched_file = os.path.join(root, f)
+                                break
+                        if dataloader_name:
+                            break
+
+                    if dataloader_name is None:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=(
+                                "ZIP file does not contain any supported dataset files."
+                                "Supported inner files: .csv, .json, .xlsx, .xls"
+                            ),
+                        )
+
+                    if dataloader_name not in component_registry:
+                        raise HTTPException(
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=(
+                                f"Dataloader {dataloader_name} not found in registry."
+                            ),
+                        )
+
+                    dataloader = component_registry[dataloader_name]["class"]()
+
+                    if (
+                        dataloader_name == "CSVDataLoader"
+                        and "separator" not in parsed_params
+                    ):
+                        parsed_params["separator"] = ","
+                    if (
+                        dataloader_name == "JSONDataLoader"
+                        and "data_key" not in parsed_params
+                    ):
+                        parsed_params["data_key"] = None
+
+                    # load_preview using the matched inner file path
+                    loaded_dataset = dataloader.load_preview(
+                        filepath_or_buffer=matched_file,
+                        params=parsed_params,
+                        n_rows=inference_rows,
+                    )
+
+                finally:
+                    # cleanup extracted dir
+                    with contextlib.suppress(Exception):
+                        shutil.rmtree(extract_dir, ignore_errors=True)
+
+            else:
+                if file.filename.endswith(".csv"):
+                    dataloader_name = "CSVDataLoader"
+                    if "separator" not in parsed_params:
+                        parsed_params["separator"] = ","
+
+                elif file.filename.endswith(".xlsx") or file.filename.endswith(".xls"):
+                    dataloader_name = "ExcelDataLoader"
+
+                elif file.filename.endswith(".json"):
+                    dataloader_name = "JSONDataLoader"
+                    if "data_key" not in parsed_params:
+                        parsed_params["data_key"] = None
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "Unsupported file type. Only CSV, Excel and JSON files are "
+                            "supported."
+                        ),
+                    )
+
+                if dataloader_name not in component_registry:
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Dataloader {dataloader_name} not found in registry.",
+                    )
+
+                dataloader = component_registry[dataloader_name]["class"]()
+
+                loaded_dataset = dataloader.load_preview(
+                    filepath_or_buffer=tmp_file_path,
+                    params=parsed_params,
+                    n_rows=inference_rows,
+                )
+
+            sample_df = loaded_dataset.head(100)
+
+            table = pa.Table.from_pandas(loaded_dataset)
+            arrow_schema = arrow_to_dashai_schema(table)
+
+            methods = parsed_params.get("methods", ["DashAIPtype"])
+            inferred_types = {}
+
+            for method in methods:
+                method_types = infer_types(loaded_dataset, method=method)
+                inferred_types.update(method_types)
+
+            sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
+            sample = sample_df.to_dict(orient="records")
+
+            return {
+                "sample": sample,
+                "schema": arrow_schema,
+                "inferred_types": inferred_types,
+                "preview_row_count": len(loaded_dataset),
+            }
+
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load preview with types: {str(e)}",
+        ) from e
+
+
+@router.post("/validate_type_changes")
+@inject
+async def validate_type_changes(
+    file: UploadFile = File(...),
+    type_changes: str = Form(...),
+    params: str = Form(None),
+    component_registry: Dict = Depends(lambda: di["component_registry"]),
+):
+    """
+    Validate proposed type changes for dataset columns.
+    """
+    try:
+        parsed_params = json.loads(params) if params else {}
+        parsed_type_changes = json.loads(type_changes)
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file.filename
+        ) as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+
+        try:
+            if file.filename.endswith(".csv"):
+                dataloader_name = "CSVDataLoader"
+            elif file.filename.endswith((".xlsx", ".xls")):
+                dataloader_name = "ExcelDataLoader"
+            elif file.filename.endswith(".json"):
+                dataloader_name = "JSONDataLoader"
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Unsupported file type",
+                )
+
+            if dataloader_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Dataloader {dataloader_name} not found",
+                )
+
+            dataloader = component_registry[dataloader_name]["class"]()
+
+            sample_df = dataloader.load_preview(
+                filepath_or_buffer=tmp_file_path, params=parsed_params, n_rows=1000
+            )
+
+            all_valid, errors = validate_multiple_type_changes(
+                sample_df, parsed_type_changes
+            )
+
+            return {
+                "valid": all_valid,
+                "errors": errors,
+            }
+
+        finally:
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to validate type changes: {str(e)}",
+        ) from e

@@ -70,7 +70,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             "Optimization modules must implement get_trials_values method."
         )
 
-    def history_objective_plot(self, trials):
+    def history_objective_plot(self, trials, goal_metric):
         """
         Plot for the goal metric achieved per trial.
 
@@ -84,7 +84,11 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         """
         x = list(range(1, len(trials) + 1))
         y = [trial["value"] for trial in trials]
-        max_cumulative = np.maximum.accumulate(y)
+        cumulative = (
+            np.maximum.accumulate(y)
+            if goal_metric["metadata"]["maximize"]
+            else np.minimum.accumulate(y)
+        )
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
@@ -99,21 +103,29 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         fig.add_trace(
             go.Scatter(
                 x=x,
-                y=max_cumulative,
+                y=cumulative,
                 mode="lines",
-                name="Current Max Value",
+                name=(
+                    "Current Max Value"
+                    if goal_metric["metadata"]["maximize"]
+                    else "Current Min Value"
+                ),
                 line_color="red",
                 line_width=2,
             )
         )
         fig.update_layout(
-            title="Optimization History with Current Max Value",
+            title=(
+                "Optimization History with Current Max Value"
+                if goal_metric["metadata"]["maximize"]
+                else "Optimization History with Current Min Value"
+            ),
             xaxis_title="Trial",
-            yaxis_title="Objective Value",
+            yaxis_title=goal_metric["name"],
         )
         return plotly.io.to_json(fig)
 
-    def slice_plot(self, trials):
+    def slice_plot(self, trials, goal_metric):
         """
         Plot that compares the performance in the
         search space of one hyperparameter.
@@ -176,12 +188,12 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             updatemenus=updatemenus,
             title=f"Slice plot for {param_names[0]}",
             xaxis_title=param_names[0],
-            yaxis_title="Objective Value",
+            yaxis_title=goal_metric["name"],
         )
 
         return plotly.io.to_json(fig)
 
-    def contour_plot(self, trials):
+    def contour_plot(self, trials, goal_metric):
         """
         Contour plot between two hyperparameters
         and the goal metric achieved in the search space.
@@ -221,7 +233,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                         y=y_values,
                         z=z_values,
                         colorscale="Blues",
-                        colorbar={"title": "Objective Value"},
+                        colorbar={"title": goal_metric["name"]},
                         showscale=True,
                         name=f"{param_x} vs {param_y}",
                         visible=False,
@@ -236,7 +248,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                             "size": 8,
                             "color": z_values,
                             "colorscale": "Blues",
-                            "colorbar": {"title": "Objective Value"},
+                            "colorbar": {"title": goal_metric["name"]},
                             "showscale": False,
                             "line": {"width": 0.2, "color": "black"},
                         },
@@ -311,7 +323,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             importances = evaluator.evaluate(study)
         except RuntimeError:
             importances = {
-                param: 1.0 / len(self.parameters) for _, param, _ in self.parameters
+                param: 1.0 / len(self.parameters) for _, param, _, _ in self.parameters
             }
             log.warning(
                 "Could not calculate parameter importance using FANOVA. "
@@ -367,9 +379,9 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                 f"importance_plot_{run_id}.pickle",
             ]
             plots_list = [
-                self.history_objective_plot(trials),
-                self.slice_plot(trials),
-                self.contour_plot(trials),
+                self.history_objective_plot(trials, goal_metric),
+                self.slice_plot(trials, goal_metric),
+                self.contour_plot(trials, goal_metric),
                 self.importance_plot(trials, goal_metric),
             ]
             return plots_filenames, plots_list
@@ -378,5 +390,8 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                 f"history_objective_plot_{run_id}.pickle",
                 f"slice_plot_{run_id}.pickle",
             ]
-            plots_list = [self.history_objective_plot(trials), self.slice_plot(trials)]
+            plots_list = [
+                self.history_objective_plot(trials, goal_metric),
+                self.slice_plot(trials, goal_metric),
+            ]
             return plots_filenames, plots_list

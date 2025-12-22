@@ -1,8 +1,10 @@
 """DashAI JSON Dataloader."""
 
 import shutil
+from itertools import islice
 from typing import Any, Dict
 
+import pandas as pd
 from beartype import beartype
 from datasets import Dataset, IterableDatasetDict, load_dataset
 
@@ -117,3 +119,41 @@ class JSONDataLoader(BaseDataLoader):
                 dataset = dataset["train"]
             dataset = Dataset.from_list(list(dataset.take(n_sample)))
         return to_dashai_dataset(dataset)
+
+    def load_preview(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+        n_rows: int = 100,
+    ) -> pd.DataFrame:
+        """
+        Load a preview of the JSON dataset using streaming.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to the JSON file.
+        params : Dict[str, Any]
+            Parameters for loading the JSON (data_key).
+        n_rows : int, optional
+            Number of rows to preview. Default is 100.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the preview rows.
+        """
+        self._check_params(params)
+        field = params.get("data_key")
+
+        dataset_stream = load_dataset(
+            "json",
+            data_files=filepath_or_buffer,
+            field=field,
+            streaming=True,
+            split="train",
+        )
+
+        sample_rows = list(islice(dataset_stream, n_rows))
+
+        return pd.DataFrame(sample_rows)

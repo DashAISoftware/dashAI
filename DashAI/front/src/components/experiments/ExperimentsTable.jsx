@@ -133,13 +133,18 @@ function ExperimentsTable({
         type: "actions",
         minWidth: 180,
         getActions: (params) => [
-          <RunnerDialog
-            key="runner-dialog"
+          // <RunnerDialog
+          //   key="runner-dialog"
+          //   experiment={params.row}
+          //   expRunning={expRunning}
+          //   setExpRunning={setExpRunning}
+          //   deleteExperiment={() => handleDeleteExperiment(params.id)}
+          // />,
+          <Results
+            key="runs-dialog"
             experiment={params.row}
-            expRunning={expRunning}
-            setExpRunning={setExpRunning}
+            handleDeleteExperiment={handleDeleteExperiment}
           />,
-          <Results key="runs-dialog" experiment={params.row} />,
           <DeleteItemModal
             key="delete-button"
             deleteFromTable={() => handleDeleteExperiment(params.id)}

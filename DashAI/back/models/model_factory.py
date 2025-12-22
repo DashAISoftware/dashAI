@@ -27,12 +27,7 @@ class ModelFactory:
         self.model, self.fixed_parameters, self.optimizable_parameters = (
             self._extract_parameters(model, params)
         )
-
         self.num_labels = n_labels
-
-        if self.num_labels is not None:
-            self.model.num_labels_from_factory = self.num_labels
-
         self.fitted = False
 
     def _extract_parameters(self, model_class, parameters: dict):
@@ -197,6 +192,10 @@ class ModelFactory:
                 results[split] = split_results
                 continue
             predictions = self.model.predict(x[split])
+            if hasattr(self.model, "prepare_output"):
+                transformed_y = self.model.prepare_output(y[split])
+            else:
+                transformed_y = self.model.prepare_dataset(y[split])
             for metric in metrics:
                 if (
                     isinstance(metric, type)
@@ -204,10 +203,11 @@ class ModelFactory:
                     and "multiclass" in metric.score.__code__.co_varnames
                     and multiclass is not None
                 ):
-                    score = metric.score(y[split], predictions, multiclass=multiclass)
+                    score = metric.score(
+                        transformed_y, predictions, multiclass=multiclass
+                    )
                 else:
-                    # For metrics that don't accept the multiclass parameter
-                    score = metric.score(y[split], predictions)
+                    score = metric.score(transformed_y, predictions)
 
                 split_results[metric.__name__] = score
 

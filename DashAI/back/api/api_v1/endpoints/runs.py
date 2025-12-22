@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import shutil
 from typing import Union
 
 from fastapi import APIRouter, Depends, Response, status
@@ -9,7 +10,7 @@ from kink import di, inject
 from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.runs_params import RunParams
+from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
 from DashAI.back.dependencies.database.models import Experiment, Run, RunStatus
 
 logging.basicConfig(level=logging.DEBUG)
@@ -274,9 +275,7 @@ async def delete_run(
 @inject
 async def update_run(
     run_id: int,
-    run_name: Union[str, None] = None,
-    run_description: Union[str, None] = None,
-    parameters: Union[dict, None] = None,
+    params: UpdateRunParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Updates the run with the provided ID.
@@ -291,6 +290,12 @@ async def update_run(
         The new description of the run, by default None.
     parameters : Union[dict, None], optional
         The new parameters of the run, by default None.
+    optimizer: Union[str, None], optional
+        The new optimizer of the run, by default None.
+    optimizer_parameters: Union[dict, None], optional
+        The new optimizer parameters of the run, by default None.
+    goal_metric: Union[str, None], optional
+        The new goal metric of the run, by default None.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -308,13 +313,38 @@ async def update_run(
     with session_factory() as db:
         try:
             run = db.get(Run, run_id)
-            if run_name:
-                setattr(run, "name", run_name)
-            if run_description:
-                setattr(run, "description", run_description)
-            if parameters:
-                setattr(run, "parameters", parameters)
-            if run_name or run_description or parameters:
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+
+            # apply updates
+            if params.run_name is not None:
+                run.name = params.run_name
+            if params.run_description is not None:
+                run.description = params.run_description
+            if params.parameters is not None:
+                run.parameters = params.parameters
+                reset_run(run)
+            if params.optimizer is not None:
+                run.optimizer_name = params.optimizer
+                reset_run(run)
+            if params.optimizer_parameters is not None:
+                run.optimizer_parameters = params.optimizer_parameters
+                reset_run(run)
+            if params.goal_metric is not None:
+                run.goal_metric = params.goal_metric
+
+            if any(
+                [
+                    params.run_name,
+                    params.run_description,
+                    params.parameters,
+                    params.optimizer,
+                    params.optimizer_parameters,
+                    params.goal_metric,
+                ]
+            ):
                 db.commit()
                 db.refresh(run)
                 return run
@@ -329,3 +359,84 @@ async def update_run(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.patch("/{run_id}/reset")
+@inject
+async def reset_run_by_id(
+    run_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+            reset_run(run)
+            db.commit()
+            db.refresh(run)
+            return run
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+def reset_run(run):
+    """
+    Reset a run to NOT_STARTED status and delete associated files.
+
+    Parameters
+    ----------
+    run : Run
+        The run object to reset.
+    """
+    setattr(run, "status", RunStatus.NOT_STARTED)
+    setattr(run, "train_metrics", None)
+    setattr(run, "validation_metrics", None)
+    setattr(run, "test_metrics", None)
+    setattr(run, "start_time", None)
+    setattr(run, "delivery_time", None)
+    setattr(run, "end_time", None)
+
+    # Delete files
+    if run.run_path and os.path.exists(run.run_path):
+        remove_path(run.run_path)
+        setattr(run, "run_path", None)
+    if run.plot_history_path and os.path.exists(run.plot_history_path):
+        remove_path(run.plot_history_path)
+        setattr(run, "plot_history_path", None)
+    if run.plot_slice_path and os.path.exists(run.plot_slice_path):
+        remove_path(run.plot_slice_path)
+        setattr(run, "plot_slice_path", None)
+    if run.plot_contour_path and os.path.exists(run.plot_contour_path):
+        remove_path(run.plot_contour_path)
+        setattr(run, "plot_contour_path", None)
+    if run.plot_importance_path and os.path.exists(run.plot_importance_path):
+        remove_path(run.plot_importance_path)
+        setattr(run, "plot_importance_path", None)
+
+
+def remove_path(path):
+    """Removes a file or directory
+
+    Parameters
+    ----------
+    path : str
+        The path to the file or directory to remove.
+
+    Raises
+    ------
+    ValueError
+        Raised if the path is not a file, directory, or symbolic link.
+    """
+    if os.path.isfile(path) or os.path.islink(path):
+        os.remove(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        raise ValueError("file {} is not a file or dir.".format(path))

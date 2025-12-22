@@ -58,7 +58,7 @@ export default function DatasetTable({
     };
 
     fetchColumnTypes();
-  }, [datasetPath]);
+  }, [datasetPath, ...deps]);
 
   useEffect(() => {
     let alive = true;
@@ -153,15 +153,6 @@ export default function DatasetTable({
             >
               {columnTypes[field]?.type || "unknown"}
             </Typography>
-            {columnTypes[field]?.dtype && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                style={{ fontSize: "0.7rem", opacity: 0.8 }}
-              >
-                {columnTypes[field]?.dtype}
-              </Typography>
-            )}
           </div>
         ),
       }));

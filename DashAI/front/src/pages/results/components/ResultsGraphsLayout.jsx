@@ -25,8 +25,10 @@ function ResultsGraphsLayout({
     <Box
       display="flex"
       flexDirection="column"
-      alignItems="center"
+      alignItems="stretch"
       textAlign="center"
+      width="100%"
+      height="100%"
     >
       {/* Chart selection buttons */}
       <ResultsGraphsSelection
@@ -40,7 +42,7 @@ function ResultsGraphsLayout({
         handleToggleMetrics={handleToggleMetrics}
       />
 
-      <Box display="flex" justifyContent="flex-start" width="100%">
+      <Box display="flex" justifyContent="center" width="100%" height="100%">
         {/* Parameter container */}
         <ResultsGraphsParameters
           showCustomMetrics={showCustomMetrics}

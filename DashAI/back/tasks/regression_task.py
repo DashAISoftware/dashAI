@@ -1,12 +1,11 @@
-from typing import List
+from typing import List, Union
 
-from datasets import DatasetDict, Value
+from datasets import DatasetDict
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float, Integer
 
 
 class RegressionTask(BaseTask):
@@ -23,16 +22,20 @@ class RegressionTask(BaseTask):
     DISPLAY_NAME: str = "Regression"
 
     metadata: dict = {
-        "inputs_types": [Value],
-        "outputs_types": [Value],
+        "inputs_types": [Float, Integer, Categorical],
+        "outputs_types": [Float, Integer],
         "inputs_cardinality": "n",
         "outputs_cardinality": 1,
     }
 
     def prepare_for_task(
-        self, datasetdict: DatasetDict, outputs_columns: List[str]
+        self,
+        dataset: Union[DatasetDict, DashAIDataset],
+        input_columns: List[str],
+        output_columns: List[str],
     ) -> DashAIDataset:
-        """Change the column types to suit the regression task.
+        """Convert the dataset to DashAIDataset and validate types.
+
 
         A copy of the dataset is created.
 
@@ -44,9 +47,12 @@ class RegressionTask(BaseTask):
         Returns
         -------
         DashAIDataset
-            Dataset with the new types
+            Dataset with validated types
         """
-        return to_dashai_dataset(datasetdict)
+        dashai_dataset = super().prepare_for_task(
+            dataset, input_columns, output_columns
+        )
+        return dashai_dataset
 
     def process_predictions(self, dataset, predictions, output_column):
         """Process the predictions

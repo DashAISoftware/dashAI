@@ -10,6 +10,8 @@ import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";
 import { useNavigate } from "react-router-dom";
+import { getComponents } from "../../../api/component";
+import PredictionModal from "../../../components/predictions/PredictionModal";
 
 // constants
 import { extractRows } from "../constants/extractRows";
@@ -19,7 +21,13 @@ import { extractColumns } from "../constants/extractColumns";
  * This component renders a table that contains the runs associated to an experiment.
  * @param {string} experimentId id of the experiment whose runs the user wants to analyze.
  */
-function ResultsTable({ experimentId }) {
+function ResultsTable({
+  runs,
+  experiment,
+  handleRun,
+  handleDeleteRun,
+  handleExecuteRuns,
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
@@ -28,99 +36,133 @@ function ResultsTable({ experimentId }) {
   const [columnVisibilityModel, setColumnVisibilityModel] = useState({});
   const [loading, setLoading] = useState(false);
   const [showRunResults, setShowRunResults] = useState(false);
-  const [selectedRunId, setSelectedRunId] = useState(null);
+  const [selectedRun, setSelectedRun] = useState(null);
+  const [models, setModels] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [predictionModalOpen, setPredictionModalOpen] = useState(false);
+  const [selectedRunForPrediction, setSelectedRunForPrediction] =
+    useState(null);
 
-  const handleRunResultsOpen = (runId) => {
-    setSelectedRunId(runId);
+  const getModels = async () => {
+    return await getComponents({ selectTypes: ["Model"] });
+  };
+
+  const handleRunResultsOpen = (run) => {
+    setSelectedRun(runs.find((r) => r.id === run.id));
     setShowRunResults(true);
   };
 
   const handleCloseRunResults = () => {
+    setSelectedRun(null);
     setShowRunResults(false);
   };
 
-  const handlePrediction = (runId, trainedDatasetId) => {
-    navigate(`../app/predict`, { state: { runId, trainedDatasetId } });
+  const handlePrediction = (run, trainedDatasetId) => {
+    setSelectedRunForPrediction(run);
+    setPredictionModalOpen(true);
   };
 
-  const handleExplainer = (runId) => {
-    navigate(`../app/explainers/runs/${runId}`);
+  const handleExplainer = (run) => {
+    navigate(`../app/explainers/runs/${run.id}`, {
+      state: {
+        modelName: run.name,
+        taskName: experiment.task_name,
+      },
+    });
   };
 
-  const getRuns = async () => {
-    setLoading(true);
+  const processRuns = () => {
     try {
-      const runs = await getRunsRequest(experimentId);
-      const experiment = await getExperimentById(experimentId);
-      const metrics = await getComponentsRequest({
-        selectTypes: ["Metric"],
-        relatedComponent: experiment.task_name,
-      });
-      const rows = await extractRows(runs);
-      const rowsWithStringStatus = rows.map((run) => {
-        return { ...run, status: getRunStatus(run.status) };
-      });
+      setLoading(true);
+
+      const extractedRows = extractRows(runs, models);
+
       const { columns, columnGroupingModel, columnVisibilityModel } =
         extractColumns(
           metrics,
           runs,
           experiment.dataset_id,
+          handleRun,
           handleRunResultsOpen,
           handlePrediction,
           handleExplainer,
+          handleDeleteRun,
         );
-      setRows(rowsWithStringStatus);
+
+      setRows(extractedRows);
       setColumns(columns);
       setColumnGroupingModel(columnGroupingModel);
       setColumnVisibilityModel(columnVisibilityModel);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the runs table.");
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      enqueueSnackbar("Error while preparing runs table", { variant: "error" });
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  // fetch the runs and preprocess the data for DataGrid
   useEffect(() => {
-    if (experimentId !== undefined) {
-      getRuns();
-      setShowRunResults(false);
-      setSelectedRunId(null);
+    if (!models || !metrics) return;
+    processRuns();
+  }, [runs, models, metrics]);
+
+  useEffect(() => {
+    if (selectedRun) {
+      setSelectedRun(runs.find((r) => r.id === selectedRun.id));
     }
-  }, [experimentId]);
+  }, [runs, selectedRun]);
+
+  useEffect(() => {
+    const fetchStaticData = async () => {
+      const m = await getModels();
+      setModels(m);
+
+      const metricComponents = await getComponentsRequest({
+        selectTypes: ["Metric"],
+        relatedComponent: experiment.task_name,
+      });
+
+      setMetrics(metricComponents);
+    };
+
+    fetchStaticData();
+  }, [experiment]);
 
   return (
-    <ResultsTableLayout
-      experimentId={experimentId}
-      rows={
-        experimentId
-          ? rows.filter((run) => String(run.experiment_id) === experimentId)
-          : []
-      }
-      columns={columns}
-      showRunResults={showRunResults}
-      loading={loading}
-      selectedRunId={selectedRunId}
-      handleCloseRunResults={handleCloseRunResults}
-      columnVisibilityModel={columnVisibilityModel}
-      columnGroupingModel={columnGroupingModel}
-    />
+    <>
+      <ResultsTableLayout
+        rows={
+          experiment.id
+            ? rows.filter(
+                (run) => String(run.experiment_id) === String(experiment.id),
+              )
+            : []
+        }
+        columns={columns}
+        showRunResults={showRunResults}
+        loading={loading}
+        selectedRun={selectedRun}
+        handleCloseRunResults={handleCloseRunResults}
+        columnVisibilityModel={columnVisibilityModel}
+        columnGroupingModel={columnGroupingModel}
+        handleExecuteRuns={handleExecuteRuns}
+        handleRun={handleRun}
+      />
+      <PredictionModal
+        isOpen={predictionModalOpen}
+        onClose={() => {
+          setPredictionModalOpen(false);
+          setSelectedRunForPrediction(null);
+        }}
+        run={selectedRunForPrediction}
+      />
+    </>
   );
 }
 
 ResultsTable.propTypes = {
-  experimentId: PropTypes.string,
-};
-
-ResultsTable.defaultProps = {
-  experimentId: undefined,
+  runs: PropTypes.array.isRequired,
+  experiment: PropTypes.object.isRequired,
 };
 
 export default ResultsTable;

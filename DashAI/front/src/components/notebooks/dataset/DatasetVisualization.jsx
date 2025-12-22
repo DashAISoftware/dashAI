@@ -38,6 +38,7 @@ import { CategoricalTab } from "./tabs/CategoricalTab";
 import QualityTab from "./tabs/QualityTab";
 import CorrelationsTab from "./tabs/CorrelationsTab";
 import { QualityAlerts } from "./QualityAlerts";
+import { TextTab } from "./tabs/TextTab";
 
 export default function DatasetVisualization({
   dataset,
@@ -333,6 +334,13 @@ export default function DatasetVisualization({
                   Object.keys(datasetInfo.categorical_stats).length === 0
                 }
               />
+              <Tab
+                label="Text"
+                disabled={
+                  !datasetInfo?.text_stats ||
+                  Object.keys(datasetInfo.text_stats).length === 0
+                }
+              />
               <Tab label="Data Quality" disabled={!datasetInfo?.quality_info} />
               <Tab
                 label="Correlations"
@@ -364,13 +372,14 @@ export default function DatasetVisualization({
                 categoricalStats={datasetInfo?.categorical_stats}
               />
             )}
-            {tab === 3 && (
+            {tab === 3 && <TextTab textStats={datasetInfo?.text_stats} />}
+            {tab === 4 && (
               <QualityTab
                 qualityInfo={datasetInfo?.quality_info}
                 totalRows={datasetInfo?.total_rows}
               />
             )}
-            {tab === 4 && (
+            {tab === 5 && (
               <CorrelationsTab correlations={datasetInfo?.correlations} />
             )}
           </Box>

@@ -52,7 +52,7 @@ class ScatterMatrixExplorer(RelationshipExplorer):
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
+        "allowed_dtypes": ["int64", "float64", "float32"],
         "restricted_dtypes": [],
         "input_cardinality": {"min": 2},
     }

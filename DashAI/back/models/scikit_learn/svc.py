@@ -11,6 +11,9 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
+from DashAI.back.models.scikit_learn.sklearn_like_model import (
+    CategoricalEncodingStrategy,
+)
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
 
@@ -112,6 +115,8 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     SCHEMA = SVCSchema
     DISPLAY_NAME: str = "Support Vector Machine (SVM)"
     COLOR: str = "#FF80AB"
+
+    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

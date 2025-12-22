@@ -1,3 +1,4 @@
+import pyarrow as pa
 from sklearn.impute import KNNImputer as KNNImputerOperation
 
 from DashAI.back.converters.category.basic_preprocessing import (
@@ -11,6 +12,8 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class KNNImputerSchema(BaseSchema):
@@ -58,3 +61,7 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float64 as the output type for imputed data."""
+        return Float(arrow_type=pa.float64())

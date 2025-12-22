@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class RUSchema(BaseSchema):
@@ -37,5 +38,15 @@ class RandomUnderSamplerConverter(
     DISPLAY_NAME = "Random Under-Sampler"
     IMAGE_PREVIEW = "random_under_sampler.png"
 
-    def __init___(self, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        RandomUnderSampler preserves input column types.
+        Type handling is done in ImbalancedLearnWrapper.transform().
+        """
+        raise NotImplementedError(
+            "RandomUnderSampler preserves input types. "
+            "Types are handled in the transform method."
+        )
