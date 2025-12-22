@@ -21,16 +21,13 @@ import {
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../../../api/datasets";
-import { getExperiments } from "../../../api/experiment";
 import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
 import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
-import { CreateSessionModal } from "../../models/CreateSessionModal";
 import { getComponents } from "../../../api/component";
 import { useTourContext } from "../../tour/TourProvider";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
-import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import Header from "./header/Header";
@@ -60,14 +57,11 @@ export default function DatasetVisualization({
   }
 
   const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
-  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const [tasks, setTasks] = useState([]);
-  const [existingSessions, setExistingSessions] = useState([]);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -82,18 +76,6 @@ export default function DatasetVisualization({
       }
     };
     fetchTasks();
-  }, []);
-
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        const data = await getExperiments();
-        setExistingSessions(data);
-      } catch (error) {
-        console.error("Failed to fetch sessions:", error);
-      }
-    };
-    fetchSessions();
   }, []);
 
   useEffect(() => {
@@ -260,18 +242,6 @@ export default function DatasetVisualization({
                     justifyContent: "flex-start",
                   }}
                 >
-                  <Button
-                    variant="contained"
-                    disabled={isProcessing}
-                    onClick={() => {
-                      setShowCreateSessionModal(true);
-                    }}
-                    endIcon={<AddIcon />}
-                    sx={{ height: "40px" }}
-                    data-tour="new-session-button-notebook"
-                  >
-                    New Session
-                  </Button>
                   <Button
                     variant="contained"
                     endIcon={<AddIcon />}
@@ -451,22 +421,6 @@ export default function DatasetVisualization({
         dataset={dataset}
         datasetInfo={datasetInfo}
         existingNotebooks={existingNotebooks}
-      />
-
-      {/* Create Session Modal */}
-      <CreateSessionModal
-        open={showCreateSessionModal}
-        onClose={() => setShowCreateSessionModal(false)}
-        onSessionCreated={(session) => {
-          setShowCreateSessionModal(false);
-          navigate("../app/models", {
-            state: { openSessionId: session.id },
-          });
-        }}
-        dataset={dataset}
-        datasetInfo={datasetInfo}
-        existingSessions={existingSessions}
-        tasks={tasks}
       />
 
       <JobQueueWidget />
