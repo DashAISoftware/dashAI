@@ -10,6 +10,7 @@ from DashAI.back.api.api_v1.endpoints import (
     generative_process,
     generative_session,
     jobs,
+    metrics,
     notebook,
     pipelines,
     plugins,
@@ -32,3 +33,4 @@ api_router_v1.include_router(generative_process.router, prefix="/generative-proc
 api_router_v1.include_router(pipelines.router, prefix="/pipelines")
 api_router_v1.include_router(plugins.router, prefix="/plugin")
 api_router_v1.include_router(notebook.router, prefix="/notebook")
+api_router_v1.include_router(metrics.router, prefix="/metrics")
