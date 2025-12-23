@@ -31,6 +31,7 @@ import { updateRunParameters } from "../../../api/run";
 import { useSnackbar } from "notistack";
 import OptimizationTableSelectOptimizer from "../../../components/experiments/OptimizationTableSelectOptimizer";
 import { getColorByStatus } from "../../../utils";
+import LiveMetricsChart from "./LiveMetricsChart";
 
 /**
  * Component that displays general information associated with a run.
@@ -234,6 +235,17 @@ function ResultsTabInfo({ runData, handleRun }) {
           </Box>
         </>
       )}
+
+      {/* Live Metrics Section */}
+      <Divider sx={{ mt: 3, mb: 2 }} />
+
+      <Typography variant="h6" gutterBottom>
+        Live Metrics
+      </Typography>
+
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <LiveMetricsChart runId={runData.id} />
+      </Paper>
 
       {/* Run edition */}
       {isLocked && (
