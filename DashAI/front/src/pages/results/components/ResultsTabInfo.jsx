@@ -189,6 +189,17 @@ function ResultsTabInfo({ runData, handleRun }) {
         </>
       )}
 
+      {/* Live Metrics Section */}
+      <Divider sx={{ mt: 3, mb: 2 }} />
+
+      <Typography variant="h6" gutterBottom>
+        Live Metrics
+      </Typography>
+
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <LiveMetricsChart run={runData} />
+      </Paper>
+
       {/* Metrics Section */}
       {(runData.train_metrics ||
         runData.validation_metrics ||
@@ -236,16 +247,7 @@ function ResultsTabInfo({ runData, handleRun }) {
         </>
       )}
 
-      {/* Live Metrics Section */}
       <Divider sx={{ mt: 3, mb: 2 }} />
-
-      <Typography variant="h6" gutterBottom>
-        Live Metrics
-      </Typography>
-
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <LiveMetricsChart runId={runData.id} />
-      </Paper>
 
       {/* Run edition */}
       {isLocked && (
