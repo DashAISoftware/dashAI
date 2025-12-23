@@ -22,14 +22,11 @@ export const extractColumns = (
   const metrics = rawMetrics.map((metric) => ({
     field: `test_${metric.name}`,
     headerName: `test_${metric.name}`,
-    renderCell: (params) => {
-      const { status } = params.row;
-      const value = params.value;
+    renderCell: ({ row, value }) => {
+      if (["Started", "Delivered"].includes(row.status)) return "-";
 
-      const isRunning = status === "Started" || status === "Delivered";
-
-      // If running → show "-", else → show metric value normally
-      return isRunning ? "-" : (value ?? "-");
+      const v = Array.isArray(value) ? value[0] : null;
+      return typeof v === "number" ? v.toFixed(2) : "-";
     },
   }));
 

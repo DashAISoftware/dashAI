@@ -122,7 +122,11 @@ function ResultsTable({
         relatedComponent: experiment.task_name,
       });
 
-      setMetrics(metricComponents);
+      setMetrics(
+        metricComponents.filter((c) =>
+          experiment.test_metrics.includes(c.name),
+        ),
+      );
     };
 
     fetchStaticData();
