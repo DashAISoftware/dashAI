@@ -28,9 +28,7 @@ export function LiveMetricsChart({ run }) {
   const [data, setData] = useState({});
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState({
-    TRAIN: [],
-    VALIDATION: [],
-    TEST: [],
+    TRAIN: [], VALIDATION: [], TEST: [],
   });
   const hasUserSelectedMetrics = useRef(false);
   const socketRef = useRef(null);
@@ -138,45 +136,46 @@ export function LiveMetricsChart({ run }) {
         })
       : [];
 
-  /* ---------------- Auto-select metrics (only when context changes or initially) ---------------- */
+  /* ---------------- Sync Level with Split ---------------- */
+  const hasTrialData = data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
+  const hasStepData = data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
+  const hasEpochData = data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
+
+  useEffect(() => {
+    // Determine the best available level for the new split
+    if (hasEpochData) setLevel("EPOCH");
+    else if (hasStepData) setLevel("STEP");
+    else if (hasTrialData) setLevel("TRIAL");
+    else setLevel(null); // Reset if no data exists for this split
+  }, [split, hasEpochData, hasStepData, hasTrialData]);
+
+  /* ---------------- Sync Metrics with Split/Level ---------------- */
   useEffect(() => {
     const metricNames = Object.keys(filteredMetrics);
-
-    // Only auto-select if user hasn't manually chosen metrics yet
-    if (!hasUserSelectedMetrics.current && metricNames.length > 0) {
-      setSelectedMetrics(metricNames);
+    
+    if (metricNames.length === 0) {
+      setSelectedMetrics([]);
+      return;
     }
-  }, [split, level, availableMetrics]);
 
-  /* ---------------- Handle manual metric selection ---------------- */
+    // If user hasn't touched it, auto-select all
+    if (!hasUserSelectedMetrics.current) {
+      setSelectedMetrics(metricNames);
+    } else {
+      // If user HAS touched it, filter out metrics that no longer exist in this split
+      setSelectedMetrics((prev) => prev.filter(m => metricNames.includes(m)));
+    }
+  }, [split, level, filteredMetrics]);
+
+  /* ---------------- Reset user selection flag when split changes ---------------- */
+  useEffect(() => {
+    hasUserSelectedMetrics.current = false;
+  }, [split]);
+
   const handleMetricChange = (e) => {
     hasUserSelectedMetrics.current = true;
     setSelectedMetrics(e.target.value);
   };
-
-  /* ---------------- Check available levels ---------------- */
-  const hasTrialData =
-    data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
-  const hasStepData =
-    data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
-  const hasEpochData =
-    data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
-
-  /* ---------------- Auto-select first level ---------------- */
-  useEffect(() => {
-    if (hasEpochData) {
-      setLevel("EPOCH");
-    } else if (hasStepData) {
-      setLevel("STEP");
-    } else if (hasTrialData) {
-      setLevel("TRIAL");
-    }
-  }, [split, hasEpochData, hasStepData, hasTrialData]);
-
-  /* ---------------- Reset user selection when split/level changes ---------------- */
-  useEffect(() => {
-    hasUserSelectedMetrics.current = false;
-  }, [split, level]);
 
   /* ---------------- Render ---------------- */
   return (
@@ -185,7 +184,7 @@ export function LiveMetricsChart({ run }) {
         <FormControl
           size="small"
           sx={{ minWidth: 250 }}
-          disabled={availableMetrics[split]?.length === 0}
+          disabled={Object.keys(filteredMetrics).length === 0}
         >
           <InputLabel>Metrics</InputLabel>
           <Select
@@ -210,8 +209,10 @@ export function LiveMetricsChart({ run }) {
         <Tab label="Test" value="TEST" />
       </Tabs>
 
-      {Object.keys(filteredMetrics).length === 0 ? (
-        <Typography>No metrics yet</Typography>
+      {chartData.length === 0 || selectedMetrics.length === 0 ? (
+        <Box height={350} display="flex" alignItems="center" justifyContent="center" border="1px dashed grey">
+          <Typography color="textSecondary">No metrics available for this view</Typography>
+        </Box>
       ) : (
         <ResponsiveContainer width="100%" height={350}>
           <LineChart data={chartData}>
@@ -229,7 +230,7 @@ export function LiveMetricsChart({ run }) {
                 type="monotone"
                 dataKey={metric}
                 dot={false}
-                stroke={`hsl(${(idx * 360) / selectedMetrics.length}, 70%, 50%)`}
+                stroke={`hsl(${(idx * 137.5) % 360}, 70%, 50%)`}
                 strokeWidth={2}
                 isAnimationActive={false}
               />
