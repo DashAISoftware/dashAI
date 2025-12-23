@@ -28,9 +28,9 @@ export default function MetricsSelector({
   const missingSplits = Object.entries(enabledSplits)
     .filter(
       ([split, enabled]) =>
-        enabled && experiment[`${split}_metrics`].length === 0
+        enabled && experiment[`${split}_metrics`].length === 0,
     )
-  .map(([split]) => split);
+    .map(([split]) => split);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -54,12 +54,10 @@ export default function MetricsSelector({
   }, [experiment.task_name]);
 
   useEffect(() => {
-    const isValid = Object.entries(enabledSplits).every(
-      ([split, enabled]) => {
-        if (!enabled) return true; // ignore disabled split
-        return experiment[`${split}_metrics`].length > 0;
-      }
-    );
+    const isValid = Object.entries(enabledSplits).every(([split, enabled]) => {
+      if (!enabled) return true; // ignore disabled split
+      return experiment[`${split}_metrics`].length > 0;
+    });
 
     setNextEnabled(isValid);
   }, [
@@ -73,10 +71,10 @@ export default function MetricsSelector({
   const toggleMetric = (split, name) => {
     const key = `${split}_metrics`;
 
-    setExperiment(prev => {
+    setExperiment((prev) => {
       const current = prev[key];
       const updated = current.includes(name)
-        ? current.filter(m => m !== name)
+        ? current.filter((m) => m !== name)
         : [...current, name];
 
       return {
@@ -86,12 +84,12 @@ export default function MetricsSelector({
     });
   };
 
-  const selectAllForSplit = split => {
+  const selectAllForSplit = (split) => {
     const key = `${split}_metrics`;
 
-    setExperiment(prev => ({
+    setExperiment((prev) => ({
       ...prev,
-      [key]: metrics.map(m => m.name),
+      [key]: metrics.map((m) => m.name),
     }));
   };
 
@@ -135,7 +133,10 @@ export default function MetricsSelector({
           <Typography variant="body2" color="text.secondary">
             Quick select all:
           </Typography>
-          <Button onClick={() => selectAllForSplit("train")} variant="contained">
+          <Button
+            onClick={() => selectAllForSplit("train")}
+            variant="contained"
+          >
             Train
           </Button>
           <Button
@@ -147,7 +148,6 @@ export default function MetricsSelector({
           <Button onClick={() => selectAllForSplit("test")} variant="contained">
             Test
           </Button>
-          
         </Stack>
 
         {/* Columns */}
@@ -163,7 +163,7 @@ export default function MetricsSelector({
             splitType="train"
             metrics={metrics}
             selectedMetrics={experiment.train_metrics}
-            onToggleMetric={name => toggleMetric("train", name)}
+            onToggleMetric={(name) => toggleMetric("train", name)}
             disabled={!experiment.splits?.train}
           />
 
@@ -172,7 +172,7 @@ export default function MetricsSelector({
             splitType="validation"
             metrics={metrics}
             selectedMetrics={experiment.validation_metrics}
-            onToggleMetric={name => toggleMetric("validation", name)}
+            onToggleMetric={(name) => toggleMetric("validation", name)}
             disabled={!experiment.splits?.validation}
           />
 
@@ -181,7 +181,7 @@ export default function MetricsSelector({
             splitType="test"
             metrics={metrics}
             selectedMetrics={experiment.test_metrics}
-            onToggleMetric={name => toggleMetric("test", name)}
+            onToggleMetric={(name) => toggleMetric("test", name)}
             disabled={!experiment.splits?.test}
           />
         </Box>
@@ -191,14 +191,18 @@ export default function MetricsSelector({
           <Alert severity="warning" sx={{ mt: 2 }}>
             {missingSplits.length === 1 ? (
               <>
-                {missingSplits[0].charAt(0).toUpperCase() + missingSplits[0].slice(1)} split must have at least one metric selected.
+                {missingSplits[0].charAt(0).toUpperCase() +
+                  missingSplits[0].slice(1)}{" "}
+                split must have at least one metric selected.
               </>
             ) : (
               <>
                 The following splits must have at least one metric selected:{" "}
                 {missingSplits.map((split, idx) => (
                   <span key={split}>
-                    <strong>{split.charAt(0).toUpperCase() + split.slice(1)}</strong>
+                    <strong>
+                      {split.charAt(0).toUpperCase() + split.slice(1)}
+                    </strong>
                     {idx < missingSplits.length - 1 ? ", " : ""}
                   </span>
                 ))}
