@@ -9,6 +9,7 @@ from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
@@ -16,7 +17,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     select_columns,
     split_dataset,
 )
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, Experiment, Metric, Run
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
@@ -221,7 +222,15 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     factory = ModelFactory(
-                        run_model_class, run.parameters, n_labels=n_labels
+                        run_model_class,
+                        run.parameters,
+                        run_id,
+                        x,
+                        y,
+                        metrics,
+                        metrics,
+                        metrics,
+                        n_labels=n_labels,
                     )
                     model: BaseModel = factory.model
                     run_optimizable_parameters = factory.optimizable_parameters
@@ -265,7 +274,9 @@ class ModelJob(BaseJob):
                     # Hyperparameter Tunning
                     plot_paths = []
                     if not run_optimizable_parameters:
-                        model.fit(x["train"], y["train"])
+                        model.train(
+                            x["train"], y["train"], x["validation"], y["validation"]
+                        )
                     else:
                         optimizer.optimize(
                             model,
@@ -309,17 +320,43 @@ class ModelJob(BaseJob):
                         f"Hyperparameter plot path saving failed {e}",
                     ) from e
 
+                # Calculate metrics at the end of training if not done already
                 try:
-                    model_metrics = factory.evaluate(x, y, metrics)
+                    last_train_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TRAIN", level="LAST")
+                        .first()
+                    )
+                    if not last_train_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TRAIN,
+                            level=LevelEnum.LAST,
+                        )
+                    last_val_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="VALIDATION", level="LAST")
+                        .first()
+                    )
+                    if not last_val_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.VALIDATION,
+                            level=LevelEnum.LAST,
+                        )
+                    last_test_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TEST", level="LAST")
+                        .first()
+                    )
+                    if not last_test_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TEST,
+                            level=LevelEnum.LAST,
+                        )
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        "Metrics calculation failed",
+                        f"Metric calculation failed {e}",
                     ) from e
-
-                run.train_metrics = model_metrics["train"]
-                run.validation_metrics = model_metrics["validation"]
-                run.test_metrics = model_metrics["test"]
 
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))

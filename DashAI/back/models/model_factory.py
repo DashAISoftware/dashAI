@@ -1,5 +1,6 @@
 from kink import di
 
+from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.metrics.classification_metric import ClassificationMetric
 
 
@@ -23,10 +24,34 @@ class ModelFactory:
         Extracts fixed and optimizable parameters from a dictionary.
     """
 
-    def __init__(self, model, params: dict, n_labels=None):
+    def __init__(
+        self,
+        model,
+        params: dict,
+        run_id: id = None,
+        x_data: dict = None,
+        y_data: dict = None,
+        train_metrics: list[BaseMetric] = None,
+        validation_metrics: list[BaseMetric] = None,
+        test_metrics: list[BaseMetric] = None,
+        n_labels=None,
+    ):
         self.model, self.fixed_parameters, self.optimizable_parameters = (
             self._extract_parameters(model, params)
         )
+
+        # Set run id
+        self.model.run_id = run_id
+
+        # Set data for the model
+        self.model.x_data = x_data
+        self.model.y_data = y_data
+
+        # Set metrics
+        self.model.train_metrics = train_metrics
+        self.model.validation_metrics = validation_metrics
+        self.model.test_metrics = test_metrics
+
         self.num_labels = n_labels
         self.fitted = False
 
