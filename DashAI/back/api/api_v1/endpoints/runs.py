@@ -11,7 +11,7 @@ from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.dependencies.database.models import Experiment, Run, RunStatus
+from DashAI.back.dependencies.database.models import Experiment, Metric, Run, RunStatus
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -402,6 +402,11 @@ def reset_run(run):
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
+
+    # Delete metrics from DB
+    with di["session_factory"]() as db:
+        db.query(Metric).filter(Metric.run_id == run.id).delete()
+        db.commit()
 
     # Delete files
     if run.run_path and os.path.exists(run.run_path):
