@@ -49,6 +49,9 @@ export default function NewExperimentModal({
       task_name: "",
       input_columns: [],
       output_columns: [],
+      train_metrics: [],
+      validation_metrics: [],
+      test_metrics: [],
       splits: {
         train: 0.6,
         validation: 0.2,
@@ -69,6 +72,7 @@ export default function NewExperimentModal({
       ? []
       : [{ name: "selectDataset", label: "Select dataset" }]),
     { name: "prepareDataset", label: "Prepare dataset" },
+    { name: "metricsSelection", label: "Select metrics" },
     { name: "configureModels", label: "Configure models" },
     {
       name: "configureOptimizer",
@@ -142,6 +146,9 @@ export default function NewExperimentModal({
         finalExperimentName,
         newExp.input_columns,
         newExp.output_columns,
+        newExp.train_metrics,
+        newExp.validation_metrics,
+        newExp.test_metrics,
         JSON.stringify(newExp.splits),
       );
       const experimentId = response.id;

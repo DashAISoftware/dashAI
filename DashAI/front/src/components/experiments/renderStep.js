@@ -4,6 +4,7 @@ import SelectDatasetStep from "./SelectDatasetStep";
 import PrepareDatasetStep from "./PrepareDatasetStep";
 import ConfigureModelsStep from "./ConfigureModelsStep";
 import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
+import MetricsSelector from "./metrics/MetricsSelector";
 
 export function renderStep(
   stepName,
@@ -37,6 +38,14 @@ export function renderStep(
         <PrepareDatasetStep
           newExp={newExp}
           setNewExp={setNewExp}
+          setNextEnabled={setNextEnabled}
+        />
+      );
+    case "metricsSelection":
+      return (
+        <MetricsSelector
+          experiment={newExp}
+          setExperiment={setNewExp}
           setNextEnabled={setNextEnabled}
         />
       );
