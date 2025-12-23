@@ -156,6 +156,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         # Load data if not provided
         if x_data is None or y_data is None:
+            if self.x_data is None or self.y_data is None:
+                return
             x_data = self.x_data[split.value]
             y_data = self.y_data[split.value]
 
