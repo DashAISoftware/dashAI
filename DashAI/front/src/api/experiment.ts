@@ -19,6 +19,9 @@ export const createExperiment = async (
   expName: string,
   inputColumns: string[],
   outputColumns: string[],
+  trainMetrics: string[],
+  validationMetrics: string[],
+  testMetrics: string[],
   splitsValue: JSON,
 ): Promise<IExperiment> => {
   const data = {
@@ -27,6 +30,9 @@ export const createExperiment = async (
     name: expName,
     input_columns: inputColumns,
     output_columns: outputColumns,
+    train_metrics: trainMetrics,
+    validation_metrics: validationMetrics,
+    test_metrics: testMetrics,
     splits: splitsValue,
   };
 
