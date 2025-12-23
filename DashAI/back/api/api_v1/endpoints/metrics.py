@@ -23,7 +23,6 @@ async def live_metrics_websocket(
     run_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-
     await websocket.accept()
 
     try:
