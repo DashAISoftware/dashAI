@@ -28,7 +28,9 @@ export function LiveMetricsChart({ run }) {
   const [data, setData] = useState({});
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState({
-    TRAIN: [], VALIDATION: [], TEST: [],
+    TRAIN: [],
+    VALIDATION: [],
+    TEST: [],
   });
   const hasUserSelectedMetrics = useRef(false);
   const socketRef = useRef(null);
@@ -137,9 +139,12 @@ export function LiveMetricsChart({ run }) {
       : [];
 
   /* ---------------- Sync Level with Split ---------------- */
-  const hasTrialData = data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
-  const hasStepData = data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
-  const hasEpochData = data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
+  const hasTrialData =
+    data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
+  const hasStepData =
+    data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
+  const hasEpochData =
+    data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
 
   useEffect(() => {
     // Determine the best available level for the new split
@@ -152,7 +157,7 @@ export function LiveMetricsChart({ run }) {
   /* ---------------- Sync Metrics with Split/Level ---------------- */
   useEffect(() => {
     const metricNames = Object.keys(filteredMetrics);
-    
+
     if (metricNames.length === 0) {
       setSelectedMetrics([]);
       return;
@@ -163,7 +168,7 @@ export function LiveMetricsChart({ run }) {
       setSelectedMetrics(metricNames);
     } else {
       // If user HAS touched it, filter out metrics that no longer exist in this split
-      setSelectedMetrics((prev) => prev.filter(m => metricNames.includes(m)));
+      setSelectedMetrics((prev) => prev.filter((m) => metricNames.includes(m)));
     }
   }, [split, level, filteredMetrics]);
 
@@ -210,8 +215,16 @@ export function LiveMetricsChart({ run }) {
       </Tabs>
 
       {chartData.length === 0 || selectedMetrics.length === 0 ? (
-        <Box height={350} display="flex" alignItems="center" justifyContent="center" border="1px dashed grey">
-          <Typography color="textSecondary">No metrics available for this view</Typography>
+        <Box
+          height={350}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          border="1px dashed grey"
+        >
+          <Typography color="textSecondary">
+            No metrics available for this view
+          </Typography>
         </Box>
       ) : (
         <ResponsiveContainer width="100%" height={350}>

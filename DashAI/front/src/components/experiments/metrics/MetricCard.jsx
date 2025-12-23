@@ -5,16 +5,16 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 const splitColors = {
   train: {
     border: "#4caf50",
-    bg: "rgba(76,175,80,0.08)"
+    bg: "rgba(76,175,80,0.08)",
   },
   test: {
     border: "#2196f3",
-    bg: "rgba(33,150,243,0.08)"
+    bg: "rgba(33,150,243,0.08)",
   },
   validation: {
     border: "#ff9800",
-    bg: "rgba(255,152,0,0.08)"
-  }
+    bg: "rgba(255,152,0,0.08)",
+  },
 };
 
 export default function MetricCard({
@@ -60,7 +60,7 @@ export default function MetricCard({
             borderColor: isSelected ? colors.border : "divider",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
           {isSelected && <CheckIcon fontSize="small" />}

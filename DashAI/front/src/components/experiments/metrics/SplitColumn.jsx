@@ -8,18 +8,18 @@ const splitConfig = {
   train: {
     icon: StorageIcon,
     color: "#4caf50",
-    bg: "rgba(76,175,80,0.08)"
+    bg: "rgba(76,175,80,0.08)",
   },
   test: {
     icon: ScienceIcon,
     color: "#2196f3",
-    bg: "rgba(33,150,243,0.08)"
+    bg: "rgba(33,150,243,0.08)",
   },
   validation: {
     icon: CheckCircleIcon,
     color: "#ff9800",
-    bg: "rgba(255,152,0,0.08)"
-  }
+    bg: "rgba(255,152,0,0.08)",
+  },
 };
 
 export default function SplitColumn({
@@ -49,7 +49,7 @@ export default function SplitColumn({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          backgroundColor: config.bg
+          backgroundColor: config.bg,
         }}
       >
         <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
@@ -67,14 +67,14 @@ export default function SplitColumn({
           sx={{
             backgroundColor: config.bg,
             color: config.color,
-            fontFamily: "monospace"
+            fontFamily: "monospace",
           }}
         />
       </Box>
 
       {/* Metrics */}
       <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-        {metrics.map(metric => (
+        {metrics.map((metric) => (
           <MetricCard
             key={metric.name}
             metric={metric}
