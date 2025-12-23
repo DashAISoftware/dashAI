@@ -18,7 +18,7 @@ export default function MetricsCard({ title, metrics }) {
               {key}:
             </Typography>
             <Typography variant="body2" fontWeight="medium">
-              {typeof value === "number" ? value.toFixed(4) : value}
+              {value[0].toFixed(4)}
             </Typography>
           </Box>
         ))
