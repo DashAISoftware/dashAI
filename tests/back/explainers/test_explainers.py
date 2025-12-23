@@ -104,7 +104,7 @@ def trained_model(dataset):
         min_samples_leaf=1,
         max_features=None,
     )
-    model.fit(x["train"], y["train"])
+    model.train(x["train"], y["train"])
 
     return model
 
