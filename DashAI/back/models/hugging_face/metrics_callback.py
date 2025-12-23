@@ -34,18 +34,4 @@ class MetricsCallback(TrainerCallback):
         )
 
     def on_step_end(self, args, state, control, **kwargs):
-        # Optional: Calculate metrics every N steps for more granular tracking
-        # Uncomment if you want step-level metrics
-        # self.model_instance.calculate_metrics(
-        #     split=SplitEnum.TRAIN,
-        #     level=LevelEnum.STEP,
-        #     x_data=self.x_train,
-        #     y_data=self.y_train,
-        # )
-        # self.model_instance.calculate_metrics(
-        #     split=SplitEnum.VALIDATION,
-        #     level=LevelEnum.STEP,
-        #     x_data=self.x_val,
-        #     y_data=self.y_val,
-        # )
         pass
