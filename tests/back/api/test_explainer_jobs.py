@@ -73,7 +73,7 @@ class DummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         return
 
     def prepare_dataset(self, dataset, is_fit=False):
