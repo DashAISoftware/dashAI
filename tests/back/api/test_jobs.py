@@ -121,6 +121,9 @@ def create_experiment(client: TestClient, dataset_id: int):
             task_name="DummyTask",
             input_columns=["SepalLengthCm"],
             output_columns=["Species"],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
             splits=json.dumps(
                 {
                     "train": 0.5,
