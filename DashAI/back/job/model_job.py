@@ -98,10 +98,6 @@ class ModelJob(BaseJob):
     ) -> None:
         from kink import di
 
-        from DashAI.back.api.api_v1.endpoints.components import (
-            _intersect_component_lists,
-        )
-
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
@@ -148,23 +144,18 @@ class ModelJob(BaseJob):
                     ) from e
 
                 try:
-                    # Get all the metrics
-                    components_by_type = component_registry.get_components_by_types(
-                        select="Metric"
-                    )
-                    all_metrics = {
-                        component_dict["name"]: component_dict
-                        for component_dict in components_by_type
-                    }
-                    # Get the intersection between the metrics and the task
-                    # related components
-                    selected_metrics = _intersect_component_lists(
-                        all_metrics,
-                        component_registry.get_related_components(experiment.task_name),
-                    )
-                    metrics: List[BaseMetric] = [
-                        metric["class"] for metric in selected_metrics.values()
+                    # Get metrics from experiment
+                    train_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"] for m in experiment.train_metrics
                     ]
+                    validation_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in experiment.validation_metrics
+                    ]
+                    test_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"] for m in experiment.test_metrics
+                    ]
+
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -227,9 +218,9 @@ class ModelJob(BaseJob):
                         run_id,
                         x,
                         y,
-                        metrics,
-                        metrics,
-                        metrics,
+                        train_metrics,
+                        validation_metrics,
+                        test_metrics,
                         n_labels=n_labels,
                     )
                     model: BaseModel = factory.model
@@ -242,7 +233,7 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     if run_optimizable_parameters:
-                        goal_metric = selected_metrics[run.goal_metric]
+                        goal_metric = component_registry[run.goal_metric]
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
