@@ -57,7 +57,7 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
     )  # type: ignore
 
 
-class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeModel):
+class BagOfWordsTextClassificationModel(TextClassificationModel):
     """Text classification meta-model.
 
     The metamodel has two main components:
@@ -215,3 +215,6 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
             return dataset
         except Exception as e:
             print(f"Couldn't apply transformations to the dataset for the model: {e}")
+
+    def prepare_output(self, dataset, is_fit=False):
+        return self.classifier.prepare_output(dataset, is_fit)
