@@ -17,7 +17,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float
