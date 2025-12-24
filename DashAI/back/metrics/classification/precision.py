@@ -13,6 +13,11 @@ from DashAI.back.metrics.classification_metric import (
 class Precision(ClassificationMetric):
     """Precision metric to classification tasks."""
 
+    DESCRIPTION: str = (
+        "Fraction of predicted positives that are correct, "
+        "important when false positives are costly."
+    )
+
     @staticmethod
     def score(
         true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None

@@ -10,6 +10,11 @@ from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_m
 class MAE(RegressionMetric):
     """Mean Absolute Error metric for regression tasks."""
 
+    DESCRIPTION: str = (
+        "Average of absolute differences between predicted and actual values, "
+        "provides a clear measure of prediction accuracy."
+    )
+
     @staticmethod
     def score(true_values: DashAIDataset, pred_values: np.ndarray) -> float:
         """Calculate the MAE between true values and predicted values.
