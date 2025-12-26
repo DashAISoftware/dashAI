@@ -223,8 +223,10 @@ function RunCard({
                           <TableRow key={key}>
                             <TableCell>{key}</TableCell>
                             <TableCell>
-                              {typeof value === "object"
-                                ? JSON.stringify(value)
+                              {typeof value === "object" && value !== null
+                                ? value.fixed_value !== undefined
+                                  ? String(value.fixed_value)
+                                  : JSON.stringify(value)
                                 : String(value)}
                             </TableCell>
                           </TableRow>

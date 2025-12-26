@@ -70,6 +70,19 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             "Optimization modules must implement get_trials_values method."
         )
 
+    @abstractmethod
+    def get_best_params(self):
+        """
+        Get the best hyperparameters found during optimization
+
+        Returns
+        -------
+            best_params (dict): Dictionary with the best hyperparameters found.
+        """
+        raise NotImplementedError(
+            "Optimization modules must implement get_best_params method."
+        )
+
     def history_objective_plot(self, trials, goal_metric):
         """
         Plot for the goal metric achieved per trial.
