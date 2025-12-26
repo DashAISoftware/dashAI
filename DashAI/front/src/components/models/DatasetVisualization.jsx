@@ -28,11 +28,11 @@ import { CategoricalTab } from "../notebooks/dataset/tabs/CategoricalTab";
 import QualityTab from "../notebooks/dataset/tabs/QualityTab";
 import CorrelationsTab from "../notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "../notebooks/dataset/QualityAlerts";
-import { CreateSessionModal } from "./CreateSessionModal";
 
 export default function DatasetVisualization({
   dataset,
   onSessionCreated,
+  onNewSession,
   existingSessions = [],
   tasks = [],
 }) {
@@ -49,7 +49,6 @@ export default function DatasetVisualization({
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
-  const [showCreateSessionModal, setShowCreateSessionModal] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
@@ -192,8 +191,12 @@ export default function DatasetVisualization({
                 >
                   <Button
                     variant="contained"
-                    disabled={isProcessing}
-                    onClick={() => setShowCreateSessionModal(true)}
+                    disabled={isProcessing || !tasks || tasks.length === 0}
+                    onClick={() => {
+                      if (onNewSession) {
+                        onNewSession();
+                      }
+                    }}
                     endIcon={<AddIcon />}
                     sx={{ height: "40px" }}
                   >
@@ -341,17 +344,6 @@ export default function DatasetVisualization({
           </Box>
         )}
       </Box>
-
-      {/* Create Session Modal */}
-      <CreateSessionModal
-        open={showCreateSessionModal}
-        onClose={() => setShowCreateSessionModal(false)}
-        onSessionCreated={onSessionCreated}
-        dataset={dataset}
-        datasetInfo={datasetInfo}
-        existingSessions={existingSessions}
-        tasks={tasks}
-      />
 
       <JobQueueWidget />
     </>

@@ -139,6 +139,7 @@ export default function ScopeStepConverter({
           alignItems: "center",
           justifyContent: "flex-end",
           gap: 1,
+          mb: 4,
         }}
       >
         {supervised && (

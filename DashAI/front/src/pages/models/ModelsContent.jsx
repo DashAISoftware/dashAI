@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import LeftBar from "../../components/models/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/models/RightBar";
@@ -39,6 +39,7 @@ import { getRunStatus } from "../../utils/runStatus";
 
 export default function ModelsContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
@@ -238,6 +239,8 @@ export default function ModelsContent() {
   const handleDatasetClick = (datasetId) => {
     setSelectedDatasetId(datasetId);
     setSelectedSessionId(null);
+    setSelectedTask(null);
+    setStep(2); // Use a different step to show DatasetVisualization
   };
 
   const handleSessionDelete = async (sessionId) => {
@@ -520,6 +523,23 @@ export default function ModelsContent() {
     setStep(0);
   };
 
+  const handleNewSessionFromDataset = () => {
+    // Keep the selectedDatasetId but go to task selection
+    setSelectedSessionId(null);
+    setSelectedTask(null);
+    setStep(0);
+  };
+
+  const handleBackToDataset = () => {
+    // Go back to dataset visualization from task selection
+    setSelectedTask(null);
+    setStep(2);
+  };
+
+  const handleGoToDatasets = () => {
+    navigate("/app/data");
+  };
+
   const handleMouseMove = useCallback((e) => {
     if (isResizingLeft.current) {
       const container = document.querySelector('[data-container="models"]');
@@ -680,17 +700,37 @@ export default function ModelsContent() {
               onEditRun={handleEditRun}
               onDeleteRun={handleDeleteRun}
             />
-          ) : selectedDatasetId ? (
+          ) : step === 1 && selectedTask ? (
+            <CreateSessionSteps
+              backHome={handleBackToTaskSelection}
+              selectedTask={selectedTask}
+              datasets={datasets}
+              handleSessionCreated={handleSessionCreated}
+              existingSessions={sessions}
+              preselectedDatasetId={selectedDatasetId}
+            />
+          ) : step === 2 && selectedDatasetId ? (
             <DatasetVisualization
               dataset={datasets.find((d) => d.id === selectedDatasetId)}
               onSessionCreated={handleSessionCreated}
+              onNewSession={handleNewSessionFromDataset}
               existingSessions={sessions}
               tasks={tasks}
             />
           ) : step === 0 ? (
             <SelectOptionMenu
-              title="Models Module"
-              subtitle="Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
+              title={
+                selectedDatasetId
+                  ? "Select a Task for Your Session"
+                  : "Models Module"
+              }
+              subtitle={
+                selectedDatasetId
+                  ? `Choose the machine learning task for your session with dataset "${
+                      datasets.find((d) => d.id === selectedDatasetId)?.name
+                    }".`
+                  : "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
+              }
               options={tasks.map((task) => ({
                 name: task.name,
                 display_name:
@@ -705,14 +745,9 @@ export default function ModelsContent() {
               }))}
               searchBar={true}
               goToNextStep={handleTaskSelect}
-            />
-          ) : step === 1 && selectedTask ? (
-            <CreateSessionSteps
-              backHome={handleBackToTaskSelection}
-              selectedTask={selectedTask}
-              datasets={datasets}
-              handleSessionCreated={handleSessionCreated}
-              existingSessions={sessions}
+              goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
+              showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}
+              onGoToDatasets={handleGoToDatasets}
             />
           ) : null}
         </CenterBox>
