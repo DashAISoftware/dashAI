@@ -72,7 +72,20 @@ from DashAI.back.job import (
     PipelineJob,
     PredictJob,
 )
-from DashAI.back.metrics import F1, MAE, RMSE, Accuracy, Bleu, Precision, Recall, Ter
+from DashAI.back.metrics import (
+    F1,
+    MAE,
+    RMSE,
+    ROCAUC,
+    Accuracy,
+    Bleu,
+    CohenKappa,
+    HammingDistance,
+    LogLoss,
+    Precision,
+    Recall,
+    Ter,
+)
 from DashAI.back.models import (
     SVC,
     BagOfWordsTextClassificationModel,
@@ -172,6 +185,10 @@ def get_initial_components():
         Ter,
         MAE,
         RMSE,
+        ROCAUC,
+        LogLoss,
+        HammingDistance,
+        CohenKappa,
         # Optimizers
         OptunaOptimizer,
         HyperOptOptimizer,
