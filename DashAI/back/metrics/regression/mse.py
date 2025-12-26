@@ -11,10 +11,11 @@ class MSE(RegressionMetric):
     """Mean Squared Error metric for regression tasks."""
 
     DESCRIPTION: str = (
-        "Mean Squared Error (MSE) measures the average of the squared differences "
+        "Mean Squared Error (MSE) measures the average "
+        "of the squared differences "
         "between predicted values and actual values in a regression model. "
-        "It provides an indication of the model's prediction accuracy, with lower values "
-        "indicating better fit."
+        "It provides an indication of the model's prediction accuracy, "
+        "with lower values indicating better fit."
     )
 
     @staticmethod
