@@ -27,7 +27,6 @@ import {
 import {
   getRuns,
   deleteRun,
-  updateRunParameters,
   resetRunById,
   getRunById,
   getRunOperationsCount,
@@ -55,9 +54,7 @@ export default function ModelsContent() {
   const [runs, setRuns] = useState([]);
   const [addModelDialogOpen, setAddModelDialogOpen] = useState(false);
   const [preselectedModel, setPreselectedModel] = useState(null);
-  const [trackedJobIds, setTrackedJobIds] = useState(new Set());
 
-  // Retrain confirmation dialog state
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
   const [operationsCount, setOperationsCount] = useState(null);
@@ -84,7 +81,7 @@ export default function ModelsContent() {
       }
     };
     fetchTasks();
-  }, []);
+  }, [enqueueSnackbar]);
 
   const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
     const enrichedDatasets = await Promise.all(
@@ -155,7 +152,6 @@ export default function ModelsContent() {
     fetchSessions();
   }, []);
 
-  // Handle navigation state to open a specific session
   useEffect(() => {
     if (location.state?.openSessionId && sessions.length > 0) {
       const sessionToOpen = sessions.find(
@@ -164,8 +160,7 @@ export default function ModelsContent() {
       if (sessionToOpen) {
         setSelectedSessionId(sessionToOpen.id);
         setSelectedSession(sessionToOpen);
-        setStep(2); // Go to session visualization step
-        // Clear the navigation state
+        setStep(2);
         window.history.replaceState({}, document.title);
       }
     }
@@ -409,8 +404,6 @@ export default function ModelsContent() {
         ),
       );
 
-      setTrackedJobIds((prev) => new Set(prev).add(response.id));
-
       startJobPolling(
         response.id,
         async () => {
@@ -434,7 +427,6 @@ export default function ModelsContent() {
         },
       );
 
-      // Close dialog and reset state
       setRetrainDialogOpen(false);
       setRunToRetrain(null);
       setOperationsCount(null);

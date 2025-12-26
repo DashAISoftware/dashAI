@@ -9,7 +9,6 @@ import {
   Button,
   Chip,
   Stack,
-  Divider,
   CircularProgress,
   Collapse,
 } from "@mui/material";
@@ -47,8 +46,6 @@ export default function RunOperations({
   const [globalDialogOpen, setGlobalDialogOpen] = useState(false);
   const [localDialogOpen, setLocalDialogOpen] = useState(false);
   const [predictionDialogOpen, setPredictionDialogOpen] = useState(false);
-
-  const { enqueueSnackbar } = useSnackbar();
 
   const [expandedSections, setExpandedSections] = useState({
     globalExplainers: false,

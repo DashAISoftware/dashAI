@@ -34,7 +34,6 @@ export default function ExplainersCard({
   compact = false,
 }) {
   const [open, setOpen] = useState(false);
-  const [viewOpen, setViewOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
 
   function plotName(name) {

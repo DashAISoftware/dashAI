@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import { Box, Chip, IconButton, Tooltip } from "@mui/material";
-import {
-  PlayArrow,
-  Info,
-  Delete,
-  Visibility,
-  TrendingUp,
-} from "@mui/icons-material";
+import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
 

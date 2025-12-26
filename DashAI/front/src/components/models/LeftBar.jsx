@@ -95,13 +95,6 @@ export default function ModelsLeftBar({
     [sessions],
   );
 
-  const toggleSection = React.useCallback((taskName) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [taskName]: !prev[taskName],
-    }));
-  }, []);
-
   const getDatasetDescription = (dataset) => {
     return (
       dataset.description ||

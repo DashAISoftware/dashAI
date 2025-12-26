@@ -16,7 +16,6 @@ import {
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../../api/datasets";
-import { useSnackbar } from "notistack";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getDatasetStatus } from "../../utils/datasetStatus";
 import { formatDate } from "../../pages/results/constants/formatDate";
@@ -49,7 +48,6 @@ export default function DatasetVisualization({
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
-  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     setTab(0);
