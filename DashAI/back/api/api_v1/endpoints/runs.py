@@ -58,11 +58,15 @@ async def get_runs(
     with session_factory() as db:
         try:
             if experiment_id is not None:
+                experiment = db.get(Experiment, experiment_id)
+                if not experiment:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Experiment not found",
+                    )
                 runs = db.scalars(
                     select(Run).where(Run.experiment_id == experiment_id)
                 ).all()
-                if not runs:
-                    runs = []
             else:
                 runs = db.query(Run).all()
         except exc.SQLAlchemyError as e:
