@@ -11,9 +11,11 @@ class MedianAbsoluteError(RegressionMetric):
     """Median Absolute Error metric for regression tasks."""
 
     DESCRIPTION: str = (
-        "Median Absolute Error (MedAE) measures the median of the absolute differences "
+        "Median Absolute Error (MedAE) measures the median "
+        "of the absolute differences "
         "between predicted values and actual values in a regression model. "
-        "It provides a robust measure of prediction accuracy, less sensitive to outliers "
+        "It provides a robust measure of prediction accuracy, "
+        "less sensitive to outliers "
         "compared to Mean Absolute Error (MAE)."
     )
 
