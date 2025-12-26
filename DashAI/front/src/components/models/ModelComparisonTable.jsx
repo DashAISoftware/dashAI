@@ -49,7 +49,9 @@ function ModelComparisonTable({
       if (run.test_metrics) {
         Object.entries(run.test_metrics).forEach(([key, value]) => {
           row[`test_${key}`] =
-            typeof value === "number" ? value.toFixed(4) : value;
+            typeof value === "number"
+              ? Math.trunc(value * 10000) / 10000
+              : value;
         });
       }
 
@@ -57,7 +59,9 @@ function ModelComparisonTable({
       if (run.train_metrics) {
         Object.entries(run.train_metrics).forEach(([key, value]) => {
           row[`train_${key}`] =
-            typeof value === "number" ? value.toFixed(4) : value;
+            typeof value === "number"
+              ? Math.trunc(value * 10000) / 10000
+              : value;
         });
       }
 
@@ -65,7 +69,9 @@ function ModelComparisonTable({
       if (run.validation_metrics) {
         Object.entries(run.validation_metrics).forEach(([key, value]) => {
           row[`val_${key}`] =
-            typeof value === "number" ? value.toFixed(4) : value;
+            typeof value === "number"
+              ? Math.trunc(value * 10000) / 10000
+              : value;
         });
       }
 
@@ -87,7 +93,7 @@ function ModelComparisonTable({
 
     return Array.from(metricsSet).map((metricField) => ({
       field: metricField,
-      headerName: metricField.toUpperCase(),
+      headerName: metricField.toLowerCase(),
       width: 120,
       renderCell: (params) => {
         const { statusCode } = params.row;
