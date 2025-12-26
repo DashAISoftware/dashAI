@@ -8,6 +8,10 @@ import {
   Divider,
   Button,
   ButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import JobQueueWidget from "../jobs/JobQueueWidget";
@@ -16,7 +20,8 @@ import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
-import PredictionModal from "../predictions/PredictionModal";
+import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
+import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
 
 export default function SessionVisualization({
   session,
@@ -30,9 +35,12 @@ export default function SessionVisualization({
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
-  const [predictionModalOpen, setPredictionModalOpen] = useState(false);
-  const [selectedRunForPrediction, setSelectedRunForPrediction] =
-    useState(null);
+  const [selectedRunForExplainer, setSelectedRunForExplainer] = useState(null);
+  const [explainerDialogOpen, setExplainerDialogOpen] = useState(false);
+  const [globalExplainerModalOpen, setGlobalExplainerModalOpen] =
+    useState(false);
+  const [localExplainerModalOpen, setLocalExplainerModalOpen] = useState(false);
+  const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
 
   // Auto-expand when switching to graphs
@@ -81,10 +89,24 @@ export default function SessionVisualization({
     }
   }, []);
 
-  const handlePrediction = React.useCallback((run) => {
-    setSelectedRunForPrediction(run);
-    setPredictionModalOpen(true);
+  const handleExplainer = React.useCallback((run) => {
+    setSelectedRunForExplainer(run);
+    setExplainerDialogOpen(true);
   }, []);
+
+  const handleCloseExplainerDialog = () => {
+    setExplainerDialogOpen(false);
+  };
+
+  const handleGlobalExplainer = () => {
+    setGlobalExplainerModalOpen(true);
+    setExplainerDialogOpen(false);
+  };
+
+  const handleLocalExplainer = () => {
+    setLocalExplainerModalOpen(true);
+    setExplainerDialogOpen(false);
+  };
 
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
@@ -238,7 +260,6 @@ export default function SessionVisualization({
                   session={session}
                   onTrain={onTrain}
                   onViewDetails={handleViewDetails}
-                  onPrediction={handlePrediction}
                   onDelete={onDeleteRun}
                   onRowClick={handleRowClick}
                 />
@@ -322,10 +343,12 @@ export default function SessionVisualization({
                   <RunCard
                     run={run}
                     models={models}
+                    session={session}
                     onTrain={onTrain}
                     onEdit={onEditRun}
-                    onPrediction={handlePrediction}
+                    onExplainer={handleExplainer}
                     onDelete={onDeleteRun}
+                    explainerRefreshTrigger={explainerRefreshTrigger}
                   />
                 </Box>
               ))}
@@ -333,14 +356,67 @@ export default function SessionVisualization({
           )}
         </Box>
       </Box>
-      <PredictionModal
-        isOpen={predictionModalOpen}
-        onClose={() => {
-          setPredictionModalOpen(false);
-          setSelectedRunForPrediction(null);
+
+      {/* Explainer Type Selection Dialog */}
+      <Dialog
+        open={explainerDialogOpen}
+        onClose={handleCloseExplainerDialog}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Select Explainer Type</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleGlobalExplainer}
+              size="large"
+            >
+              Global Explainer
+            </Button>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleLocalExplainer}
+              size="large"
+            >
+              Local Explainer
+            </Button>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseExplainerDialog}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Global Explainer Modal */}
+      <NewGlobalExplainerModal
+        open={globalExplainerModalOpen}
+        setOpen={setGlobalExplainerModalOpen}
+        explainerConfig={{
+          runId: selectedRunForExplainer?.id,
+          taskName: session?.task_name,
         }}
-        run={selectedRunForPrediction}
+        onExplainerCreated={() => {
+          setExplainerRefreshTrigger((prev) => prev + 1);
+        }}
       />
+
+      {/* Local Explainer Modal */}
+      <NewLocalExplainerModal
+        open={localExplainerModalOpen}
+        setOpen={setLocalExplainerModalOpen}
+        explainerConfig={{
+          runId: selectedRunForExplainer?.id,
+          sessionId: session?.id,
+          taskName: session?.task_name,
+        }}
+        onExplainerCreated={() => {
+          setExplainerRefreshTrigger((prev) => prev + 1);
+        }}
+      />
+
       <JobQueueWidget />
     </>
   );

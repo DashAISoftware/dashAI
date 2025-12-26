@@ -397,7 +397,7 @@ function AddModelDialog({
             (activeStep === 1 && !isStep2Valid)
           }
         >
-          {activeStep === steps.length - 1 ? "Create Run" : "Next"}
+          {activeStep === steps.length - 1 ? "Add Model" : "Next"}
         </Button>
       </DialogActions>
     </Dialog>

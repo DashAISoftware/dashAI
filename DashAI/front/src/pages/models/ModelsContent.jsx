@@ -11,6 +11,7 @@ import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/models/DatasetVisualization";
 import AddModelDialog from "../../components/models/AddModelDialog";
+import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import { getComponents } from "../../api/component";
 import {
   getDatasets,
@@ -29,6 +30,8 @@ import {
   updateRunParameters,
   resetRunById,
   getRunById,
+  getRunOperationsCount,
+  deleteRunOperations,
 } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
@@ -52,6 +55,11 @@ export default function ModelsContent() {
   const [addModelDialogOpen, setAddModelDialogOpen] = useState(false);
   const [preselectedModel, setPreselectedModel] = useState(null);
   const [trackedJobIds, setTrackedJobIds] = useState(new Set());
+
+  // Retrain confirmation dialog state
+  const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
+  const [runToRetrain, setRunToRetrain] = useState(null);
+  const [operationsCount, setOperationsCount] = useState(null);
 
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
@@ -339,6 +347,47 @@ export default function ModelsContent() {
 
   const handleTrainRun = async (run) => {
     try {
+      // Check if run has been trained before (has metrics)
+      const hasBeenTrained =
+        run.test_metrics ||
+        run.train_metrics ||
+        run.validation_metrics ||
+        getRunStatus(run.status) === "Finished";
+
+      if (hasBeenTrained) {
+        // Check for existing operations
+        const opsCount = await getRunOperationsCount(run.id.toString());
+        const hasOperations =
+          opsCount.explainers > 0 || opsCount.predictions > 0;
+
+        if (hasOperations) {
+          // Show confirmation dialog
+          setRunToRetrain(run);
+          setOperationsCount(opsCount);
+          setRetrainDialogOpen(true);
+          return;
+        }
+      }
+
+      // Proceed with training if no confirmation needed
+      await executeTraining(run);
+    } catch (error) {
+      console.error("Error checking operations:", error);
+      // If check fails, proceed with training anyway
+      await executeTraining(run);
+    }
+  };
+
+  const executeTraining = async (run) => {
+    try {
+      // Delete operations if they exist
+      if (
+        operationsCount &&
+        (operationsCount.explainers > 0 || operationsCount.predictions > 0)
+      ) {
+        await deleteRunOperations(run.id.toString());
+      }
+
       const updatedRun = await resetRunById(run.id.toString());
 
       const response = await enqueueRunnerJobRequest(run.id);
@@ -384,12 +433,29 @@ export default function ModelsContent() {
           );
         },
       );
+
+      // Close dialog and reset state
+      setRetrainDialogOpen(false);
+      setRunToRetrain(null);
+      setOperationsCount(null);
     } catch (error) {
       console.error("Error training run:", error);
       enqueueSnackbar(`Error starting run "${run.name}"`, {
         variant: "error",
       });
     }
+  };
+
+  const handleConfirmRetrain = () => {
+    if (runToRetrain) {
+      executeTraining(runToRetrain);
+    }
+  };
+
+  const handleCancelRetrain = () => {
+    setRetrainDialogOpen(false);
+    setRunToRetrain(null);
+    setOperationsCount(null);
   };
 
   const handleEditRun = async (run) => {
@@ -728,6 +794,15 @@ export default function ModelsContent() {
         preselectedModel={preselectedModel}
         existingRuns={runs}
         onRunCreated={handleRunCreated}
+      />
+
+      {/* Retrain Confirmation Dialog */}
+      <RetrainConfirmDialog
+        open={retrainDialogOpen}
+        onClose={handleCancelRetrain}
+        onConfirm={handleConfirmRetrain}
+        run={runToRetrain}
+        operationsCount={operationsCount}
       />
     </Box>
   );

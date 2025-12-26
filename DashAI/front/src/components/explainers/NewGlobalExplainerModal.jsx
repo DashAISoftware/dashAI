@@ -48,6 +48,7 @@ export default function NewGlobalExplainerModal({
   open,
   setOpen,
   explainerConfig,
+  onExplainerCreated,
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
@@ -110,6 +111,9 @@ export default function NewGlobalExplainerModal({
               },
             );
             updateExplainers();
+            if (onExplainerCreated) {
+              onExplainerCreated();
+            }
           },
           (result) => {
             console.error("Global explainer job failed:", result);
@@ -118,6 +122,9 @@ export default function NewGlobalExplainerModal({
               { variant: "error" },
             );
             updateExplainers();
+            if (onExplainerCreated) {
+              onExplainerCreated();
+            }
           },
         );
       }

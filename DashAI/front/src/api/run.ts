@@ -77,3 +77,16 @@ export const resetRunById = async (runId: string): Promise<IRun> => {
   const response = await api.patch<IRun>(`/v1/run/${runId}/reset`);
   return response.data;
 };
+
+export const getRunOperationsCount = async (
+  runId: string,
+): Promise<{ explainers: number; predictions: number }> => {
+  const response = await api.get<{ explainers: number; predictions: number }>(
+    `/v1/run/${runId}/operations/count`,
+  );
+  return response.data;
+};
+
+export const deleteRunOperations = async (runId: string): Promise<void> => {
+  await api.delete<void>(`/v1/run/${runId}/operations`);
+};

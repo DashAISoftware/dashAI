@@ -21,7 +21,6 @@ function ModelComparisonTable({
   session,
   onTrain,
   onViewDetails,
-  onPrediction,
   onDelete,
   onRowClick,
 }) {
@@ -196,22 +195,6 @@ function ModelComparisonTable({
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Predict">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPrediction(runs.find((r) => r.id === params.row.id));
-                  }}
-                  disabled={params.row.status !== "Finished"}
-                  color="primary"
-                >
-                  <TrendingUp fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-
             <Tooltip title="Delete">
               <span>
                 <IconButton
@@ -277,7 +260,6 @@ ModelComparisonTable.propTypes = {
   }),
   onTrain: PropTypes.func.isRequired,
   onViewDetails: PropTypes.func.isRequired,
-  onPrediction: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
 };

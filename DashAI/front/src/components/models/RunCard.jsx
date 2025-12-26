@@ -28,8 +28,10 @@ import {
   ExpandLess,
   Settings,
   TrendingUp,
+  QueryStats,
 } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
+import RunOperations from "./RunOperations";
 
 /**
  * Card component displaying a model run with actions and details
@@ -37,10 +39,13 @@ import { getRunStatus } from "../../utils/runStatus";
 function RunCard({
   run,
   models = [],
+  session,
   onTrain,
   onEdit,
-  onPrediction,
+  onExplainer,
   onDelete,
+  onOperationsRefresh,
+  explainerRefreshTrigger,
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -194,7 +199,7 @@ function RunCard({
             endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
             sx={{ textTransform: "none" }}
           >
-            {expanded ? "Hide Details" : "Show Details"}
+            {expanded ? "Hide Parameters" : "Show Parameters"}
           </Button>
 
           <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -277,6 +282,18 @@ function RunCard({
             </Box>
           </Collapse>
         </Box>
+
+        {/* RunOperations - Separate section for finished runs */}
+        {statusText === "Finished" && (
+          <Box sx={{ mt: 2 }}>
+            <RunOperations
+              run={run}
+              session={session}
+              onRefresh={onOperationsRefresh}
+              explainerRefreshTrigger={explainerRefreshTrigger}
+            />
+          </Box>
+        )}
       </CardContent>
 
       <Divider />
@@ -311,16 +328,45 @@ function RunCard({
           <Edit fontSize="small" />
         </IconButton>
 
-        {/* Predict button */}
-        <IconButton
-          size="small"
-          onClick={() => onPrediction(run)}
-          color="primary"
-          disabled={statusText !== "Finished"}
-          title="Make predictions"
-        >
-          <TrendingUp fontSize="small" />
-        </IconButton>
+        {/* Prediction button */}
+        {statusText === "Finished" && (
+          <IconButton
+            size="small"
+            onClick={() => {
+              // Scroll to operations and open prediction dialog
+              const operationsElement = document.getElementById(
+                `run-operations-${run.id}`,
+              );
+              if (operationsElement) {
+                operationsElement.scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                });
+                // Trigger prediction dialog open via custom event
+                const event = new CustomEvent("openPredictionDialog", {
+                  detail: { runId: run.id },
+                });
+                window.dispatchEvent(event);
+              }
+            }}
+            color="primary"
+            title="Create prediction"
+          >
+            <TrendingUp fontSize="small" />
+          </IconButton>
+        )}
+
+        {/* Explainer button */}
+        {onExplainer && statusText === "Finished" && (
+          <IconButton
+            size="small"
+            onClick={() => onExplainer(run)}
+            color="primary"
+            title="Create explainer"
+          >
+            <QueryStats fontSize="small" />
+          </IconButton>
+        )}
 
         {/* Delete button */}
         <IconButton
@@ -350,12 +396,20 @@ RunCard.propTypes = {
     description: PropTypes.string,
     created: PropTypes.string,
     trained_models: PropTypes.array,
+    experiment_id: PropTypes.number,
   }).isRequired,
   models: PropTypes.array,
+  session: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    task_name: PropTypes.string,
+  }),
   onTrain: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
-  onPrediction: PropTypes.func.isRequired,
+  onExplainer: PropTypes.func,
   onDelete: PropTypes.func.isRequired,
+  onOperationsRefresh: PropTypes.func,
+  explainerRefreshTrigger: PropTypes.number,
 };
 
 export default RunCard;
