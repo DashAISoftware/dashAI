@@ -175,13 +175,6 @@ export default function ModelsContent() {
     if (!selectedSessionId) return;
     try {
       const data = await getRuns(selectedSessionId.toString());
-      console.log("🔍 Runs data from API:", data);
-      console.log(
-        "🔍 First run metrics:",
-        data[0]?.test_metrics,
-        data[0]?.train_metrics,
-        data[0]?.validation_metrics,
-      );
       const runsWithStatus = data.map((run) => ({
         ...run,
         status:
@@ -191,10 +184,14 @@ export default function ModelsContent() {
       }));
       setRuns(runsWithStatus);
     } catch (error) {
-      enqueueSnackbar("Failed to fetch runs", {
-        variant: "error",
-      });
-      console.error("Failed to fetch runs:", error);
+      if (error.response?.status !== 404) {
+        enqueueSnackbar("Failed to fetch runs", {
+          variant: "error",
+        });
+        console.error("Failed to fetch runs:", error);
+      } else {
+        setRuns([]);
+      }
     }
   }, [selectedSessionId, enqueueSnackbar]);
 

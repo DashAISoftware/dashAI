@@ -62,10 +62,7 @@ async def get_runs(
                     select(Run).where(Run.experiment_id == experiment_id)
                 ).all()
                 if not runs:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Runs associated with Experiment not found",
-                    )
+                    runs = []
             else:
                 runs = db.query(Run).all()
         except exc.SQLAlchemyError as e:
