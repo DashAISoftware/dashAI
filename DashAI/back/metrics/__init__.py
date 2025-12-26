@@ -15,4 +15,5 @@ from DashAI.back.metrics.regression.mse import MSE
 from DashAI.back.metrics.regression.r2 import R2
 from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.translation.bleu import Bleu
+from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
