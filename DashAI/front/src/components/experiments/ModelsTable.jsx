@@ -36,8 +36,6 @@ function ModelsTable({ newExp, setNewExp }) {
     });
   };
   const handleUpdateParameters = (id) => (newValues) => {
-    console.log(id);
-    console.log(newValues);
     setNewExp((prevExp) => {
       return {
         ...prevExp,

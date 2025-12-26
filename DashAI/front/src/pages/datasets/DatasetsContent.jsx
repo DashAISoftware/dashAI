@@ -272,12 +272,9 @@ export default function DatasetsContent() {
     maxAttempts = 10,
   ) => {
     if (jobId && attempt === 1) {
-      console.log(`Setting up job polling for dataset creation job: ${jobId}`);
-
       startJobPolling(
         jobId,
         async (result) => {
-          console.log(`Dataset job completed successfully`);
           enqueueSnackbar(`Dataset "${datasetName}" created successfully`, {
             variant: "success",
           });
@@ -294,9 +291,6 @@ export default function DatasetsContent() {
               setDatasets(enrichedDatasets);
               setSelectedDatasetId(datasetId);
             } else {
-              console.log(
-                "Dataset job completed but couldn't find real dataset",
-              );
               await fetchDatasets();
               setSelectedDatasetId(datasetId);
             }

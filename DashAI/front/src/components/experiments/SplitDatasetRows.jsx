@@ -38,10 +38,6 @@ function SplitDatasetRows({
   ).toFixed(2);
   const testDatasetPercentage = (datasetInfo.test_size / totalRows).toFixed(2);
 
-  useEffect(() => {
-    console.log(rowsPartitionsIndex);
-  }, [rowsPartitionsIndex]);
-
   const hasPredefinedSplits =
     trainDatasetPercentage > 0 ||
     validationDatasetPercentage > 0 ||
@@ -130,7 +126,6 @@ function SplitDatasetRows({
             updatedIndex.test = rowsIndex;
             break;
         }
-        console.log("Updated Index:", updatedIndex);
 
         setRowsPartitionsIndex(updatedIndex);
 

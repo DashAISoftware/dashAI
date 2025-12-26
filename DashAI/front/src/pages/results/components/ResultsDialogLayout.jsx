@@ -156,7 +156,6 @@ function ResultsDialogLayout({
       tourContext.nextStep();
     }
 
-    // 1. Filter runs that are eligible to execute
     const runsToExecute = rowSelectionModel.filter((runId) => {
       const run = runs.find((r) => r.id === runId);
       return (
@@ -177,21 +176,15 @@ function ResultsDialogLayout({
     }
 
     try {
-      // 2. Reset all selected runs before enqueueing
       const updatedRuns = await Promise.all(
         runsToExecute.map((runId) => resetRunById(runId)),
       );
-      console.log("Updated runs after reset:", updatedRuns);
-
       let enqueueErrors = 0;
-
-      // 3. Enqueue each run (this triggers per-run polling)
       for (const runId of runsToExecute) {
         const error = await enqueueRunnerJob(runId);
         if (error) enqueueErrors++;
       }
 
-      // 4. Update only those runs in local state with status "Delivered"
       setRuns((prevRuns) =>
         prevRuns.map((r) => {
           const updated = updatedRuns.find((u) => u.id === r.id);
@@ -199,22 +192,18 @@ function ResultsDialogLayout({
         }),
       );
 
-      // 5. If at least one run started successfully → no need to fetch entire table
       if (enqueueErrors < runsToExecute.length) {
-        // Polling for each run will update state individually
         enqueueSnackbar(
           `${runsToExecute.length - enqueueErrors} run(s) started successfully`,
           { variant: "success" },
         );
       } else {
-        // 6. All failed → refresh fully
         getRuns({ showLoading: false });
       }
     } catch (error) {
       console.error("Error executing runs:", error);
       enqueueSnackbar("Error executing runs", { variant: "error" });
 
-      // Ensure state stays consistent
       getRuns({ showLoading: false });
     }
   };

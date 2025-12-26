@@ -459,7 +459,6 @@ export default function ModelsContent() {
   };
 
   const handleEditRun = async (run) => {
-    console.log("Edit run:", run);
     enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
   };
 

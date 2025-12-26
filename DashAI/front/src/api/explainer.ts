@@ -20,8 +20,6 @@ export const getExplainerPlot = async (
     `/v1/explainer/${scope}/plot/${explainerId}`,
   );
 
-  console.log("response explariner");
-  console.log(response);
   return response.data;
 };
 

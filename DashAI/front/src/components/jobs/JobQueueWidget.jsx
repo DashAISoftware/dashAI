@@ -89,9 +89,7 @@ const JobQueueWidget = () => {
   const confirmClearAllJobs = async () => {
     try {
       setClearingAll(true);
-      const result = await deleteAllJobs();
-      console.log(`Deleted ${result.deleted} jobs`);
-
+      await deleteAllJobs();
       refresh();
       setTimeout(() => {
         refresh();
