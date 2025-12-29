@@ -165,14 +165,31 @@ class MLPRegression(RegressionModel):
         x_proc = self.prepare_dataset(x, is_fit=False).to_pandas().values
         x_tensor = torch.tensor(x_proc, dtype=torch.float32).to(self.device)
         with torch.no_grad():
-            return self.model(x_tensor).cpu().numpy()
+            return self.model(x_tensor).cpu().numpy().flatten()
 
     def save(self, filename: str) -> None:
-        torch.save({"state": self.model.state_dict(), "params": self.params}, filename)
+        torch.save(
+            {
+                "state": self.model.state_dict(),
+                "params": self.params,
+                "input_dim": self.model.model[0].in_features,
+            },
+            filename,
+        )
 
     @staticmethod
     def load(filename: str) -> "MLPRegression":
         data = torch.load(filename)
         instance = MLPRegression(**data["params"])
-        # Logic to rebuild and load state_dict would go here
+
+        # Rebuild the model architecture using saved input_dim
+        instance.model = MLP(
+            input_dim=data["input_dim"],
+            hidden_size=instance.params.get("hidden_size", 5),
+            activation_name=instance.params.get("activation", "relu"),
+        ).to(instance.device)
+
+        # Load the trained weights
+        instance.model.load_state_dict(data["state"])
+
         return instance
