@@ -31,14 +31,37 @@ async def live_metrics_websocket(
                 metrics = db.query(Metric).filter_by(run_id=run_id).all()
                 run = db.get(Run, run_id)
 
-                payload: dict[str, dict[str, dict]] = {}
+                # Nested structure:
+                # split -> level ->
+                # metric_name -> list of {step, value, timestamp}
+                payload: dict[str, dict[str, dict[str, list]]] = {}
 
                 for metric in metrics:
                     split = metric.split.name
                     level = metric.level.name
+                    metric_name = metric.name
 
+                    # Initialize nested dictionaries
                     payload.setdefault(split, {})
-                    payload[split][level] = metric.results
+                    payload[split].setdefault(level, {})
+                    payload[split][level].setdefault(metric_name, [])
+
+                    # Append metric data point
+                    payload[split][level][metric_name].append(
+                        {
+                            "step": metric.step,
+                            "value": metric.value,
+                            "timestamp": metric.timestamp.isoformat(),
+                        }
+                    )
+
+                # Sort each metric's data points by step for consistency
+                for split in payload:
+                    for level in payload[split]:
+                        for metric_name in payload[split][level]:
+                            payload[split][level][metric_name].sort(
+                                key=lambda x: x["step"]
+                            )
 
                 if run:
                     payload["run_status"] = run.status.name
