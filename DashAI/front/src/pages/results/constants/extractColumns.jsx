@@ -18,15 +18,18 @@ export const extractColumns = (
   handleExplainer,
   handleDeleteRun,
 ) => {
+  console.log("Extracting columns with metrics:", rawMetrics);
   // ===== METRICS (only test metrics) =====
   const metrics = rawMetrics.map((metric) => ({
-    field: `test_${metric.name}`,
-    headerName: `test_${metric.name}`,
+    field: `${metric.name}`,
+    headerName: `${metric.name}`,
     renderCell: ({ row, value }) => {
-      if (["Started", "Delivered"].includes(row.status)) return "-";
+      if (["Not Started", "Started", "Delivered"].includes(row.status))
+        return "-";
 
-      const v = Array.isArray(value) ? value[0] : null;
-      return typeof v === "number" ? v.toFixed(2) : "-";
+      return row.test_metrics[metric.name] !== undefined
+        ? Number(row.test_metrics[metric.name]).toFixed(2)
+        : "-";
     },
   }));
 
