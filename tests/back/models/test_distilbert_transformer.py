@@ -79,6 +79,10 @@ def sample_model():
         learning_rate=5e-5,
         device="cpu",
         weight_decay=0.01,
+        log_train_every_n_epochs=None,
+        log_train_every_n_steps=None,
+        log_validation_every_n_epochs=None,
+        log_validation_every_n_steps=None,
     )
     return model
 
