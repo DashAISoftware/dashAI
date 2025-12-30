@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -157,6 +157,7 @@ class Run(Base):
     predictions = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="run"
     )
+    metrics = relationship("Metric", cascade="all, delete-orphan", back_populates="run")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the run to delivered and set delivery_time to now."""
@@ -232,10 +233,21 @@ class Metric(Base):
     Table to store all the information related to a metric
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    run_id: Mapped[int] = mapped_column(ForeignKey("run.id", ondelete="CASCADE"))
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("run.id", ondelete="CASCADE"), index=True
+    )
     split: Mapped[SplitEnum] = mapped_column(Enum(SplitEnum), nullable=False)
     level: Mapped[LevelEnum] = mapped_column(Enum(LevelEnum), nullable=False)
-    results: Mapped[Dict[str, list[float]]] = mapped_column(JSON, nullable=False)
+
+    name: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    step: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    # timestamp
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    # Relationships
+    run: Mapped["Run"] = relationship("Run", back_populates="metrics")
 
 
 class Plugin(Base):
