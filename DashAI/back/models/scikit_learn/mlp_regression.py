@@ -6,6 +6,8 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
+    int_field,
+    none_type,
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
@@ -30,7 +32,7 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
     activation: schema_field(
-        enum_field(enum=["relu", "tanh", "sigmoid"]),
+        enum_field(enum=["relu", "tanh", "sigmoid", "identity"]),
         placeholder="relu",
         description="Activation function.",
     )  # type: ignore
@@ -57,10 +59,45 @@ class MLPRegressorSchema(BaseSchema):
         description="Total number of training passes over the dataset.",
     )  # type: ignore
 
+    batch_size: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=32,
+        description="Number of samples per gradient update during training. "
+        "If greater than dataset size or None, uses full dataset.",
+    )  # type: ignore
+
     device: schema_field(
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
         description="Hardware device (CPU/GPU).",
+    )  # type: ignore
+
+    log_train_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for train split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_train_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for train split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
+    log_validation_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for validation split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_validation_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for validation split every n steps during training. "
+        "If None, it won't log per step.",
     )  # type: ignore
 
 
@@ -70,7 +107,7 @@ class MLP(nn.Module):
         activations = {
             "relu": nn.ReLU(),
             "tanh": nn.Tanh(),
-            "logistic": nn.Sigmoid(),
+            "sigmoid": nn.Sigmoid(),
             "identity": nn.Identity(),
         }
         self.model = nn.Sequential(
@@ -127,13 +164,19 @@ class MLPRegression(RegressionModel):
 
         # 3. Training Loop using Epochs
         total_epochs = self.params.get("epochs", 3)
-        batch_size = min(200, X_tensor.size(0))
+        batch_size = self.params.get("batch_size")
+        if batch_size is None or batch_size > X_tensor.size(0):
+            batch_size = X_tensor.size(0)
 
-        for _ in range(total_epochs):
+        global_step = 0
+        for epoch in range(total_epochs):
             self.model.train()
             indices = torch.randperm(X_tensor.size(0))
 
             for i in range(0, X_tensor.size(0), batch_size):
+                # Set model to train mode
+                self.model.train()
+
                 batch_idx = indices[i : i + batch_size]
                 train_loss = criterion(
                     self.model(X_tensor[batch_idx]), y_tensor[batch_idx]
@@ -143,20 +186,65 @@ class MLPRegression(RegressionModel):
                 train_loss.backward()
                 optimizer.step()
 
-            # Metric tracking per epoch
-            self.calculate_metrics(
-                split=SplitEnum.TRAIN,
-                level=LevelEnum.EPOCH,
-                x_data=x_train,
-                y_data=y_train,
-            )
+                # Increment global step counter
+                global_step += 1
 
-            self.calculate_metrics(
-                split=SplitEnum.VALIDATION,
-                level=LevelEnum.EPOCH,
-                x_data=x_validation,
-                y_data=y_validation,
-            )
+                # Set model to eval for metric calculation
+                self.model.eval()
+
+                # Train metrics per step
+                if self.log_train_every_n_steps and (
+                    global_step % self.log_train_every_n_steps == 0
+                ):
+                    self.calculate_metrics(
+                        split=SplitEnum.TRAIN,
+                        level=LevelEnum.STEP,
+                        x_data=x_train,
+                        y_data=y_train,
+                        log_index=global_step,
+                    )
+
+                # Validation metrics per step
+                if (
+                    self.log_validation_every_n_steps
+                    and global_step % self.log_validation_every_n_steps == 0
+                ):
+                    self.calculate_metrics(
+                        split=SplitEnum.VALIDATION,
+                        level=LevelEnum.STEP,
+                        x_data=x_validation,
+                        y_data=y_validation,
+                        log_index=global_step,
+                    )
+
+            # Set model to eval for metric calculation
+            self.model.eval()
+
+            # Train metrics per epoch
+            if (
+                self.log_train_every_n_epochs
+                and (epoch + 1) % self.log_train_every_n_epochs == 0
+            ):
+                self.calculate_metrics(
+                    split=SplitEnum.TRAIN,
+                    level=LevelEnum.EPOCH,
+                    x_data=x_train,
+                    y_data=y_train,
+                    log_index=epoch + 1,
+                )
+
+            # Validation metrics per epoch
+            if (
+                self.log_validation_every_n_epochs
+                and (epoch + 1) % self.log_validation_every_n_epochs == 0
+            ):
+                self.calculate_metrics(
+                    split=SplitEnum.VALIDATION,
+                    level=LevelEnum.EPOCH,
+                    x_data=x_validation,
+                    y_data=y_validation,
+                    log_index=epoch + 1,
+                )
 
         return self
 
