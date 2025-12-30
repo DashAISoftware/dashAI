@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Final, final
 
 from kink import di
+from sqlalchemy import func
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
@@ -68,57 +69,99 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
     @final
     def _save_metrics(
-        self, split: SplitEnum, level: LevelEnum, results: Dict[str, float]
+        self,
+        split: SplitEnum,
+        level: LevelEnum,
+        results: Dict[str, float],
+        log_index: int = None,
     ):
-        """
-        Save metrics to the database, appending to existing metrics
-        if they exist.
-
-        Parameters
-        ----------
-        split : SplitEnum
-            The data split (TRAIN, VALIDATION, TEST)
-        level : LevelEnum
-            The metric level (LAST, TRIAL, STEP, BATCH)
-        results : Dict[str, float]
-            Dictionary mapping metric names to their scores
-        """
         with di["session_factory"]() as db:
-            # Try to find existing metric entry for this run, split, and level
-            existing_metric = (
-                db.query(Metric)
-                .filter_by(run_id=self.run_id, split=split, level=level)
-                .first()
-            )
+            # Initialize tracking dict if not exists
+            if not hasattr(self, "_metric_step_counters"):
+                self._metric_step_counters = {}
 
-            if existing_metric:
-                # Append new scores to existing lists
-                for metric_name, score in results.items():
-                    # If metric already exists, append or override,
-                    # otherwise create new list
-                    if metric_name in existing_metric.results:
-                        # If last override the last value,
-                        # else, append to the list
-                        if level == LevelEnum.LAST:
-                            existing_metric.results[metric_name][-1] = score
-                        else:
-                            existing_metric.results[metric_name].append(score)
-                    else:
-                        existing_metric.results[metric_name] = [score]
+            # Create a unique key for this run/split/level combination
+            counter_key = (self.run_id, split, level)
 
-                # Mark as modified for SQLAlchemy to detect the change
-                from sqlalchemy.orm.attributes import flag_modified
+            # 1. Determine the step (log_index)
+            if log_index is None:
+                # Get the current max step from in-memory tracker
+                if counter_key not in self._metric_step_counters:
+                    # Initialize from database on first access
+                    last_step = (
+                        db.query(func.max(Metric.step))
+                        .filter_by(run_id=self.run_id, split=split, level=level)
+                        .scalar()
+                    )
+                    self._metric_step_counters[counter_key] = (
+                        last_step if last_step is not None else 0
+                    )
 
-                flag_modified(existing_metric, "results")
+                # Increment for new entry
+                log_index = self._metric_step_counters[counter_key] + 1
             else:
-                # Create new metric entry with lists
-                metric_entry = Metric(
-                    run_id=self.run_id,
-                    split=split,
-                    level=level,
-                    results={name: [score] for name, score in results.items()},
-                )
-                db.add(metric_entry)
+                # Handle provided log_index
+                if counter_key not in self._metric_step_counters:
+                    # Initialize from database
+                    last_step = (
+                        db.query(func.max(Metric.step))
+                        .filter_by(run_id=self.run_id, split=split, level=level)
+                        .scalar()
+                    )
+                    self._metric_step_counters[counter_key] = (
+                        last_step if last_step is not None else 0
+                    )
+
+                current_max = self._metric_step_counters[counter_key]
+
+                # If log_index <= current max, adjust it
+                if log_index <= current_max:
+                    previous_max = current_max - 1 if current_max > 0 else 0
+                    log_index = current_max + (current_max - previous_max)
+
+            # Update the in-memory tracker
+            self._metric_step_counters[counter_key] = log_index
+
+            # 2. Handle 'LAST' level replacement logic
+            if level == LevelEnum.LAST:
+                for name, value in results.items():
+                    existing = (
+                        db.query(Metric)
+                        .filter_by(
+                            run_id=self.run_id, split=split, level=level, name=name
+                        )
+                        .first()
+                    )
+
+                    if existing:
+                        existing.value = value
+                        existing.step = log_index
+                    else:
+                        db.add(
+                            Metric(
+                                run_id=self.run_id,
+                                split=split,
+                                level=level,
+                                name=name,
+                                value=value,
+                                step=log_index,
+                            )
+                        )
+
+            # 3. Standard logging (STEP, BATCH, TRIAL) - just insert
+            else:
+                metric_entries = [
+                    Metric(
+                        run_id=self.run_id,
+                        split=split,
+                        level=level,
+                        name=name,
+                        value=score,
+                        step=log_index,
+                    )
+                    for name, score in results.items()
+                ]
+                db.add_all(metric_entries)
 
             db.commit()
 
@@ -127,6 +170,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         self,
         split: SplitEnum = SplitEnum.VALIDATION,
         level: LevelEnum = LevelEnum.LAST,
+        log_index: int = None,
         x_data: DashAIDataset = None,
         y_data: DashAIDataset = None,
     ):
@@ -139,6 +183,9 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             The data split (TRAIN, VALIDATION, TEST).
         level : LevelEnum, default=LevelEnum.LAST
             The metric level (LAST, TRIAL, STEP, BATCH).
+        log_index : int, optional
+            The index for logging purposes. If None, it will save the metric
+            as last index + 1.
         x_data : DashAIDataset, optional
             The input features for the split. If None, the stored dataset
             associated with the split is used.
@@ -176,7 +223,9 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             results[metric.__name__] = score
 
         # Save to database
-        self._save_metrics(split=split, level=level, results=results)
+        self._save_metrics(
+            split=split, level=level, results=results, log_index=log_index
+        )
 
     def prepare_dataset(
         self, dataset: DashAIDataset, is_fit: bool = False
