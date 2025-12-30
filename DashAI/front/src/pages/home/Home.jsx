@@ -41,7 +41,7 @@ function Home() {
               Icon={FileUploadIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="experiments-button">
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="models-button">
             <HomeButton
               title="Models"
               description={

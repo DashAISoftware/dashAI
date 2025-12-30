@@ -15,13 +15,14 @@ export const homeTourSteps = [
     spotlightClicks: true,
   },
   {
-    target: '[data-tour="experiments-button"]',
+    target: '[data-tour="models-button"]',
     content: (
       <div>
-        <h3>Experiments</h3>
+        <h3>Models</h3>
         <p>
-          In this module you train and compare models, monitoring metrics such
-          as Accuracy, F1, Recall, and Precision.
+          In this module you can train, compare, and use your models to make
+          predictions, monitoring metrics such as Accuracy, F1, Recall, and
+          Precision.
         </p>
       </div>
     ),
