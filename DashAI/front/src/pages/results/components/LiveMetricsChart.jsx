@@ -32,7 +32,14 @@ export function LiveMetricsChart({ run }) {
     VALIDATION: [],
     TEST: [],
   });
-  const hasUserSelectedMetrics = useRef(false);
+
+  // Track user selections per split
+  const selectedMetricsPerSplit = useRef({
+    TRAIN: null,
+    VALIDATION: null,
+    TEST: null,
+  });
+  const hasUserSelectedLevel = useRef(false);
   const socketRef = useRef(null);
 
   /* ---------------- Load test metrics from run data ---------------- */
@@ -41,10 +48,26 @@ export function LiveMetricsChart({ run }) {
     if (run.status === 3 && run.test_metrics) {
       setData((prev) => {
         const next = structuredClone(prev);
+
+        // Convert old format to new format if needed
+        const formattedTestMetrics = {};
+        for (const metricName in run.test_metrics) {
+          const value = run.test_metrics[metricName];
+          // Check if it's already in new format (array of objects)
+          if (Array.isArray(value)) {
+            formattedTestMetrics[metricName] = value;
+          } else {
+            // Convert old format (single value) to new format
+            formattedTestMetrics[metricName] = [
+              { step: 1, value: value, timestamp: new Date().toISOString() },
+            ];
+          }
+        }
+
         next.TEST = {
-          TRIAL: run.test_metrics,
-          STEP: run.test_metrics,
-          EPOCH: run.test_metrics,
+          TRIAL: formattedTestMetrics,
+          STEP: formattedTestMetrics,
+          EPOCH: formattedTestMetrics,
         };
         return next;
       });
@@ -68,8 +91,15 @@ export function LiveMetricsChart({ run }) {
         for (const splitKey in incoming) {
           if (splitKey === "run_status") continue;
           next[splitKey] ??= {};
+
           for (const levelKey in incoming[splitKey]) {
-            next[splitKey][levelKey] = incoming[splitKey][levelKey];
+            next[splitKey][levelKey] ??= {};
+
+            // incoming[splitKey][levelKey] is now { metric_name: [data_points] }
+            for (const metricName in incoming[splitKey][levelKey]) {
+              next[splitKey][levelKey][metricName] =
+                incoming[splitKey][levelKey][metricName];
+            }
           }
         }
 
@@ -82,10 +112,26 @@ export function LiveMetricsChart({ run }) {
       if (run.test_metrics) {
         setData((prev) => {
           const next = structuredClone(prev);
+
+          // Convert old format to new format if needed
+          const formattedTestMetrics = {};
+          for (const metricName in run.test_metrics) {
+            const value = run.test_metrics[metricName];
+            // Check if it's already in new format (array of objects)
+            if (Array.isArray(value)) {
+              formattedTestMetrics[metricName] = value;
+            } else {
+              // Convert old format (single value) to new format
+              formattedTestMetrics[metricName] = [
+                { step: 1, value: value, timestamp: new Date().toISOString() },
+              ];
+            }
+          }
+
           next.TEST = {
-            TRIAL: run.test_metrics,
-            STEP: run.test_metrics,
-            EPOCH: run.test_metrics,
+            TRIAL: formattedTestMetrics,
+            STEP: formattedTestMetrics,
+            EPOCH: formattedTestMetrics,
           };
           return next;
         });
@@ -98,7 +144,13 @@ export function LiveMetricsChart({ run }) {
 
     socketRef.current = ws;
 
-    return () => ws.close();
+    return () => {
+      try {
+        ws.close();
+      } catch (e) {
+        console.log("WebSocket already closed");
+      }
+    };
   }, [run.id, run.test_metrics]);
 
   useEffect(() => {
@@ -127,16 +179,46 @@ export function LiveMetricsChart({ run }) {
     Object.entries(metrics).filter(([name]) => allowed.includes(name)),
   );
 
-  const chartData =
-    Object.keys(filteredMetrics).length > 0 && Object.values(filteredMetrics)[0]
-      ? filteredMetrics[Object.keys(filteredMetrics)[0]].map((_, idx) => {
-          const point = { x: idx + 1 };
-          for (const key in filteredMetrics) {
-            point[key] = filteredMetrics[key][idx];
-          }
-          return point;
-        })
-      : [];
+  // Transform new data structure to chart format
+  const chartData = (() => {
+    if (Object.keys(filteredMetrics).length === 0) return [];
+
+    // Get all unique steps across all metrics
+    const allSteps = new Set();
+    for (const metricName in filteredMetrics) {
+      const metricData = filteredMetrics[metricName];
+
+      // Safety check: ensure it's an array
+      if (Array.isArray(metricData)) {
+        metricData.forEach((point) => {
+          allSteps.add(point.step);
+        });
+      }
+    }
+
+    // Sort steps
+    const sortedSteps = Array.from(allSteps).sort((a, b) => a - b);
+
+    // Build chart data points
+    return sortedSteps.map((step) => {
+      const point = { x: step };
+
+      for (const metricName in filteredMetrics) {
+        const metricData = filteredMetrics[metricName];
+
+        // Safety check: ensure it's an array
+        if (Array.isArray(metricData)) {
+          // Find the data point for this step
+          const dataPoint = metricData.find((p) => p.step === step);
+          point[metricName] = dataPoint?.value ?? null;
+        } else {
+          point[metricName] = null;
+        }
+      }
+
+      return point;
+    });
+  })();
 
   /* ---------------- Sync Level with Split ---------------- */
   const hasTrialData =
@@ -147,12 +229,26 @@ export function LiveMetricsChart({ run }) {
     data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
 
   useEffect(() => {
-    // Determine the best available level for the new split
+    // Check if current level has data in the new split
+    const currentLevelHasData =
+      (level === "TRIAL" && hasTrialData) ||
+      (level === "STEP" && hasStepData) ||
+      (level === "EPOCH" && hasEpochData);
+
+    // If user selected a level and it has data in the new split, keep it
+    if (hasUserSelectedLevel.current && currentLevelHasData) {
+      return;
+    }
+
+    // Otherwise, auto-select the best available level
     if (hasEpochData) setLevel("EPOCH");
     else if (hasStepData) setLevel("STEP");
     else if (hasTrialData) setLevel("TRIAL");
-    else setLevel(null); // Reset if no data exists for this split
-  }, [split, hasEpochData, hasStepData, hasTrialData]);
+    else setLevel(null);
+
+    // Reset the user selection flag when we auto-switch
+    hasUserSelectedLevel.current = false;
+  }, [split, hasEpochData, hasStepData, hasTrialData, level]);
 
   /* ---------------- Sync Metrics with Split/Level ---------------- */
   useEffect(() => {
@@ -163,23 +259,31 @@ export function LiveMetricsChart({ run }) {
       return;
     }
 
-    // If user hasn't touched it, auto-select all
-    if (!hasUserSelectedMetrics.current) {
-      setSelectedMetrics(metricNames);
+    // Check if this split has saved selections
+    const savedSelection = selectedMetricsPerSplit.current[split];
+
+    if (savedSelection !== null) {
+      // Use saved selection, but filter out metrics that no longer exist
+      const validSavedMetrics = savedSelection.filter((m) =>
+        metricNames.includes(m),
+      );
+      setSelectedMetrics(validSavedMetrics);
     } else {
-      // If user HAS touched it, filter out metrics that no longer exist in this split
-      setSelectedMetrics((prev) => prev.filter((m) => metricNames.includes(m)));
+      // No saved selection, auto-select all
+      setSelectedMetrics(metricNames);
     }
   }, [split, level, filteredMetrics]);
 
-  /* ---------------- Reset user selection flag when split changes ---------------- */
-  useEffect(() => {
-    hasUserSelectedMetrics.current = false;
-  }, [split]);
-
   const handleMetricChange = (e) => {
-    hasUserSelectedMetrics.current = true;
-    setSelectedMetrics(e.target.value);
+    const newSelection = e.target.value;
+    setSelectedMetrics(newSelection);
+    // Save selection for current split
+    selectedMetricsPerSplit.current[split] = newSelection;
+  };
+
+  const handleLevelChange = (newLevel) => {
+    hasUserSelectedLevel.current = true;
+    setLevel(newLevel);
   };
 
   /* ---------------- Render ---------------- */
@@ -256,21 +360,21 @@ export function LiveMetricsChart({ run }) {
         <ButtonGroup size="small" variant="outlined">
           <Button
             variant={level === "TRIAL" ? "contained" : "outlined"}
-            onClick={() => setLevel("TRIAL")}
+            onClick={() => handleLevelChange("TRIAL")}
             disabled={!hasTrialData}
           >
             Trial
           </Button>
           <Button
             variant={level === "STEP" ? "contained" : "outlined"}
-            onClick={() => setLevel("STEP")}
+            onClick={() => handleLevelChange("STEP")}
             disabled={!hasStepData}
           >
             Step
           </Button>
           <Button
             variant={level === "EPOCH" ? "contained" : "outlined"}
-            onClick={() => setLevel("EPOCH")}
+            onClick={() => handleLevelChange("EPOCH")}
             disabled={!hasEpochData}
           >
             Epoch
