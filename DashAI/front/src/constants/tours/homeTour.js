@@ -28,22 +28,6 @@ export const homeTourSteps = [
     placement: "bottom",
   },
   {
-    target: '[data-tour="predictions-button"]',
-    content: (
-      <div>
-        <h3>Predictions</h3>
-        <p>
-          This section allows you to apply a trained model to new data to obtain
-          practical results.
-        </p>
-        <div style={{ marginTop: "10px", fontSize: "12px", color: "#666" }}>
-          💡 This follows naturally after training your models in Experiments.
-        </div>
-      </div>
-    ),
-    placement: "bottom",
-  },
-  {
     target: '[data-tour="explainability-button"]',
     content: (
       <div>
