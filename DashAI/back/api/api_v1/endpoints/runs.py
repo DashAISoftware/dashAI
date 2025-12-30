@@ -11,6 +11,7 @@ from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
+from DashAI.back.core.enums.metrics import LevelEnum
 from DashAI.back.dependencies.database.models import Experiment, Metric, Run, RunStatus
 
 logging.basicConfig(level=logging.DEBUG)
@@ -34,43 +35,32 @@ def get_metrics_for_run(db, run_id: int):
     dict
         A dictionary containing train, validation, and test metrics for the run.
     """
-    train_metrics = (
+    metrics = (
         db.query(Metric)
-        .filter(
-            Metric.run_id == run_id,
-            Metric.split == "TRAIN",
-            Metric.level == "LAST",
-        )
-        .first()
+        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
+        .all()
     )
 
-    validation_metrics = (
-        db.query(Metric)
-        .filter(
-            Metric.run_id == run_id,
-            Metric.split == "VALIDATION",
-            Metric.level == "LAST",
-        )
-        .first()
-    )
-
-    test_metrics = (
-        db.query(Metric)
-        .filter(
-            Metric.run_id == run_id,
-            Metric.split == "TEST",
-            Metric.level == "LAST",
-        )
-        .first()
-    )
-
-    return {
-        "train_metrics": train_metrics.results if train_metrics else None,
-        "validation_metrics": (
-            validation_metrics.results if validation_metrics else None
-        ),
-        "test_metrics": test_metrics.results if test_metrics else None,
+    # Initialize the response structure
+    response = {
+        "train_metrics": None,
+        "validation_metrics": None,
+        "test_metrics": None,
     }
+
+    # Group metrics by split
+    for metric in metrics:
+        # Determine the key in the response dictionary
+        split_key = f"{metric.split.name.lower()}_metrics"
+
+        if response[split_key] is None:
+            response[split_key] = {}
+
+        # In the new schema, we store 'value'.
+        # For 'LAST' level, we just want the latest name: value pair.
+        response[split_key][metric.name] = metric.value
+
+    return response
 
 
 @router.get("/")
