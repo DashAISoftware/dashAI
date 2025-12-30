@@ -18,6 +18,7 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
     int_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -62,6 +63,34 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         "all layers are reduced during training, provided that this rate is not zero.",
     )  # type: ignore
 
+    log_train_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for train split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_train_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for train split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
+    log_validation_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for validation split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_validation_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for validation split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
 
 class OpusMtEnESTransformer(TranslationModel):
     """Pre-trained transformer for english-spanish translation.
@@ -86,6 +115,14 @@ class OpusMtEnESTransformer(TranslationModel):
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
             self.device = kwargs.pop("device")
+            self.log_train_every_n_epochs = kwargs.pop("log_train_every_n_epochs", 1)
+            self.log_train_every_n_steps = kwargs.pop("log_train_every_n_steps", None)
+            self.log_validation_every_n_epochs = kwargs.pop(
+                "log_validation_every_n_epochs", 1
+            )
+            self.log_validation_every_n_steps = kwargs.pop(
+                "log_validation_every_n_steps", None
+            )
         self.model = (
             model
             if model is not None
@@ -172,6 +209,10 @@ class OpusMtEnESTransformer(TranslationModel):
             x_val=x_validation,
             y_val=y_validation,
             total_epochs=self.num_train_epochs,
+            log_training_every_n_epochs=self.log_train_every_n_epochs,
+            log_training_every_n_steps=self.log_train_every_n_steps,
+            log_val_every_n_epochs=self.log_validation_every_n_epochs,
+            log_val_every_n_steps=self.log_validation_every_n_steps,
         )
 
         trainer = Seq2SeqTrainer(

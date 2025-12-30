@@ -21,6 +21,7 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
     int_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -69,6 +70,34 @@ class DistilBertTransformerSchema(BaseSchema):
         "all layers are reduced during training, provided that this rate is not zero.",
     )  # type: ignore
 
+    log_train_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for train split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_train_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for train split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
+    log_validation_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for validation split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_validation_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for validation split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
 
 class DistilBertTransformer(TextClassificationModel):
     """Pre-trained transformer DistilBERT allowing English text classification.
@@ -102,6 +131,15 @@ class DistilBertTransformer(TextClassificationModel):
         self.model_name = "distilbert-base-uncased"
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
+        self.log_train_every_n_epochs = kwargs.get("log_train_every_n_epochs", 1)
+        self.log_train_every_n_steps = kwargs.get("log_train_every_n_steps", None)
+        self.log_validation_every_n_epochs = kwargs.get(
+            "log_validation_every_n_epochs", 1
+        )
+        self.log_validation_every_n_steps = kwargs.get(
+            "log_validation_every_n_steps", None
+        )
 
         self.training_args_params = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
@@ -165,12 +203,10 @@ class DistilBertTransformer(TextClassificationModel):
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args_obj = TrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
-            logging_strategy="steps",
-            logging_steps=20,
             save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
-            eval_strategy="epoch",
+            eval_strategy="no",
             use_cpu=self.device != "gpu",
             fp16=can_use_fp16,
             **self.training_args_params,
@@ -186,6 +222,10 @@ class DistilBertTransformer(TextClassificationModel):
             x_val=x_validation,
             y_val=y_validation,
             total_epochs=num_epochs,
+            log_training_every_n_epochs=self.log_train_every_n_epochs,
+            log_training_every_n_steps=self.log_train_every_n_steps,
+            log_val_every_n_epochs=self.log_validation_every_n_epochs,
+            log_val_every_n_steps=self.log_validation_every_n_steps,
         )
 
         trainer = Trainer(
