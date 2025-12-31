@@ -4,7 +4,6 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Final, final
 
 from kink import di
-from sqlalchemy import func
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
@@ -83,44 +82,45 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             # Create a unique key for this run/split/level combination
             counter_key = (self.run_id, split, level)
 
-            # 1. Determine the step (log_index)
-            if log_index is None:
-                # Get the current max step from in-memory tracker
-                if counter_key not in self._metric_step_counters:
-                    # Initialize from database on first access
-                    last_step = (
-                        db.query(func.max(Metric.step))
-                        .filter_by(run_id=self.run_id, split=split, level=level)
-                        .scalar()
-                    )
-                    self._metric_step_counters[counter_key] = (
-                        last_step if last_step is not None else 0
-                    )
+            # 1. Determine log_index
+            if counter_key not in self._metric_step_counters:
+                steps = (
+                    db.query(Metric.step)
+                    .filter_by(run_id=self.run_id, split=split, level=level)
+                    .order_by(Metric.step.desc())
+                    .limit(2)
+                    .all()
+                )
 
-                # Increment for new entry
-                log_index = self._metric_step_counters[counter_key] + 1
-            else:
-                # Handle provided log_index
-                if counter_key not in self._metric_step_counters:
-                    # Initialize from database
-                    last_step = (
-                        db.query(func.max(Metric.step))
-                        .filter_by(run_id=self.run_id, split=split, level=level)
-                        .scalar()
-                    )
-                    self._metric_step_counters[counter_key] = (
-                        last_step if last_step is not None else 0
-                    )
+                if not steps:
+                    current, previous = 0, 0
+                elif len(steps) == 1:
+                    current, previous = steps[0][0], 0
+                else:
+                    current, previous = steps[0][0], steps[1][0]
 
-                current_max = self._metric_step_counters[counter_key]
+                self._metric_step_counters[counter_key] = {
+                    "current": current,
+                    "previous": previous,
+                }
 
-                # If log_index <= current max, adjust it
-                if log_index <= current_max:
-                    previous_max = current_max - 1 if current_max > 0 else 0
-                    log_index = current_max + (current_max - previous_max)
+            counter = self._metric_step_counters[counter_key]
+
+            current_max = counter["current"]
+            previous_max = counter["previous"]
+
+            # Compute delta (preserve spacing)
+            delta = current_max - previous_max
+            if delta <= 0:
+                delta = 1
+
+            # Case 1: no log_index -> advance naturally
+            if log_index is None or log_index <= current_max:
+                log_index = current_max + delta
 
             # Update the in-memory tracker
-            self._metric_step_counters[counter_key] = log_index
+            counter["previous"] = current_max
+            counter["current"] = log_index
 
             # 2. Handle 'LAST' level replacement logic
             if level == LevelEnum.LAST:

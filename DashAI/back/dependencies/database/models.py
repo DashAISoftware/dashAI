@@ -3,7 +3,16 @@ import pathlib
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -239,12 +248,13 @@ class Metric(Base):
     split: Mapped[SplitEnum] = mapped_column(Enum(SplitEnum), nullable=False)
     level: Mapped[LevelEnum] = mapped_column(Enum(LevelEnum), nullable=False)
 
-    name: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[float] = mapped_column(Float, nullable=False)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    # timestamp
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, index=True
+    )
 
     # Relationships
     run: Mapped["Run"] = relationship("Run", back_populates="metrics")
