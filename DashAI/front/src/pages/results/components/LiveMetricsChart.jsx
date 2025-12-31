@@ -39,7 +39,6 @@ export function LiveMetricsChart({ run }) {
     VALIDATION: null,
     TEST: null,
   });
-  const hasUserSelectedLevel = useRef(false);
   const socketRef = useRef(null);
 
   /* ---------------- Load test metrics from run data ---------------- */
@@ -97,8 +96,15 @@ export function LiveMetricsChart({ run }) {
 
             // incoming[splitKey][levelKey] is now { metric_name: [data_points] }
             for (const metricName in incoming[splitKey][levelKey]) {
-              next[splitKey][levelKey][metricName] =
-                incoming[splitKey][levelKey][metricName];
+              const incomingPoints = incoming[splitKey][levelKey][metricName];
+
+              if (!Array.isArray(next[splitKey][levelKey][metricName])) {
+                // First time seeing this metric -> create array
+                next[splitKey][levelKey][metricName] = [...incomingPoints];
+              } else {
+                // Metric already exists -> append only new points
+                next[splitKey][levelKey][metricName].push(...incomingPoints);
+              }
             }
           }
         }
@@ -235,8 +241,8 @@ export function LiveMetricsChart({ run }) {
       (level === "STEP" && hasStepData) ||
       (level === "EPOCH" && hasEpochData);
 
-    // If user selected a level and it has data in the new split, keep it
-    if (hasUserSelectedLevel.current && currentLevelHasData) {
+    // If selected a level and it has data in the new split, keep it
+    if (currentLevelHasData) {
       return;
     }
 
@@ -245,9 +251,6 @@ export function LiveMetricsChart({ run }) {
     else if (hasStepData) setLevel("STEP");
     else if (hasTrialData) setLevel("TRIAL");
     else setLevel(null);
-
-    // Reset the user selection flag when we auto-switch
-    hasUserSelectedLevel.current = false;
   }, [split, hasEpochData, hasStepData, hasTrialData, level]);
 
   /* ---------------- Sync Metrics with Split/Level ---------------- */
@@ -282,7 +285,6 @@ export function LiveMetricsChart({ run }) {
   };
 
   const handleLevelChange = (newLevel) => {
-    hasUserSelectedLevel.current = true;
     setLevel(newLevel);
   };
 

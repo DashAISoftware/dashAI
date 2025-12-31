@@ -25,51 +25,58 @@ async def live_metrics_websocket(
 ):
     await websocket.accept()
 
+    last_timestamp = None
+    first_send = True
+
     try:
         while True:
             with session_factory() as db:
-                metrics = db.query(Metric).filter_by(run_id=run_id).all()
+                query = db.query(Metric).filter(Metric.run_id == run_id)
+
+                # First send: get all metrics
+                # Subsequent sends: get only new metrics
+                if not first_send and last_timestamp is not None:
+                    query = query.filter(Metric.timestamp > last_timestamp)
+
+                # Order by step and timestamp to ensure correct sequence
+                metrics = query.order_by(
+                    Metric.step,
+                    Metric.timestamp,
+                ).all()
+
                 run = db.get(Run, run_id)
 
-                # Nested structure:
-                # split -> level ->
-                # metric_name -> list of {step, value, timestamp}
-                payload: dict[str, dict[str, dict[str, list]]] = {}
+            # Update last_timestamp
+            if metrics:
+                last_timestamp = metrics[-1].timestamp
 
-                for metric in metrics:
-                    split = metric.split.name
-                    level = metric.level.name
-                    metric_name = metric.name
+            # Structure payload
+            # split -> level ->
+            # metric_name -> list of {step, value, timestamp}
+            payload: dict[str, dict[str, dict[str, list]]] = {}
+            for metric in metrics:
+                split = metric.split.name
+                level = metric.level.name
+                name = metric.name
 
-                    # Initialize nested dictionaries
-                    payload.setdefault(split, {})
-                    payload[split].setdefault(level, {})
-                    payload[split][level].setdefault(metric_name, [])
+                payload.setdefault(split, {}).setdefault(level, {}).setdefault(
+                    name, []
+                ).append(
+                    {
+                        "step": metric.step,
+                        "value": metric.value,
+                        "timestamp": metric.timestamp.isoformat(),
+                    }
+                )
 
-                    # Append metric data point
-                    payload[split][level][metric_name].append(
-                        {
-                            "step": metric.step,
-                            "value": metric.value,
-                            "timestamp": metric.timestamp.isoformat(),
-                        }
-                    )
+            if run:
+                payload["run_status"] = run.status.name
 
-                # Sort each metric's data points by step for consistency
-                for split in payload:
-                    for level in payload[split]:
-                        for metric_name in payload[split][level]:
-                            payload[split][level][metric_name].sort(
-                                key=lambda x: x["step"]
-                            )
+            if payload:
+                await websocket.send_text(json.dumps(payload))
 
-                if run:
-                    payload["run_status"] = run.status.name
+            first_send = False
 
-            # Send update
-            await websocket.send_text(json.dumps(payload))
-
-            # If run finished or errored → close cleanly
             if run and run.status in {RunStatus.FINISHED, RunStatus.ERROR}:
                 await websocket.close(code=1000)
                 break
@@ -77,8 +84,4 @@ async def live_metrics_websocket(
             await asyncio.sleep(1)
 
     except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected for run_id: {run_id}")
-
-    except Exception:
-        logger.exception("WebSocket error")
-        await websocket.close(code=1011)
+        pass
