@@ -1402,10 +1402,10 @@ def update_dataset_splits(
 
 # I'm not completely sure what this function does in converting categorical indexes part
 # I think it could be simplified since DashAITypes, but I don't want to break anything
-def prepare_for_experiment(
+def prepare_for_model_session(
     dataset: DashAIDataset, splits: dict, output_columns: List[str]
 ) -> DatasetDict:
-    """Prepare the dataset for an experiment by updating the splits configuration"""
+    """Prepare the dataset for a model session by updating the splits configuration"""
     splitType = splits.get("splitType")
     if splitType == "manual" or splitType == "predefined":
         splits_index = splits

@@ -16,7 +16,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     save_dataset,
     to_dashai_dataset,
 )
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Prediction
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks import BaseTask
@@ -124,19 +124,21 @@ class PredictJob(BaseJob):
                         "Either dataset_id or manual_input_data must be provided."
                     )
 
-                # Retrieve Experiment
-                exp: Experiment = db.get(Experiment, prediction.run.experiment_id)
-                if not exp:
+                # Retrieve Model Session
+                model_session: ModelSession = db.get(
+                    ModelSession, prediction.run.model_session_id
+                )
+                if not model_session:
                     prediction.set_status_as_error()
                     db.commit()
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Experiment not found",
+                        detail="Model session not found",
                     )
 
                 # Retrieve Dataset if dataset_id is provided
                 dataset: Dataset = None
-                dataset_trained: Dataset = db.get(Dataset, exp.dataset_id)
+                dataset_trained: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset_trained:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
@@ -155,13 +157,13 @@ class PredictJob(BaseJob):
 
             # Retrieve Task
             try:
-                task: BaseTask = component_registry[exp.task_name]["class"]()
+                task: BaseTask = component_registry[model_session.task_name]["class"]()
             except Exception as e:
                 prediction.set_status_as_error()
                 db.commit()
                 log.exception(e)
                 raise JobError(
-                    f"Task {exp.task_name} not found in the registry",
+                    f"Task {model_session.task_name} not found in the registry",
                 ) from e
 
             # Load Model
@@ -204,12 +206,14 @@ class PredictJob(BaseJob):
                     )
 
                 # Select input columns and make prediction
-                prepared_dataset = loaded_dataset.select_columns(exp.input_columns)
+                prepared_dataset = loaded_dataset.select_columns(
+                    model_session.input_columns
+                )
                 y_pred_proba = np.array(trained_model.predict(prepared_dataset))
 
                 # Process predictions (convert to labels for classification)
                 y_pred = task.process_predictions(
-                    train_dataset, y_pred_proba, exp.output_columns[0]
+                    train_dataset, y_pred_proba, model_session.output_columns[0]
                 )
 
             except ValueError as ve:
@@ -244,7 +248,7 @@ class PredictJob(BaseJob):
 
                 # Add predictions to loaded dataset
                 dataset_with_prediction = to_dashai_dataset(
-                    prepared_dataset.add_column(exp.output_columns[0], y_pred)
+                    prepared_dataset.add_column(model_session.output_columns[0], y_pred)
                 )
 
                 # Filter schema from trained dataset
@@ -252,7 +256,7 @@ class PredictJob(BaseJob):
                 filtered_schema = {
                     key: value.to_string()
                     for key, value in trained_schema.items()
-                    if key in exp.input_columns + exp.output_columns
+                    if key in model_session.input_columns + model_session.output_columns
                 }
 
                 # Store num of rows, columns, and column names

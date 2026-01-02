@@ -53,15 +53,15 @@ async def execute_model(model_name: str, payload: dict = Body(...)):
     return 0
 
 
-@router.post("/experiment/run/{session_id}")
-async def run_experiment(session_id: int):
+@router.post("/model-session/run/{session_id}")
+async def run_model_session(session_id: int):
     return 0
 
 
-@router.get("/experiment/results/{session_id}")
+@router.get("/model-session/results/{session_id}")
 async def get_results(session_id: int):
     main_task = session_info.task
-    return main_task.experimentResults
+    return main_task.modelSessionResults
 
 
 @router.get("/play/{session_id}/{execution_id}/{input}")

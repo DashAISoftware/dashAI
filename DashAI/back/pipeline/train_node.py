@@ -7,7 +7,7 @@ from kink import di
 from DashAI.back.config import DefaultSettings
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_column_names_from_indexes,
-    prepare_for_experiment,
+    prepare_for_model_session,
     select_columns,
     split_dataset,
 )
@@ -121,7 +121,7 @@ class Train(BaseJob):
                 n_labels = len(all_classes)
 
             splits = self.splits
-            prepared_dataset, splits = prepare_for_experiment(
+            prepared_dataset, splits = prepare_for_model_session(
                 dataset=prepared_dataset,
                 splits=splits,
                 output_columns=output_columns_names,

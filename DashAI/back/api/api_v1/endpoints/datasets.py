@@ -27,7 +27,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_columns_spec,
     get_dataset_info,
 )
-from DashAI.back.dependencies.database.models import Dataset, Experiment
+from DashAI.back.dependencies.database.models import Dataset, ModelSession
 from DashAI.back.types.inf.type_inference import infer_types
 from DashAI.back.types.type_validation import validate_multiple_type_changes
 from DashAI.back.types.utils import arrow_to_dashai_schema
@@ -506,13 +506,13 @@ async def get_info(
     return info
 
 
-@router.get("/{dataset_id}/experiments-exist")
+@router.get("/{dataset_id}/model-sessions-exist")
 @inject
-async def get_experiments_exist(
+async def get_model_sessions_exist(
     dataset_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Get a boolean indicating if there are experiments associated with the dataset.
+    """Get a boolean indicating if there are model sessions associated with the dataset.
 
     Parameters
     ----------
@@ -522,7 +522,7 @@ async def get_experiments_exist(
     Returns
     -------
     bool
-        True if there are experiments associated with the dataset, False otherwise.
+        True if there are model sessions associated with the dataset, False otherwise.
     """
     with session_factory() as db:
         try:
@@ -539,13 +539,15 @@ async def get_experiments_exist(
                     detail="Dataset is not in finished state",
                 )
 
-            # Check if there are any experiments associated with the dataset
-            experiments_exist = (
-                db.query(Experiment).filter(Experiment.dataset_id == dataset_id).first()
+            # Check if there are any model sessions associated with the dataset
+            model_sessions_exist = (
+                db.query(ModelSession)
+                .filter(ModelSession.dataset_id == dataset_id)
+                .first()
                 is not None
             )
 
-            return experiments_exist
+            return model_sessions_exist
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)
