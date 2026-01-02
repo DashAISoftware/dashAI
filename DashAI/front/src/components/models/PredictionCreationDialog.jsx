@@ -25,7 +25,7 @@ import {
   getDatasetSample,
 } from "../../api/datasets";
 import { enqueuePredictionJob } from "../../api/job";
-import { getExperimentById } from "../../api/experiment";
+import { getModelSessionById } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getPredictions } from "../../api/predict";
@@ -84,7 +84,7 @@ export default function PredictionCreationDialog({
         setDatasets(availableDatasetsWithInfo);
 
         if (run.experiment_id || session?.id) {
-          const experimentData = await getExperimentById(
+          const experimentData = await getModelSessionById(
             run.experiment_id || session.id,
           );
           setExperiment(experimentData);

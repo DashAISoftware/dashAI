@@ -1,6 +1,6 @@
 export interface IRun {
   id: string;
-  experiment_id: string;
+  model_session_id: string;
   created: Date;
   last_modified: Date;
   model_name: string;

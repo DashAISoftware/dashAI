@@ -4,7 +4,7 @@ import { Grid, MenuItem, Paper, TextField, Typography } from "@mui/material";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { getExperiments as getExperimentsRequest } from "../../api/experiment";
+import { getModelSessions as getModelSessionsRequest } from "../../api/modelSession";
 import { getRuns as getRunsRequest } from "../../api/run";
 import { formatDate } from "../../utils";
 import { getComponents } from "../../api/component";
@@ -125,7 +125,7 @@ function TrainedModelsTable() {
   const getModels = async () => {
     setLoading(true);
     try {
-      const experiments = await getExperimentsRequest();
+      const experiments = await getModelSessionsRequest();
       const runs = await getRunsRequest();
       const rows = extractRows(experiments, runs);
       const filteredRows = rows.filter((row) => row.status === 3);

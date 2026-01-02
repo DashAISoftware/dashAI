@@ -19,7 +19,7 @@ import {
 } from "../../api/datasets";
 import { validateDataset as validateDatasetRequest } from "../../api/explainer";
 import { getRunById } from "../../api/run";
-import { getExperimentById } from "../../api/experiment";
+import { getModelSessionById } from "../../api/modelSession";
 import { formatDate } from "../../utils";
 import { SplitSelector } from "./SplitSelector";
 import NoteBox from "../notebooks/NoteBox";
@@ -136,7 +136,7 @@ export default function SelectDatasetStep({
     if (newExpl.run_id) {
       try {
         const run = await getRunById(newExpl.run_id);
-        const experiment = await getExperimentById(run.experiment_id);
+        const experiment = await getModelSessionById(run.model_session_id);
         const splitsExperiment = JSON.parse(experiment.splits);
         setSplits((prev) => ({
           ...prev,

@@ -34,13 +34,15 @@ export const submitParameters = async (
   return response.data;
 };
 
-export const runExperiment = async (sessionId: number): Promise<object> => {
-  const response = await api.post<object>(`/v0/experiment/run/${sessionId}`);
+export const runModelSession = async (sessionId: number): Promise<object> => {
+  const response = await api.post<object>(`/v0/model-session/run/${sessionId}`);
   return response.data;
 };
 
 export const getResults = async (sessionId: number): Promise<object> => {
-  const response = await api.get<object>(`/v0/experiment/results/${sessionId}`);
+  const response = await api.get<object>(
+    `/v0/model-session/results/${sessionId}`,
+  );
   return response.data;
 };
 

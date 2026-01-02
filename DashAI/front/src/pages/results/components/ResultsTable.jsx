@@ -5,7 +5,7 @@ import {
   getHyperparameterPlot as getHyperparameterPlotRequest,
 } from "../../../api/run";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import { getExperimentById } from "../../../api/experiment";
+import { getModelSessionById } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";

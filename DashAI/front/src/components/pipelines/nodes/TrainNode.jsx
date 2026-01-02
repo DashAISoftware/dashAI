@@ -16,7 +16,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import useSchema from "../../../hooks/useSchema";
 import ParamsSettings from "../ParamsSettings";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../../api/experiment";
+import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";

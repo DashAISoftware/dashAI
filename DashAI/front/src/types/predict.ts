@@ -1,6 +1,6 @@
 export interface IPredict {
-  experiment_id: number;
-  experiment_name: string;
+  model_session_id: number;
+  model_session_name: string;
   created: string;
   run_name: string;
   model_name: string;

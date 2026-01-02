@@ -9,7 +9,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 
-import { deleteExperiment as deleteExperimentRequest } from "../../api/experiment";
+import { deleteModelSession as deleteModelSessionRequest } from "../../api/modelSession";
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
@@ -36,7 +36,7 @@ function ExperimentsTable({
 
   const deleteExperiment = async (id) => {
     try {
-      await deleteExperimentRequest(id);
+      await deleteModelSessionRequest(id);
       enqueueSnackbar("Experiment successfully deleted.", {
         variant: "success",
       });

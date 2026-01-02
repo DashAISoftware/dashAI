@@ -6,7 +6,7 @@ import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../api/experiment";
+import { validateColumns as validateColumnsRequest } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
