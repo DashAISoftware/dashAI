@@ -152,7 +152,7 @@ def test_fit_model(
     x, y = splited_dataset
     x = x["train"]
     y = y["train"]
-    sample_model.fit(x, y)
+    sample_model.train(x, y)
 
     assert hasattr(sample_model.vectorizer, "vocabulary_")
     assert hasattr(sample_model.classifier, "estimators_")
@@ -168,7 +168,7 @@ def test_predict_model(
     vectorizer_func = sample_model.get_vectorizer(input_column)
     vectorized_dataset = x.map(vectorizer_func, remove_columns="text")
     vectorized_dataset = to_dashai_dataset(vectorized_dataset)
-    sample_model.classifier.fit(vectorized_dataset, y["test"])
+    sample_model.classifier.train(vectorized_dataset, y["test"])
     predictions = sample_model.predict(x)
     assert isinstance(predictions, np.ndarray)
     assert len(predictions) == len(y["test"])
@@ -180,7 +180,7 @@ def test_save_and_load_model(
     tmp_path: Path,
 ):
     x, y = splited_dataset
-    sample_model.fit(x["train"], y["train"])
+    sample_model.train(x["train"], y["train"])
     nwft_filename = os.path.join(tmp_path, "nwft_model")
     sample_model.save(nwft_filename)
     loaded_model = sample_model.load(nwft_filename)

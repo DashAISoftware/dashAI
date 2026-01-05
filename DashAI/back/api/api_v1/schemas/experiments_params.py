@@ -9,6 +9,9 @@ class ExperimentParams(BaseModel):
     name: str
     input_columns: List[str]
     output_columns: List[str]
+    train_metrics: List[str]
+    validation_metrics: List[str]
+    test_metrics: List[str]
     splits: str
 
 

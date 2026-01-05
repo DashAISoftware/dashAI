@@ -11,12 +11,66 @@ from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.dependencies.database.models import Experiment, Run, RunStatus
+from DashAI.back.dependencies.database.models import Experiment, Metric, Run, RunStatus
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def get_metrics_for_run(db, run_id: int):
+    """Retrieve metrics associated with a specific run.
+
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy session to interact with the database.
+    run_id : int
+        ID of the run for which to retrieve metrics.
+
+    Returns
+    -------
+    dict
+        A dictionary containing train, validation, and test metrics for the run.
+    """
+    train_metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.run_id == run_id,
+            Metric.split == "TRAIN",
+            Metric.level == "LAST",
+        )
+        .first()
+    )
+
+    validation_metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.run_id == run_id,
+            Metric.split == "VALIDATION",
+            Metric.level == "LAST",
+        )
+        .first()
+    )
+
+    test_metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.run_id == run_id,
+            Metric.split == "TEST",
+            Metric.level == "LAST",
+        )
+        .first()
+    )
+
+    return {
+        "train_metrics": train_metrics.results if train_metrics else None,
+        "validation_metrics": (
+            validation_metrics.results if validation_metrics else None
+        ),
+        "test_metrics": test_metrics.results if test_metrics else None,
+    }
 
 
 @router.get("/")
@@ -59,6 +113,13 @@ async def get_runs(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Runs associated with Experiment not found",
                     )
+
+                # Add metrics to each run
+                for run in runs:
+                    metrics = get_metrics_for_run(db, run.id)
+                    run.train_metrics = metrics["train_metrics"]
+                    run.validation_metrics = metrics["validation_metrics"]
+                    run.test_metrics = metrics["test_metrics"]
             else:
                 runs = db.query(Run).all()
         except exc.SQLAlchemyError as e:
@@ -104,6 +165,12 @@ async def get_run_by_id(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Run not found",
                 )
+            # Add metrics to the run
+            metrics = get_metrics_for_run(db, run_id)
+            run.train_metrics = metrics["train_metrics"]
+            run.validation_metrics = metrics["validation_metrics"]
+            run.test_metrics = metrics["test_metrics"]
+
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -402,6 +469,11 @@ def reset_run(run):
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
+
+    # Delete metrics from DB
+    with di["session_factory"]() as db:
+        db.query(Metric).filter(Metric.run_id == run.id).delete()
+        db.commit()
 
     # Delete files
     if run.run_path and os.path.exists(run.run_path):
