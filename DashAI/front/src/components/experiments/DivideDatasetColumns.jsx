@@ -8,6 +8,7 @@ import {
   Box,
   Chip,
 } from "@mui/material";
+import { getColorByColumnType } from "../../utils";
 
 function DivideDatasetColumns({
   allColumnNames,
@@ -41,15 +42,30 @@ function DivideDatasetColumns({
   const renderColumnOption = (props, option) => {
     const { key, ...otherProps } = props;
     const columnType = columnTypes[option];
+    const typeColor = columnType?.type
+      ? getColorByColumnType(columnType.type)
+      : null;
+
     return (
-      <Box component="li" key={key} {...otherProps}>
+      <Box
+        component="li"
+        key={key}
+        {...otherProps}
+        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      >
         <span>{option}</span>
         {columnType && columnType.type && (
-          <span
-            style={{ marginLeft: "8px", fontSize: "0.85em", color: "#757575" }}
-          >
-            ({columnType.type})
-          </span>
+          <Chip
+            label={columnType.type}
+            size="small"
+            sx={{
+              backgroundColor: typeColor,
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "0.7rem",
+              height: "20px",
+            }}
+          />
         )}
       </Box>
     );
@@ -59,20 +75,26 @@ function DivideDatasetColumns({
     return value.map((option, index) => {
       const { key, ...tagProps } = getTagProps({ index });
       const columnType = columnTypes[option];
+      const typeColor = columnType?.type
+        ? getColorByColumnType(columnType.type)
+        : null;
+
       const label =
         columnType && columnType.type ? (
-          <span>
-            {option}
-            <span
-              style={{
-                marginLeft: "4px",
-                fontSize: "0.85em",
-                color: "#9e9e9e",
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <span>{option}</span>
+            <Chip
+              label={columnType.type}
+              size="small"
+              sx={{
+                backgroundColor: typeColor,
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "0.65rem",
+                height: "16px",
               }}
-            >
-              ({columnType.type})
-            </span>
-          </span>
+            />
+          </Box>
         ) : (
           option
         );
