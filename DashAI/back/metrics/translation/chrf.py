@@ -1,0 +1,59 @@
+"""DashAI CHRF metric implementation for translation tasks."""
+
+import numpy as np
+from torchmetrics.text.chrf import CHRFScore
+
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
+
+
+class Chrf(TranslationMetric):
+    """A class for calculating CHRF scores between source and target sentences.
+
+    CHRF (Character n-gram F-score) is a metric used for evaluating the quality
+    of machine-translated text by comparing it to reference translations
+    at the character level.
+
+    References
+    ----------
+    [1] https://en.wikipedia.org/wiki/CHRF
+    [2] https://lightning.ai/docs/torchmetrics/stable/text/chrf_score.html
+    """
+
+    MAXIMIZE: bool = True
+    DESCRIPTION: str = (
+        "CHRF (Character n-gram F-score) evaluates machine translation "
+        "quality by comparing candidate and reference texts at the "
+        "character level. It computes precision, recall, and F-score "
+        "over character n-grams, and is especially useful for "
+        "morphologically rich languages or short texts."
+    )
+
+    @staticmethod
+    def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):
+        """Calculate the CHRF score between source and target sentences.
+
+        Parameters
+        ----------
+        source_sentences : DashAIDataset
+            Sentences in the original language.
+        target_sentences : ndarray
+            Sentences in the target language.
+
+        Returns
+        -------
+        float
+            The calculated CHRF score ranging between 0 and 1.
+        """
+        chrf_metric = CHRFScore()
+        source_sentences, target_sentences = prepare_to_metric(
+            source_sentences, target_sentences
+        )
+        return (
+            chrf_metric(
+                target_sentences,
+                source_sentences,
+            )
+            .numpy()
+            .item()
+        )
