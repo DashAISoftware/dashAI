@@ -20,6 +20,11 @@ class Bleu(TranslationMetric):
     """
 
     MAXIMIZE: bool = True
+    DESCRIPTION: str = (
+        "BLEU (bilingual evaluation understudy) "
+        "measures similarity between generated and reference text "
+        "based on n-gram overlap."
+    )
 
     @staticmethod
     def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):

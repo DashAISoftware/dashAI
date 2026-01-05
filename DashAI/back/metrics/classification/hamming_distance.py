@@ -1,7 +1,7 @@
-"""DashAI precision classification metric implementation."""
+"""DashAI Hamming Distance implementation."""
 
 import numpy as np
-from sklearn.metrics import precision_score
+from sklearn.metrics import hamming_loss
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
@@ -10,19 +10,21 @@ from DashAI.back.metrics.classification_metric import (
 )
 
 
-class Precision(ClassificationMetric):
-    """Precision metric to classification tasks."""
+class HammingDistance(ClassificationMetric):
+    """Hamming Distance to classification tasks."""
 
+    MAXIMIZE: bool = False
     DESCRIPTION: str = (
-        "Fraction of predicted positives that are correct, "
-        "important when false positives are costly."
+        "Hamming Distance measures the fraction of "
+        "labels that are incorrectly predicted. "
+        "It is particularly useful for multi-label classification tasks."
     )
 
     @staticmethod
     def score(
         true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
     ) -> float:
-        """Calculate precision between true labels and predicted labels.
+        """Calculate Hamming Distance between true labels and predicted labels.
 
         Parameters
         ----------
@@ -39,15 +41,7 @@ class Precision(ClassificationMetric):
         Returns
         -------
         float
-            Precision score between true labels and predicted labels
+            Hamming Distance between true labels and predicted labels
         """
         true_labels, pred_labels = prepare_to_metric(true_labels, probs_pred_labels)
-
-        # Use the provided multiclass parameter or determine it using is_multiclass
-        if multiclass is None:
-            multiclass = ClassificationMetric.is_multiclass(true_labels)
-
-        if multiclass:
-            return precision_score(true_labels, pred_labels, average="macro")
-        else:
-            return precision_score(true_labels, pred_labels, average="binary")
+        return hamming_loss(true_labels, pred_labels)

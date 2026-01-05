@@ -18,9 +18,11 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
     int_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.translation_model import TranslationModel
 from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
 
@@ -61,6 +63,34 @@ class OpusMtEnESTransformerSchema(BaseSchema):
         "all layers are reduced during training, provided that this rate is not zero.",
     )  # type: ignore
 
+    log_train_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for train split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_train_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for train split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
+    log_validation_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for validation split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_validation_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for validation split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
 
 class OpusMtEnESTransformer(TranslationModel):
     """Pre-trained transformer for english-spanish translation.
@@ -87,11 +117,20 @@ class OpusMtEnESTransformer(TranslationModel):
             self.training_args = kwargs
             self.batch_size = kwargs.pop("batch_size", 16)
             self.device = kwargs.pop("device")
+            self.log_train_every_n_epochs = kwargs.pop("log_train_every_n_epochs", 1)
+            self.log_train_every_n_steps = kwargs.pop("log_train_every_n_steps", None)
+            self.log_validation_every_n_epochs = kwargs.pop(
+                "log_validation_every_n_epochs", 1
+            )
+            self.log_validation_every_n_steps = kwargs.pop(
+                "log_validation_every_n_steps", None
+            )
         self.model = (
             model
             if model is not None
             else AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
         )
+        self.num_train_epochs = kwargs.get("num_train_epochs", 2)
         self.fitted = model is not None
 
     def tokenize_data(
@@ -144,18 +183,13 @@ class OpusMtEnESTransformer(TranslationModel):
             dataset.append(sample)
         return DashAIDataset.from_list(dataset)
 
-    def fit(self, x_train: DashAIDataset, y_train: DashAIDataset):
-        """Fine-tune the pre-trained model.
-
-        Parameters
-        ----------
-        x_train : Dataset
-            Dataset with input training data.
-        y_train : Dataset
-            Dataset with output training data.
-
-        """
-
+    def train(
+        self,
+        x_train: DashAIDataset,
+        y_train: DashAIDataset,
+        x_validation: DashAIDataset = None,
+        y_validation: DashAIDataset = None,
+    ) -> "OpusMtEnESTransformer":
         dataset = self.tokenize_data(x_train, y_train)
         dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
 
@@ -169,14 +203,29 @@ class OpusMtEnESTransformer(TranslationModel):
             **self.training_args,
         )
 
+        # Initialize the custom callback with epoch information
+        metrics_callback = MetricsCallback(
+            model_instance=self,
+            x_train=x_train,
+            y_train=y_train,
+            x_val=x_validation,
+            y_val=y_validation,
+            total_epochs=self.num_train_epochs,
+            log_training_every_n_epochs=self.log_train_every_n_epochs,
+            log_training_every_n_steps=self.log_train_every_n_steps,
+            log_val_every_n_epochs=self.log_validation_every_n_epochs,
+            log_val_every_n_steps=self.log_validation_every_n_steps,
+        )
+
         trainer = Seq2SeqTrainer(
             model=self.model,
             args=training_args,
             train_dataset=dataset,
+            callbacks=[metrics_callback],
         )
 
-        trainer.train()
         self.fitted = True
+        trainer.train()
         shutil.rmtree(
             "DashAI/back/user_models/temp_checkpoints_opus-mt-en-es", ignore_errors=True
         )

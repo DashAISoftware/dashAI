@@ -21,6 +21,7 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     float_field,
     int_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -28,6 +29,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
     apply_categorical_label_encoder,
     categorical_label_encoder,
 )
+from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.types.categorical import Categorical
 
@@ -68,6 +70,34 @@ class DistilBertTransformerSchema(BaseSchema):
         "all layers are reduced during training, provided that this rate is not zero.",
     )  # type: ignore
 
+    log_train_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for train split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_train_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for train split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
+    log_validation_every_n_epochs: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=1,
+        description="Log metrics for validation split every n epochs during training. "
+        "If None, it won't log per epoch.",
+    )  # type: ignore
+
+    log_validation_every_n_steps: schema_field(
+        none_type(int_field(ge=1)),
+        placeholder=None,
+        description="Log metrics for validation split every n steps during training. "
+        "If None, it won't log per step.",
+    )  # type: ignore
+
 
 class DistilBertTransformer(TextClassificationModel):
     """Pre-trained transformer DistilBERT allowing English text classification.
@@ -104,6 +134,15 @@ class DistilBertTransformer(TextClassificationModel):
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
+        self.log_train_every_n_epochs = kwargs.get("log_train_every_n_epochs", 1)
+        self.log_train_every_n_steps = kwargs.get("log_train_every_n_steps", None)
+        self.log_validation_every_n_epochs = kwargs.get(
+            "log_validation_every_n_epochs", 1
+        )
+        self.log_validation_every_n_steps = kwargs.get(
+            "log_validation_every_n_steps", None
+        )
+
         self.training_args_params = {
             "num_train_epochs": kwargs.get("num_train_epochs", 2),
             "learning_rate": kwargs.get("learning_rate", 5e-5),
@@ -132,17 +171,7 @@ class DistilBertTransformer(TextClassificationModel):
         self.fitted = False
         self.encodings = {}  # Store encodings for categorical columns
 
-    def fit(self, x_train: DashAIDataset, y_train: DashAIDataset):
-        """Fine-tune the pre-trained model.
-
-        Parameters
-        ----------
-        x_train : Dataset
-            Dataset with input training data.
-        y_train : Dataset
-            Dataset with output training data.
-
-        """
+    def train(self, x_train, y_train, x_validation, y_validation):
         output_column_name = y_train.column_names[0]
 
         if self.num_labels is None:
@@ -156,33 +185,63 @@ class DistilBertTransformer(TextClassificationModel):
                 self.model_name, config=config
             )
 
-        x_train = self.prepare_dataset(x_train, is_fit=True)
-        y_train = self.prepare_dataset(y_train, is_fit=True)
+        # Train dataset preparation
+        x_train_prepared = self.prepare_dataset(x_train, is_fit=True)
+        y_train_prepared = self.prepare_dataset(y_train, is_fit=True)
+        train_dataset = x_train_prepared.add_column(
+            "label", y_train_prepared[output_column_name]
+        )
 
-        train_dataset = x_train.add_column("label", y_train[output_column_name])
+        # Validation dataset preparation
+        x_validation_prepared = self.prepare_dataset(x_validation)
+        y_validation_prepared = self.prepare_dataset(y_validation)
+        validation_dataset = x_validation_prepared.add_column(
+            "label", y_validation_prepared[output_column_name]
+        )
+
+        # Get number of epochs from training args
+        num_epochs = self.training_args_params.get("num_train_epochs", 2)
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args_obj = TrainingArguments(
             output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
-            logging_strategy="steps",
-            logging_steps=20,
             save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
+            per_device_eval_batch_size=self.batch_size,
+            eval_strategy="no",
             use_cpu=self.device != "gpu",
             fp16=can_use_fp16,
             **self.training_args_params,
         )
 
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
+
+        # Initialize the custom callback with epoch information
+        metrics_callback = MetricsCallback(
+            model_instance=self,
+            x_train=x_train,
+            y_train=y_train,
+            x_val=x_validation,
+            y_val=y_validation,
+            total_epochs=num_epochs,
+            log_training_every_n_epochs=self.log_train_every_n_epochs,
+            log_training_every_n_steps=self.log_train_every_n_steps,
+            log_val_every_n_epochs=self.log_validation_every_n_epochs,
+            log_val_every_n_steps=self.log_validation_every_n_steps,
+        )
+
         trainer = Trainer(
             model=self.model,
             args=training_args_obj,
             train_dataset=train_dataset,
+            eval_dataset=validation_dataset,
             data_collator=data_collator,
+            callbacks=[metrics_callback],
         )
 
-        trainer.train()
         self.fitted = True
+        trainer.train()
+
         shutil.rmtree(
             "DashAI/back/user_models/temp_checkpoints_distilbert", ignore_errors=True
         )

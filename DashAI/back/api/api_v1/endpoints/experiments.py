@@ -215,6 +215,9 @@ async def create_experiment(
                 name=params.name,
                 input_columns=params.input_columns,
                 output_columns=params.output_columns,
+                train_metrics=params.train_metrics,
+                validation_metrics=params.validation_metrics,
+                test_metrics=params.test_metrics,
                 splits=params.splits,
             )
             db.add(experiment)

@@ -127,13 +127,13 @@ def test_check_is_fitted(
 ):
     knn_model = KNeighborsClassifier(**model_params["knn"])
 
-    knn_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    knn_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
     rf_model = RandomForestClassifier(**model_params["rf"])
-    rf_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    rf_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
     svc_model = SVC(**model_params["svc"])
-    svc_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    svc_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
 
     try:
         check_is_fitted(knn_model)
@@ -148,15 +148,15 @@ def test_predict_tabular_models(
     divided_dataset: Tuple[DatasetDict, DatasetDict], model_params: dict
 ):
     knn_model = KNeighborsClassifier(**model_params["knn"])
-    knn_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    knn_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
     y_pred_knn = knn_model.predict(divided_dataset[0]["test"])
 
     rf_model = RandomForestClassifier(**model_params["rf"])
-    rf_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    rf_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
     y_pred_rf = rf_model.predict(divided_dataset[0]["test"])
 
     svc_model = SVC(**model_params["svc"])
-    svc_model.fit(divided_dataset[0]["train"], divided_dataset[1]["train"])
+    svc_model.train(divided_dataset[0]["train"], divided_dataset[1]["train"])
     y_pred_svm = svc_model.predict(divided_dataset[0]["test"])
 
     assert isinstance(y_pred_knn, np.ndarray)

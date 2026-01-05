@@ -1,23 +1,26 @@
-"""DashAI MAE regression metric implementation."""
+"""DashAI R2 score implementation."""
 
 import numpy as np
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import r2_score
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 
-class MAE(RegressionMetric):
-    """Mean Absolute Error metric for regression tasks."""
+class R2(RegressionMetric):
+    """R2 score metric for regression tasks."""
 
+    MAXIMIZE: bool = True
     DESCRIPTION: str = (
-        "Average of absolute differences between predicted and actual values, "
-        "provides a clear measure of prediction accuracy."
+        "R2 score, also known as the coefficient of determination, "
+        "measures how well the predicted values from a regression model "
+        "approximate the actual data points. It provides an indication of "
+        "the goodness of fit of the model."
     )
 
     @staticmethod
     def score(true_values: DashAIDataset, pred_values: np.ndarray) -> float:
-        """Calculate the MAE between true values and predicted values.
+        """Calculate the R2 score between true values and predicted values.
 
         Parameters
         ----------
@@ -30,7 +33,7 @@ class MAE(RegressionMetric):
         Returns
         -------
         float
-            MAE score between true values and predicted values
+            R2 score between true values and predicted values
         """
         true_values, pred_values = prepare_to_metric(true_values, pred_values)
-        return mean_absolute_error(true_values, pred_values)
+        return r2_score(true_values, pred_values)

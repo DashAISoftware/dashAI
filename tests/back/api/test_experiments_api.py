@@ -42,6 +42,9 @@ def create_experiment_1(client: TestClient, dataset_id: int):
                 "PetalWidthCm",
             ],
             "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
             "splits": splits,
         },
     )
@@ -58,6 +61,9 @@ def create_experiment_2(client: TestClient, dataset_id: int):
             "name": "ExperimentB",
             "input_columns": ["SepalLengthCm", "PetalWidthCm"],
             "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
             "splits": splits,
         },
     )
