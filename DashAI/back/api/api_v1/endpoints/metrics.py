@@ -25,28 +25,58 @@ async def live_metrics_websocket(
 ):
     await websocket.accept()
 
+    last_timestamp = None
+    first_send = True
+
     try:
         while True:
             with session_factory() as db:
-                metrics = db.query(Metric).filter_by(run_id=run_id).all()
+                query = db.query(Metric).filter(Metric.run_id == run_id)
+
+                # First send: get all metrics
+                # Subsequent sends: get only new metrics
+                if not first_send and last_timestamp is not None:
+                    query = query.filter(Metric.timestamp > last_timestamp)
+
+                # Order by step and timestamp to ensure correct sequence
+                metrics = query.order_by(
+                    Metric.step,
+                    Metric.timestamp,
+                ).all()
+
                 run = db.get(Run, run_id)
 
-                payload: dict[str, dict[str, dict]] = {}
+            # Update last_timestamp
+            if metrics:
+                last_timestamp = metrics[-1].timestamp
 
-                for metric in metrics:
-                    split = metric.split.name
-                    level = metric.level.name
+            # Structure payload
+            # split -> level ->
+            # metric_name -> list of {step, value, timestamp}
+            payload: dict[str, dict[str, dict[str, list]]] = {}
+            for metric in metrics:
+                split = metric.split.name
+                level = metric.level.name
+                name = metric.name
 
-                    payload.setdefault(split, {})
-                    payload[split][level] = metric.results
+                payload.setdefault(split, {}).setdefault(level, {}).setdefault(
+                    name, []
+                ).append(
+                    {
+                        "step": metric.step,
+                        "value": metric.value,
+                        "timestamp": metric.timestamp.isoformat(),
+                    }
+                )
 
-                if run:
-                    payload["run_status"] = run.status.name
+            if run:
+                payload["run_status"] = run.status.name
 
-            # Send update
-            await websocket.send_text(json.dumps(payload))
+            if payload:
+                await websocket.send_text(json.dumps(payload))
 
-            # If run finished or errored → close cleanly
+            first_send = False
+
             if run and run.status in {RunStatus.FINISHED, RunStatus.ERROR}:
                 await websocket.close(code=1000)
                 break
@@ -54,8 +84,4 @@ async def live_metrics_websocket(
             await asyncio.sleep(1)
 
     except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected for run_id: {run_id}")
-
-    except Exception:
-        logger.exception("WebSocket error")
-        await websocket.close(code=1011)
+        pass

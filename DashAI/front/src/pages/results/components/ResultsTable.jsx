@@ -89,6 +89,8 @@ function ResultsTable({
           handleDeleteRun,
         );
 
+      console.log("Columns:", columns);
+
       setRows(extractedRows);
       setColumns(columns);
       setColumnGroupingModel(columnGroupingModel);
