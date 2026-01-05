@@ -10,6 +10,11 @@ from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_m
 class RMSE(RegressionMetric):
     """Root Mean Squared Error metric for regression tasks."""
 
+    DESCRIPTION: str = (
+        "Square root of the average of squared differences between "
+        "predicted and actual values, penalizes larger errors more heavily."
+    )
+
     @staticmethod
     def score(true_values: DashAIDataset, predicted_values: np.ndarray) -> float:
         """Calculate the RMSE between true values and predicted values.

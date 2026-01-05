@@ -13,6 +13,11 @@ from DashAI.back.metrics.classification_metric import (
 class F1(ClassificationMetric):
     """F1 score to classification tasks."""
 
+    DESCRIPTION: str = (
+        "Harmonic mean of precision and recall, "
+        "useful for imbalanced classification tasks."
+    )
+
     @staticmethod
     def score(
         true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None

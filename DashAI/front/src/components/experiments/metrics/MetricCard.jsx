@@ -1,6 +1,7 @@
 import { Card, CardActionArea, Box, Typography, Chip } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
 const splitColors = {
   train: {
@@ -75,14 +76,18 @@ export default function MetricCard({
               {metric.name}
             </Typography>
 
-            {metric.metadata?.maximize && (
-              <Chip
-                icon={<TrendingUpIcon />}
-                label="maximize"
-                size="small"
-                variant="outlined"
-              />
-            )}
+            <Chip
+              icon={
+                metric.metadata.maximize ? (
+                  <TrendingUpIcon />
+                ) : (
+                  <TrendingDownIcon />
+                )
+              }
+              label={metric.metadata.maximize ? "maximize" : "minimize"}
+              size="small"
+              variant="outlined"
+            />
           </Box>
 
           <Typography variant="body2" color="text.secondary">
