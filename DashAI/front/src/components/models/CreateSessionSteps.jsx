@@ -106,6 +106,22 @@ function CreateSessionSteps({
         });
         setActiveStep(1);
         setNextEnabled(false);
+
+        if (tourContext?.run && tourContext?.stepIndex === 6) {
+          const waitForElement = () => {
+            const element = document.querySelector(
+              '[data-tour="models-validation-alert"]',
+            );
+            if (element) {
+              setTimeout(() => {
+                tourContext.nextStep();
+              }, 100);
+            } else {
+              setTimeout(waitForElement, 100);
+            }
+          };
+          setTimeout(waitForElement, 300);
+        }
       } else if (activeStep === 1) {
         await createSession();
       }

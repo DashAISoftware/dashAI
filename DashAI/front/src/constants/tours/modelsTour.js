@@ -163,6 +163,61 @@ export const modelsTourSteps = [
     isInteractive: true,
     disableBackButton: true,
   },
+  {
+    target: '[data-tour="models-validation-alert"]',
+    content: (
+      <div>
+        <h3>Column Validation</h3>
+        <p>
+          This alert shows whether your selected input and output columns match
+          the requirements of your chosen task.
+        </p>
+        <p>
+          <strong>Green (Success):</strong> Your columns are correctly
+          configured and ready for training.
+        </p>
+        <p>
+          <strong>Red (Error):</strong> The columns don't match the task
+          requirements. You'll need to adjust your selection.
+        </p>
+        <p>
+          The alert explains what types and how many columns are needed for
+          inputs and outputs.
+        </p>
+      </div>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+    disableBackButton: true,
+  },
+  {
+    target: '[data-tour="dataset-input-columns-autocomplete"]',
+    content: (
+      <div>
+        <h3>Input Columns</h3>
+        <p>
+          Here you select which columns from your dataset will be used as{" "}
+          <strong>features</strong> (inputs) for training your model.
+        </p>
+        <p>
+          Input columns contain the information the model will analyze to make
+          predictions. For example:
+        </p>
+        <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
+          <li>
+            In a house price prediction: square footage, bedrooms, location
+          </li>
+          <li>In spam detection: email text, sender, subject line</li>
+        </ul>
+        <p>
+          You can select multiple columns. By default, all columns except the
+          last one are selected as inputs.
+        </p>
+      </div>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+  },
 ];
 
 export const modelsTourConfig = {
