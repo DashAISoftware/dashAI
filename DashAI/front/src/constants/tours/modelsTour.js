@@ -247,7 +247,6 @@ export const modelsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
-    //disableBackButton: true,
   },
   {
     target: '[data-tour="exp-dataset-splits"]',
@@ -279,7 +278,6 @@ export const modelsTourSteps = [
     ),
     placement: "right",
     disableBeacon: true,
-    // disableBackButton: true,
   },
   {
     target: '[data-tour="models-next-button"]',
@@ -306,7 +304,6 @@ export const modelsTourSteps = [
     ),
     placement: "top",
     disableBeacon: true,
-    //disableBackButton: true,
   },
 ];
 
