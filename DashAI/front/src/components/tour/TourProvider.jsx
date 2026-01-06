@@ -51,6 +51,7 @@ export const TourProvider = ({ tourKey, children }) => {
         showSkipButton={tourData.config.showSkipButton}
         disableOverlayClose={tourData.config.disableOverlayClose}
         disableCloseOnEsc={tourData.config.disableCloseOnEsc}
+        disableScrollParentFix={true}
         locale={tourData.config.locale}
         styles={tourStyles}
         tooltipComponent={CustomTooltip}
