@@ -19,6 +19,7 @@ export default function OptionBox({
 
   return (
     <Button
+      data-tour="models-task-selection"
       onClick={onClick}
       sx={{
         p: 0,

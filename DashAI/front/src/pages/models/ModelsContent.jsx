@@ -3,6 +3,9 @@ import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTourContext } from "../../components/tour/TourProvider";
+import { TourButton } from "../../components/tour/TourButton";
+import { TOUR_KEYS } from "../../constants/tours";
 import LeftBar from "../../components/models/LeftBar";
 import CenterBox from "../../components/threeSectionLayout/CenterBox";
 import RightBar from "../../components/models/RightBar";
@@ -64,6 +67,7 @@ export default function ModelsContent() {
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const tourContext = useTourContext();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -212,6 +216,20 @@ export default function ModelsContent() {
     const task = tasks.find((t) => t.name === taskName);
     setSelectedTask(task);
     setStep(1);
+
+    if (tourContext?.run && tourContext?.stepIndex === 4) {
+      const waitForElement = () => {
+        const element = document.querySelector(
+          '[data-tour="models-dataset-selection"]',
+        );
+        if (element) {
+          tourContext.nextStep();
+        } else {
+          setTimeout(waitForElement, 100);
+        }
+      };
+      setTimeout(waitForElement, 100);
+    }
   };
 
   const handleBackToTaskSelection = () => {
@@ -588,245 +606,251 @@ export default function ModelsContent() {
           : 100;
 
   return (
-    <Box
-      height="calc(100vh - 74px)"
-      width="100%"
-      display="flex"
-      data-container="models"
-    >
-      {/* Left Panel */}
+    <>
+      <TourButton tourKey={TOUR_KEYS.MODELS} />
       <Box
-        width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
-        position="relative"
-        sx={{
-          transition: isTogglingLeft
-            ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
-            : "none",
-          opacity: leftBarVisible ? 1 : 0,
-          overflow: "hidden",
-        }}
+        height="calc(100vh - 74px)"
+        width="100%"
+        display="flex"
+        data-container="models"
       >
-        {leftBarVisible && (
-          <>
-            <LeftBar
-              datasets={datasets}
-              selectedDatasetId={selectedDatasetId}
-              sessions={sessions}
-              selectedSessionId={selectedSessionId}
-              tasks={tasks}
-              onDatasetClick={handleDatasetClick}
-              onDatasetDelete={handleDatasetDelete}
-              onDatasetEdit={handleDatasetEdit}
-              onSessionClick={handleSessionClick}
-              onSessionDelete={handleSessionDelete}
-              onSessionEdit={handleSessionEdit}
-              onToggle={handleToggleLeft}
-              handleNewSessionButton={handleNewSessionButton}
-            />
-            <Box
-              onMouseDown={() => {
-                isResizingLeft.current = true;
-                document.body.style.cursor = "col-resize";
-                document.body.style.userSelect = "none";
-              }}
-              sx={{
-                position: "absolute",
-                right: -2,
-                top: 0,
-                bottom: 0,
-                width: "5px",
-                cursor: "col-resize",
-                bgcolor: "transparent",
-                transition: "background-color 0.2s ease",
-                "&:hover": {
-                  bgcolor: "primary.main",
-                },
-                zIndex: 10,
-              }}
-            />
-          </>
-        )}
-      </Box>
-
-      {!leftBarVisible && (
-        <IconButton
-          onClick={handleToggleLeft}
+        {/* Left Panel */}
+        <Box
+          data-tour="models-left-panel"
+          width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
+          position="relative"
           sx={{
-            position: "absolute",
-            left: 8,
-            top: "50%",
-            transform: "translateY(-50%)",
-            bgcolor: "background.paper",
-            zIndex: 10,
-            transition: "all 0.2s ease",
-            "&:hover": {
-              bgcolor: "action.hover",
-              transform: "translateY(-50%) scale(1.1)",
-            },
-          }}
-        >
-          <ChevronRight />
-        </IconButton>
-      )}
-
-      {/* Center Panel */}
-      <Box
-        width={`${centerWidth}%`}
-        sx={{
-          transition:
-            isTogglingLeft || isTogglingRight
-              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+            transition: isTogglingLeft
+              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
               : "none",
-        }}
-      >
-        <CenterBox>
-          {selectedSessionId ? (
-            <SessionVisualization
-              session={selectedSession}
-              runs={runs}
-              onTrain={handleTrainRun}
-              onEditRun={handleEditRun}
-              onDeleteRun={handleDeleteRun}
-            />
-          ) : step === 1 && selectedTask ? (
-            <CreateSessionSteps
-              backHome={handleBackToTaskSelection}
-              selectedTask={selectedTask}
-              datasets={datasets}
-              handleSessionCreated={handleSessionCreated}
-              existingSessions={sessions}
-              preselectedDatasetId={selectedDatasetId}
-            />
-          ) : step === 2 && selectedDatasetId ? (
-            <DatasetVisualization
-              dataset={datasets.find((d) => d.id === selectedDatasetId)}
-              onSessionCreated={handleSessionCreated}
-              onNewSession={handleNewSessionFromDataset}
-              existingSessions={sessions}
-              tasks={tasks}
-            />
-          ) : step === 0 ? (
-            <SelectOptionMenu
-              title={
-                selectedDatasetId
-                  ? "Select a Task for Your Session"
-                  : "Models Module"
-              }
-              subtitle={
-                selectedDatasetId
-                  ? `Choose the machine learning task for your session with dataset "${
-                      datasets.find((d) => d.id === selectedDatasetId)?.name
-                    }".`
-                  : "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
-              }
-              options={tasks.map((task) => ({
-                name: task.name,
-                display_name:
-                  task.metadata?.display_name ||
-                  task.name
-                    .replace("Task", "")
-                    .replace(/([A-Z])/g, " $1")
-                    .trim(),
-                description:
-                  task.description || task.metadata?.short_description || "",
-                Icon: null,
-              }))}
-              searchBar={true}
-              goToNextStep={handleTaskSelect}
-              goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
-              showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}
-              onGoToDatasets={handleGoToDatasets}
-            />
-          ) : null}
-        </CenterBox>
-      </Box>
-
-      {!rightBarVisible && (
-        <IconButton
-          onClick={handleToggleRight}
-          sx={{
-            position: "absolute",
-            right: 8,
-            top: "50%",
-            transform: "translateY(-50%)",
-            bgcolor: "background.paper",
-            zIndex: 10,
-            transition: "all 0.2s ease",
-            "&:hover": {
-              bgcolor: "action.hover",
-              transform: "translateY(-50%) scale(1.1)",
-            },
+            opacity: leftBarVisible ? 1 : 0,
+            overflow: "hidden",
           }}
         >
-          <ChevronLeft />
-        </IconButton>
-      )}
+          {leftBarVisible && (
+            <>
+              <LeftBar
+                datasets={datasets}
+                selectedDatasetId={selectedDatasetId}
+                sessions={sessions}
+                selectedSessionId={selectedSessionId}
+                tasks={tasks}
+                onDatasetClick={handleDatasetClick}
+                onDatasetDelete={handleDatasetDelete}
+                onDatasetEdit={handleDatasetEdit}
+                onSessionClick={handleSessionClick}
+                onSessionDelete={handleSessionDelete}
+                onSessionEdit={handleSessionEdit}
+                onToggle={handleToggleLeft}
+                handleNewSessionButton={handleNewSessionButton}
+              />
+              <Box
+                onMouseDown={() => {
+                  isResizingLeft.current = true;
+                  document.body.style.cursor = "col-resize";
+                  document.body.style.userSelect = "none";
+                }}
+                sx={{
+                  position: "absolute",
+                  right: -2,
+                  top: 0,
+                  bottom: 0,
+                  width: "5px",
+                  cursor: "col-resize",
+                  bgcolor: "transparent",
+                  transition: "background-color 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "primary.main",
+                  },
+                  zIndex: 10,
+                }}
+              />
+            </>
+          )}
+        </Box>
 
-      {/* Right Panel */}
-      <Box
-        width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
-        position="relative"
-        sx={{
-          transition: isTogglingRight
-            ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
-            : "none",
-          opacity: rightBarVisible ? 1 : 0,
-          overflow: "hidden",
-        }}
-      >
-        {rightBarVisible && (
-          <>
-            <Box
-              onMouseDown={() => {
-                isResizingRight.current = true;
-                document.body.style.cursor = "col-resize";
-                document.body.style.userSelect = "none";
-              }}
-              sx={{
-                position: "absolute",
-                left: -2,
-                top: 0,
-                bottom: 0,
-                width: "5px",
-                cursor: "col-resize",
-                bgcolor: "transparent",
-                transition: "background-color 0.2s ease",
-                "&:hover": {
-                  bgcolor: "primary.main",
-                },
-                zIndex: 10,
-              }}
-            />
-            <RightBar
-              session={selectedSession}
-              onToggle={handleToggleRight}
-              onModelClick={handleModelClick}
-            />
-          </>
+        {!leftBarVisible && (
+          <IconButton
+            onClick={handleToggleLeft}
+            sx={{
+              position: "absolute",
+              left: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              bgcolor: "background.paper",
+              zIndex: 10,
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "action.hover",
+                transform: "translateY(-50%) scale(1.1)",
+              },
+            }}
+          >
+            <ChevronRight />
+          </IconButton>
         )}
+
+        {/* Center Panel */}
+        <Box
+          data-tour="models-center-panel"
+          width={`${centerWidth}%`}
+          sx={{
+            transition:
+              isTogglingLeft || isTogglingRight
+                ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                : "none",
+          }}
+        >
+          <CenterBox>
+            {selectedSessionId ? (
+              <SessionVisualization
+                session={selectedSession}
+                runs={runs}
+                onTrain={handleTrainRun}
+                onEditRun={handleEditRun}
+                onDeleteRun={handleDeleteRun}
+              />
+            ) : step === 1 && selectedTask ? (
+              <CreateSessionSteps
+                backHome={handleBackToTaskSelection}
+                selectedTask={selectedTask}
+                datasets={datasets}
+                handleSessionCreated={handleSessionCreated}
+                existingSessions={sessions}
+                preselectedDatasetId={selectedDatasetId}
+              />
+            ) : step === 2 && selectedDatasetId ? (
+              <DatasetVisualization
+                dataset={datasets.find((d) => d.id === selectedDatasetId)}
+                onSessionCreated={handleSessionCreated}
+                onNewSession={handleNewSessionFromDataset}
+                existingSessions={sessions}
+                tasks={tasks}
+              />
+            ) : step === 0 ? (
+              <SelectOptionMenu
+                title={
+                  selectedDatasetId
+                    ? "Select a Task for Your Session"
+                    : "Models Module"
+                }
+                subtitle={
+                  selectedDatasetId
+                    ? `Choose the machine learning task for your session with dataset "${
+                        datasets.find((d) => d.id === selectedDatasetId)?.name
+                      }".`
+                    : "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
+                }
+                options={tasks.map((task) => ({
+                  name: task.name,
+                  display_name:
+                    task.metadata?.display_name ||
+                    task.name
+                      .replace("Task", "")
+                      .replace(/([A-Z])/g, " $1")
+                      .trim(),
+                  description:
+                    task.description || task.metadata?.short_description || "",
+                  Icon: null,
+                }))}
+                searchBar={true}
+                goToNextStep={handleTaskSelect}
+                goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
+                showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}
+                onGoToDatasets={handleGoToDatasets}
+              />
+            ) : null}
+          </CenterBox>
+        </Box>
+
+        {!rightBarVisible && (
+          <IconButton
+            onClick={handleToggleRight}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              bgcolor: "background.paper",
+              zIndex: 10,
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "action.hover",
+                transform: "translateY(-50%) scale(1.1)",
+              },
+            }}
+          >
+            <ChevronLeft />
+          </IconButton>
+        )}
+
+        {/* Right Panel */}
+        <Box
+          data-tour="models-right-panel"
+          width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
+          position="relative"
+          sx={{
+            transition: isTogglingRight
+              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
+              : "none",
+            opacity: rightBarVisible ? 1 : 0,
+            overflow: "hidden",
+          }}
+        >
+          {rightBarVisible && (
+            <>
+              <Box
+                onMouseDown={() => {
+                  isResizingRight.current = true;
+                  document.body.style.cursor = "col-resize";
+                  document.body.style.userSelect = "none";
+                }}
+                sx={{
+                  position: "absolute",
+                  left: -2,
+                  top: 0,
+                  bottom: 0,
+                  width: "5px",
+                  cursor: "col-resize",
+                  bgcolor: "transparent",
+                  transition: "background-color 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "primary.main",
+                  },
+                  zIndex: 10,
+                }}
+              />
+              <RightBar
+                session={selectedSession}
+                onToggle={handleToggleRight}
+                onModelClick={handleModelClick}
+              />
+            </>
+          )}
+        </Box>
+
+        {/* Add Model Dialog */}
+        <AddModelDialog
+          open={addModelDialogOpen}
+          onClose={() => {
+            setAddModelDialogOpen(false);
+            setPreselectedModel(null);
+          }}
+          session={selectedSession}
+          preselectedModel={preselectedModel}
+          existingRuns={runs}
+          onRunCreated={handleRunCreated}
+        />
+
+        {/* Retrain Confirmation Dialog */}
+        <RetrainConfirmDialog
+          open={retrainDialogOpen}
+          onClose={handleCancelRetrain}
+          onConfirm={handleConfirmRetrain}
+          run={runToRetrain}
+          operationsCount={operationsCount}
+        />
       </Box>
-
-      {/* Add Model Dialog */}
-      <AddModelDialog
-        open={addModelDialogOpen}
-        onClose={() => {
-          setAddModelDialogOpen(false);
-          setPreselectedModel(null);
-        }}
-        session={selectedSession}
-        preselectedModel={preselectedModel}
-        existingRuns={runs}
-        onRunCreated={handleRunCreated}
-      />
-
-      {/* Retrain Confirmation Dialog */}
-      <RetrainConfirmDialog
-        open={retrainDialogOpen}
-        onClose={handleCancelRetrain}
-        onConfirm={handleConfirmRetrain}
-        run={runToRetrain}
-        operationsCount={operationsCount}
-      />
-    </Box>
+    </>
   );
 }

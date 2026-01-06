@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Stepper, Step, StepLabel } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
+import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
@@ -20,15 +21,23 @@ function CreateSessionSteps({
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
+  const tourContext = useTourContext();
 
-  // Step 1 state: Name and Dataset
   const [selectedDataset, setSelectedDataset] = useState(
     preselectedDatasetId
       ? datasets.find((d) => d.id === preselectedDatasetId) || null
       : null,
   );
 
-  // Step 2 state: Prepare Dataset
+  const handleDatasetChange = (newDataset) => {
+    setSelectedDataset(newDataset);
+    if (tourContext?.run && newDataset) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 600);
+    }
+  };
+
   const [newExp, setNewExp] = useState({
     name: "",
     dataset: null,
@@ -69,7 +78,6 @@ function CreateSessionSteps({
     enableReinitialize: true,
     onSubmit: async (values) => {
       if (activeStep === 0) {
-        // Moving to step 2
         setNewExp({
           name: values.name.trim(),
           dataset: selectedDataset,
@@ -82,7 +90,6 @@ function CreateSessionSteps({
         setActiveStep(1);
         setNextEnabled(false);
       } else if (activeStep === 1) {
-        // Create session
         await createSession();
       }
     },
@@ -152,12 +159,10 @@ function CreateSessionSteps({
         variant: "success",
       });
 
-      // Call parent handler with created session
       if (handleSessionCreated) {
         handleSessionCreated(response);
       }
 
-      // Reset and go back home
       backHome();
     } catch (error) {
       enqueueSnackbar("Error while trying to create session", {
@@ -170,7 +175,6 @@ function CreateSessionSteps({
   return (
     <>
       <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Stepper */}
         <Box sx={{ p: 2 }}>
           <Stepper activeStep={activeStep}>
             {steps.map((label) => (
@@ -181,16 +185,16 @@ function CreateSessionSteps({
           </Stepper>
         </Box>
 
-        {/* Step content */}
         <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
           {activeStep === 0 && (
             <SetNameAndDatasetStep
               formik={formik}
               selectedDataset={selectedDataset}
-              setSelectedDataset={setSelectedDataset}
+              setSelectedDataset={handleDatasetChange}
               datasets={datasets}
               nameError={nameError}
               selectedTask={selectedTask}
+              onDatasetChange={handleDatasetChange}
             />
           )}
           {activeStep === 1 && (
@@ -202,7 +206,6 @@ function CreateSessionSteps({
           )}
         </Box>
 
-        {/* Footer with navigation buttons */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
           <FormSchemaButtonGroup
             onCancel={handleBack}
@@ -226,7 +229,6 @@ function CreateSessionSteps({
         </Box>
       </Box>
 
-      {/* Job Queue Widget */}
       <Box
         sx={{
           position: "fixed",

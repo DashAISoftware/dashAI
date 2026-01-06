@@ -9,7 +9,15 @@ function SetNameAndDatasetStep({
   datasets,
   nameError,
   selectedTask,
+  onDatasetChange,
 }) {
+  const handleDatasetChange = (newDataset) => {
+    setSelectedDataset(newDataset);
+    if (onDatasetChange) {
+      onDatasetChange(newDataset);
+    }
+  };
+
   return (
     <Grid
       container
@@ -35,7 +43,7 @@ function SetNameAndDatasetStep({
         <DatasetAutocomplete
           datasets={datasets}
           selectedDataset={selectedDataset}
-          setSelectedDataset={setSelectedDataset}
+          setSelectedDataset={handleDatasetChange}
         />
       </Grid>
 
@@ -76,6 +84,7 @@ SetNameAndDatasetStep.propTypes = {
   datasets: PropTypes.array.isRequired,
   nameError: PropTypes.string,
   selectedTask: PropTypes.object,
+  onDatasetChange: PropTypes.func,
 };
 
 export default SetNameAndDatasetStep;

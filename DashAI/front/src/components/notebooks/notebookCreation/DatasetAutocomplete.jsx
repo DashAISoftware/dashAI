@@ -68,6 +68,7 @@ export default function DatasetAutocomplete({
     <Box width="100%">
       <Box sx={{ width: "100%", mx: "auto" }}>
         <Autocomplete
+          data-tour="models-dataset-selection"
           options={datasets}
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(opt, val) => opt.id === val.id}
