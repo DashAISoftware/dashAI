@@ -134,10 +134,11 @@ export const modelsTourSteps = [
         </p>
       </div>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    disableOverlay: true,
   },
 ];
 
