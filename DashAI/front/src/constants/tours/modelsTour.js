@@ -218,6 +218,33 @@ export const modelsTourSteps = [
     placement: "bottom",
     disableBeacon: true,
   },
+  {
+    target: '[data-tour="dataset-output-columns-autocomplete"]',
+    content: (
+      <div>
+        <h3>Output Columns</h3>
+        <p>
+          Here you select which columns represent what the model should{" "}
+          <strong>predict</strong> (the target or label).
+        </p>
+        <p>
+          Output columns are what you want the model to learn to predict based
+          on the input columns. For example:
+        </p>
+        <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
+          <li>In house price prediction: the price column</li>
+          <li>In spam detection: the spam/not spam label</li>
+          <li>In customer churn: whether a customer will leave or stay</li>
+        </ul>
+        <p>
+          Usually, you select one column as output. By default, the last column
+          is selected.
+        </p>
+      </div>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+  },
 ];
 
 export const modelsTourConfig = {
