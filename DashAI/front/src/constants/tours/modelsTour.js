@@ -217,6 +217,7 @@ export const modelsTourSteps = [
     ),
     placement: "bottom",
     disableBeacon: true,
+    spotlightClicks: true,
   },
   {
     target: '[data-tour="dataset-output-columns-autocomplete"]',
@@ -242,8 +243,70 @@ export const modelsTourSteps = [
         </p>
       </div>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
+    spotlightClicks: true,
+    disableOverlay: true,
+    //disableBackButton: true,
+  },
+  {
+    target: '[data-tour="exp-dataset-splits"]',
+    content: (
+      <div>
+        <h3>Dataset Splits</h3>
+        <p>
+          Here you configure how to divide your dataset into different sets for
+          training and evaluation.
+        </p>
+        <p>
+          <strong>Training Set:</strong> Used to train the model (typically
+          60-80%)
+        </p>
+        <p>
+          <strong>Validation Set:</strong> Used to tune and validate during
+          training (typically 10-20%)
+        </p>
+        <p>
+          <strong>Test Set:</strong> Used to evaluate final model performance
+          (typically 10-20%)
+        </p>
+        <p>
+          You can choose between <strong>Random</strong> (automatic split),{" "}
+          <strong>Manual</strong> (specify rows), or <strong>Predefined</strong>{" "}
+          (if your dataset already has splits).
+        </p>
+      </div>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    // disableBackButton: true,
+  },
+  {
+    target: '[data-tour="models-next-button"]',
+    content: (
+      <div>
+        <h3>Create Your Session!</h3>
+        <p>
+          Once you've configured the input columns, output columns, and dataset
+          splits, you're ready to create your training session!
+        </p>
+        <p>
+          Click the <strong>Create Session</strong> button to finalize the setup
+          and start adding machine learning models to train.
+        </p>
+        <p>
+          <strong>Note:</strong> The button will only be enabled when all
+          required configurations are valid (green validation alert).
+        </p>
+        <p style={{ marginTop: "10px", fontSize: "0.9em", color: "#666" }}>
+          🎉 After creating the session, you'll be able to add different models
+          from the right panel and compare their performance!
+        </p>
+      </div>
+    ),
+    placement: "top",
+    disableBeacon: true,
+    //disableBackButton: true,
   },
 ];
 
