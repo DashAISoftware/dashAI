@@ -3,6 +3,7 @@ import Joyride from "react-joyride";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
 import { tourStyles } from "./tourStyles";
+import { CustomTooltip } from "./CustomTooltip";
 
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
@@ -52,6 +53,7 @@ export const TourProvider = ({ tourKey, children }) => {
         disableCloseOnEsc={tourData.config.disableCloseOnEsc}
         locale={tourData.config.locale}
         styles={tourStyles}
+        tooltipComponent={CustomTooltip}
         scrollToFirstStep
         scrollOffset={100}
       />

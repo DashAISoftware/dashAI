@@ -112,7 +112,7 @@ export const modelsTourSteps = [
     placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
-    hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="models-dataset-selection"]',
@@ -137,8 +137,8 @@ export const modelsTourSteps = [
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
-    hideFooter: true,
     disableOverlay: true,
+    isInteractive: true,
   },
 ];
 
