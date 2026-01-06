@@ -166,7 +166,7 @@ function AddModelDialog({
       }
 
       if (name.trim() === "") {
-        enqueueSnackbar("Please enter a run name", {
+        enqueueSnackbar("Please enter a name for the model", {
           variant: "warning",
         });
         return;
@@ -256,9 +256,9 @@ function AddModelDialog({
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(
     selectedOptimizer &&
-    optimizerParameters &&
-    Object.keys(optimizerParameters).length > 0 &&
-    goalMetric,
+      optimizerParameters &&
+      Object.keys(optimizerParameters).length > 0 &&
+      goalMetric,
   );
 
   return (
@@ -302,7 +302,7 @@ function AddModelDialog({
         {activeStep === 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <TextField
-              label="Run Name"
+              label="Model Name"
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -310,7 +310,7 @@ function AddModelDialog({
               }}
               fullWidth
               required
-              placeholder="Run Name"
+              placeholder="Model Name"
               helperText={selectedModel ? `Model: ${selectedModel}` : ""}
             />
 

@@ -125,20 +125,18 @@ function RunCard({
       }}
     >
       <CardContent>
-        {/* Header: Timestamp and Status */}
+        {/* Run Name and Status */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
+            alignItems: "center",
             mb: 2,
           }}
         >
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              Created: {formatDate(run.created)}
-            </Typography>
-          </Box>
+          <Typography variant="h6" component="div">
+            {run.name}
+          </Typography>
           <Chip
             label={statusText}
             color={getStatusColor(statusText)}
@@ -146,17 +144,12 @@ function RunCard({
           />
         </Box>
 
-        {/* Run Name and Model */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6" component="div" sx={{ mb: 0.5 }}>
-            {run.name}
+        {/* Model */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <Settings fontSize="small" color="action" />
+          <Typography variant="body2" color="text.secondary">
+            {modelDisplayName}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Settings fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
-              {modelDisplayName}
-            </Typography>
-          </Box>
         </Box>
 
         {/* Metrics Summary */}
