@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Stepper, Step, StepLabel } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -22,6 +22,7 @@ function CreateSessionSteps({
   const [activeStep, setActiveStep] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
   const tourContext = useTourContext();
+  const hasAdvancedTourRef = useRef(false);
 
   const [selectedDataset, setSelectedDataset] = useState(
     preselectedDatasetId
@@ -31,10 +32,26 @@ function CreateSessionSteps({
 
   const handleDatasetChange = (newDataset) => {
     setSelectedDataset(newDataset);
-    if (tourContext?.run && newDataset) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 600);
+    if (
+      tourContext?.run &&
+      tourContext?.stepIndex === 5 &&
+      newDataset &&
+      !hasAdvancedTourRef.current
+    ) {
+      hasAdvancedTourRef.current = true;
+      const waitForElement = () => {
+        const element = document.querySelector(
+          '[data-tour="models-next-button"]',
+        );
+        if (element) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 100);
+        } else {
+          setTimeout(waitForElement, 100);
+        }
+      };
+      setTimeout(waitForElement, 200);
     }
   };
 
@@ -210,6 +227,7 @@ function CreateSessionSteps({
           <FormSchemaButtonGroup
             onCancel={handleBack}
             onFormSubmit={formik.handleSubmit}
+            dataTour="models-next-button"
             formik={{
               errors: {
                 ...(nameError ? { name: nameError } : {}),

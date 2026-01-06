@@ -141,6 +141,29 @@ export const modelsTourSteps = [
     isInteractive: true,
     disableBackButton: true,
   },
+  {
+    target: '[data-tour="models-next-button"]',
+    content: (
+      <div>
+        <h3>Continue to Dataset Configuration</h3>
+        <p>
+          Great! Now that you've selected your dataset, click the{" "}
+          <strong>Next</strong> button to proceed to the dataset configuration
+          step.
+        </p>
+        <p>
+          In the next step, you'll be able to select which columns to use as
+          inputs and outputs for your model training.
+        </p>
+      </div>
+    ),
+    placement: "top",
+    disableBeacon: true,
+    spotlightClicks: true,
+    disableOverlay: true,
+    isInteractive: true,
+    disableBackButton: true,
+  },
 ];
 
 export const modelsTourConfig = {
