@@ -160,7 +160,6 @@ export const modelsTourSteps = [
     placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
-    disableOverlay: true,
     isInteractive: true,
     disableBackButton: true,
   },
