@@ -67,7 +67,7 @@ export const CustomTooltip = ({
         }}
       >
         <Box>
-          {index > 0 && (
+          {index > 0 && !step.disableBackButton && (
             <Button
               {...backProps}
               sx={{
@@ -81,8 +81,7 @@ export const CustomTooltip = ({
               Back
             </Button>
           )}
-        </Box>
-
+        </Box>{" "}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {!isLastStep && (
             <Button
@@ -100,7 +99,7 @@ export const CustomTooltip = ({
             </Button>
           )}
 
-          {isInteractive ? (
+          {isInteractive && !isLastStep ? (
             <Typography
               variant="caption"
               sx={{

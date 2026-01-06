@@ -139,6 +139,7 @@ export const modelsTourSteps = [
     spotlightClicks: true,
     disableOverlay: true,
     isInteractive: true,
+    disableBackButton: true,
   },
 ];
 
