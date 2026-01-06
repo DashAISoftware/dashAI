@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
+import MetricsSelector from "../experiments/metrics/MetricsSelector";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { createExperiment } from "../../api/experiment";
@@ -35,13 +36,16 @@ function CreateSessionSteps({
     task_name: selectedTask?.name || "",
     input_columns: [],
     output_columns: [],
+    train_metrics: [],
+    validation_metrics: [],
+    test_metrics: [],
     splits: {},
     runs: [],
   });
 
   const [nextEnabled, setNextEnabled] = useState(false);
 
-  const steps = ["Select Dataset", "Prepare Dataset"];
+  const steps = ["Select Dataset", "Prepare Dataset", "Select Metrics"];
 
   const { defaultName } = useMemo(() => {
     if (!selectedTask) {
@@ -69,19 +73,20 @@ function CreateSessionSteps({
     enableReinitialize: true,
     onSubmit: async (values) => {
       if (activeStep === 0) {
-        // Moving to step 2
-        setNewExp({
+        // Moving to step 2 (Prepare Dataset)
+        setNewExp((prev) => ({
+          ...prev,
           name: values.name.trim(),
           dataset: selectedDataset,
           task_name: selectedTask?.name || "",
-          input_columns: [],
-          output_columns: [],
-          splits: {},
-          runs: [],
-        });
+        }));
         setActiveStep(1);
         setNextEnabled(false);
       } else if (activeStep === 1) {
+        // Moving to step 3 (Select Metrics)
+        setActiveStep(2);
+        setNextEnabled(false);
+      } else if (activeStep === 2) {
         // Create session
         await createSession();
       }
@@ -145,6 +150,9 @@ function CreateSessionSteps({
         newExp.name,
         newExp.input_columns,
         newExp.output_columns,
+        newExp.train_metrics,
+        newExp.validation_metrics,
+        newExp.test_metrics,
         JSON.stringify(newExp.splits),
       );
 
@@ -197,6 +205,13 @@ function CreateSessionSteps({
             <PrepareDatasetStep
               newExp={newExp}
               setNewExp={setNewExp}
+              setNextEnabled={setNextEnabled}
+            />
+          )}
+          {activeStep === 2 && (
+            <MetricsSelector
+              experiment={newExp}
+              setExperiment={setNewExp}
               setNextEnabled={setNextEnabled}
             />
           )}
