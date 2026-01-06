@@ -25,7 +25,8 @@ export const modelsTourSteps = [
       <div>
         <h3>Sessions and Datasets Panel</h3>
         <p>
-          On the left, you'll find all your training sessions organized by task.
+          On the left, you'll find all your available datasets, and above them,
+          all your training sessions organized by task.
         </p>
         <p>
           <strong>Sessions</strong> are where you train and compare different
@@ -45,15 +46,15 @@ export const modelsTourSteps = [
     content: (
       <div>
         <h3>Main Workspace</h3>
-        <p>This is your main working area. Here you can:</p>
-        <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
-          <li>
-            Select machine learning tasks (Classification, Regression, etc.)
-          </li>
-          <li>Create and configure training sessions</li>
-          <li>Add models to your sessions</li>
-          <li>View model performance and compare metrics</li>
-        </ul>
+        <p>
+          This is your main working area. The content here changes depending on
+          what you're doing.
+        </p>
+        <p>
+          Right now, you can select a machine learning task to start creating a
+          new session. Once you have sessions, you'll be able to add models,
+          view their performance, and compare metrics here.
+        </p>
       </div>
     ),
     placement: "bottom",
@@ -63,18 +64,14 @@ export const modelsTourSteps = [
     target: '[data-tour="models-right-panel"]',
     content: (
       <div>
-        <h3>Available Models</h3>
+        <h3>Models Panel</h3>
         <p>
-          On the right side, you'll see all the machine learning models
-          available for your selected task.
+          This panel will display all machine learning models compatible with
+          the task you select.
         </p>
         <p>
-          Each model has different strengths and characteristics. You can click
-          on any model to add it to your session and start training.
-        </p>
-        <p>
-          <strong>Tip:</strong> Try adding multiple models to compare their
-          performance!
+          Once you create your session, you'll be able to add and train
+          different models here to compare which one works best with your data.
         </p>
       </div>
     ),
@@ -151,10 +148,6 @@ export const modelsTourSteps = [
           <strong>Next</strong> button to proceed to the dataset configuration
           step.
         </p>
-        <p>
-          In the next step, you'll be able to select which columns to use as
-          inputs and outputs for your model training.
-        </p>
       </div>
     ),
     placement: "top",
@@ -178,7 +171,8 @@ export const modelsTourSteps = [
         </p>
         <p>
           <strong>Red (Error):</strong> The columns don't match the task
-          requirements. You'll need to adjust your selection.
+          requirements. Don't worry! You can adjust your column selection in the
+          next steps to fix this.
         </p>
         <p>
           The alert explains what types and how many columns are needed for
@@ -215,9 +209,10 @@ export const modelsTourSteps = [
         </p>
       </div>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableOverlay: true,
   },
   {
     target: '[data-tour="dataset-output-columns-autocomplete"]',
@@ -278,6 +273,7 @@ export const modelsTourSteps = [
     ),
     placement: "right",
     disableBeacon: true,
+    spotlightClicks: true,
   },
   {
     target: '[data-tour="models-next-button"]',
