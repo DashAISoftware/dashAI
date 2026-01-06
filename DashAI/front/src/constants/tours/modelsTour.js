@@ -105,7 +105,7 @@ export const modelsTourSteps = [
           </li>
         </ul>
         <p>
-          <strong>Click on a task to continue the tour!</strong>
+          <strong>Click on this task to continue the tour!</strong>
         </p>
       </div>
     ),
