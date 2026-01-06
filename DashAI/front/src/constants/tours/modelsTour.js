@@ -146,7 +146,7 @@ export const modelsTourConfig = {
   showProgress: true,
   showBackButton: true,
   showSkipButton: true,
-  disableOverlayClose: false,
+  disableOverlayClose: true,
   disableCloseOnEsc: false,
   locale: {
     back: "Back",
