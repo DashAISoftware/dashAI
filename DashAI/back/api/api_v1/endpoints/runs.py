@@ -1,66 +1,45 @@
+import json
 import logging
 import os
 import pickle
 import shutil
+import tempfile
+import zipfile
+from pathlib import Path
 from typing import Union
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.exceptions import HTTPException
+from fastapi.responses import FileResponse
 from kink import di, inject
 from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
+from DashAI.back.api.api_v1.endpoints.utils.run_utils import (
+    create_run_from_export,
+    get_metrics_for_run,
+    parse_metrics,
+    reset_run,
+    serialize_metrics,
+    serialize_run,
+    validate_import_structure,
+    zip_directory,
+)
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.core.enums.metrics import LevelEnum
-from DashAI.back.dependencies.database.models import Experiment, Metric, Run, RunStatus
+from DashAI.back.dependencies.database.models import Experiment, Run, RunStatus
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def get_metrics_for_run(db, run_id: int):
-    """Retrieve metrics associated with a specific run.
-
-    Parameters
-    ----------
-    db : Session
-        SQLAlchemy session to interact with the database.
-    run_id : int
-        ID of the run for which to retrieve metrics.
-
-    Returns
-    -------
-    dict
-        A dictionary containing train, validation, and test metrics for the run.
-    """
-    metrics = (
-        db.query(Metric)
-        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
-        .all()
-    )
-
-    # Initialize the response structure
-    response = {
-        "train_metrics": None,
-        "validation_metrics": None,
-        "test_metrics": None,
-    }
-
-    # Group metrics by split
-    for metric in metrics:
-        # Determine the key in the response dictionary
-        split_key = f"{metric.split.name.lower()}_metrics"
-
-        if response[split_key] is None:
-            response[split_key] = {}
-
-        # In the new schema, we store 'value'.
-        # For 'LAST' level, we just want the latest name: value pair.
-        response[split_key][metric.name] = metric.value
-
-    return response
 
 
 @router.get("/")
@@ -443,62 +422,203 @@ async def reset_run_by_id(
             ) from e
 
 
-def reset_run(run):
-    """
-    Reset a run to NOT_STARTED status and delete associated files.
+@router.get("/{run_id}/export_model")
+@inject
+async def export_model(
+    run_id: int,
+    background_tasks: BackgroundTasks,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Export the trained model associated with the provided run ID.
 
     Parameters
     ----------
-    run : Run
-        The run object to reset.
-    """
-    setattr(run, "status", RunStatus.NOT_STARTED)
-    setattr(run, "train_metrics", None)
-    setattr(run, "validation_metrics", None)
-    setattr(run, "test_metrics", None)
-    setattr(run, "start_time", None)
-    setattr(run, "delivery_time", None)
-    setattr(run, "end_time", None)
+    run_id : int
+        ID of the run whose model is to be exported.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
 
-    # Delete metrics from DB
-    with di["session_factory"]() as db:
-        db.query(Metric).filter(Metric.run_id == run.id).delete()
-        db.commit()
-
-    # Delete files
-    if run.run_path and os.path.exists(run.run_path):
-        remove_path(run.run_path)
-        setattr(run, "run_path", None)
-    if run.plot_history_path and os.path.exists(run.plot_history_path):
-        remove_path(run.plot_history_path)
-        setattr(run, "plot_history_path", None)
-    if run.plot_slice_path and os.path.exists(run.plot_slice_path):
-        remove_path(run.plot_slice_path)
-        setattr(run, "plot_slice_path", None)
-    if run.plot_contour_path and os.path.exists(run.plot_contour_path):
-        remove_path(run.plot_contour_path)
-        setattr(run, "plot_contour_path", None)
-    if run.plot_importance_path and os.path.exists(run.plot_importance_path):
-        remove_path(run.plot_importance_path)
-        setattr(run, "plot_importance_path", None)
-
-
-def remove_path(path):
-    """Removes a file or directory
-
-    Parameters
-    ----------
-    path : str
-        The path to the file or directory to remove.
+    Returns
+    -------
+    FileResponse
+        A zip file containing the model and associated metadata.
 
     Raises
     ------
-    ValueError
-        Raised if the path is not a file, directory, or symbolic link.
+    HTTPException
+        If the run is not found or if the model file does not exist.
     """
-    if os.path.isfile(path) or os.path.islink(path):
-        os.remove(path)
-    elif os.path.isdir(path):
-        shutil.rmtree(path)
-    else:
-        raise ValueError("file {} is not a file or dir.".format(path))
+    with session_factory() as db:
+        run = db.get(Run, run_id)
+        if not run:
+            raise HTTPException(404, "Run not found")
+
+        if not run.run_path or not os.path.exists(run.run_path):
+            raise HTTPException(404, "Model file not found")
+
+        # Create temp dir
+        tmp_dir = Path(tempfile.mkdtemp())
+
+        export_dir = tmp_dir / f"run_{run_id}"
+        export_dir.mkdir()
+
+        # Metadata for run and metrics
+        (export_dir / "run.json").write_text(json.dumps(serialize_run(run), indent=2))
+
+        (export_dir / "metrics.json").write_text(
+            json.dumps(serialize_metrics(run.metrics), indent=2)
+        )
+
+        # Copy model files
+        model_dir = export_dir / "model"
+        model_dir.mkdir()
+
+        model_path = Path(run.run_path)
+        if model_path.is_dir():
+            shutil.copytree(model_path, model_dir, dirs_exist_ok=True)
+        else:
+            shutil.copy2(model_path, model_dir / model_path.name)
+
+        # Copy HPO plot files if they exist
+        hpo_plots = {
+            "plot_history": run.plot_history_path,
+            "plot_slice": run.plot_slice_path,
+            "plot_contour": run.plot_contour_path,
+            "plot_importance": run.plot_importance_path,
+        }
+        for _, plot_path in hpo_plots.items():
+            if plot_path and os.path.exists(plot_path):
+                shutil.copy2(plot_path, export_dir / Path(plot_path).name)
+
+        # Create zip file
+        zip_path = tmp_dir / f"run_{run_id}_export.zip"
+        zip_directory(export_dir, zip_path)
+
+        # Schedule temp dir removal after response
+        background_tasks.add_task(shutil.rmtree, tmp_dir, ignore_errors=True)
+
+        return FileResponse(
+            path=zip_path,
+            media_type="application/zip",
+            filename=zip_path.name,
+            background=background_tasks,
+        )
+
+
+@router.post("/import_run", status_code=status.HTTP_201_CREATED)
+@inject
+async def import_run(
+    experiment_id: int,
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    config: dict = Depends(lambda: di["config"]),
+):
+    """
+    Import a run from a ZIP file containing the model and associated metadata.
+
+    Parameters
+    ----------
+    experiment_id : int
+        ID of the experiment to which the imported run will be associated.
+    file : UploadFile
+        A ZIP file containing the run data and model files.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the imported run ID, experiment ID, and status.
+
+    """
+
+    if file.content_type != "application/zip":
+        raise HTTPException(400, "Expected a ZIP file")
+
+    # Create temp dir
+    tmp_dir = Path(tempfile.mkdtemp())
+
+    try:
+        zip_path = tmp_dir / "upload.zip"
+        extract_dir = tmp_dir / "extracted"
+
+        zip_path.write_bytes(await file.read())
+
+        with zipfile.ZipFile(zip_path) as zipf:
+            zipf.extractall(extract_dir)
+
+        try:
+            validate_import_structure(extract_dir)
+        except ValueError as e:
+            raise HTTPException(400, str(e)) from e
+
+        run_data = json.loads((extract_dir / "run.json").read_text())
+        metrics_path = extract_dir / "metrics.json"
+
+        with session_factory() as db:
+            experiment = db.get(Experiment, experiment_id)
+            if not experiment:
+                raise HTTPException(404, "Experiment not found")
+
+            # Create run record
+            run = create_run_from_export(run_data, experiment_id)
+            db.add(run)
+            db.flush()  # get run.id
+
+            # Copy model files
+            model_src = extract_dir / "model"
+
+            run_dir = Path(config["RUNS_PATH"]) / str(run.id)
+            run_dir.mkdir(parents=True, exist_ok=True)
+
+            # List contents of model/
+            entries = list(model_src.iterdir())
+
+            if len(entries) == 1 and entries[0].is_file():
+                # Single file model
+                dst = run_dir / entries[0].name
+                shutil.copy2(entries[0], dst)
+                run.run_path = str(dst)
+
+            else:
+                # Directory model
+                shutil.copytree(
+                    model_src,
+                    run_dir,
+                    dirs_exist_ok=True,
+                )
+                run.run_path = str(run_dir)
+
+            # Add HPO plot paths if available
+            hpo_plots = {
+                "plot_history": run_data.get("plot_history_path"),
+                "plot_slice": run_data.get("plot_slice_path"),
+                "plot_contour": run_data.get("plot_contour_path"),
+                "plot_importance": run_data.get("plot_importance_path"),
+            }
+            for plot_name, plot_path in hpo_plots.items():
+                if plot_path:
+                    src_path = extract_dir / Path(plot_path).name
+                    if src_path.exists():
+                        dst_path = Path(config["RUNS_PATH"]) / (
+                            plot_name + "_" + str(run.id) + src_path.suffix
+                        )
+                        shutil.copy2(src_path, dst_path)
+                        setattr(run, plot_name + "_path", str(dst_path))
+
+            # Add metrics if available
+            if metrics_path.exists():
+                metrics_json = json.loads(metrics_path.read_text())
+                db.add_all(parse_metrics(metrics_json, run.id))
+
+            db.commit()
+
+            return {
+                "run_id": run.id,
+                "experiment_id": experiment_id,
+                "status": "imported",
+            }
+
+    finally:
+        # Schedule temp dir removal after response
+        background_tasks.add_task(shutil.rmtree, tmp_dir, ignore_errors=True)
