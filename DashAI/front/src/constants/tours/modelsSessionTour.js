@@ -53,6 +53,38 @@ export const modelsSessionTourSteps = [
     spotlightClicks: true,
     isInteractive: true,
   },
+  {
+    target: '[data-tour="model-config"]',
+    content: (
+      <div>
+        <h3>Model Configuration</h3>
+        <p>Here you can configure your model before training:</p>
+        <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
+          <li>
+            <strong>Run Name:</strong> Give this run a meaningful name to
+            identify it later
+          </li>
+          <li>
+            <strong>Model Parameters:</strong> Configure the hyperparameters for
+            your selected model
+          </li>
+        </ul>
+        <p
+          style={{
+            backgroundColor: "#e8f5e9",
+            padding: "8px",
+            borderRadius: "4px",
+            marginTop: "10px",
+          }}
+        >
+          💡 <strong>Pro tip:</strong> The default parameters work well for most
+          cases, but you can fine-tune them for better performance!
+        </p>
+      </div>
+    ),
+    placement: "right",
+    disableBeacon: true,
+  },
 ];
 
 export const modelsSessionTourConfig = {
