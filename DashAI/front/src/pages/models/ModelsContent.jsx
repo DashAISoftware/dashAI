@@ -68,7 +68,110 @@ export default function ModelsContent() {
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const tourContext = useTourContext();
+  const tourContext = useTourContext(); // This is for MODELS tour
+
+  // Component to handle session tour context
+  const SessionTourHandler = () => {
+    const sessionTourContext = useTourContext(); // This is for MODELS_SESSION tour
+
+    const handleModelClickWithTour = (model) => {
+      handleModelClick(model, sessionTourContext);
+    };
+
+    return (
+      <>
+        {/* Center Panel - Session */}
+        <Box
+          data-tour="models-center-panel"
+          width={`${centerWidth}%`}
+          sx={{
+            transition:
+              isTogglingLeft || isTogglingRight
+                ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                : "none",
+          }}
+        >
+          <CenterBox>
+            <SessionVisualization
+              session={selectedSession}
+              runs={runs}
+              onTrain={handleTrainRun}
+              onEditRun={handleEditRun}
+              onDeleteRun={handleDeleteRun}
+            />
+          </CenterBox>
+        </Box>
+
+        {!rightBarVisible && (
+          <IconButton
+            onClick={handleToggleRight}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: "50%",
+              transform: "translateY(-50%)",
+              bgcolor: "background.paper",
+              zIndex: 10,
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "action.hover",
+                transform: "translateY(-50%) scale(1.1)",
+              },
+            }}
+          >
+            <ChevronLeft />
+          </IconButton>
+        )}
+
+        {/* Right Panel */}
+        <Box
+          data-tour="models-right-panel"
+          width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
+          position="relative"
+          sx={{
+            transition: isTogglingRight
+              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
+              : "none",
+            opacity: rightBarVisible ? 1 : 0,
+            overflow: "hidden",
+          }}
+        >
+          {rightBarVisible && (
+            <>
+              <Box
+                onMouseDown={() => {
+                  isResizingRight.current = true;
+                  document.body.style.cursor = "col-resize";
+                  document.body.style.userSelect = "none";
+                }}
+                sx={{
+                  position: "absolute",
+                  left: -2,
+                  top: 0,
+                  bottom: 0,
+                  width: "5px",
+                  cursor: "col-resize",
+                  bgcolor: "transparent",
+                  transition: "background-color 0.2s ease",
+                  "&:hover": {
+                    bgcolor: "primary.main",
+                  },
+                  zIndex: 10,
+                }}
+              />
+              <RightBar
+                session={selectedSession}
+                onToggle={handleToggleRight}
+                onModelClick={handleModelClickWithTour}
+              />
+            </>
+          )}
+        </Box>
+
+        <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
+      </>
+    );
+  };
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -343,13 +446,27 @@ export default function ModelsContent() {
     deleteDataset(id);
   };
 
-  const handleModelClick = (model) => {
+  const handleModelClick = (model, sessionTourContext) => {
     if (!selectedSession) {
       enqueueSnackbar("Please select a session first", { variant: "warning" });
       return;
     }
+
     setPreselectedModel(model.name);
     setAddModelDialogOpen(true);
+
+    // Advance tour when clicking model (step 2) - wait for modal to open
+    if (sessionTourContext?.run && sessionTourContext?.stepIndex === 2) {
+      const waitForElement = () => {
+        const element = document.querySelector('[data-tour="model-config"]');
+        if (element) {
+          sessionTourContext.nextStep();
+        } else {
+          setTimeout(waitForElement, 100);
+        }
+      };
+      setTimeout(waitForElement, 300);
+    }
   };
 
   const handleRunCreated = (newRun) => {
@@ -692,97 +809,7 @@ export default function ModelsContent() {
 
         {selectedSessionId ? (
           <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
-            <>
-              {/* Center Panel - Session */}
-              <Box
-                data-tour="models-center-panel"
-                width={`${centerWidth}%`}
-                sx={{
-                  transition:
-                    isTogglingLeft || isTogglingRight
-                      ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                      : "none",
-                }}
-              >
-                <CenterBox>
-                  <SessionVisualization
-                    session={selectedSession}
-                    runs={runs}
-                    onTrain={handleTrainRun}
-                    onEditRun={handleEditRun}
-                    onDeleteRun={handleDeleteRun}
-                  />
-                </CenterBox>
-              </Box>
-
-              {!rightBarVisible && (
-                <IconButton
-                  onClick={handleToggleRight}
-                  sx={{
-                    position: "absolute",
-                    right: 8,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    bgcolor: "background.paper",
-                    zIndex: 10,
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                      transform: "translateY(-50%) scale(1.1)",
-                    },
-                  }}
-                >
-                  <ChevronLeft />
-                </IconButton>
-              )}
-
-              {/* Right Panel */}
-              <Box
-                data-tour="models-right-panel"
-                width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
-                position="relative"
-                sx={{
-                  transition: isTogglingRight
-                    ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
-                    : "none",
-                  opacity: rightBarVisible ? 1 : 0,
-                  overflow: "hidden",
-                }}
-              >
-                {rightBarVisible && (
-                  <>
-                    <Box
-                      onMouseDown={() => {
-                        isResizingRight.current = true;
-                        document.body.style.cursor = "col-resize";
-                        document.body.style.userSelect = "none";
-                      }}
-                      sx={{
-                        position: "absolute",
-                        left: -2,
-                        top: 0,
-                        bottom: 0,
-                        width: "5px",
-                        cursor: "col-resize",
-                        bgcolor: "transparent",
-                        transition: "background-color 0.2s ease",
-                        "&:hover": {
-                          bgcolor: "primary.main",
-                        },
-                        zIndex: 10,
-                      }}
-                    />
-                    <RightBar
-                      session={selectedSession}
-                      onToggle={handleToggleRight}
-                      onModelClick={handleModelClick}
-                    />
-                  </>
-                )}
-              </Box>
-
-              <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
-            </>
+            <SessionTourHandler />
           </TourProvider>
         ) : (
           <>
