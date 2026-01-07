@@ -569,19 +569,21 @@ async def import_run(
             model_src = extract_dir / "model"
 
             run_dir = Path(config["RUNS_PATH"]) / str(run.id)
-            run_dir.mkdir(parents=True, exist_ok=True)
 
             # List contents of model/
             entries = list(model_src.iterdir())
 
             if len(entries) == 1 and entries[0].is_file():
                 # Single file model
-                dst = run_dir / entries[0].name
+                dst = run_dir
                 shutil.copy2(entries[0], dst)
                 run.run_path = str(dst)
 
             else:
                 # Directory model
+                # Create run directory
+                run_dir.mkdir(parents=True, exist_ok=True)
+
                 shutil.copytree(
                     model_src,
                     run_dir,
