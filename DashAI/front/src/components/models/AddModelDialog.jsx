@@ -300,10 +300,7 @@ function AddModelDialog({
         </Stepper>
 
         {activeStep === 0 && (
-          <Box
-            data-tour="model-config"
-            sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-          >
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <TextField
               label="Run Name"
               value={name}
@@ -318,7 +315,7 @@ function AddModelDialog({
             />
 
             {selectedModel && (
-              <Box>
+              <Box data-tour="model-config">
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   Model Parameters
                 </Typography>

@@ -84,6 +84,9 @@ export const modelsSessionTourSteps = [
     ),
     placement: "right",
     disableBeacon: true,
+    disableScrolling: true,
+    disableScrollParentFix: true,
+    spotlightClicks: true,
   },
 ];
 
@@ -94,6 +97,7 @@ export const modelsSessionTourConfig = {
   showSkipButton: true,
   disableOverlayClose: true,
   disableCloseOnEsc: false,
+  disableScrollParentFix: true,
   locale: {
     back: "Back",
     close: "Close",
