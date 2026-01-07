@@ -216,7 +216,7 @@ def create_run_from_export(run_data: dict, experiment_id: int) -> Run:
         optimizer_name=run_data["optimizer_name"],
         optimizer_parameters=run_data["optimizer_parameters"],
         goal_metric=run_data["goal_metric"],
-        name=f"imported-{run_data.get('name')}",
+        name=run_data.get("name"),
         description=run_data.get("description"),
         status=RunStatus.FINISHED,
     )
