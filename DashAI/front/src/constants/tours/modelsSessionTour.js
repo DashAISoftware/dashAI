@@ -69,6 +69,10 @@ export const modelsSessionTourSteps = [
             your selected model
           </li>
         </ul>
+        <p>
+          Once you're happy with the configuration, click{" "}
+          <strong>Add Model</strong> to add this model to your session.
+        </p>
         <p
           style={{
             backgroundColor: "#e8f5e9",
@@ -86,7 +90,27 @@ export const modelsSessionTourSteps = [
     disableBeacon: true,
     disableScrolling: true,
     disableScrollParentFix: true,
+    disableOverlay: true,
     spotlightClicks: true,
+    isInteractive: true,
+  },
+  {
+    target: '[data-tour="run-cards-section"]',
+    content: (
+      <div>
+        <h3>Run Cards Section</h3>
+        <p>
+          Great! Your model has been added. This is where all your model runs
+          appear.
+        </p>
+        <p>
+          Each card shows the model's configuration and status. You can train
+          them, view results, and compare performance here.
+        </p>
+      </div>
+    ),
+    placement: "top",
+    disableBeacon: true,
   },
 ];
 

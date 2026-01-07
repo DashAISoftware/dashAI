@@ -78,6 +78,17 @@ export default function ModelsContent() {
       handleModelClick(model, sessionTourContext);
     };
 
+    const handleRunCreatedWithTour = (newRun) => {
+      handleRunCreated(newRun);
+
+      // Advance tour after creating run (step 3 -> 4)
+      if (sessionTourContext?.run && sessionTourContext?.stepIndex === 3) {
+        setTimeout(() => {
+          sessionTourContext.nextStep();
+        }, 500);
+      }
+    };
+
     return (
       <>
         {/* Center Panel - Session */}
@@ -169,6 +180,19 @@ export default function ModelsContent() {
         </Box>
 
         <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
+
+        {/* Add Model Dialog */}
+        <AddModelDialog
+          open={addModelDialogOpen}
+          onClose={() => {
+            setAddModelDialogOpen(false);
+            setPreselectedModel(null);
+          }}
+          session={selectedSession}
+          preselectedModel={preselectedModel}
+          existingRuns={runs}
+          onRunCreated={handleRunCreatedWithTour}
+        />
       </>
     );
   };
@@ -952,19 +976,6 @@ export default function ModelsContent() {
             </Box>
           </>
         )}
-
-        {/* Add Model Dialog */}
-        <AddModelDialog
-          open={addModelDialogOpen}
-          onClose={() => {
-            setAddModelDialogOpen(false);
-            setPreselectedModel(null);
-          }}
-          session={selectedSession}
-          preselectedModel={preselectedModel}
-          existingRuns={runs}
-          onRunCreated={handleRunCreated}
-        />
 
         {/* Retrain Confirmation Dialog */}
         <RetrainConfirmDialog

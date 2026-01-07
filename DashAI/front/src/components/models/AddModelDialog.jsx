@@ -389,6 +389,7 @@ function AddModelDialog({
           </Button>
         )}
         <Button
+          data-tour="add-model-button"
           onClick={handleNext}
           variant="contained"
           disabled={
