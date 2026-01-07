@@ -183,6 +183,7 @@ export default function SessionVisualization({
       >
         {/* Sticky Comparison Table */}
         <Paper
+          data-tour="model-comparison-panel"
           sx={{
             height: `${tableHeight}px`,
             flexShrink: 0,
@@ -305,6 +306,7 @@ export default function SessionVisualization({
 
         {/* Scrollable Run Cards */}
         <Box
+          data-tour="run-cards-section"
           sx={{
             flex: 1,
             overflow: "auto",
