@@ -213,6 +213,7 @@ export default function SessionVisualization({
                   Table
                 </Button>
                 <Button
+                  data-tour="graphs-button"
                   variant={!showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}

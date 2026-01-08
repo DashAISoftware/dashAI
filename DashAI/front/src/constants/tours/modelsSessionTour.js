@@ -147,6 +147,35 @@ export const modelsSessionTourSteps = [
     isInteractive: true,
     disableBackButton: true,
   },
+  {
+    target: '[data-tour="model-comparison-panel"]',
+    content: (
+      <div>
+        <h3>Model Comparison</h3>
+        <p>
+          Once you have trained multiple models, this comparison panel will show
+          you a side-by-side view of all your models' performance.
+        </p>
+        <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
+          <li>
+            <strong>Metrics Comparison:</strong> Compare accuracy, precision,
+            recall, and other metrics
+          </li>
+          <li>
+            <strong>Parameter Analysis:</strong> See which hyperparameters
+            worked best
+          </li>
+          <li>
+            <strong>Best Model:</strong> Quickly identify your top-performing
+            model
+          </li>
+        </ul>
+        <p>This makes it easy to choose the best model for your task!</p>
+      </div>
+    ),
+    placement: "top",
+    disableBeacon: true,
+  },
 ];
 
 export const modelsSessionTourConfig = {
