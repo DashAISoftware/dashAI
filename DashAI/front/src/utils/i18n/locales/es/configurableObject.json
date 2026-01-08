@@ -1,0 +1,9 @@
+{
+  "enterValue": "Ingresa un valor",
+  "error": {
+    "splitsParams": ""
+  },
+  "lowerBound": "Límite inferior del espacio de búsqueda",
+  "optimize": "Optimizar hiperparámetro {{name}}",
+  "upperBound": "Límite superior del espacio de búsqueda"
+}

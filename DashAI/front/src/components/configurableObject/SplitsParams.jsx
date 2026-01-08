@@ -10,6 +10,8 @@ import {
 } from "@mui/material";
 import ParameterForm from "./ParameterForm";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+
 /**
  * This component is used to render the configuration for splits in a dataloader configuration
  * If the JSON schema of dataloader have split configuration
@@ -48,6 +50,7 @@ function SplitsParams({
       settings like set a seed, or shuffle the data.
     */
   let hideSection = showSplitConfig;
+  const { t } = useTranslation(["common", "configurableObject"]);
   if (showSplitConfig === "True") {
     hideSection = true;
   }
@@ -64,7 +67,7 @@ function SplitsParams({
         <Typography variant="p">Splits configuration</Typography>
         {showSplitsError && (
           <Typography variant="caption" component="p" color="error">
-            The sum of the split sizes must be 1
+            {t("configurableObject:error.splitsParams")}
           </Typography>
         )}
         <ParameterForm
@@ -77,7 +80,7 @@ function SplitsParams({
               setShowMoreOptions(true);
             }}
           >
-            More Options
+            {t("common:moreOptions")}
           </Button>
         ) : null}
       </Collapse>

@@ -8,6 +8,7 @@ import reportWebVitals from "./reportWebVitals";
 import theme from "./styles/theme";
 import { SnackbarProvider } from "notistack";
 const root = ReactDOM.createRoot(document.getElementById("root"));
+import "./utils/i18n";
 
 root.render(
   <React.StrictMode>
