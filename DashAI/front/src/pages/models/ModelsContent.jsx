@@ -84,7 +84,22 @@ export default function ModelsContent() {
       // Advance tour after creating run (step 3 -> 4)
       if (sessionTourContext?.run && sessionTourContext?.stepIndex === 3) {
         setTimeout(() => {
-          sessionTourContext.nextStep();
+          // Scroll to the newly created run card
+          const runCard = document.querySelector(
+            '[data-tour="first-run-card"]',
+          );
+          if (runCard) {
+            runCard.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "nearest",
+            });
+          }
+
+          // Advance to next step after scroll completes
+          setTimeout(() => {
+            sessionTourContext.nextStep();
+          }, 300);
         }, 500);
       }
     };

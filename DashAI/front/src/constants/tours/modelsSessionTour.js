@@ -120,6 +120,8 @@ export const modelsSessionTourSteps = [
     ),
     placement: "bottom",
     disableBeacon: true,
+    disableScrolling: true,
+    disableScrollParentFix: true,
   },
   {
     target: '[data-tour="train-button"]',
