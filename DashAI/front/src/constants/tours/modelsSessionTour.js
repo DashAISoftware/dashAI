@@ -95,22 +95,55 @@ export const modelsSessionTourSteps = [
     isInteractive: true,
   },
   {
-    target: '[data-tour="run-cards-section"]',
+    target: '[data-tour="first-run-card"]',
     content: (
       <div>
-        <h3>Run Cards Section</h3>
+        <h3>Your Model Run</h3>
         <p>
-          Great! Your model has been added. This is where all your model runs
-          appear.
+          Great! Your model has been added. This card shows all the information
+          about your model run:
+        </p>
+        <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
+          <li>
+            <strong>Status:</strong> Whether the model is trained, training, or
+            not started
+          </li>
+          <li>
+            <strong>Configuration:</strong> The parameters you selected
+          </li>
+          <li>
+            <strong>Actions:</strong> Train, edit, or delete the model
+          </li>
+        </ul>
+        <p>Let's train this model to see how it performs!</p>
+      </div>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+  },
+  {
+    target: '[data-tour="train-button"]',
+    content: (
+      <div>
+        <h3>Train Your Model</h3>
+        <p>
+          Click the <strong>Train</strong> button to start training your model
+          with the configured parameters.
         </p>
         <p>
-          Each card shows the model's configuration and status. You can train
-          them, view results, and compare performance here.
+          The training process will run in the background, and you'll be able to
+          see the progress and results here.
+        </p>
+        <p>
+          <strong>Click "Train" to continue!</strong>
         </p>
       </div>
     ),
     placement: "top",
     disableBeacon: true,
+    spotlightClicks: true,
+    isInteractive: true,
+    disableBackButton: true,
   },
 ];
 

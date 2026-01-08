@@ -329,10 +329,15 @@ export default function SessionVisualization({
             </Box>
           ) : (
             <Stack spacing={2}>
-              {sortedRuns.map((run) => (
+              {sortedRuns.map((run, index) => (
                 <Box
                   key={run.id}
                   id={`run-card-${run.id}`}
+                  data-tour={
+                    index === sortedRuns.length - 1
+                      ? "first-run-card"
+                      : undefined
+                  }
                   sx={{
                     scrollMarginTop: "20px",
                     transition: "all 0.3s ease",
@@ -351,6 +356,7 @@ export default function SessionVisualization({
                     onExplainer={handleExplainer}
                     onDelete={onDeleteRun}
                     explainerRefreshTrigger={explainerRefreshTrigger}
+                    isLastRun={index === sortedRuns.length - 1}
                   />
                 </Box>
               ))}

@@ -89,6 +89,17 @@ export default function ModelsContent() {
       }
     };
 
+    const handleTrainRunWithTour = (run) => {
+      handleTrainRun(run);
+
+      // Advance tour after clicking train (step 5 -> end)
+      if (sessionTourContext?.run && sessionTourContext?.stepIndex === 5) {
+        setTimeout(() => {
+          sessionTourContext.nextStep();
+        }, 500);
+      }
+    };
+
     return (
       <>
         {/* Center Panel - Session */}
@@ -106,7 +117,7 @@ export default function ModelsContent() {
             <SessionVisualization
               session={selectedSession}
               runs={runs}
-              onTrain={handleTrainRun}
+              onTrain={handleTrainRunWithTour}
               onEditRun={handleEditRun}
               onDeleteRun={handleDeleteRun}
             />
