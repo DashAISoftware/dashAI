@@ -12,7 +12,15 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
 from DashAI.back.core.enums.metrics import LevelEnum
-from DashAI.back.dependencies.database.models import Experiment, Metric, Run, RunStatus
+from DashAI.back.dependencies.database.models import (
+    Experiment,
+    GlobalExplainer,
+    LocalExplainer,
+    Metric,
+    Prediction,
+    Run,
+    RunStatus,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -95,6 +103,12 @@ async def get_runs(
     with session_factory() as db:
         try:
             if experiment_id is not None:
+                experiment = db.get(Experiment, experiment_id)
+                if not experiment:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Experiment not found",
+                    )
                 runs = db.scalars(
                     select(Run).where(Run.experiment_id == experiment_id)
                 ).all()
@@ -435,6 +449,175 @@ async def reset_run_by_id(
             db.commit()
             db.refresh(run)
             return run
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get("/{run_id}/operations/count")
+@inject
+async def get_run_operations_count(
+    run_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Get the count of operations (explainers and predictions) for a run.
+
+    Parameters
+    ----------
+    run_id : int
+        ID of the run to count operations for.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    dict
+        A dictionary with 'explainers' and 'predictions' counts.
+
+    Raises
+    ------
+    HTTPException
+        If the run is not found or there's a database error.
+    """
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+
+            # Count global explainers
+            global_explainers_count = (
+                db.query(GlobalExplainer)
+                .filter(GlobalExplainer.run_id == run_id)
+                .count()
+            )
+
+            # Count local explainers
+            local_explainers_count = (
+                db.query(LocalExplainer).filter(LocalExplainer.run_id == run_id).count()
+            )
+
+            # Count predictions
+            predictions_count = (
+                db.query(Prediction).filter(Prediction.run_id == run_id).count()
+            )
+
+            return {
+                "explainers": global_explainers_count + local_explainers_count,
+                "predictions": predictions_count,
+            }
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.delete("/{run_id}/operations")
+@inject
+async def delete_run_operations(
+    run_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Delete all operations (explainers and predictions) associated with a run.
+
+    Parameters
+    ----------
+    run_id : int
+        ID of the run whose operations should be deleted.
+
+    Returns
+    -------
+    dict
+        A dictionary indicating the number of deleted items.
+
+    Raises
+    ------
+    HTTPException
+        If the run is not found or there's a database error.
+    """
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+
+            deleted_count = {
+                "global_explainers": 0,
+                "local_explainers": 0,
+                "predictions": 0,
+            }
+
+            # Delete global explainers
+            global_explainers = (
+                db.query(GlobalExplainer).filter(GlobalExplainer.run_id == run_id).all()
+            )
+            for explainer in global_explainers:
+                # Delete associated files
+                if explainer.plot_path and os.path.exists(explainer.plot_path):
+                    try:
+                        remove_path(explainer.plot_path)
+                    except Exception as e:
+                        log.warning(f"Failed to delete plot file: {e}")
+                if explainer.explanation_path and os.path.exists(
+                    explainer.explanation_path
+                ):
+                    try:
+                        remove_path(explainer.explanation_path)
+                    except Exception as e:
+                        log.warning(f"Failed to delete explanation file: {e}")
+                db.delete(explainer)
+                deleted_count["global_explainers"] += 1
+
+            # Delete local explainers
+            local_explainers = (
+                db.query(LocalExplainer).filter(LocalExplainer.run_id == run_id).all()
+            )
+            for explainer in local_explainers:
+                # Delete associated files
+                if explainer.plots_path and os.path.exists(explainer.plots_path):
+                    try:
+                        remove_path(explainer.plots_path)
+                    except Exception as e:
+                        log.warning(f"Failed to delete plots directory: {e}")
+                if explainer.explanation_path and os.path.exists(
+                    explainer.explanation_path
+                ):
+                    try:
+                        remove_path(explainer.explanation_path)
+                    except Exception as e:
+                        log.warning(f"Failed to delete explanation file: {e}")
+                db.delete(explainer)
+                deleted_count["local_explainers"] += 1
+
+            # Delete predictions
+            predictions = db.query(Prediction).filter(Prediction.run_id == run_id).all()
+            for prediction in predictions:
+                # Delete associated files
+                if prediction.results_path and os.path.exists(prediction.results_path):
+                    try:
+                        remove_path(prediction.results_path)
+                    except Exception as e:
+                        log.warning(f"Failed to delete prediction results: {e}")
+                db.delete(prediction)
+                deleted_count["predictions"] += 1
+
+            db.commit()
+
+            return {
+                "deleted": True,
+                "count": deleted_count,
+                "total": sum(deleted_count.values()),
+            }
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

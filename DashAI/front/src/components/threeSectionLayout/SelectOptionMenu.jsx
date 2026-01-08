@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Grid, Button } from "@mui/material";
+import { Box, Grid, Button, Alert, AlertTitle } from "@mui/material";
 import SearchBar from "./SearchBar";
 import CustomLayout from "../custom/CustomLayout";
 import OptionBox from "./OptionBox";
@@ -11,6 +11,8 @@ export default function SelectOptionMenu({
   subtitle,
   options,
   searchBar = false,
+  showNoDatasetAlert = false,
+  onGoToDatasets = null,
 }) {
   const [search, setSearch] = useState("");
   const filteredOptions = options.filter((option) =>
@@ -26,6 +28,25 @@ export default function SelectOptionMenu({
         flexDirection={"column"}
         justifyContent={"flex-start"}
       >
+        {showNoDatasetAlert && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <AlertTitle>No Datasets Available</AlertTitle>
+            You need to upload a dataset before creating a session. Please go to
+            the Dataset Module to upload your data.
+            {onGoToDatasets && (
+              <Box sx={{ mt: 1 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={onGoToDatasets}
+                >
+                  Go to Datasets
+                </Button>
+              </Box>
+            )}
+          </Alert>
+        )}
+
         {searchBar && (
           <Box width={"450px"}>
             <SearchBar
@@ -49,7 +70,7 @@ export default function SelectOptionMenu({
               option;
 
             return (
-              <Grid item xl={4} lg={6} md={6} sm={12} xs={12} key={index}>
+              <Grid size={{ xl: 6, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
                 <OptionBox
                   optionName={display_name}
                   description={description}
@@ -67,11 +88,11 @@ export default function SelectOptionMenu({
         sx={{
           display: "flex",
           justifyContent: "flex-end",
-          mt: 2,
+          mt: 4,
         }}
       >
         {goToPrevStep && (
-          <Button variant="outlined" onClick={goToPrevStep} sx={{ mr: 1 }}>
+          <Button variant="outlined" onClick={goToPrevStep}>
             Back
           </Button>
         )}

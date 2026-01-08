@@ -10,9 +10,13 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Collapse,
+  Box,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
@@ -23,8 +27,14 @@ import { deleteExplainer } from "../../api/explainer";
  * @param {*} explainer
  * @returns Component that render a card for the explainer
  */
-export default function ExplainersCard({ explainer, scope }) {
+export default function ExplainersCard({
+  explainer,
+  scope,
+  onDelete,
+  compact = false,
+}) {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   function plotName(name) {
     return name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
@@ -40,6 +50,95 @@ export default function ExplainersCard({ explainer, scope }) {
     setOpen(false);
   };
 
+  const handleConfirmDelete = async () => {
+    await deleteExplainer(scope, explainer.id);
+    handleClose();
+    if (onDelete) {
+      onDelete();
+    } else {
+      window.location.reload();
+    }
+  };
+
+  if (compact) {
+    return (
+      <>
+        <Paper elevation={2} sx={{ p: 2, width: "100%" }}>
+          <Grid container direction="column" gap={1}>
+            <Grid
+              item
+              container
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Grid item>
+                <Typography variant="subtitle2" fontWeight="medium">
+                  {plotName(explainer.explainer_name)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {explainer.name}
+                </Typography>
+              </Grid>
+              <Grid item>
+                <IconButton
+                  size="small"
+                  aria-label="delete"
+                  color="error"
+                  onClick={handleDeleteExplainer}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
+
+            {/* Expandable plot section */}
+            <Grid item>
+              <Button
+                size="small"
+                onClick={() => setExpanded(!expanded)}
+                endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                sx={{ textTransform: "none" }}
+              >
+                {expanded ? "Hide Plot" : "Show Plot"}
+              </Button>
+
+              <Collapse in={expanded} timeout="auto" unmountOnExit>
+                <Box sx={{ mt: 2 }}>
+                  <ExplainersPlot explainer={explainer} scope={scope} />
+                </Box>
+              </Collapse>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            {"Delete explainer?"}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              If you delete the explainer it will be removed with its
+              corresponding plot, in case it has one.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleConfirmDelete} color="error" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Full mode for standalone page
   return (
     <Paper elevation={3}>
       <Grid container item minWidth={800} maxWidth={800} p={4} gap={2}>
@@ -87,21 +186,14 @@ export default function ExplainersCard({ explainer, scope }) {
               </DialogTitle>
               <DialogContent>
                 <DialogContentText id="alert-dialog-description">
-                  If you delete the explainer it will be removed with it is
+                  If you delete the explainer it will be removed with its
                   corresponding plot, in case it has one.
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleClose}>Disagree</Button>
-                <Button
-                  onClick={() => {
-                    deleteExplainer(scope, explainer.id);
-                    handleClose();
-                    window.location.reload();
-                  }}
-                  autoFocus
-                >
-                  Agree
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                  Delete
                 </Button>
               </DialogActions>
             </Dialog>
@@ -132,4 +224,6 @@ ExplainersCard.propTypes = {
     status: PropTypes.number,
   }).isRequired,
   scope: PropTypes.string.isRequired,
+  onDelete: PropTypes.func,
+  compact: PropTypes.bool,
 };

@@ -75,7 +75,6 @@ export default function ManualInputForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (onSubmit) onSubmit(rows);
-    console.log("Submitted rows:", rows);
   };
 
   return (

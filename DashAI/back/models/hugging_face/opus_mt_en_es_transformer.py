@@ -100,7 +100,9 @@ class OpusMtEnESTransformer(TranslationModel):
 
     SCHEMA = OpusMtEnESTransformerSchema
     DISPLAY_NAME: str = "Opus MT En-Es Transformer"
+    DESCRIPTION: str = "Pre-trained transformer for English-Spanish translation."
     COLOR: str = "#FFA500"
+    ICON: str = "Translate"
 
     def __init__(self, model=None, **kwargs):
         """Initialize the transformer.

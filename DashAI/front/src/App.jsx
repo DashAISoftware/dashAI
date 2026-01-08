@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import "./App.css";
 import DatasetsPage from "./pages/datasets/Datasets";
+import ModelsPage from "./pages/models/Models";
 import ExperimentsPage from "./pages/experiments/Experiments";
 import Home from "./pages/home/Home";
 import ExplainersDashboard from "./components/explainers/ExplainersDashboard";
@@ -28,6 +29,7 @@ function App() {
         <Route path="/app" element={<Home />} />
         <Route path="/app/data/" element={<DatasetsPage />} />
         <Route path="/app/experiments" element={<ExperimentsPage />} />
+        <Route path="/app/models" element={<ModelsPage />} />
         <Route path="/app/explainers">
           <Route index element={<ExplainersPage />} />
           <Route path="runs/:id" element={<ExplainersDashboard />} />

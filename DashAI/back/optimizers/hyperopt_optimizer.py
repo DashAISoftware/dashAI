@@ -136,3 +136,10 @@ class HyperOptOptimizer(BaseOptimizer):
                 params = {key: val[0] for key, val in trial["misc"]["vals"].items()}
                 trials.append({"params": params, "value": trial["result"]["loss"]})
         return trials
+
+    def get_best_params(self):
+        """Return the best parameters found during optimization."""
+        best_trial = min(
+            self.trials, key=lambda t: t["result"].get("loss", float("inf"))
+        )
+        return {key: val[0] for key, val in best_trial["misc"]["vals"].items()}

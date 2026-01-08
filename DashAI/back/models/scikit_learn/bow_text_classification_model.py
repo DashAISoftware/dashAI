@@ -76,7 +76,11 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
     """
 
     DISPLAY_NAME: str = "Bag of Words Text Classifier"
+    DESCRIPTION: str = (
+        "Text classification using bag-of-words features and tabular classifiers."
+    )
     COLOR: str = "#FF5722"
+    ICON: str = "TextFields"
     SCHEMA = BagOfWordsTextClassificationModelSchema
 
     def __init__(self, **kwargs) -> None:

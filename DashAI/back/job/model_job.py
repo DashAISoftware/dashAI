@@ -8,6 +8,7 @@ from typing import List
 from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.attributes import flag_modified
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -278,6 +279,16 @@ class ModelJob(BaseJob):
                             task,
                         )
                         model = optimizer.get_model()
+                        best_params = optimizer.get_best_params()
+
+                        updated_params = run.parameters.copy()
+                        for param_name, param_value in best_params.items():
+                            updated_params[param_name]["fixed_value"] = param_value
+
+                        run.parameters = updated_params
+                        flag_modified(run, "parameters")
+                        db.commit()
+
                         # Generate hyperparameter plot
                         trials = optimizer.get_trials_values()
                         plot_filenames, plots = optimizer.create_plots(

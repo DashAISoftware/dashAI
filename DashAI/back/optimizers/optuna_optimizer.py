@@ -130,3 +130,7 @@ class OptunaOptimizer(BaseOptimizer):
             if trial.state == optuna.trial.TrialState.COMPLETE:
                 trials.append({"params": trial.params, "value": trial.value})
         return trials
+
+    def get_best_params(self):
+        """Return the best parameters found during optimization."""
+        return self.study.best_params

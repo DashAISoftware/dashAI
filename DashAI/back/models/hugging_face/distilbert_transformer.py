@@ -114,7 +114,9 @@ class DistilBertTransformer(TextClassificationModel):
     """
 
     DISPLAY_NAME: str = "DistilBERT Transformer"
+    DESCRIPTION: str = "Distilled BERT model for efficient text classification."
     COLOR: str = "#96008E"
+    ICON: str = "Psychology"
     SCHEMA = DistilBertTransformerSchema
 
     def __init__(self, model=None, **kwargs):

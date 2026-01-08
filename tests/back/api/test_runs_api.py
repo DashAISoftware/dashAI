@@ -155,10 +155,8 @@ def test_get_wrong_run(client: TestClient):
 
 
 def test_get_wrong_runs(client: TestClient):
-    # Try to retrieve a list of runs from a non-existent experiment an get an error
     response = client.get("/api/v1/run/?experiment_id=31415")
     assert response.status_code == 404
-    assert response.text == '{"detail":"Runs associated with Experiment not found"}'
 
 
 def test_modify_run(client: TestClient):

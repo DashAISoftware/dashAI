@@ -45,9 +45,11 @@ export const updateExperiment = async ({
   formData,
 }: {
   id: string;
-  formData: object;
+  formData: { name?: string; dataset_id?: number; task_name?: string };
 }): Promise<object> => {
-  const response = await api.patch(`/v1/experiment/${id}`, formData);
+  const response = await api.patch(`/v1/experiment/${id}`, null, {
+    params: formData,
+  });
   return response.data;
 };
 

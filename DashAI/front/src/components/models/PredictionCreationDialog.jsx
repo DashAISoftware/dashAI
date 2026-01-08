@@ -1,0 +1,380 @@
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Box,
+  Typography,
+  CircularProgress,
+  IconButton,
+  Stepper,
+  Step,
+  StepLabel,
+} from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
+import ModeSelector from "../predictions/ModeSelector";
+import DatasetSelector from "../predictions/DatasetSelector";
+import ManualInput from "../predictions/ManualInput";
+import { createPrediction, filterDatasets } from "../../api/predict";
+import {
+  getDatasetInfo,
+  getDatasetTypes,
+  getDatasetSample,
+} from "../../api/datasets";
+import { enqueuePredictionJob } from "../../api/job";
+import { getExperimentById } from "../../api/experiment";
+import { useSnackbar } from "notistack";
+import { startJobPolling } from "../../utils/jobPoller";
+import { getPredictions } from "../../api/predict";
+
+const steps = ["Select Mode", "Configure Input", "Confirm"];
+
+/**
+ * PredictionCreationDialog - Wizard for creating new predictions
+ */
+export default function PredictionCreationDialog({
+  open,
+  onClose,
+  run,
+  session,
+  onPredictionCreated,
+}) {
+  const [activeStep, setActiveStep] = useState(0);
+  const [predictionMode, setPredictionMode] = useState("dataset");
+  const [datasets, setDatasets] = useState([]);
+  const [selectedDataset, setSelectedDataset] = useState(null);
+  const [manualRows, setManualRows] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [experiment, setExperiment] = useState(null);
+  const [types, setTypes] = useState({});
+  const [sample, setSample] = useState(null);
+  const [loadingExperiment, setLoadingExperiment] = useState(true);
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    if (!open) {
+      setActiveStep(0);
+      setPredictionMode("dataset");
+      setDatasets([]);
+      setSelectedDataset(null);
+      setManualRows([]);
+      setIsLoading(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!run || !open) return;
+
+      setLoadingExperiment(true);
+
+      try {
+        const availableDatasets = await filterDatasets({ run_id: run.id });
+        const availableDatasetsWithInfo = await Promise.all(
+          availableDatasets.map(async (dataset) => {
+            const datasetInfo = await getDatasetInfo(dataset.id);
+            return { ...dataset, ...datasetInfo };
+          }),
+        );
+        setDatasets(availableDatasetsWithInfo);
+
+        if (run.experiment_id || session?.id) {
+          const experimentData = await getExperimentById(
+            run.experiment_id || session.id,
+          );
+          setExperiment(experimentData);
+
+          const datasetTypes = await getDatasetTypes(experimentData.dataset_id);
+          setTypes(datasetTypes);
+
+          const datasetSample = await getDatasetSample(
+            experimentData.dataset_id,
+          );
+          setSample(datasetSample);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        enqueueSnackbar("Error loading prediction data", {
+          variant: "error",
+        });
+      } finally {
+        setLoadingExperiment(false);
+      }
+    };
+
+    fetchData();
+  }, [run, session, open, enqueueSnackbar]);
+
+  const canProceed = () => {
+    if (activeStep === 0) return true;
+    if (activeStep === 1) {
+      if (predictionMode === "dataset") {
+        return selectedDataset !== null;
+      }
+      return manualRows && manualRows.length > 0;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (activeStep < steps.length - 1) {
+      setActiveStep((prev) => prev + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    setActiveStep((prev) => prev - 1);
+  };
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+
+    try {
+      const prediction = await createPrediction(
+        run.id,
+        predictionMode === "dataset" ? selectedDataset.id : null,
+      );
+
+      const jobResponse = await enqueuePredictionJob(
+        prediction.id,
+        predictionMode === "manual" ? manualRows : null,
+      );
+
+      if (!jobResponse || !jobResponse.id) {
+        throw new Error("Failed to enqueue prediction job");
+      }
+
+      enqueueSnackbar("Prediction job submitted successfully", {
+        variant: "success",
+      });
+
+      startJobPolling(
+        jobResponse.id,
+        async () => {
+          const updatedPredictions = await getPredictions(run.id);
+          const updatedPrediction = updatedPredictions.find(
+            (p) => p.id === prediction.id,
+          );
+
+          enqueueSnackbar("Prediction completed successfully", {
+            variant: "success",
+          });
+
+          if (onPredictionCreated) {
+            onPredictionCreated(updatedPrediction || prediction);
+          }
+        },
+        (result) => {
+          // On failure
+          console.error("Prediction job failed:", result);
+          enqueueSnackbar(
+            `Prediction failed: ${result.error || "Unknown error"}`,
+            { variant: "error" },
+          );
+
+          if (onPredictionCreated) {
+            onPredictionCreated();
+          }
+        },
+      );
+
+      if (onPredictionCreated) {
+        onPredictionCreated(prediction);
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("Error creating prediction:", error);
+      enqueueSnackbar("Error creating prediction", {
+        variant: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return (
+          <Box sx={{ py: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Select how you want to provide input data for prediction
+            </Typography>
+            <ModeSelector
+              predictionMode={predictionMode}
+              setPredictionMode={setPredictionMode}
+            />
+          </Box>
+        );
+
+      case 1:
+        return (
+          <Box sx={{ py: 2 }}>
+            {predictionMode === "dataset" ? (
+              <>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  Select a dataset for prediction
+                </Typography>
+                <DatasetSelector
+                  experiment={experiment}
+                  datasets={datasets}
+                  selectedDataset={selectedDataset}
+                  setSelectedDataset={setSelectedDataset}
+                />
+              </>
+            ) : (
+              <>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  Enter manual input data
+                </Typography>
+                <ManualInput
+                  experiment={experiment}
+                  loading={loadingExperiment}
+                  types={types}
+                  sample={sample}
+                  manualInputData={manualRows}
+                  setManualInputData={setManualRows}
+                />
+              </>
+            )}
+          </Box>
+        );
+
+      case 2:
+        return (
+          <Box sx={{ py: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Confirm Prediction
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Review your prediction configuration before submitting
+            </Typography>
+            <Box sx={{ bgcolor: "background.default", p: 2, borderRadius: 1 }}>
+              <Typography variant="body2">
+                <strong>Model:</strong> {run.model_name}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Run:</strong> {run.name}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Input Type:</strong>{" "}
+                {predictionMode === "dataset" ? "Dataset" : "Manual Input"}
+              </Typography>
+              {predictionMode === "dataset" && selectedDataset && (
+                <Typography variant="body2">
+                  <strong>Dataset:</strong> {selectedDataset.name}
+                </Typography>
+              )}
+              {predictionMode === "manual" && (
+                <Typography variant="body2">
+                  <strong>Manual Rows:</strong> {manualRows.length}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  if (!run) return null;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography variant="h6">Create New Prediction</Typography>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        {loadingExperiment && activeStep === 1 ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: 200,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          renderStepContent(activeStep)
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={onClose} disabled={isLoading}>
+          Cancel
+        </Button>
+        <Box sx={{ flex: 1 }} />
+        <Button onClick={handleBack} disabled={activeStep === 0 || isLoading}>
+          Back
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleNext}
+          disabled={!canProceed() || isLoading || loadingExperiment}
+          startIcon={isLoading && <CircularProgress size={16} />}
+        >
+          {activeStep === steps.length - 1
+            ? isLoading
+              ? "Submitting..."
+              : "Submit"
+            : "Next"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+PredictionCreationDialog.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  run: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string,
+    model_name: PropTypes.string,
+    experiment_id: PropTypes.number,
+  }).isRequired,
+  session: PropTypes.shape({
+    id: PropTypes.number,
+  }),
+  onPredictionCreated: PropTypes.func,
+};

@@ -51,6 +51,7 @@ export default function NewLocalExplainerModal({
   open,
   setOpen,
   explainerConfig,
+  onExplainerCreated,
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
@@ -106,12 +107,9 @@ export default function NewLocalExplainerModal({
 
       // Start tracking this job
       if (response && response.id) {
-        console.log("Starting to track local explainer job:", response.id);
-
         startJobPolling(
           response.id,
           (result) => {
-            console.log("Local explainer job completed successfully:", result);
             enqueueSnackbar(
               `Explainer "${newLocalExpl.name}" completed successfully`,
               {
@@ -119,6 +117,9 @@ export default function NewLocalExplainerModal({
               },
             );
             updateExplainers();
+            if (onExplainerCreated) {
+              onExplainerCreated();
+            }
           },
           (result) => {
             console.error("Local explainer job failed:", result);
@@ -127,6 +128,9 @@ export default function NewLocalExplainerModal({
               { variant: "error" },
             );
             updateExplainers();
+            if (onExplainerCreated) {
+              onExplainerCreated();
+            }
           },
         );
       }

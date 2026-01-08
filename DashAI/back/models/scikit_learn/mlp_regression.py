@@ -123,7 +123,9 @@ class MLP(nn.Module):
 class MLPRegression(RegressionModel):
     SCHEMA = MLPRegressorSchema
     DISPLAY_NAME: str = "Multi-layer Perceptron (MLP) Regression"
+    DESCRIPTION: str = "Neural network with multiple hidden layers for regression."
     COLOR: str = "#FF7043"
+    ICON: str = "Psychology"
 
     def __init__(self, **kwargs) -> None:
         self.params = kwargs

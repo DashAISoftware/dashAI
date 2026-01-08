@@ -21,13 +21,11 @@ import {
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../../../api/datasets";
-import { createNotebook } from "../../../api/notebook";
 import DatasetTable from "../dataset/DatasetTable";
-import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
+import { getComponents } from "../../../api/component";
 import { useTourContext } from "../../tour/TourProvider";
 import { useSnackbar } from "notistack";
 import JobQueueWidget from "../../jobs/JobQueueWidget";
-import { useNavigate } from "react-router-dom";
 import { getDatasetStatus } from "../../../utils/datasetStatus";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import Header from "./header/Header";
@@ -43,6 +41,7 @@ import { TextTab } from "./tabs/TextTab";
 export default function DatasetVisualization({
   dataset,
   onNotebookCreated,
+  onNewNotebook,
   existingNotebooks = [],
 }) {
   if (!dataset) {
@@ -56,12 +55,10 @@ export default function DatasetVisualization({
     );
   }
 
-  const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
 
   useEffect(() => {
     setTab(0);
@@ -107,32 +104,6 @@ export default function DatasetVisualization({
     },
     [dataset.file_path, dataset.status, dataset.id],
   );
-
-  const handleCreateNotebook = async (notebookData) => {
-    try {
-      const notebookPayload = {
-        name: notebookData.name,
-        description: notebookData.description,
-        dataset_id: dataset.id,
-      };
-
-      const createdNotebook = await createNotebook(notebookPayload);
-
-      enqueueSnackbar("Notebook created successfully", {
-        variant: "success",
-      });
-
-      setShowCreateNotebookModal(false);
-
-      if (onNotebookCreated) {
-        onNotebookCreated(createdNotebook);
-      }
-    } catch (error) {
-      enqueueSnackbar("Error creating notebook", {
-        variant: "error",
-      });
-    }
-  };
 
   const status = getDatasetStatus(dataset.status);
   const isProcessing = !(status === "Finished" || status === "Error");
@@ -229,26 +200,14 @@ export default function DatasetVisualization({
                 >
                   <Button
                     variant="contained"
-                    disabled={isProcessing}
-                    onClick={() => {
-                      navigate("../app/experiments", {
-                        state: { dataset: dataset },
-                      });
-                    }}
-                    endIcon={<AddIcon />}
-                    sx={{ height: "40px" }}
-                    data-tour="new-experiment-button-notebook"
-                  >
-                    New Experiment
-                  </Button>
-                  <Button
-                    variant="contained"
                     endIcon={<AddIcon />}
                     disabled={isProcessing}
                     className="new-notebook-button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowCreateNotebookModal(true);
+                      if (onNewNotebook) {
+                        onNewNotebook();
+                      }
                       if (tourContext && tourContext.run) {
                         setTimeout(() => {
                           tourContext.nextStep();
@@ -409,18 +368,6 @@ export default function DatasetVisualization({
           </Box>
         )}
       </Box>
-
-      {/* Create Notebook Modal */}
-      <CreateNotebookModal
-        open={showCreateNotebookModal}
-        onClose={() => {
-          setShowCreateNotebookModal(false);
-        }}
-        onCreateNotebook={handleCreateNotebook}
-        dataset={dataset}
-        datasetInfo={datasetInfo}
-        existingNotebooks={existingNotebooks}
-      />
 
       <JobQueueWidget />
     </>

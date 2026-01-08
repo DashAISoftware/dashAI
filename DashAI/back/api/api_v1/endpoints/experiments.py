@@ -7,7 +7,7 @@ import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.experiments_params import (
@@ -298,12 +298,42 @@ async def update_dataset(
     with session_factory() as db:
         try:
             experiment = db.get(Experiment, experiment_id)
+            if experiment is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Experiment not found",
+                )
+
+            # Validate name if provided
+            if name is not None:
+                if not name or not name.strip():
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Name cannot be empty",
+                    )
+
+                new_name = name.strip()
+
+                # Check if name is different from current name
+                if new_name != experiment.name:
+                    # Check if name already exists
+                    exists = db.execute(
+                        select(Experiment.id).where(
+                            Experiment.name == new_name, Experiment.id != experiment_id
+                        )
+                    ).scalar()
+                    if exists:
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail="Experiment name already exists",
+                        )
+                    setattr(experiment, "name", new_name)
+
             if dataset_id:
                 setattr(experiment, "dataset_id", dataset_id)
             if task_name:
                 setattr(experiment, "task_name", task_name)
-            if name:
-                setattr(experiment, "name", name)
+
             if dataset_id or task_name or name:
                 db.commit()
                 db.refresh(experiment)
@@ -313,7 +343,16 @@ async def update_dataset(
                     status_code=status.HTTP_304_NOT_MODIFIED,
                     detail="Record not modified",
                 )
+        except HTTPException:
+            raise
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Experiment name already exists",
+            ) from e
         except exc.SQLAlchemyError as e:
+            db.rollback()
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

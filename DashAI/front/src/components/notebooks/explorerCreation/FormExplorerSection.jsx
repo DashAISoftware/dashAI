@@ -54,7 +54,6 @@ export default function FormExplorerSection({
       setExplorersAndConverters((prev) => [...prev, data]);
 
       const response = await enqueueExplorerJob(created.id);
-      console.log("Enqueued job with ID:", response.id);
 
       if (response && response.id) {
         const jobId = response.id;
@@ -75,8 +74,6 @@ export default function FormExplorerSection({
         );
       }
       handleClose();
-
-      console.log("Enqueued explorer job:", response);
     } catch (error) {
       console.error("Error creating explorer:", error);
       enqueueSnackbar("Failed to create explorer", { variant: "error" });
