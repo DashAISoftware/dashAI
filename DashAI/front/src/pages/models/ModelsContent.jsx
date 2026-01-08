@@ -74,6 +74,23 @@ export default function ModelsContent() {
   const SessionTourHandler = () => {
     const sessionTourContext = useTourContext(); // This is for MODELS_SESSION tour
 
+    // Listen for clicks on the Graphs button
+    useEffect(() => {
+      const handleGraphsButtonClick = (e) => {
+        const graphsButton = e.target.closest('[data-tour="graphs-button"]');
+        if (graphsButton && sessionTourContext?.stepIndex === 7) {
+          setTimeout(() => {
+            sessionTourContext.nextStep();
+          }, 500);
+        }
+      };
+
+      document.addEventListener("click", handleGraphsButtonClick, true);
+      return () => {
+        document.removeEventListener("click", handleGraphsButtonClick, true);
+      };
+    }, [sessionTourContext]);
+
     const handleModelClickWithTour = (model) => {
       handleModelClick(model, sessionTourContext);
     };

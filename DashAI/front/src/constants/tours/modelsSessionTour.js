@@ -176,6 +176,49 @@ export const modelsSessionTourSteps = [
     placement: "top",
     disableBeacon: true,
   },
+  {
+    target: '[data-tour="graphs-button"]',
+    content: (
+      <div>
+        <h3>Visualize Results</h3>
+        <p>
+          Want to see your results in a more visual way? Click the{" "}
+          <strong>Graphs</strong> button to switch from the table view to
+          interactive charts.
+        </p>
+        <p>
+          <strong>Click "Graphs" to continue!</strong>
+        </p>
+      </div>
+    ),
+    placement: "bottom",
+    disableBeacon: true,
+    spotlightClicks: true,
+    isInteractive: true,
+    disableBackButton: true,
+  },
+  {
+    target: '[data-tour="model-comparison-panel"]',
+    content: (
+      <div>
+        <h3>Performance Visualizations</h3>
+        <p>
+          The graphs view shows performance metrics, confusion matrices, and
+          other visualizations to help you better understand your models'
+          performance.
+        </p>
+        <p style={{ marginTop: "12px" }}>
+          🎉 <strong>Great job!</strong> You can now add more models and
+          experiment with different parameters!
+        </p>
+      </div>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    disableScrolling: true,
+    disableScrollParentFix: true,
+    spotlightClicks: true,
+  },
 ];
 
 export const modelsSessionTourConfig = {
