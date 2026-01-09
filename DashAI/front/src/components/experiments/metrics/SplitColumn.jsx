@@ -3,6 +3,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import ScienceIcon from "@mui/icons-material/Science";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import MetricCard from "./MetricCard";
+import { useTranslation } from "react-i18next";
 
 const splitConfig = {
   train: {
@@ -30,6 +31,8 @@ export default function SplitColumn({
   onToggleMetric,
   disabled = false,
 }) {
+  const { t } = useTranslation("experiments");
+
   const config = splitConfig[splitType];
   const Icon = config.icon;
 
@@ -57,7 +60,10 @@ export default function SplitColumn({
           <Box>
             <Typography variant="subtitle1">{title}</Typography>
             <Typography variant="caption" color="text.secondary">
-              {selectedMetrics.length} of {metrics.length} selected
+              {t("metrics.selectedCount", {
+                selected: selectedMetrics.length,
+                total: metrics.length,
+              })}
             </Typography>
           </Box>
         </Box>

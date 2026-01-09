@@ -4,6 +4,8 @@ import PropTypes from "prop-types";
 import React, { useState } from "react";
 import FormSchemaDialog from "../shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
+import { useTranslation } from "react-i18next";
+
 /**
  * This component handles the configuration of a single model
  * @param {string} modelToConfigure name of the model to configure
@@ -17,13 +19,14 @@ function EditModelDialog({
   paramsInitialValues,
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation("common");
 
   return (
     <React.Fragment>
       <GridActionsCellItem
         key="edit-button"
         icon={<SettingsIcon />}
-        label="Edit"
+        label={t("edit")}
         onClick={() => setOpen(true)}
       />
       <FormSchemaDialog

@@ -26,6 +26,7 @@ import {
 import FormSchemaDialog from "../../shared/FormSchemaDialog";
 import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
 import { getComponents } from "../../../api/component";
+import { useTranslation } from "react-i18next";
 
 export default function RunInfoModal({
   experiment,
@@ -40,6 +41,7 @@ export default function RunInfoModal({
   const [localRun, setLocalRun] = useState(structuredClone(run));
   const [metrics, setMetrics] = useState([]);
   const [optimizers, setOptimizers] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
 
   useEffect(() => {
     const fetchMetricsAndOptimizers = async () => {
@@ -129,7 +131,7 @@ export default function RunInfoModal({
           <Grid container spacing={2}>
             <Grid item xs={6} md={3}>
               <Typography variant="caption" color="text.secondary">
-                Model
+                {t("experiments:label.modelName")}
               </Typography>
               <Typography variant="body2" fontWeight="medium">
                 {run.model_name}
@@ -137,7 +139,7 @@ export default function RunInfoModal({
             </Grid>
             <Grid item xs={6} md={3}>
               <Typography variant="caption" color="text.secondary">
-                Start Time
+                {t("experiments:label.startTime")}
               </Typography>
               <Typography variant="body2" fontWeight="medium">
                 {new Date(run.start_time).toLocaleString()}
@@ -145,7 +147,7 @@ export default function RunInfoModal({
             </Grid>
             <Grid item xs={6} md={3}>
               <Typography variant="caption" color="text.secondary">
-                End Time
+                {t("experiments:label.endTime")}
               </Typography>
               <Typography variant="body2" fontWeight="medium">
                 {new Date(run.end_time).toLocaleString()}
@@ -153,7 +155,7 @@ export default function RunInfoModal({
             </Grid>
             <Grid item xs={6} md={3}>
               <Typography variant="caption" color="text.secondary">
-                Duration
+                {t("experiments:label.duration")}
               </Typography>
               <Typography variant="body2" fontWeight="medium">
                 {(
@@ -168,7 +170,7 @@ export default function RunInfoModal({
 
         {/* Metrics Section */}
         <Typography variant="h6" gutterBottom>
-          Metrics
+          {t("experiments:metrics.metrics")}
         </Typography>
         <Box
           sx={{
@@ -181,26 +183,29 @@ export default function RunInfoModal({
         >
           <Box sx={{ flex: 1, minWidth: 300 }}>
             <MetricsSection
-              title="Training Metrics"
+              title={t("experiments:metrics.trainingMetrics")}
               metrics={run.train_metrics}
             />
           </Box>
 
           <Box sx={{ flex: 1, minWidth: 300 }}>
             <MetricsSection
-              title="Validation Metrics"
+              title={t("experiments:metrics.validationMetrics")}
               metrics={run.validation_metrics}
             />
           </Box>
 
           <Box sx={{ flex: 1, minWidth: 300 }}>
-            <MetricsSection title="Test Metrics" metrics={run.test_metrics} />
+            <MetricsSection
+              title={t("experiments:metrics.testMetrics")}
+              metrics={run.test_metrics}
+            />
           </Box>
         </Box>
 
         {/* Parameter modification */}
         <Typography variant="h6" gutterBottom>
-          Parameter Modification
+          {t("experiments:label.parameterModification")}
         </Typography>
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Grid container spacing={2} alignItems="center">
@@ -212,15 +217,17 @@ export default function RunInfoModal({
                 onClick={onEditParameters}
                 size="large"
               >
-                Modify Parameters
+                {t("experiments:button.editParameters")}
               </Button>
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Metric to Optimize</InputLabel>
+                <InputLabel>
+                  {t("experiments:label.metricToOptimize")}
+                </InputLabel>
                 <Select
                   value={localRun.goal_metric || ""}
-                  label="Metric to Optimize"
+                  label={t("experiments:label.metricToOptimize")}
                   onChange={(e) =>
                     setLocalRun({
                       ...localRun,
@@ -239,10 +246,10 @@ export default function RunInfoModal({
             <Grid item xs={12} md={4}>
               <Box sx={{ display: "flex", gap: 1 }}>
                 <FormControl fullWidth>
-                  <InputLabel>Optimizer</InputLabel>
+                  <InputLabel>{t("experiments:label.optimizer")}</InputLabel>
                   <Select
                     value={localRun.optimizer_name || ""}
-                    label="Optimizer"
+                    label={t("experiments:label.optimizer")}
                     onChange={(e) =>
                       setLocalRun({
                         ...localRun,
@@ -280,7 +287,9 @@ export default function RunInfoModal({
               }}
             >
               <Typography variant="subtitle2" gutterBottom>
-                Current Optimizer Settings ({run.optimizer_name})
+                {t("label.currentOptimizerSettings", {
+                  optimizer: run.optimizer_name,
+                })}
               </Typography>
               <Grid container spacing={1}>
                 {Object.entries(run.optimizer_parameters).map(
@@ -303,7 +312,7 @@ export default function RunInfoModal({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} variant="outlined">
-          Close
+          {t("common:close")}
         </Button>
         <Button
           onClick={() =>
@@ -313,7 +322,7 @@ export default function RunInfoModal({
           variant="contained"
           disabled={!localRun.goal_metric}
         >
-          Save and Run
+          {t("common:saveAndRun")}
         </Button>
       </DialogActions>
     </Dialog>

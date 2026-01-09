@@ -10,17 +10,20 @@ import { getDatasets } from "../../api/datasets";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
+import { useTranslation } from "react-i18next";
 
 function ExperimentsPage() {
   const location = useLocation();
   const [dataset, setDataset] = useState(location.state?.dataset);
-  const [showNewExperimentModal, setShowNewExperimentModal] =
-    useState(!!dataset);
+  const [showNewExperimentModal, setShowNewExperimentModal] = useState(
+    !!dataset,
+  );
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [experiments, setExperiments] = useState([]);
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["experiments", "common"]);
 
   const getExperiments = async () => {
     setLoading(true);
@@ -28,7 +31,9 @@ function ExperimentsPage() {
       const experimentsData = await getExperimentsRequest();
       setExperiments(experimentsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to get experiments.");
+      enqueueSnackbar(t("experiments:error.errorFetchingExperiments"), {
+        variant: "error",
+      });
       console.error(error);
     } finally {
       setLoading(false);
@@ -40,7 +45,9 @@ function ExperimentsPage() {
       const datasetsData = await getDatasets();
       setDatasets(datasetsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to get datasets.");
+      enqueueSnackbar(t("experiments:error.errorFetchingDatasets"), {
+        variant: "error",
+      });
       console.error(error);
     }
   };
@@ -61,8 +68,8 @@ function ExperimentsPage() {
   return (
     <TourProvider tourKey={TOUR_KEYS.EXPERIMENTS}>
       <CustomLayout
-        title="Experiments Module"
-        subtitle="Configure experiments to train models"
+        title={t("experiments:label.experimentsModuleTitle")}
+        subtitle={t("experiments:label.configureExperimentsSubtitle")}
       >
         {/* New experiment Modal */}
         {!loading && (

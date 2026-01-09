@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { getComponents } from "../../../api/component";
 import SplitColumn from "./SplitColumn";
+import { useTranslation } from "react-i18next";
 
 export default function MetricsSelector({
   experiment,
@@ -18,6 +19,7 @@ export default function MetricsSelector({
 }) {
   const [metrics, setMetrics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation("experiments");
 
   const enabledSplits = {
     train: !!experiment.splits?.train,
@@ -113,12 +115,11 @@ export default function MetricsSelector({
         gutterBottom
         sx={{ display: "flex", alignItems: "center", gap: 1 }}
       >
-        Select Metrics for Each Data Split
+        {t("metrics.selectMetrics")}
       </Typography>
 
       <Typography variant="body2" color="text.secondary" gutterBottom>
-        Choose which metrics to compute for the training, test, and validation
-        sets.
+        {t("metrics.selectMetricsDescription")}
       </Typography>
 
       <Container sx={{ py: 4 }}>
@@ -131,7 +132,7 @@ export default function MetricsSelector({
           alignItems="center"
         >
           <Typography variant="body2" color="text.secondary">
-            Quick select all:
+            {t("metrics.selectAllFor")}:
           </Typography>
           <Button
             onClick={() => selectAllForSplit("train")}
@@ -159,7 +160,7 @@ export default function MetricsSelector({
           }}
         >
           <SplitColumn
-            title="Training Set"
+            title={t("metrics.trainingSet")}
             splitType="train"
             metrics={metrics}
             selectedMetrics={experiment.train_metrics}
@@ -168,7 +169,7 @@ export default function MetricsSelector({
           />
 
           <SplitColumn
-            title="Validation Set"
+            title={t("metrics.validationSet")}
             splitType="validation"
             metrics={metrics}
             selectedMetrics={experiment.validation_metrics}
@@ -177,7 +178,7 @@ export default function MetricsSelector({
           />
 
           <SplitColumn
-            title="Test Set"
+            title={t("metrics.testSet")}
             splitType="test"
             metrics={metrics}
             selectedMetrics={experiment.test_metrics}
@@ -193,11 +194,11 @@ export default function MetricsSelector({
               <>
                 {missingSplits[0].charAt(0).toUpperCase() +
                   missingSplits[0].slice(1)}{" "}
-                split must have at least one metric selected.
+                {t("metrics.error.mustHaveOneMetricSelected")}
               </>
             ) : (
               <>
-                The following splits must have at least one metric selected:{" "}
+                {t("metrics.error.mustHaveOneMetricSelectedForSplits")}:{" "}
                 {missingSplits.map((split, idx) => (
                   <span key={split}>
                     <strong>

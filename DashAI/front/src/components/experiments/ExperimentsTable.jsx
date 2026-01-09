@@ -17,6 +17,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
+import { useTranslation } from "react-i18next";
 
 function ExperimentsTable({
   handleOpenNewExperimentModal,
@@ -29,6 +30,7 @@ function ExperimentsTable({
   const [expRunning, setExpRunning] = useState({});
   const tourContext = useTourContext();
   const [tasks, setTasks] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
 
   const datasetMap = React.useMemo(() => {
     return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
@@ -37,13 +39,15 @@ function ExperimentsTable({
   const deleteExperiment = async (id) => {
     try {
       await deleteExperimentRequest(id);
-      enqueueSnackbar("Experiment successfully deleted.", {
+      enqueueSnackbar(t("experiments:message.runDeletedSuccessfully"), {
         variant: "success",
       });
       onUpdateExperiments();
     } catch (error) {
       console.error(error);
-      enqueueSnackbar("Error when trying to delete the experiment.");
+      enqueueSnackbar(t("experiments:error.errorDeletingRun"), {
+        variant: "error",
+      });
     }
   };
 
@@ -90,13 +94,13 @@ function ExperimentsTable({
       },
       {
         field: "name",
-        headerName: "Name",
+        headerName: t("common:name"),
         minWidth: 250,
         editable: false,
       },
       {
         field: "task_name",
-        headerName: "Task",
+        headerName: t("common:task"),
         minWidth: 200,
         editable: false,
         valueGetter: (value) => {
@@ -106,7 +110,7 @@ function ExperimentsTable({
       },
       {
         field: "dataset_id",
-        headerName: "Dataset",
+        headerName: t("common:dataset"),
         minWidth: 200,
         editable: false,
         valueGetter: (value) => {
@@ -116,20 +120,21 @@ function ExperimentsTable({
       },
       {
         field: "created",
-        headerName: "Created",
+        headerName: t("common:created"),
         minWidth: 140,
         editable: false,
         valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
-        headerName: "Edited",
+        headerName: t("common:edited"),
         minWidth: 140,
         editable: false,
         valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
+        headerName: t("common:actions"),
         type: "actions",
         minWidth: 180,
         getActions: (params) => [
@@ -166,7 +171,7 @@ function ExperimentsTable({
         sx={{ mb: 4 }}
       >
         <Typography variant="h5" component="h2">
-          Current experiments
+          {t("experiments:label.currentExperiments")}
         </Typography>
         <Grid>
           <Grid container spacing={2}>
@@ -177,7 +182,7 @@ function ExperimentsTable({
                 onClick={handleNewExperiment}
                 endIcon={<AddIcon />}
               >
-                New Experiment
+                {t("experiments:button.newExperiment")}
               </Button>
             </Grid>
             <Grid>
@@ -186,7 +191,7 @@ function ExperimentsTable({
                 onClick={onUpdateExperiments}
                 endIcon={<UpdateIcon />}
               >
-                Update
+                {t("common:update")}
               </Button>
             </Grid>
           </Grid>

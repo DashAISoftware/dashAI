@@ -9,6 +9,7 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 
 import { useTourContext } from "../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 function SetNameAndTaskStep({
   newExp,
@@ -24,7 +25,7 @@ function SetNameAndTaskStep({
   const [expNameOk, setExpNameOk] = useState(true);
   const [expNameError, setExpNameError] = useState(false);
   const tourContext = useTourContext();
-
+  const { t } = useTranslation(["experiments", "common"]);
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
   const [taskNameOk, setTaskNameOk] = useState(false);
@@ -43,7 +44,9 @@ function SetNameAndTaskStep({
         setSelectedTask(previouslySelectedTask);
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the task list.");
+      enqueueSnackbar(t("experiments:error.errorFetchingTaskList"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -91,7 +94,7 @@ function SetNameAndTaskStep({
     }
 
     if (!currentName) {
-      return "Name is required";
+      return t("experiments:error.nameIsRequired");
     }
 
     const nameExists = existingExperiments.some(
@@ -100,11 +103,11 @@ function SetNameAndTaskStep({
         experiment.name.toLowerCase() === currentName.toLowerCase(),
     );
     if (nameExists) {
-      return "An experiment with this name already exists";
+      return t("experiments:error.nameAlreadyExists");
     }
 
     if (expNameError) {
-      return "The experiment name must have at least 4 alphanumeric characters.";
+      return t("experiments:error.nameTooShort");
     }
     return null;
   };
@@ -166,13 +169,13 @@ function SetNameAndTaskStep({
       {/* Set Name subcomponent */}
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Enter a name and select the task for the new experiment
+          {t("experiments:label.setNameAndTask")}
         </Typography>
 
         <TextField
           id="experiment-name-input"
           data-tour="experiment-name-input"
-          label="Experiment name"
+          label={t("experiments:label.experimentName")}
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}

@@ -2,6 +2,7 @@ import { Card, CardActionArea, Box, Typography, Chip } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import { useTranslation } from "react-i18next";
 
 const splitColors = {
   train: {
@@ -26,6 +27,7 @@ export default function MetricCard({
   disabled = false,
 }) {
   const colors = splitColors[splitType];
+  const { t } = useTranslation(["experiments", "common"]);
 
   return (
     <Card
@@ -84,14 +86,18 @@ export default function MetricCard({
                   <TrendingDownIcon />
                 )
               }
-              label={metric.metadata.maximize ? "maximize" : "minimize"}
+              label={
+                metric.metadata.maximize
+                  ? t("experiments:metrics.maximize")
+                  : t("experiments:metrics.minimize")
+              }
               size="small"
               variant="outlined"
             />
           </Box>
 
           <Typography variant="body2" color="text.secondary">
-            {metric.description || "No description available"}
+            {metric.description || t("common:noDescription")}
           </Typography>
         </Box>
       </CardActionArea>

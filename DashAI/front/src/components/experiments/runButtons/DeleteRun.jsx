@@ -4,10 +4,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { deleteRun } from "../../../api/run";
 import { useSnackbar } from "notistack";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 export default function DeleteRun({ run, onRunDelete }) {
   const isRunning = run.status === "Started" || run.status === "Delivered";
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation("experiments");
   const [open, setOpen] = useState(false);
   if (isRunning) {
     return null;
@@ -17,7 +19,7 @@ export default function DeleteRun({ run, onRunDelete }) {
     <>
       <GridActionsCellItem
         icon={<DeleteIcon />}
-        label="Delete Run"
+        label={t("button.deleteRun")}
         onClick={() => {
           setOpen(true);
         }}
@@ -30,17 +32,19 @@ export default function DeleteRun({ run, onRunDelete }) {
             try {
               await deleteRun(run.id);
               onRunDelete(run.id);
-              enqueueSnackbar("Run deleted successfully", {
+              enqueueSnackbar(t("message.runDeletedSuccessfully"), {
                 variant: "success",
               });
             } catch (error) {
               console.error("Error deleting run:", error);
-              enqueueSnackbar("Error deleting run", { variant: "error" });
+              enqueueSnackbar(t("message.errorDeletingRun"), {
+                variant: "error",
+              });
             } finally {
               setOpen(false);
             }
           }}
-          content="Are you sure you want to delete this run? This action cannot be undone."
+          content={t("message.confirmDeleteRun")}
         />
       )}
     </>

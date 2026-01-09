@@ -30,6 +30,7 @@ import { getComponents } from "../../api/component";
 import SingleRun from "./runButtons/SingleRun";
 import EditRunDialog from "./runButtons/EditRunDialog";
 import DeleteRun from "./runButtons/DeleteRun";
+import { useTranslation } from "react-i18next";
 
 function RunnerDialog({
   experiment,
@@ -47,6 +48,7 @@ function RunnerDialog({
   const experimentNameRef = useRef(experiment.name);
   const tourContext = useTourContext();
   const [models, setModels] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
 
   const hasActiveRuns = rows.some(
     (r) => r.status === "Delivered" || r.status === "Started",
@@ -111,7 +113,9 @@ function RunnerDialog({
 
           if (!finishedRunning) {
             enqueueSnackbar(
-              `${experimentNameRef.current} has completed all runs`,
+              t("experiments:message.experimentCompleted", {
+                experimentName: experimentNameRef.current,
+              }),
               {
                 variant: "success",
               },
@@ -122,7 +126,9 @@ function RunnerDialog({
       }
     } catch (error) {
       enqueueSnackbar(
-        `Error retrieving runs for ${experimentNameRef.current}`,
+        t("experiments:error.errorFetchingRuns", {
+          experimentName: experimentNameRef.current,
+        }),
         { variant: "error" },
       );
       console.error("Error fetching runs:", error);
@@ -147,9 +153,14 @@ function RunnerDialog({
           },
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
-            enqueueSnackbar(`Run failed: ${result.error || "Unknown error"}`, {
-              variant: "error",
-            });
+            enqueueSnackbar(
+              t("experiments:error.runFailed", {
+                error: result.error || "Unknown error",
+              }),
+              {
+                variant: "error",
+              },
+            );
             getRuns({ showLoading: false });
           },
         );
@@ -157,9 +168,14 @@ function RunnerDialog({
 
       return false;
     } catch (error) {
-      enqueueSnackbar(`Error enqueueing run with ID ${runId}`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("experiments:error.errorEnqueueingRun", {
+          runId,
+        }),
+        {
+          variant: "error",
+        },
+      );
       console.error("Error enqueueing run:", error);
       return true;
     }
@@ -185,12 +201,9 @@ function RunnerDialog({
 
     // If no runs to execute, show a message
     if (runsToExecute.length === 0) {
-      enqueueSnackbar(
-        "No runs available to execute. Selected runs may already be running or completed.",
-        {
-          variant: "info",
-        },
-      );
+      enqueueSnackbar(t("experiments:message.noRunsToExecute"), {
+        variant: "info",
+      });
       setExpRunning({ ...expRunning, [experiment.id]: false });
       return;
     }
@@ -248,7 +261,9 @@ function RunnerDialog({
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
             enqueueSnackbar(
-              `Run ${run.name} failed: ${result.error || "Unknown error"}`,
+              t("experiments:error.runFailed", {
+                error: result.error || "Unknown error",
+              }),
               {
                 variant: "error",
               },
@@ -259,9 +274,14 @@ function RunnerDialog({
       }
     } catch (error) {
       console.error("Error enqueueing run:", error);
-      enqueueSnackbar(`Error starting run ${run.name}`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("experiments:error.errorEnqueueingRun", {
+          runId: run.id,
+        }),
+        {
+          variant: "error",
+        },
+      );
       getRuns({ showLoading: false });
     }
   };
@@ -301,13 +321,13 @@ function RunnerDialog({
   const columns = [
     {
       field: "name",
-      headerName: "Name",
+      headerName: t("common:name"),
       minWidth: 250,
       editable: false,
     },
     {
       field: "model_name",
-      headerName: "Model Name",
+      headerName: t("experiments:label.modelName"),
       minWidth: 300,
       editable: false,
       valueGetter: (value) => {
@@ -317,13 +337,13 @@ function RunnerDialog({
     },
     {
       field: "status",
-      headerName: "Status",
+      headerName: t("common:status"),
       minWidth: 150,
       editable: false,
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: t("common:actions"),
       type: "actions",
       minWidth: 180,
       getActions: (params) => [
@@ -437,7 +457,7 @@ function RunnerDialog({
               onClick={handleCloseAndAdvance}
               data-tour="runner-dialog-close"
             >
-              Close
+              {t("common:close")}
             </Button>
             <LoadingButton
               data-tour="runner-dialog-start"
@@ -448,7 +468,7 @@ function RunnerDialog({
               endIcon={<PlayArrowIcon />}
               onClick={handleExecuteRuns}
             >
-              Run all
+              {t("experiments:button.runAll")}
             </LoadingButton>
           </ButtonGroup>
         </DialogActions>
