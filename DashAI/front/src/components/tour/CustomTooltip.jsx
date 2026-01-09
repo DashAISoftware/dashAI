@@ -21,7 +21,7 @@ export const CustomTooltip = ({
         backgroundColor: "#fff",
         borderRadius: "8px",
         boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-        maxWidth: "380px",
+        maxWidth: step.maxWidth || "380px",
         padding: "20px",
       }}
     >

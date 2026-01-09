@@ -1,3 +1,4 @@
+import { maxWidth } from "@mui/system";
 import React from "react";
 
 export const modelsSessionTourSteps = [
@@ -93,6 +94,7 @@ export const modelsSessionTourSteps = [
     disableOverlay: true,
     spotlightClicks: true,
     isInteractive: true,
+    maxWidth: "250px",
   },
   {
     target: '[data-tour="first-run-card"]',
@@ -218,6 +220,7 @@ export const modelsSessionTourSteps = [
     disableScrolling: true,
     disableScrollParentFix: true,
     spotlightClicks: true,
+    maxWidth: "250px",
   },
 ];
 
