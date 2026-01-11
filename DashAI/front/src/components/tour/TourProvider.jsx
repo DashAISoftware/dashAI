@@ -57,6 +57,9 @@ export const TourProvider = ({ tourKey, children }) => {
         tooltipComponent={CustomTooltip}
         scrollToFirstStep
         scrollOffset={100}
+        floaterProps={{
+          disableFlip: true,
+        }}
       />
       {children}
     </TourContext.Provider>

@@ -94,7 +94,7 @@ export const modelsSessionTourSteps = [
     disableOverlay: true,
     spotlightClicks: true,
     isInteractive: true,
-    maxWidth: "250px",
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="first-run-card"]',
@@ -120,7 +120,7 @@ export const modelsSessionTourSteps = [
         <p>Let's train this model to see how it performs!</p>
       </div>
     ),
-    placement: "bottom",
+    placement: "top",
     disableBeacon: true,
     disableScrolling: true,
     disableScrollParentFix: true,
@@ -175,7 +175,7 @@ export const modelsSessionTourSteps = [
         <p>This makes it easy to choose the best model for your task!</p>
       </div>
     ),
-    placement: "top",
+    placement: "bottom",
     disableBeacon: true,
   },
   {
@@ -219,8 +219,9 @@ export const modelsSessionTourSteps = [
     disableBeacon: true,
     disableScrolling: true,
     disableScrollParentFix: true,
+    disableOverlay: true,
     spotlightClicks: true,
-    maxWidth: "250px",
+    maxWidth: "320px",
   },
 ];
 
