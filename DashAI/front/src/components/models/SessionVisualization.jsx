@@ -116,6 +116,7 @@ export default function SessionVisualization({
     [runs],
   );
 
+  // Check which metrics are available
   const hasTrainMetrics = runs.some(
     (run) => run.train_metrics && Object.keys(run.train_metrics).length > 0,
   );
@@ -126,27 +127,6 @@ export default function SessionVisualization({
   const hasTestMetrics = runs.some(
     (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
   );
-
-  useEffect(() => {
-    if (!hasTestMetrics && !hasTrainMetrics && !hasValidationMetrics) return;
-
-    if (metricSplit === "test" && !hasTestMetrics) {
-      if (hasValidationMetrics) setMetricSplit("validation");
-      else if (hasTrainMetrics) setMetricSplit("train");
-    } else if (metricSplit === "validation" && !hasValidationMetrics) {
-      if (hasTestMetrics) setMetricSplit("test");
-      else if (hasTrainMetrics) setMetricSplit("train");
-    } else if (metricSplit === "train" && !hasTrainMetrics) {
-      if (hasTestMetrics) setMetricSplit("test");
-      else if (hasValidationMetrics) setMetricSplit("validation");
-    }
-  }, [
-    runs,
-    metricSplit,
-    hasTrainMetrics,
-    hasValidationMetrics,
-    hasTestMetrics,
-  ]);
 
   const handleMouseMove = React.useCallback((e) => {
     if (isResizing.current) {

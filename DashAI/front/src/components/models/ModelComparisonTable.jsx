@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-import {
-  Box,
-  Chip,
-  IconButton,
-  Tooltip,
-  ToggleButtonGroup,
-  ToggleButton,
-} from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
@@ -40,7 +33,6 @@ function ModelComparisonTable({
     fetchModels();
   }, []);
 
-  // Transform runs to rows with flattened metrics
   const getRows = () => {
     return runs.map((run) => {
       const row = {
@@ -53,33 +45,21 @@ function ModelComparisonTable({
         last_modified: run.last_modified,
       };
 
-      // Extract test metrics
       if (run.test_metrics) {
         Object.entries(run.test_metrics).forEach(([key, value]) => {
-          row[`test_${key}`] =
-            typeof value === "number"
-              ? Math.trunc(value * 10000) / 10000
-              : value;
+          row[`test_${key}`] = value;
         });
       }
 
-      // Extract train metrics
       if (run.train_metrics) {
         Object.entries(run.train_metrics).forEach(([key, value]) => {
-          row[`train_${key}`] =
-            typeof value === "number"
-              ? Math.trunc(value * 10000) / 10000
-              : value;
+          row[`train_${key}`] = value;
         });
       }
 
-      // Extract validation metrics
       if (run.validation_metrics) {
         Object.entries(run.validation_metrics).forEach(([key, value]) => {
-          row[`val_${key}`] =
-            typeof value === "number"
-              ? Math.trunc(value * 10000) / 10000
-              : value;
+          row[`val_${key}`] = value;
         });
       }
 
@@ -121,40 +101,6 @@ function ModelComparisonTable({
         },
       };
     });
-  };
-
-  const hasTrainMetrics = runs.some(
-    (run) => run.train_metrics && Object.keys(run.train_metrics).length > 0,
-  );
-  const hasValidationMetrics = runs.some(
-    (run) =>
-      run.validation_metrics && Object.keys(run.validation_metrics).length > 0,
-  );
-  const hasTestMetrics = runs.some(
-    (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
-  );
-
-  const availableMetrics = {
-    train: hasTrainMetrics,
-    validation: hasValidationMetrics,
-    test: hasTestMetrics,
-  };
-
-  // Status color mapping
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Not Started":
-        return "default";
-      case "Delivered":
-      case "Started":
-        return "info";
-      case "Finished":
-        return "success";
-      case "Error":
-        return "error";
-      default:
-        return "default";
-    }
   };
 
   const columns = [
