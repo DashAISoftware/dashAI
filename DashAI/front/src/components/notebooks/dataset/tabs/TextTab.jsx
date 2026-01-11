@@ -153,11 +153,12 @@ export const TextTab = ({ textStats }) => (
                     <YAxis />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: "#121212",
+                        backgroundColor: theme.palette.background.paper,
                         borderRadius: 4,
-                        color: "#ffffff",
+                        color: theme.palette.text.primary,
+                        border: `1px solid ${theme.palette.divider}`,
                       }}
-                      labelStyle={{ color: "#ffffff" }}
+                      labelStyle={{ color: theme.palette.text.primary }}
                     />
                     <Bar dataKey="value" fill="rgba(136, 132, 216, 0.7)" />
                   </BarChart>

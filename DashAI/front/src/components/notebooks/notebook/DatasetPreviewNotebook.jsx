@@ -102,7 +102,7 @@ export default function DatasetPreviewNotebook({
       <Accordion
         data-tour="dataset-preview-section"
         sx={{
-          bgcolor: "#212121",
+          bgcolor: "ui.box",
           borderRadius: 2,
           boxShadow: "none",
         }}

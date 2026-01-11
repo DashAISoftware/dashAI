@@ -368,10 +368,7 @@ export default function RightBar({ notebook, onToggle }) {
                   flexShrink: 0,
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "rgb(161, 161, 170)" }}
-                >
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   View mode
                 </Typography>
                 <ToggleButtonGroup
@@ -381,11 +378,12 @@ export default function RightBar({ notebook, onToggle }) {
                   size="small"
                   sx={{
                     "& .MuiToggleButton-root": {
-                      color: "rgb(161, 161, 170)",
-                      border: "1px solid rgb(39, 39, 42)",
+                      color: "text.secondary",
+                      border: "1px solid",
+                      borderColor: "ui.border",
                       "&.Mui-selected": {
-                        bgcolor: "rgb(39, 39, 42)",
-                        color: "rgb(6, 182, 212)",
+                        bgcolor: "ui.border",
+                        color: "accent.main",
                       },
                     },
                   }}

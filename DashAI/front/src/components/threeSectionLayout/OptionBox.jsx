@@ -43,7 +43,7 @@ export default function OptionBox({
           justifyContent: matches ? "space-between" : "center",
           textAlign: matches ? "left" : "center",
           "&:hover": {
-            backgroundColor: "#1e1e1e",
+            backgroundColor: theme.palette.action.hover,
           },
         }}
       >

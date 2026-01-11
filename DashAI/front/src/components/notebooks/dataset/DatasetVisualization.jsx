@@ -242,7 +242,7 @@ export default function DatasetVisualization({
             {/* Tabs */}
             <Tabs
               sx={{
-                bgcolor: "#2C2C2C",
+                bgcolor: theme.palette.ui.box,
                 borderRadius: 1,
                 minHeight: "48px",
                 "& .MuiTabs-indicator": {
@@ -256,12 +256,12 @@ export default function DatasetVisualization({
                   border: "1px solid transparent",
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.05)",
+                    bgcolor: theme.palette.action.hover,
                   },
                   "&.Mui-disabled": {
-                    color: "rgb(150, 150, 150)",
-                    bgcolor: "rgb(32, 32, 32)",
-                    borderColor: "rgb(39, 39, 42)",
+                    color: theme.palette.text.disabled,
+                    bgcolor: theme.palette.ui.disabled,
+                    borderColor: theme.palette.ui.border,
                     opacity: 0.6,
                     cursor: "not-allowed",
                     filter: "grayscale(0.6)",

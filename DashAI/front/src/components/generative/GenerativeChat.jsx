@@ -220,9 +220,9 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
             <IconButton onClick={() => setSessionInfoVisible(true)}>
               <InfoIcon
                 sx={{
-                  color: "#a0a0a0",
+                  color: "text.secondary",
                   "&:hover": {
-                    color: "#ffffff",
+                    color: "text.primary",
                   },
                 }}
               />
@@ -251,11 +251,11 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
             width: "8px",
           },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#555",
+            backgroundColor: "ui.border",
             borderRadius: "4px",
           },
           "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#888",
+            backgroundColor: "action.hover",
           },
         }}
       >

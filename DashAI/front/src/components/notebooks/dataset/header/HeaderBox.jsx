@@ -9,7 +9,7 @@ export function HeaderBox({ title, value, IconComponent, iconColor, bgColor }) {
         height: "100%",
         flex: "1 1 0",
         borderRadius: 2,
-        bgcolor: "#2C2C2C",
+        bgcolor: "ui.box",
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",

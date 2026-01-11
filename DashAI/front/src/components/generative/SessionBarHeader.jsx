@@ -15,7 +15,7 @@ export default function SessionBarHeader() {
         variant="h6"
         sx={{
           fontWeight: "bold",
-          "& span": { color: "#16FFFF" },
+          "& span": { color: "accent.main" },
         }}
       >
         <span>D</span>a<span>sh</span>

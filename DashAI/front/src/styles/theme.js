@@ -1,8 +1,8 @@
 import QuicksandBoldWoff2 from "./fonts/Quicksand-Bold.woff2";
 
-const theme = {
+const getTheme = (mode) => ({
   palette: {
-    mode: "dark",
+    mode,
 
     // PRIMARY - Main application color
     // Used in: primary buttons, highlighted icons, links, active elements
@@ -24,29 +24,42 @@ const theme = {
 
     // BACKGROUND - Background colors for different surfaces
     // Used in: page backgrounds, cards, modals, panels
-    background: {
-      default: "#2e3037", // Main app background
-      paper: "#121212", // Cards and modals background
-      box: "#212121", // Boxes and containers (AppBar, sidebars)
-    },
+    background:
+      mode === "dark"
+        ? {
+            default: "#2e3037", // Main app background
+            paper: "#121212", // Cards and modals background
+            box: "#212121", // Boxes and containers (AppBar, sidebars)
+          }
+        : {
+            default: "#f5f5f5", // Main app background
+            paper: "#ffffff", // Cards and modals background
+            box: "#fafafa", // Boxes and containers (AppBar, sidebars)
+          },
 
     // TEXT - Text colors
     // Used in: Typography components, labels, paragraphs
-    text: {
-      primary: "#ffffff", // Primary text (titles, important labels)
-      secondary: "#b0b0b0", // Secondary text (descriptions, subtitles)
-    },
+    text:
+      mode === "dark"
+        ? {
+            primary: "#ffffff", // Primary text (titles, important labels)
+            secondary: "#b0b0b0", // Secondary text (descriptions, subtitles)
+          }
+        : {
+            primary: "#1a1a1a", // Primary text (titles, important labels)
+            secondary: "#666666", // Secondary text (descriptions, subtitles)
+          },
 
     // ERROR - Error states
     // Used in: error messages, failed validations, critical alerts
     error: {
-      main: "#ff8383",
+      main: mode === "dark" ? "#ff8383" : "#d32f2f",
     },
 
     // WARNING - Warning states
     // Used in: warning alerts, pending states requiring attention
     warning: {
-      main: "#f1ae61",
+      main: mode === "dark" ? "#f1ae61" : "#ed6c02",
     },
 
     // SUCCESS - Success states
@@ -73,11 +86,11 @@ const theme = {
     // STATUS - Experiment/job states
     // Used in: status badges, progress indicators in experiments and runs
     status: {
-      notStarted: "#626262", // Experiment not started
+      notStarted: mode === "dark" ? "#626262" : "#9e9e9e", // Experiment not started
       started: "#3e68ffff", // Experiment running
       finished: "#43A047", // Experiment completed successfully
       delivered: "#3e68ffff", // Results delivered
-      error: "#A70909", // Experiment error
+      error: mode === "dark" ? "#A70909" : "#c62828", // Experiment error
     },
 
     // DATATYPE - Colors for data types in columns
@@ -103,18 +116,32 @@ const theme = {
 
     // UI - Interface elements and borders
     // Used in: borders, dividers, scrollbars, hover states
-    ui: {
-      border: "#333", // Standard border
-      borderLight: "#444", // Lighter border
-      borderDark: "#252836", // Darker border
-      panelDark: "#2C2C2C", // Dark panel
-      panelMedium: "#363636", // Medium panel
-      panelLight: "#2F2F2F", // Light panel
-      scrollbar: "#374151", // Scrollbar color
-      scrollbarHover: "#4B5563", // Scrollbar on hover
-      hover: "rgba(255, 255, 255, 0.05)", // Element hover state
-      divider: "rgba(255, 255, 255, 0.15)", // Dividers and separators
-    },
+    ui:
+      mode === "dark"
+        ? {
+            border: "#333", // Standard border
+            borderLight: "#444", // Lighter border
+            borderDark: "#252836", // Darker border
+            panelDark: "#2C2C2C", // Dark panel
+            panelMedium: "#363636", // Medium panel
+            panelLight: "#2F2F2F", // Light panel
+            scrollbar: "#374151", // Scrollbar color
+            scrollbarHover: "#4B5563", // Scrollbar on hover
+            hover: "rgba(255, 255, 255, 0.05)", // Element hover state
+            divider: "rgba(255, 255, 255, 0.15)", // Dividers and separators
+          }
+        : {
+            border: "#e0e0e0", // Standard border
+            borderLight: "#f0f0f0", // Lighter border
+            borderDark: "#d0d0d0", // Darker border
+            panelDark: "#f5f5f5", // Light panel
+            panelMedium: "#fafafa", // Medium panel
+            panelLight: "#ffffff", // Lightest panel
+            scrollbar: "#bdbdbd", // Scrollbar color
+            scrollbarHover: "#9e9e9e", // Scrollbar on hover
+            hover: "rgba(0, 0, 0, 0.04)", // Element hover state
+            divider: "rgba(0, 0, 0, 0.12)", // Dividers and separators
+          },
   },
   typography: {
     fontFamily: "Quicksand-Bold",
@@ -142,11 +169,11 @@ const theme = {
         ::-webkit-scrollbar-thumb {
             -webkit-border-radius: 10px;
             border-radius: 10px;
-            background: rgba(0, 0, 0, 0.8);
+            background: ${mode === "dark" ? "rgba(0, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.3)"};
             -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
         ::-webkit-scrollbar-thumb:window-inactive {
-                background: rgba(0,0,0,0.4);
+                background: ${mode === "dark" ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"};
         }
       `,
     },
@@ -168,6 +195,6 @@ const theme = {
       },
     },
   },
-};
+});
 
-export default theme;
+export default getTheme;

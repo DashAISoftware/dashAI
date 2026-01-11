@@ -13,6 +13,9 @@ import MenuItem from "@mui/material/MenuItem";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import { ColorModeContext } from "../contexts/ThemeContext";
 
 const pages = [
   { name: "Datasets", to: "/app/data", disabled: false },
@@ -25,6 +28,7 @@ const pages = [
 
 function ResponsiveAppBar() {
   const theme = useTheme();
+  const colorMode = React.useContext(ColorModeContext);
   const location = useLocation();
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -129,6 +133,27 @@ function ResponsiveAppBar() {
                 {page.name}
               </Button>
             ))}
+          </Box>
+
+          {/* Theme Toggle Button */}
+          <Box sx={{ flexGrow: 0 }}>
+            <IconButton
+              onClick={colorMode.toggleColorMode}
+              aria-label="toggle theme"
+              sx={{
+                ml: 1,
+                color:
+                  theme.palette.mode === "dark"
+                    ? "inherit"
+                    : theme.palette.text.primary,
+              }}
+            >
+              {theme.palette.mode === "dark" ? (
+                <Brightness7Icon />
+              ) : (
+                <Brightness4Icon />
+              )}
+            </IconButton>
           </Box>
         </Toolbar>
       </Container>
