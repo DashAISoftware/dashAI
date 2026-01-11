@@ -1,3 +1,4 @@
+import { maxWidth } from "@mui/system";
 import React from "react";
 
 export const modelsTourSteps = [
@@ -57,8 +58,9 @@ export const modelsTourSteps = [
         </p>
       </div>
     ),
-    placement: "bottom",
+    placement: "right",
     disableBeacon: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="models-right-panel"]',
@@ -106,7 +108,7 @@ export const modelsTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     isInteractive: true,
@@ -137,6 +139,7 @@ export const modelsTourSteps = [
     disableOverlay: true,
     isInteractive: true,
     disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="models-next-button"]',
@@ -213,6 +216,7 @@ export const modelsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="dataset-output-columns-autocomplete"]',
@@ -242,6 +246,7 @@ export const modelsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="exp-dataset-splits"]',
@@ -273,7 +278,7 @@ export const modelsTourSteps = [
     ),
     placement: "right",
     disableBeacon: true,
-    spotlightClicks: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="models-next-button"]',
