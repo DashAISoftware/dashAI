@@ -38,7 +38,11 @@ function ResponsiveAppBar() {
   };
 
   return (
-    <AppBar position="sticky" enableColorOnDark sx={{ background: "#212121" }}>
+    <AppBar
+      position="sticky"
+      enableColorOnDark
+      sx={{ background: theme.palette.background.box }}
+    >
       <Container maxWidth="xl">
         <Toolbar>
           <Avatar
@@ -85,7 +89,9 @@ function ResponsiveAppBar() {
                   to={page.to}
                   selected={page.to === location.pathname}
                 >
-                  <Typography textAlign="center">{page.name}</Typography>
+                  <Typography color="text.primary" textAlign="center">
+                    {page.name}
+                  </Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -108,11 +114,17 @@ function ResponsiveAppBar() {
                 to={page.to}
                 key={page.name}
                 onClick={handleCloseNavMenu}
-                sx={{ my: 2, display: "block" }}
+                sx={{
+                  my: 2,
+                  display: "block",
+                  color:
+                    page.to === location.pathname
+                      ? theme.palette.primary.main
+                      : theme.palette.text.primary,
+                }}
                 size="large"
                 disabled={page.disabled}
                 disableRipple
-                color={page.to === location.pathname ? "primary" : "inherit"}
               >
                 {page.name}
               </Button>

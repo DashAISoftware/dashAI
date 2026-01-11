@@ -9,6 +9,7 @@ import {
   styled,
   Box,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
@@ -23,6 +24,7 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
 }));
 
 export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const open = Boolean(anchorEl);
@@ -61,7 +63,7 @@ export default function ItemMenu({ itemId, onInfo, onDelete, onEdit }) {
         aria-expanded={open ? "true" : undefined}
         onClick={handleClick}
         size="small"
-        sx={{ color: "text.secondary" }}
+        sx={{ color: theme.palette.text.secondary }}
       >
         <MoreHorizIcon fontSize="small" />
       </IconButton>

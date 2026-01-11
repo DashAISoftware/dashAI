@@ -8,6 +8,7 @@ import {
   Paper,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   ResponsiveContainer,
   BarChart,
@@ -26,6 +27,7 @@ const OverviewTab = ({
   total_rows,
   fetchDatasetPage,
 }) => {
+  const theme = useTheme();
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
     missing: count,
@@ -45,7 +47,7 @@ const OverviewTab = ({
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data View */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
           <Typography variant="h6" gutterBottom>
             Dataset Preview
           </Typography>

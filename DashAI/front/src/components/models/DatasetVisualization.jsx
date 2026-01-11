@@ -10,6 +10,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import {
   getDatasetFile,
@@ -35,12 +36,14 @@ export default function DatasetVisualization({
   existingSessions = [],
   tasks = [],
 }) {
+  const theme = useTheme();
+
   if (!dataset) {
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
         <Typography>Loading...</Typography>
       </Box>
     );
@@ -221,7 +224,7 @@ export default function DatasetVisualization({
             {/* Tabs */}
             <Tabs
               sx={{
-                bgcolor: "#2C2C2C",
+                bgcolor: theme.palette.ui.panelDark,
                 borderRadius: 1,
                 minHeight: "48px",
                 "& .MuiTabs-indicator": {
@@ -330,7 +333,7 @@ export default function DatasetVisualization({
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <CircularProgress sx={{ color: theme.palette.primary.main }} />
             <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"

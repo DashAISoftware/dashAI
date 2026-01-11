@@ -1,6 +1,8 @@
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export default function BarHeader() {
+  const theme = useTheme();
   return (
     <Box
       display="flex"
@@ -14,7 +16,7 @@ export default function BarHeader() {
         variant="h6"
         sx={{
           fontWeight: "bold",
-          "& span": { color: "#16FFFF" },
+          "& span": { color: theme.palette.accent.cyan },
         }}
       >
         <span>D</span>a<span>sh</span>

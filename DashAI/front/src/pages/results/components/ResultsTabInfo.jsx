@@ -10,6 +10,7 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   Edit as EditIcon,
   Settings as SettingsIcon,
@@ -38,6 +39,7 @@ import LiveMetricsChart from "./LiveMetricsChart";
  * @param {object} runData object that contains all the necessary info of the run
  */
 function ResultsTabInfo({ runData, handleRun }) {
+  const theme = useTheme();
   const [localRun, setLocalRun] = React.useState(structuredClone(runData));
   const [openParametersDialog, setOpenParametersDialog] = useState(false);
   const [openOptimizerParametersDialog, setOpenOptimizerParametersDialog] =
@@ -127,7 +129,9 @@ function ResultsTabInfo({ runData, handleRun }) {
                 <Box>
                   <Chip
                     label={runData.status}
-                    sx={{ backgroundColor: getColorByStatus(runData.status) }}
+                    sx={{
+                      backgroundColor: getColorByStatus(runData.status, theme),
+                    }}
                     size="medium"
                   />
                 </Box>
@@ -136,7 +140,10 @@ function ResultsTabInfo({ runData, handleRun }) {
             <Grid container spacing={2}>
               {runData.model_name && (
                 <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     Model
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
@@ -146,7 +153,10 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.start_time && (
                 <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     Start Time
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
@@ -156,7 +166,10 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.end_time && (
                 <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     End Time
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
@@ -166,7 +179,10 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.start_time && runData.status !== "Error" && (
                 <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     Duration
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">

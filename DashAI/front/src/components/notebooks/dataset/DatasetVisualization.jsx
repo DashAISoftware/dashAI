@@ -12,6 +12,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   AddCircleOutline as AddIcon,
   CheckCircle as CheckIcon,
@@ -44,12 +45,14 @@ export default function DatasetVisualization({
   onNewNotebook,
   existingNotebooks = [],
 }) {
+  const theme = useTheme();
+
   if (!dataset) {
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
         <Typography>Loading...</Typography>
       </Box>
     );

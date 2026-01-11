@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Box, Typography, Tooltip } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import HoverModelInfo from "./HoverModelInfo";
 import { ModelIcon } from "./ModelIcon";
 
 export default function ModelListItem({ model, disabled = false, onClick }) {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredModel, setHoveredModel] = useState(null);
 
@@ -20,7 +22,8 @@ export default function ModelListItem({ model, disabled = false, onClick }) {
   };
 
   // Get color and icon from metadata or use defaults
-  const color = model.color || model.metadata?.color || "#795548";
+  const color =
+    model.color || model.metadata?.color || theme.palette.text.secondary;
   const iconName = model.metadata?.icon || "Science";
 
   return (

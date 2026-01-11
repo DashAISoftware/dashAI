@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { Box, Card, CardContent, Typography, Paper } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
 import CreateIcon from "@mui/icons-material/Create";
 
 function ModeSelector({ predictionMode, setPredictionMode }) {
+  const theme = useTheme();
+
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         Select Prediction Mode
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: theme.palette.text.secondary, mb: 2 }}
+      >
         Choose how you would like to provide input data for the prediction.
       </Typography>
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
@@ -40,7 +46,10 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
               <Typography variant="body2" fontWeight={600}>
                 Use Existing Dataset
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.secondary }}
+              >
                 Select a dataset from the platform
               </Typography>
             </Box>
@@ -73,7 +82,10 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
               <Typography variant="body2" fontWeight={600}>
                 Manual Prediction
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{ color: theme.palette.text.secondary }}
+              >
                 Enter values manually
               </Typography>
             </Box>

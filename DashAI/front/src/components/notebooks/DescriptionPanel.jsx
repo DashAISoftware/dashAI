@@ -1,12 +1,14 @@
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export default function DescriptionPanel() {
+  const theme = useTheme();
   return (
     <Box
       sx={{
         p: 2,
-        bgcolor: "#2C2C2C",
-        borderTop: "1px solid #444",
+        bgcolor: theme.palette.ui.panelDark,
+        borderTop: `1px solid ${theme.palette.ui.borderLight}`,
         minHeight: 80,
         maxHeight: 80,
         display: "flex",

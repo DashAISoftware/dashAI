@@ -19,6 +19,7 @@ import {
   Paper,
   Divider,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -47,6 +48,7 @@ function RunCard({
   onOperationsRefresh,
   explainerRefreshTrigger,
 }) {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
 
   // Get display status from numeric code
@@ -147,7 +149,10 @@ function RunCard({
         {/* Model */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <Settings fontSize="small" color="action" />
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary }}
+          >
             {modelDisplayName}
           </Typography>
         </Box>
@@ -164,7 +169,10 @@ function RunCard({
                   values.reduce((sum, val) => sum + val, 0) / values.length;
                 return (
                   <Box key={metric}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography
+                      variant="caption"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
                       {metric.toUpperCase()}
                     </Typography>
                     <Typography variant="body2" fontWeight="medium">
@@ -179,7 +187,10 @@ function RunCard({
 
         {/* Description if present */}
         {run.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary, mb: 2 }}
+          >
             {run.description}
           </Typography>
         )}
@@ -269,7 +280,10 @@ function RunCard({
               {/* Goal Metric */}
               {run.goal_metric && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     Goal Metric: <strong>{run.goal_metric}</strong>
                   </Typography>
                 </Box>

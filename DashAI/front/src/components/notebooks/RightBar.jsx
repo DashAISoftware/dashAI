@@ -297,7 +297,9 @@ export default function RightBar({ notebook, onToggle }) {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">Analysis Tools</Typography>
+          <Typography variant="h6" color="text.primary">
+            Analysis Tools
+          </Typography>
           <IconButton
             size="small"
             onClick={onToggle}

@@ -215,7 +215,9 @@ export default function SessionVisualization({
               mb: 2,
             }}
           >
-            <Typography variant="h6">Model Comparison</Typography>
+            <Typography variant="h6" color="text.primary">
+              Model Comparison
+            </Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {/* Metric Split Selector */}
               {showTable &&

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Box, Typography, Tooltip, IconButton } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ConverterClassColumnModal from "./ConverterTargetColumnModal";
 import HelpIcon from "@mui/icons-material/Help";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
@@ -23,6 +24,7 @@ export default function ScopeStepConverter({
   notebook,
   nextStep,
 }) {
+  const theme = useTheme();
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
@@ -100,7 +102,10 @@ export default function ScopeStepConverter({
         <Typography variant="subtitle2" gutterBottom>
           Step 1: Select Scope
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           Here you will configure which columns to apply the converter to.
         </Typography>
         {/* Scope selection UI */}
@@ -119,7 +124,10 @@ export default function ScopeStepConverter({
           }}
           onValidationChange={(isValid) => setIsColumnSelectionValid(isValid)}
         />
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           Here you will configure which rows to apply the converter to.
         </Typography>
         <RowSelector

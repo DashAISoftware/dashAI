@@ -1,7 +1,10 @@
 import React from "react";
 import { Box, Divider, Paper, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export default function MetricsCard({ title, metrics }) {
+  const theme = useTheme();
+
   return (
     <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
       <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
@@ -14,7 +17,10 @@ export default function MetricsCard({ title, metrics }) {
             key={key}
             sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              sx={{ color: theme.palette.text.secondary }}
+            >
               {key}:
             </Typography>
             <Typography variant="body2" fontWeight="medium">
@@ -23,7 +29,10 @@ export default function MetricsCard({ title, metrics }) {
           </Box>
         ))
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           No metrics available
         </Typography>
       )}
