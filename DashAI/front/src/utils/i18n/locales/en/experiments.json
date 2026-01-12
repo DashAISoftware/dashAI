@@ -15,7 +15,7 @@
     "errorFetchingColumnsValidation": "Error while trying to fetch columns validation",
     "errorFetchingDatasetInfo": "Error while trying to fetch dataset info",
     "errorFetchingDatasets": "Error while trying to fetch datasets",
-    "errorFetchingExperiments": "experiments:error.errorFetchingExperiments",
+    "errorFetchingExperiments": "Error while trying to get experiments.",
     "errorFetchingRuns": "Error retrieving runs for {{experimentName}}",
     "errorFetchingTaskList": "Error while trying to obtain the task list.",
     "errorFetchingTaskRequirements": "Error while trying to obtain task requirements",
