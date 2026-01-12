@@ -20,29 +20,30 @@ import {
   getDatasetFile,
   getDatasetInfo,
   getDatasetFileFiltered,
-} from "../../../api/datasets";
-import DatasetTable from "../dataset/DatasetTable";
-import { getComponents } from "../../../api/component";
-import { useTourContext } from "../../tour/TourProvider";
+} from "../api/datasets";
+import DatasetTable from "./notebooks/dataset/DatasetTable";
+import { getComponents } from "../api/component";
+import { useTourContext } from "./tour/TourProvider";
 import { useSnackbar } from "notistack";
-import JobQueueWidget from "../../jobs/JobQueueWidget";
-import { getDatasetStatus } from "../../../utils/datasetStatus";
-import { formatDate } from "../../../pages/results/constants/formatDate";
-import Header from "./header/Header";
+import JobQueueWidget from "./jobs/JobQueueWidget";
+import { getDatasetStatus } from "../utils/datasetStatus";
+import { formatDate } from "../pages/results/constants/formatDate";
+import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
-import OverviewTab from "./tabs/OverviewTab";
-import { NumericTab } from "./tabs/NumericTab";
-import { CategoricalTab } from "./tabs/CategoricalTab";
-import QualityTab from "./tabs/QualityTab";
-import CorrelationsTab from "./tabs/CorrelationsTab";
-import { QualityAlerts } from "./QualityAlerts";
-import { TextTab } from "./tabs/TextTab";
+import OverviewTab from "./notebooks/dataset/tabs/OverviewTab";
+import { NumericTab } from "./notebooks/dataset/tabs/NumericTab";
+import { CategoricalTab } from "./notebooks/dataset/tabs/CategoricalTab";
+import QualityTab from "./notebooks/dataset/tabs/QualityTab";
+import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
+import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
+import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 
 export default function DatasetVisualization({
   dataset,
-  onNotebookCreated,
-  onNewNotebook,
-  existingNotebooks = [],
+  onItemCreated,
+  onNewItem,
+  newItemButtonText = "New Item",
+  existingItems = [],
 }) {
   if (!dataset) {
     return (
@@ -205,8 +206,8 @@ export default function DatasetVisualization({
                     className="new-notebook-button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (onNewNotebook) {
-                        onNewNotebook();
+                      if (onNewItem) {
+                        onNewItem();
                       }
                       if (tourContext && tourContext.run) {
                         setTimeout(() => {
@@ -216,7 +217,7 @@ export default function DatasetVisualization({
                     }}
                     sx={{ height: "40px" }}
                   >
-                    New Notebook
+                    {newItemButtonText}
                   </Button>
                 </Grid>
               </Box>
