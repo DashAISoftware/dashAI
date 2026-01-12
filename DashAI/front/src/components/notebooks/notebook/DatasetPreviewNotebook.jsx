@@ -36,7 +36,7 @@ export default function DatasetPreviewNotebook({
           height: "100vh",
         }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <CircularProgress color="primary" />
         <Typography>Loading...</Typography>
       </Box>
     );

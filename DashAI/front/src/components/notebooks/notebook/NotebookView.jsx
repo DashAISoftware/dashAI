@@ -54,7 +54,7 @@ export default function NotebookView({ notebook }) {
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <CircularProgress color="primary" />
         <Typography>Loading...</Typography>
       </Box>
     );

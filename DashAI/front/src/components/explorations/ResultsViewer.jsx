@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { useExplorationsContext } from "./context";
 
 import { Button, Divider, Grid, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 import { useSnackbar } from "notistack";
 import { getExplorersByExplorationId } from "../../api/explorer";
@@ -75,9 +76,12 @@ function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
                 variant="contained"
                 color={viewMode === viewModes.ALL ? "primary" : "inherit"}
                 onClick={() => handleChangeViewMode(viewModes.ALL)}
-                style={{
-                  border: "2px solid #00bebb",
-                  color: viewMode === viewModes.ALL ? "#ffffff" : "#00bebb",
+                sx={{
+                  border: `2px solid ${theme.palette.primary.main}`,
+                  color:
+                    viewMode === viewModes.ALL
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.primary.main,
                   borderRadius: "1px",
                 }}
               >
@@ -93,10 +97,12 @@ function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
                   viewMode === viewModes.BY_EXPLORER ? "primary" : "inherit"
                 }
                 onClick={() => handleChangeViewMode(viewModes.BY_EXPLORER)}
-                style={{
-                  border: "2px solid #00bebb",
+                sx={{
+                  border: `2px solid ${theme.palette.primary.main}`,
                   color:
-                    viewMode === viewModes.BY_EXPLORER ? "#ffffff" : "#00bebb",
+                    viewMode === viewModes.BY_EXPLORER
+                      ? theme.palette.primary.contrastText
+                      : theme.palette.primary.main,
                   borderRadius: "1px",
                 }}
               >

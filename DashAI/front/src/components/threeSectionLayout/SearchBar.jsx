@@ -32,7 +32,7 @@ export default function SearchBar({ placeholder, onChange, value }) {
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: theme.palette.text.secondary }} />
+              <SearchIcon color="action" />
             </InputAdornment>
           ),
         },

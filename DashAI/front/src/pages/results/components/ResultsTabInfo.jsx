@@ -140,10 +140,7 @@ function ResultsTabInfo({ runData, handleRun }) {
             <Grid container spacing={2}>
               {runData.model_name && (
                 <Grid item xs={6} md={3}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: theme.palette.text.secondary }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     Model
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
@@ -153,10 +150,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.start_time && (
                 <Grid item xs={6} md={3}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: theme.palette.text.secondary }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     Start Time
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
@@ -166,10 +160,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.end_time && (
                 <Grid item xs={6} md={3}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: theme.palette.text.secondary }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     End Time
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
@@ -179,10 +170,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.start_time && runData.status !== "Error" && (
                 <Grid item xs={6} md={3}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: theme.palette.text.secondary }}
-                  >
+                  <Typography variant="caption" color="text.secondary">
                     Duration
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">

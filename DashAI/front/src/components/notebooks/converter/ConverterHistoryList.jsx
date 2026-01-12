@@ -35,7 +35,7 @@ export default function ConverterHistoryList({
                 width: "100%",
               }}
             >
-              <Transform sx={{ mr: 2, color: "#00BEBB" }} />
+              <Transform color="primary" sx={{ mr: 2 }} />
               <ListItemText
                 primary={converter.converter}
                 secondary={scopeText}

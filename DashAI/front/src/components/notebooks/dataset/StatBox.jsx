@@ -22,7 +22,7 @@ export const StatBox = ({ label, value }) => {
       >
         {value}
       </Typography>
-      <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+      <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
     </Paper>

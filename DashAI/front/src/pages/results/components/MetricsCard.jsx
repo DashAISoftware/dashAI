@@ -17,10 +17,7 @@ export default function MetricsCard({ title, metrics }) {
             key={key}
             sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: theme.palette.text.secondary }}
-            >
+            <Typography variant="body2" color="text.secondary">
               {key}:
             </Typography>
             <Typography variant="body2" fontWeight="medium">
@@ -29,10 +26,7 @@ export default function MetricsCard({ title, metrics }) {
           </Box>
         ))
       ) : (
-        <Typography
-          variant="body2"
-          sx={{ color: theme.palette.text.secondary }}
-        >
+        <Typography variant="body2" color="text.secondary">
           No metrics available
         </Typography>
       )}

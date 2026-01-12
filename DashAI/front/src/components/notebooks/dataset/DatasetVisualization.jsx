@@ -359,7 +359,7 @@ export default function DatasetVisualization({
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <CircularProgress color="primary" />
             <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"
