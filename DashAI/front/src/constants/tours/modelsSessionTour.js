@@ -89,21 +89,27 @@ export const modelsSessionTourSteps = [
     target: '[data-tour="first-run-card"]',
     content: (
       <div>
-        <h3>Your Model Run</h3>
+        <h3>Your Model Run Card</h3>
         <p>
-          Great! Your model has been added. This card shows all the information
-          about your model run:
+          Perfect! This card contains everything about your model run. Here you
+          can:
         </p>
         <ul style={{ marginLeft: "20px", lineHeight: "1.6" }}>
           <li>
-            <strong>Status:</strong> Whether the model is trained, training, or
-            not started
+            <strong>Train:</strong> Start the training process with your
+            configured parameters
           </li>
           <li>
-            <strong>Configuration:</strong> The parameters you selected
+            <strong>View Metrics:</strong> See performance scores once training
+            is complete
           </li>
           <li>
-            <strong>Actions:</strong> Train, edit, or delete the model
+            <strong>Make Predictions:</strong> Use your trained model on new
+            data
+          </li>
+          <li>
+            <strong>Create Explainers:</strong> Understand how your model makes
+            decisions
           </li>
         </ul>
         <p>Let's train this model to see how it performs!</p>
