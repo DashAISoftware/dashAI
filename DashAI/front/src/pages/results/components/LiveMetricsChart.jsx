@@ -20,7 +20,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useEffect, useRef, useState } from "react";
-import { getExperimentById } from "../../../api/experiment";
+import { getModelSessionById } from "../../../api/modelSession";
 
 export function LiveMetricsChart({ run }) {
   const [level, setLevel] = useState(null);
@@ -162,7 +162,7 @@ export function LiveMetricsChart({ run }) {
   useEffect(() => {
     let mounted = true;
 
-    getExperimentById(run.experiment_id).then((exp) => {
+    getModelSessionById(run.model_session_id).then((exp) => {
       if (!mounted) return;
 
       setAvailableMetrics({
