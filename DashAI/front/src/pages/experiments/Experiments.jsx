@@ -15,9 +15,8 @@ import { useTranslation } from "react-i18next";
 function ExperimentsPage() {
   const location = useLocation();
   const [dataset, setDataset] = useState(location.state?.dataset);
-  const [showNewExperimentModal, setShowNewExperimentModal] = useState(
-    !!dataset,
-  );
+  const [showNewExperimentModal, setShowNewExperimentModal] =
+    useState(!!dataset);
   const [updateTableFlag, setUpdateTableFlag] = useState(false);
   const [experiments, setExperiments] = useState([]);
   const [datasets, setDatasets] = useState([]);

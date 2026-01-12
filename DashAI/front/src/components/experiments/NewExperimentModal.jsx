@@ -374,10 +374,10 @@ export default function NewExperimentModal({
               steps[activeStep].name === "prepareDataset"
                 ? TIMESTAMP_KEYS.experiments.configureModel
                 : steps[activeStep].name === "configureModels"
-                ? TIMESTAMP_KEYS.experiments.submitModel
-                : steps[activeStep].name === "configureOptimizer"
-                ? TIMESTAMP_KEYS.experiments.configureOptimazer
-                : null
+                  ? TIMESTAMP_KEYS.experiments.submitModel
+                  : steps[activeStep].name === "configureOptimizer"
+                    ? TIMESTAMP_KEYS.experiments.configureOptimazer
+                    : null
             }
           >
             <Button
@@ -385,14 +385,14 @@ export default function NewExperimentModal({
                 steps[activeStep].name === "selectTask"
                   ? "exp-task-selector-next-button"
                   : steps[activeStep].name === "selectDataset"
-                  ? "exp-dataset-selector-next-button"
-                  : steps[activeStep].name === "prepareDataset"
-                  ? "exp-prepare-dataset-next-button"
-                  : steps[activeStep].name === "configureModels"
-                  ? "exp-configure-models-next-button"
-                  : steps[activeStep].name === "configureOptimizer"
-                  ? "exp-configure-optimizer-next-button"
-                  : undefined
+                    ? "exp-dataset-selector-next-button"
+                    : steps[activeStep].name === "prepareDataset"
+                      ? "exp-prepare-dataset-next-button"
+                      : steps[activeStep].name === "configureModels"
+                        ? "exp-configure-models-next-button"
+                        : steps[activeStep].name === "configureOptimizer"
+                          ? "exp-configure-optimizer-next-button"
+                          : undefined
               }
               onClick={handleNextButton}
               autoFocus

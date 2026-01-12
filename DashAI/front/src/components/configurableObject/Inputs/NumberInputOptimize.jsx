@@ -74,13 +74,13 @@ function OptimizeNumberInput({
 
     onChange({
       fixed_value: shouldUseePlaceholder
-        ? placeholder?.fixed_value ?? null
+        ? (placeholder?.fixed_value ?? null)
         : mergedFixed,
       lower_bound: shouldUseePlaceholder
-        ? placeholder?.lower_bound ?? null
+        ? (placeholder?.lower_bound ?? null)
         : mergedLower,
       upper_bound: shouldUseePlaceholder
-        ? placeholder?.upper_bound ?? null
+        ? (placeholder?.upper_bound ?? null)
         : mergedUpper,
       optimize: toggled,
     });
