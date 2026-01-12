@@ -1040,7 +1040,13 @@ export default function ModelsContent() {
           operationsCount={operationsCount}
         />
       </Box>
-      {!selectedSessionId && <TourButton tourKey={TOUR_KEYS.MODELS} />}
+      {!selectedSessionId && (
+        <TourButton
+          tourKey={TOUR_KEYS.MODELS}
+          disabled={step !== 0}
+          disabledMessage="Return to home to start the tour"
+        />
+      )}
     </>
   );
 }
