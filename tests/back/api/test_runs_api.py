@@ -28,6 +28,9 @@ def create_experiment(client: TestClient, dataset_id):
                 "PetalWidthCm",
             ],
             "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
             "splits": json.dumps(
                 {
                     "train": 0.5,

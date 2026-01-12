@@ -20,6 +20,10 @@ class Ter(TranslationMetric):
     """
 
     MAXIMIZE: bool = False
+    DESCRIPTION: str = (
+        "TER (Translation Edit Rate) measures the number of edits "
+        "needed to change a system output into one of the references."
+    )
 
     @staticmethod
     def score(source_sentences: DashAIDataset, target_sentences: np.ndarray):

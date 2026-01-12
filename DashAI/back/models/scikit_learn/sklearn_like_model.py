@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Type
+from typing import List, Optional
 
 import joblib
 from sklearn.preprocessing import OneHotEncoder
@@ -57,23 +57,7 @@ class SklearnLikeModel(BaseModel):
 
     # --- Methods for process the data for sklearn models ---
 
-    def fit(
-        self, x_train: DashAIDataset, y_train: DashAIDataset
-    ) -> Type["SklearnLikeModel"]:
-        """Fit the estimator.
-
-        Parameters
-        ----------
-        x_train : DashAIDataset
-            Dataset with the input data.
-        y_train : DashAIDataset
-            Dataset with the target data.
-
-        Returns
-        -------
-        self
-            The fitted estimator object.
-        """
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         x_processed = self.prepare_dataset(x_train, is_fit=True).to_pandas()
         y_processed = self.prepare_output(y_train, is_fit=True).to_pandas()
         return super().fit(x_processed, y_processed)

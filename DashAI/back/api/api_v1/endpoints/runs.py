@@ -11,10 +11,12 @@ from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
+from DashAI.back.core.enums.metrics import LevelEnum
 from DashAI.back.dependencies.database.models import (
     Experiment,
     GlobalExplainer,
     LocalExplainer,
+    Metric,
     Prediction,
     Run,
     RunStatus,
@@ -24,6 +26,49 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def get_metrics_for_run(db, run_id: int):
+    """Retrieve metrics associated with a specific run.
+
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy session to interact with the database.
+    run_id : int
+        ID of the run for which to retrieve metrics.
+
+    Returns
+    -------
+    dict
+        A dictionary containing train, validation, and test metrics for the run.
+    """
+    metrics = (
+        db.query(Metric)
+        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
+        .all()
+    )
+
+    # Initialize the response structure
+    response = {
+        "train_metrics": None,
+        "validation_metrics": None,
+        "test_metrics": None,
+    }
+
+    # Group metrics by split
+    for metric in metrics:
+        # Determine the key in the response dictionary
+        split_key = f"{metric.split.name.lower()}_metrics"
+
+        if response[split_key] is None:
+            response[split_key] = {}
+
+        # In the new schema, we store 'value'.
+        # For 'LAST' level, we just want the latest name: value pair.
+        response[split_key][metric.name] = metric.value
+
+    return response
 
 
 @router.get("/")
@@ -67,6 +112,18 @@ async def get_runs(
                 runs = db.scalars(
                     select(Run).where(Run.experiment_id == experiment_id)
                 ).all()
+                if not runs:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Runs associated with Experiment not found",
+                    )
+
+                # Add metrics to each run
+                for run in runs:
+                    metrics = get_metrics_for_run(db, run.id)
+                    run.train_metrics = metrics["train_metrics"]
+                    run.validation_metrics = metrics["validation_metrics"]
+                    run.test_metrics = metrics["test_metrics"]
             else:
                 runs = db.query(Run).all()
         except exc.SQLAlchemyError as e:
@@ -112,6 +169,12 @@ async def get_run_by_id(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Run not found",
                 )
+            # Add metrics to the run
+            metrics = get_metrics_for_run(db, run_id)
+            run.train_metrics = metrics["train_metrics"]
+            run.validation_metrics = metrics["validation_metrics"]
+            run.test_metrics = metrics["test_metrics"]
+
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -579,6 +642,11 @@ def reset_run(run):
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
+
+    # Delete metrics from DB
+    with di["session_factory"]() as db:
+        db.query(Metric).filter(Metric.run_id == run.id).delete()
+        db.commit()
 
     # Delete files
     if run.run_path and os.path.exists(run.run_path):

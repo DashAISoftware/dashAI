@@ -17,7 +17,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
 )
-from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float
@@ -57,7 +56,7 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
     )  # type: ignore
 
 
-class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeModel):
+class BagOfWordsTextClassificationModel(TextClassificationModel):
     """Text classification meta-model.
 
     The metamodel has two main components:
@@ -141,14 +140,20 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
 
         return _vectorize
 
-    def fit(self, x: Dataset, y: Dataset):
+    def train(
+        self,
+        x: Dataset,
+        y: Dataset,
+        x_validation: Dataset = None,
+        y_validation: Dataset = None,
+    ):
         input_column = x.column_names[0]
         self.vectorizer.fit(x[input_column])
         tokenizer_func = self.get_vectorizer(input_column)
         tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
-        self.classifier.fit(tokenized_dataset, y)
+        self.classifier.train(tokenized_dataset, y)
 
     def predict(self, x: Dataset):
         input_column = x.column_names[0]
@@ -213,3 +218,6 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
             return dataset
         except Exception as e:
             print(f"Couldn't apply transformations to the dataset for the model: {e}")
+
+    def prepare_output(self, dataset, is_fit=False):
+        return self.classifier.prepare_output(dataset, is_fit)

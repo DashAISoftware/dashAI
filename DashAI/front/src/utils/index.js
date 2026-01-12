@@ -35,3 +35,36 @@ export const getColorByStatus = (status) => {
   }
   return color;
 };
+
+export const getColorByColumnType = (type) => {
+  if (!type) return "#757575";
+
+  const typeColors = {
+    numerical: "#00BEBB",
+    float: "#00BEBB",
+    integer: "#3e68ff",
+    int: "#3e68ff",
+    number: "#00BEBB",
+
+    categorical: "#9c27b0",
+    category: "#9c27b0",
+
+    text: "#f1ae61",
+    string: "#f1ae61",
+
+    boolean: "#43A047",
+    bool: "#43A047",
+
+    datetime: "#e91e63",
+    date: "#e91e63",
+    time: "#e91e63",
+    timestamp: "#e91e63",
+
+    image: "#6E86E8",
+
+    default: "#757575",
+  };
+
+  const normalizedType = type.toLowerCase();
+  return typeColors[normalizedType] || typeColors.default;
+};

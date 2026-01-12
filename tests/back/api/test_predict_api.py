@@ -44,7 +44,7 @@ class DummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x, y):
         return
 
     def prepare_dataset(self, dataset, is_fit=False):
@@ -204,6 +204,9 @@ def create_experiment(client: TestClient, dataset: Dataset):
             task_name="TabularClassificationTask",
             input_columns=["feature_0", "feature_1", "feature_2", "feature_3"],
             output_columns=["class"],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
             splits=json.dumps(
                 {
                     "train": 0.5,

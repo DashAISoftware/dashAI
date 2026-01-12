@@ -1,23 +1,26 @@
-"""DashAI RMSE regression metric implementation."""
+"""DashAI MSE regression metric implementation."""
 
 import numpy as np
-from sklearn.metrics import root_mean_squared_error
+from sklearn.metrics import mean_squared_error
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 
-class RMSE(RegressionMetric):
-    """Root Mean Squared Error metric for regression tasks."""
+class MSE(RegressionMetric):
+    """Mean Squared Error metric for regression tasks."""
 
     DESCRIPTION: str = (
-        "Square root of the average of squared differences between "
-        "predicted and actual values, penalizes larger errors more heavily."
+        "Mean Squared Error (MSE) measures the average "
+        "of the squared differences "
+        "between predicted values and actual values in a regression model. "
+        "It provides an indication of the model's prediction accuracy, "
+        "with lower values indicating better fit."
     )
 
     @staticmethod
     def score(true_values: DashAIDataset, predicted_values: np.ndarray) -> float:
-        """Calculate the RMSE between true values and predicted values.
+        """Calculate the MSE between true values and predicted values.
 
         Parameters
         ----------
@@ -30,7 +33,7 @@ class RMSE(RegressionMetric):
         Returns
         -------
         float
-            RMSE score between true values and predicted values
+            MSE score between true values and predicted values
         """
         true_values, pred_values = prepare_to_metric(true_values, predicted_values)
-        return root_mean_squared_error(true_values, pred_values)
+        return mean_squared_error(true_values, pred_values)
