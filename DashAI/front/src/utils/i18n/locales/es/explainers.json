@@ -1,0 +1,61 @@
+{
+  "button": {
+    "addExplainer": "",
+    "backToExplainers": "",
+    "hidePlot": "",
+    "showPlot": ""
+  },
+  "error": {
+    "fetchDataError": "",
+    "fetchDatasets": "",
+    "fetchExplainers": "",
+    "fetchRuns": "",
+    "fetchTasks": "",
+    "globalExplainerCreationError": "",
+    "globalExplainerJobEnqueueError": "",
+    "globalExplainerJobFailed": "",
+    "invalidDataset": "",
+    "localExplainerCreationError": "",
+    "localExplainerJobEnqueueError": "",
+    "localExplainerJobFailed": "",
+    "nameTooShort": "",
+    "validateDataset": ""
+  },
+  "label": {
+    "configureExplainer": "",
+    "configureExplainerParameters": "",
+    "datasetId": "",
+    "datasetSelection": "",
+    "datasetSplit": "",
+    "deleteExplainer": "",
+    "deleteExplainerConfirmation": "",
+    "explainerConfiguration": "",
+    "explainerName": "",
+    "explainerParameters": "",
+    "explainersDashboardDescription": "",
+    "explainersDashboardTitle": "",
+    "explanationPath": "",
+    "forExplainer": "",
+    "globalExplanations": "",
+    "globalExplanationsDescription": "",
+    "instanceNumber": "",
+    "localExplanations": "",
+    "localExplanationsDescription": "",
+    "newGlobalExplainer": "",
+    "newLocalExplainer": "",
+    "noDatasetsAvailable": "",
+    "percentageOfSplitToUse": "",
+    "plotPath": "",
+    "runId": "",
+    "selectDataset": "",
+    "selectDatasetToExplain": "",
+    "selectExplainer": "",
+    "selectExplainerAndName": "",
+    "splitSelectionSummary": ""
+  },
+  "message": {
+    "explainerJobCompleted": "",
+    "globalExplainerJobCreated": "",
+    "localExplainerJobCreated": ""
+  }
+}

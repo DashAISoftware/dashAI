@@ -12,6 +12,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 
 import {
   getDatasets as getDatasetsRequest,
@@ -69,6 +70,7 @@ export default function SelectDatasetStep({
     validation: 0,
     all: 1,
   });
+  const { t } = useTranslation(["explainers", "common"]);
 
   const getDatasets = async () => {
     setLoading(true);
@@ -76,7 +78,9 @@ export default function SelectDatasetStep({
       const datasets = await getDatasetsRequest();
       setDatasets(datasets);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the datasets list.");
+      enqueueSnackbar(t("explainers:error.fetchDatasets"), {
+        variant: "error",
+      });
       setRequestError(true);
       if (error.response) {
         console.error("Response error:", error.message);
@@ -98,10 +102,14 @@ export default function SelectDatasetStep({
       );
       setIsValidDataset(validation.dataset_status === "valid");
       if (validation.dataset_status === "invalid") {
-        enqueueSnackbar("The selected dataset is not valid.");
+        enqueueSnackbar(t("explainers:error.invalidDataset"), {
+          variant: "error",
+        });
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to validate the selected dataset.");
+      enqueueSnackbar(t("explainers:error.validateDataset"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -193,7 +201,7 @@ export default function SelectDatasetStep({
         sx={{ mb: 4 }}
       >
         <Typography variant="subtitle1" component="h3">
-          Select a dataset with instances to explain
+          {t("explainers:label.selectDatasetToExplain")}
         </Typography>
       </Grid>
 
@@ -202,14 +210,15 @@ export default function SelectDatasetStep({
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            <AlertTitle>There is no datasets available.</AlertTitle>
-            Go to{" "}
-            <Link component={RouterLink} to="/app/data">
-              data tab
-            </Link>{" "}
-            to upload one first.
+            <Trans i18nKey="explainers:label.noDatasetsAvailable">
+              <AlertTitle>There are no datasets available.</AlertTitle>
+              Go to
+              <Link component={RouterLink} to="/app/data">
+                data tab
+              </Link>
+              to upload one first.
+            </Trans>
           </Alert>
-          <Typography></Typography>
         </React.Fragment>
       )}
       <Paper>
@@ -244,11 +253,7 @@ export default function SelectDatasetStep({
               setNewExpl((prevExpl) => ({ ...prevExpl, scope }));
             }}
           />
-          <NoteBox
-            message={
-              "The dataset selected here will be used to compute the explanations. If you chose the same dataset that was used to train the model, you may want to use a sample of your test set instead. Keep in mind that some explainers can take a long time to generate explanations, depending on the number of instances selected."
-            }
-          />
+          <NoteBox message={t("explainers:label.datasetSelection")} />
         </>
       )}
     </React.Fragment>

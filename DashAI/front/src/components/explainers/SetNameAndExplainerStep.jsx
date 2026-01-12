@@ -7,6 +7,7 @@ import { useSnackbar } from "notistack";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
+import { useTranslation } from "react-i18next";
 
 function SetNameAndExplainerStep({
   newExpl,
@@ -26,6 +27,7 @@ function SetNameAndExplainerStep({
   const [explainers, setExplainers] = useState([]);
   const [selectedExplainer, setSelectedExplainer] = useState({});
   const [selectedExplainerOk, setSelectedExplainerOk] = useState(false);
+  const { t } = useTranslation(["explainers"]);
 
   function filterObjects(arr) {
     return arr.filter((obj) => !obj.name.startsWith("Fit"));
@@ -40,7 +42,9 @@ function SetNameAndExplainerStep({
       });
       setExplainers(filterObjects(explainers));
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the explainers list.");
+      enqueueSnackbar(t("explainers:error.fetchExplainers"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -108,19 +112,19 @@ function SetNameAndExplainerStep({
       {/* Set Name subcomponent */}
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Select a {scope.toLowerCase()} explainer and anter a name
+          {t("explainers:label.selectExplainerAndName")}
         </Typography>
 
         <TextField
           id="explainer-name-input"
-          label="Explainer name"
+          label={t("explainers:label.explainerName")}
           value={newExpl.name}
           fullWidth
           onChange={handleNameInputChange}
           autoComplete="off"
           sx={{ mb: 2 }}
           error={explNameError}
-          helperText="The explainer name must have at least 4 alphanumeric characters."
+          helperText={t("explainers:error.nameTooShort")}
         />
       </Grid>
 

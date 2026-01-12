@@ -10,6 +10,7 @@ import { formatDate } from "../../utils";
 import { getComponents } from "../../api/component";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
+import { useTranslation } from "react-i18next";
 
 function TrainedModelsTable() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ function TrainedModelsTable() {
   const [tasks, setTasks] = useState([]);
   const [originalRows, setOriginalRows] = useState([]);
   const [models, setModels] = useState([]);
+  const { t } = useTranslation(["common"]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -36,25 +38,25 @@ function TrainedModelsTable() {
   const colums = [
     {
       field: "id",
-      headerName: "ID",
+      headerName: t("common:id"),
       minWidth: 30,
       editable: false,
     },
     {
       field: "experimentName",
-      headerName: "Experiment Name",
+      headerName: t("common:experimentName"),
       minWidth: 170,
       editable: false,
     },
     {
       field: "name",
-      headerName: "Model Name",
+      headerName: t("common:modelName"),
       minWidth: 170,
       editable: false,
     },
     {
       field: "model_name",
-      headerName: "Model",
+      headerName: t("common:model"),
       minWidth: 170,
       editable: false,
       valueGetter: (value) => {
@@ -64,7 +66,7 @@ function TrainedModelsTable() {
     },
     {
       field: "created",
-      headerName: "Created",
+      headerName: t("common:created"),
       minWidth: 170,
       editable: false,
       type: Date,
@@ -72,7 +74,7 @@ function TrainedModelsTable() {
     },
     {
       field: "actions",
-      headerName: "Dashboard",
+      headerName: t("common:dashboard"),
       headerWidth: 1,
       type: "actions",
       mindWidth: 170,
@@ -132,7 +134,7 @@ function TrainedModelsTable() {
       setOriginalRows(filteredRows);
       setRows(filteredRows);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the runs table.");
+      enqueueSnackbar(t("explainers:error.fetchRuns"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -151,7 +153,7 @@ function TrainedModelsTable() {
       const tasks = await getComponents({ selectTypes: ["Task"] });
       setTasks(tasks);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the tasks.");
+      enqueueSnackbar(t("explainers:error.fetchTasks"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -190,7 +192,7 @@ function TrainedModelsTable() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 4 }}>
           <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-            Models
+            {t("common:Models")}
           </Typography>
         </Grid>
         <Grid size={{ xs: 4 }}></Grid>
@@ -198,13 +200,13 @@ function TrainedModelsTable() {
           <TextField
             sx={{ mb: 1, mt: -1 }}
             select
-            label="Select Task"
+            label={t("common:selectTask")}
             value={selectedTask}
             onChange={taskFilter}
             fullWidth
           >
             <MenuItem key={"Wildcard"} value={"All Tasks"}>
-              All tasks
+              {t("common:allTasks")}
             </MenuItem>
             {tasks.map((task) => (
               <MenuItem key={task.name} value={task.name}>

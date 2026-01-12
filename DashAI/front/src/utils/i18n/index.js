@@ -8,6 +8,8 @@ import customEN from "./locales/en/custom.json";
 import customES from "./locales/es/custom.json";
 import experimentsEN from "./locales/en/experiments.json";
 import experimentsES from "./locales/es/experiments.json";
+import explainersEN from "./locales/en/explainers.json";
+import explainersES from "./locales/es/explainers.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -18,12 +20,14 @@ const resources = {
     common: commonEN,
     custom: customEN,
     experiments: experimentsEN,
+    explainers: explainersEN,
   },
   es: {
     configurableObject: configurableObjectES,
     common: commonES,
     custom: customES,
     experiments: experimentsES,
+    explainers: explainersES,
   },
 };
 
@@ -33,7 +37,7 @@ i18n.use(initReactI18next).init({
   lng: "en",
   fallbackLng: "en",
 
-  ns: ["common", "custom", "configurableObject", "experiments"],
+  ns: ["common", "custom", "configurableObject", "experiments", "explainers"],
   defaultNS: "common",
 
   interpolation: {
