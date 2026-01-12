@@ -12,6 +12,7 @@ import {
 } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/SideBar";
+import { useTranslation } from "react-i18next";
 
 export default function ParamsBar({
   selectedSessionId,
@@ -24,6 +25,7 @@ export default function ParamsBar({
 
   const [selectedModel, setSelectedModel] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
+  const { t } = useTranslation(["generative", "common"]);
 
   const getHistory = () => {
     getHistoryBySessionId(selectedSessionId).then((response) => {
@@ -107,7 +109,7 @@ export default function ParamsBar({
             height: 64,
           }}
         >
-          <Typography variant="h6">Model Parameters</Typography>
+          <Typography variant="h6">{t("common:modelParameters")}</Typography>
 
           {/* Parameter History Modal */}
           {selectedSessionId && (
@@ -166,7 +168,7 @@ export default function ParamsBar({
                     variant="contained"
                     disabled={!formik.dirty}
                   >
-                    EDIT
+                    {t("common:update")}
                   </Button>
                 </Box>
               </Box>
@@ -186,7 +188,7 @@ export default function ParamsBar({
               variant="body2"
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
-              Select a session to view and edit its parameters.
+              {t("generative:label.selectSessionToViewParameters")}
             </Typography>
           </Box>
         )}

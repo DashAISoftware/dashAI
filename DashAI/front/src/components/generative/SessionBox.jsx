@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import SessionMenu from "./SessionMenu";
+const { useTranslation } = require("react-i18next");
 
 export default function SessionBox({
   isSelected,
@@ -11,6 +12,8 @@ export default function SessionBox({
   onDelete,
   onInfo,
 }) {
+  const { t } = useTranslation(["generative"]);
+
   return (
     <Box
       sx={{
@@ -45,7 +48,7 @@ export default function SessionBox({
             noWrap
             sx={{ maxWidth: 180, fontSize: 14 }}
           >
-            {name ? name : "Untitled Session"}
+            {name ? name : t("generative:label.untitledSession")}
           </Typography>
           <Typography
             variant="caption"

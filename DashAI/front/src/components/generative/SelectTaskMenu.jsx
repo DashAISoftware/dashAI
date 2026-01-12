@@ -4,9 +4,11 @@ import TaskBox from "../../components/generative/TaskBox";
 import SearchBar from "./SearchBar";
 import { getGenerativeTask } from "../../api/generativeTask";
 import CustomLayout from "../../components/custom/CustomLayout";
+import { useTranslation } from "react-i18next";
 
 export default function SelectTaskMenu({ goToNextStep }) {
   const [tasks, setTasks] = useState([]);
+  const { t } = useTranslation(["generative", "common"]);
 
   useEffect(() => {
     getGenerativeTask().then(setTasks);
@@ -20,8 +22,8 @@ export default function SelectTaskMenu({ goToNextStep }) {
 
   return (
     <CustomLayout
-      title="Generative Module"
-      subtitle="Select generative task to start a new session"
+      title={t("generative:label.generativeModule")}
+      subtitle={t("generative:label.selectGenerativeTask")}
       padding={0}
     >
       <Box
@@ -33,7 +35,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
       >
         <Box width={"450px"}>
           <SearchBar
-            placeholder="Search Tasks"
+            placeholder={t("generative:label.searchTasks")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

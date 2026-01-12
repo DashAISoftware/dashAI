@@ -1,0 +1,29 @@
+{
+  "button": {
+    "backToTaskSelection": "",
+    "createSession": ""
+  },
+  "error": {
+    "nameRequired": "",
+    "processError": ""
+  },
+  "label": {
+    "deleteSessionConfirmation": "",
+    "generativeModule": "",
+    "nameYourSession": "",
+    "noSessionsFound": "",
+    "parameterChangeEvent": "",
+    "parameterChangeHistory": "",
+    "searchSessions": "",
+    "searchTasks": "",
+    "selectGenerativeTask": "",
+    "selectModelAndConfigureParameters": "",
+    "selectSessionToViewParameters": "",
+    "sessionDescription": "",
+    "sessionInformation": "",
+    "sessionName": "",
+    "sessions": "",
+    "typeYourMessage": "",
+    "untitledSession": ""
+  }
+}

@@ -2,6 +2,7 @@ import { Box, Typography, Collapse } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import SessionBox from "./SessionBox";
+import { useTranslation } from "react-i18next";
 
 export default function SessionList({
   selectedSessionId,
@@ -12,6 +13,8 @@ export default function SessionList({
   handleSessionInfo,
   toggleSection,
 }) {
+  const { t } = useTranslation(["generative"]);
+
   if (groupedSessions === undefined) {
     return (
       <Box
@@ -29,7 +32,7 @@ export default function SessionList({
             padding: 2,
           }}
         >
-          No sessions found
+          {t("generative:label.noSessionsFound")}
         </Typography>
       </Box>
     );
@@ -151,7 +154,7 @@ export default function SessionList({
             padding: 2,
           }}
         >
-          No sessions found
+          {t("generative:label.noSessionsFound")}
         </Typography>
       )}
     </Box>
