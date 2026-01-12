@@ -99,7 +99,7 @@ export const CustomTooltip = ({
             </Button>
           )}
 
-          {isInteractive && !isLastStep ? (
+          {isInteractive ? (
             <Typography
               variant="caption"
               sx={{

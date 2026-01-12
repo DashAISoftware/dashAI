@@ -99,9 +99,6 @@ export const modelsTourSteps = [
             <strong>Regression:</strong> Predict continuous values (e.g., house
             prices)
           </li>
-          <li>
-            <strong>Time Series:</strong> Forecast future values over time
-          </li>
         </ul>
         <p>
           <strong>Click on this task to continue the tour!</strong>
@@ -169,13 +166,13 @@ export const modelsTourSteps = [
           the requirements of your chosen task.
         </p>
         <p>
-          <strong>Green (Success):</strong> Your columns are correctly
-          configured and ready for training.
+          <strong style={{ color: "#2e7d32" }}>Green (Success):</strong> Your
+          columns are correctly configured and ready for training.
         </p>
         <p>
-          <strong>Red (Error):</strong> The columns don't match the task
-          requirements. Don't worry! You can adjust your column selection in the
-          next steps to fix this.
+          <strong style={{ color: "#d32f2f" }}>Red (Error):</strong> The columns
+          don't match the task requirements. Don't worry! You can adjust your
+          column selection in the next steps to fix this.
         </p>
         <p>
           The alert explains what types and how many columns are needed for
@@ -305,6 +302,8 @@ export const modelsTourSteps = [
     ),
     placement: "top",
     disableBeacon: true,
+    spotlightClicks: true,
+    isInteractive: true,
   },
 ];
 

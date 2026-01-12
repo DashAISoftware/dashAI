@@ -192,6 +192,10 @@ function CreateSessionSteps({
         variant: "success",
       });
 
+      if (tourContext?.run && tourContext?.stepIndex === 11) {
+        tourContext.stopTour();
+      }
+
       if (handleSessionCreated) {
         handleSessionCreated(response);
       }
