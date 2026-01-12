@@ -38,6 +38,16 @@ import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 
+/**
+ * Component to visualize dataset information including quality metrics, statistics, and data preview.
+ * Can be used across different modules (Notebooks, Models) with customizable action buttons.
+ * @param {Object} props
+ * @param {Object} props.dataset - Dataset object containing id, name, file_path, status, and created date
+ * @param {Function} props.onItemCreated - Callback function when a new item (notebook/session) is created
+ * @param {Function} props.onNewItem - Callback function when "New Item" button is clicked
+ * @param {string} [props.newItemButtonText="New Item"] - Custom text for the action button (e.g., "New Notebook", "New Session")
+ * @param {Array} [props.existingItems=[]] - Array of existing items (notebooks/sessions) for validation
+ */
 export default function DatasetVisualization({
   dataset,
   onItemCreated,
