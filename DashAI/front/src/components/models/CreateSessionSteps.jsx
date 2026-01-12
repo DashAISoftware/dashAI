@@ -8,6 +8,7 @@ import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { createExperiment } from "../../api/experiment";
+import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
 function CreateSessionSteps({
@@ -21,20 +22,21 @@ function CreateSessionSteps({
   const [activeStep, setActiveStep] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
 
-  // Step 1 state: Name and Dataset
   const [selectedDataset, setSelectedDataset] = useState(
     preselectedDatasetId
       ? datasets.find((d) => d.id === preselectedDatasetId) || null
       : null,
   );
 
-  // Step 2 state: Prepare Dataset
   const [newExp, setNewExp] = useState({
     name: "",
     dataset: null,
     task_name: selectedTask?.name || "",
     input_columns: [],
     output_columns: [],
+    train_metrics: [],
+    validation_metrics: [],
+    test_metrics: [],
     splits: {},
     runs: [],
   });
@@ -69,20 +71,15 @@ function CreateSessionSteps({
     enableReinitialize: true,
     onSubmit: async (values) => {
       if (activeStep === 0) {
-        // Moving to step 2
-        setNewExp({
+        setNewExp((prev) => ({
+          ...prev,
           name: values.name.trim(),
           dataset: selectedDataset,
           task_name: selectedTask?.name || "",
-          input_columns: [],
-          output_columns: [],
-          splits: {},
-          runs: [],
-        });
+        }));
         setActiveStep(1);
         setNextEnabled(false);
       } else if (activeStep === 1) {
-        // Create session
         await createSession();
       }
     },
@@ -94,7 +91,6 @@ function CreateSessionSteps({
     }
   }, [selectedTask, defaultName, formik]);
 
-  // Calculate if next button should be enabled based on current step
   const isNextEnabled = (() => {
     if (activeStep === 0) {
       const isNameValid = formik.values.name.trim().length >= 4;
@@ -139,12 +135,39 @@ function CreateSessionSteps({
   const createSession = async () => {
     try {
       setNextEnabled(false);
+
+      let allMetricNames = [];
+      try {
+        const metricsData = await getComponents({
+          selectTypes: ["Metric"],
+          relatedComponent: newExp.task_name,
+        });
+        allMetricNames = metricsData.map((metric) => metric.name);
+      } catch (error) {
+        console.warn("Could not fetch metrics:", error);
+      }
+
+      const hasTrain =
+        newExp.splits.train !== undefined && newExp.splits.train !== 0;
+      const hasValidation =
+        newExp.splits.validation !== undefined &&
+        newExp.splits.validation !== 0;
+      const hasTest =
+        newExp.splits.test !== undefined && newExp.splits.test !== 0;
+
+      const trainMetrics = hasTrain ? allMetricNames : [];
+      const validationMetrics = hasValidation ? allMetricNames : [];
+      const testMetrics = hasTest ? allMetricNames : [];
+
       const response = await createExperiment(
         newExp.dataset.id,
         newExp.task_name,
         newExp.name,
         newExp.input_columns,
         newExp.output_columns,
+        trainMetrics,
+        validationMetrics,
+        testMetrics,
         JSON.stringify(newExp.splits),
       );
 
@@ -152,12 +175,10 @@ function CreateSessionSteps({
         variant: "success",
       });
 
-      // Call parent handler with created session
       if (handleSessionCreated) {
         handleSessionCreated(response);
       }
 
-      // Reset and go back home
       backHome();
     } catch (error) {
       enqueueSnackbar("Error while trying to create session", {

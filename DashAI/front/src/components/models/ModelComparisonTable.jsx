@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-import { Box, Chip, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
@@ -17,6 +17,7 @@ function ModelComparisonTable({
   onViewDetails,
   onDelete,
   onRowClick,
+  metricSplit = "test",
 }) {
   const [models, setModels] = useState([]);
 
@@ -32,7 +33,6 @@ function ModelComparisonTable({
     fetchModels();
   }, []);
 
-  // Transform runs to rows with flattened metrics
   const getRows = () => {
     return runs.map((run) => {
       const row = {
@@ -45,33 +45,21 @@ function ModelComparisonTable({
         last_modified: run.last_modified,
       };
 
-      // Extract test metrics
       if (run.test_metrics) {
         Object.entries(run.test_metrics).forEach(([key, value]) => {
-          row[`test_${key}`] =
-            typeof value === "number"
-              ? Math.trunc(value * 10000) / 10000
-              : value;
+          row[`test_${key}`] = value;
         });
       }
 
-      // Extract train metrics
       if (run.train_metrics) {
         Object.entries(run.train_metrics).forEach(([key, value]) => {
-          row[`train_${key}`] =
-            typeof value === "number"
-              ? Math.trunc(value * 10000) / 10000
-              : value;
+          row[`train_${key}`] = value;
         });
       }
 
-      // Extract validation metrics
       if (run.validation_metrics) {
         Object.entries(run.validation_metrics).forEach(([key, value]) => {
-          row[`val_${key}`] =
-            typeof value === "number"
-              ? Math.trunc(value * 10000) / 10000
-              : value;
+          row[`val_${key}`] = value;
         });
       }
 
@@ -79,52 +67,46 @@ function ModelComparisonTable({
     });
   };
 
-  // Get all unique metrics from runs
   const getMetricColumns = () => {
     const metricsSet = new Set();
+    const prefix = metricSplit === "validation" ? "val" : metricSplit;
 
     runs.forEach((run) => {
-      if (run.test_metrics) {
-        Object.keys(run.test_metrics).forEach((key) =>
-          metricsSet.add(`test_${key}`),
+      const metricsKey = `${metricSplit}_metrics`;
+      if (run[metricsKey]) {
+        Object.keys(run[metricsKey]).forEach((key) =>
+          metricsSet.add(`${prefix}_${key}`),
         );
       }
     });
 
-    return Array.from(metricsSet).map((metricField) => ({
-      field: metricField,
-      headerName: metricField.toLowerCase(),
-      width: 120,
-      renderCell: (params) => {
-        const { statusCode } = params.row;
-        const isRunning = statusCode === 1 || statusCode === 2; // Delivered or Started
+    return Array.from(metricsSet).map((metricField) => {
+      const metricName = metricField.replace(/^(test|train|val)_/, "");
 
-        return isRunning ? "-" : params.value || "-";
-      },
-    }));
-  };
+      return {
+        field: metricField,
+        headerName: metricName,
+        width: 120,
+        renderCell: (params) => {
+          const { statusCode } = params.row;
+          const isRunning = statusCode === 1 || statusCode === 2;
 
-  // Status color mapping
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Not Started":
-        return "default";
-      case "Delivered":
-      case "Started":
-        return "info";
-      case "Finished":
-        return "success";
-      case "Error":
-        return "error";
-      default:
-        return "default";
-    }
+          if (isRunning) return "-";
+          if (params.value === null || params.value === undefined) return "-";
+
+          const value = Number(params.value);
+          if (isNaN(value)) return params.value;
+
+          return value.toFixed(4);
+        },
+      };
+    });
   };
 
   const columns = [
     {
       field: "name",
-      headerName: "Run Name",
+      headerName: "Model Name",
       flex: 1,
       minWidth: 150,
     },
@@ -137,18 +119,6 @@ function ModelComparisonTable({
         const model = models.find((m) => m.name === value);
         return model?.display_name || value;
       },
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 130,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={getStatusColor(params.value)}
-          size="small"
-        />
-      ),
     },
     ...getMetricColumns(),
     {
@@ -219,7 +189,7 @@ function ModelComparisonTable({
   const rows = getRows();
 
   return (
-    <Box sx={{ height: "100%", width: "100%", pb: 1 }}>
+    <Box sx={{ height: "100%", width: "100%" }}>
       <DataGrid
         rows={rows}
         columns={columns}
@@ -262,6 +232,7 @@ ModelComparisonTable.propTypes = {
   onViewDetails: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
+  metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
 };
 
 export default ModelComparisonTable;

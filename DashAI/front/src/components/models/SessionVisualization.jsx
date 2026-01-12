@@ -12,6 +12,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import JobQueueWidget from "../jobs/JobQueueWidget";
@@ -35,6 +37,7 @@ export default function SessionVisualization({
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
+  const [metricSplit, setMetricSplit] = useState("test");
   const [selectedRunForExplainer, setSelectedRunForExplainer] = useState(null);
   const [explainerDialogOpen, setExplainerDialogOpen] = useState(false);
   const [globalExplainerModalOpen, setGlobalExplainerModalOpen] =
@@ -111,6 +114,18 @@ export default function SessionVisualization({
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
     [runs],
+  );
+
+  // Check which metrics are available
+  const hasTrainMetrics = runs.some(
+    (run) => run.train_metrics && Object.keys(run.train_metrics).length > 0,
+  );
+  const hasValidationMetrics = runs.some(
+    (run) =>
+      run.validation_metrics && Object.keys(run.validation_metrics).length > 0,
+  );
+  const hasTestMetrics = runs.some(
+    (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
   );
 
   const handleMouseMove = React.useCallback((e) => {
@@ -202,6 +217,29 @@ export default function SessionVisualization({
           >
             <Typography variant="h6">Model Comparison</Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {/* Metric Split Selector */}
+              {showTable &&
+                (hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
+                  <ToggleButtonGroup
+                    value={metricSplit}
+                    exclusive
+                    onChange={(e, newValue) => {
+                      if (newValue !== null) setMetricSplit(newValue);
+                    }}
+                    size="small"
+                  >
+                    {hasTrainMetrics && (
+                      <ToggleButton value="train">Train</ToggleButton>
+                    )}
+                    {hasValidationMetrics && (
+                      <ToggleButton value="validation">Validation</ToggleButton>
+                    )}
+                    {hasTestMetrics && (
+                      <ToggleButton value="test">Test</ToggleButton>
+                    )}
+                  </ToggleButtonGroup>
+                )}
+
               {/* Toggle between Table and Graphs */}
               <ButtonGroup size="small" variant="outlined">
                 <Button
@@ -262,6 +300,7 @@ export default function SessionVisualization({
                   onViewDetails={handleViewDetails}
                   onDelete={onDeleteRun}
                   onRowClick={handleRowClick}
+                  metricSplit={metricSplit}
                 />
               ) : (
                 <ResultsGraphs
