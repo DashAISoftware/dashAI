@@ -74,17 +74,6 @@ export const modelsSessionTourSteps = [
           Once you're happy with the configuration, click{" "}
           <strong>Add Model</strong> to add this model to your session.
         </p>
-        <p
-          style={{
-            backgroundColor: "#e8f5e9",
-            padding: "8px",
-            borderRadius: "4px",
-            marginTop: "10px",
-          }}
-        >
-          💡 <strong>Pro tip:</strong> The default parameters work well for most
-          cases, but you can fine-tune them for better performance!
-        </p>
       </div>
     ),
     placement: "right",
