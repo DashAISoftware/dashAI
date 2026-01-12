@@ -192,8 +192,9 @@ function CreateSessionSteps({
         variant: "success",
       });
 
-      if (tourContext?.run && tourContext?.stepIndex === 11) {
+      if (tourContext?.run) {
         tourContext.stopTour();
+        sessionStorage.setItem("startModelsSessionTour", "true");
       }
 
       if (handleSessionCreated) {

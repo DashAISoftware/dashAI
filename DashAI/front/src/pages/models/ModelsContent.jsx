@@ -74,6 +74,17 @@ export default function ModelsContent() {
   const SessionTourHandler = () => {
     const sessionTourContext = useTourContext(); // This is for MODELS_SESSION tour
 
+    // Check if tour should start from previous tutorial
+    useEffect(() => {
+      const shouldStartTour = sessionStorage.getItem("startModelsSessionTour");
+      if (shouldStartTour === "true" && sessionTourContext) {
+        sessionStorage.removeItem("startModelsSessionTour");
+        setTimeout(() => {
+          sessionTourContext.startTour();
+        }, 1000);
+      }
+    }, [sessionTourContext]);
+
     // Listen for clicks on the Graphs button
     useEffect(() => {
       const handleGraphsButtonClick = (e) => {
