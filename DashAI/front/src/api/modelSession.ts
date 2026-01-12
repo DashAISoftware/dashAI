@@ -21,6 +21,9 @@ export const createModelSession = async (
   name: string,
   inputColumns: string[],
   outputColumns: string[],
+  trainMetrics: string[],
+  validationMetrics: string[],
+  testMetrics: string[],
   splitsValue: JSON,
 ): Promise<IModelSession> => {
   const data = {
@@ -29,6 +32,9 @@ export const createModelSession = async (
     name: name,
     input_columns: inputColumns,
     output_columns: outputColumns,
+    train_metrics: trainMetrics,
+    validation_metrics: validationMetrics,
+    test_metrics: testMetrics,
     splits: splitsValue,
   };
 

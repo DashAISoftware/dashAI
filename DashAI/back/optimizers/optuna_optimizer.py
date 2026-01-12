@@ -1,5 +1,6 @@
 import optuna
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -94,9 +95,19 @@ class OptunaOptimizer(BaseOptimizer):
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
                 setattr(obj, key, value)
 
-            self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
+            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
             y_pred = self.model.predict(input_dataset["validation"])
-            score = self.metric.score(output_dataset["validation"], y_pred)
+
+            # Calculate metric for train and validation data each trial
+            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+            self.model.calculate_metrics(
+                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            )
+
+            output_dataset_transformed = self.model.prepare_output(
+                output_dataset["validation"], is_fit=False
+            )
+            score = self.metric.score(output_dataset_transformed, y_pred)
 
             return score
 
@@ -106,7 +117,7 @@ class OptunaOptimizer(BaseOptimizer):
         best_model = self.model
         for hyperparameter, value in best_params.items():
             setattr(best_model, hyperparameter, value)
-        best_model.fit(self.input_dataset["train"], self.output_dataset["train"])
+        best_model.train(self.input_dataset["train"], self.output_dataset["train"])
         self.model = best_model
         self.study = study
 

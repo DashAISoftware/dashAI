@@ -44,7 +44,7 @@ class DummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         return
 
     def prepare_dataset(self, dataset, is_fit=False):
@@ -63,7 +63,7 @@ class FailDummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None):
         raise Exception("Always fails")
 
     def prepare_dataset(self, dataset, is_fit=False):
@@ -121,6 +121,9 @@ def create_experiment(client: TestClient, dataset_id: int):
             task_name="DummyTask",
             input_columns=["SepalLengthCm"],
             output_columns=["Species"],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -279,11 +282,6 @@ def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
     response = client.get(f"/api/v1/run/{run_id}")
     data = response.json()
     assert data["status"] == 3
-    assert isinstance(data["train_metrics"], dict)
-    assert "DummyMetric" in data["train_metrics"]
-    assert data["train_metrics"]["DummyMetric"] == 1
-    assert data["train_metrics"] == data["validation_metrics"]
-    assert data["train_metrics"] == data["test_metrics"]
     assert data["run_path"] is not None
     assert os.path.exists(data["run_path"])
     assert data["status"] == 3

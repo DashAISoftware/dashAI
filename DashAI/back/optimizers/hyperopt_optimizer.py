@@ -2,6 +2,7 @@ import importlib
 
 from hyperopt import Trials, fmin, hp, rand, tpe  # noqa: F401
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -98,9 +99,21 @@ class HyperOptOptimizer(BaseOptimizer):
                 obj, key = param_mapping[param_name]
                 setattr(obj, key, value)
 
-            self.model.fit(self.input_dataset["train"], self.output_dataset["train"])
+            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
             y_pred = self.model.predict(input_dataset["validation"])
-            score = self.metric.score(output_dataset["validation"], y_pred)
+
+            # Calculate metric for train and validation data each trial
+            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+            self.model.calculate_metrics(
+                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            )
+
+            output_dataset_transformed = self.model.prepare_output(
+                output_dataset["validation"], is_fit=False
+            )
+
+            score = self.metric.score(output_dataset_transformed, y_pred)
+
             return -score if metric["metadata"]["maximize"] else score
 
         trials = Trials()

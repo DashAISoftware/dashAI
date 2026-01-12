@@ -13,6 +13,11 @@ from DashAI.back.metrics.classification_metric import (
 class Accuracy(ClassificationMetric):
     """Accuracy metric to classification tasks."""
 
+    DESCRIPTION: str = (
+        "Proportion of correct predictions over all samples, "
+        "best suited for balanced datasets."
+    )
+
     @staticmethod
     def score(true_labels: DashAIDataset, probs_pred_labels: np.ndarray) -> float:
         """Calculate the accuracy between true labels and predicted labels.

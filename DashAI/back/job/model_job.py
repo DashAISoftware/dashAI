@@ -10,6 +10,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.attributes import flag_modified
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
@@ -17,7 +18,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     select_columns,
     split_dataset,
 )
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
@@ -98,10 +99,6 @@ class ModelJob(BaseJob):
     ) -> None:
         from kink import di
 
-        from DashAI.back.api.api_v1.endpoints.components import (
-            _intersect_component_lists,
-        )
-
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
@@ -150,25 +147,20 @@ class ModelJob(BaseJob):
                     ) from e
 
                 try:
-                    # Get all the metrics
-                    components_by_type = component_registry.get_components_by_types(
-                        select="Metric"
-                    )
-                    all_metrics = {
-                        component_dict["name"]: component_dict
-                        for component_dict in components_by_type
-                    }
-                    # Get the intersection between the metrics and the task
-                    # related components
-                    selected_metrics = _intersect_component_lists(
-                        all_metrics,
-                        component_registry.get_related_components(
-                            model_session.task_name
-                        ),
-                    )
-                    metrics: List[BaseMetric] = [
-                        metric["class"] for metric in selected_metrics.values()
+                    # Get metrics from model session
+                    train_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.train_metrics
                     ]
+                    validation_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.validation_metrics
+                    ]
+                    test_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.test_metrics
+                    ]
+
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -226,7 +218,15 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     factory = ModelFactory(
-                        run_model_class, run.parameters, n_labels=n_labels
+                        run_model_class,
+                        run.parameters,
+                        run_id,
+                        x,
+                        y,
+                        train_metrics,
+                        validation_metrics,
+                        test_metrics,
+                        n_labels=n_labels,
                     )
                     model: BaseModel = factory.model
                     run_optimizable_parameters = factory.optimizable_parameters
@@ -238,7 +238,7 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     if run_optimizable_parameters:
-                        goal_metric = selected_metrics[run.goal_metric]
+                        goal_metric = component_registry[run.goal_metric]
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -270,7 +270,9 @@ class ModelJob(BaseJob):
                     # Hyperparameter Tunning
                     plot_paths = []
                     if not run_optimizable_parameters:
-                        model.fit(x["train"], y["train"])
+                        model.train(
+                            x["train"], y["train"], x["validation"], y["validation"]
+                        )
                     else:
                         optimizer.optimize(
                             model,
@@ -324,17 +326,43 @@ class ModelJob(BaseJob):
                         f"Hyperparameter plot path saving failed {e}",
                     ) from e
 
+                # Calculate metrics at the end of training if not done already
                 try:
-                    model_metrics = factory.evaluate(x, y, metrics)
+                    last_train_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TRAIN", level="LAST")
+                        .first()
+                    )
+                    if not last_train_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TRAIN,
+                            level=LevelEnum.LAST,
+                        )
+                    last_val_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="VALIDATION", level="LAST")
+                        .first()
+                    )
+                    if not last_val_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.VALIDATION,
+                            level=LevelEnum.LAST,
+                        )
+                    last_test_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TEST", level="LAST")
+                        .first()
+                    )
+                    if not last_test_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TEST,
+                            level=LevelEnum.LAST,
+                        )
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        "Metrics calculation failed",
+                        f"Metric calculation failed {e}",
                     ) from e
-
-                run.train_metrics = model_metrics["train"]
-                run.validation_metrics = model_metrics["validation"]
-                run.test_metrics = model_metrics["test"]
 
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))

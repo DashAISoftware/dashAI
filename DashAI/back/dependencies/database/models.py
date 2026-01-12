@@ -3,10 +3,20 @@ import pathlib
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
     ConverterListStatus,
@@ -92,6 +102,12 @@ class ModelSession(Base):
     task_name: Mapped[str] = mapped_column(String, nullable=False)
     input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
     output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
+
+    # Metrics per split
+    train_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
+    validation_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
+    test_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
+
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
@@ -134,10 +150,6 @@ class Run(Base):
     plot_importance_path: Mapped[str] = mapped_column(String, nullable=True)
     # goal metrics
     goal_metric: Mapped[str] = mapped_column(String)
-    # metrics
-    train_metrics: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    test_metrics: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    validation_metrics: Mapped[JSON] = mapped_column(JSON, nullable=True)
     # artifacts
     artifacts: Mapped[str] = mapped_column(JSON, nullable=True)
     # metadata
@@ -154,6 +166,7 @@ class Run(Base):
     predictions = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="run"
     )
+    metrics = relationship("Metric", cascade="all, delete-orphan", back_populates="run")
 
     def set_status_as_delivered(self) -> None:
         """Update the status of the run to delivered and set delivery_time to now."""
@@ -221,6 +234,30 @@ class Prediction(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the prediction to error."""
         self.status = PredictionStatus.ERROR
+
+
+class Metric(Base):
+    __tablename__ = "metric"
+    """
+    Table to store all the information related to a metric
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("run.id", ondelete="CASCADE"), index=True
+    )
+    split: Mapped[SplitEnum] = mapped_column(Enum(SplitEnum), nullable=False)
+    level: Mapped[LevelEnum] = mapped_column(Enum(LevelEnum), nullable=False)
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    step: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now, index=True
+    )
+
+    # Relationships
+    run: Mapped["Run"] = relationship("Run", back_populates="metrics")
 
 
 class Plugin(Base):

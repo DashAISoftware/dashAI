@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-import { Grid, CircularProgress, Box, Alert, AlertTitle } from "@mui/material";
+import {
+  Grid,
+  CircularProgress,
+  Box,
+  Alert,
+  AlertTitle,
+  Chip,
+} from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
-import { getDatasetInfo as getDatasetInfoRequest } from "../../api/datasets";
+import {
+  getDatasetInfo as getDatasetInfoRequest,
+  getDatasetTypes as getDatasetTypesRequest,
+} from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
+import { getColorByColumnType } from "../../utils";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing
@@ -17,6 +28,7 @@ import { useSnackbar } from "notistack";
  */
 function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [datasetInfo, setDatasetInfo] = useState({});
+  const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const [infoLoading, setInfoLoading] = useState(true);
 
@@ -74,8 +86,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const getDatasetInfo = async () => {
     setInfoLoading(true);
     try {
-      const fetchedDatasetInfo = await getDatasetInfoRequest(newExp.dataset.id);
+      const [fetchedDatasetInfo, fetchedDatasetTypes] = await Promise.all([
+        getDatasetInfoRequest(newExp.dataset.id),
+        getDatasetTypesRequest(newExp.dataset.id),
+      ]);
       setDatasetInfo(fetchedDatasetInfo);
+      setDatasetTypes(fetchedDatasetTypes);
 
       if (fetchedDatasetInfo) {
         setDatasetPartitionsIndex({
@@ -290,6 +306,43 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     return stringsList.join(" or ");
   };
 
+  const renderTypesAsChips = (typesList) => {
+    if (!typesList || typesList.length === 0) {
+      return <span>any</span>;
+    }
+
+    return (
+      <Box
+        component="span"
+        sx={{
+          display: "inline-flex",
+          gap: 0.5,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {typesList.map((type, index) => (
+          <React.Fragment key={type}>
+            <Chip
+              label={type}
+              size="small"
+              sx={{
+                backgroundColor: getColorByColumnType(type),
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "0.75rem",
+                height: "22px",
+              }}
+            />
+            {index < typesList.length - 1 && (
+              <span style={{ margin: "0 4px" }}>or</span>
+            )}
+          </React.Fragment>
+        ))}
+      </Box>
+    );
+  };
+
   return (
     <React.Fragment>
       <Alert severity={columnsAreValid ? "success" : "error"} sx={{ mb: 1 }}>
@@ -301,20 +354,42 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         </AlertTitle>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
-            The input columns must be of the types{" "}
-            {taskRequirements
-              ? parseListOfStrings(taskRequirements.metadata.inputs_types)
-              : null}
-            , and they should have a cardinality of{" "}
-            {taskRequirements.metadata.inputs_cardinality}.
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <span>The input columns must be of the types</span>
+              {taskRequirements
+                ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
+                : null}
+              <span>
+                , and they should have a cardinality of{" "}
+                {taskRequirements.metadata.inputs_cardinality}.
+              </span>
+            </Box>
           </Grid>
           <Grid size={{ xs: 12 }}>
-            The output columns must be of the types{" "}
-            {taskRequirements
-              ? parseListOfStrings(taskRequirements.metadata.outputs_types)
-              : null}
-            , and they should have a cardinality of{" "}
-            {taskRequirements.metadata.outputs_cardinality}.
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <span>The output columns must be of the types</span>
+              {taskRequirements
+                ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
+                : null}
+              <span>
+                , and they should have a cardinality of{" "}
+                {taskRequirements.metadata.outputs_cardinality}.
+              </span>
+            </Box>
           </Grid>
         </Grid>
       </Alert>
@@ -345,6 +420,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         <Grid container spacing={1}>
           <DivideDatasetColumns
             allColumnNames={datasetInfo.column_names || []}
+            columnTypes={datasetTypes}
             selectedInputColumnNames={inputColumnNames}
             onInputColumnNamesChange={setInputColumnNames}
             selectedOutputColumnNames={outputColumnNames}
