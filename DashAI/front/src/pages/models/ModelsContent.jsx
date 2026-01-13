@@ -9,7 +9,7 @@ import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
-import DatasetVisualization from "../../components/models/DatasetVisualization";
+import DatasetVisualization from "../../components/DatasetVisualization";
 import AddModelDialog from "../../components/models/AddModelDialog";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import { getComponents } from "../../api/component";
@@ -700,10 +700,10 @@ export default function ModelsContent() {
           ) : step === 2 && selectedDatasetId ? (
             <DatasetVisualization
               dataset={datasets.find((d) => d.id === selectedDatasetId)}
-              onSessionCreated={handleSessionCreated}
-              onNewSession={handleNewSessionFromDataset}
-              existingSessions={sessions}
-              tasks={tasks}
+              onItemCreated={handleSessionCreated}
+              onNewItem={handleNewSessionFromDataset}
+              existingItems={sessions}
+              newItemButtonText="New Session"
             />
           ) : step === 0 ? (
             <SelectOptionMenu
