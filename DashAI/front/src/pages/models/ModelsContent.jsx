@@ -91,12 +91,13 @@ export default function ModelsContent() {
         );
         if (
           existingDataset &&
-          existingDataset.description &&
-          existingDataset.description.includes("rows,")
+          existingDataset.total_rows !== undefined &&
+          existingDataset.total_columns !== undefined
         ) {
           return {
             ...dataset,
-            description: existingDataset.description,
+            total_rows: existingDataset.total_rows,
+            total_columns: existingDataset.total_columns,
           };
         }
 
@@ -104,7 +105,8 @@ export default function ModelsContent() {
           const info = await getDatasetInfo(dataset.id);
           return {
             ...dataset,
-            description: `${info.total_rows} rows, ${info.total_columns} columns`,
+            total_rows: info.total_rows,
+            total_columns: info.total_columns,
           };
         } catch (error) {
           console.warn(
@@ -582,10 +584,10 @@ export default function ModelsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-        ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
-          : 100;
+      ? 100 - leftBarWidth
+      : rightBarVisible
+      ? 100 - rightBarWidth
+      : 100;
 
   return (
     <Box

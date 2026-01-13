@@ -1,0 +1,7 @@
+{
+  "label": {
+    "availableDatasets": "Available Datasets",
+    "datasetDescription": "{{rows}} rows, {{columns}} columns",
+    "unknownDataset": "Unknown dataset"
+  }
+}

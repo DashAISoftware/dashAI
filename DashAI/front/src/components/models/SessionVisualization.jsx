@@ -24,6 +24,7 @@ import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
 import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import { useTranslation } from "react-i18next";
 
 export default function SessionVisualization({
   session,
@@ -45,6 +46,7 @@ export default function SessionVisualization({
   const [localExplainerModalOpen, setLocalExplainerModalOpen] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
+  const { t } = useTranslation(["models", "common"]);
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -174,10 +176,10 @@ export default function SessionVisualization({
           }}
         >
           <Typography variant="h5" color="text.secondary">
-            No Session Selected
+            {t("models:label.noSessionSelected")}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-            Select a session from the left panel to begin
+            {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
         <JobQueueWidget />
@@ -215,7 +217,9 @@ export default function SessionVisualization({
               mb: 2,
             }}
           >
-            <Typography variant="h6">Model Comparison</Typography>
+            <Typography variant="h6">
+              {t("models:label.modelComparison")}
+            </Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {/* Metric Split Selector */}
               {showTable &&
@@ -229,13 +233,19 @@ export default function SessionVisualization({
                     size="small"
                   >
                     {hasTrainMetrics && (
-                      <ToggleButton value="train">Train</ToggleButton>
+                      <ToggleButton value="train">
+                        {t("models:label.train")}
+                      </ToggleButton>
                     )}
                     {hasValidationMetrics && (
-                      <ToggleButton value="validation">Validation</ToggleButton>
+                      <ToggleButton value="validation">
+                        {t("models:label.validation")}
+                      </ToggleButton>
                     )}
                     {hasTestMetrics && (
-                      <ToggleButton value="test">Test</ToggleButton>
+                      <ToggleButton value="test">
+                        {t("models:label.test")}
+                      </ToggleButton>
                     )}
                   </ToggleButtonGroup>
                 )}
@@ -247,14 +257,14 @@ export default function SessionVisualization({
                   onClick={() => handleToggleView(true)}
                   startIcon={<TableChart />}
                 >
-                  Table
+                  {t("common:table")}
                 </Button>
                 <Button
                   variant={!showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}
                 >
-                  Graphs
+                  {t("common:graphs")}
                 </Button>
               </ButtonGroup>
 
@@ -272,7 +282,7 @@ export default function SessionVisualization({
                       notStartedRuns.forEach((run) => onTrain(run));
                     }}
                   >
-                    Run All
+                    {t("models:button.runAll")}
                   </Button>
                 )}
             </Box>
@@ -287,7 +297,7 @@ export default function SessionVisualization({
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                No runs yet. Add models from the right panel.
+                {t("models:label.noRunsYet")}
               </Typography>
             </Box>
           ) : (
@@ -360,8 +370,7 @@ export default function SessionVisualization({
               }}
             >
               <Typography variant="body1" color="text.secondary">
-                No runs in this session. Click a model in the right panel to add
-                one.
+                {t("models:label.noRunsYet")}
               </Typography>
             </Box>
           ) : (
@@ -412,7 +421,7 @@ export default function SessionVisualization({
               onClick={handleGlobalExplainer}
               size="large"
             >
-              Global Explainer
+              {t("models:label.globalExplainer")}
             </Button>
             <Button
               variant="outlined"
@@ -420,12 +429,14 @@ export default function SessionVisualization({
               onClick={handleLocalExplainer}
               size="large"
             >
-              Local Explainer
+              {t("models:label.localExplainer")}
             </Button>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseExplainerDialog}>Cancel</Button>
+          <Button onClick={handleCloseExplainerDialog}>
+            {t("common:cancel")}
+          </Button>
         </DialogActions>
       </Dialog>
 

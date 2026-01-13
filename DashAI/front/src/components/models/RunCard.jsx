@@ -32,6 +32,7 @@ import {
 } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import RunOperations from "./RunOperations";
+import { useTranslation } from "react-i18next";
 
 /**
  * Card component displaying a model run with actions and details
@@ -48,6 +49,7 @@ function RunCard({
   explainerRefreshTrigger,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation(["models", "common"]);
 
   // Get display status from numeric code
   const statusText = getRunStatus(run.status);
@@ -80,13 +82,6 @@ function RunCard({
     statusText === "Finished";
   const isRunning = statusText === "Delivered" || statusText === "Started";
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
   // Get metrics from run
   const getMetrics = () => {
     if (!run.trained_models || run.trained_models.length === 0) {
@@ -118,10 +113,10 @@ function RunCard({
           statusText === "Finished"
             ? "success.main"
             : statusText === "Error"
-              ? "error.main"
-              : isRunning
-                ? "info.main"
-                : "grey.500",
+            ? "error.main"
+            : isRunning
+            ? "info.main"
+            : "grey.500",
       }}
     >
       <CardContent>
@@ -156,7 +151,7 @@ function RunCard({
         {metrics && Object.keys(metrics).length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Metrics
+              {t("common:metrics")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               {Object.entries(metrics).map(([metric, values]) => {
@@ -192,7 +187,9 @@ function RunCard({
             endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
             sx={{ textTransform: "none" }}
           >
-            {expanded ? "Hide Parameters" : "Show Parameters"}
+            {expanded
+              ? t("models:button.hideParameters")
+              : t("models:button.showParameters")}
           </Button>
 
           <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -201,14 +198,14 @@ function RunCard({
               {run.parameters && Object.keys(run.parameters).length > 0 && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Model Parameters
+                    {t("common:modelParameters")}
                   </Typography>
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Parameter</TableCell>
-                          <TableCell>Value</TableCell>
+                          <TableCell>{t("common:parameter")}</TableCell>
+                          <TableCell>{t("common:value")}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -234,7 +231,7 @@ function RunCard({
               {run.optimizer_name && (
                 <Box>
                   <Typography variant="subtitle2" gutterBottom>
-                    Optimizer: {run.optimizer_name}
+                    {t("common:optimizer")}: {run.optimizer_name}
                   </Typography>
                   {run.optimizer_parameters &&
                     Object.keys(run.optimizer_parameters).length > 0 && (
@@ -242,8 +239,8 @@ function RunCard({
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell>Parameter</TableCell>
-                              <TableCell>Value</TableCell>
+                              <TableCell>{t("common:parameter")}</TableCell>
+                              <TableCell>{t("common:value")}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -270,7 +267,8 @@ function RunCard({
               {run.goal_metric && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Goal Metric: <strong>{run.goal_metric}</strong>
+                    {t("models:label.goalMetric")}:{" "}
+                    <strong>{run.goal_metric}</strong>
                   </Typography>
                 </Box>
               )}
@@ -297,7 +295,7 @@ function RunCard({
         {/* Train/Stop button */}
         {isRunning && (
           <Button size="small" startIcon={<Stop />} disabled color="warning">
-            Running
+            {t("common:running")}
           </Button>
         )}
         {canTrain && (
@@ -308,7 +306,7 @@ function RunCard({
             color="primary"
             variant="contained"
           >
-            Train
+            {t("common:train")}
           </Button>
         )}
 
@@ -318,7 +316,7 @@ function RunCard({
           onClick={() => onEdit(run)}
           color="primary"
           disabled={isRunning}
-          title="Edit parameters"
+          title={t("common:editParameters")}
         >
           <Edit fontSize="small" />
         </IconButton>
@@ -345,7 +343,7 @@ function RunCard({
               }
             }}
             color="primary"
-            title="Create prediction"
+            title={t("models:button.createPrediction")}
           >
             <TrendingUp fontSize="small" />
           </IconButton>
@@ -357,7 +355,7 @@ function RunCard({
             size="small"
             onClick={() => onExplainer(run)}
             color="primary"
-            title="Create explainer"
+            title={t("models:button.createExplainer")}
           >
             <QueryStats fontSize="small" />
           </IconButton>
@@ -369,7 +367,7 @@ function RunCard({
           onClick={() => onDelete(run)}
           color="error"
           disabled={isRunning}
-          title="Delete run"
+          title={t("models:button.deleteRun")}
         >
           <Delete fontSize="small" />
         </IconButton>

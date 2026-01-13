@@ -1,0 +1,39 @@
+{
+  "button": {
+    "downloadResults": "Download Prediction Results",
+    "hideResults": "Hide Results",
+    "showResults": "Show Results"
+  },
+  "error": {
+    "creatingPrediction": "Error creating prediction",
+    "errorDeleting": "Error deleting prediction",
+    "errorDownloading": "Error downloading prediction",
+    "loadingPredictionData": "Error loading prediction data",
+    "predictionFailed": "Prediction failed: {{error}}"
+  },
+  "label": {
+    "configureInput": "Configure Input",
+    "confirm": "Confirm",
+    "confirmDeletion": "Are you sure you want to delete this prediction? This action cannot be undone.",
+    "confirmDeletionTitle": "Delete Prediction?",
+    "confirmPrediction": "Confirm Prediction",
+    "createNewPrediction": "Create New Prediction",
+    "inputType": "Input Type",
+    "manualInput": "Manual Input",
+    "manualRows": "Manual Rows",
+    "prediction": "Prediction",
+    "predictionInProgress": "Prediction in running...",
+    "provideManualInput": "Enter manual input data for prediction",
+    "resultsPreview": "Preview of first 100 rows. Download CSV for complete results.",
+    "reviewDetails": "Review your prediction configuration before submitting",
+    "selectDataset": "Select a dataset for prediction",
+    "selectMode": "Select Mode",
+    "selectPredictionMode": "Select how you want to provide input data for prediction"
+  },
+  "message": {
+    "deletedSuccessfully": "Prediction deleted successfully",
+    "downloadedSuccessfully": "Prediction downloaded successfully",
+    "predictionCompleted": "Prediction completed successfully",
+    "predictionJobSubmitted": "Prediction job submitted successfully"
+  }
+}

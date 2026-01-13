@@ -29,8 +29,7 @@ import { getExperimentById } from "../../api/experiment";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getPredictions } from "../../api/predict";
-
-const steps = ["Select Mode", "Configure Input", "Confirm"];
+import { useTranslation } from "react-i18next";
 
 /**
  * PredictionCreationDialog - Wizard for creating new predictions
@@ -55,6 +54,13 @@ export default function PredictionCreationDialog({
   const [loadingExperiment, setLoadingExperiment] = useState(true);
 
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["prediction", "common"]);
+
+  const steps = [
+    t("prediction:label.selectMode"),
+    t("prediction:label.configureInput"),
+    t("prediction:label.confirm"),
+  ];
 
   useEffect(() => {
     if (!open) {
@@ -99,7 +105,7 @@ export default function PredictionCreationDialog({
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        enqueueSnackbar("Error loading prediction data", {
+        enqueueSnackbar(t("prediction:error.loadingPredictionData"), {
           variant: "error",
         });
       } finally {
@@ -151,7 +157,7 @@ export default function PredictionCreationDialog({
         throw new Error("Failed to enqueue prediction job");
       }
 
-      enqueueSnackbar("Prediction job submitted successfully", {
+      enqueueSnackbar(t("prediction:message.predictionJobSubmitted"), {
         variant: "success",
       });
 
@@ -163,7 +169,7 @@ export default function PredictionCreationDialog({
             (p) => p.id === prediction.id,
           );
 
-          enqueueSnackbar("Prediction completed successfully", {
+          enqueueSnackbar(t("prediction:message.predictionCompleted"), {
             variant: "success",
           });
 
@@ -175,7 +181,9 @@ export default function PredictionCreationDialog({
           // On failure
           console.error("Prediction job failed:", result);
           enqueueSnackbar(
-            `Prediction failed: ${result.error || "Unknown error"}`,
+            t("prediction:error.predictionFailed", {
+              error: result.error || t("common:unknownError"),
+            }),
             { variant: "error" },
           );
 
@@ -192,7 +200,7 @@ export default function PredictionCreationDialog({
       onClose();
     } catch (error) {
       console.error("Error creating prediction:", error);
-      enqueueSnackbar("Error creating prediction", {
+      enqueueSnackbar(t("prediction:error.creatingPrediction"), {
         variant: "error",
       });
     } finally {
@@ -206,7 +214,7 @@ export default function PredictionCreationDialog({
         return (
           <Box sx={{ py: 2 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Select how you want to provide input data for prediction
+              {t("prediction:label.selectPredictionMode")}
             </Typography>
             <ModeSelector
               predictionMode={predictionMode}
@@ -225,7 +233,7 @@ export default function PredictionCreationDialog({
                   color="text.secondary"
                   sx={{ mb: 2 }}
                 >
-                  Select a dataset for prediction
+                  {t("prediction:label.selectDataset")}
                 </Typography>
                 <DatasetSelector
                   experiment={experiment}
@@ -241,7 +249,7 @@ export default function PredictionCreationDialog({
                   color="text.secondary"
                   sx={{ mb: 2 }}
                 >
-                  Enter manual input data
+                  {t("prediction:label.provideManualInput")}
                 </Typography>
                 <ManualInput
                   experiment={experiment}
@@ -260,30 +268,33 @@ export default function PredictionCreationDialog({
         return (
           <Box sx={{ py: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Confirm Prediction
+              {t("prediction:label.confirmPrediction")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Review your prediction configuration before submitting
+              {t("prediction:label.reviewDetails")}
             </Typography>
             <Box sx={{ bgcolor: "background.default", p: 2, borderRadius: 1 }}>
               <Typography variant="body2">
-                <strong>Model:</strong> {run.model_name}
+                <strong>{t("common:model")}:</strong> {run.model_name}
               </Typography>
               <Typography variant="body2">
-                <strong>Run:</strong> {run.name}
+                <strong>{t("common:run")}:</strong> {run.name}
               </Typography>
               <Typography variant="body2">
-                <strong>Input Type:</strong>{" "}
-                {predictionMode === "dataset" ? "Dataset" : "Manual Input"}
+                <strong>{t("prediction:label.inputType")}:</strong>{" "}
+                {predictionMode === "dataset"
+                  ? t("common:dataset")
+                  : t("prediction:label.manualInput")}
               </Typography>
               {predictionMode === "dataset" && selectedDataset && (
                 <Typography variant="body2">
-                  <strong>Dataset:</strong> {selectedDataset.name}
+                  <strong>{t("common:dataset")}:</strong> {selectedDataset.name}
                 </Typography>
               )}
               {predictionMode === "manual" && (
                 <Typography variant="body2">
-                  <strong>Manual Rows:</strong> {manualRows.length}
+                  <strong>{t("prediction:label.manualRows")}:</strong>{" "}
+                  {manualRows.length}
                 </Typography>
               )}
             </Box>
@@ -307,7 +318,9 @@ export default function PredictionCreationDialog({
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">Create New Prediction</Typography>
+          <Typography variant="h6">
+            {t("prediction:label.createNewPrediction")}
+          </Typography>
           <IconButton onClick={onClose} size="small">
             <CloseIcon />
           </IconButton>
@@ -341,11 +354,11 @@ export default function PredictionCreationDialog({
 
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose} disabled={isLoading}>
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Box sx={{ flex: 1 }} />
         <Button onClick={handleBack} disabled={activeStep === 0 || isLoading}>
-          Back
+          {t("common:back")}
         </Button>
         <Button
           variant="contained"
@@ -355,9 +368,9 @@ export default function PredictionCreationDialog({
         >
           {activeStep === steps.length - 1
             ? isLoading
-              ? "Submitting..."
-              : "Submit"
-            : "Next"}
+              ? t("common:submitting")
+              : t("common:submit")
+            : t("common:next")}
         </Button>
       </DialogActions>
     </Dialog>

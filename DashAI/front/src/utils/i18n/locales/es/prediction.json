@@ -1,0 +1,39 @@
+{
+  "button": {
+    "downloadResults": "",
+    "hideResults": "",
+    "showResults": ""
+  },
+  "error": {
+    "creatingPrediction": "",
+    "errorDeleting": "",
+    "errorDownloading": "",
+    "loadingPredictionData": "",
+    "predictionFailed": ""
+  },
+  "label": {
+    "configureInput": "",
+    "confirm": "",
+    "confirmDeletion": "",
+    "confirmDeletionTitle": "",
+    "confirmPrediction": "",
+    "createNewPrediction": "",
+    "inputType": "",
+    "manualInput": "",
+    "manualRows": "",
+    "prediction": "",
+    "predictionInProgress": "",
+    "provideManualInput": "",
+    "resultsPreview": "",
+    "reviewDetails": "",
+    "selectDataset": "",
+    "selectMode": "",
+    "selectPredictionMode": ""
+  },
+  "message": {
+    "deletedSuccessfully": "",
+    "downloadedSuccessfully": "",
+    "predictionCompleted": "",
+    "predictionJobSubmitted": ""
+  }
+}

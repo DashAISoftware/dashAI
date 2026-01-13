@@ -1,11 +1,14 @@
 import React from "react";
 import { Box, Typography, Popover } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function HoverModelInfo({
   anchorEl,
   hoveredModel,
   handleMouseLeave,
 }) {
+  const { t } = useTranslation(["common"]);
+
   return (
     <Popover
       open={Boolean(anchorEl)}
@@ -49,7 +52,7 @@ export default function HoverModelInfo({
           >
             {hoveredModel.description ||
               hoveredModel.metadata?.description ||
-              "No description available"}
+              t("common:noDescription")}
           </Typography>
         </Box>
       )}

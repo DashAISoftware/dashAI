@@ -5,6 +5,7 @@ import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
+import { useTranslation } from "react-i18next";
 
 /**
  * Compact comparison table showing all runs in a session
@@ -20,6 +21,7 @@ function ModelComparisonTable({
   metricSplit = "test",
 }) {
   const [models, setModels] = useState([]);
+  const { t } = useTranslation(["models", "common"]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -106,13 +108,13 @@ function ModelComparisonTable({
   const columns = [
     {
       field: "name",
-      headerName: "Model Name",
+      headerName: t("common:modelName"),
       flex: 1,
       minWidth: 150,
     },
     {
       field: "model_name",
-      headerName: "Model",
+      headerName: t("common:model"),
       flex: 1,
       minWidth: 150,
       valueGetter: (value) => {
@@ -123,7 +125,7 @@ function ModelComparisonTable({
     ...getMetricColumns(),
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: t("common:actions"),
       width: 150,
       sortable: false,
       renderCell: (params) => {
@@ -136,7 +138,7 @@ function ModelComparisonTable({
 
         return (
           <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Tooltip title="Train">
+            <Tooltip title={t("common:train")}>
               <span>
                 <IconButton
                   size="small"
@@ -152,7 +154,7 @@ function ModelComparisonTable({
               </span>
             </Tooltip>
 
-            <Tooltip title="View Details">
+            <Tooltip title={t("common:viewDetails")}>
               <IconButton
                 size="small"
                 onClick={(e) => {
@@ -165,7 +167,7 @@ function ModelComparisonTable({
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Delete">
+            <Tooltip title={t("common:delete")}>
               <span>
                 <IconButton
                   size="small"

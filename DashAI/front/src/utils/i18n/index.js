@@ -12,6 +12,12 @@ import explainersEN from "./locales/en/explainers.json";
 import explainersES from "./locales/es/explainers.json";
 import generativeEN from "./locales/en/generative.json";
 import generativeES from "./locales/es/generative.json";
+import modelsEN from "./locales/en/models.json";
+import modelsES from "./locales/es/models.json";
+import datasetsEN from "./locales/en/datasets.json";
+import datasetsES from "./locales/es/datasets.json";
+import predictionEN from "./locales/en/prediction.json";
+import predictionES from "./locales/es/prediction.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -24,6 +30,9 @@ const resources = {
     experiments: experimentsEN,
     explainers: explainersEN,
     generative: generativeEN,
+    models: modelsEN,
+    datasets: datasetsEN,
+    prediction: predictionEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -32,6 +41,9 @@ const resources = {
     experiments: experimentsES,
     explainers: explainersES,
     generative: generativeES,
+    models: modelsES,
+    datasets: datasetsES,
+    prediction: predictionES,
   },
 };
 
@@ -48,6 +60,9 @@ i18n.use(initReactI18next).init({
     "experiments",
     "explainers",
     "generative",
+    "models",
+    "datasets",
+    "prediction",
   ],
   defaultNS: "common",
 

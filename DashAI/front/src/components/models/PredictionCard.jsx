@@ -30,6 +30,7 @@ import { deletePrediction } from "../../api/predict";
 import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile, exportDatasetCsvByPath } from "../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = ["Delivered", "Started"];
 
@@ -40,6 +41,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   const [expanded, setExpanded] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["prediction", "datasets", "common"]);
 
   const statusText = getPredictionStatus(prediction.status);
 
@@ -71,14 +73,16 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   const handleDelete = async () => {
     try {
       await deletePrediction(prediction.id);
-      enqueueSnackbar("Prediction deleted successfully", {
+      enqueueSnackbar(t("prediction:message.deletedSuccessfully"), {
         variant: "success",
       });
       setDeleteDialogOpen(false);
       if (onDelete) onDelete();
     } catch (error) {
       console.error("Error deleting prediction:", error);
-      enqueueSnackbar("Error deleting prediction", { variant: "error" });
+      enqueueSnackbar(t("prediction:error.errorDeleting"), {
+        variant: "error",
+      });
     }
   };
 
@@ -91,18 +95,22 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
       link.href = url;
       link.setAttribute(
         "download",
-        `prediction-${prediction.id}-${new Date(prediction.created).toISOString().split("T")[0]}.csv`,
+        `prediction-${prediction.id}-${
+          new Date(prediction.created).toISOString().split("T")[0]
+        }.csv`,
       );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      enqueueSnackbar("Prediction downloaded successfully", {
+      enqueueSnackbar(t("prediction:message.downloadedSuccessfully"), {
         variant: "success",
       });
     } catch (error) {
       console.error("Error downloading prediction:", error);
-      enqueueSnackbar("Error downloading prediction", { variant: "error" });
+      enqueueSnackbar(t("prediction:error.errorDownloading"), {
+        variant: "error",
+      });
     }
   };
 
@@ -134,7 +142,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
           >
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle2" fontWeight="medium">
-                Prediction #{prediction.id}
+                {t("prediction:label.prediction")} #{prediction.id}
               </Typography>
               <Typography
                 variant="caption"
@@ -158,7 +166,8 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                     sx={{ fontSize: "0.875rem" }}
                   />
                   <Typography variant="caption" color="text.secondary">
-                    {prediction.dataset?.name || "Unknown Dataset"}
+                    {prediction.dataset?.name ||
+                      t("datasets:label.unknownDataset")}
                   </Typography>
                 </Box>
               )}
@@ -179,7 +188,9 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                 endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 sx={{ textTransform: "none" }}
               >
-                {expanded ? "Hide Results" : "Show Results"}
+                {expanded
+                  ? t("prediction:button.hideResults")
+                  : t("prediction:button.showResults")}
               </Button>
 
               <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -189,8 +200,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
                     color="text.secondary"
                     sx={{ mb: 1, display: "block" }}
                   >
-                    Preview of first 100 rows. Download CSV for complete
-                    results.
+                    {t("prediction:label.resultsPreview")}
                   </Typography>
                   <DatasetTable
                     fetchPage={fetchPage}
@@ -224,14 +234,14 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
             >
               <CircularProgress size={24} />
               <Typography variant="body2" sx={{ mt: 1 }}>
-                Prediction is running...
+                {t("prediction:label.predictionInProgress")}
               </Typography>
             </Box>
           )}
         </CardContent>
 
         <CardActions sx={{ justifyContent: "flex-end", pt: 0 }}>
-          <Tooltip title="Download CSV">
+          <Tooltip title={t("prediction:button.downloadResults")}>
             <span>
               <IconButton
                 size="small"
@@ -244,7 +254,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
             </span>
           </Tooltip>
 
-          <Tooltip title="Delete">
+          <Tooltip title={t("common:delete")}>
             <span>
               <IconButton
                 size="small"
@@ -264,17 +274,18 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
       >
-        <DialogTitle>Delete Prediction?</DialogTitle>
+        <DialogTitle>{t("prediction:label.confirmDeletionTitle")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this prediction? This action cannot
-            be undone.
+            {t("prediction:label.confirmDeletion")}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>
+            {t("common:cancel")}
+          </Button>
           <Button onClick={handleDelete} color="error" autoFocus>
-            Delete
+            {t("common:delete")}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { Grid, TextField, Typography } from "@mui/material";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
+import { useTranslation } from "react-i18next";
 
 function SetNameAndDatasetStep({
   formik,
@@ -10,6 +11,8 @@ function SetNameAndDatasetStep({
   nameError,
   selectedTask,
 }) {
+  const { t } = useTranslation(["models"]);
+
   return (
     <Grid
       container
@@ -30,7 +33,7 @@ function SetNameAndDatasetStep({
             mb: 2,
           }}
         >
-          Select dataset for your session
+          {t("models:label.selectDatasetForSession")}
         </Typography>
         <DatasetAutocomplete
           datasets={datasets}
@@ -48,11 +51,11 @@ function SetNameAndDatasetStep({
             my: 2,
           }}
         >
-          Name your Session
+          {t("models:label.nameYourSession")}
         </Typography>
         <TextField
           id="session-name"
-          label="Session Name"
+          label={t("models:label.sessionName")}
           name="name"
           variant="outlined"
           fullWidth
