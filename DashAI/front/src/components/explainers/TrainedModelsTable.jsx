@@ -99,18 +99,23 @@ function TrainedModelsTable() {
 
   const extractRows = (rawExperiments, rawRuns) => {
     let rows = [];
-    // A cada run agregarlo los datos de su experimento
+    // A cada run agregarlo los datos de su model session
     rawRuns.forEach((run) => {
       let newRun = { ...run };
-      const newExperiment = rawExperiments.filter(
-        (experiment) => experiment.id === newRun.experiment_id,
+      const modelSession = rawExperiments.filter(
+        (session) => session.id === newRun.model_session_id,
       )[0];
+
+      if (!modelSession) {
+        console.warn(`Model session not found for run ${newRun.id}`);
+        return;
+      }
 
       const {
         name: experimentName,
         dataset_id: datasetId,
         task_name: taskName,
-      } = newExperiment;
+      } = modelSession;
       newRun = {
         ...newRun,
         experimentName,
