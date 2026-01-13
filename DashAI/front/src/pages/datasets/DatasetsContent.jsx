@@ -9,7 +9,7 @@ import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
-import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
+import DatasetVisualization from "../../components/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
 import {
   getDatasets,
@@ -673,9 +673,10 @@ export default function DatasetsContent() {
                   ) : selectedDatasetId ? (
                     <DatasetVisualization
                       dataset={selectedDataset}
-                      onNotebookCreated={handleNotebookCreated}
-                      onNewNotebook={handleNewNotebookFromDataset}
-                      existingNotebooks={notebooks}
+                      onItemCreated={handleNotebookCreated}
+                      onNewItem={handleNewNotebookFromDataset}
+                      existingItems={notebooks}
+                      newItemButtonText="New notebook"
                     />
                   ) : step === 0 ? (
                     <SelectOptionMenu
