@@ -391,7 +391,7 @@ RunCard.propTypes = {
     description: PropTypes.string,
     created: PropTypes.string,
     trained_models: PropTypes.array,
-    experiment_id: PropTypes.number,
+    model_session_id: PropTypes.number,
   }).isRequired,
   models: PropTypes.array,
   session: PropTypes.shape({
