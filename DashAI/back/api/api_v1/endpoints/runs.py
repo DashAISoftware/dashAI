@@ -115,7 +115,7 @@ async def get_runs(
                 if not runs:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Runs associated with Experiment not found",
+                        detail="Runs associated with Model Session not found",
                     )
 
                 # Add metrics to each run
@@ -240,7 +240,7 @@ async def upload_run(
     Parameters
     ----------
     params : int
-        The parameters of the new run, which includes the experiment, model name, run
+        The parameters of the new run, which includes the model session, model name, run
         name and description, among others.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
@@ -254,7 +254,7 @@ async def upload_run(
     Raises
     ------
     HTTPException
-        If the experiment with id experiment_id is not registered in the DB.
+        If the model session with id model_session_id is not registered in the DB.
     """
     with session_factory() as db:
         try:
