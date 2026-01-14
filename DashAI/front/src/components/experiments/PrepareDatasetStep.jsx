@@ -308,14 +308,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     getTaskRequirements();
   }, []);
 
-  const parseListOfStrings = (stringsList) => {
-    if (!stringsList || stringsList.length === 0) return "any";
-    return stringsList.join(" or ");
-  };
-
   const renderTypesAsChips = (typesList) => {
     if (!typesList || typesList.length === 0) {
-      return <span>any</span>;
+      return <span>{t("common:any")}</span>;
     }
 
     return (

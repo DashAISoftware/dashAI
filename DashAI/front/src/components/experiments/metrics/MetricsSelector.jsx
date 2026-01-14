@@ -19,7 +19,7 @@ export default function MetricsSelector({
 }) {
   const [metrics, setMetrics] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation("experiments");
+  const { t } = useTranslation(["experiments", "common"]);
 
   const enabledSplits = {
     train: !!experiment.splits?.train,
@@ -115,11 +115,11 @@ export default function MetricsSelector({
         gutterBottom
         sx={{ display: "flex", alignItems: "center", gap: 1 }}
       >
-        {t("metrics.selectMetrics")}
+        {t("experiments:metrics.selectMetrics")}
       </Typography>
 
       <Typography variant="body2" color="text.secondary" gutterBottom>
-        {t("metrics.selectMetricsDescription")}
+        {t("experiments:metrics.selectMetricsDescription")}
       </Typography>
 
       <Container sx={{ py: 4 }}>
@@ -138,16 +138,16 @@ export default function MetricsSelector({
             onClick={() => selectAllForSplit("train")}
             variant="contained"
           >
-            Train
+            {t("common:trainSubject")}
           </Button>
           <Button
             onClick={() => selectAllForSplit("validation")}
             variant="contained"
           >
-            Validation
+            {t("common:validation")}
           </Button>
           <Button onClick={() => selectAllForSplit("test")} variant="contained">
-            Test
+            {t("common:testSubject")}
           </Button>
         </Stack>
 
