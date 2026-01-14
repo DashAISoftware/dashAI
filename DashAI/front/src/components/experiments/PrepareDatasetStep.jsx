@@ -9,7 +9,6 @@ import {
   AlertTitle,
   Chip,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
 import {
@@ -28,7 +27,6 @@ import { getColorByColumnType } from "../../utils";
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
  */
 function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
-  const theme = useTheme();
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();

@@ -65,9 +65,9 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
             <Typography
               variant="caption"
-              sx={{ color: theme.palette.text.secondary }}
               noWrap
               sx={{
+                color: theme.palette.text.secondary,
                 lineHeight: 1.1,
                 mt: 0.2,
                 fontSize: "95%",

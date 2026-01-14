@@ -1,10 +1,7 @@
 import React from "react";
 import { Box, Divider, Paper, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 
 export default function MetricsCard({ title, metrics }) {
-  const theme = useTheme();
-
   return (
     <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
       <Typography variant="subtitle1" fontWeight="bold" gutterBottom>

@@ -8,7 +8,6 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import { Close } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import ConverterHistoryList from "../converter/ConverterHistoryList";

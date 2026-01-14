@@ -27,6 +27,7 @@ const viewModes = {
  * @param {Function} props.setUpdateFlag - Function to set the update flag
  */
 function ResultsViewer({ updateFlag = false, setUpdateFlag = () => {} }) {
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const { explorationData, setExplorationData } = useExplorationsContext();
 

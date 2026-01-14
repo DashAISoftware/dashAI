@@ -77,7 +77,9 @@ export default function ToolListItem({
             alignItems: "center",
             gap: 1.5,
             p: 1.5,
-            bgcolor: disabled ? "ui.disabled" : "ui.box",
+            bgcolor: disabled
+              ? theme.palette.ui.disabled
+              : theme.palette.ui.box,
             border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1,
             cursor: disabled ? "not-allowed" : "pointer",
@@ -86,7 +88,9 @@ export default function ToolListItem({
             filter: disabled ? "grayscale(0.6)" : "none",
             position: "relative",
             "&:hover": {
-              bgcolor: disabled ? "ui.disabled" : theme.palette.action.hover,
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.action.hover,
               borderColor: disabled
                 ? theme.palette.ui.border
                 : tool.metadata.color,
@@ -114,8 +118,10 @@ export default function ToolListItem({
               width: 36,
               height: 36,
               borderRadius: 1,
-              bgcolor: disabled ? "ui.disabled" : "ui.border",
-              color: disabled ? "text.disabled" : "text.primary",
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.ui.border,
+              color: disabled ? theme.palette.text.disabled : "text.primary",
               flexShrink: 0,
             }}
           >
@@ -141,7 +147,9 @@ export default function ToolListItem({
               <Typography
                 variant="body2"
                 sx={{
-                  color: disabled ? "text.disabled" : "text.primary",
+                  color: disabled
+                    ? theme.palette.text.disabled
+                    : "text.primary",
                   fontWeight: 500,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -164,7 +172,9 @@ export default function ToolListItem({
               <Typography
                 variant="caption"
                 sx={{
-                  color: disabled ? "text.disabled" : "text.secondary",
+                  color: disabled
+                    ? theme.palette.text.disabled
+                    : "text.secondary",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   width: 0,
@@ -183,7 +193,9 @@ export default function ToolListItem({
               width: 60,
               height: 40,
               borderRadius: 0.75,
-              bgcolor: disabled ? "ui.disabled" : "ui.border",
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.ui.border,
               border: `1px solid ${
                 disabled ? theme.palette.ui.disabled : theme.palette.ui.border
               }`,

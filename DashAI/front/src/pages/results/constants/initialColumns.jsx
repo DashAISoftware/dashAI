@@ -11,6 +11,13 @@ const StyledCell = styled("div")(({ theme, color }) => ({
   backgroundColor: color,
 }));
 
+// Component for status cell to properly use theme hook
+const StatusCell = ({ value }) => {
+  const theme = useTheme();
+  const color = getColorByStatus(value, theme);
+  return <StyledCell color={color}>{value}</StyledCell>;
+};
+
 export const initialColumns = [
   {
     field: "name",
@@ -33,15 +40,7 @@ export const initialColumns = [
     field: "status",
     headerName: "Status",
     minWidth: 100,
-    renderCell: (params) => {
-      // Using a render function to access theme through hook
-      const StatusCell = () => {
-        const theme = useTheme();
-        const color = getColorByStatus(params.value, theme);
-        return <StyledCell color={color}>{params.value}</StyledCell>;
-      };
-      return <StatusCell />;
-    },
+    renderCell: (params) => <StatusCell value={params.value} />,
   },
   // {
   //   field: "created",
