@@ -121,7 +121,9 @@ export default function ToolListItem({
               bgcolor: disabled
                 ? theme.palette.ui.disabled
                 : theme.palette.ui.border,
-              color: disabled ? theme.palette.text.disabled : "text.primary",
+              color: disabled
+                ? theme.palette.text.disabled
+                : theme.palette.text.primary,
               flexShrink: 0,
             }}
           >
@@ -149,7 +151,7 @@ export default function ToolListItem({
                 sx={{
                   color: disabled
                     ? theme.palette.text.disabled
-                    : "text.primary",
+                    : theme.palette.text.primary,
                   fontWeight: 500,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -174,7 +176,7 @@ export default function ToolListItem({
                 sx={{
                   color: disabled
                     ? theme.palette.text.disabled
-                    : "text.secondary",
+                    : theme.palette.text.secondary,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   width: 0,
