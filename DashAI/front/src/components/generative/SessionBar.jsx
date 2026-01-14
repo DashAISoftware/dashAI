@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
-import SessionBarHeader from "./SessionBarHeader";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";

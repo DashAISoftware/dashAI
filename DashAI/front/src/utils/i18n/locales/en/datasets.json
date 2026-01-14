@@ -1,6 +1,7 @@
 {
   "button": {
     "addColorStop": "Add Color Stop",
+    "applyChanges": "Apply Changes",
     "createConverter": "Create Converter",
     "createExplorer": "Create Explorer",
     "createNotebook": "Create Notebook",
@@ -46,6 +47,7 @@
   "label": {
     "all": "all",
     "allowedDataTypes": "Allowed data types: <1><0></0></1>",
+    "allTypeChangesValid": "All type changes are valid and can be applied safely.",
     "analysisTools": "Analysis Tools",
     "appliedTransformations": "Applied Transformations:",
     "associatedDataset": "Associated Dataset",
@@ -226,6 +228,7 @@
     "showLegend": "Show Legend",
     "showZeroLine": "{{axis}} Axis Show Zero Line",
     "skewness": "Skewness",
+    "someTypeChangesCannotBeApplied": "Some type changes cannot be applied:",
     "startIndex": "Start Index",
     "stdDev": "Standard Deviation",
     "strongCorrelations": "Strong Correlations",
@@ -241,6 +244,7 @@
     "totalRows": "Total Rows",
     "totalRowsCount": "Total rows: {{total}}",
     "traceIdx": "Trace {{index}}: {{trace}}",
+    "typeChangeWarnings": "Warnings about type changes:",
     "typeToSearchDatasets": "Type to search datasets...",
     "unique": "Unique",
     "uniquenessFormula": "Uniqueness = (Unique ÷ Total) x 100",
@@ -250,6 +254,8 @@
     "uploadAndConfigure": "Upload your dataset and configure parameters",
     "uploadDataset": "Upload Dataset",
     "uploadYourDataset": "Upload your dataset",
+    "validateTypeChanges": "Validate Type Changes",
+    "validatingTypeChanges": "Validating type changes...",
     "valueDistribution": "Value Distribution",
     "valueType": "Value Type",
     "viewMode": "View mode",

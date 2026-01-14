@@ -34,8 +34,8 @@ export default function LegendForm({ layout, handleChange }) {
         slotProps={{ select: { native: true } }}
         fullWidth
       >
-        <option value="v">Vertical</option>
-        <option value="h">Horizontal</option>
+        <option value="v">{t("common:vertical")}</option>
+        <option value="h">{t("common:horizontal")}</option>
       </TextField>
 
       <Box sx={{ display: "flex", gap: 2 }}>

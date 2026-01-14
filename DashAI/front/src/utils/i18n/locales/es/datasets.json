@@ -1,6 +1,7 @@
 {
   "button": {
     "addColorStop": "",
+    "applyChanges": "",
     "createConverter": "",
     "createExplorer": "",
     "createNotebook": "",
@@ -48,6 +49,7 @@
   "label": {
     "all": "",
     "allowedDataTypes": "",
+    "allTypeChangesValid": "",
     "analysisTools": "",
     "appliedTransformations": "",
     "associatedDataset": "",
@@ -230,6 +232,7 @@
     "showLegend": "",
     "showZeroLine": "",
     "skewness": "",
+    "someTypeChangesCannotBeApplied": "",
     "startIndex": "",
     "stdDev": "",
     "strongCorrelations": "",
@@ -246,6 +249,7 @@
     "totalRows": "",
     "totalRowsCount": "",
     "traceIdx": "",
+    "typeChangeWarnings": "",
     "typeToSearchDatasets": "",
     "unique": "",
     "uniquenessFormula": "",
@@ -255,6 +259,8 @@
     "uploadAndConfigure": "",
     "uploadDataset": "",
     "uploadYourDataset": "",
+    "validateTypeChanges": "",
+    "validatingTypeChanges": "",
     "valueDistribution": "",
     "valueType": "",
     "viewMode": "",
