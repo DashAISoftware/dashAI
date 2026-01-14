@@ -18,6 +18,8 @@ import datasetsEN from "./locales/en/datasets.json";
 import datasetsES from "./locales/es/datasets.json";
 import predictionEN from "./locales/en/prediction.json";
 import predictionES from "./locales/es/prediction.json";
+import homeTourEN from "./locales/en/homeTour.json";
+import homeTourES from "./locales/es/homeTour.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -33,6 +35,7 @@ const resources = {
     models: modelsEN,
     datasets: datasetsEN,
     prediction: predictionEN,
+    homeTour: homeTourEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -44,13 +47,14 @@ const resources = {
     models: modelsES,
     datasets: datasetsES,
     prediction: predictionES,
+    homeTour: homeTourES,
   },
 };
 
 i18n.use(initReactI18next).init({
   resources,
 
-  lng: "en",
+  lng: "es",
   fallbackLng: "en",
 
   ns: [
@@ -63,6 +67,7 @@ i18n.use(initReactI18next).init({
     "models",
     "datasets",
     "prediction",
+    "homeTour",
   ],
   defaultNS: "common",
 
