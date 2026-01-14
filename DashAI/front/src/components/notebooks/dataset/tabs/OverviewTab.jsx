@@ -61,7 +61,7 @@ const OverviewTab = ({
       </Card>
       {/* Missing Values Overview */}
       <Card>
-        <CardContent sx={{ bgcolor: "ui.box" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
             Missing Values Overview
           </Typography>
@@ -95,7 +95,7 @@ const OverviewTab = ({
 
       {/* Column Types Distribution */}
       <Card>
-        <CardContent sx={{ bgcolor: "ui.box" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
             Column Types Distribution
           </Typography>
@@ -107,7 +107,7 @@ const OverviewTab = ({
                   sx={{
                     p: 2,
                     textAlign: "center",
-                    bgcolor: "ui.disabled",
+                    bgcolor: theme.palette.ui.disabled,
                     borderRadius: 2,
                   }}
                 >

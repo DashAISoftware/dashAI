@@ -22,6 +22,11 @@ const getTheme = (mode) => ({
       contrastText: "#000",
     },
 
+    // DIVIDER - Divider color
+    // Used in: Divider components, separators
+    divider:
+      mode === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.12)",
+
     // BACKGROUND - Background colors for different surfaces
     // Used in: page backgrounds, cards, modals, panels
     background:
@@ -44,10 +49,29 @@ const getTheme = (mode) => ({
         ? {
             primary: "#ffffff", // Primary text (titles, important labels)
             secondary: "#b0b0b0", // Secondary text (descriptions, subtitles)
+            disabled: "#757575", // Disabled text
           }
         : {
             primary: "#1a1a1a", // Primary text (titles, important labels)
             secondary: "#666666", // Secondary text (descriptions, subtitles)
+            disabled: "#9e9e9e", // Disabled text
+          },
+
+    // ACTION - Interactive states
+    // Used in: hover states, selected items, disabled states, focus indicators
+    action:
+      mode === "dark"
+        ? {
+            hover: "rgba(255, 255, 255, 0.08)", // Hover state for interactive elements
+            selected: "rgba(255, 255, 255, 0.16)", // Selected state for items
+            disabled: "rgba(255, 255, 255, 0.3)", // Disabled state opacity
+            disabledBackground: "rgba(255, 255, 255, 0.12)", // Disabled background
+          }
+        : {
+            hover: "rgba(0, 0, 0, 0.04)", // Hover state for interactive elements
+            selected: "rgba(0, 0, 0, 0.08)", // Selected state for items
+            disabled: "rgba(0, 0, 0, 0.26)", // Disabled state opacity
+            disabledBackground: "rgba(0, 0, 0, 0.12)", // Disabled background
           },
 
     // ERROR - Error states
@@ -79,6 +103,7 @@ const getTheme = (mode) => ({
     // ACCENT - Custom accent colors
     // Used in: elements requiring emphasis, special details
     accent: {
+      main: "#16FFFF", // Main accent color (cyan)
       cyan: "#16FFFF", // For highlights
       teal: "#00BEBB", // For featured elements
     },
@@ -129,6 +154,8 @@ const getTheme = (mode) => ({
             scrollbarHover: "#4B5563", // Scrollbar on hover
             hover: "rgba(255, 255, 255, 0.05)", // Element hover state
             divider: "rgba(255, 255, 255, 0.15)", // Dividers and separators
+            box: "#212121", // Boxes and containers background
+            disabled: "#2C2C2C", // Disabled elements background
           }
         : {
             border: "#e0e0e0", // Standard border
@@ -141,6 +168,8 @@ const getTheme = (mode) => ({
             scrollbarHover: "#9e9e9e", // Scrollbar on hover
             hover: "rgba(0, 0, 0, 0.04)", // Element hover state
             divider: "rgba(0, 0, 0, 0.12)", // Dividers and separators
+            box: "#fafafa", // Boxes and containers background
+            disabled: "#f5f5f5", // Disabled elements background
           },
   },
   typography: {

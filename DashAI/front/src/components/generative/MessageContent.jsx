@@ -9,7 +9,7 @@ export function MessageContent({ messages, isUser, isWaiting }) {
   return (
     <Paper
       sx={{
-        backgroundColor: "ui.box",
+        backgroundColor: theme.palette.ui.box,
         color: "text.primary",
         padding: theme.spacing(1.5, 2),
         maxWidth: "100%",

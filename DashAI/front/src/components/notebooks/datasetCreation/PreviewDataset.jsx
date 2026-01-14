@@ -166,7 +166,7 @@ function PreviewDataset({
                 fontSize: "1.3rem",
                 color: "text.secondary",
                 "&:hover": {
-                  backgroundColor: "action.hover",
+                  backgroundColor: "ui.hover",
                 },
               }}
             >

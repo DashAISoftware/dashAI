@@ -244,7 +244,7 @@ export default function ConfigureToolModal({
             height: "6px",
             cursor: "row-resize",
             backgroundColor: "divider",
-            "&:hover": { backgroundColor: "action.hover" },
+            "&:hover": { backgroundColor: "ui.hover" },
             zIndex: 2,
           }}
         />

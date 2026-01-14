@@ -205,7 +205,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               outline: "none",
             },
             "& .MuiDataGrid-row:hover": {
-              backgroundColor: "action.hover",
+              backgroundColor: theme.palette.ui.hover,
             },
           }}
         />

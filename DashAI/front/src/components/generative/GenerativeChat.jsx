@@ -1,4 +1,5 @@
 import { Box, Divider, IconButton, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -21,6 +22,7 @@ import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
+  const theme = useTheme();
   const [history, setHistory] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
@@ -251,11 +253,11 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
             width: "8px",
           },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "ui.border",
+            backgroundColor: theme.palette.ui.border,
             borderRadius: "4px",
           },
           "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "action.hover",
+            backgroundColor: theme.palette.ui.hover,
           },
         }}
       >

@@ -14,7 +14,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data Quality Summary */}
       <Card>
-        <CardContent sx={{ bgcolor: "ui.box" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
             Data Quality Summary
           </Typography>
@@ -72,7 +72,11 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Paper
                     variant="outlined"
-                    sx={{ p: 2, bgcolor: "ui.disabled", borderRadius: 2 }}
+                    sx={{
+                      p: 2,
+                      bgcolor: theme.palette.ui.disabled,
+                      borderRadius: 2,
+                    }}
                   >
                     <Typography variant="h5" fontWeight="bold">
                       {qualityInfo.rows_with_any_nan}
@@ -91,7 +95,11 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
 
                   <Paper
                     variant="outlined"
-                    sx={{ p: 2, bgcolor: "ui.disabled", borderRadius: 2 }}
+                    sx={{
+                      p: 2,
+                      bgcolor: theme.palette.ui.disabled,
+                      borderRadius: 2,
+                    }}
                   >
                     <Typography variant="h5" fontWeight="bold">
                       {qualityInfo.rows_with_multiple_nan}
@@ -116,7 +124,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
 
       {/* Missing Data by Column */}
       <Card>
-        <CardContent sx={{ bgcolor: "ui.box" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
             Missing Data by Column
           </Typography>

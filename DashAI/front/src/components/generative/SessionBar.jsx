@@ -150,7 +150,7 @@ export default function SessionBar({
             <Box
               sx={{
                 ml: 1,
-                bgcolor: "ui.border",
+                bgcolor: theme.palette.ui.border,
                 color: "text.primary",
                 borderRadius: "50%",
                 width: 20,

@@ -49,11 +49,11 @@ export default function SessionList({
           width: "6px",
         },
         "&::-webkit-scrollbar-thumb": {
-          backgroundColor: "ui.border",
+          backgroundColor: theme.palette.ui.border,
           borderRadius: "3px",
         },
         "&::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: "action.hover",
+          backgroundColor: theme.palette.ui.hover,
         },
         overflowY: "auto",
         flex: 1,
@@ -105,7 +105,7 @@ export default function SessionList({
               <Box
                 sx={{
                   ml: 1,
-                  bgcolor: "ui.border",
+                  bgcolor: theme.palette.ui.border,
                   color: "text.primary",
                   borderRadius: "50%",
                   width: 20,

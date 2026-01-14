@@ -23,7 +23,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(categoricalStats).map(([column, stats]) => (
         <Card key={column} sx={{ borderRadius: 2 }}>
-          <CardContent sx={{ bgcolor: "ui.box" }}>
+          <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Header */}
             <Box display="flex" alignItems="center" mb={2}>
               <TitleIcon sx={{ color: "primary.main", mr: 1 }} />

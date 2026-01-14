@@ -62,7 +62,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
             disableGutters
             defaultExpanded
             sx={{
-              bgcolor: "ui.box",
+              bgcolor: theme.palette.ui.box,
               borderRadius: 1.5,
               overflow: "hidden",
               "&:before": { display: "none" },
@@ -88,7 +88,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
                 size="small"
                 label={list.length}
                 sx={{
-                  bgcolor: "ui.disabled",
+                  bgcolor: theme.palette.ui.disabled,
                   color: "text.secondary",
                   height: 20,
                 }}

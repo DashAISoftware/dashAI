@@ -380,10 +380,10 @@ export default function RightBar({ notebook, onToggle }) {
                     "& .MuiToggleButton-root": {
                       color: "text.secondary",
                       border: "1px solid",
-                      borderColor: "ui.border",
+                      borderColor: theme.palette.ui.border,
                       "&.Mui-selected": {
-                        bgcolor: "ui.border",
-                        color: "accent.main",
+                        bgcolor: theme.palette.ui.border,
+                        color: theme.palette.accent.main,
                       },
                     },
                   }}

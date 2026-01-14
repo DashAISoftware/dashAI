@@ -45,7 +45,7 @@ export default function HoverToolInfo({
               width: "100%",
               height: 160,
               borderRadius: 1.5,
-              bgcolor: "ui.border",
+              bgcolor: theme.palette.ui.border,
               border: `1px solid ${theme.palette.divider}`,
               overflow: "hidden",
               mb: 2,
