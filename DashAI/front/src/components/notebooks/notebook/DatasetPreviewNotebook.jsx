@@ -9,6 +9,7 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
@@ -26,6 +27,7 @@ export default function DatasetPreviewNotebook({
   existingDatasets = [],
   onAccordionChange,
 }) {
+  const theme = useTheme();
   if (!notebook) {
     return (
       <Box

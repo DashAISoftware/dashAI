@@ -7,9 +7,11 @@ import {
   CardContent,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import IssueCard from "../IssueCard";
 
 const QualityTab = ({ qualityInfo, totalRows }) => {
+  const theme = useTheme();
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data Quality Summary */}

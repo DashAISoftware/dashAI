@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
 import HistoryIcon from "@mui/icons-material/History";
@@ -85,6 +86,8 @@ export default function ParamsBar({
     ? preprocessSchema(selectedModel.schema.properties)
     : {};
 
+  const theme = useTheme();
+
   return (
     <SideBar>
       <Box
@@ -99,7 +102,7 @@ export default function ParamsBar({
         <Box
           sx={{
             p: 2,
-            borderBottom: "1px solid #333",
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",

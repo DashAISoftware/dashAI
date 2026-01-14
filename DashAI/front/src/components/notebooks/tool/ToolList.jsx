@@ -7,6 +7,7 @@ import {
   Typography,
   Chip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ToolListItem from "./ToolListItem";
 import ConfigureToolModal from "./ConfigureToolModal";
@@ -14,6 +15,7 @@ import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
 
 export default function ToolList({ tools, notebook, FormComponent }) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
   const tourContext = useTourContext();

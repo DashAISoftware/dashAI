@@ -103,9 +103,9 @@ export const NumericTab = ({ numericStats }) => {
                     name: column,
                     orientation: "h", // ← rotated here
                     boxpoints: "suspectedoutliers",
-                    marker: { color: "#8884d8" },
-                    line: { color: "#212121" },
-                    fillcolor: "#8884d8",
+                    marker: { color: theme.palette.info.main },
+                    line: { color: theme.palette.background.paper },
+                    fillcolor: theme.palette.info.main,
                     opacity: 0.6,
                     showlegend: false,
                   },
@@ -120,7 +120,9 @@ export const NumericTab = ({ numericStats }) => {
                     title: "",
                     zeroline: false,
                     gridcolor:
-                      theme.palette.mode === "dark" ? "#444" : "#e0e0e0",
+                      theme.palette.mode === "dark"
+                        ? theme.palette.ui.borderLight
+                        : theme.palette.ui.border,
                   },
                   yaxis: {
                     showticklabels: false,

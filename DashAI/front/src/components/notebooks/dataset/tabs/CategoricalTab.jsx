@@ -111,11 +111,11 @@ export const CategoricalTab = ({ categoricalStats }) => {
                             key={index}
                             fill={
                               [
-                                "#8b5cf6",
-                                "#a78bfa",
-                                "#c4b5fd",
-                                "#ddd6fe",
-                                "#ede9fe",
+                                theme.palette.secondary.main,
+                                theme.palette.info.main,
+                                theme.palette.primary.main,
+                                theme.palette.success.light,
+                                theme.palette.warning.main,
                               ][index]
                             }
                           />

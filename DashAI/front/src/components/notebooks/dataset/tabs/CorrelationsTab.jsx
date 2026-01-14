@@ -51,7 +51,11 @@ const CorrelationsTab = ({ correlations }) => {
                 {corrData.map((entry, index) => (
                   <Cell
                     key={index}
-                    fill={entry.correlation > 0 ? "#10b981" : "#ef4444"}
+                    fill={
+                      entry.correlation > 0
+                        ? theme.palette.success.main
+                        : theme.palette.error.main
+                    }
                   />
                 ))}
               </Bar>
@@ -73,7 +77,10 @@ const CorrelationsTab = ({ correlations }) => {
                   alignItems="center"
                   justifyContent="space-between"
                   p={2}
-                  sx={{ backgroundColor: "#363636", borderRadius: 2 }}
+                  sx={{
+                    backgroundColor: theme.palette.ui.panelMedium,
+                    borderRadius: 2,
+                  }}
                 >
                   <Typography variant="body2" fontWeight={500}>
                     {d.pair}

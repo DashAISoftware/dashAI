@@ -1,8 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Switch, Typography, Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 function ResultsGraphsSwitch({ showCustomMetrics, handleToggleMetrics }) {
+  const theme = useTheme();
   return (
     <Box mb={2} display="flex" justifyContent="flex-start" width="100%">
       <Box display="flex" alignItems="center">
@@ -17,7 +19,7 @@ function ResultsGraphsSwitch({ showCustomMetrics, handleToggleMetrics }) {
           color="primary"
           sx={{
             "& .MuiSwitch-thumb": {
-              backgroundColor: "#00bebb",
+              backgroundColor: theme.palette.primary.main,
             },
           }}
           name="metricsSwitch"
