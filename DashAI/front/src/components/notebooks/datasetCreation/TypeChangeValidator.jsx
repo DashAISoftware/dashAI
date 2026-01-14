@@ -16,6 +16,7 @@ import WarningIcon from "@mui/icons-material/Warning";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { validateTypeChanges } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 export const TypeChangeValidator = ({
   open,
@@ -27,6 +28,7 @@ export const TypeChangeValidator = ({
 }) => {
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
+  const { t } = useTranslation(["datasets", "common"]);
 
   const validateChanges = async () => {
     setValidating(true);

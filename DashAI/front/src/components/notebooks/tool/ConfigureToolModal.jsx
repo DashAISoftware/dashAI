@@ -18,6 +18,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import api from "../../../api/api";
 
 import { getDatasetFile } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 export default function ConfigureToolModal({
   tool,
@@ -33,6 +34,7 @@ export default function ConfigureToolModal({
   const containerRef = useRef(null);
   const [topHeight, setTopHeight] = useState(100);
   const isResizingRef = useRef(false);
+  const { t } = useTranslation(["datasets", "common"]);
 
   const handleMouseDown = () => {
     isResizingRef.current = true;
@@ -79,8 +81,11 @@ export default function ConfigureToolModal({
 
   const steps =
     Object.values(tool.schema.properties).length > 0
-      ? ["Configure Scope", "Configure Parameters"]
-      : ["Configure Scope"];
+      ? [
+          t("datasets:label.configureScope"),
+          t("datasets:label.configureParameters"),
+        ]
+      : [t("datasets:label.configureScope")];
 
   return (
     <Dialog
@@ -113,6 +118,10 @@ export default function ConfigureToolModal({
       >
         <Typography variant="h6" fontWeight="600" sx={{ whiteSpace: "nowrap" }}>
           Configure {tool.type}: {tool.display_name}
+          {t("datasets:label.configureToolTitle", {
+            toolType: tool.type,
+            toolName: tool.display_name,
+          })}
         </Typography>
 
         {/* Stepper */}
@@ -149,12 +158,12 @@ export default function ConfigureToolModal({
         <Tab
           icon={<DescriptionIcon fontSize="small" />}
           iconPosition="start"
-          label="Description"
+          label={t("common:description")}
         />
         <Tab
           icon={<DatasetIcon fontSize="small" />}
           iconPosition="start"
-          label="Dataset"
+          label={t("common:dataset")}
         />
       </Tabs>
       {/* CONTENT AREA */}
@@ -195,7 +204,7 @@ export default function ConfigureToolModal({
                     display: "block",
                   }}
                 >
-                  Description
+                  {t("common:description")}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -205,7 +214,7 @@ export default function ConfigureToolModal({
                     mb: 2,
                   }}
                 >
-                  {tool.description || "No description available."}
+                  {tool.description || t("common:noDescription")}
                 </Typography>
                 <img
                   src={`${api.defaults.baseURL}/v1/component/image/${tool.name}`}
@@ -265,7 +274,7 @@ export default function ConfigureToolModal({
             gutterBottom
             textAlign="center"
           >
-            Configure the settings
+            {t("common:configureTheSettings")}
           </Typography>
           <FormSection
             step={step}

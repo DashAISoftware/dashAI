@@ -14,6 +14,7 @@ import {
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 /**
  * Props:
@@ -41,6 +42,7 @@ export default function DatasetTable({
   const [loading, setLoading] = useState(false);
   const [columnTypes, setColumnTypes] = useState({});
   const gridRef = useRef(null);
+  const { t } = useTranslation(["common"]);
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
@@ -121,16 +123,16 @@ export default function DatasetTable({
           )
             ? "number"
             : columnTypes[field] &&
-                ["bool", "boolean"].includes(
-                  String(columnTypes[field].type).toLowerCase(),
-                )
-              ? "boolean"
-              : columnTypes[field] &&
-                  ["date", "datetime", "timestamp"].includes(
-                    String(columnTypes[field].type).toLowerCase(),
-                  )
-                ? "date"
-                : "string",
+              ["bool", "boolean"].includes(
+                String(columnTypes[field].type).toLowerCase(),
+              )
+            ? "boolean"
+            : columnTypes[field] &&
+              ["date", "datetime", "timestamp"].includes(
+                String(columnTypes[field].type).toLowerCase(),
+              )
+            ? "date"
+            : "string",
         minWidth: 120,
         width: Math.max(120, field.length * 8 + 40),
         renderHeader: () => (
@@ -151,7 +153,7 @@ export default function DatasetTable({
               color="text.secondary"
               style={{ fontSize: "0.7rem" }}
             >
-              {columnTypes[field]?.type || "unknown"}
+              {columnTypes[field]?.type || t("common:unknown")}
             </Typography>
           </div>
         ),
@@ -223,7 +225,7 @@ export default function DatasetTable({
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
         >
-          Export
+          {t("common:export")}
         </Button>
         <Menu
           id="export-menu"
@@ -238,7 +240,7 @@ export default function DatasetTable({
         >
           <MenuItem onClick={handleExportCsv}>
             <Download sx={{ mr: 1, fontSize: 16 }} />
-            Download as CSV
+            {t("common:exportAsCSV")}
           </MenuItem>
         </Menu>
       </>

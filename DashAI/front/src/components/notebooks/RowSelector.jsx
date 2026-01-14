@@ -12,6 +12,7 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
   const [selectedRows, setSelectedRows] = useState([]);
@@ -19,6 +20,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
   const [indicesInput, setIndicesInput] = useState("");
+  const { t } = useTranslation(["datasets", "common"]);
 
   // Initialize selection
   useEffect(() => {
@@ -110,7 +112,9 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
   return (
     <Box sx={{ p: 3 }}>
       <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
-        <FormLabel component="legend">Selection Mode</FormLabel>
+        <FormLabel component="legend">
+          {t("datasets:label.selectionMode")}
+        </FormLabel>
 
         <Stack
           direction="row"
@@ -126,17 +130,17 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
             <FormControlLabel
               value="range"
               control={<Radio />}
-              label="By Range"
+              label={t("datasets:label.byRange")}
             />
             <FormControlLabel
               value="indices"
               control={<Radio />}
-              label="By Indices"
+              label={t("datasets:label.byIndices")}
             />
           </RadioGroup>
 
           <Button variant="outlined" size="small" onClick={handleSelectAllRows}>
-            Select All
+            {t("common:selectAll")}
           </Button>
         </Stack>
       </FormControl>
@@ -144,7 +148,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
         <Stack spacing={2} mb={2}>
           <Stack direction="row" spacing={2}>
             <TextField
-              label="Start Index"
+              label={t("datasets:label.startIndex")}
               type="number"
               size="small"
               value={rangeStart}
@@ -155,7 +159,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
               }}
             />
             <TextField
-              label="End Index"
+              label={t("datasets:label.endIndex")}
               type="number"
               size="small"
               value={rangeEnd}
@@ -170,8 +174,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
       ) : (
         <Stack spacing={2} mb={2}>
           <TextField
-            label="Indices (comma separated, or type 'all')"
-            placeholder="0,1,2,5,10 or all"
+            label={t("datasets:label.indices")}
+            placeholder={t("datasets:label.rowIndicesPlaceholder")}
             value={indicesInput}
             onChange={(e) => handleIndicesChange(e.target.value)}
             fullWidth
@@ -182,13 +186,15 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
       <Divider sx={{ my: 1 }} />
       <Box mt={1}>
         <Typography variant="caption" color="text.secondary">
-          Selected rows:{" "}
-          {selectedRows.length === 0
-            ? "all"
-            : selectedRows.length > 0
-              ? selectedRows.join(", ")
-              : "None"}{" "}
-          | Total rows: {totalRows}
+          {t("datasets:label.selectedRows", {
+            value:
+              selectedRows.length === 0
+                ? t("datasets:label.all")
+                : selectedRows.length > 0
+                ? selectedRows.join(", ")
+                : t("datasets:label.none"),
+          })}{" "}
+          | {t("datasets:label.totalRowsCount", { total: totalRows })}
         </Typography>
       </Box>
     </Box>

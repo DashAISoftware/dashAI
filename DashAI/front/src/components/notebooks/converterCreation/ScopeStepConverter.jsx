@@ -10,6 +10,7 @@ import {
   getDatasetTypesByFilePath,
 } from "../../../api/datasets";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export default function ScopeStepConverter({
   supervised,
@@ -28,6 +29,7 @@ export default function ScopeStepConverter({
   const tourContext = useTourContext();
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
   const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
+  const { t } = useTranslation(["common", "datasets"]);
 
   const handleSubmit = () => {
     nextStep();
@@ -57,8 +59,8 @@ export default function ScopeStepConverter({
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -98,10 +100,10 @@ export default function ScopeStepConverter({
         }}
       >
         <Typography variant="subtitle2" gutterBottom>
-          Step 1: Select Scope
+          {t("datasets:label.selectScopeStep", { step: 1 })}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Here you will configure which columns to apply the converter to.
+          {t("datasets:label.selectScopeDescriptionColumns")}
         </Typography>
         {/* Scope selection UI */}
         <ColumnSelector
@@ -120,7 +122,7 @@ export default function ScopeStepConverter({
           onValidationChange={(isValid) => setIsColumnSelectionValid(isValid)}
         />
         <Typography variant="body2" color="text.secondary">
-          Here you will configure which rows to apply the converter to.
+          {t("datasets:label.selectScopeDescriptionRows")}
         </Typography>
         <RowSelector
           totalRows={datasetInfo?.total_rows || 0}
@@ -144,7 +146,7 @@ export default function ScopeStepConverter({
       >
         {supervised && (
           <Tooltip
-            title="Supervised converters will include this column in their learning process."
+            title={t("datasets:label.helpSelectClassColumn")}
             placement="top"
           >
             <IconButton>
@@ -175,7 +177,9 @@ export default function ScopeStepConverter({
             !isColumnSelectionValid || (supervised ? !targetColumn : false)
           }
           saveButtonText={
-            Object.values(tool.schema.properties).length > 0 ? "Next" : "Save"
+            Object.values(tool.schema.properties).length > 0
+              ? t("common:next")
+              : t("common:save")
           }
           data-tour="converter-scope-next-button"
         />

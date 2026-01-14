@@ -10,6 +10,7 @@ import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetsNotebooksBar({
   datasets = [],
@@ -29,6 +30,7 @@ export default function DatasetsNotebooksBar({
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
+  const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -57,7 +59,10 @@ export default function DatasetsNotebooksBar({
   const getDatasetDescription = (dataset) => {
     return (
       dataset.description ||
-      `${dataset.total_rows || 0} rows, ${dataset.total_columns || 0} cols`
+      t("datasets:label.rowsColumnsInfo", {
+        totalRows: dataset.total_rows,
+        totalColumns: dataset.total_columns,
+      })
     );
   };
 
@@ -67,8 +72,10 @@ export default function DatasetsNotebooksBar({
         (dataset) => dataset.id === notebook.dataset_id,
       );
       return associatedDataset?.name
-        ? `from ${associatedDataset.name} dataset`
-        : "No dataset";
+        ? t("datasets:label.fromDataset", {
+            datasetName: associatedDataset.name,
+          })
+        : t("datasets:label.noDataset");
     }
     return notebook.description || "";
   };
@@ -100,11 +107,11 @@ export default function DatasetsNotebooksBar({
         {selectedDatasetId || selectedNotebookId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title="New Dataset/Notebook"
+            title={t("datasets:button.newDatasetNotebook")}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
-            Dataset Module
+            {t("datasets:label.datasetModule")}
           </Typography>
         )}
       </Box>
@@ -112,7 +119,7 @@ export default function DatasetsNotebooksBar({
       {/* Search bar global */}
       <Box px={2} pb={2} flex={"0 0 auto"}>
         <SearchBar
-          placeholder="Search Datasets and Notebooks"
+          placeholder={t("datasets:label.searchDatasetsNotebooks")}
           value={searchQuery}
           onChange={handleSearchChange}
         />
@@ -129,7 +136,7 @@ export default function DatasetsNotebooksBar({
           onItemDelete={onDatasetDelete}
           onItemEdit={onDatasetEdit}
           defaultOpen={true}
-          title="Available Datasets"
+          title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
         />
@@ -144,7 +151,7 @@ export default function DatasetsNotebooksBar({
           onItemEdit={onNotebookEdit}
           onItemInfo={handleNotebookInfo}
           defaultOpen={true}
-          title="Notebooks"
+          title={t("datasets:label.notebooks")}
           Icon={DescriptionIcon}
           datasets={datasets}
           getItemDescription={getNotebookDescription}

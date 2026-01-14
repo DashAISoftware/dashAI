@@ -3,10 +3,12 @@ import { Box, Typography, Chip, Tooltip } from "@mui/material";
 import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
 import { CategoryIcon } from "./CategoryIcon";
+import { useTranslation } from "react-i18next";
 
 export default function ToolGridItem({ tool, disabled, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredTool, setHoveredTool] = useState(null);
+  const { t } = useTranslation(["common"]);
 
   const handleMouseEnter = (event, tool) => {
     if (!disabled) {
@@ -152,7 +154,7 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                 color: disabled ? "rgb(90, 90, 90)" : "rgb(113, 113, 122)",
               }}
             >
-              {tool.metadata.category ?? "Other"}
+              {tool.metadata.category ?? t("common:other")}
             </Typography>
           </Box>
         </Box>

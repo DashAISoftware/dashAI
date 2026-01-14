@@ -16,12 +16,14 @@ import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
 import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import { useExplorerResults } from "./useExplorerResults";
+import { useTranslation } from "react-i18next";
 
 export default function ExplorerBox({
   explorer,
   handleExplorerDeleteClick,
   onStatusChange,
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const { loading, data, dataType, setData } = useExplorerResults(explorer);
@@ -112,7 +114,11 @@ export default function ExplorerBox({
             <>
               {statusLabel === "Finished" && (
                 <Chip
-                  label={dataType === "plotly_json" ? "Info/Edit" : "Info"}
+                  label={
+                    dataType === "plotly_json"
+                      ? t("common:infoEdit")
+                      : t("common:info")
+                  }
                   onClick={() => handleExplorerDetailsClick(explorer)}
                   size="small"
                   icon={<Info sx={{ color: "white !important" }} />}
@@ -178,7 +184,7 @@ export default function ExplorerBox({
               variant="body2"
               sx={{ color: "error.main", textAlign: "center" }}
             >
-              An error occurred during processing.
+              {t("datasets:error.explorerFailed")}
             </Typography>
           </Box>
         ) : (
@@ -193,7 +199,7 @@ export default function ExplorerBox({
             }}
           >
             <CircularProgress size={24} sx={{ mr: 1 }} />
-            <Typography>Processing...</Typography>
+            <Typography>{t("common:processing")}</Typography>
           </Box>
         )}
         {openExplorerDetails && (

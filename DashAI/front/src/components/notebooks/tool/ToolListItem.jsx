@@ -3,6 +3,7 @@ import { Box, Typography, Chip, Tooltip } from "@mui/material";
 import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
 import { CategoryIcon } from "./CategoryIcon";
+import { useTranslation } from "react-i18next";
 
 export default function ToolListItem({
   tool,
@@ -12,6 +13,7 @@ export default function ToolListItem({
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredTool, setHoveredTool] = useState(null);
+  const { t } = useTranslation(["common"]);
 
   const handleMouseEnter = (event, tool) => {
     if (!disabled) {
@@ -166,7 +168,7 @@ export default function ToolListItem({
                   whiteSpace: "nowrap",
                 }}
               >
-                {tool.metadata.category ?? "Other"}
+                {tool.metadata.category ?? t("common:other")}
               </Typography>
             </Box>
           </Box>

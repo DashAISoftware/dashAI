@@ -14,24 +14,7 @@ import {
 import { ArrowBackOutlined, ViewColumn } from "@mui/icons-material";
 import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import { useSnackbar } from "notistack";
-
-const columns = [
-  {
-    field: "columnName",
-    headerName: "Column Name",
-    flex: 1,
-  },
-  {
-    field: "valueType",
-    headerName: "Value Type",
-    flex: 0.5,
-  },
-  {
-    field: "dataType",
-    headerName: "Data Type",
-    flex: 0.5,
-  },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * Modal to select a class column for supervised learning
@@ -50,6 +33,25 @@ const ConverterTargetColumnModal = ({
   const [datasetColumns, setDatasetColumns] = useState([]);
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["common", "datasets"]);
+
+  const columns = [
+    {
+      field: "columnName",
+      headerName: t("datasets:label.columnName"),
+      flex: 1,
+    },
+    {
+      field: "valueType",
+      headerName: t("datasets:label.valueType"),
+      flex: 0.5,
+    },
+    {
+      field: "dataType",
+      headerName: t("datasets:label.dataType"),
+      flex: 0.5,
+    },
+  ];
 
   useEffect(() => {
     if (open) {
@@ -70,7 +72,9 @@ const ConverterTargetColumnModal = ({
       }));
       setDatasetColumns(rowsArray);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the dataset columns.");
+      enqueueSnackbar(t("datasets:error.fetchingDatasetColumns"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -120,7 +124,7 @@ const ConverterTargetColumnModal = ({
           },
         }}
       >
-        Set column
+        {t("datasets:button.setColumn")}
       </Button>
       {open && (
         <Dialog
@@ -143,7 +147,7 @@ const ConverterTargetColumnModal = ({
                 <ArrowBackOutlined />
               </IconButton>
               <Typography variant="h5" sx={{ ml: 2 }}>
-                Set column
+                {t("datasets:button.setColumn")}
               </Typography>
             </Box>
           </DialogTitle>
@@ -152,15 +156,14 @@ const ConverterTargetColumnModal = ({
               <Stack spacing={4} sx={{ py: 2 }}>
                 <Box>
                   <Typography variant="h6" sx={{ mb: 2 }}>
-                    Class/Target Column
+                    {t("datasets:label.classTargetColumn")}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ mb: 2 }}
                   >
-                    Select one column to be used as the target variable for
-                    supervised learning.
+                    {t("datasets:label.selectTargetColumnDescription")}
                   </Typography>
                   <DataGrid
                     rows={datasetColumns}
@@ -197,14 +200,14 @@ const ConverterTargetColumnModal = ({
           </DialogContent>
           <Box sx={{ p: 2, display: "flex", justifyContent: "flex-end" }}>
             <Button onClick={() => setOpen(false)} sx={{ mr: 2 }}>
-              Back
+              {t("common:back")}
             </Button>
             <Button
               variant="contained"
               onClick={handleOnSave}
               disabled={selectedColumn === null}
             >
-              Save
+              {t("common:save")}
             </Button>
           </Box>
         </Dialog>

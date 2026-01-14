@@ -12,11 +12,13 @@ import ToolListItem from "./ToolListItem";
 import ConfigureToolModal from "./ConfigureToolModal";
 import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
+import { useTranslation } from "react-i18next";
 
 export default function ToolList({ tools, notebook, FormComponent }) {
   const [open, setOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
   const tourContext = useTourContext();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const grouped = useMemo(() => groupByCategory(tools), [tools]);
   const categories = useMemo(
@@ -40,7 +42,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
         variant="body2"
         sx={{ color: "text.secondary", textAlign: "center", py: 2 }}
       >
-        No tools found matching your search.
+        {t("datasets:label.noToolsMatched")}
       </Typography>
     );
   }

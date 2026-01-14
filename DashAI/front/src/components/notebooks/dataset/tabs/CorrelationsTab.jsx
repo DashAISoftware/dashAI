@@ -10,8 +10,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const CorrelationsTab = ({ correlations }) => {
+  const { t } = useTranslation(["datasets"]);
+
   const corrData = [];
   Object.entries(correlations).forEach(([col1, corrs]) => {
     Object.entries(corrs).forEach(([col2, value]) => {
@@ -28,7 +31,7 @@ const CorrelationsTab = ({ correlations }) => {
     <Card>
       <CardContent sx={{ bgcolor: "#2C2C2C" }}>
         <Typography variant="h6" fontWeight="bold" mb={3}>
-          Correlation Analysis
+          {t("datasets:label.correlationAnalysis")}
         </Typography>
 
         <Box mb={4}>
@@ -59,7 +62,7 @@ const CorrelationsTab = ({ correlations }) => {
 
         <Box>
           <Typography variant="h6" fontWeight="bold" mb={2}>
-            Strong Correlations (|r| &gt; 0.5)
+            {t("datasets:label.strongCorrelations")} (|r| &gt; 0.5)
           </Typography>
           <Box display="flex" flexDirection="column" gap={1}>
             {corrData
@@ -95,7 +98,7 @@ const CorrelationsTab = ({ correlations }) => {
                   color="text.secondary"
                   fontStyle="italic"
                 >
-                  No strong correlations detected
+                  {t("datasets:label.noStrongCorrelationsFound")}
                 </Typography>
               </Box>
             )}

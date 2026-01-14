@@ -5,6 +5,7 @@ import ImageVisualizer from ".//visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "./visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "./visualizations/TabularVisualizer";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
+import { useTranslation } from "react-i18next";
 
 /**
  * NullCell component to render null values in the tabular visualizer
@@ -12,6 +13,7 @@ import { getExplorerStatus } from "../../../utils/explorerStatus";
  */
 function NullCell({}) {
   const [hover, setHover] = useState(false);
+  const { t } = useTranslation(["common"]);
   return (
     <Box
       sx={{
@@ -24,7 +26,7 @@ function NullCell({}) {
       onMouseLeave={() => setHover(false)}
     >
       <Typography variant="body2" color="text.disabled">
-        {hover ? "None" : "-"}
+        {hover ? t("common:none") : "-"}
       </Typography>
     </Box>
   );

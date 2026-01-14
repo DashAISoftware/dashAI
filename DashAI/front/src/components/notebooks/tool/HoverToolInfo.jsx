@@ -2,12 +2,15 @@ import React from "react";
 
 import { Box, Typography, Popover, Chip } from "@mui/material";
 import api from "../../../api/api";
+import { useTranslation } from "react-i18next";
 
 export default function HoverToolInfo({
   anchorEl,
   hoveredTool,
   handleMouseLeave,
 }) {
+  const { t } = useTranslation(["common"]);
+
   return (
     <Popover
       open={Boolean(anchorEl)}
@@ -73,7 +76,7 @@ export default function HoverToolInfo({
 
           {/* Category Badge */}
           <Chip
-            label={hoveredTool.metadata.category ?? "Other"}
+            label={hoveredTool.metadata.category ?? t("common:other")}
             size="small"
             sx={{
               bgcolor: hoveredTool.metadata.color,

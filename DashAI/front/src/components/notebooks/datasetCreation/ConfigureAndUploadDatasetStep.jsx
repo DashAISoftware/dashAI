@@ -8,6 +8,7 @@ import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -27,6 +28,7 @@ export default function ConfigureAndUploadDatasetStep({
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["common", "datasets"]);
 
   useEffect(() => {
     if (onPreviewError) {
@@ -36,7 +38,7 @@ export default function ConfigureAndUploadDatasetStep({
 
   useEffect(() => {
     if (previewError) {
-      enqueueSnackbar("Error loading dataset preview", {
+      enqueueSnackbar(t("datasets:error.loadingDatasetPreview"), {
         variant: "error",
       });
     }
@@ -54,7 +56,7 @@ export default function ConfigureAndUploadDatasetStep({
 
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
-      enqueueSnackbar("No dataset file available", {
+      enqueueSnackbar(t("datasets:error.noDatasetFileAvailable"), {
         variant: "error",
       });
       return;
@@ -101,14 +103,14 @@ export default function ConfigureAndUploadDatasetStep({
         }
       } catch (err) {
         console.error("Error enqueuing dataset job:", err);
-        enqueueSnackbar("Error when trying to enqueue the dataset job.", {
+        enqueueSnackbar(t("datasets:error.enqueueDatasetJob"), {
           variant: "error",
         });
         backHome();
       }
     } catch (error) {
       console.error("Error creating dataset:", error);
-      enqueueSnackbar("Error creating dataset", {
+      enqueueSnackbar(t("datasets:error.createDatasetError"), {
         variant: "error",
       });
       backHome();
@@ -192,10 +194,10 @@ export default function ConfigureAndUploadDatasetStep({
             formik={{
               errors: uploadEnabled
                 ? {}
-                : { dataset: "Required fields missing" },
+                : { dataset: t("datasets:error.requiredFieldsMissing") },
             }}
-            saveButtonText="Upload"
-            backButtonText="Back"
+            saveButtonText={t("common:upload")}
+            backButtonText={t("common:back")}
             dataTour="dataset-step-upload-button"
           />
         )}

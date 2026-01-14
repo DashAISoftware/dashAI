@@ -1,9 +1,11 @@
 import React from "react";
 import { Alert } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
+import { useTranslation } from "react-i18next";
 
 export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   if (!qualityInfo) return null;
+  const { t } = useTranslation(["datasets"]);
 
   const alerts = [];
 
@@ -11,7 +13,9 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   if (generalInfo?.duplicate_rows > 0) {
     alerts.push(
       <Alert severity="warning" sx={{ mb: 1 }} key="duplicates">
-        Found {generalInfo.duplicate_rows} duplicate rows in the dataset
+        {t("datasets:label.foundDuplicateRows", {
+          count: generalInfo.duplicate_rows,
+        })}
       </Alert>,
     );
   }
@@ -20,11 +24,12 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   if (Object.values(missingValues).some((value) => value > 0)) {
     alerts.push(
       <Alert severity="warning" sx={{ mb: 1 }} key="nan">
-        Missing values detected in columns:{" "}
-        {Object.entries(missingValues)
-          .filter(([_, value]) => value > 0)
-          .map(([key, _]) => key)
-          .join(", ")}
+        {t("datasets:label.missingValuesDetected", {
+          columns: Object.entries(missingValues)
+            .filter(([_, value]) => value > 0)
+            .map(([key, _]) => key)
+            .join(", "),
+        })}
       </Alert>,
     );
   }
@@ -33,8 +38,9 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
   if (qualityInfo.high_cardinality_columns?.length > 0) {
     alerts.push(
       <Alert severity="info" sx={{ mb: 1 }} key="cardinality">
-        High cardinality detected in:{" "}
-        {qualityInfo.high_cardinality_columns.join(", ")}
+        {t("datasets:label.highCardinalityDetected", {
+          columns: qualityInfo.high_cardinality_columns.join(", "),
+        })}
       </Alert>,
     );
   }
@@ -48,7 +54,7 @@ export const QualityAlerts = ({ qualityInfo, generalInfo, missingValues }) => {
         key="quality"
         icon={<CheckIcon />}
       >
-        No data quality issues detected
+        {t("datasets:label.noDataQualityIssuesDetected")}
       </Alert>,
     );
   }

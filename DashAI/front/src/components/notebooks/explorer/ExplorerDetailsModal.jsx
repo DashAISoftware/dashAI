@@ -23,15 +23,7 @@ import { TabColumns, TabResults, TabInfo, TabParameters } from "./tabs";
 import PlotLayoutForm from "./plotLayout/PlotLayoutForm";
 import { updateExplorerResults } from "../../../api/explorer";
 import { useSnackbar } from "notistack";
-
-const tabs = [
-  { label: "Info", value: 0, icon: <InfoOutlined /> },
-  { label: "Columns", value: 1, icon: <ViewColumnOutlined /> },
-  { label: "Parameters", value: 2, icon: <TuneOutlined /> },
-  { label: "Results", value: 3, icon: <AnalyticsOutlined /> },
-];
-
-const defaultTab = tabs.find((tab) => tab.label === "Results").value;
+import { useTranslation } from "react-i18next";
 
 export default function ExplorerDetailsModal({
   open = false,
@@ -44,9 +36,17 @@ export default function ExplorerDetailsModal({
 }) {
   if (!explorer) return null;
   if (!data) return null;
-  const [currentTab, setCurrentTab] = useState(defaultTab);
+  const [currentTab, setCurrentTab] = useState(3);
   const [localData, setLocalData] = useState(structuredClone(data));
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const tabs = [
+    { label: t("common:info"), value: 0, icon: <InfoOutlined /> },
+    { label: t("common:columns"), value: 1, icon: <ViewColumnOutlined /> },
+    { label: t("common:parameters"), value: 2, icon: <TuneOutlined /> },
+    { label: t("common:results"), value: 3, icon: <AnalyticsOutlined /> },
+  ];
 
   const handleTabChange = (_, newValue) => {
     setCurrentTab(newValue);
@@ -56,12 +56,15 @@ export default function ExplorerDetailsModal({
     try {
       await updateExplorerResults(explorer.id, localData);
       setData(localData);
-      enqueueSnackbar("Explorer results updated successfully", {
-        variant: "success",
-      });
+      enqueueSnackbar(
+        t("datasets:message.explorerResultsUpdatedSuccessfully"),
+        {
+          variant: "success",
+        },
+      );
     } catch (error) {
       console.error("Failed to update explorer results:", error);
-      enqueueSnackbar("Failed to update explorer results", {
+      enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
         variant: "error",
       });
     }
@@ -91,7 +94,7 @@ export default function ExplorerDetailsModal({
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Typography variant="h6">
-          Details for Explorer: {explorer.name}
+          {t("datasets:label.detailsForExplorer", { name: explorer.name })}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <IconButton onClick={onClose}>
