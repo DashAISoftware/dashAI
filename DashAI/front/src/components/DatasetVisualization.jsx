@@ -2,39 +2,59 @@ import { useCallback, useState, useEffect } from "react";
 import {
   Button,
   Grid,
+  Paper,
   Typography,
   CircularProgress,
   Box,
+  Chip,
   Alert,
   Divider,
   Tabs,
   Tab,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { AddCircleOutline as AddIcon } from "@mui/icons-material";
+import {
+  AddCircleOutline as AddIcon,
+  CheckCircle as CheckIcon,
+} from "@mui/icons-material";
 import {
   getDatasetFile,
   getDatasetInfo,
   getDatasetFileFiltered,
-} from "../../api/datasets";
-import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getDatasetStatus } from "../../utils/datasetStatus";
-import { formatDate } from "../../pages/results/constants/formatDate";
-import Header from "../notebooks/dataset/header/Header";
+} from "../api/datasets";
+import DatasetTable from "./notebooks/dataset/DatasetTable";
+import { getComponents } from "../api/component";
+import { useTourContext } from "./tour/TourProvider";
+import { useSnackbar } from "notistack";
+import JobQueueWidget from "./jobs/JobQueueWidget";
+import { getDatasetStatus } from "../utils/datasetStatus";
+import { formatDate } from "../pages/results/constants/formatDate";
+import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
-import OverviewTab from "../notebooks/dataset/tabs/OverviewTab";
-import { NumericTab } from "../notebooks/dataset/tabs/NumericTab";
-import { CategoricalTab } from "../notebooks/dataset/tabs/CategoricalTab";
-import QualityTab from "../notebooks/dataset/tabs/QualityTab";
-import CorrelationsTab from "../notebooks/dataset/tabs/CorrelationsTab";
-import { QualityAlerts } from "../notebooks/dataset/QualityAlerts";
+import OverviewTab from "./notebooks/dataset/tabs/OverviewTab";
+import { NumericTab } from "./notebooks/dataset/tabs/NumericTab";
+import { CategoricalTab } from "./notebooks/dataset/tabs/CategoricalTab";
+import QualityTab from "./notebooks/dataset/tabs/QualityTab";
+import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
+import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
+import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 
+/**
+ * Component to visualize dataset information including quality metrics, statistics, and data preview.
+ * Can be used across different modules (Notebooks, Models) with customizable action buttons.
+ * @param {Object} props
+ * @param {Object} props.dataset - Dataset object containing id, name, file_path, status, and created date
+ * @param {Function} props.onItemCreated - Callback function when a new item (notebook/session) is created
+ * @param {Function} props.onNewItem - Callback function when "New Item" button is clicked
+ * @param {string} [props.newItemButtonText="New Item"] - Custom text for the action button (e.g., "New Notebook", "New Session")
+ * @param {Array} [props.existingItems=[]] - Array of existing items (notebooks/sessions) for validation
+ */
 export default function DatasetVisualization({
   dataset,
-  onSessionCreated,
-  onNewSession,
-  existingSessions = [],
-  tasks = [],
+  onItemCreated,
+  onNewItem,
+  newItemButtonText = "New Item",
+  existingItems = [],
 }) {
   const theme = useTheme();
 
@@ -51,6 +71,8 @@ export default function DatasetVisualization({
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
+  const tourContext = useTourContext();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     setTab(0);
@@ -172,7 +194,7 @@ export default function DatasetVisualization({
                 </Typography>
               </Box>
 
-              {/* Buttons - Only New Session for Models module */}
+              {/* Buttons */}
               <Box
                 sx={{
                   display: "flex",
@@ -192,16 +214,23 @@ export default function DatasetVisualization({
                 >
                   <Button
                     variant="contained"
-                    disabled={isProcessing || !tasks || tasks.length === 0}
-                    onClick={() => {
-                      if (onNewSession) {
-                        onNewSession();
+                    endIcon={<AddIcon />}
+                    disabled={isProcessing}
+                    className="new-notebook-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onNewItem) {
+                        onNewItem();
+                      }
+                      if (tourContext && tourContext.run) {
+                        setTimeout(() => {
+                          tourContext.nextStep();
+                        }, 200);
                       }
                     }}
-                    endIcon={<AddIcon />}
                     sx={{ height: "40px" }}
                   >
-                    New Session
+                    {newItemButtonText}
                   </Button>
                 </Grid>
               </Box>
@@ -224,7 +253,7 @@ export default function DatasetVisualization({
             {/* Tabs */}
             <Tabs
               sx={{
-                bgcolor: theme.palette.ui.panelDark,
+                bgcolor: theme.palette.ui.box,
                 borderRadius: 1,
                 minHeight: "48px",
                 "& .MuiTabs-indicator": {
@@ -238,12 +267,12 @@ export default function DatasetVisualization({
                   border: "1px solid transparent",
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.05)",
+                    bgcolor: theme.palette.action.hover,
                   },
                   "&.Mui-disabled": {
-                    color: "rgb(150, 150, 150)",
-                    bgcolor: "rgb(32, 32, 32)",
-                    borderColor: "rgb(39, 39, 42)",
+                    color: theme.palette.text.disabled,
+                    bgcolor: theme.palette.ui.disabled,
+                    borderColor: theme.palette.ui.border,
                     opacity: 0.6,
                     cursor: "not-allowed",
                     filter: "grayscale(0.6)",
@@ -278,6 +307,13 @@ export default function DatasetVisualization({
                   Object.keys(datasetInfo.categorical_stats).length === 0
                 }
               />
+              <Tab
+                label="Text"
+                disabled={
+                  !datasetInfo?.text_stats ||
+                  Object.keys(datasetInfo.text_stats).length === 0
+                }
+              />
               <Tab label="Data Quality" disabled={!datasetInfo?.quality_info} />
               <Tab
                 label="Correlations"
@@ -309,13 +345,14 @@ export default function DatasetVisualization({
                 categoricalStats={datasetInfo?.categorical_stats}
               />
             )}
-            {tab === 3 && (
+            {tab === 3 && <TextTab textStats={datasetInfo?.text_stats} />}
+            {tab === 4 && (
               <QualityTab
                 qualityInfo={datasetInfo?.quality_info}
                 totalRows={datasetInfo?.total_rows}
               />
             )}
-            {tab === 4 && (
+            {tab === 5 && (
               <CorrelationsTab correlations={datasetInfo?.correlations} />
             )}
           </Box>
@@ -333,7 +370,7 @@ export default function DatasetVisualization({
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: theme.palette.primary.main }} />
+            <CircularProgress color="primary" />
             <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"
