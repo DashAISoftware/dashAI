@@ -20,6 +20,8 @@ import predictionEN from "./locales/en/prediction.json";
 import predictionES from "./locales/es/prediction.json";
 import homeTourEN from "./locales/en/homeTour.json";
 import homeTourES from "./locales/es/homeTour.json";
+import datasetsTourEN from "./locales/en/datasetsTour.json";
+import datasetsTourES from "./locales/es/datasetsTour.json";
 import notebookTourEN from "./locales/en/notebookTour.json";
 import notebookTourES from "./locales/es/notebookTour.json";
 
@@ -38,6 +40,7 @@ const resources = {
     datasets: datasetsEN,
     prediction: predictionEN,
     homeTour: homeTourEN,
+    datasetsTour: datasetsTourEN,
     notebookTour: notebookTourEN,
   },
   es: {
@@ -51,6 +54,7 @@ const resources = {
     datasets: datasetsES,
     prediction: predictionES,
     homeTour: homeTourES,
+    datasetsTour: datasetsTourES,
     notebookTour: notebookTourES,
   },
 };
@@ -72,6 +76,7 @@ i18n.use(initReactI18next).init({
     "datasets",
     "prediction",
     "homeTour",
+    "datasetsTour",
     "notebookTour",
   ],
   defaultNS: "common",
