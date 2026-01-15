@@ -198,6 +198,7 @@ export default function SessionVisualization({
       >
         {/* Sticky Comparison Table */}
         <Paper
+          data-tour="model-comparison-panel"
           sx={{
             height: `${tableHeight}px`,
             flexShrink: 0,
@@ -250,6 +251,7 @@ export default function SessionVisualization({
                   Table
                 </Button>
                 <Button
+                  data-tour="graphs-button"
                   variant={!showTable ? "contained" : "outlined"}
                   onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}
@@ -344,6 +346,7 @@ export default function SessionVisualization({
 
         {/* Scrollable Run Cards */}
         <Box
+          data-tour="run-cards-section"
           sx={{
             flex: 1,
             overflow: "auto",
@@ -366,10 +369,15 @@ export default function SessionVisualization({
             </Box>
           ) : (
             <Stack spacing={2}>
-              {sortedRuns.map((run) => (
+              {sortedRuns.map((run, index) => (
                 <Box
                   key={run.id}
                   id={`run-card-${run.id}`}
+                  data-tour={
+                    index === sortedRuns.length - 1
+                      ? "first-run-card"
+                      : undefined
+                  }
                   sx={{
                     scrollMarginTop: "20px",
                     transition: "all 0.3s ease",
@@ -388,6 +396,7 @@ export default function SessionVisualization({
                     onExplainer={handleExplainer}
                     onDelete={onDeleteRun}
                     explainerRefreshTrigger={explainerRefreshTrigger}
+                    isLastRun={index === sortedRuns.length - 1}
                   />
                 </Box>
               ))}

@@ -315,7 +315,7 @@ function AddModelDialog({
             />
 
             {selectedModel && (
-              <Box>
+              <Box data-tour="model-config">
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   Model Parameters
                 </Typography>
@@ -389,6 +389,7 @@ function AddModelDialog({
           </Button>
         )}
         <Button
+          data-tour="add-model-button"
           onClick={handleNext}
           variant="contained"
           disabled={
