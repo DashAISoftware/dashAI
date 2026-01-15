@@ -13,7 +13,7 @@ import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
-import DatasetVisualization from "../../components/models/DatasetVisualization";
+import DatasetVisualization from "../../components/DatasetVisualization";
 import AddModelDialog from "../../components/models/AddModelDialog";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import { getComponents } from "../../api/component";
@@ -903,7 +903,15 @@ export default function ModelsContent() {
               }}
             >
               <CenterBox>
-                {step === 1 && selectedTask ? (
+                {selectedSessionId ? (
+                  <SessionVisualization
+                    session={selectedSession}
+                    runs={runs}
+                    onTrain={handleTrainRun}
+                    onEditRun={handleEditRun}
+                    onDeleteRun={handleDeleteRun}
+                  />
+                ) : step === 1 && selectedTask ? (
                   <CreateSessionSteps
                     backHome={handleBackToTaskSelection}
                     selectedTask={selectedTask}
