@@ -369,20 +369,20 @@ function SplitDatasetRows({
                 <BooleanInput
                   name="shuffle"
                   value={shuffle}
-                  label="Shuffle"
+                  label={t("experiments:label.shuffle")}
                   onChange={handleShuffleChange}
                   description={t("experiments:label.shuffleDescription")}
                 />
                 <BooleanInput
                   name="stratify"
                   value={stratify}
-                  label="Stratify"
+                  label={t("experiments:label.stratify")}
                   onChange={handleStratifyChange}
                   description={t("experiments:label.stratifyDescription")}
                 />
                 <TextField
                   id="seed"
-                  label="Seed"
+                  label={t("experiments:label.seed")}
                   value={seed}
                   onChange={handleSeedChange}
                   autoComplete="off"
@@ -408,7 +408,7 @@ function SplitDatasetRows({
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="train"
-                  label="Train"
+                  label={t("common:trainSubject")}
                   autoComplete="off"
                   size="small"
                   error={manualSplitError}
@@ -418,7 +418,7 @@ function SplitDatasetRows({
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="validation"
-                  label="Validation"
+                  label={t("common:validation")}
                   autoComplete="off"
                   size="small"
                   error={manualSplitError}
@@ -428,7 +428,7 @@ function SplitDatasetRows({
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="test"
-                  label="Test"
+                  label={t("common:testSubject")}
                   autoComplete="off"
                   size="small"
                   error={manualSplitError}

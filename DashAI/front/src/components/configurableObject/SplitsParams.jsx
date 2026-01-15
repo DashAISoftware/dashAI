@@ -91,7 +91,9 @@ function SplitsParams({
           open={showMoreOptions}
           onClose={() => setShowMoreOptions(false)}
         >
-          <DialogTitle>Advanced configuration</DialogTitle>
+          <DialogTitle>
+            {t("configurableObject:advancedConfiguration")}
+          </DialogTitle>
           <DialogContent>
             <ParameterForm
               parameterSchema={paramsSchema.more_options}

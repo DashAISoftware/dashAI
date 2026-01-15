@@ -1,4 +1,5 @@
 import { Button, ButtonGroup } from "@mui/material";
+import { t } from "i18next";
 
 function FormSchemaButtonGroup({
   onCancel,
@@ -6,19 +7,21 @@ function FormSchemaButtonGroup({
   autoSave,
   formik,
   error,
-  saveButtonText = "Save",
-  backButtonText = "Back",
+  saveButtonText = t("common:save"),
+  backButtonText = t("common:back"),
   dataTour,
 }) {
-  const isCreateExplorer = saveButtonText === "Create Explorer";
-  const isCreateConverter = saveButtonText === "Create Converter";
+  const isCreateExplorer =
+    saveButtonText === t("datasets:button.createExplorer");
+  const isCreateConverter =
+    saveButtonText === t("datasets:button.createConverter");
   const finalDataTour =
     dataTour ||
     (isCreateExplorer
       ? "create-explorer-button"
       : isCreateConverter
-        ? "create-converter-button"
-        : undefined);
+      ? "create-converter-button"
+      : undefined);
 
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>

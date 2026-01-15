@@ -1,4 +1,5 @@
 {
+  "advancedConfiguration": "Advanced Configuration",
   "enterValue": "Enter a value",
   "error": {
     "splitsParams": "The sum of the split sizes must be 1"

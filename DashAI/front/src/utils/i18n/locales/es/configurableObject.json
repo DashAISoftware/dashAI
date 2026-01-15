@@ -1,4 +1,5 @@
 {
+  "advancedConfiguration": "Configuración Avanzada",
   "enterValue": "Ingrese un valor",
   "error": {
     "splitsParams": "La suma de los tamaños de las divisiones debe ser 1"

@@ -1,5 +1,12 @@
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+  Box,
+} from "@mui/material";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
 import React, { useEffect, useState, useMemo } from "react";
@@ -10,6 +17,7 @@ import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTourContext } from "../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import { justifyContent } from "@mui/system";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -166,7 +174,13 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
         </Typography>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <Grid container direction="row" columnSpacing={3} wrap="nowrap">
+        <Grid
+          container
+          direction="row"
+          columnSpacing={3}
+          rowSpacing={3}
+          wrap="wrap"
+        >
           <Grid size={{ xs: 4, md: 12 }}>
             <TextField
               label={t("experiments:label.modelName")}
@@ -229,7 +243,14 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 1, md: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "flex-end",
+              width: "100%",
+            }}
+          >
             <Button
               data-tour="exp-add-model-button"
               variant="outlined"
@@ -240,7 +261,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             >
               {t("common:add")}
             </Button>
-          </Grid>
+          </Box>
         </Grid>
       </Grid>
       <Grid size={{ xs: 12 }} data-tour="models-table">
