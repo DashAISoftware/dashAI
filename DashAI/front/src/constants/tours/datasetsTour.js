@@ -118,17 +118,13 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:selectCsv">
         <div>
-          <h3>Select CSV DataLoader</h3>
+          <h3></h3>
           <p>
-            Since our sample dataset is a CSV file, we need to select the{" "}
-            <strong>CSVDataLoader</strong>.
+            <strong></strong>.
           </p>
+          <p></p>
           <p>
-            DataLoaders are tools that help DashAI understand and process
-            different file formats.
-          </p>
-          <p>
-            <strong>Click on "CSVDataLoader" to select it.</strong>
+            <strong></strong>
           </p>
         </div>
       </Trans>
