@@ -20,7 +20,10 @@ const CorrelationsTab = ({ correlations }) => {
     Object.entries(corrs).forEach(([col2, value]) => {
       if (col1 < col2) {
         // Avoid duplicates
-        corrData.push({ pair: `${col1} - ${col2}`, correlation: value });
+        corrData.push({
+          pair: `${col1} - ${col2}`,
+          correlation: value,
+        });
       }
     });
   });
@@ -48,7 +51,11 @@ const CorrelationsTab = ({ correlations }) => {
                 }}
                 labelStyle={{ color: "#ffffff" }}
               />
-              <Bar dataKey="correlation" fill="#3b82f6">
+              <Bar
+                dataKey="correlation"
+                name={t("datasets:label.correlation")}
+                fill="#3b82f6"
+              >
                 {corrData.map((entry, index) => (
                   <Cell
                     key={index}
