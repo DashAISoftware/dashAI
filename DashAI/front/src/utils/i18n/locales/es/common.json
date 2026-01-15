@@ -49,6 +49,7 @@
   "loadingColumns": "Cargando columnas...",
   "metadata": "Metadatos",
   "metrics": "Métricas",
+  "missing": "Faltante",
   "model": "Modelo",
   "modelName": "Nombre del Modelo",
   "modelParameters": "Parámetros del Modelo",

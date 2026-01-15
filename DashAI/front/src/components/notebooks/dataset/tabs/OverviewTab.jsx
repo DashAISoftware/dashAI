@@ -19,7 +19,6 @@ import {
 } from "recharts";
 import DatasetTable from "../DatasetTable";
 import { useTranslation } from "react-i18next";
-import { width } from "@mui/system";
 
 const OverviewTab = ({
   dataset,
@@ -28,7 +27,7 @@ const OverviewTab = ({
   total_rows,
   fetchDatasetPage,
 }) => {
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
 
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
@@ -82,7 +81,11 @@ const OverviewTab = ({
                     }}
                     labelStyle={{ color: "#ffffff" }}
                   />
-                  <Bar dataKey="missing" fill="rgba(136, 132, 216, 0.7)" />
+                  <Bar
+                    dataKey="missing"
+                    fill="rgba(136, 132, 216, 0.7)"
+                    name={t("common:missing")}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
