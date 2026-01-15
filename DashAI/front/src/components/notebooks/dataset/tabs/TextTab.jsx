@@ -24,7 +24,7 @@ import { MetricRow } from "../MetricRow";
 import { useTranslation } from "react-i18next";
 
 export const TextTab = ({ textStats }) => {
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
@@ -194,7 +194,11 @@ export const TextTab = ({ textStats }) => {
                         }}
                         labelStyle={{ color: "#ffffff" }}
                       />
-                      <Bar dataKey="value" fill="rgba(136, 132, 216, 0.7)" />
+                      <Bar
+                        dataKey="value"
+                        fill="rgba(136, 132, 216, 0.7)"
+                        name={t("common:value")}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
