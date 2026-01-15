@@ -17,7 +17,7 @@ import { StatBox } from "../StatBox";
 import { useTranslation } from "react-i18next";
 
 export const CategoricalTab = ({ categoricalStats }) => {
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
@@ -84,7 +84,11 @@ export const CategoricalTab = ({ categoricalStats }) => {
                         }}
                         labelStyle={{ color: "#ffffff" }}
                       />
-                      <Bar dataKey="count" fill="rgba(136, 132, 216, 0.7)" />
+                      <Bar
+                        dataKey="count"
+                        fill="rgba(136, 132, 216, 0.7)"
+                        name={t("common:count")}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
