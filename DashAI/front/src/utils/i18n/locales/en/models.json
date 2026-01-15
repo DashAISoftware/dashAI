@@ -22,17 +22,29 @@
     "createSession": "Error while trying to create a new session",
     "datasetRequired": "Dataset is required",
     "enterModelName": "Please enter a name for the model",
+    "failedToDeleteRun": "Error deleting run {{runName}}",
+    "failedToDeleteSession": "Failed to delete session",
+    "failedToFetchRuns": "Failed to fetch runs",
+    "failedToFetchSessions": "Failed to fetch sessions",
+    "failedToFetchTasks": "Failed to fetch tasks",
+    "failedToStartRun": "Error starting run {{runName}}",
+    "failedToUpdateSession": "Failed to update session",
     "fetchingModels": "Error fetching compatible models",
     "nameRequired": "Name is required",
     "noModelSelected": "No model selected",
+    "runFailed": "Run {{runName}} failed: {{error}}",
     "runNameExists": "A run with the name {{name}} already exists",
+    "selectSessionFirst": "Please select a session first",
+    "sessionNameEmpty": "Session name cannot be empty",
     "sessionNameExists": "A session with this name already exists"
   },
   "label": {
     "addModelToSession": "Add Model to Session",
     "availableModels": "Available Models",
+    "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",
     "configureModel": "Configure Model",
     "configureOptimizer": "Configure Optimizer",
+    "configureTasksTrainCompareModels": "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow.",
     "explainersCount_one": "• <1>{{count}}</1> explainer",
     "explainersCount_other": "• <1>{{count}}</1> explainers",
     "globalExplainer": "Global Explainer",
@@ -67,13 +79,20 @@
     "selectDatasetForSession": "Select dataset for your session",
     "selectSessionToViewModels": "Select a session to view available models.",
     "selectTask": "Select a Task",
+    "selectTaskForSession": "Select a Task for Your Session",
     "sessionName": "Session Name",
     "test": "Test",
     "train": "Train",
     "validation": "Validation"
   },
   "message": {
+    "runAdded": "Run \"{{runName}}\" added to session",
+    "runCompleted": "Run \"{{runName}}\" completed successfully",
     "runCreatedSuccess": "Run {{name}} created successfully",
-    "sessionCreatedSuccess": "Session successfully created."
+    "runDeleted": "Run \"{{runName}}\" deleted",
+    "runStarted": "Run \"{{runName}}\" started",
+    "sessionCreatedSuccess": "Session successfully created.",
+    "sessionDeleted": "Session deleted successfully",
+    "sessionUpdated": "Session updated successfully"
   }
 }

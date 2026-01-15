@@ -22,17 +22,29 @@
     "createSession": "Error al intentar crear una nueva sesión",
     "datasetRequired": "Se requiere un dataset",
     "enterModelName": "Por favor ingrese un nombre para el modelo",
+    "failedToDeleteRun": "Error al eliminar la ejecución {{runName}}",
+    "failedToDeleteSession": "Error al eliminar la sesión",
+    "failedToFetchRuns": "Error al obtener las ejecuciones",
+    "failedToFetchSessions": "Error al obtener las sesiones",
+    "failedToFetchTasks": "Error al obtener las tareas",
+    "failedToStartRun": "Error al iniciar la ejecución {{runName}}",
+    "failedToUpdateSession": "Error al actualizar la sesión",
     "fetchingModels": "Error al obtener modelos compatibles",
     "nameRequired": "Se requiere un nombre",
     "noModelSelected": "No se seleccionó ningún modelo",
+    "runFailed": "La ejecución {{runName}} falló: {{error}}",
     "runNameExists": "Ya existe una ejecución con el nombre {{name}}",
+    "selectSessionFirst": "Por favor seleccione una sesión primero",
+    "sessionNameEmpty": "El nombre de la sesión no puede estar vacío",
     "sessionNameExists": "Ya existe una sesión con este nombre"
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
     "availableModels": "Modelos Disponibles",
+    "chooseTaskForSessionWithDataset": "Elija la tarea de aprendizaje automático para su sesión con el dataset \"{{datasetName}}\".",
     "configureModel": "Configurar Modelo",
     "configureOptimizer": "Configurar Optimizador",
+    "configureTasksTrainCompareModels": "Configure tareas, entrene y compare modelos en sesiones organizadas. Seleccione una tarea para comenzar su flujo de trabajo de modelado.",
     "explainersCount_one": "• <1>{{count}}</1> explicador",
     "explainersCount_other": "• <1>{{count}}</1> explicadores",
     "globalExplainer": "Explicador Global",
@@ -67,13 +79,20 @@
     "selectDatasetForSession": "Seleccione un dataset para su sesión",
     "selectSessionToViewModels": "Seleccione una sesión para ver los modelos disponibles.",
     "selectTask": "Seleccionar una Tarea",
+    "selectTaskForSession": "Seleccione una Tarea para Su Sesión",
     "sessionName": "Nombre de la Sesión",
     "test": "Prueba",
     "train": "Entrenamiento",
     "validation": "Validación"
   },
   "message": {
+    "runAdded": "Ejecución \"{{runName}}\" agregada a la sesión",
+    "runCompleted": "Ejecución \"{{runName}}\" completada exitosamente",
     "runCreatedSuccess": "Ejecución {{name}} creada exitosamente",
-    "sessionCreatedSuccess": "Sesión creada exitosamente."
+    "runDeleted": "Ejecución \"{{runName}}\" eliminada",
+    "runStarted": "Ejecución \"{{runName}}\" iniciada",
+    "sessionCreatedSuccess": "Sesión creada exitosamente.",
+    "sessionDeleted": "Sesión eliminada exitosamente",
+    "sessionUpdated": "Sesión actualizada exitosamente"
   }
 }

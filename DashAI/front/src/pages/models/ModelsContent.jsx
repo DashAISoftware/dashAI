@@ -35,6 +35,7 @@ import {
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getRunStatus } from "../../utils/runStatus";
+import { useTranslation } from "react-i18next";
 
 export default function ModelsContent() {
   const location = useLocation();
@@ -64,6 +65,7 @@ export default function ModelsContent() {
   const [isTogglingLeft, setIsTogglingLeft] = useState(false);
   const [isTogglingRight, setIsTogglingRight] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["models", "datasets", "common"]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -74,7 +76,7 @@ export default function ModelsContent() {
         });
         setTasks(data);
       } catch (error) {
-        enqueueSnackbar("Failed to fetch tasks", {
+        enqueueSnackbar(t("models:error.failedToFetchTasks"), {
           variant: "error",
         });
         console.error("Failed to fetch tasks:", error);
@@ -130,7 +132,7 @@ export default function ModelsContent() {
         const enrichedData = await enrichDatasetsWithInfo(data, []);
         setDatasets(enrichedData);
       } catch (error) {
-        enqueueSnackbar("Failed to fetch datasets", {
+        enqueueSnackbar(t("datasets:error.failedToFetchDatasets"), {
           variant: "error",
         });
         console.error("Failed to fetch datasets:", error);
@@ -145,7 +147,7 @@ export default function ModelsContent() {
         const data = await getExperiments();
         setSessions(data);
       } catch (error) {
-        enqueueSnackbar("Failed to fetch sessions", {
+        enqueueSnackbar(t("models:error.failedToFetchSessions"), {
           variant: "error",
         });
         console.error("Failed to fetch sessions:", error);
@@ -182,7 +184,7 @@ export default function ModelsContent() {
       setRuns(runsWithStatus);
     } catch (error) {
       if (error.response?.status !== 404) {
-        enqueueSnackbar("Failed to fetch runs", {
+        enqueueSnackbar(t("models:error.failedToFetchRuns"), {
           variant: "error",
         });
         console.error("Failed to fetch runs:", error);
@@ -251,10 +253,12 @@ export default function ModelsContent() {
 
     try {
       await deleteExperiment(sessionId.toString());
-      enqueueSnackbar("Session deleted successfully", { variant: "success" });
+      enqueueSnackbar(t("models:message.sessionDeleted"), {
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to delete session:", error);
-      enqueueSnackbar("Failed to delete session", {
+      enqueueSnackbar(t("models:error.failedToDeleteSession"), {
         variant: "error",
       });
     }
@@ -270,21 +274,21 @@ export default function ModelsContent() {
             : dataset,
         ),
       );
-      enqueueSnackbar("Dataset updated successfully", {
+      enqueueSnackbar(t("datasets:message.datasetUpdateSuccess"), {
         variant: "success",
       });
     } catch (error) {
       console.error("Failed to update dataset:", error);
       if (error.response?.status === 409) {
-        enqueueSnackbar("A dataset with this name already exists", {
+        enqueueSnackbar(t("datasets:error.datasetNameExists"), {
           variant: "error",
         });
       } else if (error.response?.status === 422) {
-        enqueueSnackbar("Dataset name cannot be empty", {
+        enqueueSnackbar(t("datasets:error.datasetNameEmpty"), {
           variant: "error",
         });
       } else {
-        enqueueSnackbar("Failed to update dataset", {
+        enqueueSnackbar(t("datasets:error.failedToUpdateDataset"), {
           variant: "error",
         });
       }
@@ -328,7 +332,9 @@ export default function ModelsContent() {
 
   const handleModelClick = (model) => {
     if (!selectedSession) {
-      enqueueSnackbar("Please select a session first", { variant: "warning" });
+      enqueueSnackbar(t("models:error.selectSessionFirst"), {
+        variant: "warning",
+      });
       return;
     }
     setPreselectedModel(model.name);
@@ -337,7 +343,7 @@ export default function ModelsContent() {
 
   const handleRunCreated = (newRun) => {
     setRuns((prev) => [...prev, newRun]);
-    enqueueSnackbar(`Run "${newRun.name}" added to session`, {
+    enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
       variant: "success",
     });
   };
@@ -390,13 +396,16 @@ export default function ModelsContent() {
       const response = await enqueueRunnerJobRequest(run.id);
 
       if (!response || !response.id) {
-        enqueueSnackbar(`Error starting run ${run.name}`, {
-          variant: "error",
-        });
+        enqueueSnackbar(
+          t("models:error.failedToStartRun", { runName: run.name }),
+          {
+            variant: "error",
+          },
+        );
         return;
       }
 
-      enqueueSnackbar(`Training started for "${run.name}"`, {
+      enqueueSnackbar(t("models:message.runStarted", { runName: run.name }), {
         variant: "success",
       });
 
@@ -413,9 +422,12 @@ export default function ModelsContent() {
           setRuns((prevRuns) =>
             prevRuns.map((r) => (r.id === run.id ? updated : r)),
           );
-          enqueueSnackbar(`Run "${run.name}" completed`, {
-            variant: "success",
-          });
+          enqueueSnackbar(
+            t("models:message.runCompleted", { runName: run.name }),
+            {
+              variant: "success",
+            },
+          );
         },
         async (result) => {
           const updated = await getRunById(run.id.toString());
@@ -423,7 +435,10 @@ export default function ModelsContent() {
             prevRuns.map((r) => (r.id === run.id ? updated : r)),
           );
           enqueueSnackbar(
-            `Run "${run.name}" failed: ${result.error || "Unknown error"}`,
+            t("models:error.runFailed", {
+              runName: run.name,
+              error: result.error || t("common:unknownError"),
+            }),
             { variant: "error" },
           );
         },
@@ -434,9 +449,12 @@ export default function ModelsContent() {
       setOperationsCount(null);
     } catch (error) {
       console.error("Error training run:", error);
-      enqueueSnackbar(`Error starting run "${run.name}"`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:error.failedToStartRun", { runName: run.name }),
+        {
+          variant: "error",
+        },
+      );
     }
   };
 
@@ -460,14 +478,17 @@ export default function ModelsContent() {
     try {
       await deleteRun(run.id.toString());
       setRuns((prev) => prev.filter((r) => r.id !== run.id));
-      enqueueSnackbar(`Run "${run.name}" deleted successfully`, {
+      enqueueSnackbar(t("models:message.runDeleted", { runName: run.name }), {
         variant: "success",
       });
     } catch (error) {
       console.error("Error deleting run:", error);
-      enqueueSnackbar(`Error deleting run "${run.name}"`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:error.failedToDeleteRun", { runName: run.name }),
+        {
+          variant: "error",
+        },
+      );
     }
   };
 
@@ -484,21 +505,21 @@ export default function ModelsContent() {
             : session,
         ),
       );
-      enqueueSnackbar("Session updated successfully", {
+      enqueueSnackbar(t("models:message.sessionUpdated"), {
         variant: "success",
       });
     } catch (error) {
       console.error("Failed to update session:", error);
       if (error.response?.status === 409) {
-        enqueueSnackbar("A session with this name already exists", {
+        enqueueSnackbar(t("models:error.sessionNameExists"), {
           variant: "error",
         });
       } else if (error.response?.status === 422) {
-        enqueueSnackbar("Session name cannot be empty", {
+        enqueueSnackbar(t("models:error.sessionNameEmpty"), {
           variant: "error",
         });
       } else {
-        enqueueSnackbar("Failed to update session", {
+        enqueueSnackbar(t("models:error.failedToUpdateSession"), {
           variant: "error",
         });
       }
@@ -711,15 +732,17 @@ export default function ModelsContent() {
             <SelectOptionMenu
               title={
                 selectedDatasetId
-                  ? "Select a Task for Your Session"
-                  : "Models Module"
+                  ? t("models:label.selectTaskForSession")
+                  : t("models:label.modelsModule")
               }
               subtitle={
                 selectedDatasetId
-                  ? `Choose the machine learning task for your session with dataset "${
-                      datasets.find((d) => d.id === selectedDatasetId)?.name
-                    }".`
-                  : "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
+                  ? t("models:label.chooseTaskForSessionWithDataset", {
+                      datasetName: datasets.find(
+                        (d) => d.id === selectedDatasetId,
+                      )?.name,
+                    })
+                  : t("models:label.configureTasksTrainCompareModels")
               }
               options={tasks.map((task) => ({
                 name: task.name,
