@@ -304,7 +304,7 @@ function AddModelDialog({
         {activeStep === 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <TextField
-              label="Model Name"
+              label={t("common:modelName")}
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -312,7 +312,7 @@ function AddModelDialog({
               }}
               fullWidth
               required
-              placeholder="Model Name"
+              placeholder={t("common:modelName")}
               helperText={selectedModel ? `Model: ${selectedModel}` : ""}
             />
 
