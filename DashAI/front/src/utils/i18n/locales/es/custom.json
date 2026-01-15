@@ -1,5 +1,5 @@
 {
-  "inferenceMethods": "",
-  "selectAnItemToShowInfo": "",
-  "selectInferenceMethods": ""
+  "inferenceMethods": "Métodos de Inferencia",
+  "selectAnItemToShowInfo": "Seleccione un elemento para ver la descripción.",
+  "selectInferenceMethods": "Seleccione los métodos de inferencia que desea aplicar"
 }
