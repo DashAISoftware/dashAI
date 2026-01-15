@@ -14,6 +14,7 @@ import {
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = ["Delivered", "Started"];
 
@@ -21,6 +22,7 @@ function ResultsTable({ selectedPrediction }) {
   const [loadingExecution, setLoadingExecution] = useState(
     RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
   );
+  const { t } = useTranslation(["prediction"]);
 
   const fetchPage = useCallback(
     async (page, pageSize) => {
@@ -46,7 +48,7 @@ function ResultsTable({ selectedPrediction }) {
   return (
     <Box>
       <Typography variant="subtitle1" fontWeight={600}>
-        Prediction Results
+        {t("prediction:label.predictionResults")}
       </Typography>
 
       <Typography
@@ -55,8 +57,8 @@ function ResultsTable({ selectedPrediction }) {
         sx={{ mb: 1, display: "block" }}
       >
         {loadingExecution
-          ? "The prediction is still running. Results will be available once it is finished."
-          : 'The table below displays a preview of the prediction results. You can download the full results as a CSV file using the "Download CSV" buttonbelow.'}
+          ? t("prediction:label.predictionStillRunningResults")
+          : t("prediction:label.resultsPreviewDownloadInfo")}
       </Typography>
 
       {/* Show loading indicator if prediction is running */}
@@ -70,7 +72,7 @@ function ResultsTable({ selectedPrediction }) {
         >
           <CircularProgress size={28} />
           <Typography variant="body2" sx={{ mt: 1 }}>
-            Prediction is still running...
+            {t("prediction:label.predictionStillRunning")}
           </Typography>
         </Box>
       )}
@@ -81,8 +83,10 @@ function ResultsTable({ selectedPrediction }) {
           <>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {selectedPrediction.dataset
-                ? `Based on dataset: ${selectedPrediction.dataset.name}`
-                : "Manually provided input data."}
+                ? t("prediction:label.basedOnDataset", {
+                    datasetName: selectedPrediction.dataset.name,
+                  })
+                : t("prediction:label.manuallyProvidedInputData")}
             </Typography>
             <Paper>
               <DatasetTable

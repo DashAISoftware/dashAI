@@ -11,8 +11,11 @@ import { DataGrid } from "@mui/x-data-grid";
 import { formatDate, getColorByStatus } from "../../utils";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { Delete } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
+  const { t } = useTranslation(["prediction", "common"]);
+
   const StyledCell = styled("div")(({ theme, color }) => ({
     display: "inline-block",
     padding: theme.spacing(0.5),
@@ -36,7 +39,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
   const columns = [
     {
       field: "type",
-      headerName: "Type",
+      headerName: t("common:type"),
       flex: 1,
       minWidth: 150,
       renderCell: (params) => {
@@ -58,7 +61,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               fontWeight={500}
               sx={{ lineHeight: 1.1, fontSize: "inherit" }}
             >
-              Dataset
+              {t("common:dataset")}
             </Typography>
 
             <Typography
@@ -87,7 +90,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               fontWeight={600}
               sx={{ lineHeight: 1.1, fontSize: "0.75rem" }}
             >
-              Manual Input
+              {t("prediction:label.manualInput")}
             </Typography>
           </Box>
         );
@@ -95,14 +98,14 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
     },
     {
       field: "created",
-      headerName: "Created",
+      headerName: t("common:created"),
       flex: 1.2,
       minWidth: 150,
       renderCell: (params) => formatDate(params?.row?.created),
     },
     {
       field: "duration",
-      headerName: "Time",
+      headerName: t("common:timeTaken"),
       flex: 0.8,
       minWidth: 80,
       renderCell: (params) =>
@@ -110,7 +113,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
     },
     {
       field: "status",
-      headerName: "Status",
+      headerName: t("common:status"),
       flex: 1,
       minWidth: 100,
       renderCell: (params) => {
@@ -124,7 +127,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
     },
     {
       field: "delete",
-      headerName: "Delete",
+      headerName: t("common:delete"),
       flex: 0.5,
       minWidth: 80,
       sortable: false,
@@ -145,9 +148,11 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
   if (!predictions || predictions.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
-        <Typography color="text.secondary">No predictions yet</Typography>
+        <Typography color="text.secondary">
+          {t("prediction:label.noPredictionsYet")}
+        </Typography>
         <Typography variant="caption" color="text.secondary">
-          Run your first prediction to see it here
+          {t("prediction:label.runFirstPrediction")}
         </Typography>
       </Box>
     );
@@ -161,11 +166,10 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-        Predictions
+        {t("prediction:label.predictions")}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Click on a prediction to view details or delete it using the delete
-        icon.
+        {t("prediction:label.clickToViewOrDelete")}
       </Typography>
       <Paper sx={{ width: "100%" }}>
         <DataGrid

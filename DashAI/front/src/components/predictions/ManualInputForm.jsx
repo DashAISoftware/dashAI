@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { AddCircleOutline, DeleteOutline } from "@mui/icons-material";
 import { renderInputField } from "./renderInputField";
+import { useTranslation } from "react-i18next";
 
 export default function ManualInputForm({
   types,
@@ -24,6 +25,7 @@ export default function ManualInputForm({
   setManualInputData,
 }) {
   const [rows, setRows] = useState(createInitialRows());
+  const { t } = useTranslation(["prediction"]);
 
   function createInitialRows() {
     if (manualInputData && manualInputData.length > 0) {
@@ -90,11 +92,10 @@ export default function ManualInputForm({
       onSubmit={handleSubmit}
     >
       <Typography variant="h6" mb={2} fontWeight={600}>
-        Manual Input
+        {t("prediction:label.manualInputData")}
       </Typography>
       <Typography variant="body2" mb={3} color="text.secondary">
-        Enter data manually for prediction. Fill in the fields below and submit
-        when ready.
+        {t("prediction:label.provideManualInput")}
       </Typography>
 
       <TableContainer component={Paper} sx={{ p: 1 }}>
@@ -107,7 +108,7 @@ export default function ManualInputForm({
                 </TableCell>
               ))}
               <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
-                Remove
+                {t("common:remove")}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -149,7 +150,7 @@ export default function ManualInputForm({
           color="primary"
           onClick={handleAddRow}
         >
-          Add row
+          {t("common:addRow")}
         </Button>
       </Box>
     </Box>

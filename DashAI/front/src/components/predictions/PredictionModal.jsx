@@ -37,6 +37,7 @@ import { getExperimentById } from "../../api/experiment";
 import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { getPredictionStatus } from "../../utils/predictionStatus";
+import { useTranslation } from "react-i18next";
 
 export default function PredictionModal({ isOpen, onClose, run }) {
   const [activeTab, setActiveTab] = useState(0);
@@ -58,6 +59,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
   const [sample, setSample] = useState(null);
 
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["prediction", "common"]);
 
   // Reset state when modal is closed
   useEffect(() => {
@@ -91,7 +93,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           setDatasets(availableDatasetsWithInfo);
         } catch (error) {
           console.error("Error fetching datasets:", error);
-          enqueueSnackbar("Error fetching datasets for prediction.", {
+          enqueueSnackbar(t("prediction:error.fetchingDatasets"), {
             variant: "error",
           });
         }
@@ -106,7 +108,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           setPredictions(preds);
         } catch (error) {
           console.error("Error fetching predictions:", error);
-          enqueueSnackbar("Error fetching previous predictions.", {
+          enqueueSnackbar(t("prediction:error.loadingPreviousPredictions"), {
             variant: "error",
           });
         }
@@ -156,7 +158,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         prediction.id,
         predictionMode === "manual" ? manualRows : null,
       );
-      enqueueSnackbar("Prediction job submitted successfully.", {
+      enqueueSnackbar(t("prediction:message.predictionJobSubmitted"), {
         variant: "success",
       });
 
@@ -171,7 +173,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
       setActiveTab(1);
     } catch (error) {
       console.error("Error submitting prediction job:", error);
-      enqueueSnackbar("Error submitting prediction job.", {
+      enqueueSnackbar(t("prediction:error.submittingPredictionJob"), {
         variant: "error",
       });
     } finally {
@@ -218,7 +220,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           // If prediction is completed or failed, stop polling
           if (statusText === "Finished" || statusText === "Error") {
             enqueueSnackbar(
-              `Prediction ${updated.id} ${statusText.toLowerCase()}.`,
+              `${t("prediction:label.prediction")} ${
+                updated.id
+              } ${statusText.toLowerCase()}.`,
               {
                 variant: statusText === "Finished" ? "success" : "error",
               },
@@ -228,7 +232,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           }
         } catch (error) {
           console.error("Error polling prediction:", error);
-          enqueueSnackbar("Error updating prediction status.", {
+          enqueueSnackbar(t("prediction:error.updatingPredictionStatus"), {
             variant: "error",
           });
         }
@@ -265,12 +269,12 @@ export default function PredictionModal({ isOpen, onClose, run }) {
       if (selectedPrediction && selectedPrediction.id === predictionId) {
         setSelectedPrediction(null);
       }
-      enqueueSnackbar("Prediction deleted successfully.", {
+      enqueueSnackbar(t("prediction:message.deletedSuccessfully"), {
         variant: "success",
       });
     } catch (error) {
       console.error("Error deleting prediction:", error);
-      enqueueSnackbar("Error deleting prediction.", {
+      enqueueSnackbar(t("prediction:error.errorDeleting"), {
         variant: "error",
       });
     }
@@ -296,7 +300,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           }}
         >
           <Box>
-            <Typography variant="h6">Model Prediction</Typography>
+            <Typography variant="h6">
+              {t("prediction:label.modelPrediction")}
+            </Typography>
             <Typography variant="body2" color="text.secondary">
               {run.model_name.display_name ?? run.model_name.name}
             </Typography>
@@ -335,8 +341,8 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           }}
           onClick={() => setSelectedPrediction(null)}
         >
-          <Tab label="New Prediction" />
-          <Tab label="Previous Predictions" />
+          <Tab label={t("prediction:label.newPrediction")} />
+          <Tab label={t("prediction:label.previousPredictions")} />
         </Tabs>
       </Box>
 
@@ -398,7 +404,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
         {activeTab === 0 ? (
           <>
             <Button variant="outlined" onClick={onClose}>
-              Close
+              {t("common:close")}
             </Button>
             <Button
               variant="contained"
@@ -406,7 +412,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
               disabled={!canPredict() || isLoading}
               startIcon={isLoading && <CircularProgress size={16} />}
             >
-              {isLoading ? "Predicting..." : "Run Prediction"}
+              {isLoading
+                ? t("prediction:label.predicting")
+                : t("prediction:button.runPrediction")}
             </Button>
           </>
         ) : selectedPrediction ? (
@@ -415,7 +423,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
               variant="outlined"
               onClick={() => setSelectedPrediction(null)}
             >
-              Back
+              {t("common:back")}
             </Button>
             <Button
               variant="contained"
@@ -425,12 +433,12 @@ export default function PredictionModal({ isOpen, onClose, run }) {
               startIcon={<DownloadIcon />}
               onClick={() => handleDownload(selectedPrediction)}
             >
-              Download CSV
+              {t("common:downloadCSV")}
             </Button>
           </>
         ) : (
           <Button variant="outlined" onClick={onClose}>
-            Close
+            {t("common:close")}
           </Button>
         )}
       </DialogActions>

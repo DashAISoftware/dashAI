@@ -244,13 +244,6 @@ export default function PredictionCreationDialog({
               </>
             ) : (
               <>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
-                >
-                  {t("prediction:label.provideManualInput")}
-                </Typography>
                 <ManualInput
                   experiment={experiment}
                   loading={loadingExperiment}
