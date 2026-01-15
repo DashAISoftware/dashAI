@@ -29,6 +29,7 @@ import {
 } from "../../api/notebook";
 import { enqueueDatasetJob } from "../../api/job";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetsContent() {
   const [step, setStep] = useState(0);
@@ -48,6 +49,7 @@ export default function DatasetsContent() {
   const [isTogglingRight, setIsTogglingRight] = useState(false);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const goToNextStep = (option) => {
     if (option === "dataset" && tourContext?.run) {
@@ -109,7 +111,7 @@ export default function DatasetsContent() {
       const enrichedDatasets = await enrichDatasetsWithInfo(data, datasets);
       setDatasets(enrichedDatasets);
     } catch (error) {
-      enqueueSnackbar("Failed to fetch datasets", {
+      enqueueSnackbar(t("datasets:error.failedToFetchDatasets"), {
         variant: "error",
       });
       console.error("Failed to fetch datasets:", error);
@@ -121,7 +123,7 @@ export default function DatasetsContent() {
       const data = await getNotebooks();
       setNotebooks(data);
     } catch (error) {
-      enqueueSnackbar("Failed to fetch notebooks", {
+      enqueueSnackbar(t("datasets:error.failedToFetchNotebooks"), {
         variant: "error",
       });
       console.error("Failed to fetch notebooks:", error);
@@ -205,7 +207,7 @@ export default function DatasetsContent() {
     if (selectedNotebook) {
       try {
         const data = await createDataset(name);
-        enqueueSnackbar("Dataset creation started", {
+        enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
           variant: "success",
         });
         setDatasets((prev) => [...prev, data]);
@@ -225,7 +227,7 @@ export default function DatasetsContent() {
           { jobId: job.id },
         );
       } catch (error) {
-        enqueueSnackbar("Failed to create dataset from notebook:", {
+        enqueueSnackbar(t("datasets:error.failedToCreateDatasetFromNotebook"), {
           variant: "error",
         });
         console.error("Failed to create dataset from notebook:", error);
@@ -274,9 +276,12 @@ export default function DatasetsContent() {
       startJobPolling(
         jobId,
         async (result) => {
-          enqueueSnackbar(`Dataset "${datasetName}" created successfully`, {
-            variant: "success",
-          });
+          enqueueSnackbar(
+            t("datasets:message.datasetCreationSuccess", { datasetName }),
+            {
+              variant: "success",
+            },
+          );
 
           try {
             const freshDatasets = await getDatasets();
@@ -305,7 +310,9 @@ export default function DatasetsContent() {
         (result) => {
           console.error(`Dataset job failed:`, result);
           enqueueSnackbar(
-            `Error creating dataset: ${result.error || "Unknown error"}`,
+            t("datasets:error.failedToCreateDataset", {
+              error: result.error || t("common:unknownError"),
+            }),
             { variant: "error" },
           );
 
@@ -341,21 +348,21 @@ export default function DatasetsContent() {
             : dataset,
         ),
       );
-      enqueueSnackbar("Dataset updated successfully", {
+      enqueueSnackbar(t("datasets:message.datasetUpdateSuccess"), {
         variant: "success",
       });
     } catch (error) {
       console.error("Failed to update dataset:", error);
       if (error.response?.status === 409) {
-        enqueueSnackbar("A dataset with this name already exists", {
+        enqueueSnackbar(t("datasets:error.datasetNameExists"), {
           variant: "error",
         });
       } else if (error.response?.status === 422) {
-        enqueueSnackbar("Dataset name cannot be empty", {
+        enqueueSnackbar(t("datasets:error.datasetNameEmpty"), {
           variant: "error",
         });
       } else {
-        enqueueSnackbar("Failed to update dataset", {
+        enqueueSnackbar(t("datasets:error.failedToUpdateDataset"), {
           variant: "error",
         });
       }
@@ -373,21 +380,21 @@ export default function DatasetsContent() {
             : notebook,
         ),
       );
-      enqueueSnackbar("Notebook updated successfully", {
+      enqueueSnackbar(t("datasets:message.notebookUpdateSuccess"), {
         variant: "success",
       });
     } catch (error) {
       console.error("Failed to update notebook:", error);
       if (error.response?.status === 422) {
-        enqueueSnackbar("Notebook name cannot be empty", {
+        enqueueSnackbar(t("datasets:error.notebookNameEmpty"), {
           variant: "error",
         });
       } else if (error.response?.status === 304) {
-        enqueueSnackbar("No changes were made", {
+        enqueueSnackbar(t("datasets:message.noChangesMade"), {
           variant: "info",
         });
       } else {
-        enqueueSnackbar("Failed to update notebook", {
+        enqueueSnackbar(t("datasets:error.failedToUpdateNotebook"), {
           variant: "error",
         });
       }
@@ -675,26 +682,28 @@ export default function DatasetsContent() {
                       onItemCreated={handleNotebookCreated}
                       onNewItem={handleNewNotebookFromDataset}
                       existingItems={notebooks}
-                      newItemButtonText="New notebook"
+                      newItemButtonText={t("datasets:button.newNotebook")}
                     />
                   ) : step === 0 ? (
                     <SelectOptionMenu
-                      title="Dataset Module"
-                      subtitle="Upload your datasets: Explore, analyze, and transform your data with advanced exploratory analysis tools. Create interactive notebooks, generate visualizations, and apply data transformations intuitively."
+                      title={t("datasets:label.datasetModule")}
+                      subtitle={t("datasets:label.datasetModuleSubtitle")}
                       options={[
                         {
                           name: "dataset",
-                          display_name: "Upload Dataset",
-                          description:
-                            "Import your data from various sources and formats.",
+                          display_name: t("datasets:label.uploadDataset"),
+                          description: t(
+                            "datasets:label.uploadDatasetDescription",
+                          ),
                           Icon: null,
                           "data-tour": "dataset-option",
                         },
                         {
                           name: "notebook",
-                          display_name: "Create a New Notebook",
-                          description:
-                            "Start a new analysis session with an existing dataset.",
+                          display_name: t("datasets:label.createNewNotebook"),
+                          description: t(
+                            "datasets:label.createNewNotebookDescription",
+                          ),
                           Icon: null,
                           "data-tour": "notebook-option",
                         },
