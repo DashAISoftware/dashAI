@@ -3,6 +3,7 @@ import { Box, Typography, Collapse } from "@mui/material";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ItemBox from "./ItemBox";
+import { t } from "i18next";
 
 export default function GroupedCollapsibleList({
   groups = {}, // Object with group names as keys and items arrays as values
@@ -11,7 +12,7 @@ export default function GroupedCollapsibleList({
   onItemDelete,
   onItemEdit,
   onItemInfo,
-  title = "Items",
+  title = t("common:items", "Items"),
   Icon,
   getItemDescription,
   initialOpenGroups = {},
@@ -185,7 +186,7 @@ export default function GroupedCollapsibleList({
                       p: 2,
                     }}
                   >
-                    No items found
+                    {t("common:noItemsInGroup", "No items found.")}
                   </Typography>
                 )}
               </Box>
