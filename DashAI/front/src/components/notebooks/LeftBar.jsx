@@ -59,10 +59,9 @@ export default function DatasetsNotebooksBar({
   const getDatasetDescription = (dataset) => {
     return (
       dataset.description ||
-      t("datasets:label.rowsColumnsInfo", {
-        totalRows: dataset.total_rows,
-        totalColumns: dataset.total_columns,
-      })
+      `${dataset.total_rows} ${t("common:rows")}, ${dataset.total_columns} ${t(
+        "common:columns",
+      )}`
     );
   };
 
