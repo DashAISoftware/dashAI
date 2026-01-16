@@ -949,6 +949,7 @@ export default function ModelsContent() {
                     onSessionCreated={handleSessionCreated}
                     onNewSession={handleNewSessionFromDataset}
                     existingSessions={sessions}
+                    newItemButtonText={t("models:button.createSession")}
                     tasks={tasks}
                   />
                 ) : step === 0 ? (
