@@ -65,12 +65,12 @@ export default function RunInfoModal({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Finished":
+      case 3: // Finished
         return "success";
-      case "Started":
-      case "Delivered":
+      case 2: // Started
+      case 1: // Delivered
         return "info";
-      case "Failed":
+      case 4: // Error
         return "error";
       default:
         return "default";

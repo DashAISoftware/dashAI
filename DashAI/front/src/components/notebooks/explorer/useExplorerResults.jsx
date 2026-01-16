@@ -63,7 +63,7 @@ export function useExplorerResults(explorer) {
 
   const fetchExplorerResults = async () => {
     // Only fetch if explorer exists and has finished status
-    if (!explorer?.id || getExplorerStatus(explorer.status) !== "Finished") {
+    if (!explorer?.id || explorer.status !== 3) {
       return;
     }
 

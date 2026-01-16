@@ -15,19 +15,19 @@ export const formatDate = (inputDate) => {
 export const getColorByStatus = (status) => {
   let color;
   switch (status) {
-    case "Not Started":
+    case 0: // Not Started
       color = "#626262";
       break;
-    case "Delivered":
+    case 1: // Delivered
       color = "#3e68ffff";
       break;
-    case "Finished":
+    case 3: // Finished
       color = "#43A047";
       break;
-    case "Started":
+    case 2: // Started
       color = "#3e68ffff";
       break;
-    case "Error":
+    case 4: // Error
       color = "#A70909";
       break;
     default:

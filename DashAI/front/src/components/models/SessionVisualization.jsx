@@ -272,15 +272,13 @@ export default function SessionVisualization({
 
               {/* Run All Button */}
               {runs.length > 0 &&
-                runs.some((r) => getRunStatus(r.status) === "Not Started") && (
+                runs.some((r) => r.status === 0) && ( // Not Started
                   <Button
                     variant="contained"
                     size="small"
                     startIcon={<PlayArrow />}
                     onClick={() => {
-                      const notStartedRuns = runs.filter(
-                        (r) => getRunStatus(r.status) === "Not Started",
-                      );
+                      const notStartedRuns = runs.filter((r) => r.status === 0); // Not Started
                       notStartedRuns.forEach((run) => onTrain(run));
                     }}
                   >
@@ -315,15 +313,7 @@ export default function SessionVisualization({
                   metricSplit={metricSplit}
                 />
               ) : (
-                <ResultsGraphs
-                  runs={runs.map((run) => ({
-                    ...run,
-                    status:
-                      typeof run.status === "number"
-                        ? getRunStatus(run.status)
-                        : run.status,
-                  }))}
-                />
+                <ResultsGraphs runs={runs} />
               )}
             </Box>
           )}

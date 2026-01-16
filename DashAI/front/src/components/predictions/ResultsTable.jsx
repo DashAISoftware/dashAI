@@ -16,7 +16,7 @@ import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
-const RUNNING_STATUSES = ["Delivered", "Started"];
+const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 function ResultsTable({ selectedPrediction }) {
   const [loadingExecution, setLoadingExecution] = useState(
@@ -79,7 +79,7 @@ function ResultsTable({ selectedPrediction }) {
 
       {!loadingExecution &&
         selectedPrediction &&
-        getPredictionStatus(selectedPrediction?.status) === "Finished" && (
+        selectedPrediction?.status === 3 && ( // Finished
           <>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {selectedPrediction.dataset

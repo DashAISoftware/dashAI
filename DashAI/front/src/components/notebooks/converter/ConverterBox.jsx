@@ -48,8 +48,9 @@ export default function ConverterBox({
           onStatusChange(updatedConverter.id, updatedConverter.status);
         }
 
-        const status = getConverterStatus(updatedConverter.status);
-        if (status === "Finished" || status === "Error") {
+        const status = updatedConverter.status;
+        if (status === 3 || status === 4) {
+          // Finished or Error
           clearInterval(intervalId);
         }
       } catch (error) {
@@ -58,15 +59,16 @@ export default function ConverterBox({
       }
     };
 
-    const currentStatus = getConverterStatus(converter.status);
-    if (currentStatus !== "Finished" && currentStatus !== "Error") {
+    const currentStatus = converter.status;
+    if (currentStatus !== 3 && currentStatus !== 4) {
+      //  Not Finished and not Error
       intervalId = setInterval(fetchConverterStatus, 1500);
     }
 
     return () => clearInterval(intervalId);
   }, [converter.id, converter.status, onStatusChange]);
 
-  const statusLabel = getConverterStatus(converter.status);
+  const statusLabel = converter.status;
 
   return (
     <Card
@@ -98,11 +100,11 @@ export default function ConverterBox({
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
-              label={statusLabel}
-              color={statusLabel === "Finished" ? "primary" : "default"}
+              label={getConverterStatus(statusLabel, t)}
+              color={statusLabel === 3 ? "primary" : "default"} // Finished
               size="small"
             />
-            {(statusLabel === "Error" || statusLabel === "Finished") && (
+            {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
               <IconButton
                 size="small"
                 onClick={() => handleConverterDeleteClick(converter)}
@@ -119,7 +121,7 @@ export default function ConverterBox({
           </Box>
         </Box>
 
-        {statusLabel === "Finished" ? (
+        {statusLabel === 3 ? ( // Finished
           <Box
             sx={{
               flexGrow: 1,
@@ -186,7 +188,7 @@ export default function ConverterBox({
               />
             )}
           </Box>
-        ) : statusLabel === "Error" ? (
+        ) : statusLabel === 4 ? ( // Error
           <Box
             sx={{
               flexGrow: 1,

@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 
 export default function SingleRun({ run, onRun }) {
   const [isStarting, setIsStarting] = useState(false);
-  const isRunning = run.status === "Started" || run.status === "Delivered";
+  const isRunning = run.status === 1 || run.status === 2; // Delivered or Started
   const { t } = useTranslation("experiments");
 
   const handleClick = async () => {

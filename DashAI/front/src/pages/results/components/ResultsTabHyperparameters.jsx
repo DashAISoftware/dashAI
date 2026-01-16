@@ -78,19 +78,19 @@ function ResultsTabHyperparameters({ runData }) {
   };
 
   useEffect(() => {
-    if (runData.status !== "Finished") return;
+    if (runData.status !== 3) return; // Finished
     getHyperparameterPlot();
   }, [runData]);
 
-  return runData.status === "Started" || runData.status === "Delivered" ? (
+  return runData.status === 1 || runData.status === 2 ? ( // Delivered or Started
     <Box
       sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
     >
       <CircularProgress />
     </Box>
-  ) : runData.status === "Failed" ? (
+  ) : runData.status === 4 ? ( // Failed
     <Box>{t("models:label.runFailedNoHyperparameterPlots")}</Box>
-  ) : runData.status === "Not Started" ? (
+  ) : runData.status === 0 ? ( // Not Started
     <Box>{t("models:label.runNotStartedNoHyperparameterPlots")}</Box>
   ) : (
     <Grid container spacing={2} direction="column">

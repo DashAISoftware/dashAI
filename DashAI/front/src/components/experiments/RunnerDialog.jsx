@@ -51,7 +51,7 @@ function RunnerDialog({
   const { t } = useTranslation(["experiments", "common"]);
 
   const hasActiveRuns = rows.some(
-    (r) => r.status === "Delivered" || r.status === "Started",
+    (r) => r.status === 1 || r.status === 2, // Delivered or Started
   );
 
   useEffect(() => {
@@ -84,12 +84,6 @@ function RunnerDialog({
       if (runningRun && !expRunning[experiment.id]) {
         setExpRunning({ ...expRunning, [experiment.id]: true });
       }
-
-      // Transform status codes to text
-      const runsWithStringStatus = runs.map((run) => ({
-        ...run,
-        status: getRunStatus(run.status),
-      }));
 
       setRows(runsWithStringStatus);
 
@@ -193,9 +187,9 @@ function RunnerDialog({
       return (
         !run ||
         !run.status ||
-        run.status === "Not Started" ||
-        run.status === "Error" ||
-        run.status === "Finished"
+        run.status === 0 || // Not Started
+        run.status === 4 || // Error
+        run.status === 3 // Finished
       );
     });
 
@@ -382,7 +376,7 @@ function RunnerDialog({
         data-tour="run-experiment-button"
         icon={
           rows.some(
-            (row) => row.status === "Delivered" || row.status === "Started",
+            (row) => row.status === 1 || row.status === 2, // Delivered or Started
           ) ? (
             <CircularProgress size={18} />
           ) : (
@@ -463,7 +457,7 @@ function RunnerDialog({
               data-tour="runner-dialog-start"
               variant="contained"
               loading={rows.every(
-                (row) => row.status === "Delivered" || row.status === "Started",
+                (row) => row.status === 1 || row.status === 2, // Delivered or Started
               )}
               endIcon={<PlayArrowIcon />}
               onClick={handleExecuteRuns}

@@ -96,8 +96,8 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     const intervalId = setInterval(() => {
       const unfinished = messages.filter(
         (m) =>
-          getRunStatus(m.status) !== "Finished" &&
-          getRunStatus(m.status) !== "Error",
+          m.status !== 3 && // Not Finished
+          m.status !== 4, // Not Error
       );
 
       if (unfinished.length === 0) {
@@ -108,9 +108,10 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       // Fetch latest status for each unfinished process
       unfinished.forEach((msg) => {
         getProcessById(msg.id).then((process) => {
-          const status = getRunStatus(process.status);
+          const status = process.status;
 
-          if (status === "Error") {
+          // Error
+          if (status === 4) {
             enqueueSnackbar(
               t("generative:error.processError", {
                 error: process.output?.[0]?.data

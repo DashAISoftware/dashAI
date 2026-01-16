@@ -32,7 +32,7 @@ import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile, exportDatasetCsvByPath } from "../../api/datasets";
 import { useTranslation } from "react-i18next";
 
-const RUNNING_STATUSES = ["Delivered", "Started"];
+const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 /**
  * PredictionCard - Displays a single prediction with results table
@@ -48,14 +48,14 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   // Status color mapping
   const getStatusColor = (status) => {
     switch (status) {
-      case "Not Started":
+      case 0: // Not Started
         return "default";
-      case "Delivered":
-      case "Started":
+      case 1: // Delivered
+      case 2: // Started
         return "info";
-      case "Finished":
+      case 3: // Finished
         return "success";
-      case "Error":
+      case 4: // Error
         return "error";
       default:
         return "default";
@@ -63,7 +63,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   };
 
   const isRunning = RUNNING_STATUSES.includes(statusText);
-  const isFinished = statusText === "Finished";
+  const isFinished = statusText === 3; // Finished
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

@@ -8,7 +8,7 @@ import RunInfoModal from "./RunInfoModal";
 import { useTranslation } from "react-i18next";
 
 export default function EditRunDialog({ experiment, run, setRun }) {
-  const isRunning = run.status === "Started" || run.status === "Delivered";
+  const isRunning = run.status === 1 || run.status === 2; // Delivered or Started
   if (isRunning) {
     return null;
   }

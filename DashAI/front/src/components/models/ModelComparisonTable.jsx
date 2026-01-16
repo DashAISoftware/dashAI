@@ -41,7 +41,7 @@ function ModelComparisonTable({
         id: run.id,
         name: run.name,
         model_name: run.model_name,
-        status: getRunStatus(run.status),
+        status: run.status,
         statusCode: run.status,
         created: run.created,
         last_modified: run.last_modified,
@@ -130,11 +130,10 @@ function ModelComparisonTable({
       sortable: false,
       renderCell: (params) => {
         const canTrain =
-          params.row.status === "Not Started" ||
-          params.row.status === "Error" ||
-          params.row.status === "Finished";
-        const isRunning =
-          params.row.status === "Delivered" || params.row.status === "Started";
+          params.row.status === 0 || // Not Started
+          params.row.status === 4 || // Error
+          params.row.status === 3; // Finished
+        const isRunning = params.row.status === 1 || params.row.status === 2; // Delivered or Started
 
         return (
           <Box sx={{ display: "flex", gap: 0.5 }}>

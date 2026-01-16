@@ -117,8 +117,8 @@ export default function DatasetVisualization({
     [dataset.file_path, dataset.status, dataset.id],
   );
 
-  const status = getDatasetStatus(dataset.status);
-  const isProcessing = !(status === "Finished" || status === "Error");
+  const status = dataset.status;
+  const isProcessing = !(status === 3 || status === 4); // Finished or Error
 
   return (
     <>

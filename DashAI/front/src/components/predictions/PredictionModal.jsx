@@ -189,8 +189,8 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     // Predictions that are still running
     const pending = predictions.filter(
       (p) =>
-        getPredictionStatus(p.status) === "Delivered" ||
-        getPredictionStatus(p.status) === "Started",
+        getPredictionStatus(p.status) === 1 ||
+        getPredictionStatus(p.status) === 2,
     );
 
     if (pending.length === 0) return;
@@ -215,16 +215,17 @@ export default function PredictionModal({ isOpen, onClose, run }) {
             return prev;
           });
 
-          const statusText = getPredictionStatus(updated.status);
+          const statusText = updated.status;
 
           // If prediction is completed or failed, stop polling
-          if (statusText === "Finished" || statusText === "Error") {
+          if (statusText === 3 || statusText === 4) {
+            // Finished or Error
             enqueueSnackbar(
               `${t("prediction:label.prediction")} ${
                 updated.id
               } ${statusText.toLowerCase()}.`,
               {
-                variant: statusText === "Finished" ? "success" : "error",
+                variant: statusText === 3 ? "success" : "error", // Finished
               },
             );
             clearInterval(intervals[prediction.id]);
@@ -428,7 +429,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
             <Button
               variant="contained"
               disabled={
-                getPredictionStatus(selectedPrediction?.status) !== "Finished"
+                selectedPrediction?.status !== 3 // Finished
               }
               startIcon={<DownloadIcon />}
               onClick={() => handleDownload(selectedPrediction)}

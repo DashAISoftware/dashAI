@@ -28,7 +28,7 @@ export default function ExplorerBox({
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const { loading, data, dataType, setData } = useExplorerResults(explorer);
 
-  const statusLabel = getExplorerStatus(explorer.status);
+  const statusLabel = explorer.status;
 
   const handleExplorerDetailsClick = () => {
     setOpenExplorerDetails(true);
@@ -59,8 +59,9 @@ export default function ExplorerBox({
           onStatusChange(updatedExplorer.id, updatedExplorer.status);
         }
 
-        const status = getExplorerStatus(updatedExplorer.status);
-        if (status === "Finished" || status === "Error") {
+        const status = updatedExplorer.status;
+        if (status === 3 || status === 4) {
+          // Finished or Error
           clearInterval(intervalId);
         }
       } catch (error) {
@@ -69,8 +70,9 @@ export default function ExplorerBox({
       }
     };
 
-    const currentStatus = getExplorerStatus(explorer.status);
-    if (currentStatus !== "Finished" && currentStatus !== "Error") {
+    const currentStatus = explorer.status;
+    if (currentStatus !== 3 && currentStatus !== 4) {
+      //  Not Finished and not Error
       intervalId = setInterval(fetchExplorerStatus, 1500);
     }
 
@@ -107,12 +109,12 @@ export default function ExplorerBox({
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
-              label={statusLabel}
-              color={statusLabel === "Finished" ? "primary" : "default"}
+              label={getExplorerStatus(statusLabel, t)}
+              color={statusLabel === 3 ? "primary" : "default"} // Finished
               size="small"
             />
             <>
-              {statusLabel === "Finished" && (
+              {statusLabel === 3 && ( // Finished
                 <Chip
                   label={
                     dataType === "plotly_json"
@@ -130,7 +132,7 @@ export default function ExplorerBox({
                   }}
                 />
               )}
-              {(statusLabel === "Error" || statusLabel === "Finished") && (
+              {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDeleteClick(explorer)}
@@ -148,7 +150,7 @@ export default function ExplorerBox({
           </Box>
         </Box>
 
-        {statusLabel === "Finished" ? (
+        {statusLabel === 3 ? ( // Finished
           <Box
             sx={{
               flexGrow: 1,
@@ -168,7 +170,7 @@ export default function ExplorerBox({
               dataType={dataType}
             />
           </Box>
-        ) : statusLabel === "Error" ? (
+        ) : statusLabel === 4 ? ( // Error
           <Box
             sx={{
               flexGrow: 1,

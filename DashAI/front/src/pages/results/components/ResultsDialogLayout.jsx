@@ -60,9 +60,7 @@ function ResultsDialogLayout({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
 
-  const hasActiveRuns = runs.some(
-    (r) => r.status === "Delivered" || r.status === "Started",
-  );
+  const hasActiveRuns = runs.some((r) => r.status === 1 || r.status === 2); // Delivered or Started
 
   const getRuns = async ({ showLoading = true } = {}) => {
     if (showLoading) {
@@ -72,13 +70,7 @@ function ResultsDialogLayout({
     try {
       const fetchedRuns = await getRunsRequest(experiment.id.toString());
 
-      // Transform status codes to text
-      const runsWithStringStatus = fetchedRuns.map((run) => ({
-        ...run,
-        status: getRunStatus(run.status),
-      }));
-
-      setRuns(runsWithStringStatus);
+      setRuns(fetchedRuns);
 
       // Initialize selection if needed
       if (rowSelectionModel.length === 0) {
@@ -179,9 +171,9 @@ function ResultsDialogLayout({
       return (
         !run ||
         !run.status ||
-        run.status === "Not Started" ||
-        run.status === "Error" ||
-        run.status === "Finished"
+        run.status === 0 || // Not Started
+        run.status === 4 || // Error
+        run.status === 3 // Finished
       );
     });
 
@@ -203,7 +195,7 @@ function ResultsDialogLayout({
       setRuns((prevRuns) =>
         prevRuns.map((r) => {
           const updated = updatedRuns.find((u) => u.id === r.id);
-          return updated ? { ...updated, status: "Delivered" } : r;
+          return updated ? { ...updated, status: 1 } : r; // Delivered
         }),
       );
 
@@ -264,7 +256,6 @@ function ResultsDialogLayout({
           r.id === run.id
             ? {
                 ...initialUpdatedRun,
-                status: getRunStatus(initialUpdatedRun.status),
               }
             : r,
         ),
@@ -282,7 +273,6 @@ function ResultsDialogLayout({
               r.id === run.id
                 ? {
                     ...updated,
-                    status: getRunStatus(updated.status),
                   }
                 : r,
             ),
@@ -305,7 +295,6 @@ function ResultsDialogLayout({
               r.id === run.id
                 ? {
                     ...updated,
-                    status: getRunStatus(updated.status),
                   }
                 : r,
             ),
@@ -331,7 +320,6 @@ function ResultsDialogLayout({
           r.id === run.id
             ? {
                 ...updated,
-                status: getRunStatus(updated.status),
               }
             : r,
         ),

@@ -2,6 +2,8 @@
 import React from "react";
 import { styled } from "@mui/material";
 import { formatDate, getColorByStatus } from "../../../utils";
+import { Translation } from "react-i18next";
+import { getRunStatus } from "../../../utils/runStatus";
 
 // style for the cells in the initial columns
 const StyledCell = styled("div")(({ theme, color }) => ({
@@ -36,7 +38,13 @@ export const initialColumns = [
     renderCell: (params) => {
       const color = getColorByStatus(params.value);
 
-      return <StyledCell color={color}>{params.value}</StyledCell>;
+      return (
+        <StyledCell color={color}>
+          <Translation>
+            {(t, { i18n }) => getRunStatus(params.value, t)}
+          </Translation>
+        </StyledCell>
+      );
     },
   },
   // {

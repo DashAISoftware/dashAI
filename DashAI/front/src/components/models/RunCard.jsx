@@ -53,7 +53,7 @@ function RunCard({
   const { t } = useTranslation(["models", "common"]);
 
   // Get display status from numeric code
-  const statusText = getRunStatus(run.status);
+  const statusText = run.status;
 
   // Get model display name
   const model = models.find((m) => m.name === run.model_name);
@@ -62,14 +62,14 @@ function RunCard({
   // Status color mapping
   const getStatusColor = (status) => {
     switch (status) {
-      case "Not Started":
+      case 0: // Not Started
         return "default";
-      case "Delivered":
-      case "Started":
+      case 1: // Delivered
+      case 2: // Started
         return "info";
-      case "Finished":
+      case 3: // Finished
         return "success";
-      case "Error":
+      case 4: // Error
         return "error";
       default:
         return "default";
@@ -78,10 +78,10 @@ function RunCard({
 
   // Check if run can be trained
   const canTrain =
-    statusText === "Not Started" ||
-    statusText === "Error" ||
-    statusText === "Finished";
-  const isRunning = statusText === "Delivered" || statusText === "Started";
+    statusText === 0 || // Not Started
+    statusText === 4 || // Error
+    statusText === 3; // Finished
+  const isRunning = statusText === 1 || statusText === 2; // Delivered or Started
 
   // Get metrics from run
   const getMetrics = () => {
@@ -111,9 +111,9 @@ function RunCard({
         mb: 2,
         borderLeft: "4px solid",
         borderLeftColor:
-          statusText === "Finished"
+          statusText === 3 // Finished
             ? "success.main"
-            : statusText === "Error"
+            : statusText === 4 // Error
             ? "error.main"
             : isRunning
             ? "info.main"
@@ -134,7 +134,7 @@ function RunCard({
             {run.name}
           </Typography>
           <Chip
-            label={statusText}
+            label={getRunStatus(statusText, t)}
             color={getStatusColor(statusText)}
             size="small"
           />
@@ -278,7 +278,7 @@ function RunCard({
         </Box>
 
         {/* RunOperations - Separate section for finished runs */}
-        {statusText === "Finished" && (
+        {statusText === 3 && ( // Finished
           <Box sx={{ mt: 2 }}>
             <RunOperations
               run={run}
@@ -324,7 +324,7 @@ function RunCard({
         </IconButton>
 
         {/* Prediction button */}
-        {statusText === "Finished" && (
+        {statusText === 3 && ( // Finished
           <IconButton
             size="small"
             onClick={() => {
@@ -352,16 +352,17 @@ function RunCard({
         )}
 
         {/* Explainer button */}
-        {onExplainer && statusText === "Finished" && (
-          <IconButton
-            size="small"
-            onClick={() => onExplainer(run)}
-            color="primary"
-            title={t("models:button.createExplainer")}
-          >
-            <QueryStats fontSize="small" />
-          </IconButton>
-        )}
+        {onExplainer &&
+          statusText === 3 && ( // Finished
+            <IconButton
+              size="small"
+              onClick={() => onExplainer(run)}
+              color="primary"
+              title={t("models:button.createExplainer")}
+            >
+              <QueryStats fontSize="small" />
+            </IconButton>
+          )}
 
         {/* Delete button */}
         <IconButton

@@ -33,6 +33,7 @@ import OptimizationTableSelectOptimizer from "../../../components/experiments/Op
 import { getColorByStatus } from "../../../utils";
 import LiveMetricsChart from "./LiveMetricsChart";
 import { useTranslation } from "react-i18next";
+import { getRunStatus } from "../../../utils/runStatus";
 
 /**
  * Component that displays general information associated with a run.
@@ -105,8 +106,7 @@ function ResultsTabInfo({ runData, handleRun }) {
     handleRun(localRun);
   };
 
-  const isLocked =
-    runData.status === "Started" || runData.status === "Delivered";
+  const isLocked = runData.status === 1 || runData.status === 2; // Delivered or Started
 
   return (
     <Grid container direction="column">
@@ -130,7 +130,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               {runData.status && (
                 <Box>
                   <Chip
-                    label={runData.status}
+                    label={getRunStatus(runData.status, t)}
                     sx={{ backgroundColor: getColorByStatus(runData.status) }}
                     size="medium"
                   />
@@ -168,26 +168,27 @@ function ResultsTabInfo({ runData, handleRun }) {
                   </Typography>
                 </Grid>
               )}
-              {runData.start_time && runData.status !== "Error" && (
-                <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("common:duration")}
-                  </Typography>
-                  <Typography variant="body2" fontWeight="medium">
-                    {runData.status === "Finished"
-                      ? (
-                          (new Date(runData.end_time) -
-                            new Date(runData.start_time)) /
-                          1000
-                        ).toFixed(2)
-                      : (
-                          (new Date() - new Date(runData.start_time)) /
-                          1000
-                        ).toFixed(2)}{" "}
-                    {t("common:seconds")}
-                  </Typography>
-                </Grid>
-              )}
+              {runData.start_time &&
+                runData.status !== 4 && ( // Not Failed
+                  <Grid item xs={6} md={3}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t("common:duration")}
+                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {runData.status === 3 // Finished
+                        ? (
+                            (new Date(runData.end_time) -
+                              new Date(runData.start_time)) /
+                            1000
+                          ).toFixed(2)
+                        : (
+                            (new Date() - new Date(runData.start_time)) /
+                            1000
+                          ).toFixed(2)}{" "}
+                      {t("common:seconds")}
+                    </Typography>
+                  </Grid>
+                )}
             </Grid>
           </Paper>
         </>
@@ -430,7 +431,7 @@ function ResultsTabInfo({ runData, handleRun }) {
 
 ResultsTabInfo.propTypes = {
   runData: PropTypes.shape({
-    status: PropTypes.string,
+    status: PropTypes.number,
     model_name: PropTypes.string,
     start_time: PropTypes.string,
     end_time: PropTypes.string,

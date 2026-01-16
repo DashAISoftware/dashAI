@@ -7,7 +7,7 @@ import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmation
 import { useTranslation } from "react-i18next";
 
 export default function DeleteRun({ run, onRunDelete }) {
-  const isRunning = run.status === "Started" || run.status === "Delivered";
+  const isRunning = run.status === 1 || run.status === 2; // Delivered or Started
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation("experiments");
   const [open, setOpen] = useState(false);

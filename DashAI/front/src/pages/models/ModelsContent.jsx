@@ -360,14 +360,8 @@ export default function ModelsContent() {
     if (!selectedSessionId) return;
     try {
       const data = await getRuns(selectedSessionId.toString());
-      const runsWithStatus = data.map((run) => ({
-        ...run,
-        status:
-          typeof run.status === "number"
-            ? run.status
-            : getRunStatus(run.status),
-      }));
-      setRuns(runsWithStatus);
+
+      setRuns(data);
     } catch (error) {
       if (error.response?.status !== 404) {
         enqueueSnackbar(t("models:error.failedToFetchRuns"), {
@@ -569,7 +563,7 @@ export default function ModelsContent() {
         run.test_metrics ||
         run.train_metrics ||
         run.validation_metrics ||
-        getRunStatus(run.status) === "Finished";
+        run.status === 3; // Finished
 
       if (hasBeenTrained) {
         // Check for existing operations

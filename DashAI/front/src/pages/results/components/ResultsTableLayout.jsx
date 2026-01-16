@@ -50,7 +50,7 @@ function ResultsTableLayout({
               data-tour="runner-dialog-start"
               variant="contained"
               loading={rows.every(
-                (run) => run.status === "Delivered" || run.status === "Started",
+                (run) => run.status === 1 || run.status === 2,
               )}
               endIcon={<PlayArrow />}
               onClick={handleExecuteRuns}

@@ -44,7 +44,7 @@ function ResultsGraphs({ runs }) {
     const processData = async () => {
       try {
         // Only take finished runs
-        const finished = runs.filter((item) => item.status === "Finished");
+        const finished = runs.filter((item) => item.status === 3); // Finished
         setFilteredDataProcess(finished);
 
         if (finished.length === 0) return;
