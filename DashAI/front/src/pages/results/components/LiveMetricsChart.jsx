@@ -335,11 +335,15 @@ export function LiveMetricsChart({ run }) {
           </Typography>
         </Box>
       ) : (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={380}>
           <LineChart data={chartData}>
             <XAxis
               dataKey="x"
-              label={{ value: level, position: "insideBottom", offset: -5 }}
+              label={{
+                value: t(`models:label.${level.toLowerCase()}`),
+                position: "insideBottom",
+                offset: -3,
+              }}
             />
             <YAxis />
             <Tooltip />
