@@ -355,7 +355,7 @@ export const notebookTourConfig = {
   showProgress: true,
   showSkipButton: true,
   showBackButton: true,
-  disableOverlayClose: false,
+  disableOverlayClose: true,
   disableCloseOnEsc: false,
   locale: {
     back: "Back",
