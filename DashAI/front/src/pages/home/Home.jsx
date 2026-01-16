@@ -14,17 +14,20 @@ import CustomLayout from "../../components/custom/CustomLayout";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
+import { useTranslation } from "react-i18next";
 
 function Home() {
+  const { t } = useTranslation(["home", "common"]);
+
   return (
     <TourProvider tourKey={TOUR_KEYS.HOME}>
       <CustomLayout>
         {/* Title */}
         <Typography variant="h3" component="h1" sx={{ mb: 6 }}>
-          Welcome to DashAI!
+          {t("home:label.welcomeDashboardAI")}
         </Typography>
         <Typography variant="h5" component="h2">
-          Getting started
+          {t("home:label.getStarted")}
         </Typography>
         <Grid
           container
@@ -35,27 +38,24 @@ function Home() {
         >
           <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="datasets-button">
             <HomeButton
-              title="Datasets"
-              description="Create and manage the datasets registered in the application."
+              title={t("common:datasets")}
+              description={t("home:description.datasets")}
               to="/app/data"
               Icon={FileUploadIcon}
             />
           </Grid>
           <Grid size={{ md: 4, sm: 6, xs: 12 }}>
             <HomeButton
-              title="Models"
-              description={
-                "Configure tasks, train and compare models in " +
-                "organized sessions."
-              }
+              title={t("common:models")}
+              description={t("home:description.models")}
               to="/app/models"
               Icon={ScienceIcon}
             />
           </Grid>
           <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="experiments-button">
             <HomeButton
-              title="Experiments"
-              description="Create and manage and view the status of your experiments."
+              title={t("common:experiments")}
+              description={t("home:description.experiments")}
               to="/app/experiments"
               Icon={ScienceIcon}
             />
@@ -65,8 +65,8 @@ function Home() {
             data-tour="explainability-button"
           >
             <HomeButton
-              title="Explainers"
-              description="Explore and understand the decision-making process behind your models."
+              title={t("common:explainers")}
+              description={t("home:description.explainers")}
               to="/app/explainers"
               Icon={InsightsIcon}
             />
@@ -74,15 +74,15 @@ function Home() {
           {/* Pipelines button */}
           <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="pipelines-button">
             <HomeButton
-              title="Pipelines"
-              description="Create and manage pipelines."
+              title={t("common:pipelines")}
+              description={t("home:description.pipelines")}
               to="/app/pipelines"
               Icon={MergeIcon}
             />
           </Grid>
         </Grid>
         <Typography variant="h5" component="h2" sx={{ mt: 6 }}>
-          Advanced
+          {t("home:label.advanced")}
         </Typography>
         <Grid
           container
@@ -93,16 +93,16 @@ function Home() {
         >
           <Grid size={{ md: 4, sm: 6, xs: 12 }}>
             <HomeButton
-              title="Generative"
-              description={"Interact with AI models to infere."}
+              title={t("common:generative")}
+              description={t("home:description.generative")}
               to="/app/generative"
               Icon={AutoAwesomeIcon}
             />
           </Grid>
           <Grid size={{ md: 4, sm: 6, xs: 12 }}>
             <HomeButton
-              title="Plugins"
-              description={"Browse and manage plugins."}
+              title={t("common:plugins")}
+              description={t("home:description.plugins")}
               to="/app/plugins/browse"
               Icon={ExtensionIcon}
             />
