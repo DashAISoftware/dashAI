@@ -6,11 +6,8 @@ export const homeTourSteps = [
     content: (
       <Trans i18nKey={"homeTour:datasetsIntro"}>
         <div>
-          <h3>Datasets</h3>
-          <p>
-            Here you upload, manage, and explore your datasets. This is the
-            natural starting point of any project.
-          </p>
+          <h3></h3>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -23,11 +20,8 @@ export const homeTourSteps = [
     content: (
       <Trans i18nKey={"homeTour:experimentsIntro"}>
         <div>
-          <h3>Experiments</h3>
-          <p>
-            In this module you train and compare models, monitoring metrics such
-            as Accuracy, F1, Recall, and Precision.
-          </p>
+          <h3></h3>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -38,14 +32,9 @@ export const homeTourSteps = [
     content: (
       <Trans i18nKey={"homeTour:explainabilityIntro"}>
         <div>
-          <h3>Explainability</h3>
-          <p>
-            Here you interpret the model and identify the variables that most
-            influence its decisions.
-          </p>
-          <div style={{ marginTop: "10px" }}>
-            📊 Understand what drives your model's predictions
-          </div>
+          <h3></h3>
+          <p></p>
+          <div style={{ marginTop: "10px" }}></div>
         </div>
       </Trans>
     ),
@@ -56,14 +45,9 @@ export const homeTourSteps = [
     content: (
       <Trans i18nKey={"homeTour:pipelinesIntro"}>
         <div>
-          <h3>Pipelines</h3>
-          <p>
-            This lets you chain preprocessing, training, and evaluation steps
-            into a reproducible workflow.
-          </p>
-          <div style={{ marginTop: "10px" }}>
-            🔗 Build automated ML workflows
-          </div>
+          <h3></h3>
+          <p></p>
+          <div style={{ marginTop: "10px" }}></div>
         </div>
       </Trans>
     ),

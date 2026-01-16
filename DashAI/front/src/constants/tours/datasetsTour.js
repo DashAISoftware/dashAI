@@ -6,11 +6,8 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:datasetModule">
         <div>
-          <h3>Dataset Module</h3>
-          <p>
-            This is where you manage your data and create interactive notebooks
-            for analysis. Let's see how to get started!
-          </p>
+          <h3></h3>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -22,12 +19,9 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:uploadDataset">
         <div>
-          <h3>Upload Dataset</h3>
-          <p>
-            This is where you import your own files from various formats and
-            sources.
-          </p>
-          <p>You can upload CSV, Excel, and other common data formats.</p>
+          <h3></h3>
+          <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -38,12 +32,9 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:createNotebook">
         <div>
-          <h3>Create Notebook</h3>
-          <p>This lets you explore or transform datasets interactively.</p>
-          <p>
-            Notebooks are where you visualize data, apply transformations, and
-            prepare it for modeling.
-          </p>
+          <h3></h3>
+          <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -54,8 +45,8 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:downloadSample">
         <div>
-          <h3>Download Sample Dataset</h3>
-          <p>To get started quickly, let's download a sample dataset.</p>
+          <h3></h3>
+          <p></p>
           <p>
             <a
               href="/samples/personality_dataset.csv"
@@ -72,17 +63,12 @@ export const datasetsTourSteps = [
               }}
               onMouseOver={(e) => (e.target.style.backgroundColor = "#1565c0")}
               onMouseOut={(e) => (e.target.style.backgroundColor = "#1976d2")}
-            >
-              Download Personality_Dataset.csv
-            </a>
+            ></a>
           </p>
           <p style={{ fontSize: "0.9em", color: "#666" }}>
-            💡 <strong>Tip:</strong> The file will be saved to your Downloads
-            folder by default.
+            <strong></strong>
           </p>
-          <p style={{ marginTop: "10px" }}>
-            Once downloaded, click "Next" to learn how to upload it!
-          </p>
+          <p style={{ marginTop: "10px" }}></p>
         </div>
       </Trans>
     ),
@@ -96,13 +82,10 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:nowUpload">
         <div>
-          <h3>Now Let's Upload It</h3>
+          <h3></h3>
+          <p></p>
           <p>
-            Now that you've downloaded the sample dataset, let's upload it to
-            DashAI.
-          </p>
-          <p>
-            <strong>Click "Upload Dataset" to begin the upload process.</strong>
+            <strong></strong>
           </p>
         </div>
       </Trans>
@@ -120,7 +103,7 @@ export const datasetsTourSteps = [
         <div>
           <h3></h3>
           <p>
-            <strong></strong>.
+            <strong></strong>
           </p>
           <p></p>
           <p>
@@ -138,11 +121,8 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:continueUpload">
         <div>
-          <h3>Continue to Upload</h3>
-          <p>
-            With the CSVDataLoader selected, click "Next" to proceed to the
-            upload configuration.
-          </p>
+          <h3></h3>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -157,16 +137,16 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:uploadFile">
         <div>
-          <h3>Upload Your File</h3>
-          <p>Now it's time to upload the file you just downloaded!</p>
+          <h3></h3>
+          <p></p>
           <ul>
             <li>
-              Click <strong>"Upload a file"</strong> to browse for it
+              <strong></strong>
             </li>
           </ul>
-          <p style={{ fontSize: "0.9em", color: "#666", marginTop: "10px" }}>
-            💡 Look for "personality_dataset.csv" in your Downloads folder.
-          </p>
+          <p
+            style={{ fontSize: "0.9em", color: "#666", marginTop: "10px" }}
+          ></p>
         </div>
       </Trans>
     ),
@@ -179,19 +159,17 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:dataLoaderConfig">
         <div>
-          <h3>DataLoader Configuration</h3>
-          <p>Here you can configure how the dataset should be loaded:</p>
+          <h3></h3>
+          <p></p>
           <ul>
             <li>
-              <strong>Name:</strong> Give your dataset a meaningful name
+              <strong></strong>
             </li>
             <li>
-              <strong>Separator:</strong> The character that separates values
-              (comma for CSV)
+              <strong></strong>
             </li>
             <li>
-              <strong>Other options:</strong> Advanced settings for specific
-              needs
+              <strong></strong>
             </li>
           </ul>
           <p
@@ -202,8 +180,7 @@ export const datasetsTourSteps = [
               marginTop: "10px",
             }}
           >
-            💡 <strong>Pro tip:</strong> The default settings work well for most
-            CSV files, so you can usually leave them as they are!
+            <strong></strong>
           </p>
         </div>
       </Trans>
@@ -216,15 +193,11 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:completeUpload">
         <div>
-          <h3>Complete the Upload</h3>
+          <h3></h3>
           <p>
-            Once you've uploaded the file and reviewed the configuration, click{" "}
-            <strong>"Upload"</strong> to process your dataset.
+            <strong></strong>
           </p>
-          <p>
-            DashAI will analyze the file structure and prepare it for
-            exploration and analysis.
-          </p>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -239,12 +212,9 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:yourDatasets">
         <div>
-          <h3>Your Datasets</h3>
-          <p>The Personality dataset is now available in your Datasets list.</p>
-          <p>
-            You can find all your uploaded datasets and notebooks in this
-            sidebar.
-          </p>
+          <h3></h3>
+          <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -255,14 +225,9 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:nextSteps">
         <div>
-          <h3>Next Steps: Create a Notebook</h3>
-          <p>
-            Now click "New Notebook" to open the dataset in an interactive
-            environment.
-          </p>
-          <p>
-            In a notebook, you can analyze, visualize, and transform your data.
-          </p>
+          <h3></h3>
+          <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -276,11 +241,9 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:importantNote">
         <div>
-          <h3>Important Note</h3>
-          <p>Pay attention to this information</p>
-          <p>
-            This ensures your original data remains intact while you experiment.
-          </p>
+          <h3></h3>
+          <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
@@ -294,15 +257,9 @@ export const datasetsTourSteps = [
     content: (
       <Trans i18nKey="datasetsTour:finishProcess">
         <div>
-          <h3>Finish the Process</h3>
-          <p>
-            Click "Create Notebook" to start working with your data in an
-            interactive environment.
-          </p>
-          <p>
-            You'll be able to visualize, transform, and prepare your data for
-            modeling.
-          </p>
+          <h3></h3>
+          <p></p>
+          <p></p>
         </div>
       </Trans>
     ),
