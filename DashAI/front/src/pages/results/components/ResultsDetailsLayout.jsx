@@ -7,7 +7,7 @@ import ResultsTabInfo from "./ResultsTabInfo";
 import ResultsTabParameters from "./ResultsTabParameters";
 import ResultsTabMetrics from "./ResultsTabMetrics";
 import ResultsTabHyperparameters from "./ResultsTabHyperparameters";
-import { tabsResultsDetails } from "../constants/tabsResultsDetails";
+import { getTabsResultsDetails } from "../constants/getTabsResultsDetails";
 import { checkIfHaveOptimazers } from "../../../utils/schema";
 import { useTranslation } from "react-i18next";
 
@@ -18,8 +18,10 @@ function ResultsDetailsLayout({
   handleCloseCustomLayout,
   handleRun,
 }) {
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["common", "models"]);
   const optimizables = checkIfHaveOptimazers(runData.parameters);
+
+  const tabsResultsDetails = getTabsResultsDetails(t);
   const updatedTabs = tabsResultsDetails.map((tab) => ({
     ...tab,
     disabled: tab.value === 3 ? !optimizables : tab.disabled,
