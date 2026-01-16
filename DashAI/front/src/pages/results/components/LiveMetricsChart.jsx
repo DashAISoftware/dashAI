@@ -299,7 +299,7 @@ export function LiveMetricsChart({ run }) {
           sx={{ minWidth: 250 }}
           disabled={Object.keys(filteredMetrics).length === 0}
         >
-          <InputLabel>Metrics</InputLabel>
+          <InputLabel>{t("common:metrics")}</InputLabel>
           <Select
             multiple
             value={selectedMetrics}
