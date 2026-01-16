@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
 import { tourStyles } from "./tourStyles";
+import { CustomTooltip } from "./CustomTooltip";
 
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
@@ -62,9 +63,14 @@ export const TourProvider = ({ tourKey, children }) => {
         disableOverlayClose={tourData.config.disableOverlayClose}
         disableCloseOnEsc={tourData.config.disableCloseOnEsc}
         locale={locale}
+        disableScrollParentFix={true}
         styles={tourStyles}
+        tooltipComponent={CustomTooltip}
         scrollToFirstStep
         scrollOffset={100}
+        floaterProps={{
+          disableFlip: true,
+        }}
       />
       {children}
     </TourContext.Provider>

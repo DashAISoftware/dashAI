@@ -3,7 +3,12 @@ import { Box, Typography, Tooltip } from "@mui/material";
 import HoverModelInfo from "./HoverModelInfo";
 import { ModelIcon } from "./ModelIcon";
 
-export default function ModelListItem({ model, disabled = false, onClick }) {
+export default function ModelListItem({
+  model,
+  disabled = false,
+  onClick,
+  ...props
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredModel, setHoveredModel] = useState(null);
 
@@ -53,6 +58,7 @@ export default function ModelListItem({ model, disabled = false, onClick }) {
           onMouseEnter={(e) => handleMouseEnter(e, model)}
           onMouseLeave={handleMouseLeave}
           onClick={disabled ? null : onClick}
+          {...props}
           sx={{
             display: "flex",
             alignItems: "center",

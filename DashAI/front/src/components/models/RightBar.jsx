@@ -179,11 +179,12 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
                 </Box>
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {filteredModels.map((model) => (
+                  {filteredModels.map((model, index) => (
                     <ModelListItem
                       key={model.name}
                       model={model}
                       onClick={() => handleModelClick(model)}
+                      data-tour={index === 0 ? "first-model" : undefined}
                     />
                   ))}
                 </Box>

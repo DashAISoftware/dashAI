@@ -47,6 +47,7 @@ function RunCard({
   onDelete,
   onOperationsRefresh,
   explainerRefreshTrigger,
+  isLastRun = false,
 }) {
   const [expanded, setExpanded] = useState(false);
   const { t } = useTranslation(["models", "common"]);
@@ -113,10 +114,10 @@ function RunCard({
           statusText === "Finished"
             ? "success.main"
             : statusText === "Error"
-            ? "error.main"
-            : isRunning
-            ? "info.main"
-            : "grey.500",
+              ? "error.main"
+              : isRunning
+                ? "info.main"
+                : "grey.500",
       }}
     >
       <CardContent>
@@ -300,6 +301,7 @@ function RunCard({
         )}
         {canTrain && (
           <Button
+            data-tour={isLastRun ? "train-button" : undefined}
             size="small"
             startIcon={<PlayArrow />}
             onClick={() => onTrain(run)}
