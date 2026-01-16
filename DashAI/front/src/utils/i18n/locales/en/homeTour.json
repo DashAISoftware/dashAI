@@ -3,5 +3,5 @@
   "experimentsIntro": "<0><0>Experiments</0><1>In this module you train and compare models, monitoring metrics such as Accuracy, F1, Recall, and Precision.</1></0>",
   "explainabilityIntro": "<0><0>Explainability</0><1>Here you interpret the model and identify the variables that most influence its decisions.</1><2>📊 Understand what drives your model's predictions</2></0>",
   "pipelinesIntro": "<0><0>Pipelines</0><1>This lets you chain preprocessing, training, and evaluation steps into a reproducible workflow.</1><2>🔗 Build automated ML workflows</2></0>",
-  "readyToStart": "<0><0>Ready to Start!</0><1>Remember that <2>Datasets</2> is the natural starting point of the workflow. Next, we'll move on to the Datasets section.</1></0>"
+  "readyToStart": "<0><0>Ready to Start!</0><1>Remember that <0>Datasets</0> is the natural starting point of the workflow. Next, we'll move on to the Datasets section.</1></0>"
 }

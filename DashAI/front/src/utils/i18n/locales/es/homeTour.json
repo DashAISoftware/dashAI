@@ -3,5 +3,5 @@
   "experimentsIntro": "<0><0>Experimentos</0><1>En este módulo entrenas y comparas modelos, monitoreando métricas como Accuracy, F1, Recall y Precision.</1></0>",
   "explainabilityIntro": "<0><0>Explicabilidad</0><1>Aquí interpretas el modelo e identificas las variables que más influyen en sus decisiones.</1><2>📊 Comprende qué impulsa las predicciones de tu modelo</2></0>",
   "pipelinesIntro": "<0><0>Pipelines</0><1>Esto te permite encadenar pasos de preprocesamiento, entrenamiento y evaluación en un flujo de trabajo reproducible.</1><2>🔗 Construye flujos de trabajo de ML automatizados</2></0>",
-  "readyToStart": "<0><0>¡Listo para Comenzar!</0><1>Recuerda que <2>Datasets</2> es el punto de partida natural del flujo de trabajo. A continuación, pasaremos a la sección de Datasets.</1></0>"
+  "readyToStart": "<0><0>¡Listo para Comenzar!</0><1>Recuerda que <0>Datasets</0> es el punto de partida natural del flujo de trabajo. A continuación, pasaremos a la sección de Datasets.</1></0>"
 }
