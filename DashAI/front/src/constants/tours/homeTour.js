@@ -56,13 +56,12 @@ export const homeTourSteps = [
   {
     target: '[data-tour="datasets-button"]',
     content: (
-      <Trans
-        i18nKey="homeTour:readyToStart"
-        components={{ strong: <strong /> }}
-      >
+      <Trans i18nKey="homeTour:readyToStart">
         <div>
           <h3></h3>
-          <p></p>
+          <p>
+            <strong></strong>
+          </p>
         </div>
       </Trans>
     ),
