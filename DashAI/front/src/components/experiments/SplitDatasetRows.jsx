@@ -408,7 +408,7 @@ function SplitDatasetRows({
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="train"
-                  label={t("common:trainSubject")}
+                  label={t("common:train")}
                   autoComplete="off"
                   size="small"
                   error={manualSplitError}
@@ -428,7 +428,7 @@ function SplitDatasetRows({
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="test"
-                  label={t("common:testSubject")}
+                  label={t("common:test")}
                   autoComplete="off"
                   size="small"
                   error={manualSplitError}

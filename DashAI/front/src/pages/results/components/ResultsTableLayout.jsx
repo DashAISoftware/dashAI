@@ -13,7 +13,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import ResultsDetails from "./ResultsDetails";
 import { PlayArrow } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
-import { json } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function ResultsTableLayout({
   rows,
@@ -27,6 +27,8 @@ function ResultsTableLayout({
   handleExecuteRuns,
   handleRun,
 }) {
+  const { t } = useTranslation(["models"]);
+
   return (
     <Paper
       sx={{
@@ -54,7 +56,7 @@ function ResultsTableLayout({
               onClick={handleExecuteRuns}
               style={{ borderRadius: 4 }}
             >
-              Run all Models
+              {t("models:button.runAllModels")}
             </LoadingButton>
           </ButtonGroup>
           <DataGrid

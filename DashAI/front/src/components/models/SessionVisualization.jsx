@@ -234,17 +234,17 @@ export default function SessionVisualization({
                   >
                     {hasTrainMetrics && (
                       <ToggleButton value="train">
-                        {t("models:label.train")}
+                        {t("common:train")}
                       </ToggleButton>
                     )}
                     {hasValidationMetrics && (
                       <ToggleButton value="validation">
-                        {t("models:label.validation")}
+                        {t("common:validation")}
                       </ToggleButton>
                     )}
                     {hasTestMetrics && (
                       <ToggleButton value="test">
-                        {t("models:label.test")}
+                        {t("common:test")}
                       </ToggleButton>
                     )}
                   </ToggleButtonGroup>

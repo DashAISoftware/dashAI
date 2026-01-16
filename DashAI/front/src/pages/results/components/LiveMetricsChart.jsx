@@ -21,8 +21,10 @@ import {
 } from "recharts";
 import { useEffect, useRef, useState } from "react";
 import { getExperimentById } from "../../../api/experiment";
+import { useTranslation } from "react-i18next";
 
 export function LiveMetricsChart({ run }) {
+  const { t } = useTranslation(["models", "common"]);
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");
   const [data, setData] = useState({});
@@ -301,7 +303,7 @@ export function LiveMetricsChart({ run }) {
           <Select
             multiple
             value={selectedMetrics}
-            label="Metrics"
+            label={t("common:metrics")}
             onChange={handleMetricChange}
             renderValue={(selected) => selected.join(", ")}
           >
@@ -315,9 +317,9 @@ export function LiveMetricsChart({ run }) {
       </Box>
 
       <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
-        <Tab label="Train" value="TRAIN" />
-        <Tab label="Validation" value="VALIDATION" />
-        <Tab label="Test" value="TEST" />
+        <Tab label={t("common:train")} value="TRAIN" />
+        <Tab label={t("common:validation")} value="VALIDATION" />
+        <Tab label={t("common:test")} value="TEST" />
       </Tabs>
 
       {chartData.length === 0 || selectedMetrics.length === 0 ? (
@@ -329,7 +331,7 @@ export function LiveMetricsChart({ run }) {
           border="1px dashed grey"
         >
           <Typography color="textSecondary">
-            No metrics available for this view
+            {t("models:label.noMetricsAvailableForThisView")}
           </Typography>
         </Box>
       ) : (
@@ -365,21 +367,21 @@ export function LiveMetricsChart({ run }) {
             onClick={() => handleLevelChange("TRIAL")}
             disabled={!hasTrialData}
           >
-            Trial
+            {t("models:label.trial")}
           </Button>
           <Button
             variant={level === "STEP" ? "contained" : "outlined"}
             onClick={() => handleLevelChange("STEP")}
             disabled={!hasStepData}
           >
-            Step
+            {t("models:label.step")}
           </Button>
           <Button
             variant={level === "EPOCH" ? "contained" : "outlined"}
             onClick={() => handleLevelChange("EPOCH")}
             disabled={!hasEpochData}
           >
-            Epoch
+            {t("models:label.epoch")}
           </Button>
         </ButtonGroup>
       </Box>

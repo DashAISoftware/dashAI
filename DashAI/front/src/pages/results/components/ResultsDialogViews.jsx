@@ -3,14 +3,17 @@ import PropTypes from "prop-types";
 import { Grid, Button, Typography } from "@mui/material";
 import TimestampWrapper from "../../../components/shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../../constants/timestamp";
+import { useTranslation } from "react-i18next";
 
 function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
+  const { t } = useTranslation(["models", "common"]);
+
   return (
     <Grid container direction="column" alignItems="center">
       <Grid container justifyContent="flex-start" sx={{ mt: 2, mb: 1 }}>
         <Grid sx={{ ml: 2 }}>
           <Typography variant="body1">
-            View results as columns or graphs
+            {t("models:label.viewResultsAs")}
           </Typography>
         </Grid>
       </Grid>
@@ -27,7 +30,7 @@ function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
                 borderRadius: "1px",
               }}
             >
-              Columns
+              {t("common:columns")}
             </Button>
           </TimestampWrapper>
           <TimestampWrapper eventName={TIMESTAMP_KEYS.experiments.viewGraphs}>
@@ -41,7 +44,7 @@ function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
                 borderRadius: "1px",
               }}
             >
-              Graphs
+              {t("common:graphs")}
             </Button>
           </TimestampWrapper>
         </Grid>

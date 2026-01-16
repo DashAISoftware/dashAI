@@ -13,6 +13,7 @@ import {
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../../utils/schema";
+import { useTranslation } from "react-i18next";
 
 function ResultsTabHyperparameters({ runData }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
@@ -20,6 +21,8 @@ function ResultsTabHyperparameters({ runData }) {
   const [slicePlot, setSlicePlot] = useState([]);
   const [contourPlot, setContourPlot] = useState([]);
   const [importancePlot, setImportancePlot] = useState([]);
+  const { t } = useTranslation(["models"]);
+
   function parsePlot(plot) {
     const formattedPlot = JSON.parse(plot);
     const data = formattedPlot.data;
@@ -63,7 +66,7 @@ function ResultsTabHyperparameters({ runData }) {
         setSlicePlot(parsedSlicePlot);
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the run data");
+      enqueueSnackbar(t("models:error.errorFetchingRunData"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -86,9 +89,9 @@ function ResultsTabHyperparameters({ runData }) {
       <CircularProgress />
     </Box>
   ) : runData.status === "Failed" ? (
-    <Box>Run Failed. No hyperparameter plots available.</Box>
+    <Box>{t("models:label.runFailedNoHyperparameterPlots")}</Box>
   ) : runData.status === "Not Started" ? (
-    <Box>Run Not Started. No hyperparameter plots available.</Box>
+    <Box>{t("models:label.runNotStartedNoHyperparameterPlots")}</Box>
   ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">

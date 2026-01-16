@@ -138,7 +138,7 @@ export default function MetricsSelector({
             onClick={() => selectAllForSplit("train")}
             variant="contained"
           >
-            {t("common:trainSubject")}
+            {t("common:train")}
           </Button>
           <Button
             onClick={() => selectAllForSplit("validation")}
@@ -147,7 +147,7 @@ export default function MetricsSelector({
             {t("common:validation")}
           </Button>
           <Button onClick={() => selectAllForSplit("test")} variant="contained">
-            {t("common:testSubject")}
+            {t("common:test")}
           </Button>
         </Stack>
 

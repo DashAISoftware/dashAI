@@ -12,6 +12,7 @@ import ResultsTableLayout from "./ResultsTableLayout";
 import { useNavigate } from "react-router-dom";
 import { getComponents } from "../../../api/component";
 import PredictionModal from "../../../components/predictions/PredictionModal";
+import { useTranslation } from "react-i18next";
 
 // constants
 import { extractRows } from "../constants/extractRows";
@@ -42,6 +43,7 @@ function ResultsTable({
   const [predictionModalOpen, setPredictionModalOpen] = useState(false);
   const [selectedRunForPrediction, setSelectedRunForPrediction] =
     useState(null);
+  const { t } = useTranslation(["models"]);
 
   const getModels = async () => {
     return await getComponents({ selectTypes: ["Model"] });
@@ -96,7 +98,9 @@ function ResultsTable({
       setColumnGroupingModel(columnGroupingModel);
       setColumnVisibilityModel(columnVisibilityModel);
     } catch (error) {
-      enqueueSnackbar("Error while preparing runs table", { variant: "error" });
+      enqueueSnackbar(t("models:error.preparingRunsTable"), {
+        variant: "error",
+      });
       console.error(error);
     } finally {
       setLoading(false);

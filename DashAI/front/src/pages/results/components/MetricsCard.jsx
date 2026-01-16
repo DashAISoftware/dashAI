@@ -1,7 +1,10 @@
 import React from "react";
 import { Box, Divider, Paper, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function MetricsCard({ title, metrics }) {
+  const { t } = useTranslation(["models"]);
+
   return (
     <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
       <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
@@ -24,7 +27,7 @@ export default function MetricsCard({ title, metrics }) {
         ))
       ) : (
         <Typography variant="body2" color="text.secondary">
-          No metrics available
+          {t("models:label.noMetricsAvailable")}
         </Typography>
       )}
     </Paper>
