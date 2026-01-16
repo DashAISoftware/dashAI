@@ -67,7 +67,7 @@
   "model": "Model",
   "modelName": "Model Name",
   "modelParameters": "Model Parameters",
-  "models": "common:models",
+  "models": "Models",
   "modelToConfig": "{{model}} configuration",
   "moreOptions": "More Options",
   "na": "N/A",
