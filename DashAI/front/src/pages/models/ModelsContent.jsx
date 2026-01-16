@@ -819,10 +819,10 @@ export default function ModelsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-        ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
-          : 100;
+      ? 100 - leftBarWidth
+      : rightBarVisible
+      ? 100 - rightBarWidth
+      : 100;
 
   return (
     <>
@@ -955,16 +955,17 @@ export default function ModelsContent() {
                   <SelectOptionMenu
                     title={
                       selectedDatasetId
-                        ? "Select a Task for Your Session"
-                        : "Models Module"
+                        ? t("models:label.selectTaskForSession")
+                        : t("models:label.modelsModule")
                     }
                     subtitle={
                       selectedDatasetId
-                        ? `Choose the machine learning task for your session with dataset "${
-                            datasets.find((d) => d.id === selectedDatasetId)
-                              ?.name
-                          }".`
-                        : "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow."
+                        ? t("models:label.chooseTaskForSessionWithDataset", {
+                            datasetName: datasets.find(
+                              (d) => d.id === selectedDatasetId,
+                            )?.name,
+                          })
+                        : t("models:label.configureTasksTrainCompareModels")
                     }
                     options={tasks.map((task) => ({
                       name: task.name,
