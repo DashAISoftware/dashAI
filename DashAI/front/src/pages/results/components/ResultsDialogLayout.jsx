@@ -250,8 +250,7 @@ function ResultsDialogLayout({
       // Update run to "Delivered" status
       initialUpdatedRun.status = 1;
       enqueueSnackbar(
-        t("models:message.runStartedSuccessfully"),
-        { runId: run.id },
+        t("models:message.runStartedSuccessfully", { runId: run.id }),
         {
           variant: "success",
         },
