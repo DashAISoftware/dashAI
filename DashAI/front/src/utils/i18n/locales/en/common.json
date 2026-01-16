@@ -66,6 +66,8 @@
   "nameRequired": "Name is required",
   "newItem": "New Item",
   "next": "Next",
+  "finish": "Finish",
+  "skipTour": "Skip Tour",
   "noDescription": "No description available",
   "noItemsAvailable": "No items available.",
   "noItemsInGroup": "No items found.",

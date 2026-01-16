@@ -98,11 +98,4 @@ export const homeTourConfig = {
   showBackButton: true,
   disableOverlayClose: false,
   disableCloseOnEsc: false,
-  locale: {
-    back: "Back",
-    close: "Close",
-    last: "Finish",
-    next: "Next",
-    skip: "Skip Tour",
-  },
 };

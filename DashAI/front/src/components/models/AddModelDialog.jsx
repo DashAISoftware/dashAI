@@ -258,9 +258,9 @@ function AddModelDialog({
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(
     selectedOptimizer &&
-      optimizerParameters &&
-      Object.keys(optimizerParameters).length > 0 &&
-      goalMetric,
+    optimizerParameters &&
+    Object.keys(optimizerParameters).length > 0 &&
+    goalMetric,
   );
 
   return (
@@ -317,7 +317,7 @@ function AddModelDialog({
             />
 
             {selectedModel && (
-              <Box>
+              <Box data-tour="model-config">
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   {t("common:modelParameters")}
                 </Typography>
@@ -391,6 +391,7 @@ function AddModelDialog({
           </Button>
         )}
         <Button
+          data-tour="add-model-button"
           onClick={handleNext}
           variant="contained"
           disabled={
