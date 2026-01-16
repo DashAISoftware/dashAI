@@ -24,6 +24,8 @@ import datasetsTourEN from "./locales/en/datasetsTour.json";
 import datasetsTourES from "./locales/es/datasetsTour.json";
 import notebookTourEN from "./locales/en/notebookTour.json";
 import notebookTourES from "./locales/es/notebookTour.json";
+import modelsTourEN from "./locales/en/modelsTour.json";
+import modelsTourES from "./locales/es/modelsTour.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -42,6 +44,7 @@ const resources = {
     homeTour: homeTourEN,
     datasetsTour: datasetsTourEN,
     notebookTour: notebookTourEN,
+    modelsTour: modelsTourEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -56,6 +59,7 @@ const resources = {
     homeTour: homeTourES,
     datasetsTour: datasetsTourES,
     notebookTour: notebookTourES,
+    modelsTour: modelsTourES,
   },
 };
 
@@ -78,6 +82,7 @@ i18n.use(initReactI18next).init({
     "homeTour",
     "datasetsTour",
     "notebookTour",
+    "modelsTour",
   ],
   defaultNS: "common",
 
