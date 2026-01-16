@@ -65,6 +65,8 @@
   "nameRequired": "El nombre es requerido",
   "newItem": "Nuevo Elemento",
   "next": "Siguiente",
+  "finish": "Finalizar",
+  "skipTour": "Saltar tutorial",
   "noDescription": "Sin descripción disponible",
   "noItemsAvailable": "No hay elementos disponibles.",
   "noItemsInGroup": "No se encontraron elementos.",
