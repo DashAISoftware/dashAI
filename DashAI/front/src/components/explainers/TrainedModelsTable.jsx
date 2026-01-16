@@ -192,7 +192,7 @@ function TrainedModelsTable() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 4 }}>
           <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-            {t("common:Models")}
+            {t("common:models")}
           </Typography>
         </Grid>
         <Grid size={{ xs: 4 }}></Grid>
