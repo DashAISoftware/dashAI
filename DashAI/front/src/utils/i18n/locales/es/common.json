@@ -36,6 +36,7 @@
   "endTime": "Hora de Finalización",
   "experimentName": "Nombre del Experimento",
   "experiments": "Experimentos",
+  "explainability": "Explicabilidad",
   "explainers": "Explicadores",
   "export": "Exportar",
   "exportAsCSV": "Exportar como CSV",

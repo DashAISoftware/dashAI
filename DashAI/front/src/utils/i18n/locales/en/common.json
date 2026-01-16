@@ -36,6 +36,7 @@
   "endTime": "End Time",
   "experimentName": "Experiment Name",
   "experiments": "Experiments",
+  "explainability": "Explainability",
   "explainers": "Explainers",
   "export": "Export",
   "exportAsCSV": "Export as CSV",

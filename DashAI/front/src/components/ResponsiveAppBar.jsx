@@ -13,21 +13,27 @@ import MenuItem from "@mui/material/MenuItem";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
-
-const pages = [
-  { name: "Datasets", to: "/app/data", disabled: false },
-  { name: "Models", to: "/app/models", disabled: false },
-  { name: "Experiments", to: "/app/experiments", disabled: false },
-  { name: "Explainability", to: "/app/explainers", disabled: false },
-  { name: "Generative", to: "/app/generative", disabled: false },
-  { name: "Plugins", to: "/app/plugins/browse", disabled: false },
-];
+import { useTranslation } from "react-i18next";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
   const location = useLocation();
+  const { t } = useTranslation(["common"]);
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
+
+  const pages = [
+    { name: t("common:datasets"), to: "/app/data", disabled: false },
+    { name: t("common:models"), to: "/app/models", disabled: false },
+    { name: t("common:experiments"), to: "/app/experiments", disabled: false },
+    {
+      name: t("common:explainability"),
+      to: "/app/explainers",
+      disabled: false,
+    },
+    { name: t("common:generative"), to: "/app/generative", disabled: false },
+    { name: t("common:plugins"), to: "/app/plugins/browse", disabled: false },
+  ];
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
