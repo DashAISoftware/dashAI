@@ -163,7 +163,11 @@ class RandomForestRegression(
 
     SCHEMA = RandomForestRegressionSchema
     DISPLAY_NAME: str = "Random Forest"
+    DESCRIPTION: str = (
+        "An ensemble learning method using multiple decision trees for regression."
+    )
     COLOR: str = "#FF8A65"
+    ICON: str = "Forest"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

@@ -20,30 +20,40 @@ import {
   getDatasetFile,
   getDatasetInfo,
   getDatasetFileFiltered,
-} from "../../../api/datasets";
-import { createNotebook } from "../../../api/notebook";
-import DatasetTable from "../dataset/DatasetTable";
-import { CreateNotebookModal } from "../notebookCreation/CreateNotebookModal";
-import { useTourContext } from "../../tour/TourProvider";
+} from "../api/datasets";
+import DatasetTable from "./notebooks/dataset/DatasetTable";
+import { getComponents } from "../api/component";
+import { useTourContext } from "./tour/TourProvider";
 import { useSnackbar } from "notistack";
-import JobQueueWidget from "../../jobs/JobQueueWidget";
-import { useNavigate } from "react-router-dom";
-import { getDatasetStatus } from "../../../utils/datasetStatus";
-import { formatDate } from "../../../pages/results/constants/formatDate";
-import Header from "./header/Header";
+import JobQueueWidget from "./jobs/JobQueueWidget";
+import { getDatasetStatus } from "../utils/datasetStatus";
+import { formatDate } from "../pages/results/constants/formatDate";
+import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
-import OverviewTab from "./tabs/OverviewTab";
-import { NumericTab } from "./tabs/NumericTab";
-import { CategoricalTab } from "./tabs/CategoricalTab";
-import QualityTab from "./tabs/QualityTab";
-import CorrelationsTab from "./tabs/CorrelationsTab";
-import { QualityAlerts } from "./QualityAlerts";
-import { TextTab } from "./tabs/TextTab";
+import OverviewTab from "./notebooks/dataset/tabs/OverviewTab";
+import { NumericTab } from "./notebooks/dataset/tabs/NumericTab";
+import { CategoricalTab } from "./notebooks/dataset/tabs/CategoricalTab";
+import QualityTab from "./notebooks/dataset/tabs/QualityTab";
+import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
+import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
+import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 
+/**
+ * Component to visualize dataset information including quality metrics, statistics, and data preview.
+ * Can be used across different modules (Notebooks, Models) with customizable action buttons.
+ * @param {Object} props
+ * @param {Object} props.dataset - Dataset object containing id, name, file_path, status, and created date
+ * @param {Function} props.onItemCreated - Callback function when a new item (notebook/session) is created
+ * @param {Function} props.onNewItem - Callback function when "New Item" button is clicked
+ * @param {string} [props.newItemButtonText="New Item"] - Custom text for the action button (e.g., "New Notebook", "New Session")
+ * @param {Array} [props.existingItems=[]] - Array of existing items (notebooks/sessions) for validation
+ */
 export default function DatasetVisualization({
   dataset,
-  onNotebookCreated,
-  existingNotebooks = [],
+  onItemCreated,
+  onNewItem,
+  newItemButtonText = "New Item",
+  existingItems = [],
 }) {
   if (!dataset) {
     return (
@@ -56,12 +66,10 @@ export default function DatasetVisualization({
     );
   }
 
-  const [showCreateNotebookModal, setShowCreateNotebookModal] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
 
   useEffect(() => {
     setTab(0);
@@ -107,32 +115,6 @@ export default function DatasetVisualization({
     },
     [dataset.file_path, dataset.status, dataset.id],
   );
-
-  const handleCreateNotebook = async (notebookData) => {
-    try {
-      const notebookPayload = {
-        name: notebookData.name,
-        description: notebookData.description,
-        dataset_id: dataset.id,
-      };
-
-      const createdNotebook = await createNotebook(notebookPayload);
-
-      enqueueSnackbar("Notebook created successfully", {
-        variant: "success",
-      });
-
-      setShowCreateNotebookModal(false);
-
-      if (onNotebookCreated) {
-        onNotebookCreated(createdNotebook);
-      }
-    } catch (error) {
-      enqueueSnackbar("Error creating notebook", {
-        variant: "error",
-      });
-    }
-  };
 
   const status = getDatasetStatus(dataset.status);
   const isProcessing = !(status === "Finished" || status === "Error");
@@ -229,26 +211,14 @@ export default function DatasetVisualization({
                 >
                   <Button
                     variant="contained"
-                    disabled={isProcessing}
-                    onClick={() => {
-                      navigate("../app/experiments", {
-                        state: { dataset: dataset },
-                      });
-                    }}
-                    endIcon={<AddIcon />}
-                    sx={{ height: "40px" }}
-                    data-tour="new-experiment-button-notebook"
-                  >
-                    New Experiment
-                  </Button>
-                  <Button
-                    variant="contained"
                     endIcon={<AddIcon />}
                     disabled={isProcessing}
                     className="new-notebook-button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowCreateNotebookModal(true);
+                      if (onNewItem) {
+                        onNewItem();
+                      }
                       if (tourContext && tourContext.run) {
                         setTimeout(() => {
                           tourContext.nextStep();
@@ -257,7 +227,7 @@ export default function DatasetVisualization({
                     }}
                     sx={{ height: "40px" }}
                   >
-                    New Notebook
+                    {newItemButtonText}
                   </Button>
                 </Grid>
               </Box>
@@ -409,18 +379,6 @@ export default function DatasetVisualization({
           </Box>
         )}
       </Box>
-
-      {/* Create Notebook Modal */}
-      <CreateNotebookModal
-        open={showCreateNotebookModal}
-        onClose={() => {
-          setShowCreateNotebookModal(false);
-        }}
-        onCreateNotebook={handleCreateNotebook}
-        dataset={dataset}
-        datasetInfo={datasetInfo}
-        existingNotebooks={existingNotebooks}
-      />
 
       <JobQueueWidget />
     </>

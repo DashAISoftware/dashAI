@@ -27,8 +27,6 @@ export default function ToolList({ tools, notebook, FormComponent }) {
   const handleToolClick = (tool) => {
     setSelectedTool(tool);
     setOpen(true);
-    console.log("Clicked tool:", tool);
-    console.log("Tour context:", tourContext);
     if (tourContext && tourContext.run) {
       setTimeout(() => {
         tourContext.nextStep();

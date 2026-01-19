@@ -96,7 +96,9 @@ class HistGradientBoostingClassifier(
 
     SCHEMA = HistGradientBoostingClassifierSchema
     DISPLAY_NAME: str = "Histogram-based Gradient Boosting"
+    DESCRIPTION: str = "Fast gradient boosting using histogram-based algorithms."
     COLOR: str = "#9575CD"
+    ICON: str = "RocketLaunch"
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)

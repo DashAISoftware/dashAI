@@ -1,33 +1,35 @@
 import api from "./api";
-import type { IExperiment } from "../types/experiment";
+import type { IModelSession } from "../types/modelSession";
 
-const endpointURL = "/v1/experiment";
+const endpointURL = "/v1/model-session";
 
-export const getExperiments = async (): Promise<IExperiment[]> => {
-  const response = await api.get<IExperiment[]>(endpointURL);
+export const getModelSessions = async (): Promise<IModelSession[]> => {
+  const response = await api.get<IModelSession[]>(endpointURL);
   return response.data;
 };
 
-export const getExperimentById = async (id: string): Promise<IExperiment> => {
-  const response = await api.get<IExperiment>(`${endpointURL}/${id}`);
+export const getModelSessionById = async (
+  id: string,
+): Promise<IModelSession> => {
+  const response = await api.get<IModelSession>(`${endpointURL}/${id}`);
   return response.data;
 };
 
-export const createExperiment = async (
+export const createModelSession = async (
   datasetId: number,
   taskName: string,
-  expName: string,
+  name: string,
   inputColumns: string[],
   outputColumns: string[],
   trainMetrics: string[],
   validationMetrics: string[],
   testMetrics: string[],
   splitsValue: JSON,
-): Promise<IExperiment> => {
+): Promise<IModelSession> => {
   const data = {
     dataset_id: datasetId,
     task_name: taskName,
-    name: expName,
+    name: name,
     input_columns: inputColumns,
     output_columns: outputColumns,
     train_metrics: trainMetrics,
@@ -36,23 +38,25 @@ export const createExperiment = async (
     splits: splitsValue,
   };
 
-  const response = await api.post<IExperiment>("/v1/experiment/", data);
+  const response = await api.post<IModelSession>("/v1/model-session/", data);
   return response.data;
 };
 
-export const updateExperiment = async ({
+export const updateModelSession = async ({
   id,
   formData,
 }: {
   id: string;
-  formData: object;
+  formData: { name?: string; dataset_id?: number; task_name?: string };
 }): Promise<object> => {
-  const response = await api.patch(`/v1/experiment/${id}`, formData);
+  const response = await api.patch(`/v1/model-session/${id}`, null, {
+    params: formData,
+  });
   return response.data;
 };
 
-export const deleteExperiment = async (id: string): Promise<object> => {
-  const response = await api.delete(`/v1/experiment/${id}`);
+export const deleteModelSession = async (id: string): Promise<object> => {
+  const response = await api.delete(`/v1/model-session/${id}`);
   return response.data;
 };
 
@@ -69,7 +73,7 @@ export const validateColumns = async (
     outputs_columns: outputColumns,
   };
   const response = await api.post<object>(
-    "/v1/experiment/validation",
+    "/v1/model-session/validation",
     formData,
   );
   return response.data;

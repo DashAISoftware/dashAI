@@ -5,9 +5,9 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
+    ModelSession,
     Run,
 )
 
@@ -48,13 +48,13 @@ def create_dummy_dataset(client: TestClient):
         db.commit()
 
 
-@pytest.fixture(scope="module", name="experiment_id", autouse=True)
-def create_experiment(client: TestClient, dataset_id: int):
+@pytest.fixture(scope="module", name="model_session_id", autouse=True)
+def create_model_session(client: TestClient, dataset_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
-        experiment = Experiment(
+        model_session = ModelSession(
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
@@ -62,25 +62,25 @@ def create_experiment(client: TestClient, dataset_id: int):
             output_columns=output_columns,
             splits=splits,
         )
-        db.add(experiment)
+        db.add(model_session)
         db.commit()
-        db.refresh(experiment)
+        db.refresh(model_session)
 
-        yield experiment.id
+        yield model_session.id
 
-        db.delete(experiment)
+        db.delete(model_session)
         db.commit()
         db.close()
 
 
 @pytest.fixture(scope="module", name="run_id_1")
-def create_run_id_1(client: TestClient, experiment_id: int):
+def create_run_id_1(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             model_name="RandomForestClassifier",
             parameters={},
             optimizer_name="OptunaOptimizer",
@@ -105,13 +105,13 @@ def create_run_id_1(client: TestClient, experiment_id: int):
 
 
 @pytest.fixture(scope="module", name="run_id_2")
-def create_run_id_2(client: TestClient, experiment_id: int):
+def create_run_id_2(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             model_name="SVC",
             parameters={},
             optimizer_name="OptunaOptimizer",

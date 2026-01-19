@@ -9,7 +9,7 @@ import RightBar from "../../components/notebooks/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
-import DatasetVisualization from "../../components/notebooks/dataset/DatasetVisualization";
+import DatasetVisualization from "../../components/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
 import {
   getDatasets,
@@ -242,6 +242,12 @@ export default function DatasetsContent() {
     setSelectedDatasetId(null);
   };
 
+  const handleNewNotebookFromDataset = () => {
+    // Keep selectedDatasetId but go to notebook creation
+    setSelectedOption("notebook");
+    setStep(1);
+  };
+
   const handleDatasetCreated = async (newDataset, datasetJob) => {
     setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
     setSelectedDatasetId(newDataset.id);
@@ -266,12 +272,9 @@ export default function DatasetsContent() {
     maxAttempts = 10,
   ) => {
     if (jobId && attempt === 1) {
-      console.log(`Setting up job polling for dataset creation job: ${jobId}`);
-
       startJobPolling(
         jobId,
         async (result) => {
-          console.log(`Dataset job completed successfully`);
           enqueueSnackbar(`Dataset "${datasetName}" created successfully`, {
             variant: "success",
           });
@@ -288,9 +291,6 @@ export default function DatasetsContent() {
               setDatasets(enrichedDatasets);
               setSelectedDatasetId(datasetId);
             } else {
-              console.log(
-                "Dataset job completed but couldn't find real dataset",
-              );
               await fetchDatasets();
               setSelectedDatasetId(datasetId);
             }
@@ -645,11 +645,38 @@ export default function DatasetsContent() {
                 }}
               >
                 <CenterBox>
-                  {selectedDatasetId ? (
+                  {step === 1 && selectedOption === "dataset" ? (
+                    <UploadDatasetSteps
+                      backHome={() => {
+                        setStep(0);
+                        setSelectedOption(null);
+                        fetchDatasets();
+                        // clear right bar when exiting
+                        setRightBarContent(null);
+                      }}
+                      handleDatasetCreated={handleDatasetCreated}
+                      existingDatasets={datasets}
+                      renderRightBar={setRightBarContent}
+                    />
+                  ) : step === 1 && selectedOption === "notebook" ? (
+                    <UploadNotebookSteps
+                      backHome={() => {
+                        setStep(0);
+                        setSelectedOption(null);
+                        fetchNotebooks();
+                      }}
+                      datasets={datasets}
+                      handleNotebookCreated={handleNotebookCreated}
+                      existingNotebooks={notebooks}
+                      preselectedDatasetId={selectedDatasetId}
+                    />
+                  ) : selectedDatasetId ? (
                     <DatasetVisualization
                       dataset={selectedDataset}
-                      onNotebookCreated={handleNotebookCreated}
-                      existingNotebooks={notebooks}
+                      onItemCreated={handleNotebookCreated}
+                      onNewItem={handleNewNotebookFromDataset}
+                      existingItems={notebooks}
+                      newItemButtonText="New notebook"
                     />
                   ) : step === 0 ? (
                     <SelectOptionMenu
@@ -675,30 +702,6 @@ export default function DatasetsContent() {
                       ]}
                       searchBar={false}
                       goToNextStep={goToNextStep}
-                    />
-                  ) : step === 1 && selectedOption === "dataset" ? (
-                    <UploadDatasetSteps
-                      backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
-                        fetchDatasets();
-                        // clear right bar when exiting
-                        setRightBarContent(null);
-                      }}
-                      handleDatasetCreated={handleDatasetCreated}
-                      existingDatasets={datasets}
-                      renderRightBar={setRightBarContent}
-                    />
-                  ) : step === 1 && selectedOption === "notebook" ? (
-                    <UploadNotebookSteps
-                      backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
-                        fetchNotebooks();
-                      }}
-                      datasets={datasets}
-                      handleNotebookCreated={handleNotebookCreated}
-                      existingNotebooks={notebooks}
                     />
                   ) : null}
                 </CenterBox>

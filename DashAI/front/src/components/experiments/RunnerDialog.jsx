@@ -219,14 +219,12 @@ function RunnerDialog({
       }
     } else {
       setExpRunning({ ...expRunning, [experiment.id]: false });
-      // Refresh to get actual status if all failed
       getRuns({ showLoading: false });
     }
   };
 
   const handleSingleRun = async (run) => {
     try {
-      // Optimistically update to "Started"
       setRows((prevRows) =>
         prevRows.map((row) =>
           row.id === run.id ? { ...row, status: "Started" } : row,
@@ -242,16 +240,12 @@ function RunnerDialog({
 
         setTrackedJobIds((prev) => new Set(prev).add(response.id));
 
-        // Start polling the job to track its progress
         startJobPolling(
           response.id,
           (result) => {
-            // On success, refresh will happen from parent's polling
-            console.log(`Run job ${response.id} completed successfully`);
             getRuns({ showLoading: false });
           },
           (result) => {
-            // On failure
             console.error(`Run job ${response.id} failed:`, result);
             enqueueSnackbar(
               `Run ${run.name} failed: ${result.error || "Unknown error"}`,
@@ -268,7 +262,6 @@ function RunnerDialog({
       enqueueSnackbar(`Error starting run ${run.name}`, {
         variant: "error",
       });
-      // Revert the status on error by refreshing
       getRuns({ showLoading: false });
     }
   };

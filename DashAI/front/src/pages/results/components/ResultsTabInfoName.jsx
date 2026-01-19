@@ -5,7 +5,6 @@ import { Grid, Typography } from "@mui/material";
 import { runNameInfo } from "../constants/runNameInfo";
 
 function ResultsTabInfoName({ runData }) {
-  console.log("Run Data in Info Name:", runData);
   return (
     <Grid>
       <Grid

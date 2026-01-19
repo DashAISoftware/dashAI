@@ -14,8 +14,13 @@ export default function UploadNotebookSteps({
   datasets,
   handleNotebookCreated,
   existingNotebooks = [],
+  preselectedDatasetId = null,
 }) {
-  const [selectedDataset, setSelectedDataset] = useState(null);
+  const [selectedDataset, setSelectedDataset] = useState(
+    preselectedDatasetId
+      ? datasets.find((d) => d.id === preselectedDatasetId) || null
+      : null,
+  );
   const { enqueueSnackbar } = useSnackbar();
 
   const { defaultName } = useMemo(() => {

@@ -48,7 +48,6 @@ export default function RunInfoModal({
           selectTypes: ["Metric", "Optimizer"],
           relatedComponent: experiment.task_name,
         });
-        console.log(components);
         const fetchedMetrics = components.filter((c) => c.type === "Metric");
         const fetchedOptimizers = components.filter(
           (c) => c.type === "Optimizer",
