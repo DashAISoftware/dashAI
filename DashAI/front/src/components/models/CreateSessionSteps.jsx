@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Stepper, Step, StepLabel } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useFormik } from "formik";
+import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
@@ -21,12 +22,39 @@ function CreateSessionSteps({
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
+  const tourContext = useTourContext();
+  const hasAdvancedTourRef = useRef(false);
 
   const [selectedDataset, setSelectedDataset] = useState(
     preselectedDatasetId
       ? datasets.find((d) => d.id === preselectedDatasetId) || null
       : null,
   );
+
+  const handleDatasetChange = (newDataset) => {
+    setSelectedDataset(newDataset);
+    if (
+      tourContext?.run &&
+      tourContext?.stepIndex === 5 &&
+      newDataset &&
+      !hasAdvancedTourRef.current
+    ) {
+      hasAdvancedTourRef.current = true;
+      const waitForElement = () => {
+        const element = document.querySelector(
+          '[data-tour="models-next-button"]',
+        );
+        if (element) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 100);
+        } else {
+          setTimeout(waitForElement, 100);
+        }
+      };
+      setTimeout(waitForElement, 200);
+    }
+  };
 
   const [newExp, setNewExp] = useState({
     name: "",
@@ -79,6 +107,22 @@ function CreateSessionSteps({
         }));
         setActiveStep(1);
         setNextEnabled(false);
+
+        if (tourContext?.run && tourContext?.stepIndex === 6) {
+          const waitForElement = () => {
+            const element = document.querySelector(
+              '[data-tour="models-validation-alert"]',
+            );
+            if (element) {
+              setTimeout(() => {
+                tourContext.nextStep();
+              }, 100);
+            } else {
+              setTimeout(waitForElement, 100);
+            }
+          };
+          setTimeout(waitForElement, 300);
+        }
       } else if (activeStep === 1) {
         await createSession();
       }
@@ -175,6 +219,11 @@ function CreateSessionSteps({
         variant: "success",
       });
 
+      if (tourContext?.run) {
+        tourContext.stopTour();
+        sessionStorage.setItem("startModelsSessionTour", "true");
+      }
+
       if (handleSessionCreated) {
         handleSessionCreated(response);
       }
@@ -191,7 +240,6 @@ function CreateSessionSteps({
   return (
     <>
       <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-        {/* Stepper */}
         <Box sx={{ p: 2 }}>
           <Stepper activeStep={activeStep}>
             {steps.map((label) => (
@@ -202,16 +250,16 @@ function CreateSessionSteps({
           </Stepper>
         </Box>
 
-        {/* Step content */}
         <Box sx={{ flexGrow: 1, overflow: "auto", p: 2 }}>
           {activeStep === 0 && (
             <SetNameAndDatasetStep
               formik={formik}
               selectedDataset={selectedDataset}
-              setSelectedDataset={setSelectedDataset}
+              setSelectedDataset={handleDatasetChange}
               datasets={datasets}
               nameError={nameError}
               selectedTask={selectedTask}
+              onDatasetChange={handleDatasetChange}
             />
           )}
           {activeStep === 1 && (
@@ -223,11 +271,11 @@ function CreateSessionSteps({
           )}
         </Box>
 
-        {/* Footer with navigation buttons */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
           <FormSchemaButtonGroup
             onCancel={handleBack}
             onFormSubmit={formik.handleSubmit}
+            dataTour="models-next-button"
             formik={{
               errors: {
                 ...(nameError ? { name: nameError } : {}),
@@ -247,7 +295,6 @@ function CreateSessionSteps({
         </Box>
       </Box>
 
-      {/* Job Queue Widget */}
       <Box
         sx={{
           position: "fixed",

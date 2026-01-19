@@ -3,6 +3,7 @@ import Joyride from "react-joyride";
 import { useTour } from "../../hooks/useTour";
 import { tours } from "../../constants/tours";
 import { tourStyles } from "./tourStyles";
+import { CustomTooltip } from "./CustomTooltip";
 
 const TourContext = createContext(null);
 export const useTourContext = () => useContext(TourContext);
@@ -50,10 +51,15 @@ export const TourProvider = ({ tourKey, children }) => {
         showSkipButton={tourData.config.showSkipButton}
         disableOverlayClose={tourData.config.disableOverlayClose}
         disableCloseOnEsc={tourData.config.disableCloseOnEsc}
+        disableScrollParentFix={true}
         locale={tourData.config.locale}
         styles={tourStyles}
+        tooltipComponent={CustomTooltip}
         scrollToFirstStep
         scrollOffset={100}
+        floaterProps={{
+          disableFlip: true,
+        }}
       />
       {children}
     </TourContext.Provider>

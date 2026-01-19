@@ -47,6 +47,7 @@ function RunCard({
   onDelete,
   onOperationsRefresh,
   explainerRefreshTrigger,
+  isLastRun = false,
 }) {
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
@@ -316,6 +317,7 @@ function RunCard({
         )}
         {canTrain && (
           <Button
+            data-tour={isLastRun ? "train-button" : undefined}
             size="small"
             startIcon={<PlayArrow />}
             onClick={() => onTrain(run)}

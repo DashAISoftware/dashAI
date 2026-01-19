@@ -345,7 +345,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   return (
     <React.Fragment>
-      <Alert severity={columnsAreValid ? "success" : "error"} sx={{ mb: 1 }}>
+      <Alert
+        severity={columnsAreValid ? "success" : "error"}
+        sx={{ mb: 1 }}
+        data-tour="models-validation-alert"
+      >
         <AlertTitle>
           {columnsAreValid
             ? "Current Input and Output columns match"
