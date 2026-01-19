@@ -17,7 +17,6 @@ import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTourContext } from "../tour/TourProvider";
 import { useTranslation } from "react-i18next";
-import { justifyContent } from "@mui/system";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
