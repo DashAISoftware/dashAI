@@ -131,9 +131,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             y_types = y.types.copy()
             ds_types.update(y_types)
         try:
-            dataset = DashAIDataset(
-                self._resampled_table, types=ds_types, splits={}
-            )
+            dataset = DashAIDataset(self._resampled_table, types=ds_types, splits={})
             return dataset
 
         except Exception as e:
