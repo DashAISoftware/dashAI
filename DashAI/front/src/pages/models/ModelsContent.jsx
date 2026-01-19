@@ -446,7 +446,7 @@ export default function ModelsContent() {
     );
 
     try {
-      await deleteExperiment(sessionId.toString());
+      await deleteModelSession(sessionId.toString());
       enqueueSnackbar(t("models:message.sessionDeleted"), {
         variant: "success",
       });
@@ -813,10 +813,10 @@ export default function ModelsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-        ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
-          : 100;
+      ? 100 - leftBarWidth
+      : rightBarVisible
+      ? 100 - rightBarWidth
+      : 100;
 
   return (
     <>
