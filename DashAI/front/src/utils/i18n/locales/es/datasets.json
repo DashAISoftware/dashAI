@@ -114,7 +114,7 @@
     "dataQuality": "Calidad de Datos",
     "dataQualityScoreTooltip": "La calidad de datos se calcula en función de la presencia de valores faltantes, duplicados y la diversidad de tipos de datos en las columnas.",
     "dataQualitySummary": "Resumen de Calidad de Datos",
-    "datasetDescription": "{{rows}} filas, {{columns}} columnas",
+    "datasetDescription": "{{rows}} Filas, {{columns}} Columnas",
     "datasetLoading": "Cargando dataset...",
     "datasetModule": "Módulo de Datasets",
     "datasetModuleSubtitle": "Sube tus datasets: Explora, analiza y transforma tus datos con herramientas avanzadas de análisis exploratorio. Crea cuadernos interactivos, genera visualizaciones y aplica transformaciones de datos de manera intuitiva.",

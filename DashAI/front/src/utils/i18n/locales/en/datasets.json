@@ -112,7 +112,7 @@
     "dataQuality": "Data Quality",
     "dataQualityScoreTooltip": "Data Quality Score is calculated based on various factors including missing values, duplicate rows, and data consistency. A higher score indicates better data quality.",
     "dataQualitySummary": "Data Quality Summary",
-    "datasetDescription": "{{rows}} rows, {{columns}} columns",
+    "datasetDescription": "{{rows}} Rows, {{columns}} Columns",
     "datasetLoading": "Loading dataset...",
     "datasetModule": "Dataset Module",
     "datasetModuleSubtitle": "Upload your datasets: Explore, analyze, and transform your data with advanced exploratory analysis tools. Create interactive notebooks, generate visualizations, and apply data transformations intuitively.",
