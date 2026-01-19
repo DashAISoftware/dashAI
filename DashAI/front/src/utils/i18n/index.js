@@ -31,6 +31,8 @@ import modelsSessionTourEN from "./locales/en/modelsSessionTour.json";
 import modelsSessionTourES from "./locales/es/modelsSessionTour.json";
 import homeEN from "./locales/en/home.json";
 import homeES from "./locales/es/home.json";
+import pluginsEN from "./locales/en/plugins.json";
+import pluginsES from "./locales/es/plugins.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -46,6 +48,7 @@ const resources = {
     models: modelsEN,
     datasets: datasetsEN,
     prediction: predictionEN,
+    plugins: pluginsEN,
     home: homeEN,
     homeTour: homeTourEN,
     datasetsTour: datasetsTourEN,
@@ -63,6 +66,7 @@ const resources = {
     models: modelsES,
     datasets: datasetsES,
     prediction: predictionES,
+    plugins: pluginsES,
     home: homeES,
     homeTour: homeTourES,
     datasetsTour: datasetsTourES,
@@ -96,6 +100,7 @@ i18n
       "notebookTour",
       "modelsTour",
       "modelsSessionTour",
+      "plugins",
     ],
     defaultNS: "common",
 
