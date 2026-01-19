@@ -923,10 +923,10 @@ export default function ModelsContent() {
                 ) : step === 2 && selectedDatasetId ? (
                   <DatasetVisualization
                     dataset={datasets.find((d) => d.id === selectedDatasetId)}
-                    onSessionCreated={handleSessionCreated}
-                    onNewSession={handleNewSessionFromDataset}
-                    existingSessions={sessions}
-                    tasks={tasks}
+                    onItemCreated={handleSessionCreated}
+                    onNewItem={handleNewSessionFromDataset}
+                    existingItems={sessions}
+                    newItemButtonText="New Session"
                   />
                 ) : step === 0 ? (
                   <SelectOptionMenu
