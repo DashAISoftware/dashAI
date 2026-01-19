@@ -19,7 +19,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
 
-import { createExperiment as createExperimentRequest } from "../../api/experiment";
+import { createModelSession as createModelSessionRequest } from "../../api/modelSession";
 import { createRun as createRunRequest } from "../../api/run";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -149,7 +149,7 @@ export default function NewExperimentModal({
       const finalExperimentName =
         newExp.name.trim() === "" ? defaultName : newExp.name.trim();
 
-      const response = await createExperimentRequest(
+      const response = await createModelSessionRequest(
         newExp.dataset.id,
         newExp.task_name,
         finalExperimentName,

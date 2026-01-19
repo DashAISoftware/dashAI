@@ -1,13 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  getRuns as getRunsRequest,
-  getHyperparameterPlot as getHyperparameterPlotRequest,
-} from "../../../api/run";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import { getExperimentById } from "../../../api/experiment";
 import { useSnackbar } from "notistack";
-import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";
 import { useNavigate } from "react-router-dom";
 import { getComponents } from "../../../api/component";
@@ -144,7 +138,7 @@ function ResultsTable({
         rows={
           experiment.id
             ? rows.filter(
-                (run) => String(run.experiment_id) === String(experiment.id),
+                (run) => String(run.model_session_id) === String(experiment.id),
               )
             : []
         }

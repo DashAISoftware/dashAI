@@ -24,10 +24,10 @@ import {
   deleteDataset,
 } from "../../api/datasets";
 import {
-  getExperiments,
-  updateExperiment,
-  deleteExperiment,
-} from "../../api/experiment";
+  getModelSessions,
+  updateModelSession,
+  deleteModelSession,
+} from "../../api/modelSession";
 import {
   getRuns,
   deleteRun,
@@ -330,7 +330,7 @@ export default function ModelsContent() {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const data = await getExperiments();
+        const data = await getModelSessions();
         setSessions(data);
       } catch (error) {
         enqueueSnackbar(t("models:error.failedToFetchSessions"), {
@@ -702,7 +702,7 @@ export default function ModelsContent() {
 
   const handleSessionEdit = async (sessionId, newName) => {
     try {
-      const result = await updateExperiment({
+      const result = await updateModelSession({
         id: sessionId,
         formData: { name: newName },
       });

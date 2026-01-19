@@ -25,7 +25,7 @@ import {
   getDatasetSample,
 } from "../../api/datasets";
 import { enqueuePredictionJob } from "../../api/job";
-import { getExperimentById } from "../../api/experiment";
+import { getModelSessionById } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getPredictions } from "../../api/predict";
@@ -48,7 +48,7 @@ export default function PredictionCreationDialog({
   const [manualRows, setManualRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [experiment, setExperiment] = useState(null);
+  const [modelSession, setModelSession] = useState(null);
   const [types, setTypes] = useState({});
   const [sample, setSample] = useState(null);
   const [loadingExperiment, setLoadingExperiment] = useState(true);
@@ -89,18 +89,16 @@ export default function PredictionCreationDialog({
         );
         setDatasets(availableDatasetsWithInfo);
 
-        if (run.experiment_id || session?.id) {
-          const experimentData = await getExperimentById(
-            run.experiment_id || session.id,
+        if (run.model_session_id || session?.id) {
+          const sessionData = await getModelSessionById(
+            run.model_session_id || session.id,
           );
-          setExperiment(experimentData);
+          setModelSession(sessionData);
 
-          const datasetTypes = await getDatasetTypes(experimentData.dataset_id);
+          const datasetTypes = await getDatasetTypes(sessionData.dataset_id);
           setTypes(datasetTypes);
 
-          const datasetSample = await getDatasetSample(
-            experimentData.dataset_id,
-          );
+          const datasetSample = await getDatasetSample(sessionData.dataset_id);
           setSample(datasetSample);
         }
       } catch (error) {
@@ -236,7 +234,7 @@ export default function PredictionCreationDialog({
                   {t("prediction:label.selectDataset")}
                 </Typography>
                 <DatasetSelector
-                  experiment={experiment}
+                  experiment={modelSession}
                   datasets={datasets}
                   selectedDataset={selectedDataset}
                   setSelectedDataset={setSelectedDataset}
@@ -245,7 +243,7 @@ export default function PredictionCreationDialog({
             ) : (
               <>
                 <ManualInput
-                  experiment={experiment}
+                  experiment={modelSession}
                   loading={loadingExperiment}
                   types={types}
                   sample={sample}
@@ -377,7 +375,7 @@ PredictionCreationDialog.propTypes = {
     id: PropTypes.number.isRequired,
     name: PropTypes.string,
     model_name: PropTypes.string,
-    experiment_id: PropTypes.number,
+    model_session_id: PropTypes.number,
   }).isRequired,
   session: PropTypes.shape({
     id: PropTypes.number,

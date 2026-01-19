@@ -1,7 +1,7 @@
 import type { IDataset } from "./dataset";
 import type { IRun } from "./run";
 
-export interface IExperiment {
+export interface IModelSession {
   id: string;
   dataset: IDataset;
   task_name: string;

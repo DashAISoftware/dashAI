@@ -44,19 +44,11 @@ function Home() {
               Icon={FileUploadIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="models-button">
             <HomeButton
               title={t("common:models")}
               description={t("home:description.models")}
               to="/app/models"
-              Icon={ScienceIcon}
-            />
-          </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="experiments-button">
-            <HomeButton
-              title={t("common:experiments")}
-              description={t("home:description.experiments")}
-              to="/app/experiments"
               Icon={ScienceIcon}
             />
           </Grid>

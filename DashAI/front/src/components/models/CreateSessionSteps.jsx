@@ -8,7 +8,7 @@ import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import JobQueueWidget from "../jobs/JobQueueWidget";
-import { createExperiment } from "../../api/experiment";
+import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
@@ -208,7 +208,7 @@ function CreateSessionSteps({
       const validationMetrics = hasValidation ? allMetricNames : [];
       const testMetrics = hasTest ? allMetricNames : [];
 
-      const response = await createExperiment(
+      const response = await createModelSession(
         newExp.dataset.id,
         newExp.task_name,
         newExp.name,

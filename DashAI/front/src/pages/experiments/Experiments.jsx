@@ -5,7 +5,7 @@ import NewExperimentModal from "../../components/experiments/NewExperimentModal"
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useLocation } from "react-router-dom";
-import { getExperiments as getExperimentsRequest } from "../../api/experiment";
+import { getModelSessions as getModelSessionsRequest } from "../../api/modelSession";
 import { getDatasets } from "../../api/datasets";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
@@ -27,7 +27,7 @@ function ExperimentsPage() {
   const getExperiments = async () => {
     setLoading(true);
     try {
-      const experimentsData = await getExperimentsRequest();
+      const experimentsData = await getModelSessionsRequest();
       setExperiments(experimentsData);
     } catch (error) {
       enqueueSnackbar(t("experiments:error.errorFetchingExperiments"), {

@@ -16,7 +16,7 @@ export const homeTourSteps = [
     spotlightClicks: true,
   },
   {
-    target: '[data-tour="experiments-button"]',
+    target: '[data-tour="models-button"]',
     content: (
       <Trans i18nKey={"homeTour:experimentsIntro"}>
         <div>

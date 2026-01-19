@@ -10,12 +10,12 @@ from kink import di, inject
 from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.api.api_v1.schemas.experiments_params import (
+from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     ColumnsValidationParams,
-    ExperimentParams,
+    ModelSessionParams,
 )
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-from DashAI.back.dependencies.database.models import Dataset, Experiment
+from DashAI.back.dependencies.database.models import Dataset, ModelSession
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.tasks.base_task import BaseTask
 
@@ -27,10 +27,10 @@ router = APIRouter()
 
 @router.get("/")
 @inject
-async def get_experiments(
+async def get_model_sessions(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Retrieve a list of the stored experiments in the database.
+    """Retrieve a list of the stored model sessions in the database.
 
     Parameters
     ----------
@@ -42,32 +42,32 @@ async def get_experiments(
     Returns
     -------
     List[dict]
-        A list of dict containing experiments.
+        A list of dict containing model sessions.
     """
     with session_factory() as db:
         try:
-            all_experiments = db.query(Experiment).all()
+            all_model_sessions = db.query(ModelSession).all()
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        return all_experiments
+        return all_model_sessions
 
 
-@router.get("/{experiment_id}")
+@router.get("/{model_session_id}")
 @inject
-async def get_experiment(
-    experiment_id: int,
+async def get_model_session(
+    model_session_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Retrieve the experiment associated with the provided ID.
+    """Retrieve the model session associated with the provided ID.
 
     Parameters
     ----------
-    experiment_id : int
-        ID of the experiment to retrieve.
+    model_session_id : int
+        ID of the model session to retrieve.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -75,15 +75,15 @@ async def get_experiment(
     Returns
     -------
     JSON
-        JSON with the specified experiment id.
+        JSON with the specified model session id.
     """
     with session_factory() as db:
         try:
-            experiment = db.get(Experiment, experiment_id)
-            if not experiment:
+            model_session = db.get(ModelSession, model_session_id)
+            if not model_session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Experiment not found",
+                    detail="Model session not found",
                 )
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -91,7 +91,7 @@ async def get_experiment(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        return experiment
+        return model_session
 
 
 @router.post("/validation")
@@ -164,24 +164,24 @@ async def validate_columns(
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
-async def create_experiment(
-    params: ExperimentParams,
+async def create_model_session(
+    params: ModelSessionParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Create a new experiment.
+    """Create a new model session.
 
     Parameters
     ----------
-    params : ExperimentParams
-        The new experiment parameters.
+    params : ModelSessionParams
+        The new model session parameters.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
 
     Returns
     -------
-    Experiment
-        The created experiment.
+    ModelSession
+        The created model session.
 
     Raises
     ------
@@ -209,7 +209,7 @@ async def create_experiment(
                     detail="Column index out of range",
                 )
 
-            experiment = Experiment(
+            model_session = ModelSession(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,
                 name=params.name,
@@ -220,10 +220,10 @@ async def create_experiment(
                 test_metrics=params.test_metrics,
                 splits=params.splits,
             )
-            db.add(experiment)
+            db.add(model_session)
             db.commit()
-            db.refresh(experiment)
-            return experiment
+            db.refresh(model_session)
+            return model_session
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -232,18 +232,18 @@ async def create_experiment(
             ) from e
 
 
-@router.delete("/{experiment_id}")
+@router.delete("/{model_session_id}")
 @inject
-async def delete_experiment(
-    experiment_id: int,
+async def delete_model_session(
+    model_session_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Delete the experiment associated with the provided ID from the database.
+    """Delete the model session associated with the provided ID from the database.
 
     Parameters
     ----------
-    experiment_id : int
-        ID of the experiment to be deleted.
+    model_session_id : int
+        ID of the model session to be deleted.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -254,13 +254,13 @@ async def delete_experiment(
     """
     with session_factory() as db:
         try:
-            experiment = db.get(Experiment, experiment_id)
-            if not experiment:
+            model_session = db.get(ModelSession, model_session_id)
+            if not model_session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Experiment not found",
+                    detail="Model session not found",
                 )
-            db.delete(experiment)
+            db.delete(model_session)
             db.commit()
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
@@ -271,21 +271,21 @@ async def delete_experiment(
             ) from e
 
 
-@router.patch("/{experiment_id}")
+@router.patch("/{model_session_id}")
 @inject
-async def update_dataset(
-    experiment_id: int,
+async def update_model_session(
+    model_session_id: int,
     dataset_id: Union[int, None] = None,
     task_name: Union[str, None] = None,
     name: Union[str, None] = None,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Update the experiment associated with the provided ID.
+    """Update the model session associated with the provided ID.
 
     Parameters
     ----------
-    experiment_id : int
-        ID of the dataset to update.
+    model_session_id : int
+        ID of the model session to update.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -293,15 +293,15 @@ async def update_dataset(
     Returns
     -------
     Dict
-        A dictionary containing the updated experiment record.
+        A dictionary containing the updated model session record.
     """
     with session_factory() as db:
         try:
-            experiment = db.get(Experiment, experiment_id)
-            if experiment is None:
+            model_session = db.get(ModelSession, model_session_id)
+            if model_session is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Experiment not found",
+                    detail="Model session not found",
                 )
 
             # Validate name if provided
@@ -315,29 +315,30 @@ async def update_dataset(
                 new_name = name.strip()
 
                 # Check if name is different from current name
-                if new_name != experiment.name:
+                if new_name != model_session.name:
                     # Check if name already exists
                     exists = db.execute(
-                        select(Experiment.id).where(
-                            Experiment.name == new_name, Experiment.id != experiment_id
+                        select(ModelSession.id).where(
+                            ModelSession.name == new_name,
+                            ModelSession.id != model_session_id,
                         )
                     ).scalar()
                     if exists:
                         raise HTTPException(
                             status_code=status.HTTP_409_CONFLICT,
-                            detail="Experiment name already exists",
+                            detail="Model session name already exists",
                         )
-                    setattr(experiment, "name", new_name)
+                    setattr(model_session, "name", new_name)
 
             if dataset_id:
-                setattr(experiment, "dataset_id", dataset_id)
+                setattr(model_session, "dataset_id", dataset_id)
             if task_name:
-                setattr(experiment, "task_name", task_name)
+                setattr(model_session, "task_name", task_name)
 
             if dataset_id or task_name or name:
                 db.commit()
-                db.refresh(experiment)
-                return experiment
+                db.refresh(model_session)
+                return model_session
             else:
                 raise HTTPException(
                     status_code=status.HTTP_304_NOT_MODIFIED,
@@ -349,7 +350,7 @@ async def update_dataset(
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Experiment name already exists",
+                detail="Model session name already exists",
             ) from e
         except exc.SQLAlchemyError as e:
             db.rollback()

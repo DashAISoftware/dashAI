@@ -20,8 +20,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useEffect, useRef, useState } from "react";
-import { getExperimentById } from "../../../api/experiment";
 import { useTranslation } from "react-i18next";
+import { getModelSessionById } from "../../../api/modelSession";
 
 export function LiveMetricsChart({ run }) {
   const { t } = useTranslation(["models", "common"]);
@@ -164,7 +164,7 @@ export function LiveMetricsChart({ run }) {
   useEffect(() => {
     let mounted = true;
 
-    getExperimentById(run.experiment_id).then((exp) => {
+    getModelSessionById(run.model_session_id).then((exp) => {
       if (!mounted) return;
 
       setAvailableMetrics({
