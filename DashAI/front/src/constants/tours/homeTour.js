@@ -15,30 +15,15 @@ export const homeTourSteps = [
     spotlightClicks: true,
   },
   {
-    target: '[data-tour="experiments-button"]',
+    target: '[data-tour="models-button"]',
     content: (
       <div>
-        <h3>Experiments</h3>
+        <h3>Models</h3>
         <p>
-          In this module you train and compare models, monitoring metrics such
-          as Accuracy, F1, Recall, and Precision.
+          In this module you can train, compare, and use your models to make
+          predictions, monitoring metrics such as Accuracy, F1, Recall, and
+          Precision.
         </p>
-      </div>
-    ),
-    placement: "bottom",
-  },
-  {
-    target: '[data-tour="predictions-button"]',
-    content: (
-      <div>
-        <h3>Predictions</h3>
-        <p>
-          This section allows you to apply a trained model to new data to obtain
-          practical results.
-        </p>
-        <div style={{ marginTop: "10px", fontSize: "12px", color: "#666" }}>
-          💡 This follows naturally after training your models in Experiments.
-        </div>
       </div>
     ),
     placement: "bottom",

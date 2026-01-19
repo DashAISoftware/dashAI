@@ -33,7 +33,7 @@ import {
 } from "../../api/predict";
 import { getDatasetInfo, exportDatasetCsvByPath } from "../../api/datasets";
 import { enqueuePredictionJob } from "../../api/job";
-import { getExperimentById } from "../../api/experiment";
+import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { getPredictionStatus } from "../../utils/predictionStatus";
@@ -118,7 +118,9 @@ export default function PredictionModal({ isOpen, onClose, run }) {
       setLoadingExperiment(true);
       try {
         if (run && run.experiment_id) {
-          const experimentData = await getExperimentById(run.experiment_id);
+          const experimentData = await getModelSessionById(
+            run.model_session_id,
+          );
           setExperiment(experimentData);
           const datasetTypes = await getDatasetTypes(experimentData.dataset_id);
           setTypes(datasetTypes);

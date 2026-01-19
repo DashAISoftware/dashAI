@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
@@ -193,12 +193,12 @@ def create_dataset_2(client: TestClient):
             db.commit()
 
 
-@pytest.fixture(scope="module", name="experiment_id", autouse=True)
-def create_experiment(client: TestClient, dataset: Dataset):
+@pytest.fixture(scope="module", name="model_session_id", autouse=True)
+def create_model_session(client: TestClient, dataset: Dataset):
     session_factory = client.app.container["session_factory"]
 
     with session_factory() as db:
-        experiment = Experiment(
+        model_session = ModelSession(
             dataset_id=dataset["id"],
             name="Experiment",
             task_name="TabularClassificationTask",
@@ -220,25 +220,25 @@ def create_experiment(client: TestClient, dataset: Dataset):
                 }
             ),
         )
-        db.add(experiment)
+        db.add(model_session)
         db.commit()
-        db.refresh(experiment)
+        db.refresh(model_session)
 
-        yield experiment.id
+        yield model_session.id
 
-        db.delete(experiment)
+        db.delete(model_session)
         db.commit()
         db.close()
 
 
 @pytest.fixture(scope="module", name="run_id")
-def create_run_id(client: TestClient, experiment_id: int):
+def create_run_id(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             optimizer_name="OptunaOptimizer",
             optimizer_parameters={
                 "n_trials": 10,

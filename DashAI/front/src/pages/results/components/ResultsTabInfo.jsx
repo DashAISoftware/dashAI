@@ -22,7 +22,7 @@ import {
   MenuItem,
   IconButton,
 } from "@mui/material";
-import { getExperimentById } from "../../../api/experiment";
+import { getModelSessionById } from "../../../api/modelSession";
 import { getComponents } from "../../../api/component";
 import { checkIfHaveOptimazers } from "../../../utils/schema";
 import FormSchemaDialog from "../../../components/shared/FormSchemaDialog";
@@ -50,7 +50,7 @@ function ResultsTabInfo({ runData, handleRun }) {
   useEffect(() => {
     const fetchMetricsAndOptimizers = async () => {
       try {
-        const experiment = await getExperimentById(runData.experiment_id);
+        const experiment = await getModelSessionById(runData.model_session_id);
         const components = await getComponents({
           selectTypes: ["Metric", "Optimizer"],
           relatedComponent: experiment.task_name,
@@ -68,7 +68,7 @@ function ResultsTabInfo({ runData, handleRun }) {
 
     const fetchExperiment = async () => {
       try {
-        const exp = await getExperimentById(runData.experiment_id);
+        const exp = await getModelSessionById(runData.model_session_id);
         experiment.current = exp;
       } catch (error) {
         console.error("Error fetching experiment:", error);

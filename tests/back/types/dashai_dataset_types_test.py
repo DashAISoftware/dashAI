@@ -8,7 +8,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
     merge_splits_with_metadata,
     modify_table,
-    prepare_for_experiment,
+    prepare_for_model_session,
     save_dataset,
     to_dashai_dataset,
 )
@@ -90,7 +90,7 @@ def test_dashai_dataset_ops_types_persistance(tmp_path):
         "stratify": False,
     }
 
-    ds_prepared, _ = prepare_for_experiment(
+    ds_prepared, _ = prepare_for_model_session(
         ds_loaded, splits=splits, output_columns=["Species"]
     )
 

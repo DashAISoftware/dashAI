@@ -343,7 +343,7 @@ RunOperations.propTypes = {
     name: PropTypes.string,
     model_name: PropTypes.string,
     status: PropTypes.number,
-    experiment_id: PropTypes.number,
+    model_session_id: PropTypes.number,
   }).isRequired,
   session: PropTypes.shape({
     id: PropTypes.number,
