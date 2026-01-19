@@ -43,7 +43,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "datasets", "common"]);
 
-  const statusText = getPredictionStatus(prediction.status);
+  const statusText = prediction.status;
 
   // Status color mapping
   const getStatusColor = (status) => {
@@ -173,7 +173,7 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
               )}
             </Box>
             <Chip
-              label={statusText}
+              label={getPredictionStatus(statusText, t)}
               color={getStatusColor(statusText)}
               size="small"
             />

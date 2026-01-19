@@ -36,7 +36,6 @@ import { enqueuePredictionJob } from "../../api/job";
 import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { useSnackbar } from "notistack";
-import { getPredictionStatus } from "../../utils/predictionStatus";
 import { useTranslation } from "react-i18next";
 
 export default function PredictionModal({ isOpen, onClose, run }) {
@@ -191,8 +190,8 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     // Predictions that are still running
     const pending = predictions.filter(
       (p) =>
-        getPredictionStatus(p.status) === 1 ||
-        getPredictionStatus(p.status) === 2,
+        p.status === 1 || // Delivered
+        p.status === 2, // Started
     );
 
     if (pending.length === 0) return;
