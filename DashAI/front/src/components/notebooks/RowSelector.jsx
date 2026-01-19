@@ -191,8 +191,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
               selectedRows.length === 0
                 ? t("datasets:label.all")
                 : selectedRows.length > 0
-                ? selectedRows.join(", ")
-                : t("datasets:label.none"),
+                  ? selectedRows.join(", ")
+                  : t("datasets:label.none"),
           })}{" "}
           | {t("datasets:label.totalRowsCount", { total: totalRows })}
         </Typography>

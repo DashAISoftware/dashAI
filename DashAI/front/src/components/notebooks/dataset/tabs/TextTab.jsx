@@ -79,8 +79,8 @@ export const TextTab = ({ textStats }) => {
                           uniquePercentage > 90
                             ? "#4caf50"
                             : uniquePercentage > 30
-                            ? "#ff9800"
-                            : "#f44336",
+                              ? "#ff9800"
+                              : "#f44336",
                         color: "white",
                         cursor: "default",
                       }}

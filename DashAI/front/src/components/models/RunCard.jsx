@@ -114,10 +114,10 @@ function RunCard({
           statusText === 3 // Finished
             ? "success.main"
             : statusText === 4 // Error
-            ? "error.main"
-            : isRunning
-            ? "info.main"
-            : "grey.500",
+              ? "error.main"
+              : isRunning
+                ? "info.main"
+                : "grey.500",
       }}
     >
       <CardContent>

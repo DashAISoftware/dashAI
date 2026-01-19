@@ -27,8 +27,8 @@ export const actionsColumns = (actions) =>
             action.alwaysEnabled
               ? false
               : !action.requiresFinished
-              ? loading
-              : params.row.status !== 3 // Finished
+                ? loading
+                : params.row.status !== 3 // Finished
           }
           loading={action.alwaysEnabled ? false : loading}
         >

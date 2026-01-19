@@ -123,16 +123,16 @@ export default function DatasetTable({
           )
             ? "number"
             : columnTypes[field] &&
-              ["bool", "boolean"].includes(
-                String(columnTypes[field].type).toLowerCase(),
-              )
-            ? "boolean"
-            : columnTypes[field] &&
-              ["date", "datetime", "timestamp"].includes(
-                String(columnTypes[field].type).toLowerCase(),
-              )
-            ? "date"
-            : "string",
+                ["bool", "boolean"].includes(
+                  String(columnTypes[field].type).toLowerCase(),
+                )
+              ? "boolean"
+              : columnTypes[field] &&
+                  ["date", "datetime", "timestamp"].includes(
+                    String(columnTypes[field].type).toLowerCase(),
+                  )
+                ? "date"
+                : "string",
         minWidth: 120,
         width: Math.max(120, field.length * 8 + 40),
         renderHeader: () => (

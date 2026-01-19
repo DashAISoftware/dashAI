@@ -20,8 +20,8 @@ function FormSchemaButtonGroup({
     (isCreateExplorer
       ? "create-explorer-button"
       : isCreateConverter
-      ? "create-converter-button"
-      : undefined);
+        ? "create-converter-button"
+        : undefined);
 
   return (
     <ButtonGroup size="large" sx={{ justifyContent: "flex-end" }}>

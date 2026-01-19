@@ -456,10 +456,10 @@ export default function DatasetsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-      ? 100 - leftBarWidth
-      : rightBarVisible
-      ? 100 - rightBarWidth
-      : 100;
+        ? 100 - leftBarWidth
+        : rightBarVisible
+          ? 100 - rightBarWidth
+          : 100;
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
