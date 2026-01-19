@@ -37,7 +37,7 @@ export default function LanguageSelector() {
           </MenuItem>
           <MenuItem value="en">
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <span>🇬🇧</span>
+              <span>🇺🇸</span>
               <span>English</span>
             </Box>
           </MenuItem>
