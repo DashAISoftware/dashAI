@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 import configurableObjectEN from "./locales/en/configurableObject.json";
 import configurableObjectES from "./locales/es/configurableObject.json";
 import commonEN from "./locales/en/common.json";
@@ -71,34 +72,36 @@ const resources = {
   },
 };
 
-i18n.use(initReactI18next).init({
-  resources,
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    supportedLngs: ["en", "es"],
+    fallbackLng: "en",
 
-  lng: "en",
-  fallbackLng: "en",
+    ns: [
+      "common",
+      "custom",
+      "configurableObject",
+      "experiments",
+      "explainers",
+      "generative",
+      "models",
+      "datasets",
+      "prediction",
+      "home",
+      "homeTour",
+      "datasetsTour",
+      "notebookTour",
+      "modelsTour",
+      "modelsSessionTour",
+    ],
+    defaultNS: "common",
 
-  ns: [
-    "common",
-    "custom",
-    "configurableObject",
-    "experiments",
-    "explainers",
-    "generative",
-    "models",
-    "datasets",
-    "prediction",
-    "home",
-    "homeTour",
-    "datasetsTour",
-    "notebookTour",
-    "modelsTour",
-    "modelsSessionTour",
-  ],
-  defaultNS: "common",
-
-  interpolation: {
-    escapeValue: false,
-  },
-});
+    interpolation: {
+      escapeValue: false,
+    },
+  });
 
 export default i18n;

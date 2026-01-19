@@ -14,6 +14,7 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
 import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -124,6 +125,7 @@ function ResponsiveAppBar() {
               </Button>
             ))}
           </Box>
+          <LanguageSelector />
         </Toolbar>
       </Container>
     </AppBar>
