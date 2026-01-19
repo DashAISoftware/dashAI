@@ -55,9 +55,9 @@ export const getDatasetInfoByFilePath = async (
   return response.data;
 };
 
-export const getExperimentsExist = async (id: number): Promise<object> => {
-  const response = await api.get<object>(
-    `${datasetEndpoint}/${id}/experiments-exist`,
+export const getModelSessionsExist = async (id: number): Promise<object> => {
+  const response = await api.get(
+    `${datasetEndpoint}/${id}/model-sessions-exist`,
   );
   return response.data;
 };

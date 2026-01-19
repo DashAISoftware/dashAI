@@ -41,7 +41,7 @@ function Home() {
               Icon={FileUploadIcon}
             />
           </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }}>
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="models-button">
             <HomeButton
               title="Models"
               description={
@@ -49,14 +49,6 @@ function Home() {
                 "organized sessions."
               }
               to="/app/models"
-              Icon={ScienceIcon}
-            />
-          </Grid>
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="experiments-button">
-            <HomeButton
-              title="Experiments"
-              description="Create and manage and view the status of your experiments."
-              to="/app/experiments"
               Icon={ScienceIcon}
             />
           </Grid>
