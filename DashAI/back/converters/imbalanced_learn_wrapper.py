@@ -132,7 +132,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             ds_types.update(y_types)
         try:
             dataset = DashAIDataset(
-                self._resampled_table, types=ds_types, splits=x.splits
+                self._resampled_table, types=ds_types, splits={}
             )
             return dataset
 
