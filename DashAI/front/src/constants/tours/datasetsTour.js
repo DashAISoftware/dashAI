@@ -197,8 +197,9 @@ export const datasetsTourSteps = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "left",
     disableBeacon: true,
+    spotlightClicks: true,
   },
   {
     target: '[data-tour="dataset-step-upload-button"]',
