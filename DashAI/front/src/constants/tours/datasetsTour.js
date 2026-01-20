@@ -102,6 +102,7 @@ export const datasetsTourSteps = [
     spotlightClicks: true,
     hideFooter: true,
     disableOverlayClose: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="csv-dataloader-option"]',
@@ -124,6 +125,7 @@ export const datasetsTourSteps = [
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="dataloader-step-next-button"]',
@@ -140,6 +142,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
 
   {
@@ -161,6 +164,7 @@ export const datasetsTourSteps = [
     placement: "left",
     disableBeacon: true,
     spotlightClicks: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="dataloader-config"]',

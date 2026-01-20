@@ -49,9 +49,13 @@ export default function SelectDataloaderStep({
   const handleNext = () => {
     if (tourContext?.run) {
       goToNextStep();
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 1500);
+      const observer = new MutationObserver(() => {
+        if (document.querySelector('[data-tour="upload-area"]')) {
+          observer.disconnect();
+          tourContext.nextStep();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
     } else {
       goToNextStep();
     }

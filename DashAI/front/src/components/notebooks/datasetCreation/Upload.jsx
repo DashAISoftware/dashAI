@@ -339,7 +339,13 @@ function Upload({
   );
 
   return (
-    <Grid container direction="column" rowSpacing={1} sx={{ width: "100%" }}>
+    <Grid
+      container
+      direction="column"
+      rowSpacing={1}
+      sx={{ width: "100%" }}
+      data-tour="upload-area"
+    >
       {/* state text */}
       <Grid sx={{ textAlign: "center" }}>
         <DialogContentText>
