@@ -42,16 +42,6 @@ export default function ConfigureAndUploadDatasetStep({
     }
   }, [previewError, enqueueSnackbar]);
 
-  useEffect(() => {
-    if (formSubmitRef.current && tourContext?.run) {
-      setTimeout(() => {
-        if (formSubmitRef.current?.setFieldValue) {
-          formSubmitRef.current.setFieldValue("name", "Personality Dataset");
-        }
-      }, 100);
-    }
-  }, [tourContext, selectedDataloader]);
-
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
       enqueueSnackbar("No dataset file available", {
