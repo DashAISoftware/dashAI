@@ -238,33 +238,37 @@ async def get_components(
 @inject
 def get_component_by_id(
     id: str,
+    accept_language: str | None = Header(default=None),
     component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
-    """Return an specific component using its id (the id is the component class name).
+    """Return a specific component using its id (the id is the component class name).
 
-        Parameters
-        ----------
-        id : str
-            A component identificator
+    Parameters
+    ----------
+    id : str
+        A component identificator
+    accept_language : str | None
+        The 'Accept-Language' header from the request to localize multilingual
+        strings in the component schema, by default None.
     component_registry : ComponentRegistry
-            The current app component registry provided by dependency injection.
+        The current app component registry provided by dependency injection.
 
-        Returns
-        -------
-        dict
-            The retrieved component dict.
+    Returns
+    -------
+    dict
+        The retrieved component dict.
 
-        Raises
-        ------
-        HTTPException
-            If the id does not exists in the registry.
+    Raises
+    ------
+    HTTPException
+        If the id does not exists in the registry.
     """
     if id not in component_registry:
         raise HTTPException(
             status_code=404,
             detail=f"Component {id} not found in the registry.",
         )
-    return _delete_class(component_registry[id])
+    return _filter_by_language(_delete_class(component_registry[id]), accept_language)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
