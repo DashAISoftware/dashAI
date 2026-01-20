@@ -5,12 +5,13 @@ import logging
 from typing import Any, Dict, List, Union
 
 import requests
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from kink import di, inject
 from typing_extensions import Annotated
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry import ComponentRegistry
 
 logging.basicConfig(level=logging.DEBUG)
@@ -31,6 +32,51 @@ def _intersect_component_lists(
     return selected_components
 
 
+def _filter_by_language(
+    component_dict: Dict[str, Any], language: str | None = None
+) -> Dict[str, Any]:
+    """
+    Recursively filters MultilingualString objects in the component dictionary,
+    returning only the string value for the specified language.
+
+    Parameters
+    ----------
+    component_dict : Dict[str, Any]
+        The component dictionary potentially containing MultilingualString objects
+    language : str | None, optional
+        The language code (e.g., 'en', 'es'). If None, defaults to 'en'
+
+    Returns
+    -------
+    Dict[str, Any]
+        The component dictionary with MultilingualString objects replaced by plain strings
+    """
+    if language is None:
+        language = "en"
+
+    # Extract just the language code (e.g., 'en' from 'en-US')
+    lang_code = language.split("-")[0].lower() if language else "en"
+
+    def process_value(value):
+        # If it's a MultilingualString, use its get method
+        if isinstance(value, MultilingualString):
+            return value.get(lang_code)
+
+        # If it's a dictionary, recursively process it
+        elif isinstance(value, dict):
+            return {k: process_value(v) for k, v in value.items()}
+
+        # If it's a list, recursively process each item
+        elif isinstance(value, list):
+            return [process_value(item) for item in value]
+
+        # Otherwise, return the value as-is
+        else:
+            return value
+
+    return process_value(component_dict)
+
+
 def _delete_class(component_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in component_dict.items() if key != "class"}
 
@@ -40,6 +86,7 @@ def _delete_class(component_dict: Dict[str, Any]) -> Dict[str, Any]:
 async def get_components(
     select_types: Annotated[Union[List[str], None], Query()] = None,
     ignore_types: Annotated[Union[List[str], None], Query()] = None,
+    accept_language: str | None = Header(default=None),
     related_component: Union[str, None] = None,
     component_parent: Union[str, None] = None,
     has_related_of_type: Union[str, None] = None,
@@ -64,6 +111,9 @@ async def get_components(
         If specified, the function return every components that is not that extend
         the provided types (e.g., task, model, dataloader, etc...).
         If None, the method returns all components in the registry, by default None.
+    accept_language: str | None = Header(default=None)
+        The 'Accept-Language' header from the request to localize multilingual
+        strings in the component schemas, by default None.
     related_component : Union[str , None], optional
         If specified, the function return only the components related with
         the specified compatible component, (usually some task. as
@@ -179,7 +229,8 @@ async def get_components(
         )
 
     return [
-        _delete_class(component_dict) for component_dict in selected_components.values()
+        _filter_by_language(_delete_class(component_dict), accept_language)
+        for component_dict in selected_components.values()
     ]
 
 
