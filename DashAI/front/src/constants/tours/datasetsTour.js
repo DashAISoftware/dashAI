@@ -1,5 +1,3 @@
-import React from "react";
-
 export const datasetsTourSteps = [
   {
     target: "body",
@@ -126,6 +124,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     disableBackButton: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="dataloader-step-next-button"]',
@@ -165,6 +164,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="dataloader-config"]',
@@ -220,6 +220,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
 
   {
@@ -254,6 +255,7 @@ export const datasetsTourSteps = [
     spotlightClicks: true,
     disableOverlayClose: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: ".notebook-note-box",
@@ -270,12 +272,13 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     disableOverlayClose: true,
     disableCloseOnEsc: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="create-notebook-button"]',
     content: (
       <div>
-        <h3>Finish the Process</h3>
+        <h3>Finish the Process 🎉</h3>
         <p>
           Click "Create Notebook" to start working with your data in an
           interactive environment.
@@ -290,6 +293,7 @@ export const datasetsTourSteps = [
     spotlightClicks: true,
     disableOverlayClose: true,
     disableBeacon: true,
+    isInteractive: true,
   },
 ];
 

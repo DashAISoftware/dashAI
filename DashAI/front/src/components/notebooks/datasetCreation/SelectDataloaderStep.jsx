@@ -93,7 +93,15 @@ export default function SelectDataloaderStep({
           <ItemSelectorWithInfo
             itemsList={dataloaders}
             selectedItem={selectedDataloader}
-            setSelectedItem={setSelectedDataloader}
+            setSelectedItem={(item) => {
+              setSelectedDataloader(item);
+              if (
+                tourContext?.run &&
+                item?.name?.toLowerCase().includes("csv")
+              ) {
+                tourContext.nextStep();
+              }
+            }}
             data-tour="csv-dataloader-option"
           />
         )}

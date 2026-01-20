@@ -8,6 +8,7 @@ import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function UploadNotebookSteps({
   backHome,
@@ -22,6 +23,7 @@ export default function UploadNotebookSteps({
       : null,
   );
   const { enqueueSnackbar } = useSnackbar();
+  const tourContext = useTourContext();
 
   const { defaultName } = useMemo(() => {
     if (!selectedDataset) {
@@ -61,6 +63,9 @@ export default function UploadNotebookSteps({
           variant: "success",
         });
         handleNotebookCreated(createdNotebook);
+        if (tourContext?.run) {
+          tourContext.stopTour();
+        }
       } catch (error) {
         console.error("Error creating notebook:", error);
         enqueueSnackbar("Error creating notebook", { variant: "error" });

@@ -3,7 +3,6 @@ import { Grid, CircularProgress } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
-import DataloaderConfiguration from "./DataloaderConfiguration";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { useTourContext } from "../../tour/TourProvider";
 
@@ -85,9 +84,7 @@ export default function ConfigureAndUploadDatasetStep({
         handleDatasetCreated(data, job);
 
         if (tourContext?.run) {
-          setTimeout(() => {
-            tourContext.nextStep();
-          }, 500);
+          tourContext.nextStep();
         }
       } catch (err) {
         console.error("Error enqueuing dataset job:", err);
