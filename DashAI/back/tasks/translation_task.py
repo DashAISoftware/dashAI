@@ -4,6 +4,7 @@ from typing import List, Union
 
 from datasets import DatasetDict
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.value_types import Text
@@ -20,12 +21,20 @@ class TranslationTask(BaseTask):
         "inputs_cardinality": 1,
         "outputs_cardinality": 1,
     }
-    DESCRIPTION: str = """
+    DESCRIPTION: str = MultilingualString(
+        en="""
     The translation task is natural language processing (NLP) task that involves
     converting text or speech from one language into another language while
     preserving the meaning and context.
-    """
-    DISPLAY_NAME: str = "Translation"
+    """,
+        es="""
+    La tarea de traducción es una tarea de procesamiento de lenguaje natural (PLN)
+    que implica convertir texto o habla de un idioma a otro idioma mientras se
+    preserva el significado y el contexto.
+    """,
+    )
+
+    DISPLAY_NAME: str = MultilingualString(en="Translation", es="Traducción")
 
     def prepare_for_task(
         self,
