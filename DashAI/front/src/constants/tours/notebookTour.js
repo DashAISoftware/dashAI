@@ -72,6 +72,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="column-selector-explorer-container"]',
@@ -91,9 +92,12 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    disableScrolling: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="explorer-parameters"]',
@@ -110,8 +114,10 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
+    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
+    disableScrolling: true,
   },
   {
     target: '[data-tour="create-explorer-button"]',
@@ -124,12 +130,14 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "left",
+    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlayClose: true,
     disableOverlay: true,
     hideFooter: true,
+    disableScrolling: true,
+    isInteractive: true,
   },
   {
     target: ".explorer-box",
@@ -148,6 +156,7 @@ export const notebookTourSteps = [
     ),
     placement: "left",
     disableBeacon: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="converters-tab"]',
@@ -167,6 +176,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="label-encoder-converter"]',
