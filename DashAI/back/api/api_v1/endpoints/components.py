@@ -49,7 +49,8 @@ def _filter_by_language(
     Returns
     -------
     Dict[str, Any]
-        The component dictionary with MultilingualString objects replaced by plain strings
+        The component dictionary with MultilingualString objects
+        replaced by plain strings
     """
     if language is None:
         language = "en"
