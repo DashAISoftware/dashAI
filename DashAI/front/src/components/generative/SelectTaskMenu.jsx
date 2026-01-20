@@ -12,7 +12,7 @@ export default function SelectTaskMenu({ goToNextStep }) {
 
   useEffect(() => {
     getGenerativeTask().then(setTasks);
-  }, []);
+  }, [t]);
 
   const [search, setSearch] = useState("");
 
