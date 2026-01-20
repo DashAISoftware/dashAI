@@ -677,6 +677,7 @@ export default function DatasetsContent() {
                       onNewItem={handleNewNotebookFromDataset}
                       existingItems={notebooks}
                       newItemButtonText="New notebook"
+                      tourContextType="datasets"
                     />
                   ) : step === 0 ? (
                     <SelectOptionMenu

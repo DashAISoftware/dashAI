@@ -98,7 +98,10 @@ export default function UploadNotebookSteps({
 
   return (
     <CustomLayout title={"Create a New Notebook"} subtitle={""} padding={0}>
-      <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
+      <NoteBox
+        message="A copy of the selected dataset will be created to work in the notebook without altering the original."
+        className="notebook-note-box"
+      />
       <Typography
         variant="h6"
         sx={{

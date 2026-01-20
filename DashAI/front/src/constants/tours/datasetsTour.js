@@ -234,9 +234,10 @@ export const datasetsTourSteps = [
       </div>
     ),
     placement: "right",
+    disableBackButton: true,
   },
   {
-    target: ".new-notebook-button",
+    target: '[data-tour="datasets-new-notebook-button"]',
     content: (
       <div>
         <h3>Next Steps: Create a Notebook</h3>

@@ -54,6 +54,7 @@ export default function DatasetVisualization({
   onNewItem,
   newItemButtonText = "New Item",
   existingItems = [],
+  tourContextType = null,
 }) {
   if (!dataset) {
     return (
@@ -214,15 +215,30 @@ export default function DatasetVisualization({
                     endIcon={<AddIcon />}
                     disabled={isProcessing}
                     className="new-notebook-button"
+                    {...(tourContextType === "datasets"
+                      ? { "data-tour": "datasets-new-notebook-button" }
+                      : {})}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onNewItem) {
                         onNewItem();
                       }
                       if (tourContext && tourContext.run) {
-                        setTimeout(() => {
-                          tourContext.nextStep();
-                        }, 200);
+                        // Esperar a que .notebook-note-box esté en el DOM
+                        const waitForNoteBox = (attempts = 0) => {
+                          const noteBox =
+                            document.querySelector(".notebook-note-box");
+                          if (noteBox) {
+                            tourContext.nextStep();
+                          } else if (attempts < 30) {
+                            // espera hasta 3s
+                            setTimeout(() => waitForNoteBox(attempts + 1), 100);
+                          } else {
+                            // fallback: avanzar igual después de 3s
+                            tourContext.nextStep();
+                          }
+                        };
+                        waitForNoteBox();
                       }
                     }}
                     sx={{ height: "40px" }}
