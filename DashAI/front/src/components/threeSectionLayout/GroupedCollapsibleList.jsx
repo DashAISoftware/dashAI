@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Typography, Collapse } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ItemBox from "./ItemBox";
@@ -16,6 +17,7 @@ export default function GroupedCollapsibleList({
   getItemDescription,
   initialOpenGroups = {},
 }) {
+  const theme = useTheme();
   const [openGroups, setOpenGroups] = useState(initialOpenGroups);
 
   const toggleGroup = (groupName) => {
@@ -57,16 +59,20 @@ export default function GroupedCollapsibleList({
           top: 0,
           zIndex: 10,
           borderRadius: 1,
-          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+          "&:hover": { bgcolor: theme.palette.ui.hover },
         }}
       >
-        {Icon && <Icon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />}
-        <Typography>{title}</Typography>
+        {Icon && (
+          <Icon
+            sx={{ color: theme.palette.accent.cyan, mr: 1, fontSize: 20 }}
+          />
+        )}
+        <Typography color="text.primary">{title}</Typography>
         <Box
           sx={{
             ml: 1,
-            bgcolor: "#374151",
-            color: "white",
+            bgcolor: theme.palette.ui.scrollbar,
+            color: theme.palette.text.primary,
             borderRadius: "50%",
             width: 20,
             height: 20,
@@ -87,10 +93,12 @@ export default function GroupedCollapsibleList({
           overflow: "auto",
           "&::-webkit-scrollbar": { width: "6px" },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#374151",
+            backgroundColor: theme.palette.ui.scrollbar,
             borderRadius: "3px",
           },
-          "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#4B5563" },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: theme.palette.ui.scrollbarHover,
+          },
           overflowY: "auto",
         }}
       >
@@ -106,18 +114,18 @@ export default function GroupedCollapsibleList({
                 px: 1,
                 borderRadius: 1,
                 "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                  bgcolor: theme.palette.ui.hover,
                 },
               }}
               onClick={() => toggleGroup(groupName)}
             >
               {openGroups[groupName] ? (
                 <KeyboardArrowDownIcon
-                  sx={{ fontSize: 20, color: "#16FFFF" }}
+                  sx={{ fontSize: 20, color: theme.palette.accent.cyan }}
                 />
               ) : (
                 <KeyboardArrowRightIcon
-                  sx={{ fontSize: 20, color: "#16FFFF" }}
+                  sx={{ fontSize: 20, color: theme.palette.accent.cyan }}
                 />
               )}
               <Typography
@@ -132,14 +140,15 @@ export default function GroupedCollapsibleList({
                   whiteSpace: "nowrap",
                   flex: 1,
                 }}
+                color="text.primary"
               >
                 {groupName}
               </Typography>
               <Box
                 sx={{
                   ml: 1,
-                  bgcolor: "#374151",
-                  color: "white",
+                  bgcolor: theme.palette.ui.scrollbar,
+                  color: theme.palette.text.primary,
                   borderRadius: "50%",
                   width: 20,
                   height: 20,
@@ -179,7 +188,7 @@ export default function GroupedCollapsibleList({
                 ) : (
                   <Typography
                     sx={{
-                      color: "#ffffff",
+                      color: theme.palette.text.primary,
                       opacity: 0.5,
                       textAlign: "center",
                       p: 2,

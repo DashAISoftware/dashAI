@@ -1,6 +1,6 @@
 // columns that are common to all runs
 import React from "react";
-import { styled } from "@mui/material";
+import { styled, useTheme } from "@mui/material";
 import { formatDate, getColorByStatus } from "../../../utils";
 
 // style for the cells in the initial columns
@@ -10,6 +10,13 @@ const StyledCell = styled("div")(({ theme, color }) => ({
   borderRadius: theme.shape.borderRadius,
   backgroundColor: color,
 }));
+
+// Component for status cell to properly use theme hook
+const StatusCell = ({ value }) => {
+  const theme = useTheme();
+  const color = getColorByStatus(value, theme);
+  return <StyledCell color={color}>{value}</StyledCell>;
+};
 
 export const initialColumns = [
   {
@@ -33,11 +40,7 @@ export const initialColumns = [
     field: "status",
     headerName: "Status",
     minWidth: 100,
-    renderCell: (params) => {
-      const color = getColorByStatus(params.value);
-
-      return <StyledCell color={color}>{params.value}</StyledCell>;
-    },
+    renderCell: (params) => <StatusCell value={params.value} />,
   },
   // {
   //   field: "created",

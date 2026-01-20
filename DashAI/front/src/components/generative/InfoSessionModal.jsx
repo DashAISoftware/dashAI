@@ -10,8 +10,10 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
+import { useTheme } from "@mui/material/styles";
 
 export default function InfoSessionModal({ sessionData, open, onClose }) {
+  const theme = useTheme();
   // Format date for display
   const formatDate = (dateString) => {
     try {
@@ -91,7 +93,9 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
             />
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Model:{" "}
-              <span style={{ color: "#fff" }}>{sessionData.model_name}</span>
+              <span style={{ color: theme.palette.text.primary }}>
+                {sessionData.model_name}
+              </span>
             </Typography>
           </Box>
 

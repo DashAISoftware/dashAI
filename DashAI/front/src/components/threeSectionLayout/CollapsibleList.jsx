@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Typography, Collapse } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -17,6 +18,7 @@ export default function CollapsibleList({
   Icon = FolderIcon,
   getItemDescription,
 }) {
+  const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
   const count = items?.length ?? 0;
 
@@ -46,11 +48,11 @@ export default function CollapsibleList({
           py: 0.5,
           px: 1,
           borderRadius: 1,
-          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+          "&:hover": { bgcolor: theme.palette.ui.hover },
         }}
         onClick={() => setOpen((v) => !v)}
       >
-        <Icon sx={{ fontSize: 20, color: "#00BEBB", mr: 1 }} />
+        <Icon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 1 }} />
 
         <Typography
           sx={{
@@ -62,6 +64,7 @@ export default function CollapsibleList({
             flex: 1,
           }}
           title={title}
+          color="text.primary"
         >
           {title}
         </Typography>
@@ -69,8 +72,8 @@ export default function CollapsibleList({
         <Box
           sx={{
             mr: 1,
-            bgcolor: "#374151",
-            color: "white",
+            bgcolor: theme.palette.ui.scrollbar,
+            color: theme.palette.text.primary,
             borderRadius: "50%",
             width: 20,
             height: 20,
@@ -84,9 +87,13 @@ export default function CollapsibleList({
         </Box>
 
         {open ? (
-          <KeyboardArrowDownIcon sx={{ fontSize: 20, color: "#00BEBB" }} />
+          <KeyboardArrowDownIcon
+            sx={{ fontSize: 20, color: theme.palette.primary.main }}
+          />
         ) : (
-          <KeyboardArrowRightIcon sx={{ fontSize: 20, color: "#00BEBB" }} />
+          <KeyboardArrowRightIcon
+            sx={{ fontSize: 20, color: theme.palette.primary.main }}
+          />
         )}
       </Box>
 
@@ -97,10 +104,12 @@ export default function CollapsibleList({
         sx={{
           "&::-webkit-scrollbar": { width: "6px" },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: "#374151",
+            backgroundColor: theme.palette.ui.scrollbar,
             borderRadius: "3px",
           },
-          "&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#4B5563" },
+          "&::-webkit-scrollbar-thumb:hover": {
+            backgroundColor: theme.palette.ui.scrollbarHover,
+          },
           overflowY: "auto",
         }}
       >
@@ -125,7 +134,12 @@ export default function CollapsibleList({
             ))
           ) : (
             <Typography
-              sx={{ color: "#ffffff", opacity: 0.5, textAlign: "center", p: 2 }}
+              sx={{
+                color: theme.palette.text.primary,
+                opacity: 0.5,
+                textAlign: "center",
+                p: 2,
+              }}
             >
               No items found
             </Typography>

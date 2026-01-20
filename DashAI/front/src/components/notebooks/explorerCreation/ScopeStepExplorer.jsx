@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import ColumnSelector from "../ColumnSelector";
 import { useTourContext } from "../../tour/TourProvider";
@@ -10,6 +11,7 @@ export default function ScopeStepExplorer({
   setScopeColumns,
   nextStep,
 }) {
+  const theme = useTheme();
   const [isSelectionValid, setIsSelectionValid] = useState(false);
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
   const restrictedDtypes = tool?.metadata?.restricted_dtypes || [];
@@ -41,7 +43,10 @@ export default function ScopeStepExplorer({
         <Typography variant="subtitle2" gutterBottom>
           Step 1: Select Scope
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary, mb: 1 }}
+        >
           Select the columns to be used by the explorer.
         </Typography>
 

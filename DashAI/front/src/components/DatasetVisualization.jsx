@@ -12,6 +12,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   AddCircleOutline as AddIcon,
   CheckCircle as CheckIcon,
@@ -55,12 +56,14 @@ export default function DatasetVisualization({
   newItemButtonText = "New Item",
   existingItems = [],
 }) {
+  const theme = useTheme();
+
   if (!dataset) {
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
         <Typography>Loading...</Typography>
       </Box>
     );
@@ -250,7 +253,7 @@ export default function DatasetVisualization({
             {/* Tabs */}
             <Tabs
               sx={{
-                bgcolor: "#2C2C2C",
+                bgcolor: theme.palette.ui.box,
                 borderRadius: 1,
                 minHeight: "48px",
                 "& .MuiTabs-indicator": {
@@ -264,12 +267,12 @@ export default function DatasetVisualization({
                   border: "1px solid transparent",
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.05)",
+                    bgcolor: theme.palette.action.hover,
                   },
                   "&.Mui-disabled": {
-                    color: "rgb(150, 150, 150)",
-                    bgcolor: "rgb(32, 32, 32)",
-                    borderColor: "rgb(39, 39, 42)",
+                    color: theme.palette.text.disabled,
+                    bgcolor: theme.palette.ui.disabled,
+                    borderColor: theme.palette.ui.border,
                     opacity: 0.6,
                     cursor: "not-allowed",
                     filter: "grayscale(0.6)",
@@ -367,7 +370,7 @@ export default function DatasetVisualization({
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <CircularProgress color="primary" />
             <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"

@@ -2,6 +2,7 @@ import React from "react";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
+import { useTheme } from "@mui/material/styles";
 import { useFormSchemaStore } from "../../contexts/schema";
 
 /**
@@ -9,6 +10,7 @@ import { useFormSchemaStore } from "../../contexts/schema";
  */
 
 function FormSchemaBreadScrumbs() {
+  const theme = useTheme();
   const { properties, removeLastProperty } = useFormSchemaStore();
 
   const handleRemoveLastProperty = (index) => {
@@ -32,7 +34,7 @@ function FormSchemaBreadScrumbs() {
   return (
     <Breadcrumbs maxItems={2} aria-label="breadcrumb">
       {linkedProperties}
-      <Typography color="text.primary">
+      <Typography sx={{ color: theme.palette.text.primary }}>
         {properties[properties.length - 1]?.label}
       </Typography>
     </Breadcrumbs>

@@ -9,6 +9,7 @@ import {
   ToggleButton,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ViewList, ViewModule } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import TransformIcon from "@mui/icons-material/Transform";
@@ -26,6 +27,7 @@ import { useExplorersAndConverters } from "./context/ExplorersAndConvertersConte
 import { ChevronRight } from "@mui/icons-material";
 
 export default function RightBar({ notebook, onToggle }) {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
@@ -289,7 +291,7 @@ export default function RightBar({ notebook, onToggle }) {
         <Box
           sx={{
             p: 2,
-            borderBottom: "1px solid #333",
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
             display: "flex",
@@ -297,7 +299,9 @@ export default function RightBar({ notebook, onToggle }) {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">Analysis Tools</Typography>
+          <Typography variant="h6" color="text.primary">
+            Analysis Tools
+          </Typography>
           <IconButton
             size="small"
             onClick={onToggle}
@@ -346,7 +350,13 @@ export default function RightBar({ notebook, onToggle }) {
               className="explorer-converter-box"
             >
               {/* Search bar */}
-              <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: `1px solid ${theme.palette.ui.border}`,
+                  flexShrink: 0,
+                }}
+              >
                 <SearchBar
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -362,14 +372,11 @@ export default function RightBar({ notebook, onToggle }) {
                   alignItems: "center",
                   px: 2,
                   py: 1,
-                  borderBottom: "1px solid #333",
+                  borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{ color: "rgb(161, 161, 170)" }}
-                >
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   View mode
                 </Typography>
                 <ToggleButtonGroup
@@ -379,11 +386,12 @@ export default function RightBar({ notebook, onToggle }) {
                   size="small"
                   sx={{
                     "& .MuiToggleButton-root": {
-                      color: "rgb(161, 161, 170)",
-                      border: "1px solid rgb(39, 39, 42)",
+                      color: "text.secondary",
+                      border: "1px solid",
+                      borderColor: theme.palette.ui.border,
                       "&.Mui-selected": {
-                        bgcolor: "rgb(39, 39, 42)",
-                        color: "rgb(6, 182, 212)",
+                        bgcolor: theme.palette.ui.border,
+                        color: theme.palette.accent.main,
                       },
                     },
                   }}

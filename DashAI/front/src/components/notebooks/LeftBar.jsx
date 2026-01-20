@@ -93,7 +93,7 @@ export default function DatasetsNotebooksBar({
           <ChevronLeft />
         </IconButton>
       </Box>
-      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+      <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
@@ -118,7 +118,7 @@ export default function DatasetsNotebooksBar({
         />
       </Box>
 
-      <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+      <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
@@ -134,7 +134,7 @@ export default function DatasetsNotebooksBar({
           getItemDescription={getDatasetDescription}
         />
 
-        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
         <CollapsibleList
           items={filteredNotebooks}

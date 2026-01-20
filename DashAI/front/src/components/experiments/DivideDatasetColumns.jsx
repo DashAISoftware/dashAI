@@ -8,6 +8,7 @@ import {
   Box,
   Chip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getColorByColumnType } from "../../utils";
 
 function DivideDatasetColumns({
@@ -23,6 +24,8 @@ function DivideDatasetColumns({
   outputHelperText = "",
   disabled = false,
 }) {
+  const theme = useTheme();
+
   const handleInputAutocompleteChange = (event, newValue) => {
     onInputColumnNamesChange(newValue);
   };
@@ -43,7 +46,7 @@ function DivideDatasetColumns({
     const { key, ...otherProps } = props;
     const columnType = columnTypes[option];
     const typeColor = columnType?.type
-      ? getColorByColumnType(columnType.type)
+      ? getColorByColumnType(columnType.type, theme)
       : null;
 
     return (
@@ -76,7 +79,7 @@ function DivideDatasetColumns({
       const { key, ...tagProps } = getTagProps({ index });
       const columnType = columnTypes[option];
       const typeColor = columnType?.type
-        ? getColorByColumnType(columnType.type)
+        ? getColorByColumnType(columnType.type, theme)
         : null;
 
       const label =

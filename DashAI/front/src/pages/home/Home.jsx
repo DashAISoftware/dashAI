@@ -20,10 +20,15 @@ function Home() {
     <TourProvider tourKey={TOUR_KEYS.HOME}>
       <CustomLayout>
         {/* Title */}
-        <Typography variant="h3" component="h1" sx={{ mb: 6 }}>
+        <Typography
+          variant="h3"
+          component="h1"
+          color="text.primary"
+          sx={{ mb: 6 }}
+        >
           Welcome to DashAI!
         </Typography>
-        <Typography variant="h5" component="h2">
+        <Typography variant="h5" component="h2" color="text.primary">
           Getting started
         </Typography>
         <Grid
@@ -73,7 +78,12 @@ function Home() {
             />
           </Grid>
         </Grid>
-        <Typography variant="h5" component="h2" sx={{ mt: 6 }}>
+        <Typography
+          variant="h5"
+          component="h2"
+          color="text.primary"
+          sx={{ mt: 6 }}
+        >
           Advanced
         </Typography>
         <Grid

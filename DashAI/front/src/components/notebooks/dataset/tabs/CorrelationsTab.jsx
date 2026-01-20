@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, CardContent, Card } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   BarChart,
   Bar,
@@ -12,6 +13,7 @@ import {
 } from "recharts";
 
 const CorrelationsTab = ({ correlations }) => {
+  const theme = useTheme();
   const corrData = [];
   Object.entries(correlations).forEach(([col1, corrs]) => {
     Object.entries(corrs).forEach(([col2, value]) => {
@@ -26,7 +28,7 @@ const CorrelationsTab = ({ correlations }) => {
 
   return (
     <Card>
-      <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+      <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
         <Typography variant="h6" fontWeight="bold" mb={3}>
           Correlation Analysis
         </Typography>
@@ -39,17 +41,21 @@ const CorrelationsTab = ({ correlations }) => {
               <YAxis domain={[-1, 1]} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#121212",
+                  backgroundColor: theme.palette.background.paper,
                   borderRadius: 4,
-                  color: "#ffffff",
+                  color: theme.palette.text.primary,
                 }}
-                labelStyle={{ color: "#ffffff" }}
+                labelStyle={{ color: theme.palette.text.primary }}
               />
-              <Bar dataKey="correlation" fill="#3b82f6">
+              <Bar dataKey="correlation" fill={theme.palette.info.main}>
                 {corrData.map((entry, index) => (
                   <Cell
                     key={index}
-                    fill={entry.correlation > 0 ? "#10b981" : "#ef4444"}
+                    fill={
+                      entry.correlation > 0
+                        ? theme.palette.success.main
+                        : theme.palette.error.main
+                    }
                   />
                 ))}
               </Bar>
@@ -71,7 +77,10 @@ const CorrelationsTab = ({ correlations }) => {
                   alignItems="center"
                   justifyContent="space-between"
                   p={2}
-                  sx={{ backgroundColor: "#363636", borderRadius: 2 }}
+                  sx={{
+                    backgroundColor: theme.palette.ui.panelMedium,
+                    borderRadius: 2,
+                  }}
                 >
                   <Typography variant="body2" fontWeight={500}>
                     {d.pair}

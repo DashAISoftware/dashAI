@@ -12,6 +12,7 @@ import {
   Paper,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline, DeleteOutline } from "@mui/icons-material";
 import { renderInputField } from "./renderInputField";
 
@@ -23,6 +24,7 @@ export default function ManualInputForm({
   manualInputData,
   setManualInputData,
 }) {
+  const theme = useTheme();
   const [rows, setRows] = useState(createInitialRows());
 
   function createInitialRows() {
@@ -92,7 +94,11 @@ export default function ManualInputForm({
       <Typography variant="h6" mb={2} fontWeight={600}>
         Manual Input
       </Typography>
-      <Typography variant="body2" mb={3} color="text.secondary">
+      <Typography
+        variant="body2"
+        mb={3}
+        sx={{ color: theme.palette.text.secondary }}
+      >
         Enter data manually for prediction. Fill in the fields below and submit
         when ready.
       </Typography>

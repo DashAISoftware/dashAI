@@ -12,57 +12,85 @@ export const formatDate = (inputDate) => {
   return `${year}/${month}/${day} ${hours}:${minutes}`;
 };
 
-export const getColorByStatus = (status) => {
-  let color;
-  switch (status) {
-    case "Not Started":
-      color = "#626262";
-      break;
-    case "Delivered":
-      color = "#3e68ffff";
-      break;
-    case "Finished":
-      color = "#43A047";
-      break;
-    case "Started":
-      color = "#3e68ffff";
-      break;
-    case "Error":
-      color = "#A70909";
-      break;
-    default:
-      color = "#000000";
+export const getColorByStatus = (status, theme) => {
+  if (!theme?.palette?.status) {
+    // Fallback to hardcoded colors if theme is not available
+    const fallbackColors = {
+      "Not Started": "#626262",
+      Delivered: "#3e68ffff",
+      Finished: "#43A047",
+      Started: "#3e68ffff",
+      Error: "#A70909",
+    };
+    return fallbackColors[status] || "#000000";
   }
-  return color;
+
+  const statusMap = {
+    "Not Started": theme.palette.status.notStarted,
+    Delivered: theme.palette.status.delivered,
+    Finished: theme.palette.status.finished,
+    Started: theme.palette.status.started,
+    Error: theme.palette.status.error,
+  };
+
+  return statusMap[status] || "#000000";
 };
 
-export const getColorByColumnType = (type) => {
-  if (!type) return "#757575";
+export const getColorByColumnType = (type, theme) => {
+  if (!type) {
+    return theme?.palette?.dataType?.default || "#757575";
+  }
+
+  if (!theme?.palette?.dataType) {
+    // Fallback to hardcoded colors if theme is not available
+    const fallbackColors = {
+      numerical: "#00BEBB",
+      float: "#00BEBB",
+      integer: "#3e68ff",
+      int: "#3e68ff",
+      number: "#00BEBB",
+      categorical: "#9c27b0",
+      category: "#9c27b0",
+      text: "#f1ae61",
+      string: "#f1ae61",
+      boolean: "#43A047",
+      bool: "#43A047",
+      datetime: "#e91e63",
+      date: "#e91e63",
+      time: "#e91e63",
+      timestamp: "#e91e63",
+      image: "#6E86E8",
+      default: "#757575",
+    };
+    const normalizedType = type.toLowerCase();
+    return fallbackColors[normalizedType] || fallbackColors.default;
+  }
 
   const typeColors = {
-    numerical: "#00BEBB",
-    float: "#00BEBB",
-    integer: "#3e68ff",
-    int: "#3e68ff",
-    number: "#00BEBB",
+    numerical: theme.palette.dataType.numerical,
+    float: theme.palette.dataType.numerical,
+    number: theme.palette.dataType.numerical,
 
-    categorical: "#9c27b0",
-    category: "#9c27b0",
+    integer: theme.palette.dataType.integer,
+    int: theme.palette.dataType.integer,
 
-    text: "#f1ae61",
-    string: "#f1ae61",
+    categorical: theme.palette.dataType.categorical,
+    category: theme.palette.dataType.categorical,
 
-    boolean: "#43A047",
-    bool: "#43A047",
+    text: theme.palette.dataType.text,
+    string: theme.palette.dataType.text,
 
-    datetime: "#e91e63",
-    date: "#e91e63",
-    time: "#e91e63",
-    timestamp: "#e91e63",
+    boolean: theme.palette.dataType.boolean,
+    bool: theme.palette.dataType.boolean,
 
-    image: "#6E86E8",
+    datetime: theme.palette.dataType.datetime,
+    date: theme.palette.dataType.datetime,
+    time: theme.palette.dataType.datetime,
+    timestamp: theme.palette.dataType.datetime,
 
-    default: "#757575",
+    image: theme.palette.dataType.image,
+
+    default: theme.palette.dataType.default,
   };
 
   const normalizedType = type.toLowerCase();

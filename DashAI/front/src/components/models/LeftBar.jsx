@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Divider, Typography, IconButton } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ChevronLeft } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
@@ -27,6 +28,7 @@ export default function ModelsLeftBar({
   onToggle,
   handleNewSessionButton,
 }) {
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
@@ -144,7 +146,7 @@ export default function ModelsLeftBar({
           <ChevronLeft />
         </IconButton>
       </Box>
-      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+      <Divider sx={{ width: "100%", bgcolor: theme.palette.ui.borderDark }} />
 
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
@@ -154,7 +156,7 @@ export default function ModelsLeftBar({
             title="New Dataset/Session"
           />
         ) : (
-          <Typography variant="body1" color="textSecondary">
+          <Typography variant="body1" color="text.secondary">
             Models Module
           </Typography>
         )}
@@ -169,7 +171,9 @@ export default function ModelsLeftBar({
         />
       </Box>
 
-      <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+      <Divider
+        sx={{ width: "90%", bgcolor: theme.palette.ui.borderDark, mx: "auto" }}
+      />
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
@@ -185,7 +189,13 @@ export default function ModelsLeftBar({
           getItemDescription={getDatasetDescription}
         />
 
-        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+        <Divider
+          sx={{
+            width: "90%",
+            bgcolor: theme.palette.ui.borderDark,
+            mx: "auto",
+          }}
+        />
 
         <GroupedCollapsibleList
           groups={groupedSessions}

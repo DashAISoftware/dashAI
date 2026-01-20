@@ -8,6 +8,7 @@ import {
   Paper,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   ResponsiveContainer,
   BarChart,
@@ -26,6 +27,7 @@ const OverviewTab = ({
   total_rows,
   fetchDatasetPage,
 }) => {
+  const theme = useTheme();
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
     missing: count,
@@ -45,7 +47,7 @@ const OverviewTab = ({
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data View */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
           <Typography variant="h6" gutterBottom>
             Dataset Preview
           </Typography>
@@ -59,7 +61,7 @@ const OverviewTab = ({
       </Card>
       {/* Missing Values Overview */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
             Missing Values Overview
           </Typography>
@@ -72,11 +74,12 @@ const OverviewTab = ({
                   <YAxis />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#121212",
+                      backgroundColor: theme.palette.background.paper,
                       borderRadius: 4,
-                      color: "#ffffff",
+                      color: theme.palette.text.primary,
+                      border: `1px solid ${theme.palette.divider}`,
                     }}
-                    labelStyle={{ color: "#ffffff" }}
+                    labelStyle={{ color: theme.palette.text.primary }}
                   />
                   <Bar dataKey="missing" fill="rgba(136, 132, 216, 0.7)" />
                 </BarChart>
@@ -92,7 +95,7 @@ const OverviewTab = ({
 
       {/* Column Types Distribution */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
             Column Types Distribution
           </Typography>
@@ -104,7 +107,7 @@ const OverviewTab = ({
                   sx={{
                     p: 2,
                     textAlign: "center",
-                    bgcolor: "#363636",
+                    bgcolor: theme.palette.ui.disabled,
                     borderRadius: 2,
                   }}
                 >

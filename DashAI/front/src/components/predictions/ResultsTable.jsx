@@ -11,6 +11,7 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
@@ -18,6 +19,7 @@ import { getDatasetFile } from "../../api/datasets";
 const RUNNING_STATUSES = ["Delivered", "Started"];
 
 function ResultsTable({ selectedPrediction }) {
+  const theme = useTheme();
   const [loadingExecution, setLoadingExecution] = useState(
     RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
   );
@@ -51,8 +53,7 @@ function ResultsTable({ selectedPrediction }) {
 
       <Typography
         variant="subtitle2"
-        color="text.secondary"
-        sx={{ mb: 1, display: "block" }}
+        sx={{ color: theme.palette.text.secondary, mb: 1, display: "block" }}
       >
         {loadingExecution
           ? "The prediction is still running. Results will be available once it is finished."
@@ -65,7 +66,7 @@ function ResultsTable({ selectedPrediction }) {
           sx={{
             py: 4,
             textAlign: "center",
-            color: "text.secondary",
+            color: theme.palette.text.secondary,
           }}
         >
           <CircularProgress size={28} />
@@ -79,7 +80,10 @@ function ResultsTable({ selectedPrediction }) {
         selectedPrediction &&
         getPredictionStatus(selectedPrediction?.status) === "Finished" && (
           <>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: theme.palette.text.secondary, mb: 2 }}
+            >
               {selectedPrediction.dataset
                 ? `Based on dataset: ${selectedPrediction.dataset.name}`
                 : "Manually provided input data."}

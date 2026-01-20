@@ -7,12 +7,14 @@ import {
   Tooltip,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import { formatDate, getColorByStatus } from "../../utils";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { Delete } from "@mui/icons-material";
 
 function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
+  const theme = useTheme();
   const StyledCell = styled("div")(({ theme, color }) => ({
     display: "inline-block",
     padding: theme.spacing(0.5),
@@ -63,9 +65,9 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
 
             <Typography
               variant="caption"
-              color="text.secondary"
               noWrap
               sx={{
+                color: theme.palette.text.secondary,
                 lineHeight: 1.1,
                 mt: 0.2,
                 fontSize: "95%",
@@ -116,7 +118,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
       renderCell: (params) => {
         const statusText = getPredictionStatus(params?.row?.status);
         return (
-          <StyledCell color={getColorByStatus(statusText)}>
+          <StyledCell color={getColorByStatus(statusText, theme)}>
             {statusText}
           </StyledCell>
         );
@@ -145,8 +147,13 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
   if (!predictions || predictions.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
-        <Typography color="text.secondary">No predictions yet</Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography sx={{ color: theme.palette.text.secondary }}>
+          No predictions yet
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           Run your first prediction to see it here
         </Typography>
       </Box>
@@ -163,7 +170,10 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         Predictions
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: theme.palette.text.secondary, mb: 2 }}
+      >
         Click on a prediction to view details or delete it using the delete
         icon.
       </Typography>
@@ -195,7 +205,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
               outline: "none",
             },
             "& .MuiDataGrid-row:hover": {
-              backgroundColor: "action.hover",
+              backgroundColor: theme.palette.ui.hover,
             },
           }}
         />

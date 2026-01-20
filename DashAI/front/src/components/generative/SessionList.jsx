@@ -1,4 +1,5 @@
 import { Box, Typography, Collapse } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import SessionBox from "./SessionBox";
@@ -12,6 +13,7 @@ export default function SessionList({
   handleSessionInfo,
   toggleSection,
 }) {
+  const theme = useTheme();
   if (groupedSessions === undefined) {
     return (
       <Box
@@ -23,7 +25,7 @@ export default function SessionList({
       >
         <Typography
           sx={{
-            color: "#ffffff",
+            color: "text.secondary",
             opacity: 0.5,
             textAlign: "center",
             padding: 2,
@@ -47,11 +49,11 @@ export default function SessionList({
           width: "6px",
         },
         "&::-webkit-scrollbar-thumb": {
-          backgroundColor: "#374151",
+          backgroundColor: theme.palette.ui.border,
           borderRadius: "3px",
         },
         "&::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: "#4B5563",
+          backgroundColor: theme.palette.ui.hover,
         },
         overflowY: "auto",
         flex: 1,
@@ -70,21 +72,22 @@ export default function SessionList({
                 px: 1,
                 borderRadius: 1,
                 "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.05)",
+                  bgcolor: "action.hover",
                 },
               }}
               onClick={() => toggleSection(taskName)}
             >
               {openSections[taskName] ? (
                 <KeyboardArrowDownIcon
-                  sx={{ fontSize: 20, color: "#16FFFF" }}
+                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
                 />
               ) : (
                 <KeyboardArrowRightIcon
-                  sx={{ fontSize: 20, color: "#16FFFF" }}
+                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
                 />
               )}
               <Typography
+                color="text.primary"
                 sx={{
                   ml: 1,
                   fontSize: "0.9rem",
@@ -102,8 +105,8 @@ export default function SessionList({
               <Box
                 sx={{
                   ml: 1,
-                  bgcolor: "#374151",
-                  color: "white",
+                  bgcolor: theme.palette.ui.border,
+                  color: "text.primary",
                   borderRadius: "50%",
                   width: 20,
                   height: 20,
@@ -145,7 +148,7 @@ export default function SessionList({
       ) : (
         <Typography
           sx={{
-            color: "#ffffff",
+            color: "text.secondary",
             opacity: 0.5,
             textAlign: "center",
             padding: 2,

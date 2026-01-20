@@ -13,6 +13,9 @@ import MenuItem from "@mui/material/MenuItem";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import { ColorModeContext } from "../contexts/ThemeContext";
 
 const pages = [
   { name: "Datasets", to: "/app/data", disabled: false },
@@ -25,6 +28,7 @@ const pages = [
 
 function ResponsiveAppBar() {
   const theme = useTheme();
+  const colorMode = React.useContext(ColorModeContext);
   const location = useLocation();
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -38,7 +42,11 @@ function ResponsiveAppBar() {
   };
 
   return (
-    <AppBar position="sticky" enableColorOnDark sx={{ background: "#212121" }}>
+    <AppBar
+      position="sticky"
+      enableColorOnDark
+      sx={{ background: theme.palette.background.box }}
+    >
       <Container maxWidth="xl">
         <Toolbar>
           <Avatar
@@ -85,7 +93,9 @@ function ResponsiveAppBar() {
                   to={page.to}
                   selected={page.to === location.pathname}
                 >
-                  <Typography textAlign="center">{page.name}</Typography>
+                  <Typography color="text.primary" textAlign="center">
+                    {page.name}
+                  </Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -108,15 +118,42 @@ function ResponsiveAppBar() {
                 to={page.to}
                 key={page.name}
                 onClick={handleCloseNavMenu}
-                sx={{ my: 2, display: "block" }}
+                sx={{
+                  my: 2,
+                  display: "block",
+                  color:
+                    page.to === location.pathname
+                      ? theme.palette.primary.main
+                      : theme.palette.text.primary,
+                }}
                 size="large"
                 disabled={page.disabled}
                 disableRipple
-                color={page.to === location.pathname ? "primary" : "inherit"}
               >
                 {page.name}
               </Button>
             ))}
+          </Box>
+
+          {/* Theme Toggle Button */}
+          <Box sx={{ flexGrow: 0 }}>
+            <IconButton
+              onClick={colorMode.toggleColorMode}
+              aria-label="toggle theme"
+              sx={{
+                ml: 1,
+                color:
+                  theme.palette.mode === "dark"
+                    ? "inherit"
+                    : theme.palette.text.primary,
+              }}
+            >
+              {theme.palette.mode === "dark" ? (
+                <Brightness7Icon />
+              ) : (
+                <Brightness4Icon />
+              )}
+            </IconButton>
           </Box>
         </Toolbar>
       </Container>

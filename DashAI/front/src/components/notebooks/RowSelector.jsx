@@ -12,8 +12,10 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
+  const theme = useTheme();
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectionMode, setSelectionMode] = useState("range");
   const [rangeStart, setRangeStart] = useState("");
@@ -181,7 +183,10 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
       )}
       <Divider sx={{ my: 1 }} />
       <Box mt={1}>
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           Selected rows:{" "}
           {selectedRows.length === 0
             ? "all"
