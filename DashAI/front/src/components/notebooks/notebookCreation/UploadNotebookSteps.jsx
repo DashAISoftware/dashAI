@@ -168,6 +168,7 @@ export default function UploadNotebookSteps({
           }}
           saveButtonText="Create Notebook"
           backButtonText="Back"
+          dataTour="create-notebook-button"
         />
       </Box>
     </CustomLayout>

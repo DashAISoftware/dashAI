@@ -286,7 +286,7 @@ export const datasetsTourSteps = [
         </p>
       </div>
     ),
-    placement: "bottom",
+    placement: "top",
     spotlightClicks: true,
     disableOverlayClose: true,
     disableBeacon: true,
