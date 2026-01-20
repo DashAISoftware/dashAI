@@ -269,7 +269,7 @@ export default function ModelsContent() {
       }
     };
     fetchTasks();
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
     const enrichedDatasets = await Promise.all(
@@ -813,10 +813,10 @@ export default function ModelsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-        ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
-          : 100;
+      ? 100 - leftBarWidth
+      : rightBarVisible
+      ? 100 - rightBarWidth
+      : 100;
 
   return (
     <>
@@ -965,7 +965,7 @@ export default function ModelsContent() {
                     options={tasks.map((task) => ({
                       name: task.name,
                       display_name:
-                        task.metadata?.display_name ||
+                        task.display_name ||
                         task.name
                           .replace("Task", "")
                           .replace(/([A-Z])/g, " $1")
