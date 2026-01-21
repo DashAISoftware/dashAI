@@ -14,11 +14,7 @@ import ViewListIcon from "@mui/icons-material/ViewList";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import SearchIcon from "@mui/icons-material/Search";
 import PropTypes from "prop-types";
-
-const sortByValues = [
-  { value: "latest", label: "Latest" },
-  { value: "oldest", label: "Oldest" },
-];
+import { useTranslation } from "react-i18next";
 
 function PluginsToolbar({
   cardView,
@@ -31,13 +27,20 @@ function PluginsToolbar({
   handleSortByChange,
   pluginTags,
 }) {
+  const { t } = useTranslation(["plugins", "common"]);
+
+  const sortByValues = [
+    { value: "latest", label: t("plugins:label.latest") },
+    { value: "oldest", label: t("plugins:label.oldest") },
+  ];
+
   return (
     <Grid container justifyContent={"space-between"} paddingBottom={2}>
       <Grid container size={{ xs: 8 }} spacing={2}>
         <Grid size={{ xs: 8 }}>
           <TextField
             id="input-with-icon-textfield"
-            label="Search"
+            label={t("common:search")}
             variant="outlined"
             value={searchField}
             onChange={handleSearchFieldChange}
@@ -55,16 +58,18 @@ function PluginsToolbar({
         </Grid>
         <Grid>
           <FormControl variant="outlined" sx={{ minWidth: 120 }}>
-            <InputLabel id="select-type-label">Tags</InputLabel>
+            <InputLabel id="select-type-label">
+              {t("plugins:label.tags")}
+            </InputLabel>
             <Select
               id="select-type"
               value={type}
               onChange={handleTypeChange}
-              label="Type"
+              label={t("common:type")}
               autoWidth
             >
               <MenuItem key={""} value={""}>
-                None
+                {t("common:none")}
               </MenuItem>
               {pluginTags.map((pluginTag) => (
                 <MenuItem key={pluginTag} value={pluginTag}>
@@ -101,12 +106,14 @@ function PluginsToolbar({
 
         <Grid>
           <FormControl variant="outlined" sx={{ minWidth: 120 }}>
-            <InputLabel id="select-sort-by-label">Sort by</InputLabel>
+            <InputLabel id="select-sort-by-label">
+              {t("common:sortBy")}
+            </InputLabel>
             <Select
               id="select-sort-by"
               value={sortBy}
               onChange={handleSortByChange}
-              label="Sort by"
+              label={t("common:sortBy")}
             >
               {sortByValues.map((sortByValue) => (
                 <MenuItem key={sortByValue.value} value={sortByValue.value}>

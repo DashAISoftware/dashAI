@@ -19,6 +19,7 @@ import usePluginsUpdate from "../hooks/usePluginsUpdate";
 import usePluginsUpgrade from "../hooks/usePluginsUpgrade";
 import Markdown from "react-markdown";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useTranslation } from "react-i18next";
 
 /**
  * component for plugin details
@@ -33,6 +34,7 @@ function PluginsDetails() {
     updatePluginFlag,
     setUpdatePluginFlag,
   });
+  const { t } = useTranslation(["plugins"]);
 
   const handleReturnClick = () => {
     navigate(`/app/plugins/${category}`);
@@ -70,8 +72,8 @@ function PluginsDetails() {
             {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
               plugin.status,
             )
-              ? "Uninstall"
-              : "Install"}
+              ? t("plugins:button.uninstall")
+              : t("plugins:button.install")}
           </Button>
         )}
         {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
@@ -83,7 +85,7 @@ function PluginsDetails() {
             variant="outlined"
             disabled={plugin.installed_version === plugin.lastest_version}
           >
-            Upgrade
+            {t("plugins:button.upgrade")}
           </Button>
         )}
       </Grid>
@@ -92,7 +94,7 @@ function PluginsDetails() {
 
   const tabs = [
     {
-      label: "Details",
+      label: t("plugins:label.details"),
       component: <Markdown>{plugin.description}</Markdown>,
     },
   ];
@@ -105,7 +107,7 @@ function PluginsDetails() {
           handleReturnClick();
         }}
       >
-        Return
+        {t("plugins:button.return")}
       </Button>
       {loading && (
         <Paper sx={{ p: 2, mt: 2, minHeight: "75vh" }}>
@@ -146,12 +148,16 @@ function PluginsDetails() {
                       plugin.status,
                     ) ? (
                       <Typography>
-                        Version installed: {plugin.installed_version} | Latest
-                        version available: {plugin.lastest_version}
+                        <Trans i18nKey="plugins:label.versionInstalledLatestAvailable">
+                          Version installed: {plugin.installed_version} | Latest
+                          version available: {plugin.lastest_version}
+                        </Trans>
                       </Typography>
                     ) : (
                       <Typography>
-                        Version: {plugin.installed_version}
+                        {t("plugins:label.version", {
+                          version: plugin.installed_version,
+                        })}
                       </Typography>
                     )}
                   </Grid>

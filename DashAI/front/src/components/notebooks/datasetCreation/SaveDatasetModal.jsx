@@ -15,6 +15,7 @@ import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import NoteBox from "../NoteBox";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export function SaveDatasetModal({
   open,
@@ -27,6 +28,7 @@ export function SaveDatasetModal({
   const [frozenDefaultName, setFrozenDefaultName] = useState("");
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const { defaultName } = useMemo(() => {
     if (tourContext && tourContext.run) {
@@ -50,7 +52,7 @@ export function SaveDatasetModal({
 
     if (datasetName) {
       if (existingDatasets.some((dataset) => dataset.name === datasetName)) {
-        enqueueSnackbar("A dataset with this name already exists", {
+        enqueueSnackbar(t("datasets:error.datasetExists"), {
           variant: "warning",
         });
         return;
@@ -68,13 +70,13 @@ export function SaveDatasetModal({
   const getNameError = () => {
     const currentName = name.trim();
     if (!currentName) {
-      return "Name is required";
+      return t("common:nameRequired");
     }
     if (
       currentName !== frozenDefaultName &&
       existingDatasets.some((dataset) => dataset.name === currentName)
     ) {
-      return "A dataset with this name already exists";
+      return t("datasets:error.datasetExists");
     }
     return null;
   };
@@ -84,7 +86,7 @@ export function SaveDatasetModal({
   return (
     <Dialog open={open} onClose={() => {}} maxWidth="sm" fullWidth>
       <DialogTitle>
-        Save Processed Dataset
+        {t("datasets:label.saveProcessedDataset")}
         <IconButton
           onClick={handleClose}
           sx={{ position: "absolute", right: 8, top: 8 }}
@@ -94,10 +96,12 @@ export function SaveDatasetModal({
       </DialogTitle>
       <DialogContent data-tour="save-dataset-modal-notebook">
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 1 }}>
-          <NoteBox message="A new dataset will be created with these transformations. It can be used with other modules without affecting the original." />
+          <NoteBox
+            message={t("datasets:label.newDatasetCreatedWithTransformations")}
+          />
           <TextField
             fullWidth
-            label="Dataset Name"
+            label={t("datasets:label.datasetName")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             variant="outlined"
@@ -107,11 +111,11 @@ export function SaveDatasetModal({
 
           <Box>
             <Typography variant="subtitle2" gutterBottom>
-              Applied Transformations:
+              {t("datasets:label.appliedTransformations")}
             </Typography>
             {appliedConverters.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                No transformations applied.
+                {t("datasets:label.noTransformationsApplied")}
               </Typography>
             ) : (
               <ConverterHistoryList converters={appliedConverters} />
@@ -125,8 +129,8 @@ export function SaveDatasetModal({
               formik={{
                 errors: nameError ? { name: nameError } : {},
               }}
-              saveButtonText="Save Dataset"
-              backButtonText="Cancel"
+              saveButtonText={t("datasets:button.saveDataset")}
+              backButtonText={t("common:cancel")}
               dataTour="save-dataset-button-notebook"
             />
           </Box>

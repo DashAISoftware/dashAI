@@ -31,6 +31,7 @@ import { LoadingButton } from "@mui/lab";
 import { useTourContext } from "../../../components/tour/TourProvider";
 import { deleteRun } from "../../../api/run";
 import DeleteConfirmationModal from "../../../components/threeSectionLayout/DeleteConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 function ResultsDialogLayout({
   experiment,
@@ -57,10 +58,9 @@ function ResultsDialogLayout({
   const tourContext = useTourContext();
   const hasNotifiedRef = useRef(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["models", "common"]);
 
-  const hasActiveRuns = runs.some(
-    (r) => r.status === "Delivered" || r.status === "Started",
-  );
+  const hasActiveRuns = runs.some((r) => r.status === 1 || r.status === 2); // Delivered or Started
 
   const getRuns = async ({ showLoading = true } = {}) => {
     if (showLoading) {
@@ -70,13 +70,7 @@ function ResultsDialogLayout({
     try {
       const fetchedRuns = await getRunsRequest(experiment.id.toString());
 
-      // Transform status codes to text
-      const runsWithStringStatus = fetchedRuns.map((run) => ({
-        ...run,
-        status: getRunStatus(run.status),
-      }));
-
-      setRuns(runsWithStringStatus);
+      setRuns(fetchedRuns);
 
       // Initialize selection if needed
       if (rowSelectionModel.length === 0) {
@@ -95,9 +89,12 @@ function ResultsDialogLayout({
       if (allRunsFinished && !hasNotifiedRef.current) {
         hasNotifiedRef.current = true;
 
-        enqueueSnackbar(`${experiment.name} has completed all runs`, {
-          variant: "success",
-        });
+        enqueueSnackbar(
+          t("models:message.allRunsCompleted", { experiment: experiment.name }),
+          {
+            variant: "success",
+          },
+        );
 
         setFinishedRunning(true);
 
@@ -106,9 +103,13 @@ function ResultsDialogLayout({
         }
       }
     } catch (error) {
-      enqueueSnackbar(`Error retrieving runs for ${experiment.name}`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:message.errorFetchingRuns"),
+        { experiment: experiment.name },
+        {
+          variant: "error",
+        },
+      );
       console.error("Error fetching runs:", error);
     } finally {
       if (showLoading) {
@@ -131,9 +132,14 @@ function ResultsDialogLayout({
           },
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
-            enqueueSnackbar(`Run failed: ${result.error || "Unknown error"}`, {
-              variant: "error",
-            });
+            enqueueSnackbar(
+              t("models:message.runFailed", {
+                error: result.error || t("common:unknownError"),
+              }),
+              {
+                variant: "error",
+              },
+            );
             getRuns({ showLoading: false });
           },
         );
@@ -141,9 +147,13 @@ function ResultsDialogLayout({
 
       return false;
     } catch (error) {
-      enqueueSnackbar(`Error enqueueing run with ID ${runId}`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:message.errorEnqueueingRun"),
+        { runId },
+        {
+          variant: "error",
+        },
+      );
       console.error("Error enqueueing run:", error);
       return true;
     }
@@ -161,17 +171,14 @@ function ResultsDialogLayout({
       return (
         !run ||
         !run.status ||
-        run.status === "Not Started" ||
-        run.status === "Error" ||
-        run.status === "Finished"
+        run.status === 0 || // Not Started
+        run.status === 4 || // Error
+        run.status === 3 // Finished
       );
     });
 
     if (runsToExecute.length === 0) {
-      enqueueSnackbar(
-        "No runs available to execute. Selected runs may already be running or completed.",
-        { variant: "info" },
-      );
+      enqueueSnackbar(t("models:message.noRunsToExecute"), { variant: "info" });
       return;
     }
 
@@ -188,13 +195,15 @@ function ResultsDialogLayout({
       setRuns((prevRuns) =>
         prevRuns.map((r) => {
           const updated = updatedRuns.find((u) => u.id === r.id);
-          return updated ? { ...updated, status: "Delivered" } : r;
+          return updated ? { ...updated, status: 1 } : r; // Delivered
         }),
       );
 
       if (enqueueErrors < runsToExecute.length) {
         enqueueSnackbar(
-          `${runsToExecute.length - enqueueErrors} run(s) started successfully`,
+          t("models:message.runsStartedSuccessfully", {
+            count: runsToExecute.length - enqueueErrors,
+          }),
           { variant: "success" },
         );
       } else {
@@ -202,7 +211,9 @@ function ResultsDialogLayout({
       }
     } catch (error) {
       console.error("Error executing runs:", error);
-      enqueueSnackbar("Error executing runs", { variant: "error" });
+      enqueueSnackbar(t("models:error.errorExecutingRuns"), {
+        variant: "error",
+      });
 
       getRuns({ showLoading: false });
     }
@@ -218,17 +229,24 @@ function ResultsDialogLayout({
       const response = await enqueueRunnerJobRequest(run.id);
 
       if (!response || !response.id) {
-        enqueueSnackbar(`Error starting run ${run.id}`, {
-          variant: "error",
-        });
+        enqueueSnackbar(
+          t("models:error.errorEnqueueingRun"),
+          { runId: run.id },
+          {
+            variant: "error",
+          },
+        );
         return;
       }
 
       // Update run to "Delivered" status
       initialUpdatedRun.status = 1;
-      enqueueSnackbar(`Run ${run.id} started successfully`, {
-        variant: "success",
-      });
+      enqueueSnackbar(
+        t("models:message.runStartedSuccessfully", { runId: run.id }),
+        {
+          variant: "success",
+        },
+      );
 
       // Track job ID
       setTrackedJobIds((prev) => new Set(prev).add(response.id));
@@ -238,7 +256,6 @@ function ResultsDialogLayout({
           r.id === run.id
             ? {
                 ...initialUpdatedRun,
-                status: getRunStatus(initialUpdatedRun.status),
               }
             : r,
         ),
@@ -256,7 +273,6 @@ function ResultsDialogLayout({
               r.id === run.id
                 ? {
                     ...updated,
-                    status: getRunStatus(updated.status),
                   }
                 : r,
             ),
@@ -265,7 +281,10 @@ function ResultsDialogLayout({
         async (result) => {
           // Job failed, still fetch only this run
           enqueueSnackbar(
-            `Run ${run.id} failed: ${result.error || "Unknown error"}`,
+            t("models:error.runFailedId", {
+              runId: run.id,
+              error: result.error || t("common:unknownError"),
+            }),
             { variant: "error" },
           );
 
@@ -276,7 +295,6 @@ function ResultsDialogLayout({
               r.id === run.id
                 ? {
                     ...updated,
-                    status: getRunStatus(updated.status),
                   }
                 : r,
             ),
@@ -286,9 +304,13 @@ function ResultsDialogLayout({
     } catch (error) {
       console.error("Error enqueueing run:", error);
 
-      enqueueSnackbar(`Error starting run ${run.id}`, {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:error.errorEnqueueingRun"),
+        { runId: run.id },
+        {
+          variant: "error",
+        },
+      );
 
       // Fetch only the affected run to restore its real status
       const updated = await getRunById(run.id);
@@ -298,7 +320,6 @@ function ResultsDialogLayout({
           r.id === run.id
             ? {
                 ...updated,
-                status: getRunStatus(updated.status),
               }
             : r,
         ),
@@ -355,7 +376,7 @@ function ResultsDialogLayout({
             justifyContent: "space-between",
           }}
         >
-          {`Experiment ${experiment.name} results`}
+          {t("models:label.experimentResults", { name: experiment.name })}
           <IconButton
             onClick={handleOnClose}
             sx={{
@@ -390,18 +411,20 @@ function ResultsDialogLayout({
               } else {
                 await deleteRun(runToDelete);
               }
-              enqueueSnackbar("Run deleted successfully", {
+              enqueueSnackbar(t("models:message.runDeletedSuccessfully"), {
                 variant: "success",
               });
             } catch (error) {
               console.error("Error deleting run:", error);
-              enqueueSnackbar("Error deleting run", { variant: "error" });
+              enqueueSnackbar(t("models:error.errorDeletingRun"), {
+                variant: "error",
+              });
             } finally {
               setOpenDeleteModal(false);
               setRunToDelete(null);
             }
           }}
-          content="Are you sure you want to delete this run? This action cannot be undone."
+          content={t("models:message.confirmDeleteRun")}
         />
       )}
 

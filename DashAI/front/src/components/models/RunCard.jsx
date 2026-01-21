@@ -19,6 +19,7 @@ import {
   Paper,
   Divider,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -32,6 +33,7 @@ import {
 } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import RunOperations from "./RunOperations";
+import { useTranslation } from "react-i18next";
 
 /**
  * Card component displaying a model run with actions and details
@@ -48,10 +50,12 @@ function RunCard({
   explainerRefreshTrigger,
   isLastRun = false,
 }) {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const { t } = useTranslation(["models", "common"]);
 
   // Get display status from numeric code
-  const statusText = getRunStatus(run.status);
+  const statusText = run.status;
 
   // Get model display name
   const model = models.find((m) => m.name === run.model_name);
@@ -60,14 +64,14 @@ function RunCard({
   // Status color mapping
   const getStatusColor = (status) => {
     switch (status) {
-      case "Not Started":
+      case 0: // Not Started
         return "default";
-      case "Delivered":
-      case "Started":
+      case 1: // Delivered
+      case 2: // Started
         return "info";
-      case "Finished":
+      case 3: // Finished
         return "success";
-      case "Error":
+      case 4: // Error
         return "error";
       default:
         return "default";
@@ -76,17 +80,10 @@ function RunCard({
 
   // Check if run can be trained
   const canTrain =
-    statusText === "Not Started" ||
-    statusText === "Error" ||
-    statusText === "Finished";
-  const isRunning = statusText === "Delivered" || statusText === "Started";
-
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
+    statusText === 0 || // Not Started
+    statusText === 4 || // Error
+    statusText === 3; // Finished
+  const isRunning = statusText === 1 || statusText === 2; // Delivered or Started
 
   // Get metrics from run
   const getMetrics = () => {
@@ -116,9 +113,9 @@ function RunCard({
         mb: 2,
         borderLeft: "4px solid",
         borderLeftColor:
-          statusText === "Finished"
+          statusText === 3 // Finished
             ? "success.main"
-            : statusText === "Error"
+            : statusText === 4 // Error
               ? "error.main"
               : isRunning
                 ? "info.main"
@@ -139,7 +136,7 @@ function RunCard({
             {run.name}
           </Typography>
           <Chip
-            label={statusText}
+            label={getRunStatus(statusText, t)}
             color={getStatusColor(statusText)}
             size="small"
           />
@@ -148,7 +145,10 @@ function RunCard({
         {/* Model */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <Settings fontSize="small" color="action" />
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary }}
+          >
             {modelDisplayName}
           </Typography>
         </Box>
@@ -157,7 +157,7 @@ function RunCard({
         {metrics && Object.keys(metrics).length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Metrics
+              {t("common:metrics")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               {Object.entries(metrics).map(([metric, values]) => {
@@ -165,7 +165,10 @@ function RunCard({
                   values.reduce((sum, val) => sum + val, 0) / values.length;
                 return (
                   <Box key={metric}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography
+                      variant="caption"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
                       {metric.toUpperCase()}
                     </Typography>
                     <Typography variant="body2" fontWeight="medium">
@@ -180,7 +183,10 @@ function RunCard({
 
         {/* Description if present */}
         {run.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary, mb: 2 }}
+          >
             {run.description}
           </Typography>
         )}
@@ -193,7 +199,9 @@ function RunCard({
             endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
             sx={{ textTransform: "none" }}
           >
-            {expanded ? "Hide Parameters" : "Show Parameters"}
+            {expanded
+              ? t("models:button.hideParameters")
+              : t("models:button.showParameters")}
           </Button>
 
           <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -202,14 +210,14 @@ function RunCard({
               {run.parameters && Object.keys(run.parameters).length > 0 && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" gutterBottom>
-                    Model Parameters
+                    {t("common:modelParameters")}
                   </Typography>
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Parameter</TableCell>
-                          <TableCell>Value</TableCell>
+                          <TableCell>{t("common:parameter")}</TableCell>
+                          <TableCell>{t("common:value")}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -235,7 +243,7 @@ function RunCard({
               {run.optimizer_name && (
                 <Box>
                   <Typography variant="subtitle2" gutterBottom>
-                    Optimizer: {run.optimizer_name}
+                    {t("common:optimizer")}: {run.optimizer_name}
                   </Typography>
                   {run.optimizer_parameters &&
                     Object.keys(run.optimizer_parameters).length > 0 && (
@@ -243,8 +251,8 @@ function RunCard({
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell>Parameter</TableCell>
-                              <TableCell>Value</TableCell>
+                              <TableCell>{t("common:parameter")}</TableCell>
+                              <TableCell>{t("common:value")}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -270,8 +278,12 @@ function RunCard({
               {/* Goal Metric */}
               {run.goal_metric && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Goal Metric: <strong>{run.goal_metric}</strong>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
+                    {t("models:label.goalMetric")}:{" "}
+                    <strong>{run.goal_metric}</strong>
                   </Typography>
                 </Box>
               )}
@@ -280,7 +292,7 @@ function RunCard({
         </Box>
 
         {/* RunOperations - Separate section for finished runs */}
-        {statusText === "Finished" && (
+        {statusText === 3 && ( // Finished
           <Box sx={{ mt: 2 }}>
             <RunOperations
               run={run}
@@ -298,7 +310,7 @@ function RunCard({
         {/* Train/Stop button */}
         {isRunning && (
           <Button size="small" startIcon={<Stop />} disabled color="warning">
-            Running
+            {t("common:running")}
           </Button>
         )}
         {canTrain && (
@@ -310,7 +322,7 @@ function RunCard({
             color="primary"
             variant="contained"
           >
-            Train
+            {t("common:trainVerb")}
           </Button>
         )}
 
@@ -320,13 +332,13 @@ function RunCard({
           onClick={() => onEdit(run)}
           color="primary"
           disabled={isRunning}
-          title="Edit parameters"
+          title={t("common:editParameters")}
         >
           <Edit fontSize="small" />
         </IconButton>
 
         {/* Prediction button */}
-        {statusText === "Finished" && (
+        {statusText === 3 && ( // Finished
           <IconButton
             size="small"
             onClick={() => {
@@ -347,23 +359,24 @@ function RunCard({
               }
             }}
             color="primary"
-            title="Create prediction"
+            title={t("models:button.createPrediction")}
           >
             <TrendingUp fontSize="small" />
           </IconButton>
         )}
 
         {/* Explainer button */}
-        {onExplainer && statusText === "Finished" && (
-          <IconButton
-            size="small"
-            onClick={() => onExplainer(run)}
-            color="primary"
-            title="Create explainer"
-          >
-            <QueryStats fontSize="small" />
-          </IconButton>
-        )}
+        {onExplainer &&
+          statusText === 3 && ( // Finished
+            <IconButton
+              size="small"
+              onClick={() => onExplainer(run)}
+              color="primary"
+              title={t("models:button.createExplainer")}
+            >
+              <QueryStats fontSize="small" />
+            </IconButton>
+          )}
 
         {/* Delete button */}
         <IconButton
@@ -371,7 +384,7 @@ function RunCard({
           onClick={() => onDelete(run)}
           color="error"
           disabled={isRunning}
-          title="Delete run"
+          title={t("models:button.deleteRun")}
         >
           <Delete fontSize="small" />
         </IconButton>

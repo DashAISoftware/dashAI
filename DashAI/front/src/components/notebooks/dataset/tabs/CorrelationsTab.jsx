@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, CardContent, Card } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   BarChart,
   Bar,
@@ -10,14 +11,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const CorrelationsTab = ({ correlations }) => {
+  const { t } = useTranslation(["datasets"]);
+
+  const theme = useTheme();
   const corrData = [];
   Object.entries(correlations).forEach(([col1, corrs]) => {
     Object.entries(corrs).forEach(([col2, value]) => {
       if (col1 < col2) {
         // Avoid duplicates
-        corrData.push({ pair: `${col1} - ${col2}`, correlation: value });
+        corrData.push({
+          pair: `${col1} - ${col2}`,
+          correlation: value,
+        });
       }
     });
   });
@@ -26,9 +34,9 @@ const CorrelationsTab = ({ correlations }) => {
 
   return (
     <Card>
-      <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+      <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
         <Typography variant="h6" fontWeight="bold" mb={3}>
-          Correlation Analysis
+          {t("datasets:label.correlationAnalysis")}
         </Typography>
 
         <Box mb={4}>
@@ -39,17 +47,25 @@ const CorrelationsTab = ({ correlations }) => {
               <YAxis domain={[-1, 1]} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#121212",
+                  backgroundColor: theme.palette.background.paper,
                   borderRadius: 4,
-                  color: "#ffffff",
+                  color: theme.palette.text.primary,
                 }}
-                labelStyle={{ color: "#ffffff" }}
+                labelStyle={{ color: theme.palette.text.primary }}
               />
-              <Bar dataKey="correlation" fill="#3b82f6">
+              <Bar
+                dataKey="correlation"
+                name={t("datasets:label.correlation")}
+                fill={theme.palette.info.main}
+              >
                 {corrData.map((entry, index) => (
                   <Cell
                     key={index}
-                    fill={entry.correlation > 0 ? "#10b981" : "#ef4444"}
+                    fill={
+                      entry.correlation > 0
+                        ? theme.palette.success.main
+                        : theme.palette.error.main
+                    }
                   />
                 ))}
               </Bar>
@@ -59,7 +75,7 @@ const CorrelationsTab = ({ correlations }) => {
 
         <Box>
           <Typography variant="h6" fontWeight="bold" mb={2}>
-            Strong Correlations (|r| &gt; 0.5)
+            {t("datasets:label.strongCorrelations")} (|r| &gt; 0.5)
           </Typography>
           <Box display="flex" flexDirection="column" gap={1}>
             {corrData
@@ -71,7 +87,10 @@ const CorrelationsTab = ({ correlations }) => {
                   alignItems="center"
                   justifyContent="space-between"
                   p={2}
-                  sx={{ backgroundColor: "#363636", borderRadius: 2 }}
+                  sx={{
+                    backgroundColor: theme.palette.ui.panelMedium,
+                    borderRadius: 2,
+                  }}
                 >
                   <Typography variant="body2" fontWeight={500}>
                     {d.pair}
@@ -95,7 +114,7 @@ const CorrelationsTab = ({ correlations }) => {
                   color="text.secondary"
                   fontStyle="italic"
                 >
-                  No strong correlations detected
+                  {t("datasets:label.noStrongCorrelationsFound")}
                 </Typography>
               </Box>
             )}

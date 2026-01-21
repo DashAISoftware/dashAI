@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
 import { getPluginById as getPluginDetailsRequest } from "../../../api/plugins";
+import { useTranslation } from "react-i18next";
 
 /**
  * custom hook to get plugin from the backend using the id
@@ -18,6 +19,7 @@ export default function usePluginsDetails({
   const [plugin, setPlugin] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
   const [error, setError] = useState(false);
+  const { t } = useTranslation(["plugins"]);
 
   const getPluginsDetails = async () => {
     setLoading(true);
@@ -25,7 +27,7 @@ export default function usePluginsDetails({
       const plugin = await getPluginDetailsRequest(pluginId);
       setPlugin(plugin);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain plugin details.", {
+      enqueueSnackbar(t("plugins:error.obtainPluginDetails"), {
         variant: "error",
       });
       setError(true);

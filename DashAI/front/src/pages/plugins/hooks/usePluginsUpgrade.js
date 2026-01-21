@@ -1,5 +1,6 @@
 import { upgradePlugin as upgradePluginRequest } from "../../../api/plugins";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 /**
  * custom hook for upgrading a plugin
@@ -12,11 +13,11 @@ export default function usePluginsUpgrade({ pluginId }) {
   const upgradePlugin = async () => {
     try {
       await upgradePluginRequest(pluginId);
-      enqueueSnackbar("Plugin upgraded", {
+      enqueueSnackbar(t("plugins:message.pluginUpgraded"), {
         variant: "success",
       });
     } catch (error) {
-      enqueueSnackbar("Error while upgrading plugin", {
+      enqueueSnackbar(t("plugins:error.upgradingPlugin"), {
         variant: "error",
       });
     }

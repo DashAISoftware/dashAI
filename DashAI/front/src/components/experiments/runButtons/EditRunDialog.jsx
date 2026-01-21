@@ -5,19 +5,21 @@ import { updateRunParameters } from "../../../api/run";
 
 import { Box } from "@mui/system";
 import RunInfoModal from "./RunInfoModal";
+import { useTranslation } from "react-i18next";
 
 export default function EditRunDialog({ experiment, run, setRun }) {
-  const isRunning = run.status === "Started" || run.status === "Delivered";
+  const isRunning = run.status === 1 || run.status === 2; // Delivered or Started
   if (isRunning) {
     return null;
   }
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation("experiments");
 
   return (
     <>
       <GridActionsCellItem
         icon={<Edit />}
-        label="Edit Run"
+        label={t("button.editRun")}
         onClick={() => setOpen(true)}
       />
       {open && (

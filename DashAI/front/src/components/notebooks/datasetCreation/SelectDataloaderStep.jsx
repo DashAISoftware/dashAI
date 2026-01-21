@@ -5,6 +5,7 @@ import ItemSelectorWithInfo from "../../custom/ItemSelectorWithInfo";
 import { Grid } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a selector for available dataloaders
@@ -21,7 +22,7 @@ export default function SelectDataloaderStep({
 }) {
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
-
+  const { t } = useTranslation(["datasets", "common"]);
   const [dataloaders, setDataloaders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +34,9 @@ export default function SelectDataloaderStep({
       });
       setDataloaders(dataloaders);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain compatible dataloaders");
+      enqueueSnackbar(t("datasets:error.fetchingDataloaders"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -113,10 +116,10 @@ export default function SelectDataloaderStep({
           formik={{
             errors: selectedDataloader.display_name
               ? {}
-              : { dataloader: "Required" },
+              : { dataloader: t("common:required") },
           }}
-          saveButtonText="Next"
-          backButtonText="Back"
+          saveButtonText={t("common:next")}
+          backButtonText={t("common:back")}
           dataTour="dataloader-step-next-button"
         />
       </Grid>

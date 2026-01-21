@@ -13,21 +13,32 @@ import MenuItem from "@mui/material/MenuItem";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
-
-const pages = [
-  { name: "Datasets", to: "/app/data", disabled: false },
-  { name: "Models", to: "/app/models", disabled: false },
-  { name: "Experiments", to: "/app/experiments", disabled: false },
-  { name: "Explainability", to: "/app/explainers", disabled: false },
-  { name: "Generative", to: "/app/generative", disabled: false },
-  { name: "Plugins", to: "/app/plugins/browse", disabled: false },
-];
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
+import { ColorModeContext } from "../contexts/ThemeContext";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
+  const colorMode = React.useContext(ColorModeContext);
   const location = useLocation();
+  const { t } = useTranslation(["common"]);
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
+
+  const pages = [
+    { name: t("common:datasets"), to: "/app/data", disabled: false },
+    { name: t("common:models"), to: "/app/models", disabled: false },
+    { name: t("common:experiments"), to: "/app/experiments", disabled: false },
+    {
+      name: t("common:explainability"),
+      to: "/app/explainers",
+      disabled: false,
+    },
+    { name: t("common:generative"), to: "/app/generative", disabled: false },
+    { name: t("common:plugins"), to: "/app/plugins/browse", disabled: false },
+  ];
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -38,7 +49,11 @@ function ResponsiveAppBar() {
   };
 
   return (
-    <AppBar position="sticky" enableColorOnDark sx={{ background: "#212121" }}>
+    <AppBar
+      position="sticky"
+      enableColorOnDark
+      sx={{ background: theme.palette.background.box }}
+    >
       <Container maxWidth="xl">
         <Toolbar>
           <Avatar
@@ -85,7 +100,9 @@ function ResponsiveAppBar() {
                   to={page.to}
                   selected={page.to === location.pathname}
                 >
-                  <Typography textAlign="center">{page.name}</Typography>
+                  <Typography color="text.primary" textAlign="center">
+                    {page.name}
+                  </Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -108,15 +125,43 @@ function ResponsiveAppBar() {
                 to={page.to}
                 key={page.name}
                 onClick={handleCloseNavMenu}
-                sx={{ my: 2, display: "block" }}
+                sx={{
+                  my: 2,
+                  display: "block",
+                  color:
+                    page.to === location.pathname
+                      ? theme.palette.primary.main
+                      : theme.palette.text.primary,
+                }}
                 size="large"
                 disabled={page.disabled}
                 disableRipple
-                color={page.to === location.pathname ? "primary" : "inherit"}
               >
                 {page.name}
               </Button>
             ))}
+          </Box>
+          <LanguageSelector />
+
+          {/* Theme Toggle Button */}
+          <Box sx={{ flexGrow: 0 }}>
+            <IconButton
+              onClick={colorMode.toggleColorMode}
+              aria-label="toggle theme"
+              sx={{
+                ml: 1,
+                color:
+                  theme.palette.mode === "dark"
+                    ? "inherit"
+                    : theme.palette.text.primary,
+              }}
+            >
+              {theme.palette.mode === "dark" ? (
+                <Brightness7Icon />
+              ) : (
+                <Brightness4Icon />
+              )}
+            </IconButton>
           </Box>
         </Toolbar>
       </Container>

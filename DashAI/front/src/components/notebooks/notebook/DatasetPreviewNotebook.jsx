@@ -9,6 +9,7 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
@@ -19,6 +20,7 @@ import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetPreviewNotebook({
   notebook,
@@ -26,6 +28,9 @@ export default function DatasetPreviewNotebook({
   existingDatasets = [],
   onAccordionChange,
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const theme = useTheme();
   if (!notebook) {
     return (
       <Box
@@ -36,8 +41,8 @@ export default function DatasetPreviewNotebook({
           height: "100vh",
         }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
-        <Typography>Loading...</Typography>
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}...</Typography>
       </Box>
     );
   }
@@ -102,7 +107,7 @@ export default function DatasetPreviewNotebook({
       <Accordion
         data-tour="dataset-preview-section"
         sx={{
-          bgcolor: "#212121",
+          bgcolor: theme.palette.ui.box,
           borderRadius: 2,
           boxShadow: "none",
         }}
@@ -133,7 +138,7 @@ export default function DatasetPreviewNotebook({
           }}
         >
           <Typography variant="h6">
-            Notebook: {getDatasetName()} Preview
+            {t("datasets:label.datasetPreviewFor", { name: getDatasetName() })}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
@@ -158,7 +163,7 @@ export default function DatasetPreviewNotebook({
               }}
               className="save-dataset-button"
             >
-              Save as new Dataset
+              {t("datasets:button.saveAsNewDataset")}
             </Button>
             <IconButton
               size="small"

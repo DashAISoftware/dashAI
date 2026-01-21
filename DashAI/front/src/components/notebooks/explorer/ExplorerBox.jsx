@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Button,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
@@ -16,17 +17,20 @@ import { getComponentById } from "../../../api/component";
 import { getExplorerById } from "../../../api/explorer";
 import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
 import { useExplorerResults } from "./useExplorerResults";
+import { useTranslation } from "react-i18next";
 
 export default function ExplorerBox({
   explorer,
   handleExplorerDeleteClick,
   onStatusChange,
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const { loading, data, dataType, setData } = useExplorerResults(explorer);
 
-  const statusLabel = getExplorerStatus(explorer.status);
+  const statusLabel = explorer.status;
 
   const handleExplorerDetailsClick = () => {
     setOpenExplorerDetails(true);
@@ -57,8 +61,9 @@ export default function ExplorerBox({
           onStatusChange(updatedExplorer.id, updatedExplorer.status);
         }
 
-        const status = getExplorerStatus(updatedExplorer.status);
-        if (status === "Finished" || status === "Error") {
+        const status = updatedExplorer.status;
+        if (status === 3 || status === 4) {
+          // Finished or Error
           clearInterval(intervalId);
         }
       } catch (error) {
@@ -67,8 +72,9 @@ export default function ExplorerBox({
       }
     };
 
-    const currentStatus = getExplorerStatus(explorer.status);
-    if (currentStatus !== "Finished" && currentStatus !== "Error") {
+    const currentStatus = explorer.status;
+    if (currentStatus !== 3 && currentStatus !== 4) {
+      //  Not Finished and not Error
       intervalId = setInterval(fetchExplorerStatus, 1500);
     }
 
@@ -78,7 +84,11 @@ export default function ExplorerBox({
   return (
     <Card
       key={explorer.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      sx={{
+        bgcolor: theme.palette.background.box,
+        borderRadius: 2,
+        height: "100%",
+      }}
       className="explorer-box"
     >
       <CardContent
@@ -98,21 +108,27 @@ export default function ExplorerBox({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
+            <Analytics
+              sx={{ color: theme.palette.primary.main, fontSize: 20 }}
+            />
             <Typography variant="h6">
               {explorerComponent.display_name}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
-              label={statusLabel}
-              color={statusLabel === "Finished" ? "primary" : "default"}
+              label={getExplorerStatus(statusLabel, t)}
+              color={statusLabel === 3 ? "primary" : "default"} // Finished
               size="small"
             />
             <>
-              {statusLabel === "Finished" && (
+              {statusLabel === 3 && ( // Finished
                 <Chip
-                  label={dataType === "plotly_json" ? "Info/Edit" : "Info"}
+                  label={
+                    dataType === "plotly_json"
+                      ? t("common:infoEdit")
+                      : t("common:info")
+                  }
                   onClick={() => handleExplorerDetailsClick(explorer)}
                   size="small"
                   icon={<Info sx={{ color: "white !important" }} />}
@@ -124,7 +140,7 @@ export default function ExplorerBox({
                   }}
                 />
               )}
-              {(statusLabel === "Error" || statusLabel === "Finished") && (
+              {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
                 <IconButton
                   size="small"
                   onClick={() => handleExplorerDeleteClick(explorer)}
@@ -142,11 +158,11 @@ export default function ExplorerBox({
           </Box>
         </Box>
 
-        {statusLabel === "Finished" ? (
+        {statusLabel === 3 ? ( // Finished
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",
@@ -162,11 +178,11 @@ export default function ExplorerBox({
               dataType={dataType}
             />
           </Box>
-        ) : statusLabel === "Error" ? (
+        ) : statusLabel === 4 ? ( // Error
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
@@ -178,14 +194,14 @@ export default function ExplorerBox({
               variant="body2"
               sx={{ color: "error.main", textAlign: "center" }}
             >
-              An error occurred during processing.
+              {t("datasets:error.explorerFailed")}
             </Typography>
           </Box>
         ) : (
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "rgba(255, 255, 255, 0.05)",
+              bgcolor: theme.palette.ui.hover,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
@@ -193,7 +209,7 @@ export default function ExplorerBox({
             }}
           >
             <CircularProgress size={24} sx={{ mr: 1 }} />
-            <Typography>Processing...</Typography>
+            <Typography>{t("common:processing")}</Typography>
           </Box>
         )}
         {openExplorerDetails && (

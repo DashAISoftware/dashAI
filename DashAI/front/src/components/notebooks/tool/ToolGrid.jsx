@@ -4,11 +4,13 @@ import ToolGridItem from "./ToolGridItem";
 import ConfigureToolModal from "./ConfigureToolModal";
 import { useTourContext } from "../../tour/TourProvider";
 import { groupByCategory, sortCategories } from "./toolCategories";
+import { useTranslation } from "react-i18next";
 
 export default function ToolGrid({ tools, notebook, FormComponent }) {
   const [open, setOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState(null);
   const tourContext = useTourContext();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const grouped = useMemo(() => groupByCategory(tools), [tools]);
   const categories = useMemo(
@@ -41,7 +43,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
         variant="body2"
         sx={{ color: "text.secondary", textAlign: "center", py: 2 }}
       >
-        No tools found matching your search.
+        {t("datasets:label.noToolsMatched")}
       </Typography>
     );
   }
@@ -67,7 +69,7 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
                 {cat}
               </Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {list.length} {list.length === 1 ? "tool" : "tools"}
+                {t("datasets:label.toolsCount", { count: list.length })}
               </Typography>
             </Box>
 
