@@ -5,6 +5,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ItemBox from "./ItemBox";
+import { t } from "i18next";
 
 export default function CollapsibleList({
   items = [],
@@ -14,7 +15,7 @@ export default function CollapsibleList({
   onItemEdit,
   onItemInfo,
   defaultOpen = true,
-  title = "Available Items",
+  title = t("common:availableItems", "Available Items"),
   Icon = FolderIcon,
   getItemDescription,
 }) {
@@ -141,7 +142,7 @@ export default function CollapsibleList({
                 p: 2,
               }}
             >
-              No items found
+              {t("common:noItemsAvailable", "No items available.")}
             </Typography>
           )}
         </Box>

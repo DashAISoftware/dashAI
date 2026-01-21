@@ -16,21 +16,21 @@ export const getColorByStatus = (status, theme) => {
   if (!theme?.palette?.status) {
     // Fallback to hardcoded colors if theme is not available
     const fallbackColors = {
-      "Not Started": "#626262",
-      Delivered: "#3e68ffff",
-      Finished: "#43A047",
-      Started: "#3e68ffff",
-      Error: "#A70909",
+      0: "#626262", // Not Started
+      1: "#3e68ffff", // Delivered
+      2: "#3e68ffff", // Started
+      3: "#43A047", // Finished
+      4: "#A70909", // Error
     };
     return fallbackColors[status] || "#000000";
   }
 
   const statusMap = {
-    "Not Started": theme.palette.status.notStarted,
-    Delivered: theme.palette.status.delivered,
-    Finished: theme.palette.status.finished,
-    Started: theme.palette.status.started,
-    Error: theme.palette.status.error,
+    0: theme.palette.status.notStarted,
+    1: theme.palette.status.delivered,
+    2: theme.palette.status.started,
+    3: theme.palette.status.finished,
+    4: theme.palette.status.error,
   };
 
   return statusMap[status] || "#000000";

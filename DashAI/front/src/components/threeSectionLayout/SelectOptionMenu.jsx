@@ -3,6 +3,7 @@ import { Box, Grid, Button, Alert, AlertTitle } from "@mui/material";
 import SearchBar from "./SearchBar";
 import CustomLayout from "../custom/CustomLayout";
 import OptionBox from "./OptionBox";
+import { useTranslation } from "react-i18next";
 
 export default function SelectOptionMenu({
   goToNextStep,
@@ -18,6 +19,7 @@ export default function SelectOptionMenu({
   const filteredOptions = options.filter((option) =>
     option.name.toLowerCase().includes(search.toLowerCase()),
   );
+  const { t } = useTranslation(["common", "datasets"]);
 
   return (
     <CustomLayout title={title} subtitle={subtitle} padding={0}>
@@ -30,9 +32,8 @@ export default function SelectOptionMenu({
       >
         {showNoDatasetAlert && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            <AlertTitle>No Datasets Available</AlertTitle>
-            You need to upload a dataset before creating a session. Please go to
-            the Dataset Module to upload your data.
+            <AlertTitle>{t("datasets:label.noDatasetsAvailable")}</AlertTitle>
+            {t("datasets:label.uploadDatasetBeforeCreatingSession")}
             {onGoToDatasets && (
               <Box sx={{ mt: 1 }}>
                 <Button
@@ -40,7 +41,7 @@ export default function SelectOptionMenu({
                   size="small"
                   onClick={onGoToDatasets}
                 >
-                  Go to Datasets
+                  {t("datasets:button.goToDatasets")}
                 </Button>
               </Box>
             )}
@@ -50,7 +51,7 @@ export default function SelectOptionMenu({
         {searchBar && (
           <Box width={"450px"}>
             <SearchBar
-              placeholder="Search ..."
+              placeholder={t("common:searchPlaceholder", "Search ...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -93,7 +94,7 @@ export default function SelectOptionMenu({
       >
         {goToPrevStep && (
           <Button variant="outlined" onClick={goToPrevStep}>
-            Back
+            {t("common:back")}
           </Button>
         )}
       </Box>

@@ -16,6 +16,7 @@ import WarningIcon from "@mui/icons-material/Warning";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { validateTypeChanges } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 export const TypeChangeValidator = ({
   open,
@@ -27,6 +28,7 @@ export const TypeChangeValidator = ({
 }) => {
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
+  const { t } = useTranslation(["datasets", "common"]);
 
   const validateChanges = async () => {
     setValidating(true);
@@ -59,12 +61,12 @@ export const TypeChangeValidator = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Validate Type Changes</DialogTitle>
+      <DialogTitle>{t("datasets:label.validateTypeChanges")}</DialogTitle>
       <DialogContent>
         {validating && (
           <Box display="flex" justifyContent="center" alignItems="center" p={3}>
             <CircularProgress />
-            <Box ml={2}>Validating type changes...</Box>
+            <Box ml={2}>{t("datasets:label.validatingTypeChanges")}</Box>
           </Box>
         )}
 
@@ -72,12 +74,12 @@ export const TypeChangeValidator = ({
           <>
             {validationResult.valid ? (
               <Alert severity="success" icon={<CheckCircleIcon />}>
-                All type changes are valid and can be applied safely.
+                {t("datasets:label.allTypeChangesValid")}
               </Alert>
             ) : (
               <>
                 <Alert severity="error" icon={<ErrorIcon />} sx={{ mb: 2 }}>
-                  Some type changes cannot be applied:
+                  {t("datasets:label.someTypeChangesCannotBeApplied")}
                 </Alert>
                 <List dense>
                   {Object.entries(validationResult.errors).map(
@@ -106,7 +108,7 @@ export const TypeChangeValidator = ({
                     icon={<WarningIcon />}
                     sx={{ mt: 2, mb: 1 }}
                   >
-                    Warnings about type changes:
+                    {t("datasets:label.typeChangeWarnings")}
                   </Alert>
                   <List dense>
                     {Object.entries(validationResult.warnings).map(
@@ -128,7 +130,7 @@ export const TypeChangeValidator = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit">
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button
           onClick={() => onConfirm(typeChanges)}
@@ -136,7 +138,7 @@ export const TypeChangeValidator = ({
           variant="contained"
           color="primary"
         >
-          Apply Changes
+          {t("datasets:button.applyChanges")}
         </Button>
       </DialogActions>
     </Dialog>

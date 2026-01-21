@@ -19,6 +19,7 @@ import YAxisForm from "./forms/YAxisForm";
 import LegendForm from "./forms/LegendForm";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DimensionsForm from "./forms/DimensionsForm";
+import { useTranslation } from "react-i18next";
 
 export default function PlotLayoutForm({
   data,
@@ -33,6 +34,7 @@ export default function PlotLayoutForm({
   const [modified, setModified] = useState(false);
   const [localLayout, setLocalLayout] = useState(structuredClone(layout));
   const [localData, setLocalData] = useState(structuredClone(data));
+  const { t } = useTranslation(["datasets", "common"]);
 
   const handleTraceChange = (index, path, value) => {
     const newData = [...data];
@@ -93,7 +95,7 @@ export default function PlotLayoutForm({
       }}
     >
       <Typography variant="h6" sx={{ mb: 1 }}>
-        Edit Plot Layout
+        {t("datasets:label.editPlotLayout")}
       </Typography>
 
       {/* General Settings */}
@@ -103,7 +105,7 @@ export default function PlotLayoutForm({
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
-            General Settings
+            {t("datasets:label.generalSettings")}
           </Typography>
         </AccordionSummary>
         <AccordionDetails
@@ -125,7 +127,10 @@ export default function PlotLayoutForm({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
-                Trace {index + 1} ({trace.name || trace.type})
+                {t("datasets:label.traceIdx", {
+                  index: index + 1,
+                  trace: trace.name || trace.type,
+                })}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -148,7 +153,7 @@ export default function PlotLayoutForm({
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="subtitle1" fontWeight="bold">
-              Dimensions Labels
+              {t("datasets:label.dimensionsLabels")}
             </Typography>
           </AccordionSummary>
           <AccordionDetails
@@ -168,7 +173,7 @@ export default function PlotLayoutForm({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
-                X Axis
+                {t("datasets:label.xAxis")}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -192,7 +197,7 @@ export default function PlotLayoutForm({
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
-                Y Axis
+                {t("datasets:label.yAxis", "Y Axis")}
               </Typography>
             </AccordionSummary>
             <AccordionDetails
@@ -215,7 +220,7 @@ export default function PlotLayoutForm({
       >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
-            Legend
+            {t("datasets:label.legend", "Legend")}
           </Typography>
         </AccordionSummary>
         <AccordionDetails
@@ -229,7 +234,7 @@ export default function PlotLayoutForm({
 
       <Stack direction="row" spacing={2} justifyContent="flex-end">
         <Button variant="outlined" onClick={handleCancel} disabled={!modified}>
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button
           variant="contained"
@@ -237,7 +242,7 @@ export default function PlotLayoutForm({
           onClick={handleSave}
           disabled={!modified}
         >
-          Save
+          {t("common:save")}
         </Button>
       </Stack>
     </Box>

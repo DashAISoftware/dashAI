@@ -13,6 +13,7 @@ import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
+import { useTranslation } from "react-i18next";
 
 export default function ModelsRightBar({ session, onToggle, onModelClick }) {
   const theme = useTheme();
@@ -21,6 +22,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["models"]);
 
   const fetchModels = React.useCallback(async () => {
     try {
@@ -33,7 +35,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
       setFilteredModels(response);
     } catch (error) {
       console.error("Error fetching models:", error);
-      enqueueSnackbar("Error fetching compatible models", {
+      enqueueSnackbar(t("models:error.fetchingModels"), {
         variant: "error",
       });
     } finally {
@@ -97,7 +99,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
           }}
         >
           <Typography variant="h6" color="text.primary">
-            Available Models
+            {t("models:label.availableModels")}
           </Typography>
           <IconButton
             size="small"
@@ -123,7 +125,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
               variant="body2"
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
-              Select a session to view available models.
+              {t("models:label.selectSessionToViewModels")}
             </Typography>
           </Box>
         ) : (
@@ -133,7 +135,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
               <TextField
                 fullWidth
                 size="small"
-                placeholder="Search models..."
+                placeholder={t("models:label.searchModels")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 slotProps={{
@@ -173,8 +175,8 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
                     sx={{ color: "text.secondary", textAlign: "center" }}
                   >
                     {searchQuery
-                      ? "No models match your search"
-                      : "No compatible models found"}
+                      ? t("models:label.noModelsMatchSearch")
+                      : t("models:label.noCompatibleModelsFound")}
                   </Typography>
                 </Box>
               ) : (

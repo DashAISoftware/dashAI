@@ -6,8 +6,10 @@ import InfoIcon from "@mui/icons-material/Info";
 import Plot from "react-plotly.js";
 import { StatBox } from "../StatBox";
 import { MetricRow } from "../MetricRow";
+import { Trans, useTranslation } from "react-i18next";
 
 export const NumericTab = ({ numericStats }) => {
+  const { t } = useTranslation(["datasets"]);
   const theme = useTheme();
 
   return (
@@ -26,16 +28,28 @@ export const NumericTab = ({ numericStats }) => {
             {/* Summary Stats */}
             <Box display="flex" flexWrap="wrap" gap={2} mb={3}>
               <Box flex="1 1 200px" minWidth="150px">
-                <StatBox label="Mean" value={stats.mean.toFixed(2)} />
+                <StatBox
+                  label={t("datasets:label.mean")}
+                  value={stats.mean.toFixed(2)}
+                />
               </Box>
               <Box flex="1 1 200px" minWidth="150px">
-                <StatBox label="Median" value={stats.median.toFixed(2)} />
+                <StatBox
+                  label={t("datasets:label.median")}
+                  value={stats.median.toFixed(2)}
+                />
               </Box>
               <Box flex="1 1 200px" minWidth="150px">
-                <StatBox label="Std Dev" value={stats.std.toFixed(2)} />
+                <StatBox
+                  label={t("datasets:label.stdDev")}
+                  value={stats.std.toFixed(2)}
+                />
               </Box>
               <Box flex="1 1 200px" minWidth="150px">
-                <StatBox label="Unique" value={stats.n_unique} />
+                <StatBox
+                  label={t("datasets:label.unique")}
+                  value={stats.n_unique}
+                />
               </Box>
             </Box>
 
@@ -48,17 +62,29 @@ export const NumericTab = ({ numericStats }) => {
                   color="text.secondary"
                   gutterBottom
                 >
-                  Distribution Metrics
+                  {t("datasets:label.distributionMetrics")}
                 </Typography>
                 <Box display="flex" flexDirection="column" gap={1}>
-                  <MetricRow label="Min" value={stats.min.toFixed(2)} />
-                  <MetricRow label="Q1" value={stats.q1.toFixed(2)} />
                   <MetricRow
-                    label="Median (Q2)"
+                    label={t("datasets:label.min")}
+                    value={stats.min.toFixed(2)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.q1")}
+                    value={stats.q1.toFixed(2)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.median")}
                     value={stats.median.toFixed(2)}
                   />
-                  <MetricRow label="Q3" value={stats.q3.toFixed(2)} />
-                  <MetricRow label="Max" value={stats.max.toFixed(2)} />
+                  <MetricRow
+                    label={t("datasets:label.q3")}
+                    value={stats.q3.toFixed(2)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.max")}
+                    value={stats.max.toFixed(2)}
+                  />
                 </Box>
               </Box>
 
@@ -69,17 +95,23 @@ export const NumericTab = ({ numericStats }) => {
                   color="text.secondary"
                   gutterBottom
                 >
-                  Shape Indicators
+                  {t("datasets:label.shapeIndicators")}
                 </Typography>
                 <Box display="flex" flexDirection="column" gap={1}>
-                  <MetricRow label="Skewness" value={stats.skew.toFixed(3)} />
                   <MetricRow
-                    label="Kurtosis"
+                    label={t("datasets:label.skewness")}
+                    value={stats.skew.toFixed(3)}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.kurtosis")}
                     value={stats.kurtosis.toFixed(3)}
                   />
-                  <MetricRow label="Outliers" value={stats.outliers_count} />
                   <MetricRow
-                    label="Range"
+                    label={t("datasets:label.outliers")}
+                    value={stats.outliers_count}
+                  />
+                  <MetricRow
+                    label={t("datasets:label.range")}
                     value={(stats.max - stats.min).toFixed(2)}
                   />
                 </Box>
@@ -93,7 +125,7 @@ export const NumericTab = ({ numericStats }) => {
                 color="text.secondary"
                 gutterBottom
               >
-                Boxplot
+                {t("datasets:label.boxplot")}
               </Typography>
               <Plot
                 data={[
@@ -144,8 +176,10 @@ export const NumericTab = ({ numericStats }) => {
                 sx={{ mt: 3 }}
               >
                 <Typography variant="body2">
-                  <strong>Right-skewed distribution:</strong> Consider applying
-                  a log transformation.
+                  <Trans i18nKey="datasets:label.rightSkewedWarning">
+                    <strong>Right-skewed distribution:</strong> Consider
+                    applying a log transformation.
+                  </Trans>
                 </Typography>
               </Alert>
             )}

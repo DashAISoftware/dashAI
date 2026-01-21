@@ -15,8 +15,10 @@ import {
   Cell,
 } from "recharts";
 import { StatBox } from "../StatBox";
+import { useTranslation } from "react-i18next";
 
 export const CategoricalTab = ({ categoricalStats }) => {
+  const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
 
   return (
@@ -35,14 +37,20 @@ export const CategoricalTab = ({ categoricalStats }) => {
             {/* Summary Stats */}
             <Box display="flex" flexWrap="wrap" gap={2} mb={4}>
               <Box flex="1 1 300px" minWidth="250px">
-                <StatBox label="Unique Values" value={stats.n_unique} />
-              </Box>
-              <Box flex="1 1 300px" minWidth="250px">
-                <StatBox label="Most Frequent" value={stats.most_frequent} />
+                <StatBox
+                  label={t("datasets:label.uniqueValues")}
+                  value={stats.n_unique}
+                />
               </Box>
               <Box flex="1 1 300px" minWidth="250px">
                 <StatBox
-                  label="Top Value Count"
+                  label={t("datasets:label.mostFrequent")}
+                  value={stats.most_frequent}
+                />
+              </Box>
+              <Box flex="1 1 300px" minWidth="250px">
+                <StatBox
+                  label={t("datasets:label.topValueCount")}
                   value={stats.most_frequent_count}
                 />
               </Box>
@@ -57,7 +65,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
                   color="text.secondary"
                   gutterBottom
                 >
-                  Value Distribution
+                  {t("datasets:label.valueDistribution")}
                 </Typography>
                 <Box sx={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -79,7 +87,11 @@ export const CategoricalTab = ({ categoricalStats }) => {
                         }}
                         labelStyle={{ color: theme.palette.text.primary }}
                       />
-                      <Bar dataKey="count" fill="rgba(136, 132, 216, 0.7)" />
+                      <Bar
+                        dataKey="count"
+                        fill="rgba(136, 132, 216, 0.7)"
+                        name={t("common:count")}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
@@ -92,7 +104,7 @@ export const CategoricalTab = ({ categoricalStats }) => {
                   color="text.secondary"
                   gutterBottom
                 >
-                  Proportion
+                  {t("datasets:label.proportion")}
                 </Typography>
                 <Box sx={{ width: "100%", height: 250 }}>
                   <ResponsiveContainer width="100%" height="100%">

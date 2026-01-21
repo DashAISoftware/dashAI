@@ -1,6 +1,7 @@
 import usePlugins from "./usePlugins";
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * custom hook for getting tabs, handle tab change and get plugin tags
@@ -18,6 +19,7 @@ export default function usePluginsTab({
     },
     refresh: refreshPluginsFlag,
   });
+  const { t } = useTranslation(["plugins"]);
 
   const pluginTags = [
     "DashAI",
@@ -31,12 +33,12 @@ export default function usePluginsTab({
 
   const tabs = [
     {
-      label: "Browse",
+      label: t("plugins:label.browse"),
       plugins: pluginsBrowse,
       to: "/app/plugins/browse",
     },
     {
-      label: "Installed",
+      label: t("plugins:label.installed"),
       plugins: pluginsInstalled,
       to: "/app/plugins/installed",
     },

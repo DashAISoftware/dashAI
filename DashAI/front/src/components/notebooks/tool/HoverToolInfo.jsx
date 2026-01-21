@@ -3,12 +3,14 @@ import React from "react";
 import { Box, Typography, Popover, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import api from "../../../api/api";
+import { useTranslation } from "react-i18next";
 
 export default function HoverToolInfo({
   anchorEl,
   hoveredTool,
   handleMouseLeave,
 }) {
+  const { t } = useTranslation(["common"]);
   const theme = useTheme();
 
   return (
@@ -76,7 +78,7 @@ export default function HoverToolInfo({
 
           {/* Category Badge */}
           <Chip
-            label={hoveredTool.metadata.category ?? "Other"}
+            label={hoveredTool.metadata.category ?? t("common:other")}
             size="small"
             sx={{
               bgcolor: hoveredTool.metadata.color,

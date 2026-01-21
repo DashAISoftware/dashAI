@@ -9,8 +9,11 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import IssueCard from "../IssueCard";
+import { useTranslation } from "react-i18next";
 
 const QualityTab = ({ qualityInfo, totalRows }) => {
+  const { t } = useTranslation(["datasets"]);
+
   const theme = useTheme();
   return (
     <Box display="flex" flexDirection="column" gap={4}>
@@ -18,7 +21,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
-            Data Quality Summary
+            {t("datasets:label.dataQualitySummary")}
           </Typography>
 
           <Box display="flex" flexWrap="wrap" gap={4}>
@@ -30,23 +33,23 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                 color="text.secondary"
                 mb={2}
               >
-                Issues Found
+                {t("datasets:label.issuesFound")}
               </Typography>
               <Box display="flex" flexDirection="column" gap={2}>
                 <IssueCard
-                  title="Constant Columns"
+                  title={t("datasets:label.constantColumns")}
                   count={qualityInfo.constant_columns.length}
                   items={qualityInfo.constant_columns}
                   severity="warning"
                 />
                 <IssueCard
-                  title="High Cardinality"
+                  title={t("datasets:label.highCardinality")}
                   count={qualityInfo.high_cardinality_columns.length}
                   items={qualityInfo.high_cardinality_columns}
                   severity="info"
                 />
                 <IssueCard
-                  title="Possible ID Columns"
+                  title={t("datasets:label.possibleIDColumns")}
                   count={qualityInfo.possible_id_columns.length}
                   items={qualityInfo.possible_id_columns}
                   severity="info"
@@ -62,13 +65,13 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                 color="text.secondary"
                 mb={2}
               >
-                Missing Data Patterns
+                {t("datasets:label.missingDataPatterns")}
               </Typography>
               {Object.values(qualityInfo.nan_ratio_per_column).every(
                 (ratio) => ratio === 0,
               ) ? (
                 <Alert severity="success">
-                  No missing values detected in the dataset.
+                  {t("datasets:label.noMissingValues")}
                 </Alert>
               ) : (
                 <Box display="flex" flexDirection="column" gap={2}>
@@ -84,14 +87,15 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                       {qualityInfo.rows_with_any_nan}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Rows with any missing value
+                      {t("datasets:label.rowsWithAnyMissingValue")}
                     </Typography>
                     <Typography variant="caption" color="text.disabled">
-                      {(
-                        (qualityInfo.rows_with_any_nan / totalRows) *
-                        100
-                      ).toFixed(1)}
-                      % of total
+                      {t("datasets:label.totalPercentage", {
+                        percentage: (
+                          (qualityInfo.rows_with_any_nan / totalRows) *
+                          100
+                        ).toFixed(1),
+                      })}
                     </Typography>
                   </Paper>
 
@@ -107,14 +111,15 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                       {qualityInfo.rows_with_multiple_nan}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Rows with multiple missing values
+                      {t("datasets:label.rowsWithMultipleMissingValues")}
                     </Typography>
                     <Typography variant="caption" color="text.disabled">
-                      {(
-                        (qualityInfo.rows_with_multiple_nan / totalRows) *
-                        100
-                      ).toFixed(1)}
-                      % of total
+                      {t("datasets:label.totalPercentage", {
+                        percentage: (
+                          (qualityInfo.rows_with_multiple_nan / totalRows) *
+                          100
+                        ).toFixed(1),
+                      })}
                     </Typography>
                   </Paper>
                 </Box>
@@ -128,7 +133,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
-            Missing Data by Column
+            {t("datasets:label.missingDataByColumn")}
           </Typography>
 
           <Box display="flex" flexDirection="column" gap={1}>
@@ -136,7 +141,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
               (ratio) => ratio === 0,
             ) ? (
               <Alert severity="success">
-                No missing values detected in any column.
+                {t("datasets:label.noMissingValues")}
               </Alert>
             ) : (
               Object.entries(qualityInfo.nan_ratio_per_column)

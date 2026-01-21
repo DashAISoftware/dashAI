@@ -3,20 +3,22 @@ import { Box, Card, CardContent, Typography, Paper } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import StorageIcon from "@mui/icons-material/Storage";
 import CreateIcon from "@mui/icons-material/Create";
+import { useTranslation } from "react-i18next";
 
 function ModeSelector({ predictionMode, setPredictionMode }) {
+  const { t } = useTranslation(["prediction"]);
   const theme = useTheme();
 
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-        Select Prediction Mode
+        {t("prediction:label.selectPredictionMode")}
       </Typography>
       <Typography
         variant="body2"
         sx={{ color: theme.palette.text.secondary, mb: 2 }}
       >
-        Choose how you would like to provide input data for the prediction.
+        {t("prediction:label.chooseInputMethod")}
       </Typography>
       <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
         <Paper
@@ -44,13 +46,13 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
             />
             <Box>
               <Typography variant="body2" fontWeight={600}>
-                Use Existing Dataset
+                {t("prediction:label.useExistingDataset")}
               </Typography>
               <Typography
                 variant="caption"
                 sx={{ color: theme.palette.text.secondary }}
               >
-                Select a dataset from the platform
+                {t("prediction:label.selectDatasetFromPlatform")}
               </Typography>
             </Box>
           </Box>
@@ -80,13 +82,13 @@ function ModeSelector({ predictionMode, setPredictionMode }) {
             />
             <Box>
               <Typography variant="body2" fontWeight={600}>
-                Manual Prediction
+                {t("prediction:label.manualPrediction")}
               </Typography>
               <Typography
                 variant="caption"
                 sx={{ color: theme.palette.text.secondary }}
               >
-                Enter values manually
+                {t("prediction:label.enterValuesManually")}
               </Typography>
             </Box>
           </Box>

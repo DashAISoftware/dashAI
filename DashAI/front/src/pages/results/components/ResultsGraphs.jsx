@@ -6,6 +6,7 @@ import { useSnackbar } from "notistack";
 import graphsMaking from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
+import { useTranslation } from "react-i18next";
 
 function ResultsGraphs({ runs }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -18,6 +19,7 @@ function ResultsGraphs({ runs }) {
   const [tabularMetrics, setTabularMetrics] = useState([]);
   const [chartData, setChartData] = useState({});
   const [filteredDataProcess, setFilteredDataProcess] = useState([]);
+  const { t } = useTranslation(["models"]);
 
   const handleChangeChart = (chartType) => {
     setSelectedChart(chartType);
@@ -42,7 +44,7 @@ function ResultsGraphs({ runs }) {
     const processData = async () => {
       try {
         // Only take finished runs
-        const finished = runs.filter((item) => item.status === "Finished");
+        const finished = runs.filter((item) => item.status === 3); // Finished
         setFilteredDataProcess(finished);
 
         if (finished.length === 0) return;
@@ -154,7 +156,7 @@ function ResultsGraphs({ runs }) {
           });
         }
       } catch (error) {
-        enqueueSnackbar("Error while processing experiment results.", {
+        enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
           variant: "error",
         });
         console.error(error);

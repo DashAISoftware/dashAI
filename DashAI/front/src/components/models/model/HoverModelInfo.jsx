@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Popover } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 
 export default function HoverModelInfo({
@@ -7,6 +8,7 @@ export default function HoverModelInfo({
   hoveredModel,
   handleMouseLeave,
 }) {
+  const { t } = useTranslation(["common"]);
   const theme = useTheme();
 
   return (
@@ -52,7 +54,7 @@ export default function HoverModelInfo({
           >
             {hoveredModel.description ||
               hoveredModel.metadata?.description ||
-              "No description available"}
+              t("common:noDescription")}
           </Typography>
         </Box>
       )}

@@ -20,6 +20,7 @@ import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { getRunStatus } from "../../utils/runStatus";
+import { Trans, useTranslation } from "react-i18next";
 
 export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const theme = useTheme();
@@ -31,6 +32,7 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["generative"]);
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -62,14 +64,12 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     setIsLoadingMessage(true);
 
     postProcess(sessionId, input).then((response) => {
-      // Añadir el nuevo mensaje en estado inicial
+      // Add the new message to the chat
       setMessages((prevMessages) => [...prevMessages, response]);
 
-      // Encolar el proceso
+      // Enqueue the generative process job
       enqueueGenerativeProcessJob(response.id).then(() => {
         startJobQueue(true).then(() => {
-          // Aquí NO arrancamos polling manual,
-          // el useEffect se encargará de actualizar este mensaje
           setIsLoadingMessage(false);
         });
       });
@@ -98,8 +98,8 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
     const intervalId = setInterval(() => {
       const unfinished = messages.filter(
         (m) =>
-          getRunStatus(m.status) !== "Finished" &&
-          getRunStatus(m.status) !== "Error",
+          m.status !== 3 && // Not Finished
+          m.status !== 4, // Not Error
       );
 
       if (unfinished.length === 0) {
@@ -110,13 +110,16 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       // Fetch latest status for each unfinished process
       unfinished.forEach((msg) => {
         getProcessById(msg.id).then((process) => {
-          const status = getRunStatus(process.status);
+          const status = process.status;
 
-          if (status === "Error") {
+          // Error
+          if (status === 4) {
             enqueueSnackbar(
-              `The process has failed. Deleting it...${
-                process.output?.[0]?.data ? `\n${process.output[0].data}` : ""
-              }`,
+              t("generative:error.processError", {
+                error: process.output?.[0]?.data
+                  ? `\n${process.output[0].data}`
+                  : "",
+              }),
               {
                 autoHideDuration: 8000,
                 style: { whiteSpace: "pre-line" },
@@ -276,7 +279,9 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
             >
               {message.type === "history" ? (
                 <Typography sx={{ fontSize: "0.875rem", opacity: 0.8 }}>
-                  Params updated: {message.changedMessage}
+                  <Trans i18nKey="generative:label.parameterChangeEvent">
+                    Parameters updated: <span>{message.changedMessage}</span>
+                  </Trans>
                 </Typography>
               ) : (
                 <>

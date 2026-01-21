@@ -25,6 +25,7 @@ import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
 import { ChevronRight } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 export default function RightBar({ notebook, onToggle }) {
   const theme = useTheme();
@@ -39,6 +40,7 @@ export default function RightBar({ notebook, onToggle }) {
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
   const { explorersAndConverters } = useExplorersAndConverters();
+  const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +53,7 @@ export default function RightBar({ notebook, onToggle }) {
         setFilteredConverters(data.filter((item) => item.type === "Converter"));
         setFilteredExplorers(data.filter((item) => item.type === "Explorer"));
       } catch (error) {
-        enqueueSnackbar("Failed to fetch explorers/converters", {
+        enqueueSnackbar(t("datasets:error.fetchingExplorersConverters"), {
           variant: "error",
         });
         console.error("Failed to fetch explorers/converters:", error);
@@ -73,8 +75,8 @@ export default function RightBar({ notebook, onToggle }) {
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -127,31 +129,33 @@ export default function RightBar({ notebook, onToggle }) {
     }
 
     // Check cardinality requirements
-    if (inputCardinality.exact != undefined && inputCardinality.exact != null) {
+    if (inputCardinality.exact != null) {
       if (validColumns.length < inputCardinality.exact) {
         disabled = true;
+
         if (validColumns.length === 0) {
-          tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
+          tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
-        tooltip += `\n\nRequires exactly ${
-          inputCardinality.exact
-        } valid column${inputCardinality.exact === 1 ? "" : "s"}, but ${
-          validColumns.length
-        } available.`;
+
+        tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
+          required: inputCardinality.exact,
+          available: validColumns.length,
+          count: inputCardinality.exact,
+        })}`;
       }
-    } else {
-      if (inputCardinality.min != undefined && inputCardinality.min != null) {
-        if (validColumns.length < inputCardinality.min) {
-          disabled = true;
-          if (validColumns.length === 0) {
-            tooltip += `\n\nThis dataset does not have any valid columns for this explorer.`;
-          }
-          tooltip += `\n\nRequires at least ${
-            inputCardinality.min
-          } valid column${inputCardinality.min === 1 ? "" : "s"}, but only ${
-            validColumns.length
-          } available.`;
+    } else if (inputCardinality.min != null) {
+      if (validColumns.length < inputCardinality.min) {
+        disabled = true;
+
+        if (validColumns.length === 0) {
+          tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
         }
+
+        tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
+          required: inputCardinality.min,
+          available: validColumns.length,
+          count: inputCardinality.min,
+        })}`;
       }
     }
 
@@ -162,7 +166,7 @@ export default function RightBar({ notebook, onToggle }) {
       !allowedDtypes.includes("*")
     ) {
       disabled = true;
-      tooltip += `\n\nThis dataset does not have any columns with the required data types.`;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypes")}`;
     }
 
     return { disabled, tooltip, validColumns };
@@ -205,9 +209,9 @@ export default function RightBar({ notebook, onToggle }) {
       !allowedDtypes.includes("*")
     ) {
       disabled = true;
-      tooltip += `\n\nThis dataset does not have any columns with the required data types (${allowedDtypes.join(
-        ", ",
-      )}).`;
+      tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
+        dtypes: allowedDtypes.join(", "),
+      })}`;
     }
 
     return { disabled, tooltip, validColumns };
@@ -300,7 +304,7 @@ export default function RightBar({ notebook, onToggle }) {
           }}
         >
           <Typography variant="h6" color="text.primary">
-            Analysis Tools
+            {t("datasets:label.analysisTools")}
           </Typography>
           <IconButton
             size="small"
@@ -325,7 +329,7 @@ export default function RightBar({ notebook, onToggle }) {
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
-                    Explore
+                    {t("datasets:label.explore")}
                   </Box>
                 }
               />
@@ -334,7 +338,7 @@ export default function RightBar({ notebook, onToggle }) {
                 label={
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
-                    Convert
+                    {t("datasets:label.convert")}
                   </Box>
                 }
               />
@@ -361,7 +365,7 @@ export default function RightBar({ notebook, onToggle }) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery("")}
-                  placeholder="Search explorers/converters"
+                  placeholder={t("datasets:label.searchExplorersConverters")}
                 />
               </Box>
               {/* View Mode Toggle */}
@@ -377,7 +381,7 @@ export default function RightBar({ notebook, onToggle }) {
                 }}
               >
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  View mode
+                  {t("datasets:label.viewMode")}
                 </Typography>
                 <ToggleButtonGroup
                   value={viewMode}
@@ -479,7 +483,7 @@ export default function RightBar({ notebook, onToggle }) {
               variant="body2"
               sx={{ color: "text.secondary", textAlign: "center" }}
             >
-              Select a notebook to access analysis tools.
+              {t("datasets:label.selectNotebookToAccessAnalysisTools")}
             </Typography>
           </Box>
         )}

@@ -8,6 +8,7 @@ import { SnackbarProvider } from "notistack";
 import { CustomThemeProvider } from "./contexts/ThemeContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+import "./utils/i18n";
 
 root.render(
   <React.StrictMode>

@@ -3,34 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Typography, Chip, Stack } from "@mui/material";
 import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
-
-const columns = [
-  {
-    field: "id",
-    headerName: "Index",
-  },
-  {
-    field: "columnName",
-    headerName: "Column Name",
-    flex: 1,
-  },
-  {
-    field: "valueType",
-    headerName: "Value Type",
-    flex: 0.5,
-  },
-  {
-    field: "dataType",
-    headerName: "Data Type",
-    flex: 0.5,
-  },
-  {
-    field: "order",
-    headerName: "Selected Order",
-    type: "number",
-    flex: 0.5,
-  },
-];
+import { Trans, useTranslation } from "react-i18next";
 
 /**
  * Generic column selection component that can be reused across the application
@@ -66,6 +39,35 @@ function ColumnSelector({
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [datasetColumns, setDatasetColumns] = useState([]);
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const columns = [
+    {
+      field: "id",
+      headerName: t("common:index"),
+    },
+    {
+      field: "columnName",
+      headerName: t("datasets:label.columnName"),
+      flex: 1,
+    },
+    {
+      field: "valueType",
+      headerName: t("datasets:label.valueType"),
+      flex: 0.5,
+    },
+    {
+      field: "dataType",
+      headerName: t("datasets:label.dataType"),
+      flex: 0.5,
+    },
+    {
+      field: "order",
+      headerName: t("datasets:label.selectedOrder"),
+      type: "number",
+      flex: 0.5,
+    },
+  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -79,8 +81,8 @@ function ColumnSelector({
           ([columnName, typeInfo], idx) => ({
             id: idx,
             columnName: columnName,
-            valueType: typeInfo.type || "Unknown",
-            dataType: typeInfo.dtype || "Unknown",
+            valueType: typeInfo.type || t("common:unknown"),
+            dataType: typeInfo.dtype || t("common:unknown"),
             order: idx,
           }),
         );
@@ -232,14 +234,16 @@ function ColumnSelector({
             variant="body1"
             sx={{ color: "rgba(255, 255, 255, 0.7)", mb: 0.5 }}
           >
-            Required columns:
-            {inputCardinality.exact
-              ? ` exactly ${inputCardinality.exact}`
-              : inputCardinality.max
-                ? ` between ${inputCardinality.min || 0} and ${
-                    inputCardinality.max
-                  }`
-                : ` at least ${inputCardinality.min || 0}`}
+            {t("datasets:label.requiredColumns", {
+              exact: inputCardinality.exact,
+              min: inputCardinality.min || 0,
+              max: inputCardinality.max,
+              context: inputCardinality.exact
+                ? "exact"
+                : inputCardinality.max
+                  ? "range"
+                  : "min",
+            })}
           </Typography>
         )}
 
@@ -257,9 +261,9 @@ function ColumnSelector({
                 : 0,
           }}
         >
-          {`Selected ${rowSelectionModel.length} column${
-            rowSelectionModel.length !== 1 ? "s" : ""
-          }`}
+          {t("datasets:label.selectedColumns", {
+            count: rowSelectionModel.length,
+          })}
         </Typography>
 
         {/* Allowed data types */}
@@ -272,13 +276,15 @@ function ColumnSelector({
               mt: 1,
             }}
           >
-            Allowed data types:{" "}
-            <Box
-              component="span"
-              sx={{ color: "secondary.main", fontWeight: 500 }}
-            >
-              {allowedDtypes.join(", ")}
-            </Box>
+            <Trans i18nKey="datasets:label.allowedDataTypes">
+              Allowed data types:
+              <Box
+                component="span"
+                sx={{ color: "secondary.main", fontWeight: 500 }}
+              >
+                {allowedDtypes.join(", ")}
+              </Box>
+            </Trans>
           </Typography>
         )}
         {/* Restricted data types */}
@@ -291,13 +297,15 @@ function ColumnSelector({
               mt: 1,
             }}
           >
-            Restricted data types:{" "}
-            <Box
-              component="span"
-              sx={{ color: "secondary.main", fontWeight: 500 }}
-            >
-              {restrictedDtypes.join(", ")}
-            </Box>
+            <Trans i18nKey="datasets:label.restrictedDataTypes">
+              Restricted data types:
+              <Box
+                component="span"
+                sx={{ color: "secondary.main", fontWeight: 500 }}
+              >
+                {restrictedDtypes.join(", ")}
+              </Box>
+            </Trans>
           </Typography>
         )}
       </Box>{" "}

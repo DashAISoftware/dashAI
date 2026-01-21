@@ -1,8 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 function ResultsTabParametersToggle({ displayMode, setDisplayMode }) {
+  const { t } = useTranslation(["common"]);
+
   return (
     <Grid>
       <ToggleButtonGroup
@@ -15,8 +18,8 @@ function ResultsTabParametersToggle({ displayMode, setDisplayMode }) {
         }}
         sx={{ float: "right" }}
       >
-        <ToggleButton value="nested-list">List</ToggleButton>
-        <ToggleButton value="json">JSON</ToggleButton>
+        <ToggleButton value="nested-list">{t("common:list")}</ToggleButton>
+        <ToggleButton value="json">{t("common:json")}</ToggleButton>
       </ToggleButtonGroup>
     </Grid>
   );

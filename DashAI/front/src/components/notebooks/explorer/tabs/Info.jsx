@@ -3,21 +3,7 @@ import PropTypes from "prop-types";
 
 import { Divider, Grid, Typography } from "@mui/material";
 import { formatDate } from "../../../../utils";
-
-const nameInfo = [
-  { key: "name", label: "Name" },
-  { key: "exploration_type", label: "Explorer Type" },
-  { key: "status", label: "Status" },
-  { key: "exploration_path", label: "Results Path" },
-];
-
-const dateInfo = [
-  { key: "created", label: "Created" },
-  { key: "last_modified", label: "Last Modified" },
-  { key: "delivery_time", label: "Delivery Time" },
-  { key: "start_time", label: "Start Time" },
-  { key: "end_time", label: "End Time" },
-];
+import { useTranslation } from "react-i18next";
 
 const dataToString = (data) => {
   if (data === undefined || data === null) {
@@ -35,11 +21,27 @@ const dataToString = (data) => {
  * Component that displays general information associated with an object.
  * @param {object} data object that contains all the necesary info
  */
-function Info({
-  data,
-  nameRelatedInfo = nameInfo,
-  dateRelatedInfo = dateInfo,
-}) {
+function Info({ data, nameRelatedInfo, dateRelatedInfo }) {
+  const { t } = useTranslation(["common", "datasets"]);
+
+  const nameInfo = [
+    { key: "name", label: t("common:name") },
+    { key: "exploration_type", label: t("datasets:label.explorationType") },
+    { key: "status", label: t("common:status") },
+    { key: "exploration_path", label: t("datasets:label.explorationPath") },
+  ];
+
+  const dateInfo = [
+    { key: "created", label: t("common:created") },
+    { key: "last_modified", label: t("common:lastModified") },
+    { key: "delivery_time", label: t("common:deliveryTime") },
+    { key: "start_time", label: t("common:startTime") },
+    { key: "end_time", label: t("common:endTime") },
+  ];
+
+  nameRelatedInfo = nameRelatedInfo || nameInfo;
+  dateRelatedInfo = dateRelatedInfo || dateInfo;
+
   return (
     <Grid container direction="column">
       {/* name related info */}

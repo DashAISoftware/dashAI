@@ -11,15 +11,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 const CorrelationsTab = ({ correlations }) => {
+  const { t } = useTranslation(["datasets"]);
+
   const theme = useTheme();
   const corrData = [];
   Object.entries(correlations).forEach(([col1, corrs]) => {
     Object.entries(corrs).forEach(([col2, value]) => {
       if (col1 < col2) {
         // Avoid duplicates
-        corrData.push({ pair: `${col1} - ${col2}`, correlation: value });
+        corrData.push({
+          pair: `${col1} - ${col2}`,
+          correlation: value,
+        });
       }
     });
   });
@@ -30,7 +36,7 @@ const CorrelationsTab = ({ correlations }) => {
     <Card>
       <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
         <Typography variant="h6" fontWeight="bold" mb={3}>
-          Correlation Analysis
+          {t("datasets:label.correlationAnalysis")}
         </Typography>
 
         <Box mb={4}>
@@ -47,7 +53,11 @@ const CorrelationsTab = ({ correlations }) => {
                 }}
                 labelStyle={{ color: theme.palette.text.primary }}
               />
-              <Bar dataKey="correlation" fill={theme.palette.info.main}>
+              <Bar
+                dataKey="correlation"
+                name={t("datasets:label.correlation")}
+                fill={theme.palette.info.main}
+              >
                 {corrData.map((entry, index) => (
                   <Cell
                     key={index}
@@ -65,7 +75,7 @@ const CorrelationsTab = ({ correlations }) => {
 
         <Box>
           <Typography variant="h6" fontWeight="bold" mb={2}>
-            Strong Correlations (|r| &gt; 0.5)
+            {t("datasets:label.strongCorrelations")} (|r| &gt; 0.5)
           </Typography>
           <Box display="flex" flexDirection="column" gap={1}>
             {corrData
@@ -104,7 +114,7 @@ const CorrelationsTab = ({ correlations }) => {
                   color="text.secondary"
                   fontStyle="italic"
                 >
-                  No strong correlations detected
+                  {t("datasets:label.noStrongCorrelationsFound")}
                 </Typography>
               </Box>
             )}

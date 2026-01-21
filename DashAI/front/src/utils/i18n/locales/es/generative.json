@@ -1,0 +1,29 @@
+{
+  "button": {
+    "backToTaskSelection": "Volver a Selección de Tarea",
+    "createSession": "Crear una sesión"
+  },
+  "error": {
+    "nameRequired": "Se requiere un nombre",
+    "processError": "El proceso ha fallado. Eliminándolo... {{error}}"
+  },
+  "label": {
+    "deleteSessionConfirmation": "¿Está seguro de que desea eliminar esta sesión? Esta acción no se puede deshacer.",
+    "generativeModule": "Módulo Generativo",
+    "nameYourSession": "Nombre su sesión",
+    "noSessionsFound": "No se encontraron sesiones",
+    "parameterChangeEvent": "Parámetros actualizados: <1></1>",
+    "parameterChangeHistory": "Historial de cambios de parámetros para la sesión actual",
+    "searchSessions": "Buscar Sesiones",
+    "searchTasks": "Buscar Tareas",
+    "selectGenerativeTask": "Seleccione una tarea generativa para comenzar una nueva sesión",
+    "selectModelAndConfigureParameters": "Seleccione un modelo y configure sus parámetros.",
+    "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",
+    "sessionDescription": "Descripción de la Sesión",
+    "sessionInformation": "Información de la Sesión",
+    "sessionName": "Nombre de la Sesión",
+    "sessions": "Sesiones",
+    "typeYourMessage": "Escriba un mensaje",
+    "untitledSession": "Sesión Sin Título"
+  }
+}

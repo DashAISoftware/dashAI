@@ -5,6 +5,7 @@ import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
+import { useTranslation } from "react-i18next";
 
 /**
  * Compact comparison table showing all runs in a session
@@ -20,6 +21,7 @@ function ModelComparisonTable({
   metricSplit = "test",
 }) {
   const [models, setModels] = useState([]);
+  const { t } = useTranslation(["models", "common"]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -39,7 +41,7 @@ function ModelComparisonTable({
         id: run.id,
         name: run.name,
         model_name: run.model_name,
-        status: getRunStatus(run.status),
+        status: run.status,
         statusCode: run.status,
         created: run.created,
         last_modified: run.last_modified,
@@ -106,13 +108,13 @@ function ModelComparisonTable({
   const columns = [
     {
       field: "name",
-      headerName: "Model Name",
+      headerName: t("common:modelName"),
       flex: 1,
       minWidth: 150,
     },
     {
       field: "model_name",
-      headerName: "Model",
+      headerName: t("common:model"),
       flex: 1,
       minWidth: 150,
       valueGetter: (value) => {
@@ -123,20 +125,19 @@ function ModelComparisonTable({
     ...getMetricColumns(),
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: t("common:actions"),
       width: 150,
       sortable: false,
       renderCell: (params) => {
         const canTrain =
-          params.row.status === "Not Started" ||
-          params.row.status === "Error" ||
-          params.row.status === "Finished";
-        const isRunning =
-          params.row.status === "Delivered" || params.row.status === "Started";
+          params.row.status === 0 || // Not Started
+          params.row.status === 4 || // Error
+          params.row.status === 3; // Finished
+        const isRunning = params.row.status === 1 || params.row.status === 2; // Delivered or Started
 
         return (
           <Box sx={{ display: "flex", gap: 0.5 }}>
-            <Tooltip title="Train">
+            <Tooltip title={t("common:train")}>
               <span>
                 <IconButton
                   size="small"
@@ -152,7 +153,7 @@ function ModelComparisonTable({
               </span>
             </Tooltip>
 
-            <Tooltip title="View Details">
+            <Tooltip title={t("common:viewDetails")}>
               <IconButton
                 size="small"
                 onClick={(e) => {
@@ -165,7 +166,7 @@ function ModelComparisonTable({
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Delete">
+            <Tooltip title={t("common:delete")}>
               <span>
                 <IconButton
                   size="small"

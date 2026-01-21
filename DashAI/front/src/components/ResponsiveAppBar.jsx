@@ -13,25 +13,32 @@ import MenuItem from "@mui/material/MenuItem";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
 import HomeIcon from "@mui/icons-material/HomeOutlined";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
+import { ColorModeContext } from "../contexts/ThemeContext";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
-import { ColorModeContext } from "../contexts/ThemeContext";
-
-const pages = [
-  { name: "Datasets", to: "/app/data", disabled: false },
-  { name: "Models", to: "/app/models", disabled: false },
-  { name: "Experiments", to: "/app/experiments", disabled: false },
-  { name: "Explainability", to: "/app/explainers", disabled: false },
-  { name: "Generative", to: "/app/generative", disabled: false },
-  { name: "Plugins", to: "/app/plugins/browse", disabled: false },
-];
 
 function ResponsiveAppBar() {
   const theme = useTheme();
   const colorMode = React.useContext(ColorModeContext);
   const location = useLocation();
+  const { t } = useTranslation(["common"]);
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
+
+  const pages = [
+    { name: t("common:datasets"), to: "/app/data", disabled: false },
+    { name: t("common:models"), to: "/app/models", disabled: false },
+    { name: t("common:experiments"), to: "/app/experiments", disabled: false },
+    {
+      name: t("common:explainability"),
+      to: "/app/explainers",
+      disabled: false,
+    },
+    { name: t("common:generative"), to: "/app/generative", disabled: false },
+    { name: t("common:plugins"), to: "/app/plugins/browse", disabled: false },
+  ];
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
@@ -134,6 +141,7 @@ function ResponsiveAppBar() {
               </Button>
             ))}
           </Box>
+          <LanguageSelector />
 
           {/* Theme Toggle Button */}
           <Box sx={{ flexGrow: 0 }}>

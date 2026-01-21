@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
-import SessionBarHeader from "./SessionBarHeader";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
+import { useTranslation } from "react-i18next";
 
 export default function SessionBar({
   sessions,
@@ -24,11 +24,14 @@ export default function SessionBar({
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
+  const { t } = useTranslation(["generative", "common"]);
 
   useEffect(() => {
     // Initialize all sections as closed
     const taskNames = [
-      ...new Set(sessions.map((session) => session.task_name || "Other")),
+      ...new Set(
+        sessions.map((session) => session.task_name || t("common:other")),
+      ),
     ];
     const initialOpenState = {};
     taskNames.forEach((task) => {
@@ -69,7 +72,7 @@ export default function SessionBar({
 
   // Group sessions by display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
-    const displayName = session.display_name || "Other";
+    const displayName = session.display_name || t("common:other");
     if (!groups[displayName]) {
       groups[displayName] = [];
     }
@@ -107,11 +110,11 @@ export default function SessionBar({
           {selectedSessionId ? (
             <NewItemButton
               onClick={handleNewSessionButton}
-              title="New Session"
+              title={t("generative:button.createSession")}
             />
           ) : (
             <Typography variant="body1" color="textSecondary">
-              Generative Module
+              {t("generative:label.generativeModule")}
             </Typography>
           )}
         </Box>
@@ -119,7 +122,7 @@ export default function SessionBar({
         {/* Search Bar */}
         <Box px={2} pb={2} flex={"0 0 auto"}>
           <SearchBar
-            placeholder={"Search Sessions"}
+            placeholder={t("generative:label.searchSessions")}
             value={searchQuery}
             onChange={handleSearchChange}
           />
@@ -141,11 +144,9 @@ export default function SessionBar({
         >
           {/* Header */}
           <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
-            <FolderIcon
-              sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 20 }}
-            />
-            <Typography variant="body2" color="text.primary">
-              Sessions
+            <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
+            <Typography color="text.primary">
+              {t("generative:label.sessions")}
             </Typography>
             <Box
               sx={{

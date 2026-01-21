@@ -1,8 +1,10 @@
 import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 
 export default function DescriptionPanel() {
   const theme = useTheme();
+  const { t } = useTranslation(["common"]);
   return (
     <Box
       sx={{
@@ -20,7 +22,7 @@ export default function DescriptionPanel() {
         variant="body2"
         sx={{ color: "text.secondary", fontStyle: "italic" }}
       >
-        Hover over a tool to see its description
+        {t("common:hoverToolForDescription")}
       </Typography>
     </Box>
   );

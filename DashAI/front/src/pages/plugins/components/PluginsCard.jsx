@@ -14,6 +14,7 @@ import PluginTags from "./PluginsTags";
 import usePluginsUpdate from "../hooks/usePluginsUpdate";
 import { PluginStatus } from "../../../types/plugin";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component for plugin card modal
@@ -31,6 +32,7 @@ function PluginsCard({
 }) {
   const navigate = useNavigate();
   const { category } = useParams();
+  const { t } = useTranslation(["plugins"]);
 
   const handlePluginClick = () => {
     navigate(`/app/plugins/${category}/details/${plugin.id}`);
@@ -85,7 +87,9 @@ function PluginsCard({
               </Grid>
               <Grid>
                 <Typography variant="body2">
-                  Version: {plugin.installed_version}
+                  {t("plugins:label.version", {
+                    version: plugin.installed_version,
+                  })}
                 </Typography>
               </Grid>
               <Grid>
@@ -135,7 +139,7 @@ function PluginsCard({
               size="medium"
               variant="outlined"
             >
-              Install
+              {t("plugins:button.install")}
             </Button>
           )}
         </CardActions>

@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import usePluginsTab from "../hooks/usePluginsTab";
 import { Update as UpdateIcon } from "@mui/icons-material";
 import { updatePluginsDBFromPypi as updatePluginsFromPypi } from "../../../api/plugins";
+import { useTranslation } from "react-i18next";
 
 /**
  * component to display plugins main tabs
@@ -20,6 +21,7 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
       refreshPluginsFlag,
       setRefreshPluginsFlag,
     });
+  const { t } = useTranslation(["plugins"]);
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -46,7 +48,7 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
             >
               <Grid>
                 <Typography variant="h4" py={2}>
-                  {label} Plugins
+                  {t("plugins:label.plugins", { label })}
                 </Typography>
               </Grid>
               <Grid>
@@ -57,14 +59,14 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
                     try {
                       await updatePluginsFromPypi();
                     } catch (error) {
-                      enqueueSnackbar("Error while trying to update plugins.", {
+                      enqueueSnackbar(t("plugins:error.updatePlugins"), {
                         variant: "error",
                       });
                     }
                   }}
                   endIcon={<UpdateIcon />}
                 >
-                  Refresh
+                  {t("plugins:button.refresh")}
                 </Button>
               </Grid>
             </Grid>

@@ -20,6 +20,7 @@ import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetPreviewNotebook({
   notebook,
@@ -27,6 +28,8 @@ export default function DatasetPreviewNotebook({
   existingDatasets = [],
   onAccordionChange,
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
+
   const theme = useTheme();
   if (!notebook) {
     return (
@@ -39,7 +42,7 @@ export default function DatasetPreviewNotebook({
         }}
       >
         <CircularProgress color="primary" />
-        <Typography>Loading...</Typography>
+        <Typography>{t("common:loading")}...</Typography>
       </Box>
     );
   }
@@ -135,7 +138,7 @@ export default function DatasetPreviewNotebook({
           }}
         >
           <Typography variant="h6">
-            Notebook: {getDatasetName()} Preview
+            {t("datasets:label.datasetPreviewFor", { name: getDatasetName() })}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Button
@@ -160,7 +163,7 @@ export default function DatasetPreviewNotebook({
               }}
               className="save-dataset-button"
             >
-              Save as new Dataset
+              {t("datasets:button.saveAsNewDataset")}
             </Button>
             <IconButton
               size="small"

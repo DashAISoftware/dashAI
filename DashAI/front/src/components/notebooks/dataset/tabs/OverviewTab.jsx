@@ -19,6 +19,7 @@ import {
   Bar,
 } from "recharts";
 import DatasetTable from "../DatasetTable";
+import { useTranslation } from "react-i18next";
 
 const OverviewTab = ({
   dataset,
@@ -27,6 +28,8 @@ const OverviewTab = ({
   total_rows,
   fetchDatasetPage,
 }) => {
+  const { t } = useTranslation(["datasets", "common"]);
+
   const theme = useTheme();
   const missingData = Object.entries(nan).map(([col, count]) => ({
     column: col,
@@ -49,7 +52,7 @@ const OverviewTab = ({
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
           <Typography variant="h6" gutterBottom>
-            Dataset Preview
+            {t("datasets:label.datasetPreview")}
           </Typography>
           <DatasetTable
             fetchPage={fetchDatasetPage}
@@ -63,7 +66,7 @@ const OverviewTab = ({
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
-            Missing Values Overview
+            {t("datasets:label.missingValuesOverview")}
           </Typography>
           {missingData.some((data) => data.missing > 0) ? (
             <Box sx={{ width: "100%", height: 300 }}>
@@ -81,13 +84,17 @@ const OverviewTab = ({
                     }}
                     labelStyle={{ color: theme.palette.text.primary }}
                   />
-                  <Bar dataKey="missing" fill="rgba(136, 132, 216, 0.7)" />
+                  <Bar
+                    dataKey="missing"
+                    fill="rgba(136, 132, 216, 0.7)"
+                    name={t("common:missing")}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
           ) : (
             <Alert severity="success">
-              No missing values detected in the dataset.
+              {t("datasets:label.noMissingValues")}
             </Alert>
           )}
         </CardContent>
@@ -97,11 +104,18 @@ const OverviewTab = ({
       <Card>
         <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" gutterBottom>
-            Column Types Distribution
+            {t("datasets:label.columnTypesDistribution")}
           </Typography>
           <Grid container spacing={2}>
             {typeCounts.map(([type, count]) => (
-              <Grid item xs={12} sm={6} md={4} key={type}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                key={type}
+                sx={{ width: "150px" }}
+              >
                 <Paper
                   elevation={1}
                   sx={{
@@ -115,7 +129,7 @@ const OverviewTab = ({
                     {count}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {type} Columns
+                    {type}
                   </Typography>
                 </Paper>
               </Grid>

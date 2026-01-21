@@ -3,6 +3,7 @@ import React from "react";
 import FormSchemaContainer from "./FormSchemaContainer";
 import FormSchemaHeader from "./FormSchemaHeader";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component is a dialog for configuring a model, it wraps the form schema and the header.
@@ -21,6 +22,7 @@ function FormSchemaDialog({
   children,
 }) {
   const handleClose = () => setOpen(false);
+  const { t } = useTranslation(["common"]);
   return (
     <Dialog
       open={open}
@@ -39,7 +41,7 @@ function FormSchemaDialog({
       <FormSchemaContainer>
         <DialogTitle>
           <FormSchemaHeader
-            title={`${modelToConfigure} configuration`}
+            title={t("common:modelToConfig", { model: modelToConfigure })}
             onClose={handleClose}
             onFormSubmit={onFormSubmit}
           />

@@ -7,6 +7,7 @@ import EditModelDialog from "./EditModelDialog";
 import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { getComponents } from "../../api/component";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -16,6 +17,7 @@ import { getComponents } from "../../api/component";
 function ModelsTable({ newExp, setNewExp }) {
   const [selectedMetric, setSelectedMetric] = useState({});
   const [models, setModels] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -88,13 +90,13 @@ function ModelsTable({ newExp, setNewExp }) {
   const columns = [
     {
       field: "name",
-      headerName: "Name",
+      headerName: t("common:name"),
       flex: 1,
       editable: false,
     },
     {
       field: "model",
-      headerName: "Model",
+      headerName: t("common:model"),
       flex: 1,
       editable: false,
       valueGetter: (value) => {
@@ -104,6 +106,7 @@ function ModelsTable({ newExp, setNewExp }) {
     },
     {
       field: "actions",
+      headerName: t("common:actions"),
       type: "actions",
       flex: 0.5,
       getActions: (params) => {
@@ -123,7 +126,7 @@ function ModelsTable({ newExp, setNewExp }) {
     },
     {
       field: "metric",
-      headerName: "Optimization Metric",
+      headerName: t("experiments:label.optimizerMetric"),
       flex: 1,
       renderCell: (params) => {
         // Check if this specific row has optimizers
@@ -139,7 +142,7 @@ function ModelsTable({ newExp, setNewExp }) {
                 fontStyle: "italic",
               }}
             >
-              No hyperparameter optimization
+              {t("experiments:label.noOptimizersNoMetric")}
             </Typography>
           );
         }
@@ -169,7 +172,7 @@ function ModelsTable({ newExp, setNewExp }) {
         sx={{ mb: 2 }}
       >
         <Typography variant="subtitle1" component="h3">
-          Current models in the experiment
+          {t("experiments:label.modelsInExperiment")}
         </Typography>
       </Grid>
 

@@ -13,6 +13,7 @@ import {
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../../utils/schema";
+import { useTranslation } from "react-i18next";
 
 function ResultsTabHyperparameters({ runData }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
@@ -20,6 +21,8 @@ function ResultsTabHyperparameters({ runData }) {
   const [slicePlot, setSlicePlot] = useState([]);
   const [contourPlot, setContourPlot] = useState([]);
   const [importancePlot, setImportancePlot] = useState([]);
+  const { t } = useTranslation(["models"]);
+
   function parsePlot(plot) {
     const formattedPlot = JSON.parse(plot);
     const data = formattedPlot.data;
@@ -63,7 +66,7 @@ function ResultsTabHyperparameters({ runData }) {
         setSlicePlot(parsedSlicePlot);
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the run data");
+      enqueueSnackbar(t("models:error.errorFetchingRunData"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -75,20 +78,20 @@ function ResultsTabHyperparameters({ runData }) {
   };
 
   useEffect(() => {
-    if (runData.status !== "Finished") return;
+    if (runData.status !== 3) return; // Finished
     getHyperparameterPlot();
   }, [runData]);
 
-  return runData.status === "Started" || runData.status === "Delivered" ? (
+  return runData.status === 1 || runData.status === 2 ? ( // Delivered or Started
     <Box
       sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
     >
       <CircularProgress />
     </Box>
-  ) : runData.status === "Failed" ? (
-    <Box>Run Failed. No hyperparameter plots available.</Box>
-  ) : runData.status === "Not Started" ? (
-    <Box>Run Not Started. No hyperparameter plots available.</Box>
+  ) : runData.status === 4 ? ( // Failed
+    <Box>{t("models:label.runFailedNoHyperparameterPlots")}</Box>
+  ) : runData.status === 0 ? ( // Not Started
+    <Box>{t("models:label.runNotStartedNoHyperparameterPlots")}</Box>
   ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">

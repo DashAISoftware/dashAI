@@ -24,6 +24,7 @@ import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
 import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import { useTranslation } from "react-i18next";
 
 export default function SessionVisualization({
   session,
@@ -45,6 +46,7 @@ export default function SessionVisualization({
   const [localExplainerModalOpen, setLocalExplainerModalOpen] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
+  const { t } = useTranslation(["models", "common"]);
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -174,10 +176,10 @@ export default function SessionVisualization({
           }}
         >
           <Typography variant="h5" color="text.secondary">
-            No Session Selected
+            {t("models:label.noSessionSelected")}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-            Select a session from the left panel to begin
+            {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
         <JobQueueWidget />
@@ -217,7 +219,7 @@ export default function SessionVisualization({
             }}
           >
             <Typography variant="h6" color="text.primary">
-              Model Comparison
+              {t("models:label.modelComparison")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               {/* Metric Split Selector */}
@@ -232,13 +234,19 @@ export default function SessionVisualization({
                     size="small"
                   >
                     {hasTrainMetrics && (
-                      <ToggleButton value="train">Train</ToggleButton>
+                      <ToggleButton value="train">
+                        {t("common:train")}
+                      </ToggleButton>
                     )}
                     {hasValidationMetrics && (
-                      <ToggleButton value="validation">Validation</ToggleButton>
+                      <ToggleButton value="validation">
+                        {t("common:validation")}
+                      </ToggleButton>
                     )}
                     {hasTestMetrics && (
-                      <ToggleButton value="test">Test</ToggleButton>
+                      <ToggleButton value="test">
+                        {t("common:test")}
+                      </ToggleButton>
                     )}
                   </ToggleButtonGroup>
                 )}
@@ -250,7 +258,7 @@ export default function SessionVisualization({
                   onClick={() => handleToggleView(true)}
                   startIcon={<TableChart />}
                 >
-                  Table
+                  {t("common:table")}
                 </Button>
                 <Button
                   data-tour="graphs-button"
@@ -258,25 +266,23 @@ export default function SessionVisualization({
                   onClick={() => handleToggleView(false)}
                   startIcon={<BarChart />}
                 >
-                  Graphs
+                  {t("common:graphs")}
                 </Button>
               </ButtonGroup>
 
               {/* Run All Button */}
               {runs.length > 0 &&
-                runs.some((r) => getRunStatus(r.status) === "Not Started") && (
+                runs.some((r) => r.status === 0) && ( // Not Started
                   <Button
                     variant="contained"
                     size="small"
                     startIcon={<PlayArrow />}
                     onClick={() => {
-                      const notStartedRuns = runs.filter(
-                        (r) => getRunStatus(r.status) === "Not Started",
-                      );
+                      const notStartedRuns = runs.filter((r) => r.status === 0); // Not Started
                       notStartedRuns.forEach((run) => onTrain(run));
                     }}
                   >
-                    Run All
+                    {t("models:button.runAll")}
                   </Button>
                 )}
             </Box>
@@ -291,7 +297,7 @@ export default function SessionVisualization({
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                No runs yet. Add models from the right panel.
+                {t("models:label.noRunsYet")}
               </Typography>
             </Box>
           ) : (
@@ -307,15 +313,7 @@ export default function SessionVisualization({
                   metricSplit={metricSplit}
                 />
               ) : (
-                <ResultsGraphs
-                  runs={runs.map((run) => ({
-                    ...run,
-                    status:
-                      typeof run.status === "number"
-                        ? getRunStatus(run.status)
-                        : run.status,
-                  }))}
-                />
+                <ResultsGraphs runs={runs} />
               )}
             </Box>
           )}
@@ -365,8 +363,7 @@ export default function SessionVisualization({
               }}
             >
               <Typography variant="body1" color="text.secondary">
-                No runs in this session. Click a model in the right panel to add
-                one.
+                {t("models:label.noRunsYet")}
               </Typography>
             </Box>
           ) : (
@@ -423,7 +420,7 @@ export default function SessionVisualization({
               onClick={handleGlobalExplainer}
               size="large"
             >
-              Global Explainer
+              {t("models:label.globalExplainer")}
             </Button>
             <Button
               variant="outlined"
@@ -431,12 +428,14 @@ export default function SessionVisualization({
               onClick={handleLocalExplainer}
               size="large"
             >
-              Local Explainer
+              {t("models:label.localExplainer")}
             </Button>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseExplainerDialog}>Cancel</Button>
+          <Button onClick={handleCloseExplainerDialog}>
+            {t("common:cancel")}
+          </Button>
         </DialogActions>
       </Dialog>
 
