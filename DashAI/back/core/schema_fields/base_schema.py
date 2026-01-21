@@ -14,19 +14,28 @@ def replace_defs_in_schema(schema: dict):
 
     # 2. Normalize titles for ALL properties
     for prop, prop_schema in schema["properties"].items():
+        # Extract display_name from the property level
         display_name = prop_schema.pop("display_name", None)
 
+        # Also check inside anyOf/oneOf/allOf items
+        for key in ["anyOf", "oneOf", "allOf"]:
+            if key in prop_schema:
+                for item in prop_schema[key]:
+                    if "display_name" in item:
+                        # Use the first display_name found if not already set
+                        if display_name is None:
+                            display_name = item.pop("display_name")
+                        else:
+                            item.pop("display_name")
+
+        # Convert display_name to MultilingualString title
         if isinstance(display_name, MultilingualString):
             prop_schema["title"] = display_name
-
-        if isinstance(display_name, dict):
-            # convert dict to MultilingualString
+        elif isinstance(display_name, dict):
             prop_schema["title"] = MultilingualString(**display_name)
-
         elif isinstance(prop_schema.get("title"), MultilingualString):
             # already correct
             pass
-
         else:
             # fallback: derive from property name
             fallback_title = prop.replace("_", " ").title()
