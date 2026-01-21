@@ -18,7 +18,7 @@ class DummyClassifierSchema(BaseSchema):
             en="Strategy to use to generate predictions.",
             es="Estrategia a utilizar para generar predicciones.",
         ),
-        alias=MultilingualString(en="strategy", es="estrategia"),
+        alias=MultilingualString(en="Strategy", es="Estrategia"),
     )  # type: ignore
 
 

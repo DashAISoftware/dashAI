@@ -112,11 +112,12 @@ class RandomForestClassifierSchema(BaseSchema):
         },
         description=MultilingualString(
             en=(
-                "This parameter sets the maximum number of leaf nodes. It must be an integer greater than or "
-                "equal to 2."
+                "This parameter sets the maximum number of leaf nodes. It must be an "
+                "integer greater than or equal to 2."
             ),
             es=(
-                "Este parámetro establece el número máximo de nodos hoja. Debe ser un entero mayor o igual a 2."
+                "Este parámetro establece el número máximo de nodos hoja. Debe ser un "
+                "entero mayor o igual a 2."
             ),
         ),
         alias=MultilingualString(en="Max leaf nodes", es="Máximos nodos para hoja"),
@@ -130,7 +131,7 @@ class RandomForestClassifierSchema(BaseSchema):
             "upper_bound": 10,
         },
         description=MultilingualString(
-            en=("This parameter must be an integer greater than or " "equal to 0."),
+            en=("This parameter must be an integer greater than or equal to 0."),
             es=("Este parámetro debe ser un entero mayor o igual a 0."),
         ),
         alias=MultilingualString(en="Random State", es="Estado Aleatorio"),

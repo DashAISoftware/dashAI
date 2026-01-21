@@ -36,7 +36,7 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "“entropy” para la ganancia de información de Shannon."
             ),
         ),
-        alias=MultilingualString(en="criterion", es="criterio"),
+        alias=MultilingualString(en="Criterion", es="Criterio"),
     )  # type: ignore
     max_depth: schema_field(
         optimizer_int_field(ge=1),
@@ -58,7 +58,7 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "contengan menos de min_samples_split muestras."
             ),
         ),
-        alias=MultilingualString(en="max_depth", es="profundidad_maxima"),
+        alias=MultilingualString(en="Max depth", es="Profundidad máxima"),
     )  # type: ignore
     min_samples_split: schema_field(
         optimizer_int_field(ge=1),
@@ -72,7 +72,9 @@ class DecisionTreeClassifierSchema(BaseSchema):
             en="The minimum number of samples required to split an internal node.",
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
         ),
-        alias=MultilingualString(en="min_samples_split", es="min_muestras_division"),
+        alias=MultilingualString(
+            en="Min samples split", es="Mínimas muestras de división"
+        ),
     )  # type: ignore
     min_samples_leaf: schema_field(
         optimizer_int_field(ge=1),
@@ -86,7 +88,9 @@ class DecisionTreeClassifierSchema(BaseSchema):
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
         ),
-        alias=MultilingualString(en="min_samples_leaf", es="min_muestras_hoja"),
+        alias=MultilingualString(
+            en="Min samples leaf", es="Mínimas muestras para hoja"
+        ),
     )  # type: ignore
     max_features: schema_field(
         none_type(
@@ -105,7 +109,7 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "total de características."
             ),
         ),
-        alias=MultilingualString(en="max_features", es="max_caracteristicas"),
+        alias=MultilingualString(en="Max features", es="Máximas características"),
     )  # type: ignore
 
 
