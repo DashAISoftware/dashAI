@@ -17,10 +17,9 @@ class OptunaSchema(BaseSchema):
         placeholder=10,
         description=MultilingualString(
             en=(
-                "The quantity of trials per study. "
-                "It must be of type positive integer."
+                "The quantity of trials per study. It must be of type positive integer."
             ),
-            es=("La cantidad de pruebas por estudio. " "Debe ser un entero positivo."),
+            es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
         ),
         alias=MultilingualString(en="N trials", es="N pruebas"),
     )  # type: ignore
