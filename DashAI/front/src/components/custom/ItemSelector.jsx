@@ -36,7 +36,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
         itemsList.find((item) => item.name === selectedItem.name) || {},
       );
     }
-  }, [t]);
+  }, [itemsList]);
 
   const handleClearSearchField = (event) => {
     setSearchField("");
