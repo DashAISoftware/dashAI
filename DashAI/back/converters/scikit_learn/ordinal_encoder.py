@@ -14,47 +14,67 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class OrdinalEncoderSchema(BaseSchema):
     categories: schema_field(
-        string_field(),  # "auto" or a list of array-like
+        string_field(),
         "auto",
-        "Categories (unique values) per feature.",
+        description=MultilingualString(
+            en="Categories (unique values) per feature.",
+            es="Categorías (valores únicos) por característica.",
+        ),
     )  # type: ignore
     dtype: schema_field(
-        enum_field(["np.int32", "np.int64", "np.float32", "np.float64"]),  # number type
+        enum_field(["np.int32", "np.int64", "np.float32", "np.float64"]),
         "np.float64",
-        "Desired dtype of output.",
+        description=MultilingualString(
+            en="Desired dtype of output.",
+            es="Tipo de dato de salida deseado.",
+        ),
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "use_encoded_value"]),
         "error",
-        (
-            "Whether to raise an error or ignore if an unknown categorical feature "
-            "is present during transform."
+        description=MultilingualString(
+            en=(
+                "Whether to raise an error or use a specific encoded value when "
+                "an unknown category is seen."
+            ),
+            es=(
+                "Si se debe lanzar un error o usar un valor codificado específico "
+                "cuando se vea una categoría desconocida."
+            ),
         ),
     )  # type: ignore
     unknown_value: schema_field(
-        none_type(
-            enum_field(["int", "np.nan"]),  # int or np.nan
-        ),
+        none_type(enum_field(["int", "np.nan"])),
         None,
-        "The value to use for unknown categories.",
+        description=MultilingualString(
+            en="The value to use for unknown categories.",
+            es="El valor a usar para categorías desconocidas.",
+        ),
     )  # type: ignore
     # Added in version 1.3
     min_frequency: schema_field(
         none_type(union_type(int_field(ge=1), float_field(ge=0.0, le=1.0))),
         None,
-        "Minimum frequency of a category to be considered as frequent.",
+        description=MultilingualString(
+            en="Minimum frequency of a category to be considered as frequent.",
+            es="Frecuencia mínima para considerar una categoría como frecuente.",
+        ),
     )  # type: ignore
     # Added in version 1.3
     max_categories: schema_field(
         none_type(int_field(ge=1)),
         None,
-        "Maximum number of categories to encode.",
+        description=MultilingualString(
+            en="Maximum number of categories to encode.",
+            es="Número máximo de categorías a codificar.",
+        ),
     )  # type: ignore
 
 
@@ -62,9 +82,12 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     """Scikit-learn's OrdinalEncoder wrapper for DashAI."""
 
     SCHEMA = OrdinalEncoderSchema
-    DESCRIPTION = "Encode categorical features as an integer array."
-    CATEGORY = "Encoding"
-    DISPLAY_NAME = "Ordinal Encoder"
+    DESCRIPTION = MultilingualString(
+        en="Encode categorical features as an integer array.",
+        es="Codifica características categóricas como un arreglo de enteros.",
+    )
+    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
+    DISPLAY_NAME = MultilingualString(en="Ordinal Encoder", es="Codificador Ordinal")
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
     metadata = {
