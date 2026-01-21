@@ -1,3 +1,4 @@
+import { maxWidth } from "@mui/system";
 import React from "react";
 
 export const notebookTourSteps = [
@@ -98,6 +99,9 @@ export const notebookTourSteps = [
     hideFooter: true,
     disableScrolling: true,
     disableBackButton: true,
+    isInteractive: true,
+    disableOverlay: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="explorer-parameters"]',
@@ -114,10 +118,12 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "top",
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableScrolling: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="create-explorer-button"]',
@@ -154,7 +160,7 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "left",
+    placement: "top",
     disableBeacon: true,
     disableBackButton: true,
   },
@@ -194,6 +200,8 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="column-selector-converter-container"]',
@@ -220,10 +228,15 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
     hideFooter: true,
+    disableScrolling: true,
+    isInteractive: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: ".converter-box",
@@ -239,8 +252,9 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
-    placement: "left",
+    placement: "top",
     disableBeacon: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="nan-remover-converter"]',
@@ -259,6 +273,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="column-selector-converter-container"]',
@@ -271,10 +286,15 @@ export const notebookTourSteps = [
         </p>
       </div>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
     hideFooter: true,
+    isInteractive: true,
+    disableScrolling: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
 
   {
@@ -298,6 +318,8 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="save-dataset-modal-notebook"]',
@@ -336,12 +358,16 @@ export const notebookTourSteps = [
         </div>
       </div>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableScrolling: true,
     disableOverlayClose: true,
     showSkipButton: false,
     hideBackButton: false,
+    disableOverlay: true,
+    isInteractive: true,
+    disableBackButton: true,
     styles: {
       options: {
         zIndex: 2000,
