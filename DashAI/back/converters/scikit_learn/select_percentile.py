@@ -5,6 +5,7 @@ from DashAI.back.converters.category.feature_selection import FeatureSelectionCo
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
@@ -13,7 +14,10 @@ class SelectPercentileSchema(BaseSchema):
     percentile: schema_field(
         int_field(ge=1, le=100),
         10,
-        "Percent of features to keep.",
+        description=MultilingualString(
+            en="Percent of features to keep.",
+            es="Porcentaje de características a conservar.",
+        ),
     )  # type: ignore
 
 
@@ -23,17 +27,26 @@ class SelectPercentile(
     """SciKit-Learn's SelectPercentile wrapper for DashAI."""
 
     SCHEMA = SelectPercentileSchema
-    DESCRIPTION = "Select features according to a percentile of the highest scores."
+    DESCRIPTION = MultilingualString(
+        en="Select features according to a percentile of the highest scores.",
+        es=(
+            "Selecciona características según un percentil de las puntuaciones "
+            "más altas."
+        ),
+    )
     SUPERVISED = True
-    DISPLAY_NAME = "Select Percentile"
+    DISPLAY_NAME = MultilingualString(
+        en="Select Percentile", es="Seleccionar Percentil"
+    )
     IMAGE_PREVIEW = "select_percentile.png"
     metadata = {}
+    CATEGORY = MultilingualString(
+        en="Feature Selection", es="Selección de Características"
+    )
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""
         return Float(arrow_type=pa.float64())
-
-    CATEGORY = "Feature Selection"
 
     def __init__(self, **kwargs):
         if callable(self._get_tags):
