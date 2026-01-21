@@ -5,6 +5,7 @@ from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Text
@@ -22,10 +23,18 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = ColumnRemoverSchema
-    DESCRIPTION = "Removes the columns selected in scope from the dataset."
-    SHORT_DESCRIPTION = "Removes the columns selected in scope from the dataset."
-    DISPLAY_NAME = "Column Remover"
-    CATEGORY = "Basic Preprocessing"
+    DESCRIPTION = MultilingualString(
+        en="Removes the columns selected in scope from the dataset.",
+        es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
+    )
+    SHORT_DESCRIPTION = MultilingualString(
+        en="Removes the columns selected in scope from the dataset.",
+        es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
+    )
+    DISPLAY_NAME = MultilingualString(en="Column Remover", es="Removedor de Columnas")
+    CATEGORY = MultilingualString(
+        en="Basic Preprocessing", es="Preprocesamiento Básico"
+    )
     IMAGE_PREVIEW = "column_remover.png"
 
     def __init__(self):
