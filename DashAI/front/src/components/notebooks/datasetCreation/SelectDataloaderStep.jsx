@@ -77,7 +77,7 @@ export default function SelectDataloaderStep({
   // fetches the available dataloaders
   useEffect(() => {
     getCompatibleDataloaders();
-  }, []);
+  }, [t]);
   return (
     <Grid
       container
