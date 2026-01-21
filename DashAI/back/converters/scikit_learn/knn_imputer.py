@@ -12,6 +12,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
@@ -20,33 +21,51 @@ class KNNImputerSchema(BaseSchema):
     n_neighbors: schema_field(
         int_field(ge=1),
         5,
-        "The number of nearest neighbors to use for imputation.",
+        description=MultilingualString(
+            en="The number of nearest neighbors to use for imputation.",
+            es="Número de vecinos más cercanos a usar para la imputación.",
+        ),
     )  # type: ignore
     weights: schema_field(
-        enum_field(["uniform", "distance"]),  # {‘uniform’, ‘distance’} or callable
+        enum_field(["uniform", "distance"]),
         "uniform",
-        "The weight function to use for imputation.",
+        description=MultilingualString(
+            en="The weight function to use for imputation.",
+            es="La función de peso a usar para la imputación.",
+        ),
     )  # type: ignore
     metric: schema_field(
-        enum_field(["nan_euclidean"]),  # {‘nan_euclidean‘} or callable
+        enum_field(["nan_euclidean"]),
         "nan_euclidean",
-        "The metric to use for imputation.",
+        description=MultilingualString(
+            en="The metric to use for imputation.",
+            es="La métrica a usar para la imputación.",
+        ),
     )  # type: ignore
     use_copy: schema_field(
         bool_field(),
         True,
-        "If True, a copy of X will be created.",
-        alias="copy",
+        description=MultilingualString(
+            en="If True, a copy of X will be created.",
+            es="Si es True, se creará una copia de X.",
+        ),
+        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
     add_indicator: schema_field(
         bool_field(),
         False,
-        "If True, a MissingIndicator transform will stack onto output.",
+        description=MultilingualString(
+            en="If True, a MissingIndicator transform will stack onto output.",
+            es="Si es True, se apilará un MissingIndicator sobre la salida.",
+        ),
     )  # type: ignore
     keep_empty_features: schema_field(
         bool_field(),
         False,
-        "If True, empty features will be kept.",
+        description=MultilingualString(
+            en="If True, empty features will be kept.",
+            es="Si es True, se mantendrán las características vacías.",
+        ),
     )  # type: ignore
 
 
@@ -54,9 +73,17 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
     """Scikit-learn's KNNImputer wrapper for DashAI."""
 
     SCHEMA = KNNImputerSchema
-    DESCRIPTION = "Imputation for completing missing values using k-Nearest Neighbors."
-    CATEGORY = "Basic Preprocessing"
-    DISPLAY_NAME = "KNN Imputer"
+    DESCRIPTION = MultilingualString(
+        en=("Imputation for completing missing values using k-Nearest Neighbors."),
+        es=(
+            "Imputación para completar valores faltantes utilizando "
+            "k-Vecinos Más Cercanos."
+        ),
+    )
+    CATEGORY = MultilingualString(
+        en="Basic Preprocessing", es="Preprocesamiento Básico"
+    )
+    DISPLAY_NAME = MultilingualString(en="KNN Imputer", es="Imputador KNN")
     IMAGE_PREVIEW = "knn_imputer.png"
 
     def __init__(self, **kwargs):
