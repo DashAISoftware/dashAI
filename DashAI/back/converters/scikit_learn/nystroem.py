@@ -16,58 +16,84 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
 
 class NystroemSchema(BaseSchema):
     kernel: schema_field(
-        none_type(string_field()),  # str or callable
+        none_type(string_field()),
         "rbf",
-        "The kernel to use for the approximation.",
+        description=MultilingualString(
+            en="The kernel to use for the approximation.",
+            es="El kernel a usar para la aproximación.",
+        ),
     )  # type: ignore
     gamma: schema_field(
         none_type(float_field(gt=0)),
         None,
-        (
-            "The gamma parameter for the RBF, laplacian, polynomial, "
-            "exponential chi2 and sigmoid kernels."
+        description=MultilingualString(
+            en=(
+                "Gamma parameter for RBF, laplacian, polynomial, exp chi2 "
+                "and sigmoid kernels."
+            ),
+            es=(
+                "Parámetro gamma para los kernels RBF, laplaciano, polinomial, "
+                "chi2 exponencial y sigmoide."
+            ),
         ),
     )  # type: ignore
     coef0: schema_field(
         none_type(float_field()),
         None,
-        "The coef0 parameter for the polynomial and sigmoid kernels.",
+        description=MultilingualString(
+            en="The coef0 parameter for polynomial and sigmoid kernels.",
+            es="Parámetro coef0 para los kernels polinomial y sigmoide.",
+        ),
     )  # type: ignore
     degree: schema_field(
         none_type(float_field(ge=1)),
         None,
-        "The degree of the polynomial kernel.",
+        description=MultilingualString(
+            en="The degree of the polynomial kernel.",
+            es="El grado del kernel polinomial.",
+        ),
     )  # type: ignore
     kernel_params: schema_field(
-        none_type(string_field()),  # dict
+        none_type(string_field()),
         None,
-        "Additional parameters (keyword arguments) for the kernel function.",
+        description=MultilingualString(
+            en="Additional parameters (kwargs) for the kernel function.",
+            es="Parámetros adicionales (kwargs) para la función kernel.",
+        ),
     )  # type: ignore
     n_components: schema_field(
         int_field(ge=1),
         2,
-        "The number of features to construct.",
+        description=MultilingualString(
+            en="The number of features to construct.",
+            es="El número de características a construir.",
+        ),
     )  # type: ignore
     random_state: schema_field(
-        none_type(
-            union_type(int_field(), enum_field(["RandomState"]))
-        ),  # int, RandomState instance or None
+        none_type(union_type(int_field(), enum_field(["RandomState"]))),
         None,
-        (
-            "The seed of the pseudo random number generator to use when "
-            "shuffling the data."
+        description=MultilingualString(
+            en=(
+                "Seed of the pseudo random number generator to use when "
+                "shuffling the data."
+            ),
+            es=("Semilla del generador pseudoaleatorio usado al mezclar los datos."),
         ),
     )  # type: ignore
     n_jobs: schema_field(
         none_type(int_field()),
         None,
-        "Number of parallel jobs to run.",
+        description=MultilingualString(
+            en="Number of parallel jobs to run.",
+            es="Número de trabajos paralelos a ejecutar.",
+        ),
     )  # type: ignore
 
 
@@ -75,13 +101,24 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
     """Scikit-learn's Nystroem wrapper for DashAI."""
 
     SCHEMA = NystroemSchema
-    DESCRIPTION = (
-        "Approximate a kernel map using a subset of the training data. "
-        "Constructs an approximate feature map for an arbitrary kernel "
-        "using a subset of the data as basis."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Approximate a kernel map using a subset of the training data. "
+            "Constructs an approximate feature map for an arbitrary kernel "
+            "using a subset of the data as basis."
+        ),
+        es=(
+            "Aproxima un mapa de kernel usando un subconjunto de los datos de "
+            "entrenamiento. Construye un mapa de características aproximado para "
+            "un kernel arbitrario usando un subconjunto de datos como base."
+        ),
     )
-    CATEGORY = "Dimensionality Reduction"
-    DISPLAY_NAME = "Nystroem Approximation"
+    CATEGORY = MultilingualString(
+        en="Dimensionality Reduction", es="Reducción de Dimensionalidad"
+    )
+    DISPLAY_NAME = MultilingualString(
+        en="Nystroem Approximation", es="Aproximación Nystroem"
+    )
     IMAGE_PREVIEW = "nystroem.png"
 
     def __init__(self, **kwargs):
