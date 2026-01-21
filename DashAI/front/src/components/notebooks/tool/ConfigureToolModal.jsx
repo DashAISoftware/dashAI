@@ -10,6 +10,7 @@ import {
   Step,
   StepLabel,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Close } from "@mui/icons-material";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
@@ -27,6 +28,7 @@ export default function ConfigureToolModal({
   notebook,
   FormSection,
 }) {
+  const theme = useTheme();
   if (!tool) return null;
 
   const [activeTab, setActiveTab] = useState(0);
@@ -253,7 +255,7 @@ export default function ConfigureToolModal({
             height: "6px",
             cursor: "row-resize",
             backgroundColor: "divider",
-            "&:hover": { backgroundColor: "action.hover" },
+            "&:hover": { backgroundColor: theme.palette.ui.hover },
             zIndex: 2,
           }}
         />

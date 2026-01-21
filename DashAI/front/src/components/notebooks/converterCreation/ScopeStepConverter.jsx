@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Box, Typography, Tooltip, IconButton } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ConverterClassColumnModal from "./ConverterTargetColumnModal";
 import HelpIcon from "@mui/icons-material/Help";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
@@ -24,6 +25,7 @@ export default function ScopeStepConverter({
   notebook,
   nextStep,
 }) {
+  const theme = useTheme();
   const [datasetInfo, setDatasetInfo] = useState(0);
   const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
@@ -102,7 +104,10 @@ export default function ScopeStepConverter({
         <Typography variant="subtitle2" gutterBottom>
           {t("datasets:label.selectScopeStep", { step: 1 })}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {t("datasets:label.selectScopeDescriptionColumns")}
         </Typography>
         {/* Scope selection UI */}
@@ -121,7 +126,10 @@ export default function ScopeStepConverter({
           }}
           onValidationChange={(isValid) => setIsColumnSelectionValid(isValid)}
         />
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {t("datasets:label.selectScopeDescriptionRows")}
         </Typography>
         <RowSelector

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Box, Typography, Popover, Chip } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import api from "../../../api/api";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +11,7 @@ export default function HoverToolInfo({
   handleMouseLeave,
 }) {
   const { t } = useTranslation(["common"]);
+  const theme = useTheme();
 
   return (
     <Popover
@@ -28,8 +30,8 @@ export default function HoverToolInfo({
       sx={{
         pointerEvents: "none",
         "& .MuiPopover-paper": {
-          bgcolor: "rgb(20, 20, 24)",
-          border: "1px solid rgb(63, 63, 70)",
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
           p: 2,
           maxWidth: 320,
@@ -45,8 +47,8 @@ export default function HoverToolInfo({
               width: "100%",
               height: 160,
               borderRadius: 1.5,
-              bgcolor: "rgb(39, 39, 42)",
-              border: "1px solid rgb(63, 63, 70)",
+              bgcolor: theme.palette.ui.border,
+              border: `1px solid ${theme.palette.divider}`,
               overflow: "hidden",
               mb: 2,
             }}
@@ -61,7 +63,7 @@ export default function HoverToolInfo({
           {/* Title */}
           <Typography
             variant="subtitle2"
-            sx={{ color: "rgb(250, 250, 250)", fontWeight: 600, mb: 1 }}
+            sx={{ color: "text.primary", fontWeight: 600, mb: 1 }}
           >
             {hoveredTool.display_name}
           </Typography>
@@ -69,7 +71,7 @@ export default function HoverToolInfo({
           {/* Description */}
           <Typography
             variant="body2"
-            sx={{ color: "rgb(161, 161, 170)", lineHeight: 1.5, mb: 1.5 }}
+            sx={{ color: "text.secondary", lineHeight: 1.5, mb: 1.5 }}
           >
             {hoveredTool.description}
           </Typography>
@@ -81,7 +83,7 @@ export default function HoverToolInfo({
             sx={{
               bgcolor: hoveredTool.metadata.color,
               color: "rgba(255, 255, 255, 1)",
-              border: `1px solid rgb(63, 63, 70)`,
+              border: `1px solid ${theme.palette.divider}`,
               fontWeight: 500,
             }}
           />

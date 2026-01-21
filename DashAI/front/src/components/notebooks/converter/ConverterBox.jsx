@@ -8,6 +8,7 @@ import {
   CircularProgress,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Delete } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import Transform from "@mui/icons-material/Transform";
@@ -21,6 +22,7 @@ export default function ConverterBox({
   onStatusChange,
   handleConverterDeleteClick,
 }) {
+  const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
   const { t } = useTranslation(["common", "datasets"]);
 
@@ -74,7 +76,11 @@ export default function ConverterBox({
     <Card
       key={converter.id}
       className="converter-box"
-      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      sx={{
+        bgcolor: theme.palette.background.box,
+        borderRadius: 2,
+        height: "100%",
+      }}
     >
       <CardContent
         sx={{
@@ -93,7 +99,9 @@ export default function ConverterBox({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
+            <Transform
+              sx={{ color: theme.palette.primary.main, fontSize: 20 }}
+            />
             <Typography variant="h6">
               {converterComponent.display_name}
             </Typography>
@@ -125,7 +133,7 @@ export default function ConverterBox({
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",
@@ -192,7 +200,7 @@ export default function ConverterBox({
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
@@ -211,7 +219,7 @@ export default function ConverterBox({
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "rgba(255, 255, 255, 0.05)",
+              bgcolor: theme.palette.ui.hover,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",

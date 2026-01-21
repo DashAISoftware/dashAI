@@ -13,8 +13,10 @@ import {
   Divider,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
+  const theme = useTheme();
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectionMode, setSelectionMode] = useState("range");
   const [rangeStart, setRangeStart] = useState("");
@@ -185,7 +187,10 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
       )}
       <Divider sx={{ my: 1 }} />
       <Box mt={1}>
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{ color: theme.palette.text.secondary }}
+        >
           {t("datasets:label.selectedRows", {
             value:
               selectedRows.length === 0

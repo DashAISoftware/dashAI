@@ -12,6 +12,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
 import { formatDate } from "../../utils";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 export default function InfoSessionModal({ sessionData, open, onClose }) {
   // If no session data is provided, don't render anything
@@ -78,7 +79,9 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
             />
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               {t("common:model")}:{" "}
-              <span style={{ color: "#fff" }}>{sessionData.model_name}</span>
+              <span style={{ color: theme.palette.text.primary }}>
+                {sessionData.model_name}
+              </span>
             </Typography>
           </Box>
 

@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Grid, Button, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import TimestampWrapper from "../../../components/shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../../constants/timestamp";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,7 @@ import { useTranslation } from "react-i18next";
 function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
   const { t } = useTranslation(["models", "common"]);
 
+  const theme = useTheme();
   return (
     <Grid container direction="column" alignItems="center">
       <Grid container justifyContent="flex-start" sx={{ mt: 2, mb: 1 }}>
@@ -25,8 +27,10 @@ function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
               color={showTable ? "primary" : "inherit"}
               onClick={handleShowTable}
               style={{
-                border: showTable ? "2px solid #00bebb" : "2px solid #00bebb",
-                color: showTable ? "#ffffff" : "#00bebb",
+                border: `2px solid ${theme.palette.primary.main}`,
+                color: showTable
+                  ? theme.palette.text.primary
+                  : theme.palette.primary.main,
                 borderRadius: "1px",
               }}
             >
@@ -39,8 +43,10 @@ function ResultsDialogViews({ showTable, handleShowTable, handleShowGraphs }) {
               color={!showTable ? "primary" : "inherit"}
               onClick={handleShowGraphs}
               style={{
-                border: !showTable ? "2px solid #00bebb" : "2px solid #00bebb",
-                color: !showTable ? "#ffffff" : "#00bebb",
+                border: `2px solid ${theme.palette.primary.main}`,
+                color: !showTable
+                  ? theme.palette.text.primary
+                  : theme.palette.primary.main,
                 borderRadius: "1px",
               }}
             >

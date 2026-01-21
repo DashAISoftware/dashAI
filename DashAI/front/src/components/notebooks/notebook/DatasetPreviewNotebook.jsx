@@ -9,6 +9,7 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
@@ -29,6 +30,7 @@ export default function DatasetPreviewNotebook({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
 
+  const theme = useTheme();
   if (!notebook) {
     return (
       <Box
@@ -39,7 +41,7 @@ export default function DatasetPreviewNotebook({
           height: "100vh",
         }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
+        <CircularProgress color="primary" />
         <Typography>{t("common:loading")}...</Typography>
       </Box>
     );
@@ -105,7 +107,7 @@ export default function DatasetPreviewNotebook({
       <Accordion
         data-tour="dataset-preview-section"
         sx={{
-          bgcolor: "#212121",
+          bgcolor: theme.palette.ui.box,
           borderRadius: 2,
           boxShadow: "none",
         }}

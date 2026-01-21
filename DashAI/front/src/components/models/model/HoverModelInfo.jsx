@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography, Popover } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 export default function HoverModelInfo({
   anchorEl,
@@ -8,6 +9,7 @@ export default function HoverModelInfo({
   handleMouseLeave,
 }) {
   const { t } = useTranslation(["common"]);
+  const theme = useTheme();
 
   return (
     <Popover
@@ -26,8 +28,8 @@ export default function HoverModelInfo({
       sx={{
         pointerEvents: "none",
         "& .MuiPopover-paper": {
-          bgcolor: "rgb(20, 20, 24)",
-          border: "1px solid rgb(63, 63, 70)",
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
           borderRadius: 2,
           p: 2,
           maxWidth: 320,
@@ -40,7 +42,7 @@ export default function HoverModelInfo({
           {/* Title */}
           <Typography
             variant="subtitle2"
-            sx={{ color: "rgb(250, 250, 250)", fontWeight: 600, mb: 1 }}
+            sx={{ color: theme.palette.text.primary, fontWeight: 600, mb: 1 }}
           >
             {hoveredModel.display_name || hoveredModel.name}
           </Typography>
@@ -48,7 +50,7 @@ export default function HoverModelInfo({
           {/* Description */}
           <Typography
             variant="body2"
-            sx={{ color: "rgb(161, 161, 170)", lineHeight: 1.5 }}
+            sx={{ color: theme.palette.text.secondary, lineHeight: 1.5 }}
           >
             {hoveredModel.description ||
               hoveredModel.metadata?.description ||
