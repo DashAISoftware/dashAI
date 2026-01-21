@@ -5,6 +5,7 @@ from DashAI.back.converters.category.feature_selection import FeatureSelectionCo
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
@@ -13,7 +14,10 @@ class SelectFprSchema(BaseSchema):
     alpha: schema_field(
         float_field(ge=0.0, le=1.0),
         0.05,
-        "The highest p-value for features to be kept.",
+        description=MultilingualString(
+            en="The highest p-value for features to be kept.",
+            es="El p-valor más alto para conservar características.",
+        ),
     )  # type: ignore
 
 
@@ -21,11 +25,19 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
     """SciKit-Learn's SelectFpr wrapper for DashAI."""
 
     SCHEMA = SelectFprSchema
-    DESCRIPTION = "Filter: Select features according to a false positive rate test."
+    DESCRIPTION = MultilingualString(
+        en="Filter: Select features according to a false positive rate test.",
+        es=(
+            "Filtro: Selecciona características según una prueba de tasa de "
+            "falsos positivos (FPR)."
+        ),
+    )
     SUPERVISED = True
-    DISPLAY_NAME = "Select FPR"
+    DISPLAY_NAME = MultilingualString(en="Select FPR", es="Seleccionar FPR")
     IMAGE_PREVIEW = "select_fpr.png"
-    CATEGORY = "Feature Selection"
+    CATEGORY = MultilingualString(
+        en="Feature Selection", es="Selección de Características"
+    )
     metadata = {}
 
     def __init__(self, **kwargs):
