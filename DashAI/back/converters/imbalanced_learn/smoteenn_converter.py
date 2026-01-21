@@ -12,6 +12,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
@@ -19,26 +20,48 @@ class SMOTEENNSchema(BaseSchema):
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
         "auto",
-        "Sampling strategy to apply SMOTE and clean the dataset.",
+        description=MultilingualString(
+            en="Sampling strategy to apply SMOTE and clean the dataset.",
+            es=(
+                "Estrategia de muestreo para aplicar SMOTE y limpiar el "
+                "conjunto de datos."
+            ),
+        ),
     )  # type: ignore
     random_state: schema_field(
         none_type(int_field()),
         None,
-        "Seed used for reproducibility.",
+        description=MultilingualString(
+            en="Seed used for reproducibility.",
+            es="Semilla usada para reproducibilidad.",
+        ),
     )  # type: ignore
     k_neighbors: schema_field(
         int_field(ge=1),
         5,
-        "Number of neighbors used by SMOTE.",
+        description=MultilingualString(
+            en="Number of neighbors used by SMOTE.",
+            es="Número de vecinos utilizados por SMOTE.",
+        ),
     )  # type: ignore
 
 
 class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     SCHEMA = SMOTEENNSchema
-    DESCRIPTION = "SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."
-    DISPLAY_NAME = "SMOTE-ENN (Hybrid Sampling)"
+    DESCRIPTION = MultilingualString(
+        en=("SMOTEENN: SMOTE with noise reduction via Edited Nearest Neighbors."),
+        es=(
+            "SMOTEENN: SMOTE con reducción de ruido mediante Vecinos Más "
+            "Cercanos Editados."
+        ),
+    )
+    DISPLAY_NAME = MultilingualString(
+        en="SMOTE-ENN (Hybrid Sampling)", es="SMOTE-ENN (Muestreo Híbrido)"
+    )
     IMAGE_PREVIEW = "smoteenn.png"
-    CATEGORY = "Resampling & Class Balancing"
+    CATEGORY = MultilingualString(
+        en="Resampling & Class Balancing", es="Remuestreo y Balanceo de Clases"
+    )
 
     def __init__(self, **kwargs):
         self.smote = SMOTE(
