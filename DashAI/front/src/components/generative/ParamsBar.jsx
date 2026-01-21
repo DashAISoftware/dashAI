@@ -55,7 +55,7 @@ export default function ParamsBar({
         }
       });
     });
-  }, [selectedSessionId]);
+  }, [selectedSessionId, t]);
 
   useEffect(() => {
     if (selectedModel?.schema?.properties) {
