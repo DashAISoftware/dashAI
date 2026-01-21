@@ -813,10 +813,10 @@ export default function ModelsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-      ? 100 - leftBarWidth
-      : rightBarVisible
-      ? 100 - rightBarWidth
-      : 100;
+        ? 100 - leftBarWidth
+        : rightBarVisible
+          ? 100 - rightBarWidth
+          : 100;
 
   return (
     <>

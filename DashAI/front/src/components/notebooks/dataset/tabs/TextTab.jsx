@@ -80,8 +80,8 @@ export const TextTab = ({ textStats }) => {
                           uniquePercentage > 90
                             ? theme.palette.success.main
                             : uniquePercentage > 30
-                            ? theme.palette.warning.main
-                            : theme.palette.error.main,
+                              ? theme.palette.warning.main
+                              : theme.palette.error.main,
                         color: "white",
                         cursor: "default",
                       }}

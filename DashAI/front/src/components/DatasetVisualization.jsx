@@ -153,10 +153,10 @@ export default function DatasetVisualization({
                       datasetInfo?.quality_info?.data_quality_score >= 80
                         ? "success"
                         : datasetInfo?.quality_info?.data_quality_score >= 50
-                        ? "warning"
-                        : datasetInfo?.quality_info?.data_quality_score
-                        ? "error"
-                        : "info"
+                          ? "warning"
+                          : datasetInfo?.quality_info?.data_quality_score
+                            ? "error"
+                            : "info"
                     }
                     sx={{
                       fontSize: "1rem",

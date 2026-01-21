@@ -178,8 +178,8 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                               ratio > 0.2
                                 ? "error.main"
                                 : ratio > 0.05
-                                ? "warning.main"
-                                : "success.main",
+                                  ? "warning.main"
+                                  : "success.main",
                           }}
                         />
                       </Box>
