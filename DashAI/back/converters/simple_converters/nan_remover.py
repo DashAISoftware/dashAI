@@ -6,6 +6,7 @@ from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
@@ -41,14 +42,25 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = NanRemoverSchema
-    DESCRIPTION = (
-        "Removes the rows with NaN values from the dataset. "
-        "Keep in mind that this converter will also remove "
-        "columns not selected in the scope."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Removes the rows with NaN values from the dataset. Keep in mind that "
+            "this converter will also remove columns not selected in the scope."
+        ),
+        es=(
+            "Elimina las filas con valores NaN del conjunto de datos. Ten en "
+            "cuenta que este convertidor también eliminará las columnas no "
+            "seleccionadas en el alcance."
+        ),
     )
-    SHORT_DESCRIPTION = "Removes the rows with NaN values from the dataset."
-    DISPLAY_NAME = "NaN Remover"
-    CATEGORY = "Basic Preprocessing"
+    SHORT_DESCRIPTION = MultilingualString(
+        en="Removes the rows with NaN values from the dataset.",
+        es="Elimina las filas con valores NaN del conjunto de datos.",
+    )
+    DISPLAY_NAME = MultilingualString(en="NaN Remover", es="Removedor de NaN")
+    CATEGORY = MultilingualString(
+        en="Basic Preprocessing", es="Preprocesamiento Básico"
+    )
     IMAGE_PREVIEW = "nan_remover.png"
 
     metadata = {
