@@ -117,7 +117,7 @@ class SVCSchema(BaseSchema):
                 "o -1 para indicar sin límite."
             ),
         ),
-        alias=MultilingualString(en="max_iter", es="max_iter"),
+        alias=MultilingualString(en="max iterations", es="max iteraciones"),
     )  # type: ignore
     probability: schema_field(
         bool_field(),
@@ -164,7 +164,7 @@ class SVCSchema(BaseSchema):
                 " la tolerancia para el criterio de detención."
             ),
         ),
-        alias=MultilingualString(en="tol", es="tol"),
+        alias=MultilingualString(en="tolerance", es="tolerancia"),
     )  # type: ignore
 
 
