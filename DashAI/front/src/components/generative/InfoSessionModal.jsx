@@ -19,6 +19,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
   if (!sessionData) return null;
 
   const { t } = useTranslation(["generative", "common"]);
+  const theme = useTheme();
 
   return (
     <Modal

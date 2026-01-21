@@ -162,7 +162,9 @@ export default function SessionBar({
           {/* Header */}
           <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
             <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
-            <Typography>{t("generative:label.sessions")}</Typography>
+            <Typography color="text.primary">
+              {t("generative:label.sessions")}
+            </Typography>
             <Box
               sx={{
                 ml: 1,
