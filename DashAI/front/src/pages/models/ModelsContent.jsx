@@ -813,10 +813,10 @@ export default function ModelsContent() {
     leftBarVisible && rightBarVisible
       ? 100 - leftBarWidth - rightBarWidth
       : leftBarVisible
-        ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
-          : 100;
+      ? 100 - leftBarWidth
+      : rightBarVisible
+      ? 100 - rightBarWidth
+      : 100;
 
   return (
     <>
@@ -940,11 +940,10 @@ export default function ModelsContent() {
                 ) : step === 2 && selectedDatasetId ? (
                   <DatasetVisualization
                     dataset={datasets.find((d) => d.id === selectedDatasetId)}
-                    onSessionCreated={handleSessionCreated}
-                    onNewSession={handleNewSessionFromDataset}
-                    existingSessions={sessions}
+                    onItemCreated={handleSessionCreated}
+                    onNewItem={handleNewSessionFromDataset}
+                    existingItems={sessions}
                     newItemButtonText={t("models:button.createSession")}
-                    tasks={tasks}
                   />
                 ) : step === 0 ? (
                   <SelectOptionMenu

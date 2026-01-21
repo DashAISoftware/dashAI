@@ -19,6 +19,7 @@ import {
   Paper,
   Divider,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -49,6 +50,7 @@ function RunCard({
   explainerRefreshTrigger,
   isLastRun = false,
 }) {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
   const { t } = useTranslation(["models", "common"]);
 
@@ -114,10 +116,10 @@ function RunCard({
           statusText === 3 // Finished
             ? "success.main"
             : statusText === 4 // Error
-              ? "error.main"
-              : isRunning
-                ? "info.main"
-                : "grey.500",
+            ? "error.main"
+            : isRunning
+            ? "info.main"
+            : "grey.500",
       }}
     >
       <CardContent>
@@ -143,7 +145,10 @@ function RunCard({
         {/* Model */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <Settings fontSize="small" color="action" />
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary }}
+          >
             {modelDisplayName}
           </Typography>
         </Box>
@@ -160,7 +165,10 @@ function RunCard({
                   values.reduce((sum, val) => sum + val, 0) / values.length;
                 return (
                   <Box key={metric}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography
+                      variant="caption"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
                       {metric.toUpperCase()}
                     </Typography>
                     <Typography variant="body2" fontWeight="medium">
@@ -175,7 +183,10 @@ function RunCard({
 
         {/* Description if present */}
         {run.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary, mb: 2 }}
+          >
             {run.description}
           </Typography>
         )}
@@ -267,7 +278,10 @@ function RunCard({
               {/* Goal Metric */}
               {run.goal_metric && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     {t("models:label.goalMetric")}:{" "}
                     <strong>{run.goal_metric}</strong>
                   </Typography>

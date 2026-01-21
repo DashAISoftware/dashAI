@@ -8,6 +8,7 @@ import {
   Alert,
   Tooltip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
 import {
   ResponsiveContainer,
@@ -24,8 +25,8 @@ import { MetricRow } from "../MetricRow";
 import { useTranslation } from "react-i18next";
 
 export const TextTab = ({ textStats }) => {
+  const theme = useTheme();
   const { t } = useTranslation(["datasets", "common"]);
-
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(textStats).map(([column, stats]) => {
@@ -33,22 +34,22 @@ export const TextTab = ({ textStats }) => {
           {
             label: t("datasets:label.min"),
             value: stats.min_length,
-            color: "#82ca9d",
+            color: theme.palette.success.light,
           },
           {
             label: t("datasets:label.median"),
             value: stats.median_length,
-            color: "#8884d8",
+            color: theme.palette.info.main,
           },
           {
             label: t("datasets:label.avg"),
             value: stats.avg_length,
-            color: "#ffc658",
+            color: theme.palette.warning.main,
           },
           {
             label: t("datasets:label.max"),
             value: stats.max_length,
-            color: "#ff7c7c",
+            color: theme.palette.error.main,
           },
         ];
 
@@ -58,7 +59,7 @@ export const TextTab = ({ textStats }) => {
 
         return (
           <Card key={column} sx={{ borderRadius: 2 }}>
-            <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+            <CardContent sx={{ bgcolor: theme.palette.ui.panelDark }}>
               {/* Title */}
               <Box display="flex" alignItems="center" mb={2}>
                 <TextFieldsIcon sx={{ color: "primary.main", mr: 1 }} />
@@ -77,10 +78,10 @@ export const TextTab = ({ textStats }) => {
                         ml: 2,
                         bgcolor:
                           uniquePercentage > 90
-                            ? "#4caf50"
+                            ? theme.palette.success.main
                             : uniquePercentage > 30
-                              ? "#ff9800"
-                              : "#f44336",
+                            ? theme.palette.warning.main
+                            : theme.palette.error.main,
                         color: "white",
                         cursor: "default",
                       }}
@@ -188,11 +189,12 @@ export const TextTab = ({ textStats }) => {
                       <YAxis />
                       <RechartsTooltip
                         contentStyle={{
-                          backgroundColor: "#121212",
+                          backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
-                          color: "#ffffff",
+                          color: theme.palette.text.primary,
+                          border: `1px solid ${theme.palette.divider}`,
                         }}
-                        labelStyle={{ color: "#ffffff" }}
+                        labelStyle={{ color: theme.palette.text.primary }}
                       />
                       <Bar
                         dataKey="value"

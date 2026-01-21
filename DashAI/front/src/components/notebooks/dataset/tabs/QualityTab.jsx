@@ -7,17 +7,19 @@ import {
   CardContent,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import IssueCard from "../IssueCard";
 import { useTranslation } from "react-i18next";
 
 const QualityTab = ({ qualityInfo, totalRows }) => {
   const { t } = useTranslation(["datasets"]);
 
+  const theme = useTheme();
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {/* Data Quality Summary */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
             {t("datasets:label.dataQualitySummary")}
           </Typography>
@@ -75,7 +77,11 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                 <Box display="flex" flexDirection="column" gap={2}>
                   <Paper
                     variant="outlined"
-                    sx={{ p: 2, bgcolor: "#363636", borderRadius: 2 }}
+                    sx={{
+                      p: 2,
+                      bgcolor: theme.palette.ui.disabled,
+                      borderRadius: 2,
+                    }}
                   >
                     <Typography variant="h5" fontWeight="bold">
                       {qualityInfo.rows_with_any_nan}
@@ -95,7 +101,11 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
 
                   <Paper
                     variant="outlined"
-                    sx={{ p: 2, bgcolor: "#363636", borderRadius: 2 }}
+                    sx={{
+                      p: 2,
+                      bgcolor: theme.palette.ui.disabled,
+                      borderRadius: 2,
+                    }}
                   >
                     <Typography variant="h5" fontWeight="bold">
                       {qualityInfo.rows_with_multiple_nan}
@@ -121,7 +131,7 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
 
       {/* Missing Data by Column */}
       <Card>
-        <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+        <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
           <Typography variant="h6" fontWeight="bold" mb={2}>
             {t("datasets:label.missingDataByColumn")}
           </Typography>
@@ -168,8 +178,8 @@ const QualityTab = ({ qualityInfo, totalRows }) => {
                               ratio > 0.2
                                 ? "error.main"
                                 : ratio > 0.05
-                                  ? "warning.main"
-                                  : "success.main",
+                                ? "warning.main"
+                                : "success.main",
                           }}
                         />
                       </Box>

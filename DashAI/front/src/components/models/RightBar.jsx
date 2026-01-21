@@ -7,6 +7,7 @@ import {
   TextField,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ChevronRight, Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/SideBar";
@@ -15,6 +16,7 @@ import ModelListItem from "./model/ModelListItem";
 import { useTranslation } from "react-i18next";
 
 export default function ModelsRightBar({ session, onToggle, onModelClick }) {
+  const theme = useTheme();
   const [models, setModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,7 +90,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
         <Box
           sx={{
             p: 2,
-            borderBottom: "1px solid #333",
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
             display: "flex",
@@ -96,7 +98,7 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
             justifyContent: "space-between",
           }}
         >
-          <Typography variant="h6">
+          <Typography variant="h6" color="text.primary">
             {t("models:label.availableModels")}
           </Typography>
           <IconButton

@@ -1,4 +1,5 @@
 import { Box, Typography, Divider } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "./SearchBar";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ export default function SessionBar({
   handleSessionDelete,
   stepIndex,
 }) {
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
@@ -98,7 +100,7 @@ export default function SessionBar({
         >
           <BarHeader />
         </Box>
-        <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
         <Box
           p={2}
@@ -126,7 +128,7 @@ export default function SessionBar({
           />
         </Box>
 
-        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
         {/* Sessions */}
         <Box
@@ -147,8 +149,8 @@ export default function SessionBar({
             <Box
               sx={{
                 ml: 1,
-                bgcolor: "#374151",
-                color: "white",
+                bgcolor: theme.palette.ui.border,
+                color: "text.primary",
                 borderRadius: "50%",
                 width: 20,
                 height: 20,

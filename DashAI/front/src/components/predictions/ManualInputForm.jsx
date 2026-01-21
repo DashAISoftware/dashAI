@@ -12,6 +12,7 @@ import {
   Paper,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline, DeleteOutline } from "@mui/icons-material";
 import { renderInputField } from "./renderInputField";
 import { useTranslation } from "react-i18next";
@@ -24,6 +25,7 @@ export default function ManualInputForm({
   manualInputData,
   setManualInputData,
 }) {
+  const theme = useTheme();
   const [rows, setRows] = useState(createInitialRows());
   const { t } = useTranslation(["prediction"]);
 
@@ -94,7 +96,11 @@ export default function ManualInputForm({
       <Typography variant="h6" mb={2} fontWeight={600}>
         {t("prediction:label.manualInputData")}
       </Typography>
-      <Typography variant="body2" mb={3} color="text.secondary">
+      <Typography
+        variant="body2"
+        mb={3}
+        sx={{ color: theme.palette.text.secondary }}
+      >
         {t("prediction:label.provideManualInput")}
       </Typography>
 

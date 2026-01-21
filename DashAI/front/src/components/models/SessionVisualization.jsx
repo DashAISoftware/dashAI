@@ -218,7 +218,7 @@ export default function SessionVisualization({
               mb: 2,
             }}
           >
-            <Typography variant="h6">
+            <Typography variant="h6" color="text.primary">
               {t("models:label.modelComparison")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>

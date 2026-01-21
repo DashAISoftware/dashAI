@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { previewWithTypes } from "../../../api/datasets";
 import PreviewDatasetTable from "./PreviewDatasetTable";
@@ -20,6 +21,7 @@ function PreviewDataset({
   onPreviewError,
   onTypesChanged,
 }) {
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [previewData, setPreviewData] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
@@ -168,7 +170,7 @@ function PreviewDataset({
                 fontSize: "1.3rem",
                 color: "text.secondary",
                 "&:hover": {
-                  backgroundColor: "action.hover",
+                  backgroundColor: theme.palette.ui.hover,
                 },
               }}
             >

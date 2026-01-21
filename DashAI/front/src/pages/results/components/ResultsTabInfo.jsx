@@ -10,6 +10,7 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   Edit as EditIcon,
   Settings as SettingsIcon,
@@ -40,6 +41,7 @@ import { getRunStatus } from "../../../utils/runStatus";
  * @param {object} runData object that contains all the necessary info of the run
  */
 function ResultsTabInfo({ runData, handleRun }) {
+  const theme = useTheme();
   const [localRun, setLocalRun] = React.useState(structuredClone(runData));
   const [openParametersDialog, setOpenParametersDialog] = useState(false);
   const [openOptimizerParametersDialog, setOpenOptimizerParametersDialog] =
@@ -131,7 +133,9 @@ function ResultsTabInfo({ runData, handleRun }) {
                 <Box>
                   <Chip
                     label={getRunStatus(runData.status, t)}
-                    sx={{ backgroundColor: getColorByStatus(runData.status) }}
+                    sx={{
+                      backgroundColor: getColorByStatus(runData.status, theme),
+                    }}
                     size="medium"
                   />
                 </Box>

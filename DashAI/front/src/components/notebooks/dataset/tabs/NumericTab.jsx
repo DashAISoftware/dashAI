@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Card, CardContent, Alert } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
 import Plot from "react-plotly.js";
@@ -9,12 +10,13 @@ import { Trans, useTranslation } from "react-i18next";
 
 export const NumericTab = ({ numericStats }) => {
   const { t } = useTranslation(["datasets"]);
+  const theme = useTheme();
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(numericStats).map(([column, stats]) => (
         <Card key={column} sx={{ borderRadius: 2 }}>
-          <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+          <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Title */}
             <Box display="flex" alignItems="center" mb={2}>
               <TrendingUpIcon sx={{ color: "primary.main", mr: 1 }} />
@@ -133,9 +135,9 @@ export const NumericTab = ({ numericStats }) => {
                     name: column,
                     orientation: "h", // ← rotated here
                     boxpoints: "suspectedoutliers",
-                    marker: { color: "#8884d8" },
-                    line: { color: "#212121" },
-                    fillcolor: "#8884d8",
+                    marker: { color: theme.palette.info.main },
+                    line: { color: theme.palette.background.paper },
+                    fillcolor: theme.palette.info.main,
                     opacity: 0.6,
                     showlegend: false,
                   },
@@ -143,13 +145,16 @@ export const NumericTab = ({ numericStats }) => {
                 layout={{
                   paper_bgcolor: "transparent",
                   plot_bgcolor: "transparent",
-                  font: { color: "#ddd" },
+                  font: { color: theme.palette.text.primary },
                   margin: { t: 10, b: 40, l: 40, r: 20 },
                   height: 220,
                   xaxis: {
                     title: "",
                     zeroline: false,
-                    gridcolor: "#444",
+                    gridcolor:
+                      theme.palette.mode === "dark"
+                        ? theme.palette.ui.borderLight
+                        : theme.palette.ui.border,
                   },
                   yaxis: {
                     showticklabels: false,

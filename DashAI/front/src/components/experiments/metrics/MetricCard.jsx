@@ -1,23 +1,9 @@
 import { Card, CardActionArea, Box, Typography, Chip } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import CheckIcon from "@mui/icons-material/Check";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { useTranslation } from "react-i18next";
-
-const splitColors = {
-  train: {
-    border: "#4caf50",
-    bg: "rgba(76,175,80,0.08)",
-  },
-  test: {
-    border: "#2196f3",
-    bg: "rgba(33,150,243,0.08)",
-  },
-  validation: {
-    border: "#ff9800",
-    bg: "rgba(255,152,0,0.08)",
-  },
-};
 
 export default function MetricCard({
   metric,
@@ -26,6 +12,23 @@ export default function MetricCard({
   splitType,
   disabled = false,
 }) {
+  const theme = useTheme();
+
+  const splitColors = {
+    train: {
+      border: theme.palette.chart.train,
+      bg: `${theme.palette.chart.train}14`, // ~8% opacity
+    },
+    test: {
+      border: theme.palette.chart.test,
+      bg: `${theme.palette.chart.test}14`,
+    },
+    validation: {
+      border: theme.palette.chart.validation,
+      bg: `${theme.palette.chart.validation}14`,
+    },
+  };
+
   const colors = splitColors[splitType];
   const { t } = useTranslation(["experiments", "common"]);
 

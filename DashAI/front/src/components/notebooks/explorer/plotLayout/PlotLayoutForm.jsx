@@ -10,6 +10,7 @@ import {
   AccordionDetails,
   TextField,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 import GeneralForm from "./forms/GeneralForm";
 import TraceForm from "./forms/TraceForm";
@@ -27,6 +28,7 @@ export default function PlotLayoutForm({
   setLayout,
   onSave,
 }) {
+  const theme = useTheme();
   if (!layout) return null;
 
   const [modified, setModified] = useState(false);
@@ -85,8 +87,8 @@ export default function PlotLayoutForm({
         flexDirection: "column",
         gap: 2,
         width: "100%",
-        bgcolor: "#1e1e1e",
-        color: "white",
+        bgcolor: theme.palette.background.paper,
+        color: "text.primary",
         p: 3,
         borderRadius: 2,
         boxShadow: 2,
@@ -97,7 +99,10 @@ export default function PlotLayoutForm({
       </Typography>
 
       {/* General Settings */}
-      <Accordion defaultExpanded sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+      <Accordion
+        defaultExpanded
+        sx={{ bgcolor: theme.palette.ui.panelMedium, color: "text.primary" }}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
             {t("datasets:label.generalSettings")}
@@ -113,7 +118,13 @@ export default function PlotLayoutForm({
       {/* Trace Settings */}
       {Array.isArray(data) &&
         data.map((trace, index) => (
-          <Accordion key={index} sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+          <Accordion
+            key={index}
+            sx={{
+              bgcolor: theme.palette.ui.panelMedium,
+              color: "text.primary",
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
                 {t("datasets:label.traceIdx", {
@@ -137,7 +148,9 @@ export default function PlotLayoutForm({
         ))}
 
       {data?.[0]?.dimensions ? (
-        <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+        <Accordion
+          sx={{ bgcolor: theme.palette.ui.panelMedium, color: "text.primary" }}
+        >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="subtitle1" fontWeight="bold">
               {t("datasets:label.dimensionsLabels")}
@@ -152,7 +165,12 @@ export default function PlotLayoutForm({
       ) : (
         <>
           {/* X Axis Settings */}
-          <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+          <Accordion
+            sx={{
+              bgcolor: theme.palette.ui.panelMedium,
+              color: "text.primary",
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
                 {t("datasets:label.xAxis")}
@@ -171,7 +189,12 @@ export default function PlotLayoutForm({
           </Accordion>
 
           {/* Y Axis Settings */}
-          <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+          <Accordion
+            sx={{
+              bgcolor: theme.palette.ui.panelMedium,
+              color: "text.primary",
+            }}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle1" fontWeight="bold">
                 {t("datasets:label.yAxis", "Y Axis")}
@@ -192,7 +215,9 @@ export default function PlotLayoutForm({
       )}
 
       {/* Legend Settings */}
-      <Accordion sx={{ bgcolor: "#2a2a2a", color: "white" }}>
+      <Accordion
+        sx={{ bgcolor: theme.palette.ui.panelMedium, color: "text.primary" }}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1" fontWeight="bold">
             {t("datasets:label.legend", "Legend")}
@@ -205,7 +230,7 @@ export default function PlotLayoutForm({
         </AccordionDetails>
       </Accordion>
 
-      <Divider sx={{ my: 2, borderColor: "#444" }} />
+      <Divider sx={{ my: 2, borderColor: theme.palette.ui.borderLight }} />
 
       <Stack direction="row" spacing={2} justifyContent="flex-end">
         <Button variant="outlined" onClick={handleCancel} disabled={!modified}>

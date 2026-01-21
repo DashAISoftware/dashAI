@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Button,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
@@ -24,6 +25,7 @@ export default function ExplorerBox({
   onStatusChange,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
   const { loading, data, dataType, setData } = useExplorerResults(explorer);
@@ -82,7 +84,11 @@ export default function ExplorerBox({
   return (
     <Card
       key={explorer.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      sx={{
+        bgcolor: theme.palette.background.box,
+        borderRadius: 2,
+        height: "100%",
+      }}
       className="explorer-box"
     >
       <CardContent
@@ -102,7 +108,9 @@ export default function ExplorerBox({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Analytics sx={{ color: "#00BEBB", fontSize: 20 }} />
+            <Analytics
+              sx={{ color: theme.palette.primary.main, fontSize: 20 }}
+            />
             <Typography variant="h6">
               {explorerComponent.display_name}
             </Typography>
@@ -154,7 +162,7 @@ export default function ExplorerBox({
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",
@@ -174,7 +182,7 @@ export default function ExplorerBox({
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
@@ -193,7 +201,7 @@ export default function ExplorerBox({
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "rgba(255, 255, 255, 0.05)",
+              bgcolor: theme.palette.ui.hover,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",

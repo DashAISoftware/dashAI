@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Card, CardContent } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {
   ResponsiveContainer,
@@ -18,12 +19,13 @@ import { useTranslation } from "react-i18next";
 
 export const CategoricalTab = ({ categoricalStats }) => {
   const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
 
   return (
     <Box display="flex" flexDirection="column" gap={4}>
       {Object.entries(categoricalStats).map(([column, stats]) => (
         <Card key={column} sx={{ borderRadius: 2 }}>
-          <CardContent sx={{ bgcolor: "#2C2C2C" }}>
+          <CardContent sx={{ bgcolor: theme.palette.ui.box }}>
             {/* Header */}
             <Box display="flex" alignItems="center" mb={2}>
               <TitleIcon sx={{ color: "primary.main", mr: 1 }} />
@@ -78,11 +80,12 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       <YAxis />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#121212",
+                          backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
-                          color: "#ffffff",
+                          color: theme.palette.text.primary,
+                          border: `1px solid ${theme.palette.divider}`,
                         }}
-                        labelStyle={{ color: "#ffffff" }}
+                        labelStyle={{ color: theme.palette.text.primary }}
                       />
                       <Bar
                         dataKey="count"
@@ -120,11 +123,11 @@ export const CategoricalTab = ({ categoricalStats }) => {
                             key={index}
                             fill={
                               [
-                                "#8b5cf6",
-                                "#a78bfa",
-                                "#c4b5fd",
-                                "#ddd6fe",
-                                "#ede9fe",
+                                theme.palette.secondary.main,
+                                theme.palette.info.main,
+                                theme.palette.primary.main,
+                                theme.palette.success.light,
+                                theme.palette.warning.main,
                               ][index]
                             }
                           />
@@ -132,11 +135,12 @@ export const CategoricalTab = ({ categoricalStats }) => {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: "#121212",
+                          backgroundColor: theme.palette.background.paper,
                           borderRadius: 4,
+                          border: `1px solid ${theme.palette.divider}`,
                         }}
-                        labelStyle={{ color: "#ffffff" }}
-                        itemStyle={{ color: "#ffffff" }}
+                        labelStyle={{ color: theme.palette.text.primary }}
+                        itemStyle={{ color: theme.palette.text.primary }}
                       />
                     </PieChart>
                   </ResponsiveContainer>

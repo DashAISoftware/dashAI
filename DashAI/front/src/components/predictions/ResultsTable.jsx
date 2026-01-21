@@ -11,6 +11,7 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
@@ -19,6 +20,7 @@ import { useTranslation } from "react-i18next";
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 function ResultsTable({ selectedPrediction }) {
+  const theme = useTheme();
   const [loadingExecution, setLoadingExecution] = useState(
     RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
   );
@@ -53,8 +55,7 @@ function ResultsTable({ selectedPrediction }) {
 
       <Typography
         variant="subtitle2"
-        color="text.secondary"
-        sx={{ mb: 1, display: "block" }}
+        sx={{ color: theme.palette.text.secondary, mb: 1, display: "block" }}
       >
         {loadingExecution
           ? t("prediction:label.predictionStillRunningResults")
@@ -67,7 +68,7 @@ function ResultsTable({ selectedPrediction }) {
           sx={{
             py: 4,
             textAlign: "center",
-            color: "text.secondary",
+            color: theme.palette.text.secondary,
           }}
         >
           <CircularProgress size={28} />
@@ -81,7 +82,10 @@ function ResultsTable({ selectedPrediction }) {
         selectedPrediction &&
         selectedPrediction?.status === 3 && ( // Finished
           <>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: theme.palette.text.secondary, mb: 2 }}
+            >
               {selectedPrediction.dataset
                 ? t("prediction:label.basedOnDataset", {
                     datasetName: selectedPrediction.dataset.name,
