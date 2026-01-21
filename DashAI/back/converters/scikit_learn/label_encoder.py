@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
@@ -22,10 +23,16 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     """Scikit-learn's LabelEncoder wrapper for DashAI that supports multiple columns."""
 
     SCHEMA = LabelEncoderSchema
-    DESCRIPTION = "Encode target labels with value between 0 and n_classes-1."
-    SHORT_DESCRIPTION = "Convert categorical labels to numeric values"
-    CATEGORY = "Encoding"
-    DISPLAY_NAME = "Label Encoder"
+    DESCRIPTION = MultilingualString(
+        en="Encode target labels with value between 0 and n_classes-1.",
+        es="Codifica etiquetas objetivo con valores entre 0 y n_clases-1.",
+    )
+    SHORT_DESCRIPTION = MultilingualString(
+        en="Convert categorical labels to numeric values",
+        es="Convierte etiquetas categóricas a valores numéricos",
+    )
+    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
+    DISPLAY_NAME = MultilingualString(en="Label Encoder", es="Codificador de Etiquetas")
     IMAGE_PREVIEW = "label_encoder.png"
 
     metadata = {
