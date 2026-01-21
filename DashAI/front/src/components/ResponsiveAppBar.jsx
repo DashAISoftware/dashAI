@@ -16,6 +16,8 @@ import HomeIcon from "@mui/icons-material/HomeOutlined";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "./LanguageSelector";
 import { ColorModeContext } from "../contexts/ThemeContext";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
