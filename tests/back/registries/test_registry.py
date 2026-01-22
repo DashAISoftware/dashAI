@@ -114,6 +114,9 @@ COMPONENT3_DICT = {
     "display_name": None,
     "color": None,
 }
+COMPONENT3_DICT_MS = COMPONENT3_DICT.copy()
+COMPONENT3_DICT_MS["description"] = MultilingualString(en="Some static component")
+
 RELATED_COMPONENT1_DICT = {
     "name": "RelatedComponent1",
     "type": "StaticComponent",
@@ -199,18 +202,12 @@ def test__init__with_components():
     assert hasattr(test_registry, "registry")
     assert isinstance(test_registry.registry, dict)
 
-    # Replace description with MultilingualString for comparison
-    # since in the registry it is converted to MultilingualString
-    COMPONENT3_DICT["description"] = MultilingualString(
-        en=COMPONENT3_DICT["description"]
-    )
-
     assert test_registry.registry == {
         "ConfigComponent1": {
             "Component1": COMPONENT1_DICT,
             "Component2": COMPONENT2_DICT,
         },
-        "StaticComponent": {"Component3": COMPONENT3_DICT},
+        "StaticComponent": {"Component3": COMPONENT3_DICT_MS},
     }
 
 
@@ -268,15 +265,10 @@ def test__getitem__():
             Component3,
         ]
     )
-    # Replace description with MultilingualString for comparison
-    # since in the registry it is converted to MultilingualString
-    COMPONENT3_DICT["description"] = MultilingualString(
-        en=COMPONENT3_DICT["description"]
-    )
 
     assert test_registry["Component1"] == COMPONENT1_DICT
     assert test_registry["Component2"] == COMPONENT2_DICT
-    assert test_registry["Component3"] == COMPONENT3_DICT
+    assert test_registry["Component3"] == COMPONENT3_DICT_MS
 
 
 def test__getitem__key_error():
@@ -303,18 +295,13 @@ def test_get_components_by_type_select_and_ignore_none():
             Component3,
         ]
     )
-    # Replace description with MultilingualString for comparison
-    # since in the registry it is converted to MultilingualString
-    COMPONENT3_DICT["description"] = MultilingualString(
-        en=COMPONENT3_DICT["description"]
-    )
 
     # test with one component type
     assert test_registry.get_components_by_types() == [
         COMPONENT1_DICT,
         COMPONENT2_DICT,
         SUBCOMPONENT1_DICT,
-        COMPONENT3_DICT,
+        COMPONENT3_DICT_MS,
     ]
 
 
@@ -327,11 +314,6 @@ def test_get_components_by_type_select_param():
             Component3,
         ]
     )
-    # Replace description with MultilingualString for comparison
-    # since in the registry it is converted to MultilingualString
-    COMPONENT3_DICT["description"] = MultilingualString(
-        en=COMPONENT3_DICT["description"]
-    )
 
     # test with one component type
     assert test_registry.get_components_by_types(select="ConfigComponent1") == [
@@ -342,7 +324,7 @@ def test_get_components_by_type_select_param():
 
     # test with another component type
     assert test_registry.get_components_by_types(select="StaticComponent") == [
-        COMPONENT3_DICT
+        COMPONENT3_DICT_MS
     ]
 
     # test with one component type as list
@@ -355,7 +337,7 @@ def test_get_components_by_type_select_param():
     # test with two component type as list
     assert test_registry.get_components_by_types(
         select=["ConfigComponent1", "StaticComponent"]
-    ) == [COMPONENT1_DICT, COMPONENT2_DICT, SUBCOMPONENT1_DICT, COMPONENT3_DICT]
+    ) == [COMPONENT1_DICT, COMPONENT2_DICT, SUBCOMPONENT1_DICT, COMPONENT3_DICT_MS]
 
 
 def test_get_components_by_type_select_param_errors():
@@ -389,15 +371,10 @@ def test_get_components_by_type_ignore_param():
             Component3,
         ]
     )
-    # Replace description with MultilingualString for comparison
-    # since in the registry it is converted to MultilingualString
-    COMPONENT3_DICT["description"] = MultilingualString(
-        en=COMPONENT3_DICT["description"]
-    )
 
     # test with another component type
     assert test_registry.get_components_by_types(ignore="ConfigComponent1") == [
-        COMPONENT3_DICT
+        COMPONENT3_DICT_MS
     ]
     # test with one component type
     assert test_registry.get_components_by_types(ignore="StaticComponent") == [
@@ -408,7 +385,7 @@ def test_get_components_by_type_ignore_param():
 
     # test with one component type as list
     assert test_registry.get_components_by_types(ignore=["ConfigComponent1"]) == [
-        COMPONENT3_DICT
+        COMPONENT3_DICT_MS
     ]
 
     # test with two component type as list
