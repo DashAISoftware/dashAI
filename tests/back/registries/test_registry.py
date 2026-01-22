@@ -1,6 +1,7 @@
 import pytest
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry import ComponentRegistry
 
 TEST_SCHEMA_1 = {
@@ -198,6 +199,12 @@ def test__init__with_components():
     assert hasattr(test_registry, "registry")
     assert isinstance(test_registry.registry, dict)
 
+    # Replace description with MultilingualString for comparison
+    # since in the registry it is converted to MultilingualString
+    COMPONENT3_DICT["description"] = MultilingualString(
+        en=COMPONENT3_DICT["description"]
+    )
+
     assert test_registry.registry == {
         "ConfigComponent1": {
             "Component1": COMPONENT1_DICT,
@@ -261,6 +268,12 @@ def test__getitem__():
             Component3,
         ]
     )
+    # Replace description with MultilingualString for comparison
+    # since in the registry it is converted to MultilingualString
+    COMPONENT3_DICT["description"] = MultilingualString(
+        en=COMPONENT3_DICT["description"]
+    )
+
     assert test_registry["Component1"] == COMPONENT1_DICT
     assert test_registry["Component2"] == COMPONENT2_DICT
     assert test_registry["Component3"] == COMPONENT3_DICT
@@ -290,6 +303,12 @@ def test_get_components_by_type_select_and_ignore_none():
             Component3,
         ]
     )
+    # Replace description with MultilingualString for comparison
+    # since in the registry it is converted to MultilingualString
+    COMPONENT3_DICT["description"] = MultilingualString(
+        en=COMPONENT3_DICT["description"]
+    )
+
     # test with one component type
     assert test_registry.get_components_by_types() == [
         COMPONENT1_DICT,
@@ -308,6 +327,12 @@ def test_get_components_by_type_select_param():
             Component3,
         ]
     )
+    # Replace description with MultilingualString for comparison
+    # since in the registry it is converted to MultilingualString
+    COMPONENT3_DICT["description"] = MultilingualString(
+        en=COMPONENT3_DICT["description"]
+    )
+
     # test with one component type
     assert test_registry.get_components_by_types(select="ConfigComponent1") == [
         COMPONENT1_DICT,
@@ -364,6 +389,12 @@ def test_get_components_by_type_ignore_param():
             Component3,
         ]
     )
+    # Replace description with MultilingualString for comparison
+    # since in the registry it is converted to MultilingualString
+    COMPONENT3_DICT["description"] = MultilingualString(
+        en=COMPONENT3_DICT["description"]
+    )
+
     # test with another component type
     assert test_registry.get_components_by_types(ignore="ConfigComponent1") == [
         COMPONENT3_DICT
