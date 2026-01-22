@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Grid } from "@mui/material";
 import TaskBox from "../../components/generative/TaskBox";
-import SearchBar from "./SearchBar";
+import SearchBar from "../../components/threeSectionLayout/SearchBar";
 import { getGenerativeTask } from "../../api/generativeTask";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useTranslation } from "react-i18next";
