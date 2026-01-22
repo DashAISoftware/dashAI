@@ -124,7 +124,7 @@ def test_get_plugin_by_name_from_pypi_with_other_tags():
 
 
 def test_get_plugins_from_pypi():
-    # Mock to server_proxy
+    # Mock GET /simple/
     server_proxy_mock = Mock()
     server_proxy_mock.json.return_value = {
         "meta": {"_last-serial": 0, "api-version": "1.0"},
@@ -135,9 +135,16 @@ def test_get_plugins_from_pypi():
         ],
     }
     server_proxy_mock.status_code = 200
-    # Mock to request.get
+
+    # Mock GET /simple/<project>/ (status)
+    status_mock = Mock()
+    status_mock.status_code = 200
+    status_mock.raise_for_status.return_value = None
+    status_mock.json.return_value = {"project-status": {"status": "active"}}
+
+    # Mock GET /pypi/<project>/json
     request_mock = Mock()
-    json_return = {
+    request_mock.json.return_value = {
         "info": {
             "author": "DashAI Team",
             "version": "0.1.0",
@@ -148,9 +155,11 @@ def test_get_plugins_from_pypi():
             "summary": "Tabular Classification Package",
         },
     }
-    request_mock.json.return_value = json_return
 
-    with patch("requests.get", side_effect=[server_proxy_mock, request_mock]):
+    with patch(
+        "requests.get",
+        side_effect=[server_proxy_mock, status_mock, request_mock],
+    ):
         plugins = get_plugins_from_pypi()
 
     assert plugins == [
