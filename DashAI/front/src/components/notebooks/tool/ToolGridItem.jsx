@@ -4,11 +4,13 @@ import HoverToolInfo from "./HoverToolInfo";
 import api from "../../../api/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 export default function ToolGridItem({ tool, disabled, onClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredTool, setHoveredTool] = useState(null);
   const { t } = useTranslation(["common"]);
+  const theme = useTheme();
 
   const handleMouseEnter = (event, tool) => {
     if (!disabled) {
@@ -31,16 +33,16 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
         slotProps={{
           tooltip: {
             sx: {
-              bgcolor: "rgb(33, 33, 33)",
+              bgcolor: theme.palette.background.paper,
+              color: theme.palette.text.primary,
               display: disabled ? "block" : "none",
-              color: "rgb(255, 255, 255)",
-              border: "1px solid rgb(63, 63, 70)",
+              border: `1px solid ${theme.palette.divider}`,
               fontSize: "0.75rem",
               maxWidth: 300,
               "& .MuiTooltip-arrow": {
-                color: "rgb(33, 33, 33)",
+                color: theme.palette.background.paper,
                 "&::before": {
-                  border: "1px solid rgb(63, 63, 70)",
+                  border: `1px solid ${theme.palette.divider}`,
                 },
               },
             },
@@ -54,8 +56,10 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
           onClick={disabled ? null : onClick}
           sx={{
             position: "relative",
-            bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(44, 44, 44)",
-            border: "1px solid rgb(39, 39, 42)",
+            bgcolor: disabled
+              ? theme.palette.ui.disabled
+              : theme.palette.ui.box,
+            border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1.5,
             overflow: "hidden",
             cursor: disabled ? "not-allowed" : "pointer",
@@ -63,8 +67,12 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
             opacity: disabled ? 0.5 : 1,
             filter: disabled ? "grayscale(0.6)" : "none",
             "&:hover": {
-              bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(60, 60, 60)",
-              borderColor: disabled ? "rgb(39, 39, 42)" : tool.metadata.color,
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.action.hover,
+              borderColor: disabled
+                ? theme.palette.ui.border
+                : tool.metadata.color,
               transform: disabled ? "none" : "translateY(-4px)",
               boxShadow: disabled ? "none" : `0 8px 16px rgba(0, 0, 0, 0.2)`,
             },
@@ -87,8 +95,12 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
             sx={{
               width: "100%",
               height: 100,
-              bgcolor: disabled ? "rgb(30, 30, 30)" : "rgb(39, 39, 42)",
-              borderBottom: "1px solid rgb(39, 39, 42)",
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.ui.border,
+              borderBottom: `1px solid ${
+                disabled ? theme.palette.ui.disabled : theme.palette.ui.border
+              }`,
             }}
           >
             <img
@@ -114,16 +126,23 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
                   justifyContent: "center",
                   width: 28,
                   height: 28,
+                  p: 2,
                   borderRadius: 0.75,
-                  bgcolor: disabled ? "rgb(50, 50, 50)" : "rgb(63, 63, 70)",
-                  color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
+                  bgcolor: disabled
+                    ? theme.palette.ui.disabled
+                    : theme.palette.ui.border,
+                  color: disabled
+                    ? theme.palette.text.disabled
+                    : theme.palette.text.primary,
                   flexShrink: 0,
                 }}
               >
                 <CategoryIcon
                   name={tool.type}
                   category={tool.metadata.category}
-                  color={disabled ? "rgb(100, 100, 100)" : tool.metadata.color}
+                  color={
+                    disabled ? theme.palette.text.disabled : tool.metadata.color
+                  }
                 />
               </Box>
             </Box>
@@ -132,7 +151,9 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
             <Typography
               variant="body2"
               sx={{
-                color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
+                color: disabled
+                  ? theme.palette.text.disabled
+                  : theme.palette.text.primary,
                 fontWeight: 500,
                 mb: 0.5,
                 overflow: "hidden",
@@ -151,7 +172,9 @@ export default function ToolGridItem({ tool, disabled, onClick }) {
             <Typography
               variant="caption"
               sx={{
-                color: disabled ? "rgb(90, 90, 90)" : "rgb(113, 113, 122)",
+                color: disabled
+                  ? theme.palette.text.disabled
+                  : theme.palette.text.primary,
               }}
             >
               {tool.metadata.category ?? t("common:other")}
