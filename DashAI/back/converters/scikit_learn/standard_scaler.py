@@ -59,9 +59,6 @@ class StandardScaler(
             "a varianza unitaria."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Scaling & Normalization", es="Escalado y Normalización"
-    )
     DISPLAY_NAME = MultilingualString(en="Standard Scaler", es="Estandarizador")
 
     metadata = {

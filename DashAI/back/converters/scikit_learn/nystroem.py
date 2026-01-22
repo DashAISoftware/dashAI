@@ -113,9 +113,6 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
             "un kernel arbitrario usando un subconjunto de datos como base."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Dimensionality Reduction", es="Reducción de Dimensionalidad"
-    )
     DISPLAY_NAME = MultilingualString(
         en="Nystroem Approximation", es="Aproximación Nystroem"
     )

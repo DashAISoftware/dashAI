@@ -59,9 +59,6 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
         en="SMOTE-ENN (Hybrid Sampling)", es="SMOTE-ENN (Muestreo Híbrido)"
     )
     IMAGE_PREVIEW = "smoteenn.png"
-    CATEGORY = MultilingualString(
-        en="Resampling & Class Balancing", es="Remuestreo y Balanceo de Clases"
-    )
 
     def __init__(self, **kwargs):
         self.smote = SMOTE(

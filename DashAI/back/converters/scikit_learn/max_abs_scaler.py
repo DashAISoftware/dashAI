@@ -34,9 +34,6 @@ class MaxAbsScaler(
         en="Scale each feature by its maximum absolute value.",
         es="Escala cada característica por su valor absoluto máximo.",
     )
-    CATEGORY = MultilingualString(
-        en="Scaling & Normalization", es="Escalado y Normalización"
-    )
     DISPLAY_NAME = MultilingualString(en="Max Abs Scaler", es="Escalador Max Abs")
     IMAGE_PREVIEW = "max_abs_scaler.png"
 

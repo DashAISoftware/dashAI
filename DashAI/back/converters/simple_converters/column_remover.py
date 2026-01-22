@@ -32,9 +32,6 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
         es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
     )
     DISPLAY_NAME = MultilingualString(en="Column Remover", es="Removedor de Columnas")
-    CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
-    )
     IMAGE_PREVIEW = "column_remover.png"
 
     def __init__(self):

@@ -69,7 +69,6 @@ class CCA(AdvancedPreprocessingConverter, SklearnWrapper, CCAOPERATION):
         es="Análisis de Correlación Canónica, también conocido como PLS 'Modo B'.",
     )
     DISPLAY_NAME = MultilingualString(en="CCA", es="CCA")
-    CATEGORY = MultilingualString(en="Advanced", es="Avanzado")
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""

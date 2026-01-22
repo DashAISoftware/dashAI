@@ -52,9 +52,6 @@ class AdditiveChi2Sampler(
             "a intervalos regulares."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Polynomial & Kernel Methods", es="Métodos Polinomiales y de Kernel"
-    )
     DISPLAY_NAME = MultilingualString(en="Additive Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "additive_chi2_sampler.png"
 

@@ -35,9 +35,6 @@ class SelectFpr(FeatureSelectionConverter, SklearnWrapper, SelectFprOperation):
     SUPERVISED = True
     DISPLAY_NAME = MultilingualString(en="Select FPR", es="Seleccionar FPR")
     IMAGE_PREVIEW = "select_fpr.png"
-    CATEGORY = MultilingualString(
-        en="Feature Selection", es="Selección de Características"
-    )
     metadata = {}
 
     def __init__(self, **kwargs):

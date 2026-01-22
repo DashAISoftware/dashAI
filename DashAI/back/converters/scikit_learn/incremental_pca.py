@@ -68,9 +68,6 @@ class IncrementalPCA(
     """Scikit-learn's IncrementalPCA wrapper for DashAI."""
 
     SCHEMA = IncrementalPCASchema
-    CATEGORY = MultilingualString(
-        en="Dimensionality Reduction", es="Reducción de Dimensionalidad"
-    )
     DESCRIPTION = MultilingualString(
         en=(
             "Incremental PCA (IPCA) is typically used as a replacement for PCA "

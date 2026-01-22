@@ -92,7 +92,6 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
             "numérico one-hot."
         ),
     )
-    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
     DISPLAY_NAME = MultilingualString(en="One-Hot Encoder", es="Codificador One-Hot")
     IMAGE_PREVIEW = "one_hot_encoder.png"
 

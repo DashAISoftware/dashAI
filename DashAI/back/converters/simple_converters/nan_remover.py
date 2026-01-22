@@ -58,9 +58,6 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         es="Elimina las filas con valores NaN del conjunto de datos.",
     )
     DISPLAY_NAME = MultilingualString(en="NaN Remover", es="Removedor de NaN")
-    CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
-    )
     IMAGE_PREVIEW = "nan_remover.png"
 
     metadata = {

@@ -67,9 +67,6 @@ class RBFSampler(PolynomialKernelConverter, SklearnWrapper, RBFSamplerOperation)
             "la aproximación de Monte Carlo de su transformada de Fourier."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Polynomial & Kernel Methods", es="Métodos Polinomiales y de Kernel"
-    )
     DISPLAY_NAME = MultilingualString(en="RBF Sampler", es="Muestreador RBF")
     IMAGE_PREVIEW = "rbf_sampler.png"
 

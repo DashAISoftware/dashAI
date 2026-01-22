@@ -20,9 +20,6 @@ class MissingIndicator(
 ):
     """Scikit-learn's MissingIndicator wrapper for DashAI."""
 
-    CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
-    )
     SCHEMA = MissingIndicatorSchema
     DESCRIPTION = MultilingualString(
         en="Binary indicators for missing values.",

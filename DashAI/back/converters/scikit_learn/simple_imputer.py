@@ -93,9 +93,6 @@ class SimpleImputer(
             "por columna, o usando un valor constante."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
-    )
     DISPLAY_NAME = MultilingualString(en="Simple Imputer", es="Imputador Simple")
     IMAGE_PREVIEW = "simple_imputer.png"
 

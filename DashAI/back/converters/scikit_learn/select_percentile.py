@@ -40,9 +40,6 @@ class SelectPercentile(
     )
     IMAGE_PREVIEW = "select_percentile.png"
     metadata = {}
-    CATEGORY = MultilingualString(
-        en="Feature Selection", es="Selección de Características"
-    )
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""

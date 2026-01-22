@@ -46,7 +46,6 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
             "Binariza datos (pone valores de características en 0 o 1) según un umbral."
         ),
     )
-    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
     DISPLAY_NAME = MultilingualString(en="Binarizer", es="Binarizador")
     IMAGE_PREVIEW = "binarizer.png"
 

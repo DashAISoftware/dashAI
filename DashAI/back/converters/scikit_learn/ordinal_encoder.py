@@ -86,7 +86,6 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
         en="Encode categorical features as an integer array.",
         es="Codifica características categóricas como un arreglo de enteros.",
     )
-    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
     DISPLAY_NAME = MultilingualString(en="Ordinal Encoder", es="Codificador Ordinal")
     IMAGE_PREVIEW = "ordinal_encoder.png"
 

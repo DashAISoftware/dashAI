@@ -168,9 +168,6 @@ class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     )
     IMAGE_PREVIEW = "pca.png"
     metadata = {}
-    CATEGORY = MultilingualString(
-        en="Dimensionality Reduction", es="Reducción de Dimensionalidad"
-    )
 
     def __init__(self, **kwargs):
         self.random_state = kwargs.pop("random_state", None)

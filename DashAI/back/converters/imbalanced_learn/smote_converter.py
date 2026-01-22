@@ -53,9 +53,6 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
         en="SMOTE: Synthetic Minority Over-sampling Technique.",
         es="SMOTE: Técnica de Sobre-muestreo de la Minoría Sintética.",
     )
-    CATEGORY = MultilingualString(
-        en="Resampling & Class Balancing", es="Remuestreo y Balanceo de Clases"
-    )
     DISPLAY_NAME = MultilingualString(
         en="SMOTE (Oversampling)", es="SMOTE (Sobre-muestreo)"
     )

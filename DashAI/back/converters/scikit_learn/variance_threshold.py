@@ -36,9 +36,6 @@ class VarianceThreshold(
         en="Feature selector that removes all low-variance features.",
         es="Selector de características que elimina todas las de baja varianza.",
     )
-    CATEGORY = MultilingualString(
-        en="Dimensionality Reduction", es="Reducción de Dimensionalidad"
-    )
     DISPLAY_NAME = MultilingualString(en="Variance Threshold", es="Umbral de Varianza")
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:

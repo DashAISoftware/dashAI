@@ -76,9 +76,6 @@ class SkewedChi2Sampler(
             "mediante la aproximación de Monte Carlo de su transformada de Fourier."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Polynomial & Kernel Methods", es="Métodos Polinomiales y de Kernel"
-    )
     DISPLAY_NAME = MultilingualString(en="Skewed Chi² Sampler", es="Muestreador Chi²")
     IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
 

@@ -80,9 +80,6 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
             "k-Vecinos Más Cercanos."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
-    )
     DISPLAY_NAME = MultilingualString(en="KNN Imputer", es="Imputador KNN")
     IMAGE_PREVIEW = "knn_imputer.png"
 

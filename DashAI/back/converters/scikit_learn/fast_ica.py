@@ -138,9 +138,6 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
             "el Análisis de Componentes Independientes."
         ),
     )
-    CATEGORY = MultilingualString(
-        en="Dimensionality Reduction", es="Reducción de Dimensionalidad"
-    )
     DISPLAY_NAME = MultilingualString(en="Fast ICA", es="Fast ICA")
     IMAGE_PREVIEW = "fast_ica.png"
 

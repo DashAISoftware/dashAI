@@ -45,9 +45,6 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     If 'replacement_char' is an empty string, 'char_to_replace' will be removed.
     """
 
-    CATEGORY = MultilingualString(
-        en="Basic Preprocessing", es="Preprocesamiento Básico"
-    )
     SCHEMA = CharacterReplacerSchema
     DESCRIPTION = MultilingualString(
         en=(

@@ -31,7 +31,6 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         en="Convert categorical labels to numeric values",
         es="Convierte etiquetas categóricas a valores numéricos",
     )
-    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
     DISPLAY_NAME = MultilingualString(en="Label Encoder", es="Codificador de Etiquetas")
     IMAGE_PREVIEW = "label_encoder.png"
 

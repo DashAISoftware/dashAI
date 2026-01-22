@@ -45,9 +45,6 @@ class RandomUnderSamplerConverter(
         en="Randomly remove samples from the majority class to balance the dataset.",
         es="Elimina aleatoriamente muestras de la clase mayoritaria para balancear.",
     )
-    CATEGORY = MultilingualString(
-        en="Resampling & Class Balancing", es="Remuestreo y Balanceo de Clases"
-    )
     DISPLAY_NAME = MultilingualString(
         en="Random Under-Sampler", es="Submuestreador Aleatorio"
     )

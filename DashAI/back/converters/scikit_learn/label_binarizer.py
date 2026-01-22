@@ -37,7 +37,6 @@ class LabelBinarizer(EncodingConverter, SklearnWrapper, LabelBinarizerOperation)
         en="Binarize labels in a one-vs-all fashion.",
         es="Binariza etiquetas en esquema uno-contra-todos.",
     )
-    CATEGORY = MultilingualString(en="Encoding", es="Codificación")
     DISPLAY_NAME = MultilingualString(
         en="Label Binarizer", es="Binarizador de Etiquetas"
     )

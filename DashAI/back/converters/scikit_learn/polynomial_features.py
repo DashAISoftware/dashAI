@@ -75,9 +75,6 @@ class PolynomialFeatures(
     """Scikit-learn's PolynomialFeatures wrapper for DashAI."""
 
     SCHEMA = PolynomialFeaturesSchema
-    CATEGORY = MultilingualString(
-        en="Polynomial & Kernel Methods", es="Métodos Polinomiales y de Kernel"
-    )
     DESCRIPTION = MultilingualString(
         en=(
             "Generate polynomial and interaction features. For example, if an "

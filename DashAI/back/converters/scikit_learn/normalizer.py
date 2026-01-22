@@ -40,9 +40,6 @@ class Normalizer(ScalingAndNormalizationConverter, SklearnWrapper, NormalizerOpe
         en="Normalize samples individually to unit norm.",
         es="Normaliza muestras individualmente a norma unitaria.",
     )
-    CATEGORY = MultilingualString(
-        en="Scaling & Normalization", es="Escalado y Normalización"
-    )
     DISPLAY_NAME = MultilingualString(en="Normalizer", es="Normalizador")
     IMAGE_PREVIEW = "normalizer.png"
 

@@ -58,9 +58,6 @@ class MinMaxScaler(
         en="Transform features by scaling each feature to a given range.",
         es="Transforma características escalándolas a un rango dado.",
     )
-    CATEGORY = MultilingualString(
-        en="Scaling & Normalization", es="Escalado y Normalización"
-    )
     DISPLAY_NAME = MultilingualString(en="Min-Max Scaler", es="Escalador Min-Max")
     IMAGE_PREVIEW = "min_max_scaler.png"
 
