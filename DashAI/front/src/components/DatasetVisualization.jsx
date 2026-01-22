@@ -235,18 +235,27 @@ export default function DatasetVisualization({
                         onNewItem();
                       }
                       if (tourContext && tourContext.run) {
-                        // Esperar a que .notebook-note-box esté en el DOM
                         const waitForNoteBox = (attempts = 0) => {
                           const noteBox =
                             document.querySelector(".notebook-note-box");
                           if (noteBox) {
-                            tourContext.nextStep();
-                          } else if (attempts < 30) {
-                            // espera hasta 3s
+                            setTimeout(() => {
+                              if (
+                                tourContext &&
+                                typeof tourContext.nextStep === "function"
+                              ) {
+                                tourContext.nextStep();
+                              }
+                            }, 300);
+                          } else if (attempts < 50) {
                             setTimeout(() => waitForNoteBox(attempts + 1), 100);
                           } else {
-                            // fallback: avanzar igual después de 3s
-                            tourContext.nextStep();
+                            if (
+                              tourContext &&
+                              typeof tourContext.nextStep === "function"
+                            ) {
+                              tourContext.nextStep();
+                            }
                           }
                         };
                         waitForNoteBox();

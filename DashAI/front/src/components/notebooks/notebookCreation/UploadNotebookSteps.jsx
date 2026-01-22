@@ -111,7 +111,11 @@ export default function UploadNotebookSteps({
       subtitle={""}
       padding={0}
     >
-      <NoteBox message={t("datasets:label.notebookCreationNote")} />
+      <NoteBox
+        className="notebook-note-box"
+        data-tour="notebook-note-box"
+        message={t("datasets:label.notebookCreationNote")}
+      />
       <Typography
         variant="h6"
         sx={{
@@ -182,6 +186,7 @@ export default function UploadNotebookSteps({
           }}
           saveButtonText={t("datasets:button.createNotebook")}
           backButtonText={t("common:back")}
+          dataTour="create-notebook-button"
         />
       </Box>
     </CustomLayout>
