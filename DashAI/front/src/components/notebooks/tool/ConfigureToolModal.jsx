@@ -193,8 +193,8 @@ export default function ConfigureToolModal({
               {/* Tool Description */}
               <Box
                 sx={{
-                  bgcolor: "rgb(44, 44, 44)",
-                  border: "1px solid rgb(39, 39, 42)",
+                  bgcolor: "theme.palette.background.box",
+                  border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 1.5,
                   p: 2,
                 }}
