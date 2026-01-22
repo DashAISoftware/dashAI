@@ -25,7 +25,7 @@ def test_post_plugin(client: TestClient):
 
 
 def test_refresh_plugins(client: TestClient):
-    # Mock para requests.get
+    # Mock para requests.get (lista global /simple/)
     mock_client = Mock()
     mock_client.json.return_value = {
         "meta": {"_last-serial": 0, "api-version": "1.0"},
@@ -37,7 +37,13 @@ def test_refresh_plugins(client: TestClient):
     }
     mock_client.status_code = 200
 
-    # Mock para el segundo request.get
+    # Mock para requests.get (status /simple/<project>/)
+    status_mock = Mock()
+    status_mock.status_code = 200
+    status_mock.raise_for_status.return_value = None
+    status_mock.json.return_value = {"project-status": {"status": "active"}}
+
+    # Mock para requests.get (metadata /pypi/<project>/json)
     request_mock = Mock()
     json_return = {
         "info": {
@@ -52,7 +58,7 @@ def test_refresh_plugins(client: TestClient):
     }
     request_mock.json.return_value = json_return
 
-    with patch("requests.get", side_effect=[mock_client, request_mock]):
+    with patch("requests.get", side_effect=[mock_client, status_mock, request_mock]):
         response = client.post("/api/v1/plugin/index")
         assert response.status_code == 201, response.text
         assert len(response.json()) == 1
@@ -82,7 +88,6 @@ def test_post_existing_plugin(client: TestClient):
 
 
 def test_refresh_existing_plugin_with_new_version(client: TestClient):
-    # Mock para requests.get
     mock_client = Mock()
     mock_client.json.return_value = {
         "meta": {"_last-serial": 0, "api-version": "1.0"},
@@ -94,7 +99,11 @@ def test_refresh_existing_plugin_with_new_version(client: TestClient):
     }
     mock_client.status_code = 200
 
-    # Mock para el segundo request.get
+    status_mock = Mock()
+    status_mock.status_code = 200
+    status_mock.raise_for_status.return_value = None
+    status_mock.json.return_value = {"project-status": {"status": "active"}}
+
     request_mock = Mock()
     json_return = {
         "info": {
@@ -109,7 +118,7 @@ def test_refresh_existing_plugin_with_new_version(client: TestClient):
     }
     request_mock.json.return_value = json_return
 
-    with patch("requests.get", side_effect=[mock_client, request_mock]):
+    with patch("requests.get", side_effect=[mock_client, status_mock, request_mock]):
         response = client.post("/api/v1/plugin/index")
         assert response.status_code == 201, response.text
         assert len(response.json()) == 1
@@ -118,6 +127,30 @@ def test_refresh_existing_plugin_with_new_version(client: TestClient):
         assert plugin["summary"] == "Tabular Classification Package"
         assert plugin["installed_version"] == "0.0.2"
         assert plugin["lastest_version"] == "0.0.5"
+
+
+def test_refresh_plugins_skips_archived(client: TestClient):
+    mock_client = Mock()
+    mock_client.json.return_value = {
+        "meta": {"_last-serial": 0, "api-version": "1.0"},
+        "projects": [
+            {"_last-serial": 1, "name": "dashai-tabular-classification-package"}
+        ],
+    }
+    mock_client.status_code = 200
+
+    status_mock = Mock()
+    status_mock.status_code = 200
+    status_mock.raise_for_status.return_value = None
+    status_mock.json.return_value = {"project-status": {"status": "archived"}}
+
+    # No debería llamarse, pero igual lo dejamos por seguridad
+    request_mock = Mock()
+
+    with patch("requests.get", side_effect=[mock_client, status_mock, request_mock]):
+        response = client.post("/api/v1/plugin/index")
+        assert response.status_code == 201, response.text
+        assert len(response.json()) == 0
 
 
 def test_get_all_plugins(client: TestClient):
