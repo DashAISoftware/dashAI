@@ -21,8 +21,7 @@ class SMOTESchema(BaseSchema):
         "auto",
         description=MultilingualString(
             en=(
-                "Sampling strategy (float or 'auto') to determine minority "
-                "class size."
+                "Sampling strategy (float or 'auto') to determine minority class size."
             ),
             es=(
                 "Estrategia de muestreo (float o 'auto') para determinar el "

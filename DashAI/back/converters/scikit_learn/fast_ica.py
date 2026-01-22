@@ -133,7 +133,10 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     SCHEMA = FastICASchema
     DESCRIPTION = MultilingualString(
         en="FastICA: a fast algorithm for Independent Component Analysis.",
-        es="FastICA: un algoritmo rápido para el Análisis de Componentes Independientes.",
+        es=(
+            "FastICA: un algoritmo rápido para "
+            "el Análisis de Componentes Independientes."
+        ),
     )
     CATEGORY = MultilingualString(
         en="Dimensionality Reduction", es="Reducción de Dimensionalidad"

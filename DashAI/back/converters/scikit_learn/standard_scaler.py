@@ -18,9 +18,7 @@ class StandardScalerSchema(BaseSchema):
         True,
         description=MultilingualString(
             en=("If False, try to avoid a copy and do inplace scaling instead."),
-            es=(
-                "Si es False, intenta evitar copias y realiza la " "escalación in situ."
-            ),
+            es=("Si es False, intenta evitar copias y realiza la escalación in situ."),
         ),
         alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
@@ -55,9 +53,7 @@ class StandardScaler(
 
     SCHEMA = StandardScalerSchema
     DESCRIPTION = MultilingualString(
-        en=(
-            "Standardize features by removing the mean and scaling to unit " "variance."
-        ),
+        en=("Standardize features by removing the mean and scaling to unit variance."),
         es=(
             "Estandariza las características eliminando la media y escalando "
             "a varianza unitaria."

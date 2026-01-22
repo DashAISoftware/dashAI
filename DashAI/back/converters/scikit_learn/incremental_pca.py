@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.decomposition import IncrementalPCA as IncrementalPCAOperation
 
 from DashAI.back.converters.category.dimensionality_reduction import (
@@ -13,8 +12,6 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.types.dashai_data_type import DashAIDataType
-from DashAI.back.types.value_types import Float
 
 
 class IncrementalPCASchema(BaseSchema):

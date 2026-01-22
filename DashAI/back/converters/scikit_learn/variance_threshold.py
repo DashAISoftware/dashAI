@@ -17,9 +17,7 @@ class VarianceThresholdSchema(BaseSchema):
         float_field(ge=0.0),
         0.0,
         description=MultilingualString(
-            en=(
-                "Features with a variance lower than this threshold will be " "removed."
-            ),
+            en=("Features with a variance lower than this threshold will be removed."),
             es=(
                 "Se eliminarán las características con una varianza inferior "
                 "a este umbral."

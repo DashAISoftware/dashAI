@@ -43,8 +43,7 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     DESCRIPTION = MultilingualString(
         en=("Binarize data (set feature values to 0 or 1) according to a threshold."),
         es=(
-            "Binariza datos (pone valores de características en 0 o 1) "
-            "según un umbral."
+            "Binariza datos (pone valores de características en 0 o 1) según un umbral."
         ),
     )
     CATEGORY = MultilingualString(en="Encoding", es="Codificación")

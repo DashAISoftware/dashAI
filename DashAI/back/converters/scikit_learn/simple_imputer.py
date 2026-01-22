@@ -27,7 +27,7 @@ class SimpleImputerSchema(BaseSchema):
             [
                 "mean",
                 "median",
-                "most_frequent, constant".split(", ")[0],
+                ["most_frequent", "constant"][0],
                 "most_frequent",
                 "constant",
             ]

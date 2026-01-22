@@ -56,8 +56,7 @@ class TFIDFConverterSchema(BaseSchema):
         description=MultilingualString(
             en=("Lower bound for n-grams to be extracted. Must be <= upper bound."),
             es=(
-                "Límite inferior de n-grams a extraer. Debe ser <= al límite "
-                "superior."
+                "Límite inferior de n-grams a extraer. Debe ser <= al límite superior."
             ),
         ),
     )  # type: ignore
@@ -67,8 +66,7 @@ class TFIDFConverterSchema(BaseSchema):
         description=MultilingualString(
             en=("Upper bound for n-grams to be extracted. Must be >= lower bound."),
             es=(
-                "Límite superior de n-grams a extraer. Debe ser >= al límite "
-                "inferior."
+                "Límite superior de n-grams a extraer. Debe ser >= al límite inferior."
             ),
         ),
     )  # type: ignore
