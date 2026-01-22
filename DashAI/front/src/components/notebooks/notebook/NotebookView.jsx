@@ -1,3 +1,4 @@
+import { useTourContext } from "../../tour/TourProvider";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Virtuoso } from "react-virtuoso";
 import { Box, CircularProgress, Typography } from "@mui/material";
@@ -51,6 +52,20 @@ const RowItem = React.memo(function RowItem({
 
 export default function NotebookView({ notebook }) {
   const { t } = useTranslation(["datasets", "common"]);
+  const tourContext = useTourContext();
+
+  useEffect(() => {
+    if (sessionStorage.getItem("startNotebookTour") === "true") {
+      sessionStorage.removeItem("startNotebookTour");
+      setTimeout(() => {
+        if (tourContext && typeof tourContext.startTour === "function") {
+          tourContext.startTour();
+        } else if (tourContext && typeof tourContext.run === "undefined") {
+          tourContext.run = true;
+        }
+      }, 1000);
+    }
+  }, [tourContext]);
 
   if (!notebook) {
     return (

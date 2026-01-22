@@ -67,6 +67,7 @@ export default function UploadNotebookSteps({
         handleNotebookCreated(createdNotebook);
         if (tourContext?.run) {
           tourContext.stopTour();
+          sessionStorage.setItem("startNotebookTour", "true");
         }
       } catch (error) {
         console.error("Error creating notebook:", error);
