@@ -63,10 +63,14 @@ export default function OptionBox({
             gap: 1,
           }}
         >
-          <Typography variant="h6" sx={{ mb: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1, color: "text.primary" }}>
             {optionName}
           </Typography>
-          <Typography variant="caption" component="p">
+          <Typography
+            variant="caption"
+            component="p"
+            sx={{ color: "text.secondary" }}
+          >
             {description}
           </Typography>
         </Box>
