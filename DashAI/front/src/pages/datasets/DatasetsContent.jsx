@@ -30,13 +30,12 @@ import {
 import { enqueueDatasetJob } from "../../api/job";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useTranslation } from "react-i18next";
+import { useDatasets } from "../../hooks/useDatasets";
 
 export default function DatasetsContent() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [selectedNotebookId, setSelectedNotebookId] = useState(0);
-  const [datasets, setDatasets] = useState([]);
   const [notebooks, setNotebooks] = useState([]);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
@@ -50,6 +49,19 @@ export default function DatasetsContent() {
   const tourContext = useTourContext();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
+
+  const {
+    datasets,
+    selectedDatasetId,
+    fetchDatasets,
+    selectDataset,
+    clearSelectedDataset,
+    deleteDatasetLocal,
+    deleteDatasetRemote,
+    editDataset,
+    addDatasetOptimistically,
+    startDatasetPolling,
+  } = useDatasets({ enqueueSnackbar, t });
 
   const goToNextStep = (option) => {
     if (option === "dataset" && tourContext?.run) {
@@ -65,56 +77,6 @@ export default function DatasetsContent() {
       setSelectedOption(option);
       setSelectedNotebookId(null);
       setSelectedDatasetId(null);
-    }
-  };
-
-  const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
-    const enrichedDatasets = await Promise.all(
-      newDatasets.map(async (dataset) => {
-        const existingDataset = existingDatasets.find(
-          (d) => d.id === dataset.id,
-        );
-        if (existingDataset) {
-          return {
-            ...dataset,
-            total_rows: existingDataset.total_rows,
-            total_columns: existingDataset.total_columns,
-          };
-        }
-
-        try {
-          const info = await getDatasetInfo(dataset.id);
-          return {
-            ...dataset,
-            total_rows: info.total_rows,
-            total_columns: info.total_columns,
-          };
-        } catch (error) {
-          console.warn(
-            `Failed to fetch info for dataset ${dataset.id}:`,
-            error,
-          );
-          return {
-            ...dataset,
-            total_rows: dataset.total_rows,
-            columns: dataset.total_columns,
-          };
-        }
-      }),
-    );
-    return enrichedDatasets;
-  };
-
-  const fetchDatasets = async () => {
-    try {
-      const data = await getDatasets();
-      const enrichedDatasets = await enrichDatasetsWithInfo(data, datasets);
-      setDatasets(enrichedDatasets);
-    } catch (error) {
-      enqueueSnackbar(t("datasets:error.failedToFetchDatasets"), {
-        variant: "error",
-      });
-      console.error("Failed to fetch datasets:", error);
     }
   };
 
@@ -143,7 +105,7 @@ export default function DatasetsContent() {
   };
 
   const handleDatasetClick = (datasetId) => {
-    setSelectedDatasetId(datasetId);
+    selectDataset(datasetId);
     setSelectedNotebookId(null);
     setSelectedOption("dataset");
     setRightBarContent(null);
@@ -155,27 +117,22 @@ export default function DatasetsContent() {
     setSelectedOption("notebook");
   };
 
-  const handleDatasetDelete = (id) => {
+  const handleDatasetDelete = async (id) => {
     if (id === selectedDatasetId) {
-      setSelectedDatasetId(null);
+      clearSelectedDataset();
       setStep(0);
       setSelectedOption(null);
     }
 
-    setDatasets((prevDatasets) =>
-      prevDatasets.filter((dataset) => dataset.id !== id),
-    );
+    deleteDatasetLocal(id);
 
     setNotebooks((prevNotebooks) => {
-      const filteredNotebooks = prevNotebooks.filter(
-        (notebook) => notebook.dataset_id !== id,
-      );
+      const filtered = prevNotebooks.filter((n) => n.dataset_id !== id);
 
       if (
         selectedNotebookId &&
         prevNotebooks.find(
-          (notebook) =>
-            notebook.id === selectedNotebookId && notebook.dataset_id === id,
+          (n) => n.id === selectedNotebookId && n.dataset_id === id,
         )
       ) {
         setSelectedNotebookId(null);
@@ -183,10 +140,10 @@ export default function DatasetsContent() {
         setSelectedOption(null);
       }
 
-      return filteredNotebooks;
+      return filtered;
     });
 
-    deleteDataset(id);
+    await deleteDatasetRemote(id);
   };
 
   const handleNotebookDelete = (id) => {
@@ -249,21 +206,16 @@ export default function DatasetsContent() {
     setStep(1);
   };
 
-  const handleDatasetCreated = async (newDataset, datasetJob) => {
-    setDatasets((prevDatasets) => [...prevDatasets, newDataset]);
-    setSelectedDatasetId(newDataset.id);
+  const handleDatasetCreated = (newDataset, datasetJob) => {
+    addDatasetOptimistically(newDataset);
 
     setStep(0);
     setSelectedOption("dataset");
     setSelectedNotebookId(null);
-
     // clear right bar content injected during dataset creation (e.g. dataloader config)
     setRightBarContent(null);
 
-    pollForDataset(
-      { datasetId: newDataset.id, datasetName: newDataset.name },
-      { jobId: datasetJob.id },
-    );
+    startDatasetPolling(newDataset, datasetJob);
   };
 
   const pollForDataset = async (
@@ -338,37 +290,7 @@ export default function DatasetsContent() {
     }
   };
 
-  const handleEditDataset = async (id, newName) => {
-    try {
-      const updatedDataset = await updateDataset(id, { name: newName });
-      setDatasets((prevDatasets) =>
-        prevDatasets.map((dataset) =>
-          dataset.id === id
-            ? { ...dataset, name: updatedDataset.name }
-            : dataset,
-        ),
-      );
-      enqueueSnackbar(t("datasets:message.datasetUpdateSuccess"), {
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Failed to update dataset:", error);
-      if (error.response?.status === 409) {
-        enqueueSnackbar(t("datasets:error.datasetNameExists"), {
-          variant: "error",
-        });
-      } else if (error.response?.status === 422) {
-        enqueueSnackbar(t("datasets:error.datasetNameEmpty"), {
-          variant: "error",
-        });
-      } else {
-        enqueueSnackbar(t("datasets:error.failedToUpdateDataset"), {
-          variant: "error",
-        });
-      }
-      throw error;
-    }
-  };
+  const handleEditDataset = (id, newName) => editDataset(id, newName);
 
   const handleEditNotebook = async (id, newName) => {
     try {
