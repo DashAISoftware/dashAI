@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Box, Grid } from "@mui/material";
-import TaskBox from "../../components/generative/TaskBox";
 import SearchBar from "../../components/threeSectionLayout/SearchBar";
 import { getGenerativeTask } from "../../api/generativeTask";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useTranslation } from "react-i18next";
+import OptionBox from "../threeSectionLayout/OptionBox";
 
 export default function SelectTaskMenu({ goToNextStep }) {
   const [tasks, setTasks] = useState([]);
@@ -51,8 +51,8 @@ export default function SelectTaskMenu({ goToNextStep }) {
         >
           {filteredTasks.map((task, index) => (
             <Grid size={{ xl: 4, lg: 6, md: 6, sm: 12, xs: 12 }} key={index}>
-              <TaskBox
-                taskName={task.display_name}
+              <OptionBox
+                optionName={task.display_name}
                 description={task.description}
                 onClick={() => goToNextStep(task.name, task.display_name)}
               />
