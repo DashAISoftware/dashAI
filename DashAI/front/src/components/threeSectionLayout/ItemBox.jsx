@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Box, Typography, TextField } from "@mui/material";
 import ItemMenu from "./ItemMenu";
+import { useTheme } from "@mui/material/styles";
 
 export default function ItemBox({
   isSelected,
@@ -15,6 +16,7 @@ export default function ItemBox({
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
   const inputRef = useRef(null);
+  const theme = useTheme();
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -82,10 +84,10 @@ export default function ItemBox({
         alignItems: "center",
         borderRadius: 1,
         cursor: isSelected || isEditing ? "default" : "pointer",
-        bgcolor: isSelected ? "rgba(255, 255, 255, 0.05)" : "transparent",
+        bgcolor: isSelected ? theme.palette.action.selected : "transparent",
         p: 0.5,
         "&:hover": {
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          backgroundColor: theme.palette.action.hover,
         },
       }}
       onClick={isSelected || isEditing ? undefined : onClick}
