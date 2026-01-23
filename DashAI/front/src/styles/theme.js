@@ -1,6 +1,7 @@
 import QuicksandBoldWoff2 from "./fonts/Quicksand-Bold.woff2";
+import { dataGridLocales } from "../utils/i18n/datagridLocale";
 
-const getTheme = (mode) => ({
+const getTheme = (mode, language) => ({
   palette: {
     mode,
 
@@ -198,11 +199,15 @@ const getTheme = (mode) => ({
         ::-webkit-scrollbar-thumb {
             -webkit-border-radius: 10px;
             border-radius: 10px;
-            background: ${mode === "dark" ? "rgba(0, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.3)"};
+            background: ${
+              mode === "dark" ? "rgba(0, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.3)"
+            };
             -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
         }
         ::-webkit-scrollbar-thumb:window-inactive {
-                background: ${mode === "dark" ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"};
+                background: ${
+                  mode === "dark" ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)"
+                };
         }
       `,
     },
@@ -221,6 +226,9 @@ const getTheme = (mode) => ({
         columnHeader: {
           backgroundColor: "transparent",
         },
+      },
+      defaultProps: {
+        localeText: dataGridLocales[language] ?? dataGridLocales.en,
       },
     },
   },
