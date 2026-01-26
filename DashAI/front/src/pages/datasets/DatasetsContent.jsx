@@ -14,13 +14,12 @@ import NotebookVisualization from "../../components/notebooks/notebook/NotebookV
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
-import { startJobPolling } from "../../utils/jobPoller";
-import { enqueueDatasetJob } from "../../api/job";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/useDatasets";
 import { useNotebooks } from "../../hooks/useNotebooks";
 import { useDatasetUIState } from "../../hooks/useDatasetUIState";
+import { useDatasetFlow } from "../../hooks/useDatasetFlow";
 
 export default function DatasetsContent() {
   const [leftBarVisible, setLeftBarVisible] = useState(true);
@@ -39,9 +38,9 @@ export default function DatasetsContent() {
   const {
     datasets,
     selectedDatasetId,
+    enrichDatasetsWithInfo,
     createDataset,
     fetchDatasets,
-    fetchFreshDatasets,
     selectDataset,
     clearSelectedDataset,
     deleteDatasetLocal,
@@ -74,6 +73,19 @@ export default function DatasetsContent() {
     selectDatasetView,
     selectNotebookView,
   } = useDatasetUIState();
+
+  const { createDatasetFromNotebook, deleteDatasetById } = useDatasetFlow({
+    datasets,
+    enrichDatasetsWithInfo,
+    fetchDatasets,
+    replaceDatasets,
+    selectDataset,
+    clearSelectedDataset,
+    deleteDatasetRemote,
+    enqueueSnackbar,
+    t,
+    resetUI,
+  });
 
   const goToNextStep = (option) => {
     if (option === "dataset") {
@@ -116,16 +128,13 @@ export default function DatasetsContent() {
     selectNotebookView();
   };
 
-  const handleDatasetDelete = async (id) => {
+  const handleDatasetDelete = (id) => {
     if (id === selectedDatasetId) {
       clearSelectedDataset();
       resetUI();
     }
 
-    deleteDatasetLocal(id);
-    removeNotebooksByDatasetId(id);
-
-    await deleteDatasetRemote(id);
+    deleteDatasetById(id);
   };
 
   const handleNotebookDelete = (id) => {
@@ -139,35 +148,9 @@ export default function DatasetsContent() {
 
   const handleAddDatasetFromNotebook = async (name) => {
     if (!selectedNotebook) return;
-
-    try {
-      const data = await createDataset(name);
-
-      enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
-        variant: "success",
-      });
-      addDatasetOptimistically(data);
-      selectDatasetView();
-      clearSelectedNotebook();
-
-      const job = await enqueueDatasetJob(
-        data.id,
-        null,
-        "",
-        {},
-        selectedNotebook.id,
-      );
-
-      pollForDataset(
-        { datasetId: data.id, datasetName: name },
-        { jobId: job.id },
-      );
-    } catch (error) {
-      enqueueSnackbar(t("datasets:error.failedToCreateDatasetFromNotebook"), {
-        variant: "error",
-      });
-      console.error("Failed to create dataset from notebook:", error);
-    }
+    clearSelectedNotebook();
+    selectDatasetView();
+    createDatasetFromNotebook(name, selectedNotebook.id);
   };
 
   const handleNotebookCreated = async (createdNotebook) => {
@@ -188,57 +171,6 @@ export default function DatasetsContent() {
     // clear right bar content injected during dataset creation (e.g. dataloader config)
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
-  };
-
-  const pollForDataset = async ({ datasetId, datasetName }, { jobId }) => {
-    if (!jobId) return;
-
-    startJobPolling(
-      jobId,
-      async () => {
-        enqueueSnackbar(
-          t("datasets:message.datasetCreationSuccess", { datasetName }),
-          { variant: "success" },
-        );
-
-        try {
-          const freshDatasets = await fetchFreshDatasets();
-          const dataset = freshDatasets.find((d) => d.id === datasetId);
-
-          if (dataset) {
-            const enriched = await enrichDatasetsWithInfo(
-              freshDatasets,
-              datasets,
-            );
-
-            replaceDatasets(enriched);
-            selectDataset(datasetId);
-          } else {
-            await fetchDatasets();
-            selectDataset(datasetId);
-          }
-        } catch (error) {
-          console.error("Error fetching datasets after job completion:", error);
-          await fetchDatasets();
-          selectDataset(datasetId);
-        }
-      },
-
-      async (result) => {
-        console.error("Dataset job failed:", result);
-
-        enqueueSnackbar(
-          t("datasets:error.failedToCreateDataset", {
-            error: result?.error || t("common:unknownError"),
-          }),
-          { variant: "error" },
-        );
-
-        removeDatasetById(datasetId);
-        clearSelectedDataset();
-        resetUI();
-      },
-    );
   };
 
   const handleEditDataset = (id, newName) => editDataset(id, newName);

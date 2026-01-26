@@ -149,6 +149,7 @@ export function useDatasets({ enqueueSnackbar, t }) {
   return {
     datasets,
     selectedDatasetId,
+    enrichDatasetsWithInfo,
 
     createDataset,
 
