@@ -15,6 +15,8 @@ import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/DatasetVisualization";
 import AddModelDialog from "../../components/models/AddModelDialog";
+import EditRunDialog from "../../components/models/EditRunDialog";
+import EditConfirmationDialog from "../../components/models/EditConfirmationDialog";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import { getComponents } from "../../api/component";
 import {
@@ -35,6 +37,7 @@ import {
   getRunById,
   getRunOperationsCount,
   deleteRunOperations,
+  updateRunParameters,
 } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
@@ -62,6 +65,11 @@ export default function ModelsContent() {
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
   const [operationsCount, setOperationsCount] = useState(null);
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [runToEdit, setRunToEdit] = useState(null);
+  const [editConfirmDialogOpen, setEditConfirmDialogOpen] = useState(false);
+  const [pendingEditData, setPendingEditData] = useState(null);
 
   const isResizingLeft = useRef(false);
   const isResizingRight = useRef(false);
@@ -665,7 +673,70 @@ export default function ModelsContent() {
   };
 
   const handleEditRun = async (run) => {
-    enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
+    setRunToEdit(run);
+    setEditDialogOpen(true);
+  };
+
+  const handleConfirmEdit = async (editData) => {
+    // Check if run has operations (explainers/predictions)
+    try {
+      const count = await getRunOperationsCount(editData.runId.toString());
+      const hasOperations = count.explainers > 0 || count.predictions > 0;
+
+      setPendingEditData({ ...editData, hasOperations });
+      setEditConfirmDialogOpen(true);
+    } catch (error) {
+      console.error("Error checking operations:", error);
+      // Proceed without operations check
+      setPendingEditData({ ...editData, hasOperations: false });
+      setEditConfirmDialogOpen(true);
+    }
+  };
+
+  const handleExecuteEdit = async () => {
+    if (!pendingEditData) return;
+
+    try {
+      setEditConfirmDialogOpen(false);
+
+      // Update run parameters via API
+      await updateRunParameters(
+        pendingEditData.runId.toString(),
+        pendingEditData.parameters,
+        pendingEditData.optimizer,
+        pendingEditData.optimizer_parameters,
+        pendingEditData.goal_metric,
+      );
+
+      // Fetch updated run
+      const updatedRun = await getRunById(pendingEditData.runId.toString());
+
+      // Update runs list
+      setRuns((prev) =>
+        prev.map((r) => (r.id === updatedRun.id ? updatedRun : r)),
+      );
+
+      enqueueSnackbar(`Run "${pendingEditData.name}" updated successfully`, {
+        variant: "success",
+      });
+
+      // Auto-retrain the updated run
+      await executeTraining(updatedRun);
+
+      setPendingEditData(null);
+    } catch (error) {
+      console.error("Error updating run:", error);
+      enqueueSnackbar(
+        `Error updating run: ${error.message || "Unknown error"}`,
+        { variant: "error" },
+      );
+      setPendingEditData(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditConfirmDialogOpen(false);
+    setPendingEditData(null);
   };
 
   const handleDeleteRun = async (run) => {
@@ -1046,6 +1117,25 @@ export default function ModelsContent() {
           onConfirm={handleConfirmRetrain}
           run={runToRetrain}
           operationsCount={operationsCount}
+        />
+
+        {/* Edit Run Dialog */}
+        <EditRunDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          session={selectedSession}
+          run={runToEdit}
+          existingRuns={runs}
+          onConfirmEdit={handleConfirmEdit}
+        />
+
+        {/* Edit Confirmation Dialog */}
+        <EditConfirmationDialog
+          open={editConfirmDialogOpen}
+          onClose={handleCancelEdit}
+          onConfirm={handleExecuteEdit}
+          run={runToEdit}
+          hasOperations={pendingEditData?.hasOperations}
         />
       </Box>
       {!selectedSessionId && (

@@ -18,6 +18,8 @@ import {
   TableRow,
   Paper,
   Divider,
+  Tooltip,
+  Grid,
 } from "@mui/material";
 import {
   PlayArrow,
@@ -126,31 +128,94 @@ function RunCard({
       }}
     >
       <CardContent>
-        {/* Run Name and Status */}
+        {/* Header: Model Name (User Name) with Status and Actions */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             mb: 2,
+            gap: 1,
           }}
         >
-          <Typography variant="h6" component="div">
-            {run.name}
-          </Typography>
-          <Chip
-            label={statusText}
-            color={getStatusColor(statusText)}
-            size="small"
-          />
-        </Box>
+          {/* Left: Model Name and User Name with Gear */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
+            <Tooltip title={expanded ? "Hide Parameters" : "View Parameters"}>
+              <IconButton
+                size="small"
+                onClick={() => setExpanded(!expanded)}
+                color={expanded ? "primary" : "default"}
+              >
+                <Settings fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              {modelDisplayName}
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                component="span"
+              >
+                ({run.name})
+              </Typography>
+            </Typography>
+          </Box>
 
-        {/* Model */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <Settings fontSize="small" color="action" />
-          <Typography variant="body2" color="text.secondary">
-            {modelDisplayName}
-          </Typography>
+          {/* Right: Actions and Status */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Train/Re-train Button */}
+            {canTrain && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                startIcon={<PlayArrow />}
+                onClick={() => onTrain(run)}
+                data-tour={isLastRun ? "train-button" : undefined}
+              >
+                {statusText === "Finished" ? "Re-train" : "Train"}
+              </Button>
+            )}
+            {isRunning && (
+              <Button
+                variant="contained"
+                color="warning"
+                size="small"
+                disabled
+                startIcon={<Stop />}
+              >
+                Running
+              </Button>
+            )}
+
+            {/* Status Chip */}
+            <Chip
+              label={statusText}
+              color={getStatusColor(statusText)}
+              size="small"
+            />
+
+            {/* Delete Button */}
+            <Tooltip title="Delete Run">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => onDelete(run)}
+                disabled={isRunning}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
         {/* Metrics Summary */}
@@ -186,98 +251,87 @@ function RunCard({
         )}
 
         {/* Expandable Details */}
-        <Box>
-          <Button
-            size="small"
-            onClick={() => setExpanded(!expanded)}
-            endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
-            sx={{ textTransform: "none" }}
-          >
-            {expanded ? "Hide Parameters" : "Show Parameters"}
-          </Button>
-
-          <Collapse in={expanded} timeout="auto" unmountOnExit>
-            <Box sx={{ mt: 2 }}>
-              {/* Model Parameters */}
-              {run.parameters && Object.keys(run.parameters).length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Model Parameters
-                  </Typography>
-                  <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Parameter</TableCell>
-                          <TableCell>Value</TableCell>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <Box sx={{ mt: 2 }}>
+            {/* Model Parameters */}
+            {run.parameters && Object.keys(run.parameters).length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Model Parameters
+                </Typography>
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Parameter</TableCell>
+                        <TableCell>Value</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {Object.entries(run.parameters).map(([key, value]) => (
+                        <TableRow key={key}>
+                          <TableCell>{key}</TableCell>
+                          <TableCell>
+                            {typeof value === "object" && value !== null
+                              ? value.fixed_value !== undefined
+                                ? String(value.fixed_value)
+                                : JSON.stringify(value)
+                              : String(value)}
+                          </TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(run.parameters).map(([key, value]) => (
-                          <TableRow key={key}>
-                            <TableCell>{key}</TableCell>
-                            <TableCell>
-                              {typeof value === "object" && value !== null
-                                ? value.fixed_value !== undefined
-                                  ? String(value.fixed_value)
-                                  : JSON.stringify(value)
-                                : String(value)}
-                            </TableCell>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
+
+            {/* Optimizer Configuration */}
+            {run.optimizer_name && (
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Optimizer: {run.optimizer_name}
+                </Typography>
+                {run.optimizer_parameters &&
+                  Object.keys(run.optimizer_parameters).length > 0 && (
+                    <TableContainer component={Paper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Parameter</TableCell>
+                            <TableCell>Value</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              )}
+                        </TableHead>
+                        <TableBody>
+                          {Object.entries(run.optimizer_parameters).map(
+                            ([key, value]) => (
+                              <TableRow key={key}>
+                                <TableCell>{key}</TableCell>
+                                <TableCell>
+                                  {typeof value === "object"
+                                    ? JSON.stringify(value)
+                                    : String(value)}
+                                </TableCell>
+                              </TableRow>
+                            ),
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+              </Box>
+            )}
 
-              {/* Optimizer Configuration */}
-              {run.optimizer_name && (
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Optimizer: {run.optimizer_name}
-                  </Typography>
-                  {run.optimizer_parameters &&
-                    Object.keys(run.optimizer_parameters).length > 0 && (
-                      <TableContainer component={Paper}>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Parameter</TableCell>
-                              <TableCell>Value</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {Object.entries(run.optimizer_parameters).map(
-                              ([key, value]) => (
-                                <TableRow key={key}>
-                                  <TableCell>{key}</TableCell>
-                                  <TableCell>
-                                    {typeof value === "object"
-                                      ? JSON.stringify(value)
-                                      : String(value)}
-                                  </TableCell>
-                                </TableRow>
-                              ),
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                </Box>
-              )}
-
-              {/* Goal Metric */}
-              {run.goal_metric && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Goal Metric: <strong>{run.goal_metric}</strong>
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Collapse>
-        </Box>
+            {/* Goal Metric */}
+            {run.goal_metric && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Goal Metric: <strong>{run.goal_metric}</strong>
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Collapse>
 
         {/* RunOperations - Separate section for finished runs */}
         {statusText === "Finished" && (
@@ -295,25 +349,6 @@ function RunCard({
       <Divider />
 
       <CardActions sx={{ justifyContent: "flex-end", px: 2, py: 1 }}>
-        {/* Train/Stop button */}
-        {isRunning && (
-          <Button size="small" startIcon={<Stop />} disabled color="warning">
-            Running
-          </Button>
-        )}
-        {canTrain && (
-          <Button
-            data-tour={isLastRun ? "train-button" : undefined}
-            size="small"
-            startIcon={<PlayArrow />}
-            onClick={() => onTrain(run)}
-            color="primary"
-            variant="contained"
-          >
-            Train
-          </Button>
-        )}
-
         {/* Edit button */}
         <IconButton
           size="small"
@@ -323,57 +358,6 @@ function RunCard({
           title="Edit parameters"
         >
           <Edit fontSize="small" />
-        </IconButton>
-
-        {/* Prediction button */}
-        {statusText === "Finished" && (
-          <IconButton
-            size="small"
-            onClick={() => {
-              // Scroll to operations and open prediction dialog
-              const operationsElement = document.getElementById(
-                `run-operations-${run.id}`,
-              );
-              if (operationsElement) {
-                operationsElement.scrollIntoView({
-                  behavior: "smooth",
-                  block: "nearest",
-                });
-                // Trigger prediction dialog open via custom event
-                const event = new CustomEvent("openPredictionDialog", {
-                  detail: { runId: run.id },
-                });
-                window.dispatchEvent(event);
-              }
-            }}
-            color="primary"
-            title="Create prediction"
-          >
-            <TrendingUp fontSize="small" />
-          </IconButton>
-        )}
-
-        {/* Explainer button */}
-        {onExplainer && statusText === "Finished" && (
-          <IconButton
-            size="small"
-            onClick={() => onExplainer(run)}
-            color="primary"
-            title="Create explainer"
-          >
-            <QueryStats fontSize="small" />
-          </IconButton>
-        )}
-
-        {/* Delete button */}
-        <IconButton
-          size="small"
-          onClick={() => onDelete(run)}
-          color="error"
-          disabled={isRunning}
-          title="Delete run"
-        >
-          <Delete fontSize="small" />
         </IconButton>
       </CardActions>
     </Card>

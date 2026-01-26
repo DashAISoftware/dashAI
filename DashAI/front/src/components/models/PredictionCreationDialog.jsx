@@ -15,7 +15,6 @@ import {
   StepLabel,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
-import ModeSelector from "../predictions/ModeSelector";
 import DatasetSelector from "../predictions/DatasetSelector";
 import ManualInput from "../predictions/ManualInput";
 import { createPrediction, filterDatasets } from "../../api/predict";
@@ -30,7 +29,7 @@ import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getPredictions } from "../../api/predict";
 
-const steps = ["Select Mode", "Configure Input", "Confirm"];
+const steps = ["Configure Input", "Confirm"];
 
 /**
  * PredictionCreationDialog - Wizard for creating new predictions
@@ -41,9 +40,10 @@ export default function PredictionCreationDialog({
   run,
   session,
   onPredictionCreated,
+  defaultMode = "dataset",
 }) {
   const [activeStep, setActiveStep] = useState(0);
-  const [predictionMode, setPredictionMode] = useState("dataset");
+  const [predictionMode, setPredictionMode] = useState(defaultMode);
   const [datasets, setDatasets] = useState([]);
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [manualRows, setManualRows] = useState([]);
@@ -59,13 +59,13 @@ export default function PredictionCreationDialog({
   useEffect(() => {
     if (!open) {
       setActiveStep(0);
-      setPredictionMode("dataset");
+      setPredictionMode(defaultMode);
       setDatasets([]);
       setSelectedDataset(null);
       setManualRows([]);
       setIsLoading(false);
     }
-  }, [open]);
+  }, [open, defaultMode]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -205,19 +205,6 @@ export default function PredictionCreationDialog({
       case 0:
         return (
           <Box sx={{ py: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Select how you want to provide input data for prediction
-            </Typography>
-            <ModeSelector
-              predictionMode={predictionMode}
-              setPredictionMode={setPredictionMode}
-            />
-          </Box>
-        );
-
-      case 1:
-        return (
-          <Box sx={{ py: 2 }}>
             {predictionMode === "dataset" ? (
               <>
                 <Typography
@@ -256,7 +243,7 @@ export default function PredictionCreationDialog({
           </Box>
         );
 
-      case 2:
+      case 1:
         return (
           <Box sx={{ py: 2 }}>
             <Typography variant="h6" gutterBottom>
@@ -323,7 +310,7 @@ export default function PredictionCreationDialog({
           ))}
         </Stepper>
 
-        {loadingExperiment && activeStep === 1 ? (
+        {loadingExperiment && activeStep === 0 ? (
           <Box
             sx={{
               display: "flex",
@@ -377,4 +364,5 @@ PredictionCreationDialog.propTypes = {
     id: PropTypes.number,
   }),
   onPredictionCreated: PropTypes.func,
+  defaultMode: PropTypes.oneOf(["dataset", "manual"]),
 };

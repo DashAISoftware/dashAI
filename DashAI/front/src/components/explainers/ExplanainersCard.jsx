@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Typography,
@@ -34,7 +34,18 @@ export default function ExplainersCard({
   compact = false,
 }) {
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => {
+    const saved = localStorage.getItem(`explainer-${explainer.id}-expanded`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Persist expanded state
+  useEffect(() => {
+    localStorage.setItem(
+      `explainer-${explainer.id}-expanded`,
+      JSON.stringify(expanded),
+    );
+  }, [expanded, explainer.id]);
 
   function plotName(name) {
     return name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
@@ -73,11 +84,24 @@ export default function ExplainersCard({
               alignItems="center"
             >
               <Grid item>
-                <Typography variant="subtitle2" fontWeight="medium">
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="medium"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {plotName(explainer.explainer_name)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {explainer.name}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    component="span"
+                  >
+                    {explainer.name}
+                  </Typography>
                 </Typography>
               </Grid>
               <Grid item>
