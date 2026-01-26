@@ -4,8 +4,6 @@ import { Tabs, Tab, Typography, Paper, Box, Button } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import CustomLayout from "../../../components/custom/CustomLayout";
 import ResultsTabInfo from "./ResultsTabInfo";
-import ResultsTabParameters from "./ResultsTabParameters";
-import ResultsTabMetrics from "./ResultsTabMetrics";
 import ResultsTabHyperparameters from "./ResultsTabHyperparameters";
 import { tabsResultsDetails } from "../constants/tabsResultsDetails";
 import { checkIfHaveOptimazers } from "../../../utils/schema";
@@ -46,8 +44,6 @@ function ResultsDetailsLayout({
           {currentTab === 0 && (
             <ResultsTabInfo runData={runData} handleRun={handleRun} />
           )}
-          {/* {currentTab === 1 && <ResultsTabParameters runData={runData} />}
-          {currentTab === 2 && <ResultsTabMetrics runData={runData} />} */}
           {currentTab === 3 && <ResultsTabHyperparameters runData={runData} />}
           {currentTab === 4 && <Typography>TODO...</Typography>}
         </Box>

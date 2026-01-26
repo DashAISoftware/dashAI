@@ -26,15 +26,14 @@ import PredictionCard from "./PredictionCard";
 import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
 import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
 import PredictionCreationDialog from "./PredictionCreationDialog";
+import LiveMetricsChart from "./LiveMetricsChart";
+import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
+import { checkHowManyOptimazers } from "../../utils/schema";
 import { useSnackbar } from "notistack";
 
-/**
- * RunOperations component - Shows explainers and predictions for a finished run
- * Displays as expandable sections within a RunCard
- */
-export default function RunOperations({
+export default function RunResults({
   run,
   session,
   onRefresh,
@@ -44,13 +43,13 @@ export default function RunOperations({
   const [localExplainers, setLocalExplainers] = useState([]);
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [operationsVisible, setOperationsVisible] = useState(() => {
-    const saved = localStorage.getItem(`run-${run.id}-operations-visible`);
-    return saved !== null ? JSON.parse(saved) : false;
+  const [resultsVisible, setResultsVisible] = useState(() => {
+    const saved = localStorage.getItem(`run-${run.id}-results-visible`);
+    return saved ? JSON.parse(saved) : false;
   });
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
-    return saved !== null ? JSON.parse(saved) : 0;
+    return saved ? JSON.parse(saved) : 0;
   });
 
   const [globalDialogOpen, setGlobalDialogOpen] = useState(false);
@@ -59,6 +58,10 @@ export default function RunOperations({
     useState(false);
   const [manualPredictionDialogOpen, setManualPredictionDialogOpen] =
     useState(false);
+
+  const optimizables = checkHowManyOptimazers({ params: run.parameters });
+  const isFinished = run.status === 3;
+  const isRunning = run.status === 1 || run.status === 2;
 
   const fetchOperations = useCallback(async () => {
     if (!run || !run.id) return;
@@ -85,7 +88,6 @@ export default function RunOperations({
     fetchOperations();
   }, [fetchOperations, explainerRefreshTrigger]);
 
-  // Listen for prediction dialog open event
   useEffect(() => {
     const handleOpenDialog = (event) => {
       if (event.detail.runId === run.id) {
@@ -97,15 +99,20 @@ export default function RunOperations({
       window.removeEventListener("openPredictionDialog", handleOpenDialog);
   }, [run.id]);
 
-  // Persist operationsVisible state
+  useEffect(() => {
+    if (isRunning && !resultsVisible) {
+      setResultsVisible(true);
+      setActiveTab(0); // Live Metrics tab
+    }
+  }, [isRunning, resultsVisible]);
+
   useEffect(() => {
     localStorage.setItem(
-      `run-${run.id}-operations-visible`,
-      JSON.stringify(operationsVisible),
+      `run-${run.id}-results-visible`,
+      JSON.stringify(resultsVisible),
     );
-  }, [operationsVisible, run.id]);
+  }, [resultsVisible, run.id]);
 
-  // Persist activeTab state
   useEffect(() => {
     localStorage.setItem(`run-${run.id}-active-tab`, JSON.stringify(activeTab));
   }, [activeTab, run.id]);
@@ -136,7 +143,7 @@ export default function RunOperations({
   const totalOperations =
     globalExplainers.length + localExplainers.length + predictions.length;
 
-  if (loading) {
+  if (loading && isFinished) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
         <CircularProgress size={24} />
@@ -145,60 +152,75 @@ export default function RunOperations({
   }
 
   return (
-    <Box id={`run-operations-${run.id}`}>
-      {/* Header with Show/Hide button */}
+    <Box id={`run-results-${run.id}`}>
       <Box sx={{ mb: 2 }}>
         <Button
           size="small"
-          onClick={() => setOperationsVisible(!operationsVisible)}
-          endIcon={operationsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          onClick={() => setResultsVisible(!resultsVisible)}
+          endIcon={resultsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           sx={{ textTransform: "none" }}
         >
-          {operationsVisible ? "Hide Operations" : "Show Operations"}
-          <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
+          {resultsVisible ? "Hide Results" : "Show Results"}
+          {isFinished && (
+            <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
+          )}
         </Button>
       </Box>
 
-      <Collapse in={operationsVisible} timeout="auto" unmountOnExit>
-        {/* Tabs for Explainability and Predictions */}
+      <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
-            aria-label="Operations tabs"
+            aria-label="Results tabs"
           >
+            <Tab label="Live Metrics" />
             <Tab
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <span>Explainability</span>
-                  <Chip
-                    label={globalExplainers.length + localExplainers.length}
-                    size="small"
-                    color="primary"
-                  />
+                  {isFinished && (
+                    <Chip
+                      label={globalExplainers.length + localExplainers.length}
+                      size="small"
+                      color="primary"
+                    />
+                  )}
                 </Box>
               }
+              disabled={!isFinished}
             />
             <Tab
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <span>Predictions</span>
-                  <Chip
-                    label={predictions.length}
-                    size="small"
-                    color="primary"
-                  />
+                  {isFinished && (
+                    <Chip
+                      label={predictions.length}
+                      size="small"
+                      color="primary"
+                    />
+                  )}
                 </Box>
               }
+              disabled={!isFinished}
+            />
+            <Tab
+              label="Hyperparameters"
+              disabled={!isFinished || optimizables === 0}
             />
           </Tabs>
         </Box>
 
-        {/* Tab Panel 0: Explainability */}
         {activeTab === 0 && (
           <Box sx={{ py: 2 }}>
+            <LiveMetricsChart run={run} />
+          </Box>
+        )}
+
+        {activeTab === 1 && isFinished && (
+          <Box sx={{ py: 2 }}>
             <Grid container spacing={2}>
-              {/* Global Explainers Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -262,7 +284,6 @@ export default function RunOperations({
                 </Box>
               </Grid>
 
-              {/* Local Explainers Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -329,11 +350,9 @@ export default function RunOperations({
           </Box>
         )}
 
-        {/* Tab Panel 1: Predictions */}
-        {activeTab === 1 && (
+        {activeTab === 2 && isFinished && (
           <Box sx={{ py: 2 }}>
             <Grid container spacing={2}>
-              {/* Dataset Predictions Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -398,7 +417,6 @@ export default function RunOperations({
                 </Box>
               </Grid>
 
-              {/* Manual Predictions Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -465,9 +483,14 @@ export default function RunOperations({
             </Grid>
           </Box>
         )}
+
+        {activeTab === 3 && isFinished && optimizables > 0 && (
+          <Box sx={{ py: 2 }}>
+            <HyperparameterPlots run={run} />
+          </Box>
+        )}
       </Collapse>
 
-      {/* Dialogs */}
       <NewGlobalExplainerModal
         open={globalDialogOpen}
         setOpen={setGlobalDialogOpen}
@@ -510,13 +533,14 @@ export default function RunOperations({
   );
 }
 
-RunOperations.propTypes = {
+RunResults.propTypes = {
   run: PropTypes.shape({
     id: PropTypes.number.isRequired,
     name: PropTypes.string,
     model_name: PropTypes.string,
     status: PropTypes.number,
     experiment_id: PropTypes.number,
+    parameters: PropTypes.object,
   }).isRequired,
   session: PropTypes.shape({
     id: PropTypes.number,

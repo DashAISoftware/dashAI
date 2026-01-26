@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import {
   Card,
   CardContent,
-  CardActions,
   Box,
   Typography,
   Chip,
@@ -27,13 +26,14 @@ import {
   Stop,
   Edit,
   Delete,
-  Settings,
   Save,
   Cancel,
+  ExpandMore,
+  ExpandLess,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../utils/runStatus";
-import RunOperations from "./RunOperations";
+import RunResults from "./RunResults";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
 import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSelectOptimizer";
@@ -307,7 +307,11 @@ function RunCard({
                 color={expanded ? "primary" : "default"}
                 disabled={isEditing}
               >
-                <Settings fontSize="small" />
+                {expanded ? (
+                  <ExpandLess fontSize="small" />
+                ) : (
+                  <ExpandMore fontSize="small" />
+                )}
               </IconButton>
             </Tooltip>
             <Typography
@@ -360,15 +364,15 @@ function RunCard({
             {!isEditing &&
               statusText !== "Delivered" &&
               statusText !== "Started" && (
-                <Tooltip title="Edit Parameters">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={handleStartEdit}
-                  >
-                    <Edit fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  color="primary"
+                  startIcon={<Edit />}
+                  onClick={handleStartEdit}
+                >
+                  Edit
+                </Button>
               )}
             {/* Train/Re-train Button */}
             {canTrain && (
@@ -469,7 +473,17 @@ function RunCard({
 
         {/* Expandable Details */}
         <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <Box sx={{ mt: 2 }}>
+          <Box
+            sx={{
+              mt: 2,
+              ...(isEditing && {
+                maxHeight: "500px",
+                overflowY: "auto",
+                overflowX: "hidden",
+                pr: 1,
+              }),
+            }}
+          >
             {isEditing ? (
               // EDIT MODE
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -679,17 +693,15 @@ function RunCard({
           </Box>
         </Collapse>
 
-        {/* RunOperations - Separate section for finished runs */}
-        {statusText === "Finished" && (
-          <Box sx={{ mt: 2 }}>
-            <RunOperations
-              run={run}
-              session={session}
-              onRefresh={onOperationsRefresh}
-              explainerRefreshTrigger={explainerRefreshTrigger}
-            />
-          </Box>
-        )}
+        {/* RunResults - Shows live metrics, explainers, predictions, and hyperparameters */}
+        <Box sx={{ mt: 2 }}>
+          <RunResults
+            run={run}
+            session={session}
+            onRefresh={onOperationsRefresh}
+            explainerRefreshTrigger={explainerRefreshTrigger}
+          />
+        </Box>
       </CardContent>
     </Card>
   );
