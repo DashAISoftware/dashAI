@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -19,21 +19,27 @@ import {
   Paper,
   Divider,
   Tooltip,
-  Grid,
+  TextField,
+  Alert,
 } from "@mui/material";
 import {
   PlayArrow,
   Stop,
   Edit,
   Delete,
-  ExpandMore,
-  ExpandLess,
   Settings,
-  TrendingUp,
-  QueryStats,
+  Save,
+  Cancel,
 } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
 import { getRunStatus } from "../../utils/runStatus";
 import RunOperations from "./RunOperations";
+import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
+import FormSchemaContainer from "../shared/FormSchemaContainer";
+import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSelectOptimizer";
+import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
+import useSchema from "../../hooks/useSchema";
+import { updateRunParameters, getRunOperationsCount } from "../../api/run";
 
 /**
  * Card component displaying a model run with actions and details
@@ -43,23 +49,188 @@ function RunCard({
   models = [],
   session,
   onTrain,
-  onEdit,
-  onExplainer,
   onDelete,
   onOperationsRefresh,
   explainerRefreshTrigger,
   isLastRun = false,
+  existingRuns = [],
+  onRefresh,
 }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [expanded, setExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(run.name || "");
+  const [editedParameters, setEditedParameters] = useState(
+    run.parameters || {},
+  );
+  const [editedOptimizer, setEditedOptimizer] = useState(
+    run.optimizer_name || "",
+  );
+  const [editedOptimizerParams, setEditedOptimizerParams] = useState(
+    run.optimizer_parameters || {},
+  );
+  const [editedGoalMetric, setEditedGoalMetric] = useState(
+    run.goal_metric || "",
+  );
+  const [operationsCount, setOperationsCount] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Get display status from numeric code
+  const { defaultValues: defaultOptimizerParams } = useSchema({
+    modelName: editedOptimizer,
+  });
+
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedName(run.name || "");
+      setEditedParameters(run.parameters || {});
+      setEditedOptimizer(run.optimizer_name || "");
+      setEditedOptimizerParams(run.optimizer_parameters || {});
+      setEditedGoalMetric(run.goal_metric || "");
+    }
+  }, [run, isEditing]);
+
+  useEffect(() => {
+    const fetchOperationsCount = async () => {
+      if (!run || !run.id) return;
+      try {
+        const count = await getRunOperationsCount(run.id.toString());
+        setOperationsCount(count);
+      } catch (error) {
+        console.error("Error fetching operations count:", error);
+      }
+    };
+    fetchOperationsCount();
+  }, [run, explainerRefreshTrigger]);
+
+  const hasOptimizableParams = useMemo(() => {
+    return Object.values(editedParameters).some(
+      (value) =>
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        value.optimize === true,
+    );
+  }, [editedParameters]);
+
+  useEffect(() => {
+    if (
+      editedOptimizer &&
+      defaultOptimizerParams &&
+      Object.keys(defaultOptimizerParams).length > 0
+    ) {
+      setEditedOptimizerParams((prev) => {
+        if (Object.keys(prev).length === 0) {
+          return defaultOptimizerParams;
+        }
+        return prev;
+      });
+    }
+  }, [editedOptimizer, defaultOptimizerParams]);
+
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setExpanded(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedName(run.name || "");
+    setEditedParameters(run.parameters || {});
+    setEditedOptimizer(run.optimizer_name || "");
+    setEditedOptimizerParams(run.optimizer_parameters || {});
+    setEditedGoalMetric(run.goal_metric || "");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editedName.trim()) {
+      enqueueSnackbar("Run name cannot be empty", { variant: "warning" });
+      return;
+    }
+
+    const nameExists = existingRuns.some(
+      (r) =>
+        r.id !== run.id &&
+        r.name &&
+        r.name.toLowerCase() === editedName.trim().toLowerCase(),
+    );
+    if (nameExists) {
+      enqueueSnackbar("A run with this name already exists", {
+        variant: "error",
+      });
+      return;
+    }
+
+    if (hasOptimizableParams) {
+      if (!editedOptimizer) {
+        enqueueSnackbar(
+          "Please select an optimizer for optimizable parameters",
+          { variant: "warning" },
+        );
+        return;
+      }
+      if (!editedGoalMetric) {
+        enqueueSnackbar("Please select a goal metric for optimization", {
+          variant: "warning",
+        });
+        return;
+      }
+    }
+
+    setIsSaving(true);
+    try {
+      await updateRunParameters(
+        run.id.toString(),
+        editedParameters,
+        editedOptimizer || "",
+        editedOptimizerParams || {},
+        editedGoalMetric || "",
+      );
+
+      enqueueSnackbar(
+        `Run "${editedName}" updated successfully. Status changed to Not Started.`,
+        {
+          variant: "success",
+        },
+      );
+
+      setIsEditing(false);
+
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (error) {
+      console.error("Error updating run:", error);
+      enqueueSnackbar(
+        `Error updating run: ${error.message || "Unknown error"}`,
+        {
+          variant: "error",
+        },
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleParametersChange = useCallback((values) => {
+    setEditedParameters(values);
+  }, []);
+
+  const handleOptimizerParamsChange = useCallback((values) => {
+    setEditedOptimizerParams((prev) => ({ ...prev, ...values }));
+  }, []);
+
+  const handleOptimizerSelected = (optimizerName, defaultValues) => {
+    setEditedOptimizer(optimizerName);
+    if (defaultValues && Object.keys(defaultValues).length > 0) {
+      setEditedOptimizerParams(defaultValues);
+    }
+  };
+
   const statusText = getRunStatus(run.status);
 
-  // Get model display name
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
 
-  // Status color mapping
   const getStatusColor = (status) => {
     switch (status) {
       case "Not Started":
@@ -76,21 +247,12 @@ function RunCard({
     }
   };
 
-  // Check if run can be trained
   const canTrain =
     statusText === "Not Started" ||
     statusText === "Error" ||
     statusText === "Finished";
   const isRunning = statusText === "Delivered" || statusText === "Started";
 
-  // Format date
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  // Get metrics from run
   const getMetrics = () => {
     if (!run.trained_models || run.trained_models.length === 0) {
       return null;
@@ -128,7 +290,6 @@ function RunCard({
       }}
     >
       <CardContent>
-        {/* Header: Model Name (User Name) with Status and Actions */}
         <Box
           sx={{
             display: "flex",
@@ -138,13 +299,13 @@ function RunCard({
             gap: 1,
           }}
         >
-          {/* Left: Model Name and User Name with Gear */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
             <Tooltip title={expanded ? "Hide Parameters" : "View Parameters"}>
               <IconButton
                 size="small"
                 onClick={() => setExpanded(!expanded)}
                 color={expanded ? "primary" : "default"}
+                disabled={isEditing}
               >
                 <Settings fontSize="small" />
               </IconButton>
@@ -170,20 +331,76 @@ function RunCard({
             </Typography>
           </Box>
 
-          {/* Right: Actions and Status */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Edit Mode - Save and Cancel Buttons */}
+            {isEditing && (
+              <>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Cancel />}
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<Save />}
+                  onClick={handleSaveEdit}
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              </>
+            )}
+
+            {/* Edit Button */}
+            {!isEditing &&
+              statusText !== "Delivered" &&
+              statusText !== "Started" && (
+                <Tooltip title="Edit Parameters">
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={handleStartEdit}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             {/* Train/Re-train Button */}
             {canTrain && (
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                startIcon={<PlayArrow />}
-                onClick={() => onTrain(run)}
-                data-tour={isLastRun ? "train-button" : undefined}
+              <Tooltip
+                title={
+                  statusText === "Finished" &&
+                  operationsCount &&
+                  (operationsCount.explainers > 0 ||
+                    operationsCount.predictions > 0)
+                    ? `Warning: This will reset ${operationsCount.explainers} explainer(s) and ${operationsCount.predictions} prediction(s)`
+                    : ""
+                }
               >
-                {statusText === "Finished" ? "Re-train" : "Train"}
-              </Button>
+                <Button
+                  variant="contained"
+                  color={
+                    statusText === "Finished" &&
+                    operationsCount &&
+                    (operationsCount.explainers > 0 ||
+                      operationsCount.predictions > 0)
+                      ? "warning"
+                      : "primary"
+                  }
+                  size="small"
+                  startIcon={<PlayArrow />}
+                  onClick={() => onTrain(run, operationsCount)}
+                  data-tour={isLastRun ? "train-button" : undefined}
+                  disabled={isEditing}
+                >
+                  {statusText === "Finished" ? "Re-train" : "Train"}
+                </Button>
+              </Tooltip>
             )}
             {isRunning && (
               <Button
@@ -253,47 +470,137 @@ function RunCard({
         {/* Expandable Details */}
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box sx={{ mt: 2 }}>
-            {/* Model Parameters */}
-            {run.parameters && Object.keys(run.parameters).length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Model Parameters
-                </Typography>
-                <TableContainer component={Paper}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Parameter</TableCell>
-                        <TableCell>Value</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {Object.entries(run.parameters).map(([key, value]) => (
-                        <TableRow key={key}>
-                          <TableCell>{key}</TableCell>
-                          <TableCell>
-                            {typeof value === "object" && value !== null
-                              ? value.fixed_value !== undefined
-                                ? String(value.fixed_value)
-                                : JSON.stringify(value)
-                              : String(value)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            )}
+            {isEditing ? (
+              // EDIT MODE
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {/* Warning about editing */}
+                <Alert severity="info">
+                  Editing parameters will reset the run status to "Not Started".
+                  You'll need to retrain after saving.
+                </Alert>
 
-            {/* Optimizer Configuration */}
-            {run.optimizer_name && (
+                {/* Run Name */}
+                <TextField
+                  label="Run Name"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  fullWidth
+                  required
+                  size="small"
+                />
+
+                {/* Model Parameters */}
+                {run.model_name && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                      Model Parameters
+                    </Typography>
+                    <FormSchemaContainer>
+                      <FormSchemaWithSelectedModel
+                        modelToConfigure={run.model_name}
+                        initialValues={editedParameters}
+                        onFormSubmit={handleParametersChange}
+                        onValuesChange={handleParametersChange}
+                        onCancel={() => {}}
+                        hideButtons
+                      />
+                    </FormSchemaContainer>
+                  </Box>
+                )}
+
+                {/* Optimizer Configuration - Only if there are optimizable params */}
+                {hasOptimizableParams && (
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <Divider />
+                    <Typography variant="subtitle2">
+                      Hyperparameter Optimizer Configuration
+                    </Typography>
+                    <Alert severity="warning" icon={false}>
+                      Some parameters are marked for optimization. Configure the
+                      optimizer below.
+                    </Alert>
+
+                    {/* Goal Metric */}
+                    <Box>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Goal Metric *
+                      </Typography>
+                      <ModelsTableSelectMetric
+                        taskName={session?.task_name}
+                        metricName={editedGoalMetric}
+                        handleSelectedMetric={setEditedGoalMetric}
+                        required
+                      />
+                    </Box>
+
+                    {/* Optimizer Selection */}
+                    <OptimizationTableSelectOptimizer
+                      taskName={session?.task_name}
+                      optimizerName={editedOptimizer}
+                      handleSelectedOptimizer={handleOptimizerSelected}
+                    />
+
+                    {/* Optimizer Parameters */}
+                    {editedOptimizer && (
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                          Optimizer Parameters
+                        </Typography>
+                        <FormSchemaContainer>
+                          <FormSchemaWithSelectedModel
+                            modelToConfigure={editedOptimizer}
+                            initialValues={editedOptimizerParams}
+                            onFormSubmit={(values) =>
+                              setEditedOptimizerParams(values)
+                            }
+                            onValuesChange={handleOptimizerParamsChange}
+                            onCancel={() => {}}
+                            hideButtons
+                          />
+                        </FormSchemaContainer>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* Action Buttons */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 2,
+                    justifyContent: "flex-end",
+                    mt: 2,
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    startIcon={<Cancel />}
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<Save />}
+                    onClick={handleSaveEdit}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </Box>
+              </Box>
+            ) : (
+              // VIEW MODE
               <Box>
-                <Typography variant="subtitle2" gutterBottom>
-                  Optimizer: {run.optimizer_name}
-                </Typography>
-                {run.optimizer_parameters &&
-                  Object.keys(run.optimizer_parameters).length > 0 && (
+                {/* Model Parameters */}
+                {run.parameters && Object.keys(run.parameters).length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Model Parameters
+                    </Typography>
                     <TableContainer component={Paper}>
                       <Table size="small">
                         <TableHead>
@@ -303,13 +610,15 @@ function RunCard({
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {Object.entries(run.optimizer_parameters).map(
+                          {Object.entries(run.parameters).map(
                             ([key, value]) => (
                               <TableRow key={key}>
                                 <TableCell>{key}</TableCell>
                                 <TableCell>
-                                  {typeof value === "object"
-                                    ? JSON.stringify(value)
+                                  {typeof value === "object" && value !== null
+                                    ? value.fixed_value !== undefined
+                                      ? String(value.fixed_value)
+                                      : JSON.stringify(value)
                                     : String(value)}
                                 </TableCell>
                               </TableRow>
@@ -318,16 +627,53 @@ function RunCard({
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  )}
-              </Box>
-            )}
+                  </Box>
+                )}
 
-            {/* Goal Metric */}
-            {run.goal_metric && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Goal Metric: <strong>{run.goal_metric}</strong>
-                </Typography>
+                {/* Optimizer Configuration */}
+                {run.optimizer_name && (
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Optimizer: {run.optimizer_name}
+                    </Typography>
+                    {run.optimizer_parameters &&
+                      Object.keys(run.optimizer_parameters).length > 0 && (
+                        <TableContainer component={Paper}>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Parameter</TableCell>
+                                <TableCell>Value</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {Object.entries(run.optimizer_parameters).map(
+                                ([key, value]) => (
+                                  <TableRow key={key}>
+                                    <TableCell>{key}</TableCell>
+                                    <TableCell>
+                                      {typeof value === "object"
+                                        ? JSON.stringify(value)
+                                        : String(value)}
+                                    </TableCell>
+                                  </TableRow>
+                                ),
+                              )}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                  </Box>
+                )}
+
+                {/* Goal Metric */}
+                {run.goal_metric && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Goal Metric: <strong>{run.goal_metric}</strong>
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             )}
           </Box>
@@ -345,21 +691,6 @@ function RunCard({
           </Box>
         )}
       </CardContent>
-
-      <Divider />
-
-      <CardActions sx={{ justifyContent: "flex-end", px: 2, py: 1 }}>
-        {/* Edit button */}
-        <IconButton
-          size="small"
-          onClick={() => onEdit(run)}
-          color="primary"
-          disabled={isRunning}
-          title="Edit parameters"
-        >
-          <Edit fontSize="small" />
-        </IconButton>
-      </CardActions>
     </Card>
   );
 }
@@ -386,11 +717,12 @@ RunCard.propTypes = {
     task_name: PropTypes.string,
   }),
   onTrain: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onExplainer: PropTypes.func,
   onDelete: PropTypes.func.isRequired,
   onOperationsRefresh: PropTypes.func,
   explainerRefreshTrigger: PropTypes.number,
+  isLastRun: PropTypes.bool,
+  existingRuns: PropTypes.array,
+  onRefresh: PropTypes.func,
 };
 
 export default RunCard;

@@ -8,10 +8,6 @@ import {
   Divider,
   Button,
   ButtonGroup,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
@@ -22,15 +18,13 @@ import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
-import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
-import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
 
 export default function SessionVisualization({
   session,
   runs = [],
   onTrain,
-  onEditRun,
   onDeleteRun,
+  onRefreshRuns,
 }) {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
@@ -38,11 +32,6 @@ export default function SessionVisualization({
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
-  const [selectedRunForExplainer, setSelectedRunForExplainer] = useState(null);
-  const [explainerDialogOpen, setExplainerDialogOpen] = useState(false);
-  const [globalExplainerModalOpen, setGlobalExplainerModalOpen] =
-    useState(false);
-  const [localExplainerModalOpen, setLocalExplainerModalOpen] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
 
@@ -91,25 +80,6 @@ export default function SessionVisualization({
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, []);
-
-  const handleExplainer = React.useCallback((run) => {
-    setSelectedRunForExplainer(run);
-    setExplainerDialogOpen(true);
-  }, []);
-
-  const handleCloseExplainerDialog = () => {
-    setExplainerDialogOpen(false);
-  };
-
-  const handleGlobalExplainer = () => {
-    setGlobalExplainerModalOpen(true);
-    setExplainerDialogOpen(false);
-  };
-
-  const handleLocalExplainer = () => {
-    setLocalExplainerModalOpen(true);
-    setExplainerDialogOpen(false);
-  };
 
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
@@ -392,11 +362,11 @@ export default function SessionVisualization({
                     models={models}
                     session={session}
                     onTrain={onTrain}
-                    onEdit={onEditRun}
-                    onExplainer={handleExplainer}
                     onDelete={onDeleteRun}
                     explainerRefreshTrigger={explainerRefreshTrigger}
                     isLastRun={index === sortedRuns.length - 1}
+                    existingRuns={runs}
+                    onRefresh={onRefreshRuns}
                   />
                 </Box>
               ))}
@@ -404,66 +374,6 @@ export default function SessionVisualization({
           )}
         </Box>
       </Box>
-
-      {/* Explainer Type Selection Dialog */}
-      <Dialog
-        open={explainerDialogOpen}
-        onClose={handleCloseExplainerDialog}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Select Explainer Type</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleGlobalExplainer}
-              size="large"
-            >
-              Global Explainer
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleLocalExplainer}
-              size="large"
-            >
-              Local Explainer
-            </Button>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseExplainerDialog}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Global Explainer Modal */}
-      <NewGlobalExplainerModal
-        open={globalExplainerModalOpen}
-        setOpen={setGlobalExplainerModalOpen}
-        explainerConfig={{
-          runId: selectedRunForExplainer?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={() => {
-          setExplainerRefreshTrigger((prev) => prev + 1);
-        }}
-      />
-
-      {/* Local Explainer Modal */}
-      <NewLocalExplainerModal
-        open={localExplainerModalOpen}
-        setOpen={setLocalExplainerModalOpen}
-        explainerConfig={{
-          runId: selectedRunForExplainer?.id,
-          sessionId: session?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={() => {
-          setExplainerRefreshTrigger((prev) => prev + 1);
-        }}
-      />
 
       <JobQueueWidget />
     </>
@@ -478,6 +388,6 @@ SessionVisualization.propTypes = {
   }),
   runs: PropTypes.array,
   onTrain: PropTypes.func.isRequired,
-  onEditRun: PropTypes.func.isRequired,
   onDeleteRun: PropTypes.func.isRequired,
+  onRefreshRuns: PropTypes.func,
 };

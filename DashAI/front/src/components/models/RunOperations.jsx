@@ -51,7 +51,7 @@ export default function RunOperations({
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
     return saved !== null ? JSON.parse(saved) : 0;
-  }); // 0: Explainability, 1: Predictions
+  });
 
   const [globalDialogOpen, setGlobalDialogOpen] = useState(false);
   const [localDialogOpen, setLocalDialogOpen] = useState(false);
