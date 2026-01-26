@@ -8,6 +8,7 @@ import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
+import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
 export default function UploadNotebookSteps({
@@ -23,6 +24,7 @@ export default function UploadNotebookSteps({
       : null,
   );
   const { enqueueSnackbar } = useSnackbar();
+  const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
 
   const { defaultName } = useMemo(() => {
@@ -63,6 +65,10 @@ export default function UploadNotebookSteps({
           variant: "success",
         });
         handleNotebookCreated(createdNotebook);
+        if (tourContext?.run) {
+          tourContext.stopTour();
+          sessionStorage.setItem("startNotebookTour", "true");
+        }
       } catch (error) {
         console.error("Error creating notebook:", error);
         enqueueSnackbar(t("datasets:error.errorCreatingNotebook"), {
@@ -106,7 +112,11 @@ export default function UploadNotebookSteps({
       subtitle={""}
       padding={0}
     >
-      <NoteBox message={t("datasets:label.notebookCreationNote")} />
+      <NoteBox
+        className="notebook-note-box"
+        data-tour="notebook-note-box"
+        message={t("datasets:label.notebookCreationNote")}
+      />
       <Typography
         variant="h6"
         sx={{
@@ -177,6 +187,7 @@ export default function UploadNotebookSteps({
           }}
           saveButtonText={t("datasets:button.createNotebook")}
           backButtonText={t("common:back")}
+          dataTour="create-notebook-button"
         />
       </Box>
     </CustomLayout>
