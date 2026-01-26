@@ -11,32 +11,19 @@ import UploadDatasetSteps from "../../components/notebooks/datasetCreation/Uploa
 import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
 import DatasetVisualization from "../../components/DatasetVisualization";
 import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
-import {
-  getDatasets,
-  deleteDataset,
-  getDatasetInfo,
-  updateDataset,
-  createDataset,
-} from "../../api/datasets";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { startJobPolling } from "../../utils/jobPoller";
-import {
-  getNotebooks,
-  deleteNotebook,
-  updateNotebook,
-} from "../../api/notebook";
 import { enqueueDatasetJob } from "../../api/job";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/useDatasets";
+import { useNotebooks } from "../../hooks/useNotebooks";
 
 export default function DatasetsContent() {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [selectedNotebookId, setSelectedNotebookId] = useState(0);
-  const [notebooks, setNotebooks] = useState([]);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
   const [leftBarWidth, setLeftBarWidth] = useState(20);
@@ -53,7 +40,9 @@ export default function DatasetsContent() {
   const {
     datasets,
     selectedDatasetId,
+    createDataset,
     fetchDatasets,
+    fetchFreshDatasets,
     selectDataset,
     clearSelectedDataset,
     deleteDatasetLocal,
@@ -61,34 +50,35 @@ export default function DatasetsContent() {
     editDataset,
     addDatasetOptimistically,
     startDatasetPolling,
+    removeDatasetById,
+    replaceDatasets,
   } = useDatasets({ enqueueSnackbar, t });
+
+  const {
+    notebooks,
+    selectedNotebookId,
+    fetchNotebooks,
+    selectNotebook,
+    clearSelectedNotebook,
+    deleteNotebookById,
+    editNotebook,
+    removeNotebooksByDatasetId,
+  } = useNotebooks({ enqueueSnackbar, t });
 
   const goToNextStep = (option) => {
     if (option === "dataset" && tourContext?.run) {
       setStep((prevStep) => prevStep + 1);
       setSelectedOption(option);
-      setSelectedNotebookId(null);
-      setSelectedDatasetId(null);
+      clearSelectedNotebook();
+      clearSelectedDataset();
       setTimeout(() => {
         tourContext.nextStep();
       }, 600);
     } else {
       setStep((prevStep) => prevStep + 1);
       setSelectedOption(option);
-      setSelectedNotebookId(null);
-      setSelectedDatasetId(null);
-    }
-  };
-
-  const fetchNotebooks = async () => {
-    try {
-      const data = await getNotebooks();
-      setNotebooks(data);
-    } catch (error) {
-      enqueueSnackbar(t("datasets:error.failedToFetchNotebooks"), {
-        variant: "error",
-      });
-      console.error("Failed to fetch notebooks:", error);
+      clearSelectedNotebook();
+      clearSelectedDataset();
     }
   };
 
@@ -98,22 +88,22 @@ export default function DatasetsContent() {
   }, []);
 
   const handleNewSessionButton = () => {
-    setSelectedDatasetId(null);
-    setSelectedNotebookId(null);
+    clearSelectedDataset();
+    clearSelectedNotebook();
     setStep(0);
     setSelectedOption(null);
   };
 
   const handleDatasetClick = (datasetId) => {
     selectDataset(datasetId);
-    setSelectedNotebookId(null);
+    clearSelectedNotebook();
     setSelectedOption("dataset");
     setRightBarContent(null);
   };
 
   const handleNotebookClick = (notebookId) => {
-    setSelectedNotebookId(notebookId);
-    setSelectedDatasetId(null);
+    selectNotebook(notebookId);
+    clearSelectedDataset();
     setSelectedOption("notebook");
   };
 
@@ -125,70 +115,53 @@ export default function DatasetsContent() {
     }
 
     deleteDatasetLocal(id);
-
-    setNotebooks((prevNotebooks) => {
-      const filtered = prevNotebooks.filter((n) => n.dataset_id !== id);
-
-      if (
-        selectedNotebookId &&
-        prevNotebooks.find(
-          (n) => n.id === selectedNotebookId && n.dataset_id === id,
-        )
-      ) {
-        setSelectedNotebookId(null);
-        setStep(0);
-        setSelectedOption(null);
-      }
-
-      return filtered;
-    });
+    removeNotebooksByDatasetId(id);
 
     await deleteDatasetRemote(id);
   };
 
   const handleNotebookDelete = (id) => {
+    deleteNotebookById(id);
+
     if (id === selectedNotebookId) {
-      setSelectedNotebookId(null);
+      clearSelectedNotebook();
       setStep(0);
       setSelectedOption(null);
     }
-
-    setNotebooks((prevNotebooks) =>
-      prevNotebooks.filter((notebook) => notebook.id !== id),
-    );
-
-    deleteNotebook(id);
   };
 
   const handleAddDatasetFromNotebook = async (name) => {
-    if (selectedNotebook) {
-      try {
-        const data = await createDataset(name);
-        enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
-          variant: "success",
-        });
-        setDatasets((prev) => [...prev, data]);
-        setSelectedDatasetId(data.id);
-        setSelectedOption("dataset");
-        setSelectedNotebookId(null);
+    if (!selectedNotebook) return;
 
-        const job = await enqueueDatasetJob(
-          data.id,
-          null,
-          "",
-          {},
-          selectedNotebook.id,
-        );
-        pollForDataset(
-          { datasetId: data.id, datasetName: name },
-          { jobId: job.id },
-        );
-      } catch (error) {
-        enqueueSnackbar(t("datasets:error.failedToCreateDatasetFromNotebook"), {
-          variant: "error",
-        });
-        console.error("Failed to create dataset from notebook:", error);
-      }
+    try {
+      const data = await createDataset(name);
+
+      enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
+        variant: "success",
+      });
+
+      addDatasetOptimistically(data);
+
+      setSelectedOption("dataset");
+      clearSelectedNotebook();
+
+      const job = await enqueueDatasetJob(
+        data.id,
+        null,
+        "",
+        {},
+        selectedNotebook.id,
+      );
+
+      pollForDataset(
+        { datasetId: data.id, datasetName: name },
+        { jobId: job.id },
+      );
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToCreateDatasetFromNotebook"), {
+        variant: "error",
+      });
+      console.error("Failed to create dataset from notebook:", error);
     }
   };
 
@@ -196,8 +169,8 @@ export default function DatasetsContent() {
     await fetchNotebooks();
     setStep(0);
     setSelectedOption("notebook");
-    setSelectedNotebookId(createdNotebook.id);
-    setSelectedDatasetId(null);
+    selectNotebook(createdNotebook.id);
+    clearSelectedDataset();
   };
 
   const handleNewNotebookFromDataset = () => {
@@ -211,118 +184,69 @@ export default function DatasetsContent() {
 
     setStep(0);
     setSelectedOption("dataset");
-    setSelectedNotebookId(null);
+    clearSelectedNotebook();
     // clear right bar content injected during dataset creation (e.g. dataloader config)
     setRightBarContent(null);
 
     startDatasetPolling(newDataset, datasetJob);
   };
 
-  const pollForDataset = async (
-    { datasetId, datasetName },
-    { jobId },
-    attempt = 1,
-    maxAttempts = 10,
-  ) => {
-    if (jobId && attempt === 1) {
-      startJobPolling(
-        jobId,
-        async (result) => {
-          enqueueSnackbar(
-            t("datasets:message.datasetCreationSuccess", { datasetName }),
-            {
-              variant: "success",
-            },
-          );
+  const pollForDataset = async ({ datasetId, datasetName }, { jobId }) => {
+    if (!jobId) return;
 
-          try {
-            const freshDatasets = await getDatasets();
-            const dataset = freshDatasets.find((d) => d.id === datasetId);
+    startJobPolling(
+      jobId,
+      async () => {
+        enqueueSnackbar(
+          t("datasets:message.datasetCreationSuccess", { datasetName }),
+          { variant: "success" },
+        );
 
-            if (dataset) {
-              const enrichedDatasets = await enrichDatasetsWithInfo(
-                freshDatasets,
-                datasets,
-              );
-              setDatasets(enrichedDatasets);
-              setSelectedDatasetId(datasetId);
-            } else {
-              await fetchDatasets();
-              setSelectedDatasetId(datasetId);
-            }
-          } catch (error) {
-            console.error(
-              "Error fetching datasets after job completion:",
-              error,
+        try {
+          const freshDatasets = await fetchFreshDatasets();
+          const dataset = freshDatasets.find((d) => d.id === datasetId);
+
+          if (dataset) {
+            const enriched = await enrichDatasetsWithInfo(
+              freshDatasets,
+              datasets,
             );
+
+            replaceDatasets(enriched);
+            selectDataset(datasetId);
+          } else {
             await fetchDatasets();
-            setSelectedDatasetId(datasetId);
+            selectDataset(datasetId);
           }
-        },
-        (result) => {
-          console.error(`Dataset job failed:`, result);
-          enqueueSnackbar(
-            t("datasets:error.failedToCreateDataset", {
-              error: result.error || t("common:unknownError"),
-            }),
-            { variant: "error" },
-          );
+        } catch (error) {
+          console.error("Error fetching datasets after job completion:", error);
+          await fetchDatasets();
+          selectDataset(datasetId);
+        }
+      },
 
-          setDatasets((prevDatasets) => {
-            const datasetExists = prevDatasets.some((d) => d.id === datasetId);
+      async (result) => {
+        console.error("Dataset job failed:", result);
 
-            if (datasetExists) {
-              deleteDataset(datasetId).catch((error) => {
-                console.error("Error deleting failed dataset:", error);
-              });
+        enqueueSnackbar(
+          t("datasets:error.failedToCreateDataset", {
+            error: result?.error || t("common:unknownError"),
+          }),
+          { variant: "error" },
+        );
 
-              return prevDatasets.filter((d) => d.id !== datasetId);
-            }
+        removeDatasetById(datasetId);
+        clearSelectedDataset();
 
-            return prevDatasets;
-          });
-
-          setSelectedDatasetId(null);
-          setStep(0);
-          setSelectedOption(null);
-        },
-      );
-    }
+        setStep(0);
+        setSelectedOption(null);
+      },
+    );
   };
 
   const handleEditDataset = (id, newName) => editDataset(id, newName);
 
-  const handleEditNotebook = async (id, newName) => {
-    try {
-      const updatedNotebook = await updateNotebook(id, { name: newName });
-      setNotebooks((prevNotebooks) =>
-        prevNotebooks.map((notebook) =>
-          notebook.id === id
-            ? { ...notebook, name: updatedNotebook.name }
-            : notebook,
-        ),
-      );
-      enqueueSnackbar(t("datasets:message.notebookUpdateSuccess"), {
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Failed to update notebook:", error);
-      if (error.response?.status === 422) {
-        enqueueSnackbar(t("datasets:error.notebookNameEmpty"), {
-          variant: "error",
-        });
-      } else if (error.response?.status === 304) {
-        enqueueSnackbar(t("datasets:message.noChangesMade"), {
-          variant: "info",
-        });
-      } else {
-        enqueueSnackbar(t("datasets:error.failedToUpdateNotebook"), {
-          variant: "error",
-        });
-      }
-      throw error;
-    }
-  };
+  const handleEditNotebook = (id, newName) => editNotebook(id, newName);
 
   const handleMouseMove = useCallback((e) => {
     if (isResizingLeft.current) {

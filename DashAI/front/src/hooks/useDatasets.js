@@ -4,8 +4,10 @@ import {
   deleteDataset,
   getDatasetInfo,
   updateDataset,
+  createDataset,
 } from "../api/datasets";
 import { startJobPolling } from "../utils/jobPoller";
+import { replace } from "formik";
 
 export function useDatasets({ enqueueSnackbar, t }) {
   const [datasets, setDatasets] = useState([]);
@@ -55,6 +57,10 @@ export function useDatasets({ enqueueSnackbar, t }) {
     setDatasets(enriched);
   }, [datasets, enrichDatasetsWithInfo]);
 
+  const fetchFreshDatasets = async () => {
+    return await getDatasets();
+  };
+
   const selectDataset = (id) => {
     setSelectedDatasetId(id);
   };
@@ -75,14 +81,30 @@ export function useDatasets({ enqueueSnackbar, t }) {
   };
 
   const editDataset = async (id, newName) => {
-    const updated = await updateDataset(id, { name: newName });
-    setDatasets((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, name: updated.name } : d)),
-    );
-
-    enqueueSnackbar(t("datasets:message.datasetUpdateSuccess"), {
-      variant: "success",
-    });
+    try {
+      const updated = await updateDataset(id, { name: newName });
+      setDatasets((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, name: updated.name } : d)),
+      );
+      enqueueSnackbar(t("datasets:message.datasetUpdateSuccess"), {
+        variant: "success",
+      });
+    } catch (error) {
+      if (error.response?.status === 409) {
+        enqueueSnackbar(t("datasets:error.datasetNameExists"), {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar(t("datasets:error.datasetNameEmpty"), {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar(t("datasets:error.failedToUpdateDataset"), {
+          variant: "error",
+        });
+      }
+      throw error;
+    }
   };
 
   const addDatasetOptimistically = (dataset) => {
@@ -112,11 +134,26 @@ export function useDatasets({ enqueueSnackbar, t }) {
     );
   };
 
+  const removeDatasetById = (id) => {
+    setDatasets((prev) => prev.filter((d) => d.id !== id));
+
+    if (id === selectedDatasetId) {
+      setSelectedDatasetId(null);
+    }
+  };
+
+  const replaceDatasets = (datasets) => {
+    setDatasets(datasets);
+  };
+
   return {
     datasets,
     selectedDatasetId,
 
+    createDataset,
+
     fetchDatasets,
+    fetchFreshDatasets,
     selectDataset,
     clearSelectedDataset,
 
@@ -126,5 +163,8 @@ export function useDatasets({ enqueueSnackbar, t }) {
     editDataset,
     addDatasetOptimistically,
     startDatasetPolling,
+
+    removeDatasetById,
+    replaceDatasets,
   };
 }
