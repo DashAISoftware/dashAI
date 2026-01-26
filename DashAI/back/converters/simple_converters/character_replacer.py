@@ -8,6 +8,7 @@ from DashAI.back.converters.category.basic_preprocessing import (
 )
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer, Text
@@ -17,14 +18,23 @@ class CharacterReplacerSchema(BaseSchema):
     char_to_replace: schema_field(
         string_field(),
         "",  # default: empty string
-        description="The character or substring to be replaced. Cannot be empty.",
+        description=MultilingualString(
+            en=("The character or substring to be replaced. Cannot be empty."),
+            es=("El carácter o subcadena a reemplazar. No puede estar vacío."),
+        ),
     )  # type: ignore
     replacement_char: schema_field(
         none_type(string_field()),
         None,
-        description=(
-            "The character or substring to replace with. "
-            "If null, 'char_to_replace' will be removed."
+        description=MultilingualString(
+            en=(
+                "The character or substring to replace with. If null, "
+                "'char_to_replace' will be removed."
+            ),
+            es=(
+                "El carácter o subcadena con el que reemplazar. Si es nulo, "
+                "se eliminará 'char_to_replace'.",
+            ),
         ),
     )  # type: ignore
 
@@ -35,13 +45,20 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     If 'replacement_char' is an empty string, 'char_to_replace' will be removed.
     """
 
-    CATEGORY = "Basic Preprocessing"
     SCHEMA = CharacterReplacerSchema
-    DESCRIPTION = (
-        "Replaces or removes specified characters/substrings "
-        "in selected string columns."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Replaces or removes specified characters/substrings in selected "
+            "string columns."
+        ),
+        es=(
+            "Reemplaza o elimina caracteres/subcadenas especificados en las "
+            "columnas de texto seleccionadas."
+        ),
     )
-    DISPLAY_NAME = "Character Replacer"
+    DISPLAY_NAME = MultilingualString(
+        en="Character Replacer", es="Reemplazador de Caracteres"
+    )
     IMAGE_PREVIEW = "character_replacer.png"
 
     metadata = {

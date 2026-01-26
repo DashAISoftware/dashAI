@@ -1,5 +1,6 @@
 from typing import Any, List, Optional, Tuple
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -17,10 +18,19 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         "outputs_cardinality": 1,
     }
 
-    DISPLAY_NAME: str = "Text to Text Generation"
-    DESCRIPTION: str = (
-        "This task uses a large language model (LLM) "
-        "to generate text from a given prompt."
+    DISPLAY_NAME: MultilingualString = MultilingualString(
+        en="Text to Text", es="Texto a Texto"
+    )
+
+    DESCRIPTION: MultilingualString = MultilingualString(
+        en="""
+        This task uses a large language model (LLM)
+        to generate text from a given prompt.
+        """,
+        es="""
+        Esta tarea utiliza un modelo de lenguaje grande (LLM)
+        para generar texto a partir de un prompt dado.
+        """,
     )
 
     USE_HISTORY: bool = True

@@ -60,7 +60,7 @@ export default function RightBar({ notebook, onToggle }) {
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
   // Fetch dataset columns from notebook file
   useEffect(() => {

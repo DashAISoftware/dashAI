@@ -29,6 +29,7 @@ export default function ExplorerDetailsModal({
   open = false,
   onClose = () => {},
   explorer,
+  explorerComponent,
   data,
   setData,
   dataType,
@@ -94,7 +95,9 @@ export default function ExplorerDetailsModal({
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Typography variant="h6">
-          {t("datasets:label.detailsForExplorer", { name: explorer.name })}
+          {t("datasets:label.detailsForExplorer", {
+            name: explorerComponent.display_name,
+          })}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <IconButton onClick={onClose}>

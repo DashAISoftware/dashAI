@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
     none_type,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
@@ -25,27 +26,45 @@ class BagOfWordsConverterSchema(BaseSchema):
     max_features: schema_field(
         int_field(gt=0),
         placeholder=1000,
-        description="Maximum number of features (most frequent words) to keep.",
+        description=MultilingualString(
+            en="Maximum number of features (most frequent words) to keep.",
+            es=(
+                "Número máximo de características (palabras más frecuentes) "
+                "a conservar."
+            ),
+        ),
     )  # type: ignore
     lowercase: schema_field(
         bool_field(),
         placeholder=True,
-        description="Whether to convert all characters to lowercase before tokenizing.",
+        description=MultilingualString(
+            en="Whether to convert all characters to lowercase before tokenizing.",
+            es="Si se debe convertir todo a minúsculas antes de tokenizar.",
+        ),
     )  # type: ignore
     stop_words: schema_field(
         none_type(enum_field(["english"])),
         placeholder=None,
-        description="Stop word set to remove. Use 'english' or None.",
+        description=MultilingualString(
+            en="Stop word set to remove. Use 'english' or None.",
+            es="Conjunto de stopwords a eliminar. Usa 'english' o None.",
+        ),
     )  # type: ignore
     lower_bound_ngrams: schema_field(
         int_field(gt=0, le=5),
         placeholder=1,
-        description="Lower bound for n-grams to be extracted. Must be <= upper bound.",
+        description=MultilingualString(
+            en="Lower bound for n-grams. Must be <= upper bound.",
+            es="Límite inferior de n-grams. Debe ser <= al límite superior.",
+        ),
     )  # type: ignore
     upper_bound_ngrams: schema_field(
         int_field(gt=0, le=5),
         placeholder=1,
-        description="Upper bound for n-grams to be extracted. Must be >= lower bound.",
+        description=MultilingualString(
+            en="Upper bound for n-grams. Must be >= lower bound.",
+            es="Límite superior de n-grams. Debe ser >= al límite inferior.",
+        ),
     )  # type: ignore
 
 
@@ -56,11 +75,17 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = BagOfWordsConverterSchema
-    DISPLAY_NAME = "Bag of Words"
+    DISPLAY_NAME = MultilingualString(en="Bag of Words", es="Bolsa de Palabras")
     IMAGE_PREVIEW = "bag_of_words.png"
-    DESCRIPTION = (
-        "Converts text into a Bag-of-Words representation "
-        "with one column per token (frequency per token)."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Converts text into a Bag-of-Words representation with one column "
+            "per token (frequency per token)."
+        ),
+        es=(
+            "Convierte texto en una representación de Bolsa de Palabras con una "
+            "columna por token (frecuencia por token)."
+        ),
     )
 
     def __init__(self, **kwargs):

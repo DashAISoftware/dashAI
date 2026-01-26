@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Typography,
@@ -22,6 +22,7 @@ import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
 import { deleteExplainer } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
+import { getComponentById } from "../../api/component";
 
 /**
  * GlobalExplainersCard
@@ -36,6 +37,7 @@ export default function ExplainersCard({
 }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
 
   function plotName(name) {
@@ -62,6 +64,16 @@ export default function ExplainersCard({
     }
   };
 
+  useEffect(() => {
+    getComponentById(explainer.explainer_name)
+      .then((data) => {
+        setComponentData(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching component data:", error);
+      });
+  }, [explainer.explainer_name]);
+
   if (compact) {
     return (
       <>
@@ -76,7 +88,9 @@ export default function ExplainersCard({
             >
               <Grid item>
                 <Typography variant="subtitle2" fontWeight="medium">
-                  {plotName(explainer.explainer_name)}
+                  {componentData
+                    ? componentData.display_name
+                    : plotName(explainer.explainer_name)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {explainer.name}

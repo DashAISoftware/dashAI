@@ -13,33 +13,59 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
 from DashAI.back.types.categorical import Categorical
 
 
 class PartialDependenceSchema(BaseSchema):
-    """PartialDependence of a feature shows the average prediction of a machine
+    """Partial Dependence of a feature shows the average prediction of a machine
     learning model for each possible value of the feature.
     """
 
     grid_resolution: schema_field(
         int_field(ge=1),
         placeholder=100,
-        description="The number of equidistant points to split the range of "
-        "the target feature",
+        description=MultilingualString(
+            en=(
+                "Number of equidistant points to split the range of the target feature."
+            ),
+            es=(
+                "Número de puntos equidistantes para dividir el rango de la "
+                "característica objetivo."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Grid resolution",
+            es="Resolución de la malla",
+        ),
     )  # type: ignore
 
     lower_percentile: schema_field(
         float_field(ge=0, le=0.99),
         placeholder=0.05,
-        description="The lower percentile used to limit the feature values.",
+        description=MultilingualString(
+            en=("Lower percentile used to limit the feature values."),
+            es=("Percentil inferior para limitar los valores de la característica."),
+        ),
+        alias=MultilingualString(
+            en="Lower percentile",
+            es="Percentil inferior",
+        ),
     )  # type: ignore
 
     upper_percentile: schema_field(
         float_field(ge=0.01, le=1),
         placeholder=0.95,
-        description="The upper percentile used to limit the feature values.",
+        description=MultilingualString(
+            en=("Upper percentile used to limit the feature values."),
+            es=("Percentil superior para limitar los valores de la característica."),
+        ),
+        alias=MultilingualString(
+            en="Upper percentile",
+            es="Percentil superior",
+        ),
     )  # type: ignore
 
 
@@ -50,7 +76,22 @@ class PartialDependence(BaseGlobalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
-    DISPLAY_NAME = "Partial Dependence"
+    DISPLAY_NAME = MultilingualString(
+        en="Partial Dependence",
+        es="Dependencia Parcial",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Partial Dependence shows the marginal effect of a feature on the "
+            "model's predicted probability by averaging over the distribution of "
+            "other features."
+        ),
+        es=(
+            "La Dependencia Parcial muestra el efecto marginal de una "
+            "característica sobre la probabilidad predicha por el modelo, "
+            "promediando sobre la distribución del resto de características."
+        ),
+    )
     COLOR = "#FFA500"
     SCHEMA = PartialDependenceSchema
 

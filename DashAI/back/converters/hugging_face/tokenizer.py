@@ -7,6 +7,7 @@ from DashAI.back.converters.category.advanced_preprocessing import (
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -25,21 +26,37 @@ class TokenizerSchema(BaseSchema):
             ]
         ),
         "bert-base-uncased",
-        "Name of the pre-trained tokenizer model",
+        description=MultilingualString(
+            en="Name of the pre-trained tokenizer model",
+            es="Nombre del modelo de tokenización preentrenado",
+        ),
     )  # type: ignore
 
     max_length: schema_field(
-        int_field(ge=1), 512, "Maximum sequence length for tokenization"
+        int_field(ge=1),
+        512,
+        description=MultilingualString(
+            en="Maximum sequence length for tokenization",
+            es="Longitud máxima de secuencia para la tokenización",
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
-        int_field(ge=1), 32, "Number of samples to process at once"
+        int_field(ge=1),
+        32,
+        description=MultilingualString(
+            en="Number of samples to process at once",
+            es="Número de muestras a procesar a la vez",
+        ),
     )  # type: ignore
 
     device: schema_field(
         enum_field(["cuda", "cpu"]),
         "cpu",
-        "Device to use for computation",
+        description=MultilingualString(
+            en="Device to use for computation",
+            es="Dispositivo a usar para el cómputo",
+        ),
     )  # type: ignore
 
 
@@ -47,11 +64,17 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """Converter that tokenizes text and stores each token ID in a separate column."""
 
     SCHEMA = TokenizerSchema
-    DESCRIPTION = (
-        "Tokenize text into input IDs; each token ID goes into its own column. "
-        "Attention mask is ignored."
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Tokenize text into input IDs; each token ID goes into its own column. "
+            "Attention mask is ignored."
+        ),
+        es=(
+            "Tokeniza texto a IDs de entrada; cada ID va en su propia columna. "
+            "Se ignora la máscara de atención."
+        ),
     )
-    DISPLAY_NAME = "Tokenizer"
+    DISPLAY_NAME = MultilingualString(en="Tokenizer", es="Tokenizador")
     IMAGE_PREVIEW = "tokenizer.png"
 
     def __init__(self, **kwargs):

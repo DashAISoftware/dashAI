@@ -6,6 +6,7 @@ from DashAI.back.core.schema_fields import (
     optimizer_int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -28,20 +29,34 @@ class KNeighborsClassifierSchema(BaseSchema):
             "lower_bound": 5,
             "upper_bound": 10,
         },
-        description="The 'n_neighbors' parameter is the number of neighbors to "
-        "consider in each input for classification. It must be an integer greater "
-        "than or equal to 1.",
+        description=MultilingualString(
+            en=(
+                "The number of neighbors to consider in each input for classification. "
+            ),
+            es=(
+                "Es el número de vecinos a considerar en "
+                "cada entrada para la clasificación. "
+            ),
+        ),
+        alias=MultilingualString(en="N neighbors", es="N vecinos"),
     )  # type: ignore
     weights: schema_field(
         enum_field(enum=["uniform", "distance"]),
         placeholder="uniform",
-        description="The 'weights' parameter must be 'uniform' or 'distance'.",
+        description=MultilingualString(
+            en="The parameter must be 'uniform' or 'distance'.",
+            es="El parámetro debe ser 'uniform' o 'distance'.",
+        ),
+        alias=MultilingualString(en="Weights", es="Pesos"),
     )  # type: ignore
     algorithm: schema_field(
         enum_field(enum=["auto", "ball_tree", "kd_tree", "brute"]),
         placeholder="auto",
-        description="The 'algorithm' parameter must be 'auto', 'ball_tree', "
-        "'kd_tree', or 'brute'.",
+        description=MultilingualString(
+            en=("The parameter must be 'auto', 'ball_tree', 'kd_tree', or 'brute'."),
+            es=("El parámetro debe ser 'auto', 'ball_tree', 'kd_tree' o 'brute'.",),
+        ),
+        alias=MultilingualString(en="Algorithm", es="Algoritmo"),
     )  # type: ignore
 
 
@@ -51,9 +66,16 @@ class KNeighborsClassifier(
     """Scikit-learn's K-Nearest Neighbors (KNN) classifier wrapper for DashAI."""
 
     SCHEMA = KNeighborsClassifierSchema
-    DISPLAY_NAME: str = "K-Nearest Neighbors (KNN)"
-    DESCRIPTION: str = (
-        "Classification based on k nearest training examples in feature space."
+    DISPLAY_NAME: str = MultilingualString(
+        en="K-Nearest Neighbors (KNN)",
+        es="K-Vecinos más Cercanos (KNN)",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Classification based on k nearest training examples in feature space.",
+        es=(
+            "Clasificación basada en los k ejemplos de entrenamiento más cercanos en "
+            "el espacio de características."
+        ),
     )
     COLOR: str = "#FFD54F"
     ICON: str = "ScatterPlot"
