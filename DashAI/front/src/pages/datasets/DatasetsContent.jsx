@@ -20,10 +20,9 @@ import { ExplorersAndConvertersProvider } from "../../components/notebooks/conte
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/useDatasets";
 import { useNotebooks } from "../../hooks/useNotebooks";
+import { useDatasetUIState } from "../../hooks/useDatasetUIState";
 
 export default function DatasetsContent() {
-  const [step, setStep] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
   const [leftBarVisible, setLeftBarVisible] = useState(true);
   const [rightBarVisible, setRightBarVisible] = useState(true);
   const [leftBarWidth, setLeftBarWidth] = useState(20);
@@ -65,20 +64,31 @@ export default function DatasetsContent() {
     removeNotebooksByDatasetId,
   } = useNotebooks({ enqueueSnackbar, t });
 
+  const {
+    step,
+    selectedOption,
+    resetUI,
+    goToDatasetFlow,
+    goToNotebookFlow,
+    goToNotebookCreation,
+    selectDatasetView,
+    selectNotebookView,
+  } = useDatasetUIState();
+
   const goToNextStep = (option) => {
+    if (option === "dataset") {
+      goToDatasetFlow();
+    } else {
+      goToNotebookFlow();
+    }
+
+    clearSelectedNotebook();
+    clearSelectedDataset();
+
     if (option === "dataset" && tourContext?.run) {
-      setStep((prevStep) => prevStep + 1);
-      setSelectedOption(option);
-      clearSelectedNotebook();
-      clearSelectedDataset();
       setTimeout(() => {
         tourContext.nextStep();
       }, 600);
-    } else {
-      setStep((prevStep) => prevStep + 1);
-      setSelectedOption(option);
-      clearSelectedNotebook();
-      clearSelectedDataset();
     }
   };
 
@@ -90,28 +100,26 @@ export default function DatasetsContent() {
   const handleNewSessionButton = () => {
     clearSelectedDataset();
     clearSelectedNotebook();
-    setStep(0);
-    setSelectedOption(null);
+    resetUI();
   };
 
   const handleDatasetClick = (datasetId) => {
     selectDataset(datasetId);
     clearSelectedNotebook();
-    setSelectedOption("dataset");
+    selectDatasetView();
     setRightBarContent(null);
   };
 
   const handleNotebookClick = (notebookId) => {
     selectNotebook(notebookId);
     clearSelectedDataset();
-    setSelectedOption("notebook");
+    selectNotebookView();
   };
 
   const handleDatasetDelete = async (id) => {
     if (id === selectedDatasetId) {
       clearSelectedDataset();
-      setStep(0);
-      setSelectedOption(null);
+      resetUI();
     }
 
     deleteDatasetLocal(id);
@@ -125,8 +133,7 @@ export default function DatasetsContent() {
 
     if (id === selectedNotebookId) {
       clearSelectedNotebook();
-      setStep(0);
-      setSelectedOption(null);
+      resetUI();
     }
   };
 
@@ -139,10 +146,8 @@ export default function DatasetsContent() {
       enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
         variant: "success",
       });
-
       addDatasetOptimistically(data);
-
-      setSelectedOption("dataset");
+      selectDatasetView();
       clearSelectedNotebook();
 
       const job = await enqueueDatasetJob(
@@ -167,27 +172,21 @@ export default function DatasetsContent() {
 
   const handleNotebookCreated = async (createdNotebook) => {
     await fetchNotebooks();
-    setStep(0);
-    setSelectedOption("notebook");
+    selectNotebookView();
     selectNotebook(createdNotebook.id);
     clearSelectedDataset();
   };
 
   const handleNewNotebookFromDataset = () => {
-    // Keep selectedDatasetId but go to notebook creation
-    setSelectedOption("notebook");
-    setStep(1);
+    goToNotebookCreation();
   };
 
   const handleDatasetCreated = (newDataset, datasetJob) => {
     addDatasetOptimistically(newDataset);
-
-    setStep(0);
-    setSelectedOption("dataset");
+    selectDatasetView();
     clearSelectedNotebook();
     // clear right bar content injected during dataset creation (e.g. dataloader config)
     setRightBarContent(null);
-
     startDatasetPolling(newDataset, datasetJob);
   };
 
@@ -237,9 +236,7 @@ export default function DatasetsContent() {
 
         removeDatasetById(datasetId);
         clearSelectedDataset();
-
-        setStep(0);
-        setSelectedOption(null);
+        resetUI();
       },
     );
   };
@@ -500,8 +497,7 @@ export default function DatasetsContent() {
                   {step === 1 && selectedOption === "dataset" ? (
                     <UploadDatasetSteps
                       backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
+                        resetUI();
                         fetchDatasets();
                         // clear right bar when exiting
                         setRightBarContent(null);
@@ -513,8 +509,7 @@ export default function DatasetsContent() {
                   ) : step === 1 && selectedOption === "notebook" ? (
                     <UploadNotebookSteps
                       backHome={() => {
-                        setStep(0);
-                        setSelectedOption(null);
+                        resetUI();
                         fetchNotebooks();
                       }}
                       datasets={datasets}
