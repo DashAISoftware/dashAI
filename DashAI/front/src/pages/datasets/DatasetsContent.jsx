@@ -20,6 +20,7 @@ import { useDatasets } from "../../hooks/useDatasets";
 import { useNotebooks } from "../../hooks/useNotebooks";
 import { useDatasetUIState } from "../../hooks/useDatasetUIState";
 import { useDatasetFlow } from "../../hooks/useDatasetFlow";
+import { useDatasetActions } from "../../hooks/useDatasetActions";
 
 export default function DatasetsContent() {
   const [leftBarVisible, setLeftBarVisible] = useState(true);
@@ -74,7 +75,7 @@ export default function DatasetsContent() {
     selectNotebookView,
   } = useDatasetUIState();
 
-  const { createDatasetFromNotebook, deleteDatasetById } = useDatasetFlow({
+  const { createDatasetFromNotebook } = useDatasetFlow({
     datasets,
     enrichDatasetsWithInfo,
     fetchDatasets,
@@ -85,6 +86,35 @@ export default function DatasetsContent() {
     enqueueSnackbar,
     t,
     resetUI,
+  });
+
+  const {
+    handleDatasetClick,
+    handleNotebookClick,
+    handleDatasetDelete,
+    handleNotebookDelete,
+    handleEditDataset,
+    handleEditNotebook,
+  } = useDatasetActions({
+    selectedDatasetId,
+    selectedNotebookId,
+
+    selectDataset,
+    selectNotebook,
+    clearSelectedDataset,
+    clearSelectedNotebook,
+
+    deleteDatasetLocal,
+    deleteDatasetRemote,
+    removeNotebooksByDatasetId,
+    deleteNotebookById,
+
+    editDataset,
+    editNotebook,
+
+    resetUI,
+    selectDatasetView,
+    selectNotebookView,
   });
 
   const goToNextStep = (option) => {
@@ -115,37 +145,6 @@ export default function DatasetsContent() {
     resetUI();
   };
 
-  const handleDatasetClick = (datasetId) => {
-    selectDataset(datasetId);
-    clearSelectedNotebook();
-    selectDatasetView();
-    setRightBarContent(null);
-  };
-
-  const handleNotebookClick = (notebookId) => {
-    selectNotebook(notebookId);
-    clearSelectedDataset();
-    selectNotebookView();
-  };
-
-  const handleDatasetDelete = (id) => {
-    if (id === selectedDatasetId) {
-      clearSelectedDataset();
-      resetUI();
-    }
-
-    deleteDatasetById(id);
-  };
-
-  const handleNotebookDelete = (id) => {
-    deleteNotebookById(id);
-
-    if (id === selectedNotebookId) {
-      clearSelectedNotebook();
-      resetUI();
-    }
-  };
-
   const handleAddDatasetFromNotebook = async (name) => {
     if (!selectedNotebook) return;
     clearSelectedNotebook();
@@ -172,10 +171,6 @@ export default function DatasetsContent() {
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
   };
-
-  const handleEditDataset = (id, newName) => editDataset(id, newName);
-
-  const handleEditNotebook = (id, newName) => editNotebook(id, newName);
 
   const handleMouseMove = useCallback((e) => {
     if (isResizingLeft.current) {

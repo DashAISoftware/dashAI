@@ -8,10 +8,8 @@ export function useDatasetFlow({
   fetchDatasets,
   replaceDatasets,
   addDatasetOptimistically,
-  removeDatasetById,
   selectDataset,
   clearSelectedDataset,
-  removeNotebooksByDatasetId,
   enqueueSnackbar,
   t,
   resetUIAfterFailure,
@@ -95,17 +93,6 @@ export function useDatasetFlow({
     }
   };
 
-  const deleteDatasetById = async (datasetId) => {
-    removeDatasetById(datasetId);
-    removeNotebooksByDatasetId(datasetId);
-
-    try {
-      await deleteDataset(datasetId);
-    } catch (error) {
-      console.error("Failed to delete dataset:", error);
-    }
-  };
-
   const createDatasetFromUpload = (dataset, job) => {
     addDatasetOptimistically(dataset);
     selectDataset(dataset.id);
@@ -118,7 +105,6 @@ export function useDatasetFlow({
   return {
     createDatasetFromNotebook,
     createDatasetFromUpload,
-    deleteDatasetById,
     pollForDataset,
   };
 }
