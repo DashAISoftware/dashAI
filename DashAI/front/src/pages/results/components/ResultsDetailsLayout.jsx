@@ -5,8 +5,9 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import CustomLayout from "../../../components/custom/CustomLayout";
 import ResultsTabInfo from "./ResultsTabInfo";
 import ResultsTabHyperparameters from "./ResultsTabHyperparameters";
-import { tabsResultsDetails } from "../constants/tabsResultsDetails";
+import { getTabsResultsDetails } from "../constants/getTabsResultsDetails";
 import { checkIfHaveOptimazers } from "../../../utils/schema";
+import { useTranslation } from "react-i18next";
 
 function ResultsDetailsLayout({
   runData,
@@ -15,7 +16,10 @@ function ResultsDetailsLayout({
   handleCloseCustomLayout,
   handleRun,
 }) {
+  const { t } = useTranslation(["common", "models"]);
   const optimizables = checkIfHaveOptimazers(runData.parameters);
+
+  const tabsResultsDetails = getTabsResultsDetails(t);
   const updatedTabs = tabsResultsDetails.map((tab) => ({
     ...tab,
     disabled: tab.value === 3 ? !optimizables : tab.disabled,
@@ -26,7 +30,7 @@ function ResultsDetailsLayout({
         startIcon={<ArrowBackIosNewIcon />}
         onClick={handleCloseCustomLayout}
       >
-        Close
+        {t("common:close")}
       </Button>
 
       <Paper sx={{ mt: 2 }}>
@@ -45,7 +49,7 @@ function ResultsDetailsLayout({
             <ResultsTabInfo runData={runData} handleRun={handleRun} />
           )}
           {currentTab === 3 && <ResultsTabHyperparameters runData={runData} />}
-          {currentTab === 4 && <Typography>TODO...</Typography>}
+          {currentTab === 4 && <Typography>{t("common:todo")}</Typography>}
         </Box>
       </Paper>
     </CustomLayout>

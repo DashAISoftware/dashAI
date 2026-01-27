@@ -4,13 +4,13 @@ from DashAI.back.api.api_v1.endpoints import (
     components,
     converters,
     datasets,
-    experiments,
     explainers,
     explorers,
     generative_process,
     generative_session,
     jobs,
     metrics,
+    model_sessions,
     notebook,
     pipelines,
     plugins,
@@ -22,7 +22,7 @@ api_router_v1 = APIRouter()
 api_router_v1.include_router(converters.router, prefix="/converter")
 api_router_v1.include_router(components.router, prefix="/component")
 api_router_v1.include_router(datasets.router, prefix="/dataset")
-api_router_v1.include_router(experiments.router, prefix="/experiment")
+api_router_v1.include_router(model_sessions.router, prefix="/model-session")
 api_router_v1.include_router(explainers.router, prefix="/explainer")
 api_router_v1.include_router(explorers.router, prefix="/explorer")
 api_router_v1.include_router(jobs.router, prefix="/job")

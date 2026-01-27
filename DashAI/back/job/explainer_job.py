@@ -11,15 +11,15 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
-    prepare_for_experiment,
+    prepare_for_model_session,
     select_columns,
     split_dataset,
 )
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
+    ModelSession,
     Run,
 )
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
@@ -217,7 +217,7 @@ class ExplainerJob(BaseJob):
                     if not same_dataset:
                         if isinstance(splits, str):
                             splits = json.loads(splits)
-                        prepared_dataset_dict, splits = prepare_for_experiment(
+                        prepared_dataset_dict, splits = prepare_for_model_session(
                             dataset=prepared_instance,
                             splits=splits,
                             output_columns=self.output_columns,
@@ -324,19 +324,19 @@ class ExplainerJob(BaseJob):
                     raise JobError(
                         f"Run {self.explainer_db.run_id} does not exist in DB."
                     )
-                experiment: Experiment = db.get(Experiment, run.experiment_id)
-                if not experiment:
+                model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+                if not model_session:
                     raise JobError(
-                        f"Experiment {run.experiment_id} does not exist in DB."
+                        f"Model session {run.model_session_id} does not exist in DB."
                     )
-                dataset: Dataset = db.get(Dataset, experiment.dataset_id)
+                dataset: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset:
                     raise JobError(
                         f"Dataset {self.explainer_db.dataset_id} does not exist in DB."
                     )
 
-                self.input_columns = experiment.input_columns
-                self.output_columns = experiment.output_columns
+                self.input_columns = model_session.input_columns
+                self.output_columns = model_session.output_columns
 
                 try:
                     run_model_class = component_registry[run.model_name]["class"]
@@ -387,12 +387,14 @@ class ExplainerJob(BaseJob):
                         f"Can not load dataset from path {dataset.file_path}",
                     ) from e
                 try:
-                    task: BaseTask = component_registry[experiment.task_name]["class"]()
+                    task: BaseTask = component_registry[model_session.task_name][
+                        "class"
+                    ]()
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         (
-                            f"Unable to find Task with name {experiment.task_name} "
+                            f"Unable to find Task with name {model_session.task_name} "
                             "in registry"
                         ),
                     ) from e
@@ -455,9 +457,11 @@ class ExplainerJob(BaseJob):
                     )
 
                 elif explainer_scope == "local":
-                    same_dataset = experiment.dataset_id == self.explainer_db.dataset_id
+                    same_dataset = (
+                        model_session.dataset_id == self.explainer_db.dataset_id
+                    )
                     if not same_dataset:
-                        splits = experiment.splits
+                        splits = model_session.splits
 
                     self._generate_local_explanation(
                         explainer=explainer,

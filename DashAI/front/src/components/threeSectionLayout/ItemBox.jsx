@@ -125,11 +125,21 @@ export default function ItemBox({
               }}
             />
           ) : (
-            <Typography variant="body2" noWrap sx={{ fontSize: 14 }}>
+            <Typography
+              variant="body2"
+              color="text.primary"
+              noWrap
+              sx={{ fontSize: 14 }}
+            >
               {editedName}
             </Typography>
           )}
-          <Typography variant="caption" noWrap sx={{ fontSize: 10, pl: 1 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            noWrap
+            sx={{ fontSize: 10, pl: 1 }}
+          >
             {description ? description : ""}
           </Typography>
         </Box>

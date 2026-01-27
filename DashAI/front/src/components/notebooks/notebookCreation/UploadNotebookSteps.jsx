@@ -8,6 +8,7 @@ import { createNotebook } from "../../../api/notebook";
 import { useSnackbar } from "notistack";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import NoteBox from "../NoteBox";
+import { useTranslation } from "react-i18next";
 
 export default function UploadNotebookSteps({
   backHome,
@@ -22,6 +23,7 @@ export default function UploadNotebookSteps({
       : null,
   );
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const { defaultName } = useMemo(() => {
     if (!selectedDataset) {
@@ -57,13 +59,15 @@ export default function UploadNotebookSteps({
 
         const createdNotebook = await createNotebook(notebookData);
 
-        enqueueSnackbar("Notebook created successfully", {
+        enqueueSnackbar(t("datasets:message.notebookCreated"), {
           variant: "success",
         });
         handleNotebookCreated(createdNotebook);
       } catch (error) {
         console.error("Error creating notebook:", error);
-        enqueueSnackbar("Error creating notebook", { variant: "error" });
+        enqueueSnackbar(t("datasets:error.errorCreatingNotebook"), {
+          variant: "error",
+        });
       }
     },
   });
@@ -89,7 +93,7 @@ export default function UploadNotebookSteps({
 
     const currentName = formik.values.name.trim();
     if (!currentName) {
-      return "Name is required";
+      return t("common:nameRequired");
     }
     return null;
   };
@@ -97,8 +101,12 @@ export default function UploadNotebookSteps({
   const nameError = getNameError();
 
   return (
-    <CustomLayout title={"Create a New Notebook"} subtitle={""} padding={0}>
-      <NoteBox message="A copy of the selected dataset will be created to work in the notebook without altering the original." />
+    <CustomLayout
+      title={t("datasets:label.createNewNotebook")}
+      subtitle={""}
+      padding={0}
+    >
+      <NoteBox message={t("datasets:label.notebookCreationNote")} />
       <Typography
         variant="h6"
         sx={{
@@ -107,7 +115,7 @@ export default function UploadNotebookSteps({
           mb: 2,
         }}
       >
-        Select dataset for your notebook
+        {t("datasets:label.selectDatasetForNotebook")}
       </Typography>
       <DatasetAutocomplete
         datasets={datasets}
@@ -122,12 +130,12 @@ export default function UploadNotebookSteps({
           my: 2,
         }}
       >
-        Name your Notebook
+        {t("datasets:label.nameYourNotebook")}
       </Typography>
       {/* Notebook name */}
       <TextField
         fullWidth
-        label="Notebook Name"
+        label={t("datasets:label.notebookName")}
         name="name"
         value={formik.values.name}
         onChange={formik.handleChange}
@@ -136,7 +144,9 @@ export default function UploadNotebookSteps({
         sx={{ mb: 2 }}
         disabled={!selectedDataset}
         placeholder={
-          !selectedDataset ? "Select a dataset first" : "Notebook Name"
+          !selectedDataset
+            ? t("datasets:label.selectDatasetFirst")
+            : t("datasets:label.notebookName")
         }
         slotProps={{
           inputLabel: { shrink: true },
@@ -145,7 +155,7 @@ export default function UploadNotebookSteps({
       {/* Notebook description */}
       <TextField
         fullWidth
-        label="Notebook Description"
+        label={t("datasets:label.notebookDescription")}
         name="description"
         value={formik.values.description}
         onChange={formik.handleChange}
@@ -160,11 +170,13 @@ export default function UploadNotebookSteps({
           formik={{
             errors: {
               ...(nameError ? { name: nameError } : {}),
-              ...(selectedDataset ? {} : { dataset: "Dataset is required" }),
+              ...(selectedDataset
+                ? {}
+                : { dataset: t("datasets:error.datasetRequired") }),
             },
           }}
-          saveButtonText="Create Notebook"
-          backButtonText="Back"
+          saveButtonText={t("datasets:button.createNotebook")}
+          backButtonText={t("common:back")}
         />
       </Box>
     </CustomLayout>

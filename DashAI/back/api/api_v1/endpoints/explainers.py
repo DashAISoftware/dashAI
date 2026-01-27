@@ -17,9 +17,9 @@ from DashAI.back.core.enums.status import ExplainerStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
+    ModelSession,
     Run,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
@@ -624,11 +624,11 @@ async def validate_dataset(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Run not found",
                 )
-            experiment: Experiment = db.get(Experiment, run.experiment_id)
-            if not experiment:
+            model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+            if not model_session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Experiment not found",
+                    detail="Model session not found",
                 )
 
             dataset: Dataset = db.get(Dataset, params.dataset_id)
@@ -654,8 +654,8 @@ async def validate_dataset(
 
     # TODO: validate dataset for task
     validation_response = {}
-    input_columns = experiment.input_columns
-    output_columns = experiment.output_columns
+    input_columns = model_session.input_columns
+    output_columns = model_session.output_columns
     columns = input_columns + output_columns
 
     instances_columns = list(instances.features)

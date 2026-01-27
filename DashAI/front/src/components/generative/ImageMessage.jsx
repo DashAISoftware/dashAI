@@ -2,8 +2,10 @@ import { Box, useTheme } from "@mui/material";
 import { useState } from "react";
 import { FullscreenImageChat } from "./FullscreenImageChat";
 import api from "../../api/api";
+import { useTranslation } from "react-i18next";
 
 export function ImageMessage({ image }) {
+  const { t } = useTranslation(["common"]);
   const theme = useTheme();
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
@@ -29,7 +31,7 @@ export function ImageMessage({ image }) {
       >
         <img
           src={`${api.defaults.baseURL}/v1/generative-process/image/${image}`}
-          alt="Image"
+          alt={t("common:image")}
           style={{
             maxWidth: "100%",
             maxHeight: "300px",

@@ -1,15 +1,15 @@
-export function getExplorerStatus(statusNumber) {
+export function getExplorerStatus(statusNumber, t) {
   switch (statusNumber) {
     case 0:
-      return "Not Started";
+      return t("common:notStarted");
     case 1:
-      return "In Progress";
+      return t("common:delivered");
     case 2:
-      return "Started";
+      return t("common:started");
     case 3:
-      return "Finished";
+      return t("common:finished");
     case 4:
-      return "Error";
+      return t("common:error");
     default:
       throw new Error(`Error ${statusNumber} is not a valid status`);
   }

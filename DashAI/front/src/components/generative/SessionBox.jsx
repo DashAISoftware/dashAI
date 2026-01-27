@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import SessionMenu from "./SessionMenu";
+const { useTranslation } = require("react-i18next");
 
 export default function SessionBox({
   isSelected,
@@ -11,6 +12,8 @@ export default function SessionBox({
   onDelete,
   onInfo,
 }) {
+  const { t } = useTranslation(["generative"]);
+
   return (
     <Box
       sx={{
@@ -21,12 +24,10 @@ export default function SessionBox({
         alignItems: "center",
         borderRadius: 1,
         cursor: isSelected ? "default" : "pointer",
-        bgcolor: isSelected ? "rgba(255, 255, 255, 0.05)" : "transparent",
+        bgcolor: isSelected ? "action.selected" : "transparent",
         p: 0.5,
         "&:hover": {
-          backgroundColor: isSelected
-            ? "rgba(255, 255, 255, 0.05)"
-            : "rgba(255, 255, 255, 0.05)",
+          backgroundColor: isSelected ? "action.selected" : "action.hover",
         },
       }}
       onClick={isSelected ? undefined : onClick}
@@ -42,13 +43,15 @@ export default function SessionBox({
         <Box>
           <Typography
             variant="body2"
+            color="text.primary"
             noWrap
             sx={{ maxWidth: 180, fontSize: 14 }}
           >
-            {name ? name : "Untitled Session"}
+            {name ? name : t("generative:label.untitledSession")}
           </Typography>
           <Typography
             variant="caption"
+            color="text.secondary"
             noWrap
             sx={{ maxWidth: 150, fontSize: 10, pl: 1 }}
           >

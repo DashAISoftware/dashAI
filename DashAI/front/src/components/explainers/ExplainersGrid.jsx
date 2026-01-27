@@ -7,6 +7,7 @@ import { getExplainers as getExplainersRequest } from "../../api/explainer";
 import ExplainersCard from "./ExplanainersCard";
 import useUpdateFlag from "../../hooks/useUpdateFlag";
 import { flags } from "../../constants/flags";
+import { useTranslation } from "react-i18next";
 
 /**
  * GlobalExplainersGrid
@@ -17,6 +18,7 @@ export default function ExplainersGrid(explainerConfig) {
   // const [loading, setLoading] = useState(false);
   const [explainers, setExplainers] = useState([]);
   const { runId, scope } = explainerConfig;
+  const { t } = useTranslation(["explainers"]);
 
   // Filter explainers that have status FINISHED
   function getFilteredExplainers(explainers) {
@@ -28,7 +30,9 @@ export default function ExplainersGrid(explainerConfig) {
       const explainers = await getExplainersRequest(runId, scope);
       setExplainers(explainers);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the explainers.");
+      enqueueSnackbar(t("explainers:error.fetchExplainers"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {

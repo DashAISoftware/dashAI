@@ -6,6 +6,7 @@ import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { generateSequentialName } from "../../../utils/nameGenerator";
 import FormInputWrapper from "../../configurableObject/Inputs/FormInputWrapper";
 import InputWithDebounce from "../../shared/InputWithDebounce";
+import { useTranslation } from "react-i18next";
 
 /**
  * Right sidebar component for configuring dataloader parameters
@@ -24,6 +25,9 @@ export default function DataloaderConfigBar({
   existingDatasets = [],
   onValuesChange,
 }) {
+  const [inferenceRows, setInferenceRows] = useState(1000);
+  const { t } = useTranslation(["common", "datasets"]);
+
   const { defaultName } = useMemo(
     () =>
       generateSequentialName({
@@ -32,8 +36,6 @@ export default function DataloaderConfigBar({
       }),
     [existingDatasets],
   );
-
-  const [inferenceRows, setInferenceRows] = useState(1000);
 
   if (!selectedDataloader) {
     return (
@@ -52,7 +54,7 @@ export default function DataloaderConfigBar({
           variant="body2"
           sx={{ color: "text.secondary", textAlign: "center" }}
         >
-          Select a dataloader to configure parameters
+          {t("datasets:label.selectDataloaderToConfigure")}
         </Typography>
       </Box>
     );
@@ -87,12 +89,14 @@ export default function DataloaderConfigBar({
               pb: 2,
             }}
           >
-            Type Inference Configuration
+            {t("datasets:label.inferredConfiguration")}
           </Typography>
-          <FormInputWrapper description="Number of rows used for preview/type inference (quick override).">
+          <FormInputWrapper
+            description={t("datasets:label.inferenceRowsDescription")}
+          >
             <InputWithDebounce
               variant="outlined"
-              label="Inference rows"
+              label={t("datasets:label.inferenceRows")}
               name="inference_rows"
               value={inferenceRows}
               onChange={(val) => {
@@ -126,7 +130,7 @@ export default function DataloaderConfigBar({
               textAlign: "center",
             }}
           >
-            Dataloader Configuration
+            {t("datasets:label.dataloaderConfiguration")}
           </Typography>
         </Box>
 

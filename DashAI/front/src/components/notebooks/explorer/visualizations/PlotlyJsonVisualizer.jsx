@@ -3,10 +3,12 @@ import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
 import { Box, Slider, Typography } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
+import { useTranslation } from "react-i18next";
 
 function PlotlyJsonVisualizer({ data, minimalist = false }) {
   const [expanded, setExpanded] = useState(false);
   const [height, setHeight] = useState(minimalist ? 220 : 500);
+  const { t } = useTranslation(["datasets"]);
 
   // Parse JSON if data is a string
   const parsedData = typeof data === "string" ? JSON.parse(data) : data;
@@ -121,7 +123,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
                 border: "1px solid rgba(0,0,0,0.1)",
               }}
             >
-              Height
+              {t("datasets:label.height")}
             </Typography>
             <Slider
               value={height}

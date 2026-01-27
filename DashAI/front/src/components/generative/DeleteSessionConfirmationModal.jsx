@@ -8,6 +8,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function DeleteSessionConfirmationModal({
   open,
@@ -17,6 +18,7 @@ export default function DeleteSessionConfirmationModal({
 }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const { t } = useTranslation(["common", "generative"]);
 
   return (
     <Dialog
@@ -26,20 +28,19 @@ export default function DeleteSessionConfirmationModal({
       aria-labelledby="delete-confirmation-dialog-title"
     >
       <DialogTitle id="delete-confirmation-dialog-title">
-        Confirm Deletion
+        {t("common:confirmDeletion")}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Are you sure you want to delete this session? This action cannot be
-          undone.
+          {t("generative:label.deleteSessionConfirmation")}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button onClick={onConfirm} color="error" autoFocus>
-          Delete
+          {t("common:delete")}
         </Button>
       </DialogActions>
     </Dialog>

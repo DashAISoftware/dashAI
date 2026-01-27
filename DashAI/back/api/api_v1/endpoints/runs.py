@@ -13,10 +13,10 @@ from sqlalchemy.orm import sessionmaker
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
 from DashAI.back.core.enums.metrics import LevelEnum
 from DashAI.back.dependencies.database.models import (
-    Experiment,
     GlobalExplainer,
     LocalExplainer,
     Metric,
+    ModelSession,
     Prediction,
     Run,
     RunStatus,
@@ -74,18 +74,18 @@ def get_metrics_for_run(db, run_id: int):
 @router.get("/")
 @inject
 async def get_runs(
-    experiment_id: Union[int, None] = None,
+    model_session_id: Union[int, None] = None,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Retrieve a list of the stored experiment runs in the database.
+    """Retrieve a list of the stored model session runs in the database.
 
-    The runs can be filtered by experiment_id if the parameter is passed.
+    The runs can be filtered by model_session_id if the parameter is passed.
 
     Parameters
     ----------
-    experiment_id: Union[int, None], optional
+    model_session_id: Union[int, None], optional
         If specified, the function will return all the runs associated with
-        the experiment, by default None.
+        the model session, by default None.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -98,24 +98,24 @@ async def get_runs(
     Raises
     ------
     HTTPException
-        If the experiment is not registered in the DB.
+        If the model session is not registered in the DB.
     """
     with session_factory() as db:
         try:
-            if experiment_id is not None:
-                experiment = db.get(Experiment, experiment_id)
-                if not experiment:
+            if model_session_id is not None:
+                model_session = db.get(ModelSession, model_session_id)
+                if not model_session:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Experiment not found",
+                        detail="Model session not found",
                     )
                 runs = db.scalars(
-                    select(Run).where(Run.experiment_id == experiment_id)
+                    select(Run).where(Run.model_session_id == model_session_id)
                 ).all()
                 if not runs:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Runs associated with Experiment not found",
+                        detail="Runs associated with Model Session not found",
                     )
 
                 # Add metrics to each run
@@ -240,7 +240,7 @@ async def upload_run(
     Parameters
     ----------
     params : int
-        The parameters of the new run, which includes the experiment, model name, run
+        The parameters of the new run, which includes the model session, model name, run
         name and description, among others.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
@@ -254,17 +254,18 @@ async def upload_run(
     Raises
     ------
     HTTPException
-        If the experiment with id experiment_id is not registered in the DB.
+        If the model session with id model_session_id is not registered in the DB.
     """
     with session_factory() as db:
         try:
-            experiment = db.get(Experiment, params.experiment_id)
-            if not experiment:
+            model_session = db.get(ModelSession, params.model_session_id)
+            if not model_session:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Experiment not found"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
                 )
             run = Run(
-                experiment_id=params.experiment_id,
+                model_session_id=params.model_session_id,
                 model_name=params.model_name,
                 parameters=params.parameters,
                 optimizer_name=params.optimizer_name,

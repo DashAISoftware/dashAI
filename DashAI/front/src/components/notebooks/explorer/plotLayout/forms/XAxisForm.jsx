@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
+import { useTranslation } from "react-i18next";
 
 export default function XAxisForm({
   data,
@@ -15,12 +16,13 @@ export default function XAxisForm({
   handleAxisChange,
   handleTraceChange,
 }) {
+  const { t } = useTranslation(["datasets"]);
   const tickvalsArray = Array.isArray(data[0]?.x) ? data[0].x : [];
 
   return (
     <>
       <TextField
-        label="X Axis Title"
+        label={t("datasets:label.axisTitle", { axis: "X" })}
         variant="filled"
         value={layout.xaxis?.title?.text || ""}
         onChange={(e) =>
@@ -33,7 +35,7 @@ export default function XAxisForm({
       />
 
       <TextField
-        label="X Axis Font Size"
+        label={t("datasets:label.axisFontSize", { axis: "X" })}
         variant="filled"
         type="number"
         value={layout.xaxis?.title?.font?.size || 14}
@@ -50,7 +52,7 @@ export default function XAxisForm({
       />
 
       <DebouncedColorPicker
-        label="X Axis Title Color"
+        label={t("datasets:label.axisTitleColor", { axis: "X" })}
         value={layout.xaxis?.title?.font?.color || "#2A3F5F"}
         onChange={(color) =>
           handleAxisChange("xaxis", "title", {
@@ -61,7 +63,7 @@ export default function XAxisForm({
       />
 
       <TextField
-        label="X Axis Title Standoff"
+        label={t("datasets:label.axisTitleStandoff", { axis: "X" })}
         variant="filled"
         type="number"
         value={layout.xaxis?.title?.standoff || 15}
@@ -75,7 +77,7 @@ export default function XAxisForm({
       />
 
       <DebouncedColorPicker
-        label="X Axis Tick Color"
+        label={t("datasets:label.axisTickFontColor", { axis: "X" })}
         value={layout.xaxis?.tickfont?.color || "#2A3F5F"}
         onChange={(color) =>
           handleAxisChange("xaxis", "tickfont", {
@@ -85,7 +87,7 @@ export default function XAxisForm({
         }
       />
       <TextField
-        label="X Axis Tick Angle"
+        label={t("datasets:label.axisTickAngle", { axis: "X" })}
         variant="filled"
         type="number"
         value={layout.xaxis?.tickangle || 0}
@@ -96,13 +98,13 @@ export default function XAxisForm({
       />
 
       <DebouncedColorPicker
-        label="X Axis Line Color"
+        label={t("datasets:label.axisLineColor", { axis: "X" })}
         value={layout.xaxis?.linecolor || "#FFFFFF"}
         onChange={(color) => handleAxisChange("xaxis", "linecolor", color)}
       />
 
       <TextField
-        label="X Axis Line Width"
+        label={t("datasets:label.axisLineWidth", { axis: "X" })}
         variant="filled"
         type="number"
         value={layout.xaxis?.linewidth || 1}
@@ -113,13 +115,13 @@ export default function XAxisForm({
       />
 
       <DebouncedColorPicker
-        label="X Axis Grid Color"
+        label={t("datasets:label.axisGridColor", { axis: "X" })}
         value={layout.xaxis?.gridcolor || "#FFFFFF"}
         onChange={(color) => handleAxisChange("xaxis", "gridcolor", color)}
       />
 
       <TextField
-        label="X Axis Grid Width"
+        label={t("datasets:label.axisGridWidth", { axis: "X" })}
         variant="filled"
         type="number"
         value={layout.xaxis?.gridwidth || 1}
@@ -139,7 +141,7 @@ export default function XAxisForm({
             color="primary"
           />
         }
-        label="Show Grid"
+        label={t("datasets:label.showGrid")}
       />
 
       <FormControlLabel
@@ -152,7 +154,7 @@ export default function XAxisForm({
             color="primary"
           />
         }
-        label="Show Zero Line"
+        label={t("datasets:label.showZeroLine")}
       />
       {/* X Axis Tick Labels */}
       {tickvalsArray.length > 0 &&
@@ -172,7 +174,7 @@ export default function XAxisForm({
             >
               {/* Label input */}
               <TextField
-                label={`X Tick Label for ${tick}`}
+                label={t("datasets:label.axisTickLabel", { axis: "X", tick })}
                 variant="filled"
                 value={rawTicktext}
                 onChange={(e) => {

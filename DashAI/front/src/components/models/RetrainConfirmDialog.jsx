@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Warning as WarningIcon } from "@mui/icons-material";
+import { Trans, useTranslation } from "react-i18next";
 
 /**
  * RetrainConfirmDialog - Confirms re-training a run with existing operations
@@ -23,6 +24,8 @@ export default function RetrainConfirmDialog({
   run,
   operationsCount,
 }) {
+  const { t } = useTranslation(["models", "common"]);
+
   const hasOperations =
     operationsCount &&
     (operationsCount.explainers > 0 || operationsCount.predictions > 0);
@@ -32,7 +35,7 @@ export default function RetrainConfirmDialog({
       <DialogTitle>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {hasOperations && <WarningIcon color="warning" />}
-          <Typography variant="h6">Re-train Model?</Typography>
+          <Typography variant="h6">{t("models:label.retrainModel")}</Typography>
         </Box>
       </DialogTitle>
 
@@ -40,47 +43,64 @@ export default function RetrainConfirmDialog({
         {hasOperations ? (
           <>
             <Alert severity="warning" sx={{ mb: 2 }}>
-              This run has existing operations that will be deleted
+              {t("models:label.retrainWillDeleteOperations")}
             </Alert>
             <DialogContentText>
-              Re-training run "<strong>{run?.name}</strong>" will delete:
+              <Trans i18nKey="models:label.retrainWillDeleteOperationsDetails">
+                Re-training run "<strong>{{ runName: run?.name }}</strong>" will
+                delete:
+              </Trans>
             </DialogContentText>
             <Box sx={{ mt: 2, pl: 2 }}>
               {operationsCount.explainers > 0 && (
                 <Typography variant="body2">
-                  • <strong>{operationsCount.explainers}</strong> explainer
-                  {operationsCount.explainers !== 1 ? "s" : ""}
+                  <Trans
+                    i18nKey="models:label.explainersCount"
+                    count={operationsCount.explainers}
+                  >
+                    • <strong>{{ count: operationsCount.explainers }}</strong>{" "}
+                    explainer
+                  </Trans>
                 </Typography>
               )}
               {operationsCount.predictions > 0 && (
                 <Typography variant="body2">
-                  • <strong>{operationsCount.predictions}</strong> prediction
-                  {operationsCount.predictions !== 1 ? "s" : ""}
+                  <Trans
+                    i18nKey="models:label.predictionsCount"
+                    count={operationsCount.predictions}
+                  >
+                    • <strong>{{ count: operationsCount.predictions }}</strong>{" "}
+                    prediction
+                  </Trans>
                 </Typography>
               )}
             </Box>
             <DialogContentText sx={{ mt: 2 }}>
-              These operations will be permanently removed and cannot be
-              recovered. Are you sure you want to continue?
+              {t("models:label.operationsWillBeDeletedWarning")}
             </DialogContentText>
           </>
         ) : (
           <DialogContentText>
-            Are you sure you want to re-train run "<strong>{run?.name}</strong>
-            "?
+            <Trans i18nKey="models:label.retrainConfirmDetails">
+              Are you sure you want to re-train run "
+              <strong>{{ runName: run?.name }}</strong>
+              "?
+            </Trans>
           </DialogContentText>
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{t("common:cancel")}</Button>
         <Button
           onClick={onConfirm}
           variant="contained"
           color={hasOperations ? "warning" : "primary"}
           autoFocus
         >
-          {hasOperations ? "Delete & Re-train" : "Re-train"}
+          {hasOperations
+            ? t("models:button.deleteAndRetrain")
+            : t("models:button.retrain")}
         </Button>
       </DialogActions>
     </Dialog>

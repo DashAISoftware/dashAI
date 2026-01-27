@@ -1,6 +1,8 @@
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 export default function BarHeader() {
+  const theme = useTheme();
   return (
     <Box
       display="flex"

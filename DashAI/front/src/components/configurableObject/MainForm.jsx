@@ -5,6 +5,7 @@ import { useFormik } from "formik";
 import { FormRenderer } from "./FormRenderer";
 import { getValidationSchema } from "../../utils/paramFormValidation";
 import useSchema from "../../hooks/useSchema";
+import { useTranslation } from "react-i18next";
 
 /**
  * This code implements a component that is responsible for rendering the main form,
@@ -37,6 +38,7 @@ function MainForm({
     },
   });
   useSchema();
+  const { t } = useTranslation(["common"]);
 
   // Updates the formSubmitRef with the current formik object if formSubmitRef is not null
   // this is used when the form needs to be submitted from outside the ParameterForm component
@@ -68,7 +70,7 @@ function MainForm({
           size="large"
           onClick={formik.handleSubmit}
         >
-          Save
+          {t("common:save")}
         </Button>
       )}
     </div>

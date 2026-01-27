@@ -1,0 +1,33 @@
+{
+  "button": {
+    "install": "Instalar",
+    "refresh": "Refrescar",
+    "return": "Volver",
+    "uninstall": "Desinstalar",
+    "upgrade": "Actualizar"
+  },
+  "error": {
+    "installingPlugin": "Error al instalar el plugin.",
+    "obtainPluginDetails": "Error al obtener los detalles del plugin.",
+    "obtainPlugins": "Error al intentar obtener los plugins.",
+    "updatePlugins": "Error al intentar actualizar los plugins.",
+    "upgradingPlugin": "Error al actualizar el plugin."
+  },
+  "label": {
+    "browse": "Explorar",
+    "details": "Detalles",
+    "installed": "Instalados",
+    "latest": "Más recientes",
+    "noPluginsToShow": "No hay plugins para mostrar (intenta refrescar)",
+    "oldest": "Más antiguos",
+    "plugins": "Plugins - {{label}}",
+    "tags": "Etiquetas",
+    "version": "Versión: {{version}}",
+    "versionInstalledLatestAvailable": "Versión instalada: <1></1> | Última versión disponible: <3></3>"
+  },
+  "message": {
+    "pluginInstalled": "Plugin instalado correctamente",
+    "pluginUninstalled": "Plugin desinstalado correctamente",
+    "pluginUpgraded": "Plugin actualizado correctamente"
+  }
+}

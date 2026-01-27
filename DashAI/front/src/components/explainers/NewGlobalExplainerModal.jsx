@@ -32,11 +32,7 @@ import { flags } from "../../constants/flags";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
-
-const steps = [
-  { name: "selectExplainer", label: "Set name and explainer" },
-  { name: "configureExplainer", label: "Configure explainer parameters" },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a modal that takes the user through the process of creating a new explainer.
@@ -54,6 +50,18 @@ export default function NewGlobalExplainerModal({
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
   const formSubmitRef = useRef(null);
+  const { t } = useTranslation(["explainers", "common"]);
+
+  const steps = [
+    {
+      name: "selectExplainer",
+      label: t("explainers:label.selectExplainer"),
+    },
+    {
+      name: "configureExplainer",
+      label: t("explainers:label.configureExplainerParameters"),
+    },
+  ];
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -96,7 +104,7 @@ export default function NewGlobalExplainerModal({
   const enqueueGlobalExplainerJob = async (explainerId) => {
     try {
       const response = await enqueueExplainerJobRequest(explainerId, "global");
-      enqueueSnackbar("Global explainer job successfully created.", {
+      enqueueSnackbar(t("explainers:message.globalExplainerJobCreated"), {
         variant: "success",
       });
 
@@ -105,7 +113,9 @@ export default function NewGlobalExplainerModal({
           response.id,
           (result) => {
             enqueueSnackbar(
-              `Explainer "${newGlobalExpl.name}" completed successfully`,
+              t("explainers:message.explainerJobCompleted", {
+                name: newGlobalExpl.name,
+              }),
               {
                 variant: "success",
               },
@@ -118,7 +128,9 @@ export default function NewGlobalExplainerModal({
           (result) => {
             console.error("Global explainer job failed:", result);
             enqueueSnackbar(
-              `Error processing explainer: ${result.error || "Unknown error"}`,
+              t("explainers:error.globalExplainerJobFailed", {
+                error: result.error || "Unknown error",
+              }),
               { variant: "error" },
             );
             updateExplainers();
@@ -131,7 +143,9 @@ export default function NewGlobalExplainerModal({
 
       return response;
     } catch (error) {
-      enqueueSnackbar("Error while trying to enqueue global explainer job");
+      enqueueSnackbar(t("explainers:error.globalExplainerJobEnqueueError"), {
+        variant: "error",
+      });
       console.error("Error details:", error);
       throw error;
     }
@@ -150,7 +164,9 @@ export default function NewGlobalExplainerModal({
       await enqueueGlobalExplainerJob(explainerId);
       await loadExistingExplainers();
     } catch (error) {
-      enqueueSnackbar("Error while trying to create a new explainer");
+      enqueueSnackbar(t("explainers:error.globalExplainerCreationError"), {
+        variant: "error",
+      });
       console.error("Error details:", error);
     } finally {
       setIsLoading(false);
@@ -230,7 +246,7 @@ export default function NewGlobalExplainerModal({
                   align={matches ? "center" : "left"}
                   sx={{ mb: { sm: 2, md: 0 } }}
                 >
-                  New global explainer
+                  {t("explainers:label.newGlobalExplainer")}
                 </Typography>
               </Grid>
             </Grid>
@@ -298,7 +314,7 @@ export default function NewGlobalExplainerModal({
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
+            {activeStep === 0 ? t("common:close") : t("common:back")}
           </Button>
           <TimestampWrapper
             eventName={
@@ -313,7 +329,7 @@ export default function NewGlobalExplainerModal({
               disabled={!nextEnabled}
               loading={isLoading}
             >
-              {activeStep === 1 ? "Save" : "Next"}
+              {activeStep === 1 ? t("common:save") : t("common:next")}
             </LoadingButton>
           </TimestampWrapper>
         </ButtonGroup>

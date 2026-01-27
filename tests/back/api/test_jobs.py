@@ -7,7 +7,7 @@ from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.metrics import BaseMetric
@@ -109,13 +109,13 @@ def dataset_id(dataset_1: Dataset) -> int:
     return dataset_1.id
 
 
-@pytest.fixture(scope="module", name="experiment_id", autouse=True)
-def create_experiment(client: TestClient, dataset_id: int):
+@pytest.fixture(scope="module", name="model_session_id", autouse=True)
+def create_model_session(client: TestClient, dataset_id: int):
     container = client.app.container
     session = container["session_factory"]
 
     with session() as db:
-        experiment = Experiment(
+        model_session = ModelSession(
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
@@ -138,23 +138,23 @@ def create_experiment(client: TestClient, dataset_id: int):
                 }
             ),
         )
-        db.add(experiment)
+        db.add(model_session)
         db.commit()
-        db.refresh(experiment)
+        db.refresh(model_session)
 
-        yield experiment.id
+        yield model_session.id
 
-        db.delete(experiment)
+        db.delete(model_session)
         db.commit()
         db.close()
 
 
 @pytest.fixture(scope="module", name="run_id", autouse=True)
-def create_run(client: TestClient, experiment_id: int):
+def create_run(client: TestClient, model_session_id: int):
     response = client.post(
         "/api/v1/run/",
         json={
-            "experiment_id": experiment_id,
+            "model_session_id": model_session_id,
             "model_name": "DummyModel",
             "name": "DummyRun",
             "parameters": {},
@@ -182,13 +182,13 @@ def create_run(client: TestClient, experiment_id: int):
 
 
 @pytest.fixture(scope="module", name="failed_run_id", autouse=True)
-def create_failed_run(client: TestClient, experiment_id: int):
+def create_failed_run(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             model_name="FailDummyModel",
             parameters={},
             optimizer_name="",

@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 import JsonDisplayer from "../../../shared/JsonDisplayer";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component that displays the parameters associated with an object.
@@ -11,6 +12,7 @@ import JsonDisplayer from "../../../shared/JsonDisplayer";
  */
 function Parameters({ data }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
+  const { t } = useTranslation(["common"]);
 
   return (
     <Grid container direction="column">
@@ -26,13 +28,17 @@ function Parameters({ data }) {
           }}
           sx={{ float: "right" }}
         >
-          <ToggleButton value="nested-list">List</ToggleButton>
-          <ToggleButton value="json">JSON</ToggleButton>
+          <ToggleButton value="nested-list">{t("common:list")}</ToggleButton>
+          <ToggleButton value="json">{t("common:json")}</ToggleButton>
         </ToggleButtonGroup>
       </Grid>
 
       {/* JSON object display */}
-      <JsonDisplayer displayMode={displayMode} name="Parameters" data={data} />
+      <JsonDisplayer
+        displayMode={displayMode}
+        name={t("common:parameters")}
+        data={data}
+      />
     </Grid>
   );
 }

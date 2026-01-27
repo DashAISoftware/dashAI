@@ -14,6 +14,7 @@ import {
 } from "../../utils/schema";
 import useModelParents from "../../hooks/useModelParents";
 import { Settings } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component is a subform for the form schema
@@ -35,6 +36,7 @@ function FormSchemaFieldWithParent({
   const { models } = useModelParents({
     parent: field.value?.properties.component,
   });
+  const { t } = useTranslation(["common"]);
 
   const handleOnChange = async (event) => {
     const model = models?.find((model) => model.name === event.target.value);
@@ -69,7 +71,7 @@ function FormSchemaFieldWithParent({
           </MenuItem>
         ))}
       </Input>
-      <Tooltip title="Configure submodel">
+      <Tooltip title={t("common:configureSubmodel")}>
         <IconButton onClick={handleClick}>
           <Settings />
         </IconButton>

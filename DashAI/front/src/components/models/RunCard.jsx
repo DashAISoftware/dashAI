@@ -21,6 +21,7 @@ import {
   TextField,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   PlayArrow,
   Stop,
@@ -40,6 +41,8 @@ import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSe
 import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../../api/run";
+import RunOperations from "./RunOperations";
+import { useTranslation } from "react-i18next";
 
 /**
  * Card component displaying a model run with actions and details
@@ -56,6 +59,8 @@ function RunCard({
   existingRuns = [],
   onRefresh,
 }) {
+  const theme = useTheme();
+  const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [expanded, setExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -227,20 +232,19 @@ function RunCard({
   };
 
   const statusText = getRunStatus(run.status);
-
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Not Started":
+      case 0:
         return "default";
-      case "Delivered":
-      case "Started":
+      case 1:
+      case 2:
         return "info";
-      case "Finished":
+      case 3:
         return "success";
-      case "Error":
+      case 4:
         return "error";
       default:
         return "default";
@@ -280,9 +284,9 @@ function RunCard({
         mb: 2,
         borderLeft: "4px solid",
         borderLeftColor:
-          statusText === "Finished"
+          statusText === 3 // Finished
             ? "success.main"
-            : statusText === "Error"
+            : statusText === 4 // Error
               ? "error.main"
               : isRunning
                 ? "info.main"
@@ -300,7 +304,13 @@ function RunCard({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
-            <Tooltip title={expanded ? "Hide Parameters" : "View Parameters"}>
+            <Tooltip
+              title={
+                expanded
+                  ? t("models:button.hideParameters")
+                  : t("models:button.showParameters")
+              }
+            >
               <IconButton
                 size="small"
                 onClick={() => setExpanded(!expanded)}
@@ -336,7 +346,6 @@ function RunCard({
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* Edit Mode - Save and Cancel Buttons */}
             {isEditing && (
               <>
                 <Button
@@ -346,7 +355,7 @@ function RunCard({
                   onClick={handleCancelEdit}
                   disabled={isSaving}
                 >
-                  Cancel
+                  {t("common:cancel")}
                 </Button>
                 <Button
                   variant="contained"
@@ -355,12 +364,11 @@ function RunCard({
                   onClick={handleSaveEdit}
                   disabled={isSaving}
                 >
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving ? t("common:saving") : t("common:save")}
                 </Button>
               </>
             )}
 
-            {/* Edit Button */}
             {!isEditing &&
               statusText !== "Delivered" &&
               statusText !== "Started" && (
@@ -371,10 +379,9 @@ function RunCard({
                   startIcon={<Edit />}
                   onClick={handleStartEdit}
                 >
-                  Edit
+                  {t("common:edit")}
                 </Button>
               )}
-            {/* Train/Re-train Button */}
             {canTrain && (
               <Tooltip
                 title={
@@ -402,7 +409,9 @@ function RunCard({
                   data-tour={isLastRun ? "train-button" : undefined}
                   disabled={isEditing}
                 >
-                  {statusText === "Finished" ? "Re-train" : "Train"}
+                  {statusText === "Finished"
+                    ? t("common:retrain")
+                    : t("common:trainVerb")}
                 </Button>
               </Tooltip>
             )}
@@ -414,19 +423,17 @@ function RunCard({
                 disabled
                 startIcon={<Stop />}
               >
-                Running
+                {t("common:running")}
               </Button>
             )}
 
-            {/* Status Chip */}
             <Chip
               label={statusText}
-              color={getStatusColor(statusText)}
+              color={getStatusColor(run.status)}
               size="small"
             />
 
-            {/* Delete Button */}
-            <Tooltip title="Delete Run">
+            <Tooltip title={t("models:button.deleteRun")}>
               <IconButton
                 size="small"
                 color="error"
@@ -439,11 +446,10 @@ function RunCard({
           </Box>
         </Box>
 
-        {/* Metrics Summary */}
         {metrics && Object.keys(metrics).length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Metrics
+              {t("common:metrics")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               {Object.entries(metrics).map(([metric, values]) => {
@@ -451,7 +457,10 @@ function RunCard({
                   values.reduce((sum, val) => sum + val, 0) / values.length;
                 return (
                   <Box key={metric}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography
+                      variant="caption"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
                       {metric.toUpperCase()}
                     </Typography>
                     <Typography variant="body2" fontWeight="medium">
@@ -464,14 +473,15 @@ function RunCard({
           </Box>
         )}
 
-        {/* Description if present */}
         {run.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary, mb: 2 }}
+          >
             {run.description}
           </Typography>
         )}
 
-        {/* Expandable Details */}
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <Box
             sx={{
@@ -485,17 +495,13 @@ function RunCard({
             }}
           >
             {isEditing ? (
-              // EDIT MODE
               <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                {/* Warning about editing */}
                 <Alert severity="info">
-                  Editing parameters will reset the run status to "Not Started".
-                  You'll need to retrain after saving.
+                  {t("models:message.editingParametersWarning")}
                 </Alert>
 
-                {/* Run Name */}
                 <TextField
-                  label="Run Name"
+                  label={t("models:label.runName")}
                   value={editedName}
                   onChange={(e) => setEditedName(e.target.value)}
                   fullWidth
@@ -503,11 +509,10 @@ function RunCard({
                   size="small"
                 />
 
-                {/* Model Parameters */}
                 {run.model_name && (
                   <Box>
                     <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                      Model Parameters
+                      {t("common:modelParameters")}
                     </Typography>
                     <FormSchemaContainer>
                       <FormSchemaWithSelectedModel
@@ -522,24 +527,21 @@ function RunCard({
                   </Box>
                 )}
 
-                {/* Optimizer Configuration - Only if there are optimizable params */}
                 {hasOptimizableParams && (
                   <Box
                     sx={{ display: "flex", flexDirection: "column", gap: 2 }}
                   >
                     <Divider />
                     <Typography variant="subtitle2">
-                      Hyperparameter Optimizer Configuration
+                      {t("models:label.hyperparameterOptimizerConfiguration")}
                     </Typography>
                     <Alert severity="warning" icon={false}>
-                      Some parameters are marked for optimization. Configure the
-                      optimizer below.
+                      {t("models:message.parametersMarkedForOptimization")}
                     </Alert>
 
-                    {/* Goal Metric */}
                     <Box>
                       <Typography variant="body2" sx={{ mb: 1 }}>
-                        Goal Metric *
+                        {t("models:label.goalMetric")} *
                       </Typography>
                       <ModelsTableSelectMetric
                         taskName={session?.task_name}
@@ -556,11 +558,10 @@ function RunCard({
                       handleSelectedOptimizer={handleOptimizerSelected}
                     />
 
-                    {/* Optimizer Parameters */}
                     {editedOptimizer && (
                       <Box>
                         <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                          Optimizer Parameters
+                          {t("common:optimizerParameters")}
                         </Typography>
                         <FormSchemaContainer>
                           <FormSchemaWithSelectedModel
@@ -579,7 +580,6 @@ function RunCard({
                   </Box>
                 )}
 
-                {/* Action Buttons */}
                 <Box
                   sx={{
                     display: "flex",
@@ -594,7 +594,7 @@ function RunCard({
                     onClick={handleCancelEdit}
                     disabled={isSaving}
                   >
-                    Cancel
+                    {t("common:cancel")}
                   </Button>
                   <Button
                     variant="contained"
@@ -602,25 +602,23 @@ function RunCard({
                     onClick={handleSaveEdit}
                     disabled={isSaving}
                   >
-                    {isSaving ? "Saving..." : "Save Changes"}
+                    {isSaving ? t("common:saving") : t("common:saveChanges")}
                   </Button>
                 </Box>
               </Box>
             ) : (
-              // VIEW MODE
               <Box>
-                {/* Model Parameters */}
                 {run.parameters && Object.keys(run.parameters).length > 0 && (
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="subtitle2" gutterBottom>
-                      Model Parameters
+                      {t("common:modelParameters")}
                     </Typography>
                     <TableContainer component={Paper}>
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Parameter</TableCell>
-                            <TableCell>Value</TableCell>
+                            <TableCell>{t("common:parameter")}</TableCell>
+                            <TableCell>{t("common:value")}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -644,11 +642,10 @@ function RunCard({
                   </Box>
                 )}
 
-                {/* Optimizer Configuration */}
                 {run.optimizer_name && (
                   <Box>
                     <Typography variant="subtitle2" gutterBottom>
-                      Optimizer: {run.optimizer_name}
+                      {t("common:optimizer")}: {run.optimizer_name}
                     </Typography>
                     {run.optimizer_parameters &&
                       Object.keys(run.optimizer_parameters).length > 0 && (
@@ -656,8 +653,8 @@ function RunCard({
                           <Table size="small">
                             <TableHead>
                               <TableRow>
-                                <TableCell>Parameter</TableCell>
-                                <TableCell>Value</TableCell>
+                                <TableCell>{t("common:parameter")}</TableCell>
+                                <TableCell>{t("common:value")}</TableCell>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -680,11 +677,14 @@ function RunCard({
                   </Box>
                 )}
 
-                {/* Goal Metric */}
                 {run.goal_metric && (
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Goal Metric: <strong>{run.goal_metric}</strong>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
+                      {t("models:label.goalMetric")}:{" "}
+                      <strong>{run.goal_metric}</strong>
                     </Typography>
                   </Box>
                 )}
@@ -693,7 +693,6 @@ function RunCard({
           </Box>
         </Collapse>
 
-        {/* RunResults - Shows live metrics, explainers, predictions, and hyperparameters */}
         <Box sx={{ mt: 2 }}>
           <RunResults
             run={run}
@@ -720,7 +719,7 @@ RunCard.propTypes = {
     description: PropTypes.string,
     created: PropTypes.string,
     trained_models: PropTypes.array,
-    experiment_id: PropTypes.number,
+    model_session_id: PropTypes.number,
   }).isRequired,
   models: PropTypes.array,
   session: PropTypes.shape({

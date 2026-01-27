@@ -8,9 +8,10 @@ import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
 import JobQueueWidget from "../jobs/JobQueueWidget";
-import { createExperiment } from "../../api/experiment";
+import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
+import { useTranslation } from "react-i18next";
 
 function CreateSessionSteps({
   backHome,
@@ -22,6 +23,7 @@ function CreateSessionSteps({
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["models", "common"]);
   const tourContext = useTourContext();
   const hasAdvancedTourRef = useRef(false);
 
@@ -71,7 +73,10 @@ function CreateSessionSteps({
 
   const [nextEnabled, setNextEnabled] = useState(false);
 
-  const steps = ["Select Dataset", "Prepare Dataset"];
+  const steps = [
+    t("models:label.selectDataset"),
+    t("models:label.prepareDataset"),
+  ];
 
   const { defaultName } = useMemo(() => {
     if (!selectedTask) {
@@ -151,7 +156,7 @@ function CreateSessionSteps({
 
     const currentName = formik.values.name.trim();
     if (!currentName) {
-      return "Name is required";
+      return t("models:error.nameRequired");
     }
 
     const nameExists = existingSessions.some(
@@ -160,7 +165,7 @@ function CreateSessionSteps({
         session.name.toLowerCase() === currentName.toLowerCase(),
     );
     if (nameExists) {
-      return "A session with this name already exists";
+      return t("models:error.sessionNameExists");
     }
 
     return null;
@@ -203,7 +208,7 @@ function CreateSessionSteps({
       const validationMetrics = hasValidation ? allMetricNames : [];
       const testMetrics = hasTest ? allMetricNames : [];
 
-      const response = await createExperiment(
+      const response = await createModelSession(
         newExp.dataset.id,
         newExp.task_name,
         newExp.name,
@@ -215,7 +220,7 @@ function CreateSessionSteps({
         JSON.stringify(newExp.splits),
       );
 
-      enqueueSnackbar("Session successfully created.", {
+      enqueueSnackbar(t("models:message.sessionCreatedSuccess"), {
         variant: "success",
       });
 
@@ -230,7 +235,7 @@ function CreateSessionSteps({
 
       backHome();
     } catch (error) {
-      enqueueSnackbar("Error while trying to create session", {
+      enqueueSnackbar(t("models:error.createSession"), {
         variant: "error",
       });
       console.error("Error creating session:", error);
@@ -281,16 +286,18 @@ function CreateSessionSteps({
                 ...(nameError ? { name: nameError } : {}),
                 ...(selectedDataset || activeStep === 1
                   ? {}
-                  : { dataset: "Dataset is required" }),
+                  : { dataset: t("models:error.datasetRequired") }),
                 ...(!isNextEnabled && activeStep === 1
-                  ? { validation: "Complete required fields" }
+                  ? { validation: t("models:error.completeRequiredFields") }
                   : {}),
               },
             }}
             saveButtonText={
-              activeStep === steps.length - 1 ? "Create Session" : "Next"
+              activeStep === steps.length - 1
+                ? t("models:button.createSession")
+                : t("common:next")
             }
-            backButtonText="Back"
+            backButtonText={t("common:back")}
           />
         </Box>
       </Box>

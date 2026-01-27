@@ -7,6 +7,7 @@ import ScopeStepExplorer from "./ScopeStepExplorer";
 import { createNotebookExplorer } from "../../../api/explorer";
 import { enqueueExplorerJob } from "../../../api/job";
 import { startJobPolling } from "../../../utils/jobPoller";
+import { useTranslation } from "react-i18next";
 
 export default function FormExplorerSection({
   step,
@@ -34,6 +35,7 @@ export default function FormExplorerSection({
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const handleSaveExplorer = async (params) => {
     try {
@@ -61,13 +63,20 @@ export default function FormExplorerSection({
         startJobPolling(
           jobId,
           (result) => {
-            enqueueSnackbar(`Explorer ${tool.name} processed successfully`, {
-              variant: "success",
-            });
+            enqueueSnackbar(
+              t("datasets:message.explorerProcessedSuccessfully", {
+                name: tool.name,
+              }),
+              {
+                variant: "success",
+              },
+            );
           },
           (result) => {
             enqueueSnackbar(
-              `Error processing explorer: ${result.error || "Unknown error"}`,
+              t("datasets:error.errorProcessingExplorer", {
+                error: result.error || t("common:unknownError"),
+              }),
               { variant: "error" },
             );
           },
@@ -76,7 +85,9 @@ export default function FormExplorerSection({
       handleClose();
     } catch (error) {
       console.error("Error creating explorer:", error);
-      enqueueSnackbar("Failed to create explorer", { variant: "error" });
+      enqueueSnackbar(t("datasets:error.failedToCreateExplorer"), {
+        variant: "error",
+      });
     }
   };
 

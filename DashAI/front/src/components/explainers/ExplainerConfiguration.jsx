@@ -3,8 +3,11 @@ import { DialogContentText, Grid, Paper } from "@mui/material";
 import PropTypes from "prop-types";
 
 import ParameterForm from "../configurableObject/ParameterForm";
+import { useTranslation } from "react-i18next";
 
 function ExplainerConfiguration({ paramsSchema, updateParameters }) {
+  const { t } = useTranslation(["explainers"]);
+
   return (
     <Paper
       variant="outlined"
@@ -13,7 +16,9 @@ function ExplainerConfiguration({ paramsSchema, updateParameters }) {
       <Grid container direction={"column"} alignItems={"center"}>
         {/* Form title */}
         <Grid>
-          <DialogContentText>Explainer configuration</DialogContentText>
+          <DialogContentText>
+            {t("explainers:label.explainerConfiguration")}
+          </DialogContentText>
         </Grid>
         <Grid sx={{ p: 3 }}>
           {/* Main dataloader form */}

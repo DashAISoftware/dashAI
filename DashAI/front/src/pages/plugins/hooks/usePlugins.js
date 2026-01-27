@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSnackbar } from "notistack";
 import { getPlugins as getPluginsRequest } from "../../../api/plugins";
 import { PluginStatus } from "../../../types/plugin";
+import { useTranslation } from "react-i18next";
 
 /**
  * Custom hook to get plugins from the backend
@@ -14,6 +15,7 @@ export default function usePlugins({ onSettled, refresh = false }) {
   const [pluginsBrowse, setPluginsBrowse] = useState([]);
   const [pluginsInstalled, setPluginsInstalled] = useState([]);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["plugins"]);
 
   const getPlugins = async () => {
     try {
@@ -29,7 +31,7 @@ export default function usePlugins({ onSettled, refresh = false }) {
         ),
       );
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain plugins.", {
+      enqueueSnackbar(t("plugins:error.obtainPlugins"), {
         variant: "error",
       });
     } finally {

@@ -1,5 +1,12 @@
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import { Button, Grid, MenuItem, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Grid,
+  MenuItem,
+  TextField,
+  Typography,
+  Box,
+} from "@mui/material";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
 import React, { useEffect, useState, useMemo } from "react";
@@ -9,6 +16,7 @@ import ModelsTable from "./ModelsTable";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTourContext } from "../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
@@ -23,6 +31,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
   const [compatibleModels, setCompatibleModels] = useState([]);
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const tourContext = useTourContext();
+  const { t } = useTranslation(["experiments", "common"]);
 
   const { defaultValues } = useSchema({ modelName: selectedModel });
 
@@ -47,7 +56,9 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
       });
       setCompatibleModels(models);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain compatible models");
+      enqueueSnackbar(t("experiments:error.fetchingCompatibleModels"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -158,14 +169,20 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
-          Add models to your experiment
+          {t("experiments:label.addModelsToExperiment")}
         </Typography>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <Grid container direction="row" columnSpacing={3} wrap="nowrap">
+        <Grid
+          container
+          direction="row"
+          columnSpacing={3}
+          rowSpacing={3}
+          wrap="wrap"
+        >
           <Grid size={{ xs: 4, md: 12 }}>
             <TextField
-              label="Model Name"
+              label={t("experiments:label.modelName")}
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -183,7 +200,9 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               fullWidth
               disabled={!selectedModel}
               placeholder={
-                !selectedModel ? "Select a model first" : "Model Name"
+                !selectedModel
+                  ? t("experiments:label.selectModelFirst")
+                  : t("experiments:label.modelName")
               }
               slotProps={{
                 inputLabel: { shrink: true },
@@ -195,7 +214,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             <TextField
               data-tour="exp-model-selector"
               select
-              label="Select a model to add"
+              label={t("experiments:label.selectModelToAdd")}
               value={selectedModel}
               onChange={handleOnChangeModel}
               fullWidth
@@ -207,7 +226,7 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             >
               {compatibleModels.length === 0 && (
                 <MenuItem value="" disabled>
-                  No models available
+                  {t("experiments:label.noModelsAvailable")}
                 </MenuItem>
               )}
               {compatibleModels.length > 0 &&
@@ -223,7 +242,14 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 1, md: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "flex-end",
+              width: "100%",
+            }}
+          >
             <Button
               data-tour="exp-add-model-button"
               variant="outlined"
@@ -232,9 +258,9 @@ function ConfigureModelsStep({ newExp, setNewExp, setNextEnabled }) {
               onClick={handleAddButton}
               sx={{ height: "100%" }}
             >
-              Add
+              {t("common:add")}
             </Button>
-          </Grid>
+          </Box>
         </Grid>
       </Grid>
       <Grid size={{ xs: 12 }} data-tour="models-table">
