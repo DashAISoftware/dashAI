@@ -22,6 +22,7 @@ import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
 import { deleteExplainer } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
+import { getComponentById } from "../../api/component";
 
 /**
  * GlobalExplainersCard
@@ -46,6 +47,7 @@ export default function ExplainersCard({
       JSON.stringify(expanded),
     );
   }, [expanded, explainer.id]);
+  const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
 
   function plotName(name) {
@@ -72,6 +74,16 @@ export default function ExplainersCard({
     }
   };
 
+  useEffect(() => {
+    getComponentById(explainer.explainer_name)
+      .then((data) => {
+        setComponentData(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching component data:", error);
+      });
+  }, [explainer.explainer_name]);
+
   if (compact) {
     return (
       <>
@@ -95,7 +107,9 @@ export default function ExplainersCard({
                     flexWrap: "wrap",
                   }}
                 >
-                  {plotName(explainer.explainer_name)}
+                  {componentData
+                    ? componentData.display_name
+                    : plotName(explainer.explainer_name)}
                   <Typography
                     variant="caption"
                     color="text.secondary"

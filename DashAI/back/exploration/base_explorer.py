@@ -7,6 +7,7 @@ from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Explorer, Notebook
+from DashAI.back.static.icons import Icon
 
 
 class BaseExplorerSchema(BaseSchema):
@@ -48,6 +49,7 @@ class BaseExplorer(ConfigObject, ABC):
     SHORT_DESCRIPTION: Final[str] = ""
     IMAGE_PREVIEW: Final[str] = ""
     CATEGORY: Final[str] = "Other"
+    ICON: Final[str] = Icon.Extension.value
     COLOR: Final[str] = "rgb(255, 255, 255)"
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
@@ -75,6 +77,7 @@ class BaseExplorer(ConfigObject, ABC):
         )
         metadata["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
         metadata["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
+        metadata["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
         metadata["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented

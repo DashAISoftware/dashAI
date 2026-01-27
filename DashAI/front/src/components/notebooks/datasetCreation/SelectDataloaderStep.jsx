@@ -52,9 +52,13 @@ export default function SelectDataloaderStep({
   const handleNext = () => {
     if (tourContext?.run) {
       goToNextStep();
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 1500);
+      const observer = new MutationObserver(() => {
+        if (document.querySelector('[data-tour="upload-area"]')) {
+          observer.disconnect();
+          tourContext.nextStep();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
     } else {
       goToNextStep();
     }
@@ -77,7 +81,7 @@ export default function SelectDataloaderStep({
   // fetches the available dataloaders
   useEffect(() => {
     getCompatibleDataloaders();
-  }, []);
+  }, [t]);
   return (
     <Grid
       container
@@ -92,7 +96,15 @@ export default function SelectDataloaderStep({
           <ItemSelectorWithInfo
             itemsList={dataloaders}
             selectedItem={selectedDataloader}
-            setSelectedItem={setSelectedDataloader}
+            setSelectedItem={(item) => {
+              setSelectedDataloader(item);
+              if (
+                tourContext?.run &&
+                item?.name?.toLowerCase().includes("csv")
+              ) {
+                tourContext.nextStep();
+              }
+            }}
             data-tour="csv-dataloader-option"
           />
         )}

@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
@@ -25,17 +26,35 @@ class ScatterPlotSchema(BaseExplorerSchema):
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping colored points."),
+        description=MultilingualString(
+            en=("Column name or index used to group colored points."),
+            es=("Nombre o índice de columna para agrupar puntos por color."),
+        ),
+        alias=MultilingualString(
+            en="Color group column",
+            es="Columna para grupo de color",
+        ),
     )  # type: ignore
     simbol_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping simbol of the points."),
+        description=MultilingualString(
+            en=("Column name or index used to group point symbols."),
+            es=("Nombre o índice de columna para agrupar símbolos de puntos."),
+        ),
+        alias=MultilingualString(
+            en="Symbol group column",
+            es="Columna para grupo de símbolo",
+        ),
     )  # type: ignore
     point_size: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for size of each point."),
+        description=MultilingualString(
+            en=("Column name or index to set the size of each point."),
+            es=("Nombre o índice de columna para definir el tamaño de cada punto."),
+        ),
+        alias=MultilingualString(en="Point size column", es="Columna tamaño punto"),
     )  # type: ignore
 
 
@@ -45,10 +64,16 @@ class ScatterPlotExplorer(RelationshipExplorer):
     of selected columns of a dataset.
     """
 
-    DISPLAY_NAME = "Scatter Plot"
-    DESCRIPTION = (
-        "ScatterPlotExplorer is an explorer that returns a scatter plot "
-        "of selected columns of a dataset."
+    DISPLAY_NAME = MultilingualString(en="Scatter Plot", es="Gráfico de Dispersión")
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Displays a scatter plot for two selected columns to explore their "
+            "relationship."
+        ),
+        es=(
+            "Muestra un gráfico de dispersión para dos columnas seleccionadas "
+            "a fin de explorar su relación."
+        ),
     )
     IMAGE_PREVIEW = "scatter_plot.png"
 

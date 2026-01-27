@@ -21,6 +21,7 @@ from DashAI.back.core.schema_fields import (
     none_type,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.translation_model import TranslationModel
@@ -35,60 +36,139 @@ class OpusMtEnESTransformerSchema(BaseSchema):
     num_train_epochs: schema_field(
         int_field(ge=1),
         placeholder=1,
-        description="Total number of training epochs to perform.",
+        description=MultilingualString(
+            en="Total number of training epochs to perform.",
+            es="Número total de épocas de entrenamiento a realizar.",
+        ),
+        alias=MultilingualString(en="Num train epochs", es="Número de épocas"),
     )  # type: ignore
     batch_size: schema_field(
         int_field(ge=1),
         placeholder=4,
-        description="The batch size per GPU/TPU core/CPU for training",
+        description=MultilingualString(
+            en="The batch size per GPU/TPU core/CPU for training",
+            es="El tamaño de lote por núcleo GPU/TPU/CPU para entrenamiento",
+        ),
+        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
     )  # type: ignore
     learning_rate: schema_field(
         float_field(ge=0.0),
         placeholder=2e-5,
-        description="The initial learning rate for AdamW optimizer",
+        description=MultilingualString(
+            en="The initial learning rate for AdamW optimizer",
+            es="La tasa de aprendizaje inicial para el optimizador AdamW",
+        ),
+        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
     )  # type: ignore
     device: schema_field(
         enum_field(enum=GPU_OR_CPU),
         placeholder=GPU_OR_CPU_PLACEHOLDER,
-        description="Hardware on which the training is run. If available, GPU is "
-        "recommended for efficiency reasons. Otherwise, use CPU. "
-        "If GPU is selected then it will use all gpus available. ",
+        description=MultilingualString(
+            en=(
+                "Hardware on which the training is run. If available, GPU is "
+                "recommended for efficiency reasons. Otherwise, use CPU. "
+                "If GPU is selected then it will use all gpus available. "
+            ),
+            es=(
+                "Hardware en el que se ejecuta el entrenamiento. Si está disponible, "
+                "se recomienda GPU por razones de eficiencia. De lo contrario, use "
+                "CPU. Si se selecciona GPU, usará todas las GPUs disponibles."
+            ),
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
     weight_decay: schema_field(
         float_field(ge=0.0),
         placeholder=0.01,
-        description="Weight decay is a regularization technique used in training "
-        "neural networks to prevent overfitting. In the context of the AdamW "
-        "optimizer, the 'weight_decay' parameter is the rate at which the weights of "
-        "all layers are reduced during training, provided that this rate is not zero.",
+        description=MultilingualString(
+            en=(
+                "Weight decay is a regularization technique used in training "
+                "neural networks to prevent overfitting. In the context of the AdamW "
+                "optimizer, the 'weight_decay' parameter is the rate at which the "
+                "weights of all layers are reduced during training, provided that "
+                "this rate is not zero."
+            ),
+            es=(
+                "Weight decay es una técnica de regularización usada en el "
+                "entrenamiento de redes neuronales para prevenir sobreajuste. En el "
+                "contexto del optimizador AdamW, el parámetro 'weight_decay' es la "
+                "tasa a la cual los pesos de todas las capas se reducen durante el "
+                "entrenamiento, siempre que esta tasa no sea cero."
+            ),
+        ),
+        alias=MultilingualString(en="Weight decay", es="Decaimiento de pesos"),
     )  # type: ignore
 
     log_train_every_n_epochs: schema_field(
         none_type(int_field(ge=1)),
         placeholder=1,
-        description="Log metrics for train split every n epochs during training. "
-        "If None, it won't log per epoch.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for train split every n epochs during training. "
+                "If None, it won't log per epoch."
+            ),
+            es=(
+                "Registrar métricas del split de entrenamiento cada n épocas. "
+                "Si es None, no registrará por época."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log train every N epochs", es="Registrar entrenamiento cada N épocas"
+        ),
     )  # type: ignore
 
     log_train_every_n_steps: schema_field(
         none_type(int_field(ge=1)),
         placeholder=None,
-        description="Log metrics for train split every n steps during training. "
-        "If None, it won't log per step.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for train split every n steps during training. "
+                "If None, it won't log per step."
+            ),
+            es=(
+                "Registrar métricas del split de entrenamiento cada n pasos. "
+                "Si es None, no registrará por paso."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log train every N steps", es="Registrar entrenamiento cada N pasos"
+        ),
     )  # type: ignore
 
     log_validation_every_n_epochs: schema_field(
         none_type(int_field(ge=1)),
         placeholder=1,
-        description="Log metrics for validation split every n epochs during training. "
-        "If None, it won't log per epoch.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for validation split every n epochs during training. "
+                "If None, it won't log per epoch."
+            ),
+            es=(
+                "Registrar métricas del split de validación cada n épocas. "
+                "Si es None, no registrará por época."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log validation every N epochs", es="Registrar validación cada N épocas"
+        ),
     )  # type: ignore
 
     log_validation_every_n_steps: schema_field(
         none_type(int_field(ge=1)),
         placeholder=None,
-        description="Log metrics for validation split every n steps during training. "
-        "If None, it won't log per step.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for validation split every n steps during training. "
+                "If None, it won't log per step."
+            ),
+            es=(
+                "Registrar métricas del split de validación cada n pasos. "
+                "Si es None, no registrará por paso."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log validation every N steps", es="Registrar validación cada N pasos"
+        ),
     )  # type: ignore
 
 
@@ -99,8 +179,14 @@ class OpusMtEnESTransformer(TranslationModel):
     """
 
     SCHEMA = OpusMtEnESTransformerSchema
-    DISPLAY_NAME: str = "Opus MT En-Es Transformer"
-    DESCRIPTION: str = "Pre-trained transformer for English-Spanish translation."
+    DISPLAY_NAME: str = MultilingualString(
+        en="Opus MT En-Es Transformer",
+        es="Transformer Opus MT En-Es",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Pre-trained transformer for English-Spanish translation.",
+        es="Transformer pre-entrenado para traducción inglés-español.",
+    )
     COLOR: str = "#FFA500"
     ICON: str = "Translate"
 

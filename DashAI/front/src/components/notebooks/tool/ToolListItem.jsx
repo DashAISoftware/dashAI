@@ -130,8 +130,7 @@ export default function ToolListItem({
             }}
           >
             <CategoryIcon
-              name={tool.type}
-              category={tool.metadata.category}
+              icon={tool.metadata.icon}
               color={
                 disabled ? theme.palette.text.disabled : tool.metadata.color
               }

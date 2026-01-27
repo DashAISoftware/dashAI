@@ -4,6 +4,7 @@ from typing import Any, List, Tuple, Union
 
 from PIL import Image
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -21,9 +22,18 @@ class ControlNetTask(BaseGenerativeTask):
         "outputs_cardinality": "n",
     }
 
-    DISPLAY_NAME: str = "ControlNet"
-    DESCRIPTION: str = (
-        "This task generates images based on the provided input text and image."
+    DISPLAY_NAME: str = MultilingualString(
+        en="ControlNet Image Generation", es="Generación de Imágenes con ControlNet"
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="""
+        This task generates images based on the
+        provided input text and image.
+        """,
+        es="""
+        Esta tarea genera imágenes basadas en el texto de entrada
+        y la imagen proporcionados.
+        """,
     )
 
     def prepare_for_task(

@@ -10,6 +10,7 @@ from datasets import Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
@@ -21,22 +22,41 @@ class JSONDataloaderSchema(BaseSchema):
     name: schema_field(
         string_field(),
         "",
-        (
-            "Custom name to register your dataset. If no name is specified, "
-            "the name of the uploaded file will be used."
+        description=MultilingualString(
+            en=(
+                "Custom name to register your dataset. If no name is specified, "
+                "the name of the uploaded file will be used."
+            ),
+            es=(
+                "Nombre personalizado para registrar su dataset. Si no se especifica "
+                "un nombre, se usará el nombre del archivo subido."
+            ),
         ),
+        alias=MultilingualString(en="Name", es="Nombre"),
     )  # type: ignore
     data_key: schema_field(
         none_type(string_field()),
         placeholder="data",
-        description="""
-            In case the data has the form {“data”: [{“col1”: val1, “col2”: val2, ...]}}
-            (also known as “table” in pandas), name of the field "data",
-            where the list with dictionaries with the data should be found.
-
-            In case the format is only a list of dictionaries (also known as
-            "records" orient in pandas), set this value as null.
-        """,
+        description=MultilingualString(
+            en=(
+                "In case the data has the form "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(also known as "table" in pandas), name of the field "data", '
+                "where the list with dictionaries with the data should be found. "
+                "In case the format is only a list of dictionaries (also known as "
+                '"records" orient in pandas), set this value as null.'
+            ),
+            es=(
+                "En caso de que los datos tengan la forma "
+                '{"data": [{"col1": val1, "col2": val2, ...}]} '
+                '(también conocido como "table" en pandas), nombre del campo "data", '
+                "donde se debe encontrar la lista con diccionarios con los datos. "
+                "En caso de que el formato sea solo una lista de diccionarios "
+                '(también conocido como orientación "records" en pandas), '
+                "establezca este valor como null."
+            ),
+        ),
+        alias=MultilingualString(en="Data key", es="Clave de datos"),
     )  # type: ignore
 
 
@@ -50,12 +70,23 @@ class JSONDataLoader(BaseDataLoader):
     ]
     SCHEMA = JSONDataloaderSchema
 
-    DESCRIPTION: str = """
-    Data loader for tabular data in JSON files.
-    Supports both standard JSON array format (a list of dictionaries)
-    and nested JSON data where records are contained within a specific key.
-    """
-    DISPLAY_NAME: str = "JSON Data Loader"
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Data loader for tabular data in JSON files. "
+            "Supports both standard JSON array format (a list of dictionaries) "
+            "and nested JSON data where records are contained within a specific key."
+        ),
+        es=(
+            "Cargador de datos para datos tabulares en archivos JSON. "
+            "Soporta tanto el formato de array JSON estándar (una lista de "
+            "diccionarios) como datos JSON anidados donde los registros están "
+            "contenidos dentro de una clave específica."
+        ),
+    )
+    DISPLAY_NAME: str = MultilingualString(
+        en="JSON Data Loader",
+        es="Cargador de Datos JSON",
+    )
 
     def _check_params(self, params: Dict[str, Any]) -> None:
         if "data_key" not in params:

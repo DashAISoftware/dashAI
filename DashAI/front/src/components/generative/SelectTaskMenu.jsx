@@ -6,13 +6,8 @@ import { getGenerativeTask } from "../../api/generativeTask";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useTranslation } from "react-i18next";
 
-export default function SelectTaskMenu({ goToNextStep }) {
-  const [tasks, setTasks] = useState([]);
+export default function SelectTaskMenu({ tasks, goToNextStep }) {
   const { t } = useTranslation(["generative", "common"]);
-
-  useEffect(() => {
-    getGenerativeTask().then(setTasks);
-  }, []);
 
   const [search, setSearch] = useState("");
 
