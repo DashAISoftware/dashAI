@@ -16,14 +16,14 @@ import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useTranslation } from "react-i18next";
-import { useDatasets } from "../../hooks/useDatasets";
-import { useNotebooks } from "../../hooks/useNotebooks";
-import { useDatasetUIState } from "../../hooks/useDatasetUIState";
-import { useDatasetFlow } from "../../hooks/useDatasetFlow";
-import { useDatasetActions } from "../../hooks/useDatasetActions";
+import { useDatasets } from "../../hooks/datasets/useDatasets";
+import { useNotebooks } from "../../hooks/datasets/useNotebooks";
+import { useDatasetUIState } from "../../hooks/datasets/useDatasetUIState";
+import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
+import { useDatasetActions } from "../../hooks/datasets/useDatasetActions";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
-import { useNotebookActions } from "../../hooks/useNotebooksActions";
-import { useLayoutActions } from "../../hooks/useLayoutActions";
+import { useNotebookActions } from "../../hooks/datasets/useNotebooksActions";
+import { useLayoutActions } from "../../hooks/datasets/useLayoutActions";
 
 export default function DatasetsContent() {
   const [rightBarContent, setRightBarContent] = useState(null);

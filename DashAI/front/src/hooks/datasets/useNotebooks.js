@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
-import { getNotebooks, deleteNotebook, updateNotebook } from "../api/notebook";
+import {
+  getNotebooks,
+  deleteNotebook,
+  updateNotebook,
+} from "../../api/notebook";
 
 export function useNotebooks({ enqueueSnackbar, t }) {
   const [notebooks, setNotebooks] = useState([]);
