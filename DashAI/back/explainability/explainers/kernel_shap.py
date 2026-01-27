@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
     float_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models import BaseModel
@@ -22,53 +23,113 @@ from DashAI.back.types.categorical import Categorical
 
 class KernelShapSchema(BaseSchema):
     """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
-    values to explain the output of machine learning model by attributing contributions
-    of each feature to the model's prediction.
+    values to explain the output of machine learning model by attributing
+    contributions of each feature to the model's prediction.
     """
 
     link: schema_field(
         enum_field(enum=["identity", "logit"]),
         placeholder="identity",
-        description="Link function to connect the feature importance values to the "
-        "model's outputs. Options are 'identity' to use identity function or 'logit' "
-        "to use log-odds function.",
+        description=MultilingualString(
+            en=(
+                "Link function to connect feature importance values to the "
+                "model's outputs. Options are 'identity' (identity function) "
+                "or 'logit' (log-odds)."
+            ),
+            es=(
+                "Función de enlace para conectar los valores de importancia de "
+                "características con las salidas del modelo. Opciones: 'identity' "
+                "(identidad) o 'logit' (log-odds)."
+            ),
+        ),
+        alias=MultilingualString(en="Link function", es="Función de enlace"),
     )  # type: ignore
 
     fit_parameter_sample_background_data: schema_field(
         bool_field(),
         placeholder=True,
-        description="Parameter to fit the explainer. 'true' if the background "
-        "data must be sampled, otherwise the entire train data set is used. "
-        "Smaller datasets speed up the algorithm run time.",
+        description=MultilingualString(
+            en=(
+                "Parameter to fit the explainer. 'true' if background data must "
+                "be sampled; otherwise the entire training set is used. Smaller "
+                "datasets speed up the algorithm runtime."
+            ),
+            es=(
+                "Parámetro para ajustar el explicador. 'true' si se deben "
+                "muestrear los datos de fondo; de lo contrario se usa el "
+                "conjunto de entrenamiento completo. Conjuntos más pequeños "
+                "reducen el tiempo de ejecución."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Sample background data",
+            es="Muestrear datos de fondo",
+        ),
     )  # type: ignore
 
     fit_parameter_background_fraction: schema_field(
         float_field(ge=0, le=1),
         placeholder=0.2,
-        description="Parameter to fit the explainer. If the parameter "
-        "'sample_background_data' is 'true', the proportion of background "
-        "data samples to be drawn from the training data set.",
+        description=MultilingualString(
+            en=(
+                "If 'Sample background data' is selected, this corresponds to "
+                "the fraction of background samples to draw from the training set."
+            ),
+            es=(
+                "Si se selecciona 'Muestrear datos de fondo', entonces corresponde "
+                "a la proporción de muestras de fondo a extraer "
+                "del conjunto de entrenamiento."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Background fraction",
+            es="Fracción de fondo",
+        ),
     )  # type: ignore
 
     fit_parameter_sampling_method: schema_field(
         enum_field(enum=["shuffle", "kmeans"]),
         placeholder="shuffle",
-        description="Parameter to fit the explainer. If the parameter "
-        "'sample_background_data' is 'true', whether to sample random "
-        "samples with 'shuffle' option or summarize the data set with "
-        "'kmeans' option. If 'categorical_features' is 'true', 'shuffle' "
-        "options used by default.",
+        description=MultilingualString(
+            en=(
+                "If 'true', choose to sample random "
+                "instances with 'shuffle' or summarize the dataset with "
+                "'kmeans'. If there are categorical features, 'shuffle' is used "
+                "by default."
+            ),
+            es=(
+                "Si es 'true', elija muestrear "
+                "instancias aleatorias con 'shuffle' o resumir el conjunto con "
+                "'kmeans'. Si hay características categóricas, se usa 'shuffle' "
+                "por defecto."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Sampling method",
+            es="Método de muestreo",
+        ),
     )  # type: ignore
 
 
 class KernelShap(BaseLocalExplainer):
     """Kernel SHAP is a model-agnostic explainability method for approximating SHAP
-    values to explain the output of machine learning model by attributing contributions
-    of each feature to the model's prediction.
+    values to explain the output of machine learning model by attributing
+    contributions of each feature to the model's prediction.
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
-    DISPLAY_NAME = "Kernel SHAP"
+    DISPLAY_NAME = MultilingualString(en="Kernel SHAP", es="Kernel SHAP")
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Kernel SHAP approximates SHAP values to explain a model's output by "
+            "attributing contributions of each feature to the prediction."
+        ),
+        es=(
+            "Kernel SHAP aproxima los valores SHAP para explicar la salida del "
+            "modelo atribuyendo la contribución de cada característica a la "
+            "predicción."
+        ),
+    )
     COLOR = "#008000"
     SCHEMA = KernelShapSchema
 

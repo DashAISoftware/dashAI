@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     to_dashai_dataset,
@@ -31,28 +32,51 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
     tabular_classifier: schema_field(
         component_field(parent="TabularClassificationModel"),
         placeholder={"component": "SVC", "params": {}},
-        description=(
-            "Tabular model used as the underlying model "
-            "to generate the text classifier."
+        description=MultilingualString(
+            en=(
+                "Tabular model used as the underlying model "
+                "to generate the text classifier."
+            ),
+            es=(
+                "Modelo tabular usado como el modelo subyacente "
+                "para generar el clasificador de texto."
+            ),
         ),
+        alias=MultilingualString(en="Tabular classifier", es="Clasificador tabular"),
     )  # type: ignore
     ngram_min_n: schema_field(
         int_field(ge=1),
         placeholder=1,
-        description=(
-            "The lower boundary of the range of n-values for different word n-grams "
-            "or char n-grams to be extracted. It must be an integer greater or equal "
-            "than 1"
+        description=MultilingualString(
+            en=(
+                "The lower boundary of the range of n-values for different word "
+                "n-grams or char n-grams to be extracted. It must be an integer "
+                "greater or equal than 1"
+            ),
+            es=(
+                "El límite inferior del rango de valores n para diferentes n-gramas "
+                "de palabras o caracteres a extraer. Debe ser un entero mayor o "
+                "igual a 1"
+            ),
         ),
+        alias=MultilingualString(en="Ngram min N", es="Ngrama mínimo N"),
     )  # type: ignore
     ngram_max_n: schema_field(
         int_field(ge=1),
         placeholder=1,
-        description=(
-            "The upper boundary of the range of n-values for different word n-grams "
-            "or char n-grams to be extracted. It must be an integer greater or equal "
-            "than 1"
+        description=MultilingualString(
+            en=(
+                "The upper boundary of the range of n-values for different word "
+                "n-grams or char n-grams to be extracted. It must be an integer "
+                "greater or equal than 1"
+            ),
+            es=(
+                "El límite superior del rango de valores n para diferentes n-gramas "
+                "de palabras o caracteres a extraer. Debe ser un entero mayor o "
+                "igual a 1"
+            ),
         ),
+        alias=MultilingualString(en="Ngram max N", es="Ngrama máximo N"),
     )  # type: ignore
 
 
@@ -75,9 +99,16 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
     To predict with the tabular_model the vectorizer is used to transform the dataset.
     """
 
-    DISPLAY_NAME: str = "Bag of Words Text Classifier"
-    DESCRIPTION: str = (
-        "Text classification using bag-of-words features and tabular classifiers."
+    DISPLAY_NAME: str = MultilingualString(
+        en="Bag of Words Text Classifier",
+        es="Clasificador de Texto Bolsa de Palabras",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Text classification using bag-of-words features and tabular classifiers.",
+        es=(
+            "Clasificación de texto usando bolsa de palabras y "
+            "clasificadores tabulares."
+        ),
     )
     COLOR: str = "#FF5722"
     ICON: str = "TextFields"

@@ -63,6 +63,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="column-selector-explorer-container"]',
@@ -80,9 +81,15 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    disableScrolling: true,
+    disableBackButton: true,
+    isInteractive: true,
+    disableOverlay: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="explorer-parameters"]',
@@ -95,8 +102,12 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableScrolling: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="create-explorer-button"]',
@@ -108,12 +119,14 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "left",
+    placement: "top",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlayClose: true,
     disableOverlay: true,
     hideFooter: true,
+    disableScrolling: true,
+    isInteractive: true,
   },
   {
     target: ".explorer-box",
@@ -129,8 +142,9 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "left",
+    placement: "top",
     disableBeacon: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="converters-tab"]',
@@ -147,6 +161,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="label-encoder-converter"]',
@@ -164,6 +179,8 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="column-selector-converter-container"]',
@@ -187,10 +204,15 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
     hideFooter: true,
+    disableScrolling: true,
+    isInteractive: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: ".converter-box",
@@ -203,8 +225,9 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "left",
+    placement: "top",
     disableBeacon: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="nan-remover-converter"]',
@@ -222,6 +245,7 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="column-selector-converter-container"]',
@@ -236,10 +260,15 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableOverlay: true,
     hideFooter: true,
+    isInteractive: true,
+    disableScrolling: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
 
   {
@@ -259,6 +288,8 @@ export const notebookTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="save-dataset-modal-notebook"]',
@@ -290,12 +321,16 @@ export const notebookTourSteps = [
         </div>
       </Trans>
     ),
+    placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
     disableScrolling: true,
     disableOverlayClose: true,
     showSkipButton: false,
     hideBackButton: false,
+    disableOverlay: true,
+    isInteractive: true,
+    disableBackButton: true,
     styles: {
       options: {
         zIndex: 2000,
@@ -319,6 +354,6 @@ export const notebookTourConfig = {
   showProgress: true,
   showSkipButton: true,
   showBackButton: true,
-  disableOverlayClose: false,
+  disableOverlayClose: true,
   disableCloseOnEsc: false,
 };

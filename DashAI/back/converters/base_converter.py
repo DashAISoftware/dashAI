@@ -6,6 +6,7 @@ from typing import Any, Dict, Final, Type, Union
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.static.icons import Icon
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
@@ -32,6 +33,7 @@ class BaseConverter(ConfigObject, ABC):
     SHORT_DESCRIPTION: Final[str] = ""
     IMAGE_PREVIEW: Final[str] = ""
     CATEGORY: Final[str] = "Other"
+    ICON: Final[str] = Icon.Extension.value
     COLOR: Final[str] = "rgb(255, 255, 255)"
     SUPERVISED: bool = False
     SCHEMA: BaseConverterSchema
@@ -53,6 +55,7 @@ class BaseConverter(ConfigObject, ABC):
         )
         meta["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
         meta["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
+        meta["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
         meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         meta["supervised"] = cls.SUPERVISED
 

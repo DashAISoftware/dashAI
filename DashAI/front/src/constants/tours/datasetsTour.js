@@ -95,6 +95,7 @@ export const datasetsTourSteps = [
     spotlightClicks: true,
     hideFooter: true,
     disableOverlayClose: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="csv-dataloader-option"]',
@@ -115,6 +116,8 @@ export const datasetsTourSteps = [
     placement: "right",
     disableBeacon: true,
     spotlightClicks: true,
+    disableBackButton: true,
+    isInteractive: true,
   },
   {
     target: '[data-tour="dataloader-step-next-button"]',
@@ -130,6 +133,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
 
   {
@@ -153,6 +157,8 @@ export const datasetsTourSteps = [
     placement: "left",
     disableBeacon: true,
     spotlightClicks: true,
+    disableBackButton: true,
+    maxWidth: "320px",
   },
   {
     target: '[data-tour="dataloader-config"]',
@@ -185,8 +191,9 @@ export const datasetsTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "left",
     disableBeacon: true,
+    spotlightClicks: true,
   },
   {
     target: '[data-tour="dataset-step-upload-button"]',
@@ -205,6 +212,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     spotlightClicks: true,
     hideFooter: true,
+    isInteractive: true,
   },
 
   {
@@ -219,9 +227,10 @@ export const datasetsTourSteps = [
       </Trans>
     ),
     placement: "right",
+    disableBackButton: true,
   },
   {
-    target: ".new-notebook-button",
+    target: '[data-tour="datasets-new-notebook-button"]',
     content: (
       <Trans i18nKey="datasetsTour:nextSteps">
         <div>
@@ -235,6 +244,7 @@ export const datasetsTourSteps = [
     spotlightClicks: true,
     disableOverlayClose: true,
     hideFooter: true,
+    isInteractive: true,
   },
   {
     target: ".notebook-note-box",
@@ -251,6 +261,7 @@ export const datasetsTourSteps = [
     disableBeacon: true,
     disableOverlayClose: true,
     disableCloseOnEsc: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="create-notebook-button"]',
@@ -263,10 +274,11 @@ export const datasetsTourSteps = [
         </div>
       </Trans>
     ),
-    placement: "bottom",
+    placement: "top",
     spotlightClicks: true,
     disableOverlayClose: true,
     disableBeacon: true,
+    isInteractive: true,
   },
 ];
 
@@ -275,6 +287,6 @@ export const datasetsTourConfig = {
   showProgress: true,
   showSkipButton: true,
   showBackButton: true,
-  disableOverlayClose: false,
+  disableOverlayClose: true,
   disableCloseOnEsc: false,
 };

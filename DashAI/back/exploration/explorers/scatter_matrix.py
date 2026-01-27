@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
@@ -25,12 +26,26 @@ class ScatterMatrixSchema(BaseExplorerSchema):
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping colored points."),
+        description=MultilingualString(
+            en=("Column name or index used to group colored points."),
+            es=("Nombre o índice de columna para agrupar puntos por color."),
+        ),
+        alias=MultilingualString(
+            en="Color group column",
+            es="Columna para grupo de color",
+        ),
     )  # type: ignore
     simbol_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping simbol of the points."),
+        description=MultilingualString(
+            en=("Column name or index used to group point symbols."),
+            es=("Nombre o índice de columna para agrupar símbolos de puntos."),
+        ),
+        alias=MultilingualString(
+            en="Symbol group column",
+            es="Columna para grupo de símbolo",
+        ),
     )  # type: ignore
 
 
@@ -40,15 +55,27 @@ class ScatterMatrixExplorer(RelationshipExplorer):
     of selected columns of a dataset.
     """
 
-    DISPLAY_NAME = "Multiple Scatter Plot"
-    DESCRIPTION = (
-        "ScatterMatrixExplorer is an explorer that returns a scatter matrix plot "
-        "of selected columns of a dataset. Multiple scatter plots are generated "
-        "for each pair of columns. The diagonal plots are histograms of the columns. "
+    DISPLAY_NAME = MultilingualString(
+        en="Multiple Scatter Plot",
+        es="Matriz de Dispersión",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Returns a scatter matrix for selected columns. Multiple scatter plots "
+            "are generated for each pair, with histograms on the diagonal."
+        ),
+        es=(
+            "Devuelve una matriz de dispersión para columnas seleccionadas. Se "
+            "generan gráficos de dispersión por cada par, con histogramas en la "
+            "diagonal."
+        ),
     )
     IMAGE_PREVIEW = "scatter_matrix.png"
 
-    SHORT_DESCRIPTION = "Display a scatter matrix plot of selected columns."
+    SHORT_DESCRIPTION = MultilingualString(
+        en="Display a scatter matrix plot of selected columns.",
+        es="Muestra una matriz de dispersión de columnas seleccionadas.",
+    )
 
     SCHEMA = ScatterMatrixSchema
     metadata: Dict[str, Any] = {

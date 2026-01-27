@@ -12,6 +12,7 @@ import BarHeader from "../threeSectionLayout/BarHeader";
 import { useTranslation } from "react-i18next";
 
 export default function SessionBar({
+  tasks,
   sessions,
   selectedSessionId,
   handleSessionClick,
@@ -26,19 +27,32 @@ export default function SessionBar({
   const [openSections, setOpenSections] = useState({});
   const { t } = useTranslation(["generative", "common"]);
 
+  console.log(tasks);
+  console.log(sessions);
+
+  // Create a map of task_name to display_name for quick lookup
+  const taskDisplayNameMap =
+    tasks?.reduce((map, task) => {
+      map[task.name] = task.display_name;
+      return map;
+    }, {}) || {};
+
   useEffect(() => {
-    // Initialize all sections as closed
-    const taskNames = [
+    // Initialize all sections as closed based on unique task display names
+    const uniqueDisplayNames = [
       ...new Set(
-        sessions.map((session) => session.task_name || t("common:other")),
+        sessions.map(
+          (session) =>
+            taskDisplayNameMap[session.task_name] || t("common:other"),
+        ),
       ),
     ];
     const initialOpenState = {};
-    taskNames.forEach((task) => {
-      initialOpenState[task] = false;
+    uniqueDisplayNames.forEach((displayName) => {
+      initialOpenState[displayName] = false;
     });
     setOpenSections(initialOpenState);
-  }, []);
+  }, [sessions, tasks]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -70,9 +84,12 @@ export default function SessionBar({
     }));
   };
 
-  // Group sessions by display_name
+  // Group sessions by task display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
-    const displayName = session.display_name || t("common:other");
+    // Get the display name from the task using the session's task_name
+    const displayName =
+      taskDisplayNameMap[session.task_name] || t("common:other");
+
     if (!groups[displayName]) {
       groups[displayName] = [];
     }

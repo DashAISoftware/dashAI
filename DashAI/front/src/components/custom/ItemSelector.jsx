@@ -30,6 +30,14 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
     setItemsToShow(itemsList.map(() => true));
   }, [itemsList]);
 
+  useEffect(() => {
+    if (selectedItem) {
+      setSelectedItem(
+        itemsList.find((item) => item.name === selectedItem.name) || {},
+      );
+    }
+  }, [itemsList]);
+
   const handleClearSearchField = (event) => {
     setSearchField("");
     setItemsToShow(itemsList);

@@ -2,6 +2,7 @@ from typing import List, Union
 
 from datasets import DatasetDict
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.categorical import Categorical
@@ -14,12 +15,20 @@ class RegressionTask(BaseTask):
     Here you can change the methods provided by class Task.
     """
 
-    DESCRIPTION: str = """
+    DESCRIPTION: str = MultilingualString(
+        en="""
     Regression in machine learning involves predicting continuous values for
     structured data organized in tabular form (rows and columns).
     Models are trained to learn patterns and relationships in the data,
-    enabling accurate prediction of new instances."""
-    DISPLAY_NAME: str = "Regression"
+    enabling accurate prediction of new instances.""",
+        es="""
+    La regresión en el aprendizaje automático implica predecir valores
+    continuos para datos estructurados organizados en
+    forma tabular (filas y columnas).
+    Los modelos se entrenan para aprender patrones y relaciones en los datos,
+    lo que permite una predicción precisa de nuevas instancias.""",
+    )
+    DISPLAY_NAME: str = MultilingualString(en="Regression", es="Regresión")
 
     metadata: dict = {
         "inputs_types": [Float, Integer, Categorical],

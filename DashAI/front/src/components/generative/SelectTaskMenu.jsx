@@ -3,8 +3,7 @@ import { getGenerativeTask } from "../../api/generativeTask";
 import { useTranslation } from "react-i18next";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 
-export default function SelectTaskMenu({ goToNextStep }) {
-  const [tasks, setTasks] = useState([]);
+export default function SelectTaskMenu({ tasks, goToNextStep }) {
   const { t } = useTranslation(["generative", "common"]);
 
   useEffect(() => {

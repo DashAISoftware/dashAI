@@ -119,7 +119,6 @@ export default function ConfigureToolModal({
         }}
       >
         <Typography variant="h6" fontWeight="600" sx={{ whiteSpace: "nowrap" }}>
-          Configure {tool.type}: {tool.display_name}
           {t("datasets:label.configureToolTitle", {
             toolType: tool.type,
             toolName: tool.display_name,
