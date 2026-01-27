@@ -13,8 +13,10 @@ import { LinearProgress } from "@mui/material";
 import {
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
+  renameDatasetColumn,
 } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
+import EditableColumnHeader from "./EditableColumnHeader";
 
 /**
  * Props:
@@ -25,6 +27,8 @@ import { useTranslation } from "react-i18next";
  * - autoHeight?: boolean (default true)
  * - pageSizeOptions?: number[] (default [5, 10, 25])
  * - datasetPath?: string (optional) - Path to dataset for CSV export
+ * - datasetId?: number (optional) - Dataset ID for column renaming
+ * - editableColumns?: boolean (default false) - Enable column name editing
  */
 export default function DatasetTable({
   fetchPage,
@@ -34,6 +38,8 @@ export default function DatasetTable({
   autoHeight = true,
   pageSizeOptions = [5, 10, 25],
   datasetPath,
+  datasetId,
+  editableColumns = false,
   density = "compact",
   ...props
 }) {
@@ -77,7 +83,6 @@ export default function DatasetTable({
         }));
 
         setRows(withIds);
-        // Siempre usa el total devuelto por el backend para la paginación
         setRowCount(data?.total ?? withIds.length);
       } catch (e) {
         setRows([]);
@@ -91,10 +96,8 @@ export default function DatasetTable({
       alive = false;
     };
   }, [fetchPage, paginationModel, filterModel, ...deps]);
-  // Handler for DataGrid filter changes
   const handleFilterModelChange = useCallback((model) => {
     setFilterModel((prev) => {
-      // Si el filtro es igual al anterior, igual resetea la paginación
       setPaginationModel((m) => ({ ...m, page: 0 }));
       if (!model || !model.items || model.items.length === 0) {
         return { items: [] };
@@ -106,6 +109,37 @@ export default function DatasetTable({
   useEffect(() => {
     setPaginationModel((m) => ({ ...m, page: 0 }));
   }, deps);
+
+  const handleColumnRename = useCallback(
+    async (oldName, newName) => {
+      if (!datasetId) {
+        throw new Error("Dataset ID is required for renaming columns");
+      }
+
+      const result = await renameDatasetColumn(datasetId, oldName, newName);
+
+      setColumnTypes((prevTypes) => {
+        const newTypes = { ...prevTypes };
+        if (newTypes[oldName]) {
+          newTypes[newName] = newTypes[oldName];
+          delete newTypes[oldName];
+        }
+        return newTypes;
+      });
+
+      const { page, pageSize } = paginationModel;
+      const data = await fetchPage(page, pageSize, filterModel);
+      const withIds = (data?.rows ?? []).map((r, i) => ({
+        id: page * pageSize + i,
+        ...r,
+      }));
+      setRows(withIds);
+      setRowCount(data?.total ?? withIds.length);
+
+      return result;
+    },
+    [datasetId, paginationModel, filterModel, fetchPage],
+  );
 
   const columns = useMemo(() => {
     if (columnsProp?.length) return columnsProp;
@@ -135,30 +169,47 @@ export default function DatasetTable({
                 : "string",
         minWidth: 120,
         width: Math.max(120, field.length * 8 + 40),
-        renderHeader: () => (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
-              {field}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              style={{ fontSize: "0.7rem" }}
+        sortable: !editableColumns,
+        disableColumnMenu: editableColumns,
+        renderHeader: () =>
+          editableColumns && datasetId ? (
+            <EditableColumnHeader
+              columnName={field}
+              columnType={columnTypes[field]?.type}
+              onRename={handleColumnRename}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                width: "100%",
+              }}
             >
-              {columnTypes[field]?.type || t("common:unknown")}
-            </Typography>
-          </div>
-        ),
+              <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
+                {field}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                style={{ fontSize: "0.7rem" }}
+              >
+                {columnTypes[field]?.type || t("common:unknown")}
+              </Typography>
+            </div>
+          ),
       }));
-  }, [rows, columnsProp, columnTypes]);
+  }, [
+    rows,
+    columnsProp,
+    columnTypes,
+    editableColumns,
+    datasetId,
+    handleColumnRename,
+    t,
+  ]);
 
   // Custom CSV Export Button
   function CsvExportButton() {
@@ -291,7 +342,7 @@ export default function DatasetTable({
         toolbar: CustomToolbar,
         loadingOverlay: LinearProgress,
       }}
-      columnHeaderHeight={85}
+      columnHeaderHeight={editableColumns ? 95 : 85}
       {...props}
     />
   );

@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import zipfile
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 import numpy as np
@@ -30,7 +31,11 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
 from DashAI.back.types.inf.type_inference import infer_types
 from DashAI.back.types.type_validation import validate_multiple_type_changes
-from DashAI.back.types.utils import arrow_to_dashai_schema
+from DashAI.back.types.utils import (
+    arrow_to_dashai_schema,
+    get_types_from_arrow_metadata,
+    save_types_in_arrow_metadata,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -838,6 +843,143 @@ async def update_dataset(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
+            ) from e
+
+
+@router.patch("/{dataset_id}/columns/rename")
+@inject
+async def rename_dataset_column(
+    dataset_id: int,
+    params: schemas.DatasetRenameColumnParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Rename a column in a dataset.
+
+    Parameters
+    ----------
+    dataset_id : int
+        ID of the dataset to update.
+    params : DatasetRenameColumnParams
+        Parameters containing old_name and new_name for the column.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    Dict
+        A dictionary with a success message and updated column types.
+    """
+    with session_factory() as db:
+        dataset = db.get(Dataset, dataset_id)
+        if dataset is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+
+        if dataset.status != DatasetStatus.FINISHED:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Dataset is not in finished state",
+            )
+
+        old_name = params.old_name.strip()
+        new_name = params.new_name.strip()
+        if not old_name or not new_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Column names cannot be empty",
+            )
+        if old_name == new_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="New column name must be different from old name",
+            )
+
+        dataset_path = f"{dataset.file_path}/dataset"
+        arrow_file_path = f"{dataset_path}/data.arrow"
+        try:
+            with pa.OSFile(arrow_file_path, "rb") as source:
+                reader = pa.ipc.open_file(source)
+                table = reader.read_all()
+            if old_name not in table.schema.names:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Column '{old_name}' not found in dataset",
+                )
+            if new_name in table.schema.names and new_name != old_name:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Column '{new_name}' already exists",
+                )
+
+            column_index = table.schema.get_field_index(old_name)
+            types_dict = get_types_from_arrow_metadata(table.schema)
+            new_fields = []
+            for i, field in enumerate(table.schema):
+                if i == column_index:
+                    new_fields.append(pa.field(new_name, field.type, field.nullable))
+                else:
+                    new_fields.append(field)
+
+            new_schema = pa.schema(new_fields)
+
+            renamed_table = pa.table(
+                {
+                    new_name if name == old_name else name: table[name]
+                    for name in table.schema.names
+                },
+                schema=new_schema,
+            )
+            if old_name in types_dict:
+                types_dict[new_name] = types_dict.pop(old_name)
+
+            types_serialized = {col: types_dict[col].to_string() for col in types_dict}
+            renamed_table = save_types_in_arrow_metadata(
+                renamed_table, types_serialized
+            )
+
+            with pa.OSFile(arrow_file_path, "wb") as sink:
+                writer = ipc.new_file(sink, renamed_table.schema)
+                writer.write_table(renamed_table)
+                writer.close()
+
+            splits_path = f"{dataset_path}/splits.json"
+            if os.path.exists(splits_path):
+                with open(splits_path, "r", encoding="utf-8") as f:
+                    splits_data = json.load(f)
+                if "column_names" in splits_data:
+                    splits_data["column_names"] = [
+                        new_name if name == old_name else name
+                        for name in splits_data["column_names"]
+                    ]
+                if "nan" in splits_data and old_name in splits_data["nan"]:
+                    splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
+                with open(splits_path, "w", encoding="utf-8") as f:
+                    json.dump(
+                        splits_data,
+                        f,
+                        indent=2,
+                        sort_keys=True,
+                        ensure_ascii=False,
+                    )
+
+            dataset.last_modified = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(dataset)
+            updated_columns = get_columns_spec(dataset_path)
+            return {
+                "message": f"Column '{old_name}' renamed to '{new_name}' successfully",
+                "old_name": old_name,
+                "new_name": new_name,
+                "columns": updated_columns,
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error renaming column: {str(e)}",
             ) from e
 
 

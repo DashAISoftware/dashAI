@@ -3,7 +3,6 @@ import { Typography, Select, MenuItem, Box } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { TypeChangeValidator } from "./TypeChangeValidator";
 
-// Mapeo de tipos a dtypes por defecto
 const TYPE_TO_DEFAULT_DTYPE = {
   Integer: "int64",
   Float: "float64",
@@ -38,32 +37,26 @@ export default function PreviewDatasetTable({
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
 
-  // Handler cuando el usuario selecciona un nuevo tipo en el dropdown
   const handleTypeChangeRequest = (columnName, newType) => {
     const currentType = columnTypes[columnName]?.type;
 
-    // Si no cambió el tipo, no hacer nada
     if (currentType === newType) {
       return;
     }
 
-    // Obtener el dtype correcto para el nuevo tipo
     const newDtype = TYPE_TO_DEFAULT_DTYPE[newType] || "string";
 
-    // Preparar el cambio pendiente con el dtype correcto
     setPendingChanges({
       [columnName]: {
         current_type: currentType,
         new_type: newType,
-        new_dtype: newDtype, // Ya normalizado aquí
+        new_dtype: newDtype,
       },
     });
 
-    // Mostrar el validador
     setShowValidator(true);
   };
 
-  // Handler cuando el usuario confirma los cambios después de la validación
   const handleConfirmChanges = (changes) => {
     if (onTypeChange) {
       onTypeChange(changes);
@@ -72,13 +65,11 @@ export default function PreviewDatasetTable({
     setPendingChanges({});
   };
 
-  // Handler cuando el usuario cancela
   const handleCancelChanges = () => {
     setShowValidator(false);
     setPendingChanges({});
   };
 
-  // Crear las columnas del DataGrid
   const columns = useMemo(() => {
     if (!rows || rows.length === 0) return [];
 
@@ -91,7 +82,6 @@ export default function PreviewDatasetTable({
         headerName: field,
         minWidth: 150,
         flex: 1,
-        // Custom header con el selector de tipo
         renderHeader: () => (
           <Box
             sx={{
@@ -102,7 +92,6 @@ export default function PreviewDatasetTable({
               gap: 0.5,
             }}
           >
-            {/* Nombre de la columna */}
             <Typography
               variant="subtitle2"
               sx={{
@@ -113,7 +102,6 @@ export default function PreviewDatasetTable({
               {field}
             </Typography>
 
-            {/* Selector de tipo */}
             <Select
               value={columnType?.type || "Text"}
               onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
@@ -131,10 +119,6 @@ export default function PreviewDatasetTable({
               <MenuItem value="Float">Float</MenuItem>
               <MenuItem value="Text">Text</MenuItem>
               <MenuItem value="Categorical">Categorical</MenuItem>
-              {/* <MenuItem value="Date">Date</MenuItem> */}
-              {/* <MenuItem value="Time">Time</MenuItem> */}
-              {/* <MenuItem value="Timestamp">Timestamp</MenuItem> */}
-              {/* <MenuItem value="Boolean">Boolean</MenuItem> */}
             </Select>
           </Box>
         ),
@@ -170,7 +154,6 @@ export default function PreviewDatasetTable({
         }}
       />
 
-      {/* Diálogo de validación */}
       <TypeChangeValidator
         open={showValidator}
         onClose={handleCancelChanges}

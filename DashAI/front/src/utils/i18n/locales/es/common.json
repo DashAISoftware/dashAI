@@ -133,5 +133,9 @@
   "validation": "Validación",
   "value": "Valor",
   "vertical": "Vertical",
-  "viewDetails": "Ver Detalles"
+  "viewDetails": "Ver Detalles",
+  "renameColumn": "Renombrar columna",
+  "columnNameEmpty": "El nombre de la columna no puede estar vacío",
+  "columnNameInvalid": "El nombre de la columna solo puede contener letras, números y guiones bajos",
+  "errorRenamingColumn": "Error al renombrar la columna"
 }

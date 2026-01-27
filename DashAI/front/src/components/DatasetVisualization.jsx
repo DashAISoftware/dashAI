@@ -22,12 +22,8 @@ import {
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../api/datasets";
-import DatasetTable from "./notebooks/dataset/DatasetTable";
-import { getComponents } from "../api/component";
 import { useTourContext } from "./tour/TourProvider";
-import { useSnackbar } from "notistack";
 import JobQueueWidget from "./jobs/JobQueueWidget";
-import { getDatasetStatus } from "../utils/datasetStatus";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
@@ -92,12 +88,10 @@ export default function DatasetVisualization({
     fetchDatasetInfo();
   }, [dataset.id, dataset.status]);
 
-  // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
       if (isProcessing) return { rows: [], total: 0 };
       try {
-        // Use getDatasetFile if no filters, else use getDatasetFileFiltered
         const hasFilters =
           filterModel &&
           Array.isArray(filterModel.items) &&
@@ -122,7 +116,7 @@ export default function DatasetVisualization({
   );
 
   const status = dataset.status;
-  const isProcessing = !(status === 3 || status === 4); // Finished or Error
+  const isProcessing = !(status === 3 || status === 4);
 
   return (
     <>

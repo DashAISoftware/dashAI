@@ -133,5 +133,9 @@
   "validation": "Validation",
   "value": "Value",
   "vertical": "Vertical",
-  "viewDetails": "View Details"
+  "viewDetails": "View Details",
+  "renameColumn": "Rename column",
+  "columnNameEmpty": "Column name cannot be empty",
+  "columnNameInvalid": "Column name can only contain letters, numbers and underscores",
+  "errorRenamingColumn": "Error renaming column"
 }
