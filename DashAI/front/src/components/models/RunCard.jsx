@@ -41,7 +41,6 @@ import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSe
 import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../../api/run";
-import RunOperations from "./RunOperations";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -231,7 +230,7 @@ function RunCard({
     }
   };
 
-  const statusText = getRunStatus(run.status);
+  const statusText = getRunStatus(run.status, t);
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
 
@@ -251,11 +250,8 @@ function RunCard({
     }
   };
 
-  const canTrain =
-    statusText === "Not Started" ||
-    statusText === "Error" ||
-    statusText === "Finished";
-  const isRunning = statusText === "Delivered" || statusText === "Started";
+  const canTrain = run.status === 0 || run.status === 3 || run.status === 4; // Not Started, Finished, Error
+  const isRunning = run.status === 1 || run.status === 2; // Delivered, Started
 
   const getMetrics = () => {
     if (!run.trained_models || run.trained_models.length === 0) {
@@ -284,9 +280,9 @@ function RunCard({
         mb: 2,
         borderLeft: "4px solid",
         borderLeftColor:
-          statusText === 3 // Finished
+          run.status === 3 // Finished
             ? "success.main"
-            : statusText === 4 // Error
+            : run.status === 4 // Error
               ? "error.main"
               : isRunning
                 ? "info.main"
@@ -369,23 +365,21 @@ function RunCard({
               </>
             )}
 
-            {!isEditing &&
-              statusText !== "Delivered" &&
-              statusText !== "Started" && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="primary"
-                  startIcon={<Edit />}
-                  onClick={handleStartEdit}
-                >
-                  {t("common:edit")}
-                </Button>
-              )}
+            {!isEditing && run.status !== 1 && run.status !== 2 && (
+              <Button
+                variant="outlined"
+                size="small"
+                color="primary"
+                startIcon={<Edit />}
+                onClick={handleStartEdit}
+              >
+                {t("common:edit")}
+              </Button>
+            )}
             {canTrain && (
               <Tooltip
                 title={
-                  statusText === "Finished" &&
+                  run.status === 3 &&
                   operationsCount &&
                   (operationsCount.explainers > 0 ||
                     operationsCount.predictions > 0)
@@ -396,7 +390,7 @@ function RunCard({
                 <Button
                   variant="contained"
                   color={
-                    statusText === "Finished" &&
+                    run.status === 3 &&
                     operationsCount &&
                     (operationsCount.explainers > 0 ||
                       operationsCount.predictions > 0)
@@ -409,7 +403,7 @@ function RunCard({
                   data-tour={isLastRun ? "train-button" : undefined}
                   disabled={isEditing}
                 >
-                  {statusText === "Finished"
+                  {run.status === 3
                     ? t("common:retrain")
                     : t("common:trainVerb")}
                 </Button>

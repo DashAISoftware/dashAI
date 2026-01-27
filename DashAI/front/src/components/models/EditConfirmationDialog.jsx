@@ -20,6 +20,7 @@ import {
   DeleteSweep as DeleteSweepIcon,
   RestartAlt as RestartAltIcon,
 } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 /**
  * Confirmation dialog for editing run parameters
@@ -32,23 +33,23 @@ function EditConfirmationDialog({
   run,
   hasOperations = false,
 }) {
+  const { t } = useTranslation(["models", "common"]);
+
   if (!run) {
     return null;
   }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Confirm Parameter Update</DialogTitle>
+      <DialogTitle>{t("models:label.confirmParameterUpdate")}</DialogTitle>
       <DialogContent>
         <DialogContentText sx={{ mb: 2 }}>
-          You are about to update the parameters for run{" "}
-          <strong>{run.name}</strong>. This action will have the following
-          consequences:
+          {t("models:message.aboutToUpdateParameters", { runName: run.name })}
         </DialogContentText>
 
         <Alert severity="warning" sx={{ mb: 2 }}>
-          <AlertTitle>Important</AlertTitle>
-          The following data will be permanently deleted:
+          <AlertTitle>{t("common:important")}</AlertTitle>
+          {t("models:message.dataWillBeDeleted")}
         </Alert>
 
         <List dense>
@@ -57,8 +58,8 @@ function EditConfirmationDialog({
               <DeleteSweepIcon color="warning" />
             </ListItemIcon>
             <ListItemText
-              primary="All existing metrics will be cleared"
-              secondary="Training, validation, and test metrics"
+              primary={t("models:message.metricsWillBeCleared")}
+              secondary={t("models:message.trainValidationTestMetrics")}
             />
           </ListItem>
           <ListItem>
@@ -66,8 +67,8 @@ function EditConfirmationDialog({
               <DeleteSweepIcon color="warning" />
             </ListItemIcon>
             <ListItemText
-              primary="Training results will be reset"
-              secondary="Start time, end time, and delivery time"
+              primary={t("models:message.trainingResultsWillBeReset")}
+              secondary={t("models:message.startEndDeliveryTime")}
             />
           </ListItem>
           {hasOperations && (
@@ -76,8 +77,8 @@ function EditConfirmationDialog({
                 <WarningIcon color="error" />
               </ListItemIcon>
               <ListItemText
-                primary="Existing explainers and predictions may become invalid"
-                secondary="You may need to recreate them after retraining"
+                primary={t("models:message.operationsMayBecomeInvalid")}
+                secondary={t("models:message.mayNeedToRecreate")}
               />
             </ListItem>
           )}
@@ -87,7 +88,7 @@ function EditConfirmationDialog({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <RestartAltIcon color="info" />
             <DialogContentText sx={{ color: "info.contrastText", mb: 0 }}>
-              The run will be automatically retrained after updating parameters.
+              {t("models:message.willBeRetrainedAfterUpdate")}
             </DialogContentText>
           </Box>
         </Box>
@@ -95,7 +96,7 @@ function EditConfirmationDialog({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} variant="outlined">
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button
           onClick={onConfirm}
@@ -103,7 +104,7 @@ function EditConfirmationDialog({
           color="warning"
           autoFocus
         >
-          Update & Retrain
+          {t("models:button.updateAndRetrain")}
         </Button>
       </DialogActions>
     </Dialog>
