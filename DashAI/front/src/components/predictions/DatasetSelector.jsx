@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 function DatasetSelector({
   experiment,
@@ -19,6 +20,8 @@ function DatasetSelector({
   selectedDataset,
   setSelectedDataset,
 }) {
+  const { t } = useTranslation(["prediction", "common"]);
+
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
       const data = await getDatasetFile(
@@ -34,10 +37,10 @@ function DatasetSelector({
   return (
     <Box sx={{ mb: 3 }}>
       <FormControl fullWidth>
-        <InputLabel>Select Dataset</InputLabel>
+        <InputLabel>{t("prediction:label.selectDataset")}</InputLabel>
         <Select
           value={selectedDataset?.id || ""}
-          label="Select Dataset"
+          label={t("prediction:label.selectDataset")}
           onChange={(e) => {
             const dataset = datasets.find((d) => d.id === e.target.value);
             setSelectedDataset(dataset);
@@ -45,7 +48,7 @@ function DatasetSelector({
         >
           {datasets.map((dataset) => (
             <MenuItem key={dataset.id} value={dataset.id}>
-              {dataset.name} ({dataset.total_rows} rows)
+              {dataset.name} ({dataset.total_rows} {t("common:rows")})
             </MenuItem>
           ))}
         </Select>
@@ -54,11 +57,11 @@ function DatasetSelector({
         <>
           <Alert severity="info" sx={{ mt: 2 }}>
             <Box sx={{ fontWeight: 600, mb: 1, fontSize: "1rem" }}>
-              Prediction Configuration
+              {t("prediction:label.predictionInfo")}
             </Box>
 
             <Box sx={{ mb: 1 }}>
-              <strong>Input columns:</strong>
+              <strong>{t("prediction:label.inputColumns")}:</strong>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
                 {experiment.input_columns.map((col) => (
                   <Chip
@@ -73,7 +76,7 @@ function DatasetSelector({
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <strong>Target column:</strong>
+              <strong>{t("prediction:label.targetColumn")}:</strong>
               <Chip
                 label={experiment.output_columns[0]}
                 size="small"

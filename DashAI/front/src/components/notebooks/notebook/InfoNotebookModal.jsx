@@ -10,6 +10,8 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableRow from "@mui/material/TableRow";
+import { formatDate } from "../../../utils";
+import { useTranslation } from "react-i18next";
 
 export default function InfoNotebookModal({
   notebookData,
@@ -17,30 +19,15 @@ export default function InfoNotebookModal({
   open,
   onClose,
 }) {
-  // Format date for display
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      });
-    } catch (error) {
-      return dateString;
-    }
-  };
+  const { t } = useTranslation(["datasets", "common"]);
 
   // Find the associated dataset name
   const getDatasetName = () => {
     if (!notebookData.dataset_id || !datasets.length) {
-      return "Unknown";
+      return t("common:unknown");
     }
     const dataset = datasets.find((d) => d.id === notebookData.dataset_id);
-    return dataset ? dataset.name : "Dataset not found";
+    return dataset ? dataset.name : t("common:datasetNotFound");
   };
 
   // If no notebook data is provided, don't render anything
@@ -79,7 +66,7 @@ export default function InfoNotebookModal({
         >
           <Box>
             <Typography variant="h6" component="h2">
-              Notebook Information
+              {t("datasets:label.notebookInformation")}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {notebookData.name}
@@ -99,7 +86,7 @@ export default function InfoNotebookModal({
           {notebookData.description && notebookData.description.trim() && (
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                Description
+                {t("common:description")}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {notebookData.description}
@@ -108,7 +95,7 @@ export default function InfoNotebookModal({
           )}
 
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Metadata
+            {t("common:metadata")}
           </Typography>
           <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
             <Table size="small">
@@ -119,7 +106,7 @@ export default function InfoNotebookModal({
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    ID
+                    {t("common:id")}
                   </TableCell>
                   <TableCell align="right">{notebookData.id}</TableCell>
                 </TableRow>
@@ -129,7 +116,7 @@ export default function InfoNotebookModal({
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    Associated Dataset
+                    {t("datasets:label.associatedDataset")}
                   </TableCell>
                   <TableCell align="right">{getDatasetName()}</TableCell>
                 </TableRow>
@@ -139,7 +126,7 @@ export default function InfoNotebookModal({
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    Created
+                    {t("common:created")}
                   </TableCell>
                   <TableCell align="right">
                     {formatDate(notebookData.created)}
@@ -151,7 +138,7 @@ export default function InfoNotebookModal({
                     scope="row"
                     sx={{ color: "text.secondary" }}
                   >
-                    Last Modified
+                    {t("common:lastModified")}
                   </TableCell>
                   <TableCell align="right">
                     {formatDate(notebookData.last_modified)}

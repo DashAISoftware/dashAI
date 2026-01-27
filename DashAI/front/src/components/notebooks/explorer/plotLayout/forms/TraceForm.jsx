@@ -3,6 +3,7 @@ import { TextField } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 import ColorscaleSelector from "../ColorscaleSelector";
+import { useTranslation } from "react-i18next";
 
 const usesColormap = (trace) =>
   ["heatmap", "surface", "scatter3d", "choropleth", "histogram2d"].includes(
@@ -16,11 +17,13 @@ export default function TraceForm({
   handleTraceChange,
   handleChange,
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
+
   return (
     <>
       {/* Common trace settings */}
       <TextField
-        label="Name"
+        label={t("common:name")}
         variant="filled"
         value={trace.name || ""}
         onChange={(e) => handleTraceChange(index, "name", e.target.value)}
@@ -31,7 +34,7 @@ export default function TraceForm({
       {!usesColormap(trace) && (
         <>
           <DebouncedColorPicker
-            label="Marker Color"
+            label={t("datasets:label.markerColor")}
             value={
               trace.marker?.color ||
               layout.template.layout.colorway[
@@ -60,14 +63,14 @@ export default function TraceForm({
           />
 
           <DebouncedColorPicker
-            label="Colorbar Border Color"
+            label={t("datasets:label.colorbarBorderColor")}
             value={trace.colorbar?.bordercolor || "#FFFFFF"}
             onChange={(color) =>
               handleTraceChange(index, "colorbar.bordercolor", color)
             }
           />
           <TextField
-            label="Colorbar Border Width"
+            label={t("datasets:label.colorbarBorderWidth")}
             variant="filled"
             type="number"
             value={trace.colorbar?.borderwidth || 0}

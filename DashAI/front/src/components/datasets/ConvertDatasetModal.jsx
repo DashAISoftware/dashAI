@@ -26,7 +26,7 @@ import {
   getDatasetConverterList,
 } from "../../api/converter";
 import { ConverterListStatus } from "../../types/converter";
-import { getExperimentsExist } from "../../api/datasets";
+import { getModelSessionsExist } from "../../api/datasets";
 import CopyDatasetModal from "./converterModals/CopyDatasetModal";
 import ConverterClassColumnModal from "./converterModals/ConverterClassColumnModal";
 import TooltipedCellItem from "../shared/TooltipedCellItem";
@@ -114,7 +114,7 @@ function ConvertDatasetModal({ datasetId }) {
   const handleSaveConfig = async () => {
     // Check if there are experiments associated with the dataset
     try {
-      const hasExperiments = await getExperimentsExist(datasetIdToModify);
+      const hasExperiments = await getModelSessionsExist(datasetIdToModify);
       if (hasExperiments) {
         setOpenCopyModal(true);
       } else {

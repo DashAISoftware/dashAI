@@ -12,6 +12,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   AddCircleOutline as AddIcon,
   CheckCircle as CheckIcon,
@@ -37,6 +38,7 @@ import QualityTab from "./notebooks/dataset/tabs/QualityTab";
 import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
@@ -55,13 +57,16 @@ export default function DatasetVisualization({
   newItemButtonText = "New Item",
   existingItems = [],
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
+
   if (!dataset) {
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
-        <Typography>Loading...</Typography>
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+        <Typography>{t("common:loading")}</Typography>
       </Box>
     );
   }
@@ -69,7 +74,6 @@ export default function DatasetVisualization({
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
-  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     setTab(0);
@@ -116,8 +120,8 @@ export default function DatasetVisualization({
     [dataset.file_path, dataset.status, dataset.id],
   );
 
-  const status = getDatasetStatus(dataset.status);
-  const isProcessing = !(status === "Finished" || status === "Error");
+  const status = dataset.status;
+  const isProcessing = !(status === 3 || status === 4); // Finished or Error
 
   return (
     <>
@@ -141,7 +145,7 @@ export default function DatasetVisualization({
               </Box>
               <Box>
                 <Tooltip
-                  title="Data Quality Score is calculated based on various factors including missing values, duplicate rows, and data consistency. A higher score indicates better data quality."
+                  title={t("datasets:label.dataQualityScoreTooltip")}
                   arrow
                 >
                   <Alert
@@ -162,11 +166,18 @@ export default function DatasetVisualization({
                       p: "0 12px",
                     }}
                   >
-                    Quality Score:{" "}
-                    {datasetInfo?.quality_info?.data_quality_score?.toFixed(
-                      2,
-                    ) ?? "N/A"}
-                    {datasetInfo?.quality_info?.data_quality_score ? "%" : ""}
+                    {t("datasets:label.qualityScore", {
+                      value:
+                        datasetInfo?.quality_info?.data_quality_score != null
+                          ? datasetInfo.quality_info.data_quality_score.toFixed(
+                              2,
+                            )
+                          : t("common:na"),
+                      unit:
+                        datasetInfo?.quality_info?.data_quality_score != null
+                          ? "%"
+                          : "",
+                    })}
                   </Alert>
                 </Tooltip>
               </Box>
@@ -250,7 +261,7 @@ export default function DatasetVisualization({
             {/* Tabs */}
             <Tabs
               sx={{
-                bgcolor: "#2C2C2C",
+                bgcolor: theme.palette.ui.box,
                 borderRadius: 1,
                 minHeight: "48px",
                 "& .MuiTabs-indicator": {
@@ -264,12 +275,12 @@ export default function DatasetVisualization({
                   border: "1px solid transparent",
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.05)",
+                    bgcolor: theme.palette.action.hover,
                   },
                   "&.Mui-disabled": {
-                    color: "rgb(150, 150, 150)",
-                    bgcolor: "rgb(32, 32, 32)",
-                    borderColor: "rgb(39, 39, 42)",
+                    color: theme.palette.text.disabled,
+                    bgcolor: theme.palette.ui.disabled,
+                    borderColor: theme.palette.ui.border,
                     opacity: 0.6,
                     cursor: "not-allowed",
                     filter: "grayscale(0.6)",
@@ -289,31 +300,34 @@ export default function DatasetVisualization({
               value={tab}
               onChange={(_, newValue) => setTab(newValue)}
             >
-              <Tab label="Overview" />
+              <Tab label={t("datasets:label.overview")} />
               <Tab
-                label="Numerical Analysis"
+                label={t("datasets:label.numericalAnalysis")}
                 disabled={
                   !datasetInfo?.numeric_stats ||
                   Object.keys(datasetInfo.numeric_stats).length === 0
                 }
               />
               <Tab
-                label="Categorical"
+                label={t("datasets:label.categorical")}
                 disabled={
                   !datasetInfo?.categorical_stats ||
                   Object.keys(datasetInfo.categorical_stats).length === 0
                 }
               />
               <Tab
-                label="Text"
+                label={t("datasets:label.text")}
                 disabled={
                   !datasetInfo?.text_stats ||
                   Object.keys(datasetInfo.text_stats).length === 0
                 }
               />
-              <Tab label="Data Quality" disabled={!datasetInfo?.quality_info} />
               <Tab
-                label="Correlations"
+                label={t("datasets:label.dataQuality")}
+                disabled={!datasetInfo?.quality_info}
+              />
+              <Tab
+                label={t("datasets:label.correlations")}
                 disabled={
                   !datasetInfo?.correlations ||
                   Object.keys(datasetInfo.correlations).length === 0
@@ -367,14 +381,14 @@ export default function DatasetVisualization({
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <CircularProgress color="primary" />
             <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"
               color="text.secondary"
               textAlign="center"
             >
-              This may take a few moments depending on the size of your data.
+              {t("datasets:label.processingMessage")}
             </Typography>
           </Box>
         )}

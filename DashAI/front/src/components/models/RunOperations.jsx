@@ -28,7 +28,7 @@ import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
 import PredictionCreationDialog from "./PredictionCreationDialog";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 /**
  * RunOperations component - Shows explainers and predictions for a finished run
@@ -59,6 +59,8 @@ export default function RunOperations({
     useState(false);
   const [manualPredictionDialogOpen, setManualPredictionDialogOpen] =
     useState(false);
+
+  const { t } = useTranslation(["models"]);
 
   const fetchOperations = useCallback(async () => {
     if (!run || !run.id) return;
@@ -154,13 +156,14 @@ export default function RunOperations({
           endIcon={operationsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           sx={{ textTransform: "none" }}
         >
-          {operationsVisible ? "Hide Operations" : "Show Operations"}
+          {operationsVisible
+            ? t("models:button.hideOperations")
+            : t("models:button.showOperations")}
           <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
         </Button>
       </Box>
 
       <Collapse in={operationsVisible} timeout="auto" unmountOnExit>
-        {/* Tabs for Explainability and Predictions */}
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
           <Tabs
             value={activeTab}
@@ -170,7 +173,7 @@ export default function RunOperations({
             <Tab
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <span>Explainability</span>
+                  <span>{t("models:label.explainability")}</span>
                   <Chip
                     label={globalExplainers.length + localExplainers.length}
                     size="small"
@@ -182,7 +185,7 @@ export default function RunOperations({
             <Tab
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <span>Predictions</span>
+                  <span>{t("models:label.predictions")}</span>
                   <Chip
                     label={predictions.length}
                     size="small"
@@ -194,11 +197,9 @@ export default function RunOperations({
           </Tabs>
         </Box>
 
-        {/* Tab Panel 0: Explainability */}
         {activeTab === 0 && (
           <Box sx={{ py: 2 }}>
             <Grid container spacing={2}>
-              {/* Global Explainers Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -219,7 +220,7 @@ export default function RunOperations({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Global Explainers
+                        {t("models:label.globalExplainers")}
                       </Typography>
                       <Chip
                         label={globalExplainers.length}
@@ -236,7 +237,7 @@ export default function RunOperations({
                       onClick={() => setGlobalDialogOpen(true)}
                       fullWidth
                     >
-                      New Global Explainer
+                      {t("models:button.createGlobalExplainer")}
                     </Button>
                     {globalExplainers.length === 0 ? (
                       <Typography
@@ -245,7 +246,7 @@ export default function RunOperations({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No global explainers yet
+                        {t("models:label.noGlobalExplainersYet")}
                       </Typography>
                     ) : (
                       globalExplainers.map((explainer) => (
@@ -262,7 +263,6 @@ export default function RunOperations({
                 </Box>
               </Grid>
 
-              {/* Local Explainers Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -283,7 +283,7 @@ export default function RunOperations({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Local Explainers
+                        {t("models:label.localExplainers")}
                       </Typography>
                       <Chip
                         label={localExplainers.length}
@@ -300,7 +300,7 @@ export default function RunOperations({
                       onClick={() => setLocalDialogOpen(true)}
                       fullWidth
                     >
-                      New Local Explainer
+                      {t("models:button.createLocalExplainer")}
                     </Button>
                     {localExplainers.length === 0 ? (
                       <Typography
@@ -309,7 +309,7 @@ export default function RunOperations({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No local explainers yet
+                        {t("models:label.noLocalExplainersYet")}
                       </Typography>
                     ) : (
                       localExplainers.map((explainer) => (
@@ -329,11 +329,9 @@ export default function RunOperations({
           </Box>
         )}
 
-        {/* Tab Panel 1: Predictions */}
         {activeTab === 1 && (
           <Box sx={{ py: 2 }}>
             <Grid container spacing={2}>
-              {/* Dataset Predictions Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -354,7 +352,7 @@ export default function RunOperations({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Dataset Predictions
+                        {t("models:label.datasetPredictions")}
                       </Typography>
                       <Chip
                         label={predictions.filter((p) => p.dataset_id).length}
@@ -371,7 +369,7 @@ export default function RunOperations({
                       onClick={() => setDatasetPredictionDialogOpen(true)}
                       fullWidth
                     >
-                      New Dataset Prediction
+                      {t("models:button.newDatasetPrediction")}
                     </Button>
                     {predictions.filter((p) => p.dataset_id).length === 0 ? (
                       <Typography
@@ -380,7 +378,7 @@ export default function RunOperations({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No dataset predictions yet
+                        {t("models:label.noDatasetPredictionsYet")}
                       </Typography>
                     ) : (
                       predictions
@@ -398,7 +396,6 @@ export default function RunOperations({
                 </Box>
               </Grid>
 
-              {/* Manual Predictions Column */}
               <Grid item xs={12} md={6}>
                 <Box
                   sx={{
@@ -419,7 +416,7 @@ export default function RunOperations({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Manual Predictions
+                        {t("models:label.manualPredictions")}
                       </Typography>
                       <Chip
                         label={predictions.filter((p) => !p.dataset_id).length}
@@ -436,7 +433,7 @@ export default function RunOperations({
                       onClick={() => setManualPredictionDialogOpen(true)}
                       fullWidth
                     >
-                      New Manual Prediction
+                      {t("models:button.newManualPrediction")}
                     </Button>
                     {predictions.filter((p) => !p.dataset_id).length === 0 ? (
                       <Typography
@@ -445,7 +442,7 @@ export default function RunOperations({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No manual predictions yet
+                        {t("models:label.noManualPredictionsYet")}
                       </Typography>
                     ) : (
                       predictions
@@ -516,7 +513,7 @@ RunOperations.propTypes = {
     name: PropTypes.string,
     model_name: PropTypes.string,
     status: PropTypes.number,
-    experiment_id: PropTypes.number,
+    model_session_id: PropTypes.number,
   }).isRequired,
   session: PropTypes.shape({
     id: PropTypes.number,

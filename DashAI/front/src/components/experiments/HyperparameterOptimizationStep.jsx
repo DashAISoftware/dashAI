@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Grid, Typography } from "@mui/material";
 import OptimizationTable from "./OptimizationTable";
+import { useTranslation } from "react-i18next";
 /**
  * Step of the experiment modal: add models to the experiment and configure its parameters
  * @param {object} newExp object that contains the Experiment Modal state
@@ -9,6 +10,7 @@ import OptimizationTable from "./OptimizationTable";
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
  */
 function HyperparameterOptimizationStep({ newExp, setNewExp, setNextEnabled }) {
+  const { t } = useTranslation(["experiments", "common"]);
   // checks if there is at least 1 model added to enable the "Next" button
   useEffect(() => {
     const checkIfRunsHaveOptimazers = () => {
@@ -31,7 +33,7 @@ function HyperparameterOptimizationStep({ newExp, setNewExp, setNextEnabled }) {
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3">
-          Add optimizers to your experiment
+          {t("experiments:label.addOptimizersToExperiment")}
         </Typography>
       </Grid>
       {/* Hyperparameter Optimization table */}

@@ -3,17 +3,18 @@ import { TextField, Button, Box, IconButton } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import ImageIcon from "@mui/icons-material/Image";
 import CloseIcon from "@mui/icons-material/Close";
+import { useTranslation } from "react-i18next";
 
 export function MediaInput({
   onSendMessage,
   isLoading = false,
   maxImages = 1,
-  placeholder = "Type a message",
 }) {
   const [text, setText] = useState("");
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const fileInputRef = useRef(null);
+  const { t } = useTranslation(["generative"]);
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -117,7 +118,7 @@ export function MediaInput({
           multiline
           minRows={3}
           maxRows={3}
-          placeholder={placeholder}
+          placeholder={t("generative:label.typeYourMessage")}
           value={text}
           onChange={(e) => setText(e.target.value)}
           disabled={isLoading}

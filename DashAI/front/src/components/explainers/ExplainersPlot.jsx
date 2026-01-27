@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
+import { useTranslation } from "react-i18next";
 
 export default function ExplainersPlot({ explainer, scope }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -12,6 +13,7 @@ export default function ExplainersPlot({ explainer, scope }) {
   const [currentPlot, setCurrentPlot] = useState(0);
   const [loading, setLoading] = useState(true);
   const isLocal = scope === "local";
+  const { t } = useTranslation(["explainers"]);
   function parseExplanationPlot(explanation) {
     const formattedPlot = JSON.parse(JSON.stringify(explanation));
     return formattedPlot.map(JSON.parse);
@@ -27,7 +29,9 @@ export default function ExplainersPlot({ explainer, scope }) {
       const parsedExplainersPlot = parseExplanationPlot(explainersPlots);
       setExplainersPlots(parsedExplainersPlot);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the explainers.");
+      enqueueSnackbar(t("explainers:error.fetchExplainers"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -59,7 +63,7 @@ export default function ExplainersPlot({ explainer, scope }) {
             >
               {explainersPlots.map((_, i) => (
                 <MenuItem key={i} value={i}>
-                  Instance {i + 1}
+                  {t("explainers:label.instanceNumber", { number: i + 1 })}
                 </MenuItem>
               ))}
             </Select>

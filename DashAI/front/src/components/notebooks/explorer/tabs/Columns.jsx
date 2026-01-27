@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 import JsonDisplayer from "../../../shared/JsonDisplayer";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component that displays the columns associated with an object.
@@ -10,6 +11,7 @@ import JsonDisplayer from "../../../shared/JsonDisplayer";
  */
 function Columns({ data }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
+  const { t } = useTranslation(["common"]);
 
   return (
     <Grid container direction="column">
@@ -25,13 +27,17 @@ function Columns({ data }) {
           }}
           sx={{ float: "right" }}
         >
-          <ToggleButton value="nested-list">List</ToggleButton>
-          <ToggleButton value="json">JSON</ToggleButton>
+          <ToggleButton value="nested-list">{t("common:list")}</ToggleButton>
+          <ToggleButton value="json">{t("common:json")}</ToggleButton>
         </ToggleButtonGroup>
       </Grid>
 
       {/* JSON object display */}
-      <JsonDisplayer displayMode={displayMode} name="Columns" data={data} />
+      <JsonDisplayer
+        displayMode={displayMode}
+        name={t("common:columns")}
+        data={data}
+      />
     </Grid>
   );
 }

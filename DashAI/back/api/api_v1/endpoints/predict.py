@@ -12,7 +12,7 @@ from DashAI.back.api.api_v1.schemas import prediction_params
 from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 from DashAI.back.dependencies.database.models import (
     Dataset,
-    Experiment,
+    ModelSession,
     Prediction,
     Run,
 )
@@ -47,7 +47,7 @@ async def create_prediction(
     Raises
     ------
     HTTPException
-        If the run or experiment is not found.
+        If the run or model session is not found.
     """
     db: Session
     with session_factory() as db:
@@ -141,12 +141,13 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
 
-            exp: Experiment = db.get(Experiment, run.experiment_id)
-            if not exp:
+            model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+            if not model_session:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail="Experiment not found"
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
                 )
-            input_columns = list(exp.input_columns)
+            input_columns = list(model_session.input_columns)
 
             datasets = db.query(Dataset).all()
             datasets_filtered = []

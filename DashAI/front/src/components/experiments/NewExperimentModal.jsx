@@ -19,7 +19,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
 
-import { createExperiment as createExperimentRequest } from "../../api/experiment";
+import { createModelSession as createModelSessionRequest } from "../../api/modelSession";
 import { createRun as createRunRequest } from "../../api/run";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -27,6 +27,7 @@ import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { useTourContext } from "../tour/TourProvider";
 import { renderStep } from "./renderStep";
+import { useTranslation } from "react-i18next";
 
 export default function NewExperimentModal({
   open,
@@ -40,6 +41,7 @@ export default function NewExperimentModal({
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
   const tourContext = useTourContext();
+  const { t } = useTranslation(["experiments", "common"]);
 
   const defaultNewExp = useMemo(
     () => ({
@@ -67,16 +69,21 @@ export default function NewExperimentModal({
 
   // Build steps dynamically
   const steps = [
-    { name: "selectTask", label: "Set name and task" },
+    { name: "selectTask", label: t("experiments:label.setNameAndTask") },
     ...(preselectedDataset
       ? []
-      : [{ name: "selectDataset", label: "Select dataset" }]),
-    { name: "prepareDataset", label: "Prepare dataset" },
-    { name: "metricsSelection", label: "Select metrics" },
-    { name: "configureModels", label: "Configure models" },
+      : [
+          {
+            name: "selectDataset",
+            label: t("experiments:label.selectDataset"),
+          },
+        ]),
+    { name: "prepareDataset", label: t("experiments:label.prepareDataset") },
+    { name: "metricsSelection", label: t("experiments:label.selectMetrics") },
+    { name: "configureModels", label: t("experiments:label.configureModels") },
     {
       name: "configureOptimizer",
-      label: "Configure hyperparameter optimization",
+      label: t("experiments:label.configureOptimizer"),
     },
   ];
 
@@ -120,7 +127,9 @@ export default function NewExperimentModal({
           "",
         );
       } catch (error) {
-        enqueueSnackbar(`Error while trying to create a new run: ${run.name}`);
+        enqueueSnackbar(
+          t("experiments:error.errorCreatingRun", { runName: run.name }),
+        );
 
         if (error.response) {
           console.error("Response error:", error.message);
@@ -140,7 +149,7 @@ export default function NewExperimentModal({
       const finalExperimentName =
         newExp.name.trim() === "" ? defaultName : newExp.name.trim();
 
-      const response = await createExperimentRequest(
+      const response = await createModelSessionRequest(
         newExp.dataset.id,
         newExp.task_name,
         finalExperimentName,
@@ -154,12 +163,12 @@ export default function NewExperimentModal({
       const experimentId = response.id;
       await uploadRuns(experimentId);
 
-      enqueueSnackbar("Experiment successfully created.", {
+      enqueueSnackbar(t("experiments:message.experimentCreatedSuccessfully"), {
         variant: "success",
       });
       updateExperiments();
     } catch (error) {
-      enqueueSnackbar("Error while trying to create a new experiment");
+      enqueueSnackbar(t("experiments:error.errorCreatingExperiment"));
 
       if (error.response) {
         console.error("Response error:", error.message);
@@ -304,7 +313,7 @@ export default function NewExperimentModal({
                   align={matches ? "center" : "left"}
                   sx={{ mb: { sm: 2, md: 0 } }}
                 >
-                  New experiment
+                  {t("experiments:button.newExperiment")}
                 </Typography>
               </Grid>
             </Grid>
@@ -358,7 +367,7 @@ export default function NewExperimentModal({
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
+            {activeStep === 0 ? t("common:close") : t("common:back")}
           </Button>
           <TimestampWrapper
             eventName={
@@ -391,7 +400,9 @@ export default function NewExperimentModal({
               color="primary"
               disabled={!nextEnabled}
             >
-              {activeStep === steps.length - 1 ? "Save" : "Next"}
+              {activeStep === steps.length - 1
+                ? t("common:save")
+                : t("common:next")}
             </Button>
           </TimestampWrapper>
         </ButtonGroup>

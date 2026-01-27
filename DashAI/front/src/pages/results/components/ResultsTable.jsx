@@ -1,17 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  getRuns as getRunsRequest,
-  getHyperparameterPlot as getHyperparameterPlotRequest,
-} from "../../../api/run";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import { getExperimentById } from "../../../api/experiment";
 import { useSnackbar } from "notistack";
-import { getRunStatus } from "../../../utils/runStatus";
 import ResultsTableLayout from "./ResultsTableLayout";
 import { useNavigate } from "react-router-dom";
 import { getComponents } from "../../../api/component";
 import PredictionModal from "../../../components/predictions/PredictionModal";
+import { useTranslation } from "react-i18next";
 
 // constants
 import { extractRows } from "../constants/extractRows";
@@ -42,6 +37,7 @@ function ResultsTable({
   const [predictionModalOpen, setPredictionModalOpen] = useState(false);
   const [selectedRunForPrediction, setSelectedRunForPrediction] =
     useState(null);
+  const { t } = useTranslation(["models"]);
 
   const getModels = async () => {
     return await getComponents({ selectTypes: ["Model"] });
@@ -96,7 +92,9 @@ function ResultsTable({
       setColumnGroupingModel(columnGroupingModel);
       setColumnVisibilityModel(columnVisibilityModel);
     } catch (error) {
-      enqueueSnackbar("Error while preparing runs table", { variant: "error" });
+      enqueueSnackbar(t("models:error.preparingRunsTable"), {
+        variant: "error",
+      });
       console.error(error);
     } finally {
       setLoading(false);
@@ -140,7 +138,7 @@ function ResultsTable({
         rows={
           experiment.id
             ? rows.filter(
-                (run) => String(run.experiment_id) === String(experiment.id),
+                (run) => String(run.model_session_id) === String(experiment.id),
               )
             : []
         }

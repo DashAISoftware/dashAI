@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
 export default function ParameterStepExplorer({
   explorer,
@@ -11,6 +12,7 @@ export default function ParameterStepExplorer({
   setStep,
 }) {
   const tourContext = useTourContext();
+  const { t } = useTranslation(["datasets"]);
 
   const handleSave = async (params) => {
     await handleSaveExplorer(params);
@@ -43,7 +45,9 @@ export default function ParameterStepExplorer({
   return (
     <Box flex={1} data-tour="explorer-parameters">
       <Typography variant="subtitle2" gutterBottom>
-        Step 2: Configure Parameters
+        {t("datasets:label.configureParametersStep", {
+          step: 2,
+        })}
       </Typography>
       <FormSchemaContainer>
         <FormSchemaWithSelectedModel
@@ -51,7 +55,7 @@ export default function ParameterStepExplorer({
           modelToConfigure={explorer}
           initialValues={initialParams}
           onCancel={() => setStep(0)}
-          saveButtonText="Create Explorer"
+          saveButtonText={t("datasets:button.createExplorer")}
         />
       </FormSchemaContainer>
     </Box>

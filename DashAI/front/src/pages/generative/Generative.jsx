@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import { useState, useEffect } from "react";
 import SessionBar from "../../components/generative/SessionBar";
-import MainGenerativeBox from "../../components/generative/MainGenerativeBox";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";

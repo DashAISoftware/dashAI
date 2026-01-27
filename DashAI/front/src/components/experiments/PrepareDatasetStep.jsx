@@ -16,9 +16,11 @@ import {
   getDatasetTypes as getDatasetTypesRequest,
 } from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../api/experiment";
+import { validateColumns as validateColumnsRequest } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../utils";
+import { useTranslation } from "react-i18next";
+import { Trans } from "react-i18next";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing
@@ -31,6 +33,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const [infoLoading, setInfoLoading] = useState(true);
+  const { t } = useTranslation(["experiments", "common"]);
 
   const [taskRequirements, setTaskRequirements] = useState({
     name: "",
@@ -128,7 +131,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         }
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the dataset info.");
+      enqueueSnackbar(t("experiments:error.errorFetchingDatasetInfo"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -153,7 +156,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       if (currentTask) {
         setTaskRequirements(currentTask);
       } else {
-        enqueueSnackbar(`Task requirements for ${newExp.task_name} not found.`);
+        enqueueSnackbar(
+          t("experiments:error.taskRequirementsNotFound", {
+            taskName: newExp.task_name,
+          }),
+        );
         setTaskRequirements({
           name: newExp.task_name,
           metadata: {
@@ -165,7 +172,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         });
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the task requirements.");
+      enqueueSnackbar(t("experiments:error.errorFetchingTaskRequirements"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -200,7 +207,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       );
       setColumnsAreValid(validation.dataset_status === "valid");
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the columns validation.");
+      enqueueSnackbar(t("experiments:error.errorFetchingColumnsValidation"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -301,14 +308,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     getTaskRequirements();
   }, []);
 
-  const parseListOfStrings = (stringsList) => {
-    if (!stringsList || stringsList.length === 0) return "any";
-    return stringsList.join(" or ");
-  };
-
   const renderTypesAsChips = (typesList) => {
     if (!typesList || typesList.length === 0) {
-      return <span>any</span>;
+      return <span>{t("common:any")}</span>;
     }
 
     return (
@@ -335,7 +337,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               }}
             />
             {index < typesList.length - 1 && (
-              <span style={{ margin: "0 4px" }}>or</span>
+              <span style={{ margin: "0 4px" }}>{t("common:or")}</span>
             )}
           </React.Fragment>
         ))}
@@ -351,10 +353,14 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         data-tour="models-validation-alert"
       >
         <AlertTitle>
-          {columnsAreValid
-            ? "Current Input and Output columns match"
-            : "Current Input and Output columns doesn't match"}{" "}
-          {taskRequirements.display_name} requirements
+          {taskRequirements
+            ? t(
+                columnsAreValid
+                  ? "experiments:label.columnsValidRequirements"
+                  : "experiments:label.columnsInvalidRequirements",
+                { taskName: taskRequirements.display_name },
+              )
+            : null}
         </AlertTitle>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12 }}>
@@ -366,14 +372,21 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
                 flexWrap: "wrap",
               }}
             >
-              <span>The input columns must be of the types</span>
-              {taskRequirements
-                ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
-                : null}
-              <span>
-                , and they should have a cardinality of{" "}
-                {taskRequirements.metadata.inputs_cardinality}.
-              </span>
+              <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
+                <span>The input columns must be of the types</span>
+                {taskRequirements
+                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
+                  : null}
+                <span>
+                  , and they should have a cardinality of
+                  <span>
+                    {{
+                      cardinality: taskRequirements.metadata.inputs_cardinality,
+                    }}
+                    .
+                  </span>
+                </span>
+              </Trans>
             </Box>
           </Grid>
           <Grid size={{ xs: 12 }}>
@@ -385,14 +398,19 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
                 flexWrap: "wrap",
               }}
             >
-              <span>The output columns must be of the types</span>
-              {taskRequirements
-                ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
-                : null}
-              <span>
-                , and they should have a cardinality of{" "}
-                {taskRequirements.metadata.outputs_cardinality}.
-              </span>
+              <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
+                <span>The output columns must be of the types</span>
+                {taskRequirements
+                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
+                  : null}
+                <span>
+                  , and they should have a cardinality of
+                  {{
+                    cardinality: taskRequirements.metadata.outputs_cardinality,
+                  }}
+                  .
+                </span>
+              </Trans>
             </Box>
           </Grid>
         </Grid>
@@ -401,21 +419,18 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         Object.values(datasetInfo.nan).some((v) => v > 0) ? (
           <Alert severity="warning" sx={{ mb: 1 }}>
             <AlertTitle>
-              The dataset contains missing values (NaN) in the columns:
+              {t("experiments:label.missingValuesDetected")}
             </AlertTitle>
             <Grid container spacing={2}>
               {Object.entries(datasetInfo.nan)
                 .filter(([_, count]) => count > 0)
                 .map(([col, count]) => (
                   <Grid item xs={12} key={col}>
-                    - {col}: {count} missing values
+                    - {col}: {count} {t("experiments:label.missingValues")}
                   </Grid>
                 ))}
             </Grid>
-            <p>
-              It's recommended to preprocess the dataset to handle these missing
-              values before training a model.
-            </p>
+            <p>{t("experiments:label.recommendPreprocessMissingValues")}</p>
           </Alert>
         ) : null
       ) : null}

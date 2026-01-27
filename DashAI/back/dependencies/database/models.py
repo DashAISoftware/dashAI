@@ -50,8 +50,8 @@ class Dataset(Base):
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
     )
-    experiments: Mapped[List["Experiment"]] = relationship(
-        "Experiment", cascade="all, delete-orphan", back_populates="dataset"
+    model_sessions: Mapped[List["ModelSession"]] = relationship(
+        "ModelSession", cascade="all, delete-orphan", back_populates="dataset"
     )
     predictions: Mapped[List["Prediction"]] = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="dataset"
@@ -91,10 +91,10 @@ class Dataset(Base):
         self.status = DatasetStatus.ERROR
 
 
-class Experiment(Base):
-    __tablename__ = "experiment"
+class ModelSession(Base):
+    __tablename__ = "model_session"
     """
-    Table to store all the information about a model.
+    Table to store all the information about a model session.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
@@ -116,9 +116,9 @@ class Experiment(Base):
         onupdate=datetime.now,
     )
     runs: Mapped[List["Run"]] = relationship(
-        "Run", cascade="all, delete-orphan", back_populates="experiment"
+        "Run", cascade="all, delete-orphan", back_populates="model_session"
     )
-    dataset = relationship("Dataset", back_populates="experiments")
+    dataset = relationship("Dataset", back_populates="model_sessions")
 
 
 class Run(Base):
@@ -127,8 +127,8 @@ class Run(Base):
     Table to store all the information about a specific run of a model.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    experiment_id: Mapped[int] = mapped_column(
-        ForeignKey("experiment.id", ondelete="CASCADE")
+    model_session_id: Mapped[int] = mapped_column(
+        ForeignKey("model_session.id", ondelete="CASCADE")
     )
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
@@ -162,7 +162,7 @@ class Run(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    experiment = relationship("Experiment", back_populates="runs")
+    model_session = relationship("ModelSession", back_populates="runs")
     predictions = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="run"
     )

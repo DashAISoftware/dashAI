@@ -8,7 +8,9 @@ import {
   Box,
   Chip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getColorByColumnType } from "../../utils";
+import { useTranslation } from "react-i18next";
 
 function DivideDatasetColumns({
   allColumnNames,
@@ -23,6 +25,9 @@ function DivideDatasetColumns({
   outputHelperText = "",
   disabled = false,
 }) {
+  const { t } = useTranslation(["experiments", "common"]);
+  const theme = useTheme();
+
   const handleInputAutocompleteChange = (event, newValue) => {
     onInputColumnNamesChange(newValue);
   };
@@ -43,7 +48,7 @@ function DivideDatasetColumns({
     const { key, ...otherProps } = props;
     const columnType = columnTypes[option];
     const typeColor = columnType?.type
-      ? getColorByColumnType(columnType.type)
+      ? getColorByColumnType(columnType.type, theme)
       : null;
 
     return (
@@ -76,7 +81,7 @@ function DivideDatasetColumns({
       const { key, ...tagProps } = getTagProps({ index });
       const columnType = columnTypes[option];
       const typeColor = columnType?.type
-        ? getColorByColumnType(columnType.type)
+        ? getColorByColumnType(columnType.type, theme)
         : null;
 
       const label =
@@ -107,8 +112,7 @@ function DivideDatasetColumns({
     <React.Fragment>
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 0 }}>
-          Indicate which columns of the dataset will be used as input and
-          output.
+          {t("experiments:label.selectDatasetColumns")}
         </Typography>
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -117,7 +121,7 @@ function DivideDatasetColumns({
           component="h3"
           sx={{ mb: 2, color: "grey" }}
         >
-          Select column names from the lists.
+          {t("experiments:label.selectInputOutputColumnsDescription")}
         </Typography>
       </Grid>
 
@@ -143,8 +147,8 @@ function DivideDatasetColumns({
             helperText={inputHelperText}
             placeholder={
               allColumnNames.length > 0
-                ? "Select columns"
-                : "Loading columns..."
+                ? t("common:selectColumns")
+                : t("common:loadingColumns")
             }
           />
         )}
@@ -173,8 +177,8 @@ function DivideDatasetColumns({
             helperText={outputHelperText}
             placeholder={
               allColumnNames.length > 0
-                ? "Select columns"
-                : "Loading columns..."
+                ? t("common:selectColumns")
+                : t("common:loadingColumns")
             }
           />
         )}

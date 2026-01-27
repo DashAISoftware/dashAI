@@ -8,6 +8,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function DeleteConfirmationModal({
   open,
@@ -18,6 +19,7 @@ export default function DeleteConfirmationModal({
 }) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const { t } = useTranslation(["common"]);
 
   return (
     <Dialog
@@ -31,20 +33,23 @@ export default function DeleteConfirmationModal({
       }}
     >
       <DialogTitle id="delete-confirmation-dialog-title">
-        Confirm Deletion
+        {t("common:confirmDeletion")}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
           {content ||
-            "Are you sure you want to delete this item? This action cannot be undone."}
+            t(
+              "common:confirmDeletionMessage",
+              "Are you sure you want to delete this item? This action cannot be undone.",
+            )}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button onClick={onConfirm} color="error" autoFocus>
-          Delete
+          {t("common:delete")}
         </Button>
       </DialogActions>
     </Dialog>

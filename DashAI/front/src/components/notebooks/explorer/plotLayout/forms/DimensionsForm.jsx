@@ -1,7 +1,10 @@
 import React from "react";
 import { TextField, Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export default function DimensionsForm({ data, handleTraceChange }) {
+  const { t } = useTranslation(["datasets"]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {data[0].dimensions.map((dim, idx) => (
@@ -19,12 +22,15 @@ export default function DimensionsForm({ data, handleTraceChange }) {
             color="text.secondary"
             sx={{ mb: 2, color: "white" }}
           >
-            Dimension {idx + 1}: {dim.label || `Dimension ${idx + 1}`}
+            {t("datasets:label.dimensionIdx", {
+              idx: idx + 1,
+              label: dim.label || `Dimension ${idx + 1}`,
+            })}
           </Typography>
 
           {/* Dimension Title */}
           <TextField
-            label="Dimension Title"
+            label={t("datasets:label.dimensionTitle")}
             variant="filled"
             value={dim.label || ""}
             onChange={(e) =>

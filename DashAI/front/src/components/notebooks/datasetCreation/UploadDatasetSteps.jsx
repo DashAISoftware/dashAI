@@ -3,6 +3,7 @@ import SelectDataloaderStep from "./SelectDataloaderStep";
 import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
 import CustomLayout from "../../custom/CustomLayout";
+import { useTranslation } from "react-i18next";
 
 export default function UploadDatasetSteps({
   backHome,
@@ -15,6 +16,7 @@ export default function UploadDatasetSteps({
   const [formValues, setFormValues] = useState({});
   const [error, setError] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const { t } = useTranslation(["datasets"]);
 
   const formSubmitRef = useRef(null);
 
@@ -34,11 +36,11 @@ export default function UploadDatasetSteps({
   const getSubtitle = () => {
     switch (step) {
       case 0:
-        return "Select a way to upload your data";
+        return t("datasets:label.selectUploadMethod");
       case 1:
-        return "Upload your dataset and configure parameters";
+        return t("datasets:label.uploadAndConfigure");
       default:
-        return "Configure your dataset";
+        return t("datasets:label.configureDataset");
     }
   };
 
@@ -62,7 +64,11 @@ export default function UploadDatasetSteps({
   }, [step, selectedDataloader, existingDatasets, renderRightBar]);
 
   return (
-    <CustomLayout title={"Upload Dataset"} subtitle={getSubtitle()} padding={0}>
+    <CustomLayout
+      title={t("datasets:label.uploadDataset")}
+      subtitle={getSubtitle()}
+      padding={0}
+    >
       {step === 0 && (
         <SelectDataloaderStep
           goToNextStep={goToNextStep}

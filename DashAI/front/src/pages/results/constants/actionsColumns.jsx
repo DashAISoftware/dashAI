@@ -15,8 +15,7 @@ export const actionsColumns = (actions) =>
     headerAlign: "center",
     minWidth: 50,
     renderCell: (params) => {
-      const loading =
-        params.row.status === "Started" || params.row.status === "Delivered";
+      const loading = params.row.status === 1 || params.row.status === 2; // Delivered or Started
 
       return (
         <IconButton
@@ -29,7 +28,7 @@ export const actionsColumns = (actions) =>
               ? false
               : !action.requiresFinished
                 ? loading
-                : params.row.status !== "Finished"
+                : params.row.status !== 3 // Finished
           }
           loading={action.alwaysEnabled ? false : loading}
         >
