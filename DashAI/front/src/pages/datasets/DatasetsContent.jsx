@@ -23,6 +23,7 @@ import { useDatasetFlow } from "../../hooks/useDatasetFlow";
 import { useDatasetActions } from "../../hooks/useDatasetActions";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { useNotebookActions } from "../../hooks/useNotebooksActions";
+import { useLayoutActions } from "../../hooks/useLayoutActions";
 
 export default function DatasetsContent() {
   const [rightBarContent, setRightBarContent] = useState(null);
@@ -141,42 +142,28 @@ export default function DatasetsContent() {
     createDatasetFromNotebook,
   });
 
-  const goToNextStep = (option) => {
-    if (option === "dataset") {
-      goToDatasetFlow();
-    } else {
-      goToNotebookFlow();
-    }
+  const { goToNextStep, handleNewSessionButton, handleDatasetCreated } =
+    useLayoutActions({
+      goToDatasetFlow,
+      goToNotebookFlow,
+      resetUI,
 
-    clearSelectedNotebook();
-    clearSelectedDataset();
+      clearSelectedDataset,
+      clearSelectedNotebook,
 
-    if (option === "dataset" && tourContext?.run) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 600);
-    }
-  };
+      selectDatasetView,
+
+      addDatasetOptimistically,
+      startDatasetPolling,
+
+      setRightBarContent,
+      tourContext,
+    });
 
   useEffect(() => {
     fetchDatasets();
     fetchNotebooks();
   }, []);
-
-  const handleNewSessionButton = () => {
-    clearSelectedDataset();
-    clearSelectedNotebook();
-    resetUI();
-  };
-
-  const handleDatasetCreated = (newDataset, datasetJob) => {
-    addDatasetOptimistically(newDataset);
-    selectDatasetView();
-    clearSelectedNotebook();
-    // clear right bar content injected during dataset creation (e.g. dataloader config)
-    setRightBarContent(null);
-    startDatasetPolling(newDataset, datasetJob);
-  };
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
