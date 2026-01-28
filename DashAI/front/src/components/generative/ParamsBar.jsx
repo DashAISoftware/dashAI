@@ -12,7 +12,7 @@ import {
   updateGenerativeSessionParams,
 } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 
 export default function ParamsBar({

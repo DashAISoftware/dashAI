@@ -8,7 +8,7 @@ import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import LeftBar from "../../components/models/LeftBar";
-import CenterBox from "../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../../components/threeSectionLayout/panelContainers/CenterBox";
 import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";

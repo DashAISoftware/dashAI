@@ -6,7 +6,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
 import Footer from "../threeSectionLayout/Footer";
 import BarHeader from "../threeSectionLayout/BarHeader";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";

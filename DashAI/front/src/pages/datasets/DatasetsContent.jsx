@@ -2,16 +2,12 @@ import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import { useTourContext } from "../../components/tour/TourProvider";
 import ModuleContainer from "../../components/layout/ModuleContainer";
-import LeftPanel from "./LeftPanel";
+import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import LeftBar from "../../components/notebooks/LeftBar";
-import CenterPanel from "./CenterPanel";
+import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
 import RightBar from "../../components/notebooks/RightBar";
-import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
-import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
-import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
-import DatasetVisualization from "../../components/DatasetVisualization";
-import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
-import RightPanel from "./RightPanel";
+import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
+import DatasetsCenterContent from "./DatasetsCenterContent";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
@@ -23,7 +19,7 @@ import { useDatasetUIState } from "../../hooks/datasets/useDatasetUIState";
 import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
 import { useDatasetActions } from "../../hooks/datasets/useDatasetActions";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
-import { ThreePanelLayoutContext } from "./ThreePanelLayoutContext";
+import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useNotebookActions } from "../../hooks/datasets/useNotebooksActions";
 import { useLayoutActions } from "../../hooks/datasets/useLayoutActions";
 
@@ -114,20 +110,17 @@ export default function DatasetsContent() {
 
   const threePanelLayout = useThreePanelLayout();
 
-  const {
-    handleAddDatasetFromNotebook,
-    handleNotebookCreated,
-    handleNewNotebookFromDataset,
-  } = useNotebookActions({
-    fetchNotebooks,
-    selectNotebook,
-    clearSelectedNotebook,
-    clearSelectedDataset,
-    selectNotebookView,
-    selectDatasetView,
-    goToNotebookCreation,
-    createDatasetFromNotebook,
-  });
+  const { handleNotebookCreated, handleNewNotebookFromDataset } =
+    useNotebookActions({
+      fetchNotebooks,
+      selectNotebook,
+      clearSelectedNotebook,
+      clearSelectedDataset,
+      selectNotebookView,
+      selectDatasetView,
+      goToNotebookCreation,
+      createDatasetFromNotebook,
+    });
 
   const { goToNextStep, handleNewSessionButton, handleDatasetCreated } =
     useLayoutActions({
@@ -181,70 +174,27 @@ export default function DatasetsContent() {
               <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
                 <>
                   <CenterPanel>
-                    {selectedNotebookId ? (
-                      <NotebookVisualization
-                        notebook={selectedNotebook}
-                        handleAddDatasetFromNotebook={() => {}}
-                        existingDatasets={datasets}
-                      />
-                    ) : step === 1 && selectedOption === "dataset" ? (
-                      <UploadDatasetSteps
-                        backHome={() => {
-                          resetUI();
-                          fetchDatasets();
-                          setRightBarContent(null);
-                        }}
-                        handleDatasetCreated={handleDatasetCreated}
-                        existingDatasets={datasets}
-                        renderRightBar={setRightBarContent}
-                      />
-                    ) : step === 1 && selectedOption === "notebook" ? (
-                      <UploadNotebookSteps
-                        backHome={() => {
-                          resetUI();
-                          fetchNotebooks();
-                        }}
-                        datasets={datasets}
-                        handleNotebookCreated={handleNotebookCreated}
-                        existingNotebooks={notebooks}
-                        preselectedDatasetId={selectedDatasetId}
-                      />
-                    ) : selectedDatasetId ? (
-                      <DatasetVisualization
-                        dataset={selectedDataset}
-                        onItemCreated={handleNotebookCreated}
-                        onNewItem={handleNewNotebookFromDataset}
-                        existingItems={notebooks}
-                        newItemButtonText={t("datasets:button.newNotebook")}
-                      />
-                    ) : step === 0 ? (
-                      <SelectOptionMenu
-                        title={t("datasets:label.datasetModule")}
-                        subtitle={t("datasets:label.datasetModuleSubtitle")}
-                        options={[
-                          {
-                            name: "dataset",
-                            display_name: t("datasets:label.uploadDataset"),
-                            description: t(
-                              "datasets:label.uploadDatasetDescription",
-                            ),
-                            Icon: null,
-                            "data-tour": "dataset-option",
-                          },
-                          {
-                            name: "notebook",
-                            display_name: t("datasets:label.createNewNotebook"),
-                            description: t(
-                              "datasets:label.createNewNotebookDescription",
-                            ),
-                            Icon: null,
-                            "data-tour": "notebook-option",
-                          },
-                        ]}
-                        searchBar={false}
-                        goToNextStep={goToNextStep}
-                      />
-                    ) : null}
+                    <DatasetsCenterContent
+                      selectedNotebookId={selectedNotebookId}
+                      selectedNotebook={selectedNotebook}
+                      step={step}
+                      selectedOption={selectedOption}
+                      selectedDatasetId={selectedDatasetId}
+                      selectedDataset={selectedDataset}
+                      datasets={datasets}
+                      notebooks={notebooks}
+                      t={t}
+                      goToNextStep={goToNextStep}
+                      resetUI={resetUI}
+                      fetchDatasets={fetchDatasets}
+                      fetchNotebooks={fetchNotebooks}
+                      setRightBarContent={setRightBarContent}
+                      handleDatasetCreated={handleDatasetCreated}
+                      handleNotebookCreated={handleNotebookCreated}
+                      handleNewNotebookFromDataset={
+                        handleNewNotebookFromDataset
+                      }
+                    />
                   </CenterPanel>
                   <RightPanel isNotebook={true}>
                     {rightBarContent ? (
@@ -262,70 +212,25 @@ export default function DatasetsContent() {
             ) : (
               <>
                 <CenterPanel>
-                  {selectedNotebookId ? (
-                    <NotebookVisualization
-                      notebook={selectedNotebook}
-                      handleAddDatasetFromNotebook={() => {}}
-                      existingDatasets={datasets}
-                    />
-                  ) : step === 1 && selectedOption === "dataset" ? (
-                    <UploadDatasetSteps
-                      backHome={() => {
-                        resetUI();
-                        fetchDatasets();
-                        setRightBarContent(null);
-                      }}
-                      handleDatasetCreated={handleDatasetCreated}
-                      existingDatasets={datasets}
-                      renderRightBar={setRightBarContent}
-                    />
-                  ) : step === 1 && selectedOption === "notebook" ? (
-                    <UploadNotebookSteps
-                      backHome={() => {
-                        resetUI();
-                        fetchNotebooks();
-                      }}
-                      datasets={datasets}
-                      handleNotebookCreated={handleNotebookCreated}
-                      existingNotebooks={notebooks}
-                      preselectedDatasetId={selectedDatasetId}
-                    />
-                  ) : selectedDatasetId ? (
-                    <DatasetVisualization
-                      dataset={selectedDataset}
-                      onItemCreated={handleNotebookCreated}
-                      onNewItem={handleNewNotebookFromDataset}
-                      existingItems={notebooks}
-                      newItemButtonText={t("datasets:button.newNotebook")}
-                    />
-                  ) : step === 0 ? (
-                    <SelectOptionMenu
-                      title={t("datasets:label.datasetModule")}
-                      subtitle={t("datasets:label.datasetModuleSubtitle")}
-                      options={[
-                        {
-                          name: "dataset",
-                          display_name: t("datasets:label.uploadDataset"),
-                          description: t(
-                            "datasets:label.uploadDatasetDescription",
-                          ),
-                          Icon: null,
-                          "data-tour": "dataset-option",
-                        },
-                        {
-                          name: "notebook",
-                          display_name: t("datasets:label.createNewNotebook"),
-                          description: t(
-                            "datasets:label.createNewNotebookDescription",
-                          ),
-                          Icon: null,
-                          "data-tour": "notebook-option",
-                        },
-                      ]}
-                      searchBar={false}
-                      goToNextStep={goToNextStep}
-                    />
-                  ) : null}
+                  <DatasetsCenterContent
+                    selectedNotebookId={selectedNotebookId}
+                    selectedNotebook={selectedNotebook}
+                    step={step}
+                    selectedOption={selectedOption}
+                    selectedDatasetId={selectedDatasetId}
+                    selectedDataset={selectedDataset}
+                    datasets={datasets}
+                    notebooks={notebooks}
+                    t={t}
+                    goToNextStep={goToNextStep}
+                    resetUI={resetUI}
+                    fetchDatasets={fetchDatasets}
+                    fetchNotebooks={fetchNotebooks}
+                    setRightBarContent={setRightBarContent}
+                    handleDatasetCreated={handleDatasetCreated}
+                    handleNotebookCreated={handleNotebookCreated}
+                    handleNewNotebookFromDataset={handleNewNotebookFromDataset}
+                  />
                 </CenterPanel>
                 <RightPanel isNotebook={false}>
                   {rightBarContent ? (

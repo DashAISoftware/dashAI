@@ -7,7 +7,7 @@ import BarHeader from "../threeSectionLayout/BarHeader";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";

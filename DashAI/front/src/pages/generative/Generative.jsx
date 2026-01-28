@@ -7,7 +7,7 @@ import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { getSessions, removeSession } from "../../api/session";
 import JobQueueWidget from "../../components/jobs/JobQueueWidget";
-import CenterBox from "../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../../components/threeSectionLayout/panelContainers/CenterBox";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);

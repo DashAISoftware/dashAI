@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import CenterBox from "../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../panelContainers/CenterBox";
 import { useThreePanelLayoutContext } from "./ThreePanelLayoutContext";
 
 export default function CenterPanel({ children }) {
