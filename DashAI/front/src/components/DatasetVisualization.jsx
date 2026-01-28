@@ -56,6 +56,7 @@ export default function DatasetVisualization({
   onNewItem,
   newItemButtonText = "New Item",
   existingItems = [],
+  tourContextType = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -225,15 +226,39 @@ export default function DatasetVisualization({
                     endIcon={<AddIcon />}
                     disabled={isProcessing}
                     className="new-notebook-button"
+                    {...(tourContextType === "datasets"
+                      ? { "data-tour": "datasets-new-notebook-button" }
+                      : {})}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onNewItem) {
                         onNewItem();
                       }
                       if (tourContext && tourContext.run) {
-                        setTimeout(() => {
-                          tourContext.nextStep();
-                        }, 200);
+                        const waitForNoteBox = (attempts = 0) => {
+                          const noteBox =
+                            document.querySelector(".notebook-note-box");
+                          if (noteBox) {
+                            setTimeout(() => {
+                              if (
+                                tourContext &&
+                                typeof tourContext.nextStep === "function"
+                              ) {
+                                tourContext.nextStep();
+                              }
+                            }, 300);
+                          } else if (attempts < 50) {
+                            setTimeout(() => waitForNoteBox(attempts + 1), 100);
+                          } else {
+                            if (
+                              tourContext &&
+                              typeof tourContext.nextStep === "function"
+                            ) {
+                              tourContext.nextStep();
+                            }
+                          }
+                        };
+                        waitForNoteBox();
                       }
                     }}
                     sx={{ height: "40px" }}

@@ -47,7 +47,7 @@ export default function ExplorerBox({
     };
 
     fetchConverterComponent();
-  }, [explorer.exploration_type]);
+  }, [explorer.exploration_type, t]);
 
   useEffect(() => {
     let intervalId;
@@ -219,6 +219,7 @@ export default function ExplorerBox({
               setOpenExplorerDetails(false);
             }}
             explorer={explorer}
+            explorerComponent={explorerComponent}
             data={data}
             dataType={dataType}
             loading={loading}

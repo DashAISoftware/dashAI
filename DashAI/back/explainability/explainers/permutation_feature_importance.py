@@ -16,13 +16,14 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
 
 
 class PermutationFeatureImportanceSchema(BaseSchema):
     """
-    Permutation Feature Importance is a explanation method to asses the
+    Permutation Feature Importance is an explanation method to assess the
     importance of each feature in a model by evaluating how much the model's
     performance decreases when the values of a specific feature are randomly
     shuffled.
@@ -31,28 +32,62 @@ class PermutationFeatureImportanceSchema(BaseSchema):
     scoring: schema_field(
         enum_field(enum=["accuracy", "balanced_accuracy"]),
         placeholder="accuracy",
-        description="Scorer to evaluate how the perfomance of the model "
-        "changes when a particular feature is shuffled.",
+        description=MultilingualString(
+            en=(
+                "Metric used to evaluate how the model's performance changes when "
+                "a particular feature is shuffled."
+            ),
+            es=(
+                "Métrica utilizada para evaluar cómo cambia el rendimiento del "
+                "modelo cuando se baraja una característica particular."
+            ),
+        ),
+        alias=MultilingualString(en="Scoring metric", es="Métrica de evaluación"),
     )  # type: ignore
 
     n_repeats: schema_field(
         int_field(ge=1),
         placeholder=20,
-        description="Number of times to permute a feature.",
+        description=MultilingualString(
+            en=("Number of times to permute a feature."),
+            es=("Número de veces que se permuta una característica."),
+        ),
+        alias=MultilingualString(en="Number of repeats", es="Número de repeticiones"),
     )  # type: ignore
 
     random_state: schema_field(
         int_field(),
         placeholder=0,
-        description="Seed for the random number generator to control the "
-        "permutations of each feature.",
+        description=MultilingualString(
+            en=(
+                "Seed for the random number generator to control permutations of "
+                "each feature."
+            ),
+            es=(
+                "Semilla del generador aleatorio para controlar las permutaciones "
+                "de cada característica."
+            ),
+        ),
+        alias=MultilingualString(en="Random state", es="Semilla aleatoria"),
     )  # type: ignore
 
     max_samples_fraction: schema_field(
         float_field(ge=0.0, le=1.0),
         placeholder=1.0,
-        description="The fraction of samples to draw from the test set to "
-        "calculate feature importance at each repetition.",
+        description=MultilingualString(
+            en=(
+                "Fraction of samples to draw from the test set to calculate "
+                "feature importance at each repetition."
+            ),
+            es=(
+                "Fracción de muestras a extraer del conjunto de prueba para "
+                "calcular la importancia en cada repetición."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Max samples fraction",
+            es="Fracción máxima de muestras",
+        ),
     )  # type: ignore
 
 
@@ -63,7 +98,21 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
-    DISPLAY_NAME = "Permutation Feature Importance"
+    DISPLAY_NAME = MultilingualString(
+        en="Permutation Feature Importance",
+        es="Importancia por Permutación",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Assesses feature importance by measuring the drop in model "
+            "performance when a feature's values are randomly shuffled."
+        ),
+        es=(
+            "Evalúa la importancia de las características midiendo la caída en el "
+            "rendimiento del modelo cuando los valores de una característica se "
+            "barajan aleatoriamente."
+        ),
+    )
     COLOR = "#800080"
     SCHEMA = PermutationFeatureImportanceSchema
 

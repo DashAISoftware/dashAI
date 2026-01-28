@@ -37,7 +37,7 @@ export default function ConverterBox({
     };
 
     fetchConverterComponent();
-  }, [converter.converter]);
+  }, [converter.converter, t]);
 
   useEffect(() => {
     let intervalId;

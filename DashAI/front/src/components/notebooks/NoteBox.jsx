@@ -2,12 +2,13 @@ import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 
-export default function NoteBox({ message, className = "" }) {
+export default function NoteBox({ message, className = "", ...props }) {
   const theme = useTheme();
   const { t } = useTranslation(["common"]);
   return (
     <Box
       className={className}
+      {...props}
       sx={{
         mt: 2,
         p: 2,

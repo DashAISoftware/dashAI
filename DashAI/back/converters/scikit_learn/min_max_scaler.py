@@ -7,6 +7,7 @@ from DashAI.back.converters.category.scaling_and_normalization import (
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import bool_field, float_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
@@ -15,23 +16,35 @@ class MinMaxScalerSchema(BaseSchema):
     min_range: schema_field(
         float_field(ge=0),
         0,
-        "The minimum value of the range to scale the data to.",
+        description=MultilingualString(
+            en="The minimum value of the range to scale the data to.",
+            es="El valor mínimo del rango al que escalar los datos.",
+        ),
     )  # type: ignore
     max_range: schema_field(
         float_field(ge=0),
         1,
-        "The maximum value of the range to scale the data to.",
+        description=MultilingualString(
+            en="The maximum value of the range to scale the data to.",
+            es="El valor máximo del rango al que escalar los datos.",
+        ),
     )  # type: ignore
     use_copy: schema_field(
         bool_field(),
         True,
-        "Set to False to perform inplace row normalization.",
-        alias="copy",
+        description=MultilingualString(
+            en="Set to False to perform inplace row normalization.",
+            es="Ponlo en False para normalizar filas in situ.",
+        ),
+        alias=MultilingualString(en="copy", es="copiar"),
     )  # type: ignore
     clip: schema_field(
         bool_field(),
         False,
-        "Set to True to clip the data to the feature range.",
+        description=MultilingualString(
+            en="Set to True to clip the data to the feature range.",
+            es="Ponlo en True para recortar los datos al rango de características.",
+        ),
     )  # type: ignore
 
 
@@ -41,9 +54,11 @@ class MinMaxScaler(
     """Scikit-learn's MinMaxScaler wrapper for DashAI."""
 
     SCHEMA = MinMaxScalerSchema
-    DESCRIPTION = "Transform features by scaling each feature to a given range."
-    CATEGORY = "Scaling & Normalization"
-    DISPLAY_NAME = "Min-Max Scaler"
+    DESCRIPTION = MultilingualString(
+        en="Transform features by scaling each feature to a given range.",
+        es="Transforma características escalándolas a un rango dado.",
+    )
+    DISPLAY_NAME = MultilingualString(en="Min-Max Scaler", es="Escalador Min-Max")
     IMAGE_PREVIEW = "min_max_scaler.png"
 
     metadata = {

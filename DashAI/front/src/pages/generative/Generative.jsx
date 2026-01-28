@@ -6,17 +6,20 @@ import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { getSessions, removeSession } from "../../api/session";
-import JobQueueWidget from "../../components/jobs/JobQueueWidget";
 import CenterBox from "../../components/threeSectionLayout/panelContainers/CenterBox";
+import { getComponents } from "../../api/component";
+import { useTranslation } from "react-i18next";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [tasks, setTasks] = useState([]);
   // TODO: Combine selectedTaskName and selectedDisplayName into a single selectedTask State
   const [selectedTaskName, setSelectedTaskName] = useState("");
   const [selectedDisplayName, setSelectedDisplayName] = useState("");
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
+  const { t } = useTranslation(["generative", "common"]);
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     setSelectedTaskName(taskName);
@@ -40,6 +43,16 @@ export default function Generative() {
     });
   }, []);
 
+  useEffect(() => {
+    try {
+      getComponents({ selectTypes: "GenerativeTask" }).then((data) => {
+        setTasks(data);
+      });
+    } catch (error) {
+      console.error("Error fetching generative tasks:", error);
+    }
+  }, [t]);
+
   const handleAddSession = (session) => {
     setSessions((prevSessions) => [session, ...prevSessions]);
   };
@@ -61,6 +74,7 @@ export default function Generative() {
     <Box height="calc(100vh - 74px)" width="100%" display="flex">
       <Box width="20%">
         <SessionBar
+          tasks={tasks}
           sessions={sessions}
           selectedSessionId={selectedSessionId}
           handleSessionClick={handleSessionClick}
@@ -79,6 +93,7 @@ export default function Generative() {
             />
           ) : stepIndex === 0 ? (
             <SelectTaskMenu
+              tasks={tasks}
               goToNextStep={(taskName, displayName) => {
                 setSelectedDisplayName(displayName);
                 setSelectedTaskName(taskName);
