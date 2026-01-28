@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Box, IconButton } from "@mui/material";
-import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTourContext } from "../../components/tour/TourProvider";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
+import ModuleContainer from "../../components/layout/ModuleContainer";
+import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
+import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
+import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import LeftBar from "../../components/models/LeftBar";
-import CenterBox from "../../components/threeSectionLayout/panelContainers/CenterBox";
 import RightBar from "../../components/models/RightBar";
 import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
@@ -40,15 +41,13 @@ import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getRunStatus } from "../../utils/runStatus";
 import { useTranslation } from "react-i18next";
+import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
+import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 
 export default function ModelsContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [leftBarVisible, setLeftBarVisible] = useState(true);
-  const [rightBarVisible, setRightBarVisible] = useState(true);
-  const [leftBarWidth, setLeftBarWidth] = useState(20);
-  const [rightBarWidth, setRightBarWidth] = useState(20);
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -64,13 +63,11 @@ export default function ModelsContent() {
   const [runToRetrain, setRunToRetrain] = useState(null);
   const [operationsCount, setOperationsCount] = useState(null);
 
-  const isResizingLeft = useRef(false);
-  const isResizingRight = useRef(false);
-  const [isTogglingLeft, setIsTogglingLeft] = useState(false);
-  const [isTogglingRight, setIsTogglingRight] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "datasets", "common"]);
   const tourContext = useTourContext(); // This is for MODELS tour
+
+  const threePanelLayout = useThreePanelLayout();
 
   // Component to handle session tour context
   const SessionTourHandler = () => {
@@ -148,92 +145,23 @@ export default function ModelsContent() {
     return (
       <>
         {/* Center Panel - Session */}
-        <Box
-          data-tour="models-center-panel"
-          width={`${centerWidth}%`}
-          sx={{
-            transition:
-              isTogglingLeft || isTogglingRight
-                ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                : "none",
-          }}
-        >
-          <CenterBox>
-            <SessionVisualization
-              session={selectedSession}
-              runs={runs}
-              onTrain={handleTrainRunWithTour}
-              onEditRun={handleEditRun}
-              onDeleteRun={handleDeleteRun}
-            />
-          </CenterBox>
-        </Box>
+        <CenterPanel data-tour="models-center-panel">
+          <SessionVisualization
+            session={selectedSession}
+            runs={runs}
+            onTrain={handleTrainRunWithTour}
+            onEditRun={handleEditRun}
+            onDeleteRun={handleDeleteRun}
+          />
+        </CenterPanel>
 
-        {!rightBarVisible && (
-          <IconButton
-            onClick={handleToggleRight}
-            sx={{
-              position: "absolute",
-              right: 8,
-              top: "50%",
-              transform: "translateY(-50%)",
-              bgcolor: "background.paper",
-              zIndex: 10,
-              transition: "all 0.2s ease",
-              "&:hover": {
-                bgcolor: "action.hover",
-                transform: "translateY(-50%) scale(1.1)",
-              },
-            }}
-          >
-            <ChevronLeft />
-          </IconButton>
-        )}
-
-        {/* Right Panel */}
-        <Box
-          data-tour="models-right-panel"
-          width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
-          position="relative"
-          sx={{
-            transition: isTogglingRight
-              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
-              : "none",
-            opacity: rightBarVisible ? 1 : 0,
-            overflow: "hidden",
-          }}
-        >
-          {rightBarVisible && (
-            <>
-              <Box
-                onMouseDown={() => {
-                  isResizingRight.current = true;
-                  document.body.style.cursor = "col-resize";
-                  document.body.style.userSelect = "none";
-                }}
-                sx={{
-                  position: "absolute",
-                  left: -2,
-                  top: 0,
-                  bottom: 0,
-                  width: "5px",
-                  cursor: "col-resize",
-                  bgcolor: "transparent",
-                  transition: "background-color 0.2s ease",
-                  "&:hover": {
-                    bgcolor: "primary.main",
-                  },
-                  zIndex: 10,
-                }}
-              />
-              <RightBar
-                session={selectedSession}
-                onToggle={handleToggleRight}
-                onModelClick={handleModelClickWithTour}
-              />
-            </>
-          )}
-        </Box>
+        <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+          <RightBar
+            session={selectedSession}
+            onToggle={threePanelLayout.handleToggleRight}
+            onModelClick={handleModelClickWithTour}
+          />
+        </RightPanel>
 
         <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
 
@@ -759,167 +687,37 @@ export default function ModelsContent() {
     navigate("/app/data");
   };
 
-  const handleMouseMove = useCallback((e) => {
-    if (isResizingLeft.current) {
-      const container = document.querySelector('[data-container="models"]');
-      const containerRect = container.getBoundingClientRect();
-      const newWidth =
-        ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      if (newWidth >= 15 && newWidth <= 40) {
-        setLeftBarWidth(newWidth);
-      }
-    }
-
-    if (isResizingRight.current) {
-      const container = document.querySelector('[data-container="models"]');
-      const containerRect = container.getBoundingClientRect();
-      const newWidth =
-        ((containerRect.right - e.clientX) / containerRect.width) * 100;
-      if (newWidth >= 15 && newWidth <= 40) {
-        setRightBarWidth(newWidth);
-      }
-    }
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isResizingLeft.current = false;
-    isResizingRight.current = false;
-    document.body.style.cursor = "default";
-    document.body.style.userSelect = "auto";
-  }, []);
-
-  const handleToggleLeft = () => {
-    setIsTogglingLeft(true);
-    setLeftBarVisible(!leftBarVisible);
-    setTimeout(() => setIsTogglingLeft(false), 300);
-  };
-
-  const handleToggleRight = () => {
-    setIsTogglingRight(true);
-    setRightBarVisible(!rightBarVisible);
-    setTimeout(() => setIsTogglingRight(false), 300);
-  };
-
-  useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
-
-  const centerWidth =
-    leftBarVisible && rightBarVisible
-      ? 100 - leftBarWidth - rightBarWidth
-      : leftBarVisible
-        ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
-          : 100;
-
   return (
     <>
-      <Box
-        height="calc(100vh - 74px)"
-        width="100%"
-        display="flex"
-        data-container="models"
-      >
-        {/* Left Panel */}
-        <Box
-          data-tour="models-left-panel"
-          width={leftBarVisible ? `${leftBarWidth}%` : "0%"}
-          position="relative"
-          sx={{
-            transition: isTogglingLeft
-              ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
-              : "none",
-            opacity: leftBarVisible ? 1 : 0,
-            overflow: "hidden",
-          }}
-        >
-          {leftBarVisible && (
+      <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+        <ModuleContainer>
+          {/* Left Panel */}
+          <LeftPanel>
+            <LeftBar
+              datasets={datasets}
+              selectedDatasetId={selectedDatasetId}
+              sessions={sessions}
+              selectedSessionId={selectedSessionId}
+              tasks={tasks}
+              onDatasetClick={handleDatasetClick}
+              onDatasetDelete={handleDatasetDelete}
+              onDatasetEdit={handleDatasetEdit}
+              onSessionClick={handleSessionClick}
+              onSessionDelete={handleSessionDelete}
+              onSessionEdit={handleSessionEdit}
+              onToggle={threePanelLayout.handleToggleLeft}
+              handleNewSessionButton={handleNewSessionButton}
+            />
+          </LeftPanel>
+
+          {selectedSessionId ? (
+            <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
+              <SessionTourHandler />
+            </TourProvider>
+          ) : (
             <>
-              <LeftBar
-                datasets={datasets}
-                selectedDatasetId={selectedDatasetId}
-                sessions={sessions}
-                selectedSessionId={selectedSessionId}
-                tasks={tasks}
-                onDatasetClick={handleDatasetClick}
-                onDatasetDelete={handleDatasetDelete}
-                onDatasetEdit={handleDatasetEdit}
-                onSessionClick={handleSessionClick}
-                onSessionDelete={handleSessionDelete}
-                onSessionEdit={handleSessionEdit}
-                onToggle={handleToggleLeft}
-                handleNewSessionButton={handleNewSessionButton}
-              />
-              <Box
-                onMouseDown={() => {
-                  isResizingLeft.current = true;
-                  document.body.style.cursor = "col-resize";
-                  document.body.style.userSelect = "none";
-                }}
-                sx={{
-                  position: "absolute",
-                  right: -2,
-                  top: 0,
-                  bottom: 0,
-                  width: "5px",
-                  cursor: "col-resize",
-                  bgcolor: "transparent",
-                  transition: "background-color 0.2s ease",
-                  "&:hover": {
-                    bgcolor: "primary.main",
-                  },
-                  zIndex: 10,
-                }}
-              />
-            </>
-          )}
-        </Box>
-
-        {!leftBarVisible && (
-          <IconButton
-            onClick={handleToggleLeft}
-            sx={{
-              position: "absolute",
-              left: 8,
-              top: "50%",
-              transform: "translateY(-50%)",
-              bgcolor: "background.paper",
-              zIndex: 10,
-              transition: "all 0.2s ease",
-              "&:hover": {
-                bgcolor: "action.hover",
-                transform: "translateY(-50%) scale(1.1)",
-              },
-            }}
-          >
-            <ChevronRight />
-          </IconButton>
-        )}
-
-        {selectedSessionId ? (
-          <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
-            <SessionTourHandler />
-          </TourProvider>
-        ) : (
-          <>
-            {/* Center Panel */}
-            <Box
-              data-tour="models-center-panel"
-              width={`${centerWidth}%`}
-              sx={{
-                transition:
-                  isTogglingLeft || isTogglingRight
-                    ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                    : "none",
-              }}
-            >
-              <CenterBox>
+              {/* Center Panel */}
+              <CenterPanel data-tour="models-center-panel">
                 {selectedSessionId ? (
                   <SessionVisualization
                     session={selectedSession}
@@ -986,93 +784,36 @@ export default function ModelsContent() {
                     onGoToDatasets={handleGoToDatasets}
                   />
                 ) : null}
-              </CenterBox>
-            </Box>
+              </CenterPanel>
 
-            {!rightBarVisible && (
-              <IconButton
-                onClick={handleToggleRight}
-                sx={{
-                  position: "absolute",
-                  right: 8,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  bgcolor: "background.paper",
-                  zIndex: 10,
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    bgcolor: "action.hover",
-                    transform: "translateY(-50%) scale(1.1)",
-                  },
-                }}
-              >
-                <ChevronLeft />
-              </IconButton>
-            )}
+              {/* Right Panel */}
+              <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+                <RightBar
+                  session={selectedSession}
+                  onToggle={threePanelLayout.handleToggleRight}
+                  onModelClick={handleModelClick}
+                />
+              </RightPanel>
+            </>
+          )}
 
-            {/* Right Panel */}
-            <Box
-              data-tour="models-right-panel"
-              width={rightBarVisible ? `${rightBarWidth}%` : "0%"}
-              position="relative"
-              sx={{
-                transition: isTogglingRight
-                  ? "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease"
-                  : "none",
-                opacity: rightBarVisible ? 1 : 0,
-                overflow: "hidden",
-              }}
-            >
-              {rightBarVisible && (
-                <>
-                  <Box
-                    onMouseDown={() => {
-                      isResizingRight.current = true;
-                      document.body.style.cursor = "col-resize";
-                      document.body.style.userSelect = "none";
-                    }}
-                    sx={{
-                      position: "absolute",
-                      left: -2,
-                      top: 0,
-                      bottom: 0,
-                      width: "5px",
-                      cursor: "col-resize",
-                      bgcolor: "transparent",
-                      transition: "background-color 0.2s ease",
-                      "&:hover": {
-                        bgcolor: "primary.main",
-                      },
-                      zIndex: 10,
-                    }}
-                  />
-                  <RightBar
-                    session={selectedSession}
-                    onToggle={handleToggleRight}
-                    onModelClick={handleModelClick}
-                  />
-                </>
-              )}
-            </Box>
-          </>
+          {/* Retrain Confirmation Dialog */}
+          <RetrainConfirmDialog
+            open={retrainDialogOpen}
+            onClose={handleCancelRetrain}
+            onConfirm={handleConfirmRetrain}
+            run={runToRetrain}
+            operationsCount={operationsCount}
+          />
+        </ModuleContainer>
+        {!selectedSessionId && (
+          <TourButton
+            tourKey={TOUR_KEYS.MODELS}
+            disabled={step !== 0}
+            disabledMessage="Return to home to start the tour"
+          />
         )}
-
-        {/* Retrain Confirmation Dialog */}
-        <RetrainConfirmDialog
-          open={retrainDialogOpen}
-          onClose={handleCancelRetrain}
-          onConfirm={handleConfirmRetrain}
-          run={runToRetrain}
-          operationsCount={operationsCount}
-        />
-      </Box>
-      {!selectedSessionId && (
-        <TourButton
-          tourKey={TOUR_KEYS.MODELS}
-          disabled={step !== 0}
-          disabledMessage="Return to home to start the tour"
-        />
-      )}
+      </ThreePanelLayoutContext.Provider>
     </>
   );
 }
