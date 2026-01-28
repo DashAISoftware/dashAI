@@ -1,8 +1,7 @@
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft } from "@mui/icons-material";
 import { useThreePanelLayoutContext } from "./ThreePanelLayoutContext";
-
-export default function RightPanel({ isNotebook, children }) {
+export default function RightPanel({ toggleButtonTop = "50%", children }) {
   const {
     rightBarVisible,
     rightBarWidth,
@@ -18,7 +17,7 @@ export default function RightPanel({ isNotebook, children }) {
           sx={{
             position: "absolute",
             right: 8,
-            top: isNotebook ? "calc(50% + 60px)" : "50%",
+            top: toggleButtonTop,
             transform: "translateY(-50%)",
             bgcolor: "background.paper",
             zIndex: 10,

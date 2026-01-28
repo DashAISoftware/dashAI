@@ -196,7 +196,7 @@ export default function DatasetsContent() {
                       }
                     />
                   </CenterPanel>
-                  <RightPanel isNotebook={true}>
+                  <RightPanel toggleButtonTop="calc(50% + 60px)">
                     {rightBarContent ? (
                       rightBarContent
                     ) : (
@@ -232,7 +232,7 @@ export default function DatasetsContent() {
                     handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                   />
                 </CenterPanel>
-                <RightPanel isNotebook={false}>
+                <RightPanel toggleButtonTop="50%">
                   {rightBarContent ? (
                     rightBarContent
                   ) : (
