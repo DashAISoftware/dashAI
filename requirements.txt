@@ -25,7 +25,7 @@ typer
 rich
 torch
 torchvision
-transformers
+transformers<5.0.0
 sacrebleu
 sentencepiece
 optuna
