@@ -1,8 +1,8 @@
-import NotebookVisualization from "../../components/notebooks/notebook/NotebookVisualization";
-import UploadDatasetSteps from "../../components/notebooks/datasetCreation/UploadDatasetSteps";
-import UploadNotebookSteps from "../../components/notebooks/notebookCreation/UploadNotebookSteps";
-import DatasetVisualization from "../../components/DatasetVisualization";
-import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
+import NotebookVisualization from "../notebook/NotebookVisualization";
+import UploadDatasetSteps from "../datasetCreation/UploadDatasetSteps";
+import UploadNotebookSteps from "../notebookCreation/UploadNotebookSteps";
+import DatasetVisualization from "../../DatasetVisualization";
+import SelectOptionMenu from "../../threeSectionLayout/SelectOptionMenu";
 
 export default function DatasetsCenterContent({
   selectedNotebookId,

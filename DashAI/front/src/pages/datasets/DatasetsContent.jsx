@@ -7,7 +7,7 @@ import LeftBar from "../../components/notebooks/LeftBar";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
 import RightBar from "../../components/notebooks/RightBar";
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
-import DatasetsCenterContent from "./DatasetsCenterContent";
+import DatasetsCenterContent from "../../components/notebooks/dataset/DatasetsCenterContent";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
