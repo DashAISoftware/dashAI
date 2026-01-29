@@ -2,7 +2,7 @@ import { Box, IconButton } from "@mui/material";
 import { ChevronRight } from "@mui/icons-material";
 import { useThreePanelLayoutContext } from "./ThreePanelLayoutContext";
 
-export default function LeftPanel({ children }) {
+export default function LeftPanel({ children, "data-tour": dataTour }) {
   const {
     leftBarVisible,
     leftBarWidth,
@@ -43,6 +43,7 @@ export default function LeftPanel({ children }) {
           opacity: leftBarVisible ? 1 : 0,
           overflow: "hidden",
         }}
+        data-tour={dataTour}
       >
         {leftBarVisible && (
           <>

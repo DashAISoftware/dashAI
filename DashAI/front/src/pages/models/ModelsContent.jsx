@@ -692,7 +692,7 @@ export default function ModelsContent() {
       <ThreePanelLayoutContext.Provider value={threePanelLayout}>
         <ModuleContainer>
           {/* Left Panel */}
-          <LeftPanel>
+          <LeftPanel data-tour="models-left-panel">
             <LeftBar
               datasets={datasets}
               selectedDatasetId={selectedDatasetId}
@@ -712,7 +712,34 @@ export default function ModelsContent() {
 
           {selectedSessionId ? (
             <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
-              <SessionTourHandler />
+              <CenterPanel data-tour="models-center-panel">
+                <SessionVisualization
+                  session={selectedSession}
+                  runs={runs}
+                  onTrain={handleTrainRun}
+                  onEditRun={handleEditRun}
+                  onDeleteRun={handleDeleteRun}
+                />
+              </CenterPanel>
+              <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+                <RightBar
+                  session={selectedSession}
+                  onToggle={threePanelLayout.handleToggleRight}
+                  onModelClick={handleModelClick}
+                />
+              </RightPanel>
+              <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
+              <AddModelDialog
+                open={addModelDialogOpen}
+                onClose={() => {
+                  setAddModelDialogOpen(false);
+                  setPreselectedModel(null);
+                }}
+                session={selectedSession}
+                preselectedModel={preselectedModel}
+                existingRuns={runs}
+                onRunCreated={handleRunCreated}
+              />
             </TourProvider>
           ) : (
             <>
