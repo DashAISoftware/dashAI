@@ -6,6 +6,7 @@
     "showPlot": "Show Plot"
   },
   "error": {
+    "explainerFailed": "Explainer failed to generate.",
     "fetchDataError": "Error while trying to obtain data of the explainer with id: {{explainerId}}",
     "fetchDatasets": "Error while trying to obtain the datasets.",
     "fetchExplainers": "Error while trying to obtain the explainers.",
