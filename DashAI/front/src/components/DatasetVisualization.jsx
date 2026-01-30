@@ -2,32 +2,23 @@ import { useCallback, useState, useEffect } from "react";
 import {
   Button,
   Grid,
-  Paper,
   Typography,
   CircularProgress,
   Box,
-  Chip,
   Alert,
   Divider,
   Tabs,
   Tab,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {
-  AddCircleOutline as AddIcon,
-  CheckCircle as CheckIcon,
-} from "@mui/icons-material";
+import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import {
   getDatasetFile,
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../api/datasets";
-import DatasetTable from "./notebooks/dataset/DatasetTable";
-import { getComponents } from "../api/component";
 import { useTourContext } from "./tour/TourProvider";
-import { useSnackbar } from "notistack";
 import JobQueueWidget from "./jobs/JobQueueWidget";
-import { getDatasetStatus } from "../utils/datasetStatus";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
