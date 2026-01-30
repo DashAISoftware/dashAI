@@ -34,13 +34,14 @@ plotly
 shap
 typer
 rich
+torchmetrics
 
 # PyTorch CPU wheels
 torch --index-url https://download.pytorch.org/whl/cpu
 torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Transformers ecosystem
-transformers
+transformers<5.0.0
 sacrebleu
 sentencepiece
 
@@ -57,6 +58,8 @@ protobuf
 imblearn
 numba
 llvmlite
+greenery==3.2
+filetype
 huey
 
 # Optional: llama-cpp CPU-only (sin dependencias CUDA)
