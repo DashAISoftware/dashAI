@@ -16,6 +16,10 @@ import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/DatasetVisualization";
 import AddModelDialog from "../../components/models/AddModelDialog";
+import {
+  ModelProvider,
+  useModelContext,
+} from "../../components/models/ModelProvider";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import { getComponents } from "../../api/component";
 import {
@@ -56,8 +60,7 @@ export default function ModelsContent() {
   const [datasets, setDatasets] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [runs, setRuns] = useState([]);
-  const [addModelDialogOpen, setAddModelDialogOpen] = useState(false);
-  const [preselectedModel, setPreselectedModel] = useState(null);
+  // Eliminados: addModelDialogOpen, setAddModelDialogOpen, preselectedModel, setPreselectedModel
 
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
@@ -68,6 +71,7 @@ export default function ModelsContent() {
   const tourContext = useTourContext(); // This is for MODELS tour
 
   const threePanelLayout = useThreePanelLayout();
+  const sessionTourContext = useTourContext();
 
   // Component to handle session tour context
   const SessionTourHandler = () => {
@@ -100,10 +104,6 @@ export default function ModelsContent() {
         document.removeEventListener("click", handleGraphsButtonClick, true);
       };
     }, [sessionTourContext]);
-
-    const handleModelClickWithTour = (model) => {
-      handleModelClick(model, sessionTourContext);
-    };
 
     const handleRunCreatedWithTour = (newRun) => {
       handleRunCreated(newRun);
@@ -145,6 +145,7 @@ export default function ModelsContent() {
     return (
       <>
         {/* Center Panel - Session */}
+
         <CenterPanel data-tour="models-center-panel">
           <SessionVisualization
             session={selectedSession}
@@ -159,7 +160,6 @@ export default function ModelsContent() {
           <RightBar
             session={selectedSession}
             onToggle={threePanelLayout.handleToggleRight}
-            onModelClick={handleModelClickWithTour}
           />
         </RightPanel>
 
@@ -452,36 +452,31 @@ export default function ModelsContent() {
     deleteDataset(id);
   };
 
-  const handleModelClick = (model, sessionTourContext) => {
-    if (!selectedSession) {
-      enqueueSnackbar(t("models:error.selectSessionFirst"), {
-        variant: "warning",
-      });
-      return;
-    }
-
-    setPreselectedModel(model.name);
-    setAddModelDialogOpen(true);
-
-    // Advance tour when clicking model (step 2) - wait for modal to open
-    if (sessionTourContext?.run && sessionTourContext?.stepIndex === 2) {
-      const waitForElement = () => {
-        const element = document.querySelector('[data-tour="model-config"]');
-        if (element) {
-          sessionTourContext.nextStep();
-        } else {
-          setTimeout(waitForElement, 100);
-        }
-      };
-      setTimeout(waitForElement, 300);
-    }
-  };
-
   const handleRunCreated = (newRun) => {
     setRuns((prev) => [...prev, newRun]);
     enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
       variant: "success",
     });
+
+    // Advance tour after creating run (step 3 -> 4)
+    if (sessionTourContext?.run && sessionTourContext?.stepIndex === 3) {
+      setTimeout(() => {
+        // Scroll to the newly created run card
+        const runCard = document.querySelector('[data-tour="first-run-card"]');
+        if (runCard) {
+          runCard.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "nearest",
+          });
+        }
+
+        // Advance to next step after scroll completes
+        setTimeout(() => {
+          sessionTourContext.nextStep();
+        }, 300);
+      }, 500);
+    }
   };
 
   const handleTrainRun = async (run) => {
@@ -688,28 +683,27 @@ export default function ModelsContent() {
   };
 
   return (
-    <>
-      <ThreePanelLayoutContext.Provider value={threePanelLayout}>
-        <ModuleContainer>
-          {/* Left Panel */}
-          <LeftPanel data-tour="models-left-panel">
-            <LeftBar
-              datasets={datasets}
-              selectedDatasetId={selectedDatasetId}
-              sessions={sessions}
-              selectedSessionId={selectedSessionId}
-              tasks={tasks}
-              onDatasetClick={handleDatasetClick}
-              onDatasetDelete={handleDatasetDelete}
-              onDatasetEdit={handleDatasetEdit}
-              onSessionClick={handleSessionClick}
-              onSessionDelete={handleSessionDelete}
-              onSessionEdit={handleSessionEdit}
-              onToggle={threePanelLayout.handleToggleLeft}
-              handleNewSessionButton={handleNewSessionButton}
-            />
-          </LeftPanel>
-
+    <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+      <ModuleContainer>
+        {/* Left Panel */}
+        <LeftPanel data-tour="models-left-panel">
+          <LeftBar
+            datasets={datasets}
+            selectedDatasetId={selectedDatasetId}
+            sessions={sessions}
+            selectedSessionId={selectedSessionId}
+            tasks={tasks}
+            onDatasetClick={handleDatasetClick}
+            onDatasetDelete={handleDatasetDelete}
+            onDatasetEdit={handleDatasetEdit}
+            onSessionClick={handleSessionClick}
+            onSessionDelete={handleSessionDelete}
+            onSessionEdit={handleSessionEdit}
+            onToggle={threePanelLayout.handleToggleLeft}
+            handleNewSessionButton={handleNewSessionButton}
+          />
+        </LeftPanel>
+        <ModelProvider>
           {selectedSessionId ? (
             <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
               <CenterPanel data-tour="models-center-panel">
@@ -724,36 +718,17 @@ export default function ModelsContent() {
               <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
                 <RightBar
                   session={selectedSession}
+                  existingRuns={runs}
+                  onRunCreated={handleRunCreated}
                   onToggle={threePanelLayout.handleToggleRight}
-                  onModelClick={handleModelClick}
                 />
               </RightPanel>
               <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
-              <AddModelDialog
-                open={addModelDialogOpen}
-                onClose={() => {
-                  setAddModelDialogOpen(false);
-                  setPreselectedModel(null);
-                }}
-                session={selectedSession}
-                preselectedModel={preselectedModel}
-                existingRuns={runs}
-                onRunCreated={handleRunCreated}
-              />
             </TourProvider>
           ) : (
             <>
-              {/* Center Panel */}
               <CenterPanel data-tour="models-center-panel">
-                {selectedSessionId ? (
-                  <SessionVisualization
-                    session={selectedSession}
-                    runs={runs}
-                    onTrain={handleTrainRun}
-                    onEditRun={handleEditRun}
-                    onDeleteRun={handleDeleteRun}
-                  />
-                ) : step === 1 && selectedTask ? (
+                {step === 1 && selectedTask ? (
                   <CreateSessionSteps
                     backHome={handleBackToTaskSelection}
                     selectedTask={selectedTask}
@@ -818,7 +793,6 @@ export default function ModelsContent() {
                 <RightBar
                   session={selectedSession}
                   onToggle={threePanelLayout.handleToggleRight}
-                  onModelClick={handleModelClick}
                 />
               </RightPanel>
             </>
@@ -832,15 +806,15 @@ export default function ModelsContent() {
             run={runToRetrain}
             operationsCount={operationsCount}
           />
-        </ModuleContainer>
-        {!selectedSessionId && (
-          <TourButton
-            tourKey={TOUR_KEYS.MODELS}
-            disabled={step !== 0}
-            disabledMessage="Return to home to start the tour"
-          />
-        )}
-      </ThreePanelLayoutContext.Provider>
-    </>
+        </ModelProvider>
+      </ModuleContainer>
+      {!selectedSessionId && (
+        <TourButton
+          tourKey={TOUR_KEYS.MODELS}
+          disabled={step !== 0}
+          disabledMessage="Return to home to start the tour"
+        />
+      )}
+    </ThreePanelLayoutContext.Provider>
   );
 }
