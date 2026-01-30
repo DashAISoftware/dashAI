@@ -114,6 +114,8 @@ jobs:
               pyinstaller -F -n DashAI-launcher-cpu --clean ^
                 --add-data "DashAI/front/build;DashAI/front/build" ^
                 --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+                --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+                --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
                 --add-data "%SITEPKG%\transformers;transformers" ^
                 --add-binary "%SITEPKG%\llama_cpp\lib\*;llama_cpp/lib" ^
                 --additional-hooks-dir=hooks DashAI/__main__.py
@@ -122,6 +124,8 @@ jobs:
               pyinstaller -F -n DashAI-launcher-cpu --clean ^
                 --add-data "DashAI/front/build;DashAI/front/build" ^
                 --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+                --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+                --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
                 --add-data "%SITEPKG%\transformers;transformers" ^
                 --additional-hooks-dir=hooks DashAI/__main__.py
           )
@@ -163,6 +167,8 @@ jobs:
             pyinstaller -F -n DashAI-launcher-cpu-arm64 --clean \
               --add-data "DashAI/front/build:DashAI/front/build" \
               --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
               --add-data "$SITEPKG/transformers:transformers" \
               --add-binary "$SITEPKG/llama_cpp/lib/*:llama_cpp/lib" \
               --additional-hooks-dir=hooks DashAI/__main__.py
@@ -171,6 +177,8 @@ jobs:
             pyinstaller -F -n DashAI-launcher-cpu-arm64 --clean \
               --add-data "DashAI/front/build:DashAI/front/build" \
               --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
               --add-data "$SITEPKG/transformers:transformers" \
               --additional-hooks-dir=hooks DashAI/__main__.py
           fi
@@ -216,6 +224,8 @@ jobs:
             pyinstaller -F -n DashAI-launcher-cpu-x86_64 --clean \
               --add-data "DashAI/front/build:DashAI/front/build" \
               --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
               --add-data "$SITEPKG/transformers:transformers" \
               --add-binary "$SITEPKG/llama_cpp/lib/*:llama_cpp/lib" \
               --additional-hooks-dir=hooks DashAI/__main__.py
@@ -224,6 +234,8 @@ jobs:
             pyinstaller -F -n DashAI-launcher-cpu-x86_64 --clean \
               --add-data "DashAI/front/build:DashAI/front/build" \
               --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
               --add-data "$SITEPKG/transformers:transformers" \
               --additional-hooks-dir=hooks DashAI/__main__.py
           fi
