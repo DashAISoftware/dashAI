@@ -15,11 +15,7 @@ import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMe
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/DatasetVisualization";
-import AddModelDialog from "../../components/models/AddModelDialog";
-import {
-  ModelProvider,
-  useModelContext,
-} from "../../components/models/ModelProvider";
+import { ModelProvider } from "../../components/models/ModelProvider";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import { getComponents } from "../../api/component";
 import {
@@ -43,7 +39,6 @@ import {
 } from "../../api/run";
 import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
-import { getRunStatus } from "../../utils/runStatus";
 import { useTranslation } from "react-i18next";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
@@ -60,8 +55,6 @@ export default function ModelsContent() {
   const [datasets, setDatasets] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [runs, setRuns] = useState([]);
-  // Eliminados: addModelDialogOpen, setAddModelDialogOpen, preselectedModel, setPreselectedModel
-
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
   const [operationsCount, setOperationsCount] = useState(null);
@@ -71,7 +64,6 @@ export default function ModelsContent() {
   const tourContext = useTourContext(); // This is for MODELS tour
 
   const threePanelLayout = useThreePanelLayout();
-  const sessionTourContext = useTourContext();
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -349,26 +341,6 @@ export default function ModelsContent() {
     enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
       variant: "success",
     });
-
-    // Advance tour after creating run (step 3 -> 4)
-    if (sessionTourContext?.run && sessionTourContext?.stepIndex === 3) {
-      setTimeout(() => {
-        // Scroll to the newly created run card
-        const runCard = document.querySelector('[data-tour="first-run-card"]');
-        if (runCard) {
-          runCard.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
-          });
-        }
-
-        // Advance to next step after scroll completes
-        setTimeout(() => {
-          sessionTourContext.nextStep();
-        }, 300);
-      }, 500);
-    }
   };
 
   const handleTrainRun = async (run) => {

@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getRunStatus } from "../../utils/runStatus";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
