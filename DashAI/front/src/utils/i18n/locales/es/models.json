@@ -18,7 +18,8 @@
     "runModel": "Ejecutar Modelo",
     "saveAndRunModel": "Guardar y Ejecutar Modelo",
     "showOperations": "Mostrar Operaciones",
-    "showParameters": "Mostrar Parámetros"
+    "showParameters": "Mostrar Parámetros",
+    "updateAndRetrain": "Actualizar y Re-entrenar"
   },
   "error": {
     "completeRequiredFields": "Por favor complete todos los campos requeridos",
@@ -68,6 +69,9 @@
     "globalExplainers": "Explicadores Globales",
     "goalMetric": "Métrica Objetivo",
     "hyperparameterOptimizationPlots": "Gráficos de Optimización de Hiperparámetros",
+    "hyperparameterOptimizerConfiguration": "Configuración del Optimizador de Hiperparámetros",
+    "runName": "Nombre de la Ejecución",
+    "confirmParameterUpdate": "Confirmar Actualización de Parámetros",
     "liveMetrics": "Métricas en Vivo",
     "localExplainer": "Explicador Local",
     "localExplainers": "Explicadores Locales",
@@ -125,6 +129,18 @@
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
     "confirmDeleteRun": "¿Está seguro de que desea eliminar esta ejecución? Esta acción no se puede deshacer.",
+    "editingParametersWarning": "Al editar los parámetros se restablecerá el estado de esta ejecución a 'No Iniciado'. Todas las métricas y resultados existentes se perderán.",
+    "aboutToUpdateParameters": "Está a punto de actualizar los parámetros para la ejecución <strong>{{runName}}</strong>. Esta acción tendrá las siguientes consecuencias:",
+    "dataWillBeDeleted": "Los siguientes datos serán eliminados permanentemente:",
+    "metricsWillBeCleared": "Todas las métricas existentes serán eliminadas",
+    "trainValidationTestMetrics": "Métricas de entrenamiento, validación y prueba",
+    "trainingResultsWillBeReset": "Los resultados de entrenamiento serán reiniciados",
+    "startEndDeliveryTime": "Tiempo de inicio, fin y entrega",
+    "operationsMayBecomeInvalid": "Los explicadores y predicciones existentes pueden quedar inválidos",
+    "mayNeedToRecreate": "Es posible que deba recrearlos después de re-entrenar",
+    "willBeRetrainedAfterUpdate": "La ejecución se re-entrenará automáticamente después de actualizar los parámetros.",
+    "parametersMarkedForOptimization": "Los parámetros marcados para optimización requieren un optimizador de hiperparámetros.",
+    "retrainWillResetOperations": "Advertencia: Esto restablecerá {{explainersCount}} explicador(es) y {{predictionsCount}} predicción(es)",
     "errorEnqueueingRun": "Error al encolar ejecución con ID {{runId}}",
     "errorFetchingRuns": "Error al recuperar ejecuciones para {{experiment}}",
     "noRunsToExecute": "No hay ejecuciones disponibles para ejecutar. Las ejecuciones seleccionadas pueden estar ya en ejecución o completadas.",

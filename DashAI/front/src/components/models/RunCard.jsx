@@ -383,7 +383,10 @@ function RunCard({
                   operationsCount &&
                   (operationsCount.explainers > 0 ||
                     operationsCount.predictions > 0)
-                    ? `Warning: This will reset ${operationsCount.explainers} explainer(s) and ${operationsCount.predictions} prediction(s)`
+                    ? t("models:message.retrainWillResetOperations", {
+                        explainersCount: operationsCount.explainers,
+                        predictionsCount: operationsCount.predictions,
+                      })
                     : ""
                 }
               >
