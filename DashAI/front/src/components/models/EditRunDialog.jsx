@@ -25,7 +25,7 @@ import useSchema from "../../hooks/useSchema";
 /**
  * Dialog for editing an existing model run parameters
  * Step 1: Configure model name and parameters
- * Step 2: Configure optimizer (if optimizable parameters exist)
+ * Step 2: Configure optimizer
  */
 function EditRunDialog({
   open,
