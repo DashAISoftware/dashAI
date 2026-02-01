@@ -146,6 +146,7 @@ export default function DatasetsContent() {
     setSelectedDatasetId(datasetId);
     setSelectedNotebookId(null);
     setSelectedOption("dataset");
+    setStep(0);
     setRightBarContent(null);
   };
 
@@ -153,6 +154,7 @@ export default function DatasetsContent() {
     setSelectedNotebookId(notebookId);
     setSelectedDatasetId(null);
     setSelectedOption("notebook");
+    setStep(0);
   };
 
   const handleDatasetDelete = (id) => {
