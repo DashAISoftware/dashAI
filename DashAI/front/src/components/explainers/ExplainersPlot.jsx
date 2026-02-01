@@ -1,5 +1,13 @@
 import { React, useEffect, useState } from "react";
-import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  Grid,
+  MenuItem,
+  Select,
+  CircularProgress,
+  Box,
+} from "@mui/material";
 import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
@@ -45,8 +53,10 @@ export default function ExplainersPlot({ explainer, scope }) {
   };
 
   useEffect(() => {
-    getExplainerPlot();
-  }, []);
+    if (explainer.status === 3) {
+      getExplainerPlot();
+    }
+  }, [explainer.status]);
 
   return (
     <Grid container flexDirection={"row"} justifyContent={"space-between"}>
@@ -71,7 +81,7 @@ export default function ExplainersPlot({ explainer, scope }) {
         )}
       </Grid>
       <Grid size={{ xs: 8 }}>
-        {!loading && (
+        {!loading && explainer.status === 3 ? (
           <Plot
             data={explainersPlots[currentPlot].data}
             layout={{
@@ -81,6 +91,12 @@ export default function ExplainersPlot({ explainer, scope }) {
             }}
             config={{ staticPlot: false }}
           />
+        ) : explainer.status === 4 ? (
+          <Box>{t("explainers:error.explainerFailed")}</Box>
+        ) : (
+          <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
+            <CircularProgress />
+          </Box>
         )}
       </Grid>
     </Grid>

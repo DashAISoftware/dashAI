@@ -1,5 +1,7 @@
 import React from "react";
 import { TextField, Select, MenuItem, FormControl } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 export const renderInputField = (
   handleChange,
@@ -11,6 +13,8 @@ export const renderInputField = (
 ) => {
   const { dtype, type, categories } = typeInfo || {};
   const effectiveType = type || dtype || "string";
+  const theme = useTheme();
+  const { t } = useTranslation(["prediction"]);
 
   if (effectiveType === "Categorical" && categories && categories.length > 0) {
     return (
@@ -20,14 +24,16 @@ export const renderInputField = (
           onChange={(e) => handleChange(rowIndex, col, e.target.value)}
           displayEmpty
           sx={{
-            color: "white",
-            ".MuiOutlinedInput-notchedOutline": { borderColor: "#555" },
+            color: theme.palette.text.primary,
+            ".MuiOutlinedInput-notchedOutline": {
+              borderColor: theme.palette.divider,
+            },
             "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#888" },
-            ".MuiSvgIcon-root": { color: "white" },
+            ".MuiSvgIcon-root": { color: theme.palette.text.primary },
           }}
         >
           <MenuItem value="" disabled>
-            Select a category
+            {t("prediction:label.selectCategory")}
           </MenuItem>
           {categories.map((cat, idx) => (
             <MenuItem key={idx} value={cat}>
@@ -66,9 +72,9 @@ export const renderInputField = (
           handleChange(rowIndex, col, val);
         }}
         sx={{
-          input: { color: "white" },
+          input: { color: theme.palette.text.primary },
           "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "#555" },
+            "& fieldset": { borderColor: theme.palette.divider },
             "&:hover fieldset": { borderColor: "#888" },
           },
         }}
@@ -88,9 +94,9 @@ export const renderInputField = (
         placeholder={placeholder}
         onChange={(e) => handleChange(rowIndex, col, e.target.value)}
         sx={{
-          input: { color: "white" },
+          input: { color: theme.palette.text.primary },
           "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "#555" },
+            "& fieldset": { borderColor: theme.palette.divider },
             "&:hover fieldset": { borderColor: "#888" },
           },
         }}
@@ -104,21 +110,21 @@ export const renderInputField = (
         type="file"
         accept="image/*"
         onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
-        style={{ color: "white" }}
+        style={{ color: theme.palette.text.primary }}
       />
     );
   }
 
   return (
-    <TextField
+    <TextField1
       size="small"
       value={value}
       placeholder={placeholder}
       onChange={(e) => handleChange(rowIndex, col, e.target.value)}
       sx={{
-        input: { color: "white" },
+        input: { color: theme.palette.text.primary },
         "& .MuiOutlinedInput-root": {
-          "& fieldset": { borderColor: "#555" },
+          "& fieldset": { borderColor: theme.palette.divider },
           "&:hover fieldset": { borderColor: "#888" },
         },
       }}

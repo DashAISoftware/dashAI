@@ -300,9 +300,9 @@ class KernelShap(BaseLocalExplainer):
         # TODO: evaluate args nsamples y l1_reg
         shap_values = self.explainer.shap_values(X=X)
 
-        # shap_values has size (n_clases, n_instances, n_features)
-        # Reorder shap values: (n_instances, n_clases, n_features)
-        shap_values = np.array(shap_values).swapaxes(1, 0)
+        # shap_values has size (n_instances, n_features, n_classes)
+        # Reorder shap values: (n_instances, n_classes, n_features)
+        shap_values = np.array(shap_values).transpose(0, 2, 1)
 
         explanation = {
             "metadata": self.metadata,

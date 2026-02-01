@@ -7,6 +7,7 @@ import {
   DialogContentText,
   Grid,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import PreviewDataset from "./PreviewDataset";
@@ -53,6 +54,7 @@ function Upload({
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
 
   // helper to extract allowed extensions from acceptAttr (returns lowercase extensions like ".csv")
   const getAllowedExtensions = (accept) => {
@@ -275,14 +277,20 @@ function Upload({
               </Grid>
               {dragActive ? (
                 <Grid>
-                  <Typography variant="subtitle1">
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
                     {t("datasets:label.clickToUpload")}
                   </Typography>
                 </Grid>
               ) : (
                 <React.Fragment>
                   <Grid>
-                    <Typography variant="subtitle1">
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
                       {t("datasets:label.dragAndDropFileHere")}
                     </Typography>
                   </Grid>
@@ -346,12 +354,12 @@ function Upload({
       container
       direction="column"
       rowSpacing={1}
-      sx={{ width: "100%" }}
+      sx={{ width: "100%", bgcolor: theme.palette.ui.box }}
       data-tour="upload-area"
     >
       {/* state text */}
       <Grid sx={{ textAlign: "center" }}>
-        <DialogContentText>
+        <DialogContentText sx={{ color: theme.palette.text.primary }}>
           {datasetState === EMPTY && t("datasets:label.uploadYourDataset")}
           {datasetState === LOADING && t("datasets:label.datasetLoading")}
           {datasetState === LOADED && t("datasets:label.datasetPreview")}
