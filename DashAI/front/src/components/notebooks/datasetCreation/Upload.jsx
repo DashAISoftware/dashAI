@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
  * @param {object} formValues current form values from the configuration form
  * @param {function} onPreviewError callback to notify parent of preview errors
  * @param {function} onTypesChanged callback to notify parent when column types change
+ * @param {function} onColumnRename callback to notify parent when columns are renamed
  */
 function Upload({
   onFileUpload,
@@ -32,6 +33,7 @@ function Upload({
   selectedDataloader = null,
   onPreviewError,
   onTypesChanged,
+  onColumnRename,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -321,6 +323,7 @@ function Upload({
                 }}
                 onPreviewError={onPreviewError}
                 onTypesChanged={onTypesChanged}
+                onColumnRename={onColumnRename}
               />
             </Box>
           );

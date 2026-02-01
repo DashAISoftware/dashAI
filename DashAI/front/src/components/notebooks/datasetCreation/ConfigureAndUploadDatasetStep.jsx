@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Grid, CircularProgress } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
@@ -24,6 +24,7 @@ export default function ConfigureAndUploadDatasetStep({
   const [previewError, setPreviewError] = useState(false);
   const [datasetFileToUpload, setDatasetFileToUpload] = useState(null);
   const [columnTypes, setColumnTypes] = useState(null);
+  const columnRenamesRef = useRef({});
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -77,6 +78,12 @@ export default function ConfigureAndUploadDatasetStep({
         params["inferred_types"] = columnTypes;
       }
 
+      const currentRenames = columnRenamesRef.current;
+
+      if (Object.keys(currentRenames).length > 0) {
+        params["column_renames"] = currentRenames;
+      }
+
       const { file, url } = datasetFileToUpload;
 
       const data = await createDataset(name);
@@ -123,6 +130,13 @@ export default function ConfigureAndUploadDatasetStep({
     setColumnTypes(types);
   }, []);
 
+  const handleColumnRename = useCallback((oldName, newName) => {
+    columnRenamesRef.current = {
+      ...columnRenamesRef.current,
+      [oldName]: newName,
+    };
+  }, []);
+
   const isFormValid = () => {
     if (!formSubmitRef.current) return false;
 
@@ -167,6 +181,7 @@ export default function ConfigureAndUploadDatasetStep({
           selectedDataloader={selectedDataloader}
           onPreviewError={setPreviewError}
           onTypesChanged={handleTypesChanged}
+          onColumnRename={handleColumnRename}
         />
       </Grid>
 

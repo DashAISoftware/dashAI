@@ -175,10 +175,20 @@ class DatasetJob(BaseJob):
                 else:
                     schema = infer_types(new_dataset.to_pandas(), method="DashAIPtype")
 
-                # Cast dataset to inferred types
+                if "column_renames" in params:
+                    renames = params["column_renames"]
+                    new_names = [
+                        renames.get(col, col)
+                        for col in new_dataset.arrow_table.schema.names
+                    ]
+                    arrow_table = new_dataset.arrow_table.rename_columns(new_names)
+                    new_dataset = new_dataset.__class__(
+                        arrow_table, splits=new_dataset.splits, types=new_dataset.types
+                    )
+                    schema = {renames.get(col, col): schema[col] for col in schema}
+
                 new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
-                # Calculate metadata
                 new_dataset.compute_metadata()
                 gc.collect()
 

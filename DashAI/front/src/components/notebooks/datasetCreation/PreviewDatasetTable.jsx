@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
-import { Typography, Select, MenuItem, Box } from "@mui/material";
+import {
+  Typography,
+  Select,
+  MenuItem,
+  Box,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { TypeChangeValidator } from "./TypeChangeValidator";
+import { useTranslation } from "react-i18next";
 
 const TYPE_TO_DEFAULT_DTYPE = {
   Integer: "int64",
@@ -26,6 +34,7 @@ const TYPE_TO_DEFAULT_DTYPE = {
  * @param {File} file - The uploaded file (needed for validation)
  * @param {Object} params - Dataloader parameters (needed for validation)
  * @param {Function} onTypeChange - Callback when types are successfully changed
+ * @param {Function} onColumnRename - Callback when a column is renamed (oldName, newName) => void
  */
 export default function PreviewDatasetTable({
   rows,
@@ -33,9 +42,14 @@ export default function PreviewDatasetTable({
   file,
   params,
   onTypeChange,
+  onColumnRename,
 }) {
+  const { t } = useTranslation(["common"]);
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
+  const [editingColumn, setEditingColumn] = useState(null);
+  const [editValue, setEditValue] = useState("");
+  const [columnNames, setColumnNames] = useState({});
 
   const handleTypeChangeRequest = (columnName, newType) => {
     const currentType = columnTypes[columnName]?.type;
@@ -70,18 +84,74 @@ export default function PreviewDatasetTable({
     setPendingChanges({});
   };
 
+  const handleStartEdit = (columnName) => {
+    setEditingColumn(columnName);
+    setEditValue(columnNames[columnName] || columnName);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingColumn(null);
+    setEditValue("");
+  };
+
+  const handleConfirmEdit = (oldName) => {
+    const newName = editValue.trim();
+
+    if (!newName) {
+      handleCancelEdit();
+      return;
+    }
+
+    if (newName === oldName || newName === (columnNames[oldName] || oldName)) {
+      handleCancelEdit();
+      return;
+    }
+
+    const currentNames = Object.values(columnNames);
+    const allColumnNames = Object.keys(columnTypes).map(
+      (col) => columnNames[col] || col,
+    );
+
+    if (allColumnNames.includes(newName)) {
+      handleCancelEdit();
+      return;
+    }
+
+    setColumnNames((prev) => ({
+      ...prev,
+      [oldName]: newName,
+    }));
+
+    if (onColumnRename) {
+      onColumnRename(oldName, newName);
+    }
+
+    handleCancelEdit();
+  };
+
+  const handleKeyDown = (e, columnName) => {
+    if (e.key === "Enter") {
+      handleConfirmEdit(columnName);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
   const columns = useMemo(() => {
     if (!rows || rows.length === 0) return [];
 
     const firstRow = rows[0];
     return Object.keys(firstRow).map((field) => {
       const columnType = columnTypes[field];
+      const displayName = columnNames[field] || field;
 
       return {
         field,
-        headerName: field,
+        headerName: displayName,
         minWidth: 150,
         flex: 1,
+        sortable: false,
+        disableColumnMenu: true,
         renderHeader: () => (
           <Box
             sx={{
@@ -92,20 +162,48 @@ export default function PreviewDatasetTable({
               gap: 0.5,
             }}
           >
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                fontSize: "0.875rem",
-              }}
-            >
-              {field}
-            </Typography>
+            {editingColumn === field ? (
+              <TextField
+                autoFocus
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, field)}
+                onBlur={() => handleConfirmEdit(field)}
+                size="small"
+                sx={{
+                  width: "100%",
+                  "& .MuiInputBase-input": {
+                    fontSize: "0.875rem",
+                    paddingY: 0.5,
+                  },
+                }}
+              />
+            ) : (
+              <Tooltip title={t("common:renameColumn")} arrow>
+                <Typography
+                  variant="subtitle2"
+                  onDoubleClick={() => handleStartEdit(field)}
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      color: "primary.main",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  {displayName}
+                </Typography>
+              </Tooltip>
+            )}
 
             <Select
               value={columnType?.type || "Text"}
               onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
               size="small"
+              disabled={editingColumn === field}
               sx={{
                 fontSize: "0.75rem",
                 minWidth: 120,
@@ -124,7 +222,7 @@ export default function PreviewDatasetTable({
         ),
       };
     });
-  }, [rows, columnTypes]);
+  }, [rows, columnTypes, columnNames, editingColumn, editValue, t]);
 
   const rowsWithIds = useMemo(() => {
     if (!rows) return [];
