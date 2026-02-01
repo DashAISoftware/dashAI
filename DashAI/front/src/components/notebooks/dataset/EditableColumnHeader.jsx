@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Typography, TextField, Box, Tooltip } from "@mui/material";
-import { Edit, Check, Close } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -100,7 +99,7 @@ export default function EditableColumnHeader({
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={handleCancel}
+          onBlur={handleConfirm}
           size="small"
           error={!!error}
           disabled={isLoading}

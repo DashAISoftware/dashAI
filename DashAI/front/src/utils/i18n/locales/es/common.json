@@ -137,5 +137,8 @@
   "renameColumn": "Renombrar columna",
   "columnNameEmpty": "El nombre de la columna no puede estar vacío",
   "columnNameInvalid": "El nombre de la columna solo puede contener letras, números y guiones bajos",
+  "columnNameCannotBeEmpty": "El nombre de la columna no puede estar vacío",
+  "columnNameInvalidCharacters": "El nombre de la columna solo puede contener letras, números y guiones bajos",
+  "columnNameAlreadyExists": "Ya existe una columna con este nombre",
   "errorRenamingColumn": "Error al renombrar la columna"
 }

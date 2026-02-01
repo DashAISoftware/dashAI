@@ -10,6 +10,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import { TypeChangeValidator } from "./TypeChangeValidator";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
 const TYPE_TO_DEFAULT_DTYPE = {
   Integer: "int64",
@@ -45,6 +46,7 @@ export default function PreviewDatasetTable({
   onColumnRename,
 }) {
   const { t } = useTranslation(["common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
   const [editingColumn, setEditingColumn] = useState(null);
@@ -98,6 +100,18 @@ export default function PreviewDatasetTable({
     const newName = editValue.trim();
 
     if (!newName) {
+      enqueueSnackbar(t("common:columnNameCannotBeEmpty"), {
+        variant: "warning",
+      });
+      handleCancelEdit();
+      return;
+    }
+
+    const columnNameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!columnNameRegex.test(newName)) {
+      enqueueSnackbar(t("common:columnNameInvalidCharacters"), {
+        variant: "warning",
+      });
       handleCancelEdit();
       return;
     }
@@ -107,12 +121,14 @@ export default function PreviewDatasetTable({
       return;
     }
 
-    const currentNames = Object.values(columnNames);
     const allColumnNames = Object.keys(columnTypes).map(
       (col) => columnNames[col] || col,
     );
 
     if (allColumnNames.includes(newName)) {
+      enqueueSnackbar(t("common:columnNameAlreadyExists"), {
+        variant: "warning",
+      });
       handleCancelEdit();
       return;
     }

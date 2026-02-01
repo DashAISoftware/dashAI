@@ -179,10 +179,24 @@ class DatasetJob(BaseJob):
 
                     if "column_renames" in params:
                         renames = params["column_renames"]
-                        new_names = [
-                            renames.get(col, col)
-                            for col in new_dataset.arrow_table.schema.names
-                        ]
+                        original_names = new_dataset.arrow_table.schema.names
+                        new_names = [renames.get(col, col) for col in original_names]
+
+                        if len(new_names) != len(set(new_names)):
+                            duplicate_names = set()
+                            seen = set()
+                            for name in new_names:
+                                if name in seen:
+                                    duplicate_names.add(name)
+                                else:
+                                    seen.add(name)
+                            msg = (
+                                "Invalid column_renames: resulting column names "
+                                "contain duplicates: "
+                                f"{sorted(duplicate_names)}"
+                            )
+                            raise JobError(msg)
+
                         arrow_table = new_dataset.arrow_table.rename_columns(new_names)
                         new_dataset = new_dataset.__class__(
                             arrow_table,

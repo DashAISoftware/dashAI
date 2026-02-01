@@ -116,27 +116,32 @@ export default function DatasetTable({
         throw new Error("Dataset ID is required for renaming columns");
       }
 
-      const result = await renameDatasetColumn(datasetId, oldName, newName);
+      try {
+        const result = await renameDatasetColumn(datasetId, oldName, newName);
 
-      setColumnTypes((prevTypes) => {
-        const newTypes = { ...prevTypes };
-        if (newTypes[oldName]) {
-          newTypes[newName] = newTypes[oldName];
-          delete newTypes[oldName];
-        }
-        return newTypes;
-      });
+        const { page, pageSize } = paginationModel;
+        const data = await fetchPage(page, pageSize, filterModel);
+        const withIds = (data?.rows ?? []).map((r, i) => ({
+          id: page * pageSize + i,
+          ...r,
+        }));
 
-      const { page, pageSize } = paginationModel;
-      const data = await fetchPage(page, pageSize, filterModel);
-      const withIds = (data?.rows ?? []).map((r, i) => ({
-        id: page * pageSize + i,
-        ...r,
-      }));
-      setRows(withIds);
-      setRowCount(data?.total ?? withIds.length);
+        setColumnTypes((prevTypes) => {
+          const newTypes = { ...prevTypes };
+          if (newTypes[oldName]) {
+            newTypes[newName] = newTypes[oldName];
+            delete newTypes[oldName];
+          }
+          return newTypes;
+        });
 
-      return result;
+        setRows(withIds);
+        setRowCount(data?.total ?? withIds.length);
+
+        return result;
+      } catch (error) {
+        throw error;
+      }
     },
     [datasetId, paginationModel, filterModel, fetchPage],
   );

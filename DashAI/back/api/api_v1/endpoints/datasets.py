@@ -879,8 +879,19 @@ async def rename_dataset_column(
         if dataset.status != DatasetStatus.FINISHED:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Dataset is not in finished state",
+                detail="Dataset is not in finished state or being modified",
             )
+
+        # Lock the dataset to prevent concurrent modifications
+        try:
+            dataset.set_status_as_started()
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error locking dataset for modification",
+            ) from e
 
         old_name = params.old_name.strip()
         new_name = params.new_name.strip()
@@ -964,6 +975,7 @@ async def rename_dataset_column(
                     )
 
             dataset.last_modified = datetime.now(timezone.utc)
+            dataset.set_status_as_finished()
             db.commit()
             db.refresh(dataset)
             updated_columns = get_columns_spec(dataset_path)
@@ -974,8 +986,14 @@ async def rename_dataset_column(
                 "columns": updated_columns,
             }
         except HTTPException:
+            # Release the lock before re-raising
+            dataset.set_status_as_finished()
+            db.commit()
             raise
         except Exception as e:
+            # Release the lock and mark as finished on error
+            dataset.set_status_as_finished()
+            db.commit()
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
