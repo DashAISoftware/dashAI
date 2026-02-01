@@ -184,6 +184,7 @@ function RunCard({
     try {
       await updateRunParameters(
         run.id.toString(),
+        editedName.trim(),
         editedParameters,
         editedOptimizer || "",
         editedOptimizerParams || {},

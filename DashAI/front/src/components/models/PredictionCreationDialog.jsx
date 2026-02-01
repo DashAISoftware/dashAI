@@ -29,7 +29,6 @@ import { useSnackbar } from "notistack";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getPredictions } from "../../api/predict";
 
-const steps = ["Configure Input", "Confirm"];
 import { useTranslation } from "react-i18next";
 
 /**
@@ -59,7 +58,6 @@ export default function PredictionCreationDialog({
   const { t } = useTranslation(["prediction", "common"]);
 
   const steps = [
-    t("prediction:label.selectMode"),
     t("prediction:label.configureInput"),
     t("prediction:label.confirm"),
   ];
@@ -211,19 +209,6 @@ export default function PredictionCreationDialog({
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
-        return (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {t("prediction:label.selectPredictionMode")}
-            </Typography>
-            <ModeSelector
-              predictionMode={predictionMode}
-              setPredictionMode={setPredictionMode}
-            />
-          </Box>
-        );
-
-      case 1:
         return (
           <Box sx={{ py: 2 }}>
             {predictionMode === "dataset" ? (

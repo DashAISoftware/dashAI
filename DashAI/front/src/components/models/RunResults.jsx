@@ -2,9 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
   Button,
   Chip,
@@ -31,7 +28,6 @@ import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
 import { checkHowManyOptimazers } from "../../utils/schema";
-import { useSnackbar } from "notistack";
 
 export default function RunResults({
   run,
