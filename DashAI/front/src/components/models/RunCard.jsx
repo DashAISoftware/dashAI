@@ -639,7 +639,7 @@ function RunCard({
                   </Box>
                 )}
 
-                {run.optimizer_name && (
+                {run.optimizer_name && run.goal_metric && (
                   <Box>
                     <Typography variant="subtitle2" gutterBottom>
                       {t("common:optimizer")}: {run.optimizer_name}
