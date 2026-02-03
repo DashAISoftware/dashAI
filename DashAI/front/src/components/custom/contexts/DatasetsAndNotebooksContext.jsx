@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../../hooks/datasets/useDatasets";
 import { useNotebooks } from "../../../hooks/datasets/useNotebooks";
+import { create } from "yup/lib/Reference";
 
 const DatasetsAndNotebooksContext = createContext();
 
@@ -19,6 +20,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const {
     datasets,
+    createDataset,
     selectedDatasetId,
     fetchDatasets,
     selectDataset,
@@ -55,6 +57,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
 
   const value = {
     datasets,
+    createDataset,
     selectedDatasetId,
     fetchDatasets,
     selectDataset,

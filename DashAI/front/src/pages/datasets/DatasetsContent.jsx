@@ -53,19 +53,6 @@ export default function DatasetsContent() {
     selectNotebookView,
   } = useDatasetUIState();
 
-  const { createDatasetFromNotebook } = useDatasetFlow({
-    datasets,
-    enrichDatasetsWithInfo,
-    fetchDatasets,
-    replaceDatasets,
-    addDatasetOptimistically,
-    selectDataset,
-    clearSelectedDataset,
-    t,
-    resetUI,
-    deleteDatasetRemote,
-  });
-
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
@@ -82,10 +69,7 @@ export default function DatasetsContent() {
             <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
               <>
                 <CenterPanel>
-                  <DatasetsCenterContent
-                    t={t}
-                    handleAddDatasetFromNotebook={createDatasetFromNotebook}
-                  />
+                  <DatasetsCenterContent t={t} />
                 </CenterPanel>
                 <RightPanel toggleButtonTop="calc(50% + 60px)">
                   {rightBarContent ? (
@@ -103,10 +87,7 @@ export default function DatasetsContent() {
           ) : (
             <>
               <CenterPanel>
-                <DatasetsCenterContent
-                  t={t}
-                  handleAddDatasetFromNotebook={createDatasetFromNotebook}
-                />
+                <DatasetsCenterContent t={t} />
               </CenterPanel>
               <RightPanel toggleButtonTop="50%">
                 {rightBarContent ? (

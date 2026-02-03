@@ -7,10 +7,7 @@ import SelectOptionMenu from "../../threeSectionLayout/SelectOptionMenu";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
 
-export default function DatasetsCenterContent({
-  t,
-  handleAddDatasetFromNotebook,
-}) {
+export default function DatasetsCenterContent({ t }) {
   const {
     datasets,
     notebooks,
@@ -77,15 +74,28 @@ export default function DatasetsCenterContent({
     setStep(1);
   };
 
-  if (selectedNotebookId) {
+  if (selectedNotebookId && selectedOption === "notebook") {
     return (
       <NotebookVisualization
         notebook={selectedNotebook}
-        handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
         existingDatasets={datasets}
       />
     );
   }
+
+  if (selectedDatasetId && selectedOption === "dataset") {
+    return (
+      <DatasetVisualization
+        dataset={selectedDataset}
+        onItemCreated={handleNotebookCreated}
+        onNewItem={handleNewNotebookFromDataset}
+        existingItems={notebooks}
+        newItemButtonText={t("datasets:button.newNotebook")}
+        tourContextType="datasets"
+      />
+    );
+  }
+
   if (step === 1 && selectedOption === "dataset") {
     return (
       <UploadDatasetSteps
@@ -108,18 +118,6 @@ export default function DatasetsCenterContent({
         handleNotebookCreated={handleNotebookCreated}
         existingNotebooks={notebooks}
         preselectedDatasetId={selectedDatasetId}
-      />
-    );
-  }
-  if (selectedDatasetId) {
-    return (
-      <DatasetVisualization
-        dataset={selectedDataset}
-        onItemCreated={handleNotebookCreated}
-        onNewItem={handleNewNotebookFromDataset}
-        existingItems={notebooks}
-        newItemButtonText={t("datasets:button.newNotebook")}
-        tourContextType="datasets"
       />
     );
   }
