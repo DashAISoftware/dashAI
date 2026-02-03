@@ -12,11 +12,9 @@ import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+
 export default function DatasetsNotebooksLeftBar({
-  datasets = [],
-  selectedDatasetId,
-  notebooks = [],
-  selectedNotebookId,
   onDatasetClick,
   onDatasetDelete,
   onDatasetEdit,
@@ -26,10 +24,12 @@ export default function DatasetsNotebooksLeftBar({
   onToggle,
   handleNewSessionButton,
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { datasets, notebooks, selectedDatasetId, selectedNotebookId } =
+    useDatasetsAndNotebooks();
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {

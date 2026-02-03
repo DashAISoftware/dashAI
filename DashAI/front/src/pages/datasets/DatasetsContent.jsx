@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTourContext } from "../../components/tour/TourProvider";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
@@ -18,6 +18,7 @@ import { useDatasetUIState } from "../../hooks/datasets/useDatasetUIState";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
+import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetsContent() {
   const [rightBarContent, setRightBarContent] = useState(null);
@@ -38,9 +39,6 @@ export default function DatasetsContent() {
     enrichDatasetsWithInfo,
     replaceDatasets,
     startDatasetPolling,
-  } = useDatasets({ t });
-
-  const {
     notebooks,
     selectedNotebookId,
     fetchNotebooks,
@@ -49,7 +47,7 @@ export default function DatasetsContent() {
     deleteNotebookById,
     editNotebook,
     removeNotebooksByDatasetId,
-  } = useNotebooks({ t });
+  } = useDatasetsAndNotebooks();
 
   const {
     step,
@@ -149,77 +147,28 @@ export default function DatasetsContent() {
     startDatasetPolling(newDataset, datasetJob);
   };
 
-  useEffect(() => {
-    fetchDatasets();
-    fetchNotebooks();
-  }, []);
-
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
-    <>
-      <ThreePanelLayoutContext.Provider value={threePanelLayout}>
-        <ModuleContainer>
-          <LeftPanel>
-            <DatasetsNotebooksLeftBar
-              datasets={datasets}
-              notebooks={notebooks}
-              selectedDatasetId={selectedDatasetId}
-              selectedNotebookId={selectedNotebookId}
-              onDatasetClick={handleDatasetClick}
-              onDatasetDelete={handleDatasetDelete}
-              onDatasetEdit={editDataset}
-              onNotebookClick={handleNotebookClick}
-              onNotebookDelete={handleNotebookDelete}
-              onNotebookEdit={editNotebook}
-              handleNewSessionButton={handleNewSessionButton}
-              onToggle={threePanelLayout.handleToggleLeft}
-            />
-          </LeftPanel>
+    <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+      <ModuleContainer>
+        <LeftPanel>
+          <DatasetsNotebooksLeftBar
+            onDatasetClick={handleDatasetClick}
+            onDatasetDelete={handleDatasetDelete}
+            onDatasetEdit={editDataset}
+            onNotebookClick={handleNotebookClick}
+            onNotebookDelete={handleNotebookDelete}
+            onNotebookEdit={editNotebook}
+            handleNewSessionButton={handleNewSessionButton}
+            onToggle={threePanelLayout.handleToggleLeft}
+          />
+        </LeftPanel>
 
-          <ExplorersAndConvertersProvider>
-            {selectedNotebookId ? (
-              <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
-                <>
-                  <CenterPanel>
-                    <DatasetsCenterContent
-                      selectedNotebookId={selectedNotebookId}
-                      selectedNotebook={selectedNotebook}
-                      step={step}
-                      selectedOption={selectedOption}
-                      selectedDatasetId={selectedDatasetId}
-                      selectedDataset={selectedDataset}
-                      datasets={datasets}
-                      notebooks={notebooks}
-                      t={t}
-                      goToNextStep={goToNextStep}
-                      resetUI={resetUI}
-                      fetchDatasets={fetchDatasets}
-                      fetchNotebooks={fetchNotebooks}
-                      setRightBarContent={setRightBarContent}
-                      handleDatasetCreated={handleDatasetCreated}
-                      handleNotebookCreated={handleNotebookCreated}
-                      handleNewNotebookFromDataset={
-                        handleNewNotebookFromDataset
-                      }
-                      handleAddDatasetFromNotebook={createDatasetFromNotebook}
-                    />
-                  </CenterPanel>
-                  <RightPanel toggleButtonTop="calc(50% + 60px)">
-                    {rightBarContent ? (
-                      rightBarContent
-                    ) : (
-                      <RightBar
-                        notebook={selectedNotebook}
-                        onToggle={threePanelLayout.handleToggleRight}
-                      />
-                    )}
-                  </RightPanel>
-                  <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
-                </>
-              </TourProvider>
-            ) : (
+        <ExplorersAndConvertersProvider>
+          {selectedNotebookId ? (
+            <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
               <>
                 <CenterPanel>
                   <DatasetsCenterContent
@@ -243,22 +192,58 @@ export default function DatasetsContent() {
                     handleAddDatasetFromNotebook={createDatasetFromNotebook}
                   />
                 </CenterPanel>
-                <RightPanel toggleButtonTop="50%">
+                <RightPanel toggleButtonTop="calc(50% + 60px)">
                   {rightBarContent ? (
                     rightBarContent
                   ) : (
                     <RightBar
-                      notebook={null}
+                      notebook={selectedNotebook}
                       onToggle={threePanelLayout.handleToggleRight}
                     />
                   )}
                 </RightPanel>
+                <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
               </>
-            )}
-          </ExplorersAndConvertersProvider>
-        </ModuleContainer>
-        {!selectedNotebookId && <TourButton tourKey={TOUR_KEYS.DATASETS} />}
-      </ThreePanelLayoutContext.Provider>
-    </>
+            </TourProvider>
+          ) : (
+            <>
+              <CenterPanel>
+                <DatasetsCenterContent
+                  selectedNotebookId={selectedNotebookId}
+                  selectedNotebook={selectedNotebook}
+                  step={step}
+                  selectedOption={selectedOption}
+                  selectedDatasetId={selectedDatasetId}
+                  selectedDataset={selectedDataset}
+                  datasets={datasets}
+                  notebooks={notebooks}
+                  t={t}
+                  goToNextStep={goToNextStep}
+                  resetUI={resetUI}
+                  fetchDatasets={fetchDatasets}
+                  fetchNotebooks={fetchNotebooks}
+                  setRightBarContent={setRightBarContent}
+                  handleDatasetCreated={handleDatasetCreated}
+                  handleNotebookCreated={handleNotebookCreated}
+                  handleNewNotebookFromDataset={handleNewNotebookFromDataset}
+                  handleAddDatasetFromNotebook={createDatasetFromNotebook}
+                />
+              </CenterPanel>
+              <RightPanel toggleButtonTop="50%">
+                {rightBarContent ? (
+                  rightBarContent
+                ) : (
+                  <RightBar
+                    notebook={null}
+                    onToggle={threePanelLayout.handleToggleRight}
+                  />
+                )}
+              </RightPanel>
+            </>
+          )}
+        </ExplorersAndConvertersProvider>
+      </ModuleContainer>
+      {!selectedNotebookId && <TourButton tourKey={TOUR_KEYS.DATASETS} />}
+    </ThreePanelLayoutContext.Provider>
   );
 }
