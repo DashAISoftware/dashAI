@@ -22,12 +22,13 @@ export default function DatasetsCenterContent({
   handleDatasetCreated,
   handleNotebookCreated,
   handleNewNotebookFromDataset,
+  handleAddDatasetFromNotebook,
 }) {
   if (selectedNotebookId) {
     return (
       <NotebookVisualization
         notebook={selectedNotebook}
-        handleAddDatasetFromNotebook={() => {}}
+        handleAddDatasetFromNotebook={handleAddDatasetFromNotebook}
         existingDatasets={datasets}
       />
     );

@@ -21,6 +21,7 @@ import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import { useDatasets } from "../../../hooks/datasets/useDatasets";
 
 export default function DatasetPreviewNotebook({
   notebook,
@@ -101,6 +102,8 @@ export default function DatasetPreviewNotebook({
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
+
+  const { createDatasetFromNotebook } = useDatasets({ t });
 
   return (
     <Box>
@@ -206,7 +209,9 @@ export default function DatasetPreviewNotebook({
       <SaveDatasetModal
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
-        onSaveDataset={handleAddDatasetFromNotebook}
+        onSaveDataset={(name) =>
+          handleAddDatasetFromNotebook(name, notebook.id)
+        }
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,
         )}

@@ -1,11 +1,13 @@
 import { useState, useCallback } from "react";
+import { useSnackbar } from "notistack";
 import {
   getNotebooks,
   deleteNotebook,
   updateNotebook,
 } from "../../api/notebook";
 
-export function useNotebooks({ enqueueSnackbar, t }) {
+export function useNotebooks({ t }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [notebooks, setNotebooks] = useState([]);
   const [selectedNotebookId, setSelectedNotebookId] = useState(null);
 

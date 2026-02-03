@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSnackbar } from "notistack";
 import { useTourContext } from "../../components/tour/TourProvider";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
@@ -16,23 +15,19 @@ import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
 import { useNotebooks } from "../../hooks/datasets/useNotebooks";
 import { useDatasetUIState } from "../../hooks/datasets/useDatasetUIState";
-import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
-import { useDatasetActions } from "../../hooks/datasets/useDatasetActions";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
-import { useNotebookActions } from "../../hooks/datasets/useNotebooksActions";
-import { useLayoutActions } from "../../hooks/datasets/useLayoutActions";
+import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
 
 export default function DatasetsContent() {
   const [rightBarContent, setRightBarContent] = useState(null);
   const tourContext = useTourContext();
-  const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
+  const threePanelLayout = useThreePanelLayout();
 
   const {
     datasets,
     selectedDatasetId,
-    enrichDatasetsWithInfo,
     fetchDatasets,
     selectDataset,
     clearSelectedDataset,
@@ -40,9 +35,10 @@ export default function DatasetsContent() {
     deleteDatasetRemote,
     editDataset,
     addDatasetOptimistically,
-    startDatasetPolling,
+    enrichDatasetsWithInfo,
     replaceDatasets,
-  } = useDatasets({ enqueueSnackbar, t });
+    startDatasetPolling,
+  } = useDatasets({ t });
 
   const {
     notebooks,
@@ -53,7 +49,7 @@ export default function DatasetsContent() {
     deleteNotebookById,
     editNotebook,
     removeNotebooksByDatasetId,
-  } = useNotebooks({ enqueueSnackbar, t });
+  } = useNotebooks({ t });
 
   const {
     step,
@@ -71,74 +67,87 @@ export default function DatasetsContent() {
     enrichDatasetsWithInfo,
     fetchDatasets,
     replaceDatasets,
+    addDatasetOptimistically,
     selectDataset,
     clearSelectedDataset,
-    deleteDatasetRemote,
-    enqueueSnackbar,
     t,
     resetUI,
-  });
-
-  const {
-    handleDatasetClick,
-    handleNotebookClick,
-    handleDatasetDelete,
-    handleNotebookDelete,
-    handleEditDataset,
-    handleEditNotebook,
-  } = useDatasetActions({
-    selectedDatasetId,
-    selectedNotebookId,
-
-    selectDataset,
-    selectNotebook,
-    clearSelectedDataset,
-    clearSelectedNotebook,
-
-    deleteDatasetLocal,
     deleteDatasetRemote,
-    removeNotebooksByDatasetId,
-    deleteNotebookById,
-
-    editDataset,
-    editNotebook,
-
-    resetUI,
-    selectDatasetView,
-    selectNotebookView,
   });
 
-  const threePanelLayout = useThreePanelLayout();
+  const handleDatasetClick = (id) => {
+    selectDataset(id);
+    clearSelectedNotebook();
+    selectDatasetView();
+  };
 
-  const { handleNotebookCreated, handleNewNotebookFromDataset } =
-    useNotebookActions({
-      fetchNotebooks,
-      selectNotebook,
-      clearSelectedNotebook,
-      clearSelectedDataset,
-      selectNotebookView,
-      selectDatasetView,
-      goToNotebookCreation,
-      createDatasetFromNotebook,
-    });
+  const handleNotebookClick = (id) => {
+    selectNotebook(id);
+    clearSelectedDataset();
+    selectNotebookView();
+  };
 
-  const { goToNextStep, handleNewSessionButton, handleDatasetCreated } =
-    useLayoutActions({
-      goToDatasetFlow,
-      goToNotebookFlow,
-      resetUI,
+  const handleDatasetDelete = async (id) => {
+    if (id === selectedDatasetId) {
+      clearSelectedDataset();
+      resetUI();
+    }
 
-      clearSelectedDataset,
-      clearSelectedNotebook,
+    deleteDatasetLocal(id);
+    removeNotebooksByDatasetId(id);
+    await deleteDatasetRemote(id);
+  };
 
-      selectDatasetView,
+  const handleNotebookDelete = (id) => {
+    deleteNotebookById(id);
 
-      addDatasetOptimistically,
-      startDatasetPolling,
+    if (id === selectedNotebookId) {
+      clearSelectedNotebook();
+      resetUI();
+    }
+  };
 
-      setRightBarContent,
-      tourContext,
-    });
+  const handleNotebookCreated = async (createdNotebook) => {
+    await fetchNotebooks();
+    selectNotebookView();
+    selectNotebook(createdNotebook.id);
+    clearSelectedDataset();
+  };
+
+  const handleNewNotebookFromDataset = () => {
+    goToNotebookCreation();
+  };
+
+  const goToNextStep = (option) => {
+    if (option === "dataset") {
+      goToDatasetFlow();
+    } else {
+      goToNotebookFlow();
+    }
+
+    clearSelectedDataset();
+    clearSelectedNotebook();
+
+    if (option === "dataset" && tourContext?.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 600);
+    }
+  };
+
+  const handleNewSessionButton = () => {
+    clearSelectedDataset();
+    clearSelectedNotebook();
+    resetUI();
+  };
+
+  const handleDatasetCreated = (newDataset, datasetJob) => {
+    addDatasetOptimistically(newDataset);
+    selectDatasetView();
+    clearSelectedNotebook();
+    setRightBarContent(null);
+    startDatasetPolling(newDataset, datasetJob);
+  };
 
   useEffect(() => {
     fetchDatasets();
@@ -160,10 +169,10 @@ export default function DatasetsContent() {
               selectedNotebookId={selectedNotebookId}
               onDatasetClick={handleDatasetClick}
               onDatasetDelete={handleDatasetDelete}
-              onDatasetEdit={handleEditDataset}
+              onDatasetEdit={editDataset}
               onNotebookClick={handleNotebookClick}
               onNotebookDelete={handleNotebookDelete}
-              onNotebookEdit={handleEditNotebook}
+              onNotebookEdit={editNotebook}
               handleNewSessionButton={handleNewSessionButton}
               onToggle={threePanelLayout.handleToggleLeft}
             />
@@ -194,6 +203,7 @@ export default function DatasetsContent() {
                       handleNewNotebookFromDataset={
                         handleNewNotebookFromDataset
                       }
+                      handleAddDatasetFromNotebook={createDatasetFromNotebook}
                     />
                   </CenterPanel>
                   <RightPanel toggleButtonTop="calc(50% + 60px)">
@@ -230,6 +240,7 @@ export default function DatasetsContent() {
                     handleDatasetCreated={handleDatasetCreated}
                     handleNotebookCreated={handleNotebookCreated}
                     handleNewNotebookFromDataset={handleNewNotebookFromDataset}
+                    handleAddDatasetFromNotebook={createDatasetFromNotebook}
                   />
                 </CenterPanel>
                 <RightPanel toggleButtonTop="50%">

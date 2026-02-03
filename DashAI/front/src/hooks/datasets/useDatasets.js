@@ -1,4 +1,6 @@
 import { useState, useCallback } from "react";
+import { useSnackbar } from "notistack";
+import { enqueueDatasetJob } from "../../api/job";
 import {
   getDatasets,
   deleteDataset,
@@ -7,9 +9,9 @@ import {
   createDataset,
 } from "../../api/datasets";
 import { startJobPolling } from "../../utils/jobPoller";
-import { replace } from "formik";
 
-export function useDatasets({ enqueueSnackbar, t }) {
+export function useDatasets({ t }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
 

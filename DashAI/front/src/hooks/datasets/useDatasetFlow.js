@@ -1,6 +1,7 @@
 import { startJobPolling } from "../../utils/jobPoller";
 import { enqueueDatasetJob } from "../../api/job";
 import { createDataset, deleteDataset } from "../../api/datasets";
+import { useSnackbar } from "notistack";
 
 export function useDatasetFlow({
   datasets,
@@ -10,10 +11,12 @@ export function useDatasetFlow({
   addDatasetOptimistically,
   selectDataset,
   clearSelectedDataset,
-  enqueueSnackbar,
   t,
-  resetUIAfterFailure,
+  resetUI,
+  deleteDatasetRemote,
 }) {
+  const { enqueueSnackbar } = useSnackbar();
+
   const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
     if (!jobId) return;
 
@@ -62,13 +65,19 @@ export function useDatasetFlow({
 
         deleteDatasetRemote(datasetId).catch(console.error);
         clearSelectedDataset();
-        resetUIAfterFailure();
+        resetUI();
       },
     );
   };
 
   const createDatasetFromNotebook = async (name, notebookId) => {
     try {
+      console.log(
+        "Creating dataset from notebook:",
+        notebookId,
+        "with name:",
+        name,
+      );
       const dataset = await createDataset(name);
 
       enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
