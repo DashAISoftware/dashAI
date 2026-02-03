@@ -7,9 +7,8 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
-from DashAI.back.api.api_v0.endpoints.session_class import Session
 from DashAI.back.api.api_v1.schemas.pipelines_params import (
     DatasetFilterParams,
     PipelineCreateParams,
