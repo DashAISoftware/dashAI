@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useTourContext } from "../../components/tour/TourProvider";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
@@ -19,7 +18,6 @@ import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
 import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetsContent() {
-  const [rightBarContent, setRightBarContent] = useState(null);
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
   const threePanelLayout = useThreePanelLayout();
@@ -45,6 +43,7 @@ export default function DatasetsContent() {
     deleteNotebookById,
     editNotebook,
     removeNotebooksByDatasetId,
+    rightBarContent,
   } = useDatasetsAndNotebooks();
 
   const {
@@ -110,14 +109,6 @@ export default function DatasetsContent() {
     resetUI();
   };
 
-  const handleDatasetCreated = (newDataset, datasetJob) => {
-    addDatasetOptimistically(newDataset);
-    selectDatasetView();
-    clearSelectedNotebook();
-    setRightBarContent(null);
-    startDatasetPolling(newDataset, datasetJob);
-  };
-
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
@@ -142,8 +133,6 @@ export default function DatasetsContent() {
                 <CenterPanel>
                   <DatasetsCenterContent
                     t={t}
-                    setRightBarContent={setRightBarContent}
-                    handleDatasetCreated={handleDatasetCreated}
                     handleNotebookCreated={handleNotebookCreated}
                     handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                     handleAddDatasetFromNotebook={createDatasetFromNotebook}
@@ -167,8 +156,6 @@ export default function DatasetsContent() {
               <CenterPanel>
                 <DatasetsCenterContent
                   t={t}
-                  setRightBarContent={setRightBarContent}
-                  handleDatasetCreated={handleDatasetCreated}
                   handleNotebookCreated={handleNotebookCreated}
                   handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                   handleAddDatasetFromNotebook={createDatasetFromNotebook}

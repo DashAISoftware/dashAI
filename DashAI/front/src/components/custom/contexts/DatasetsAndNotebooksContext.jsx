@@ -46,6 +46,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
   const [step, setStep] = useState(0);
   const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW); // "datasets" or "notebooks"
 
+  const [rightBarContent, setRightBarContent] = useState(null);
+
   useEffect(() => {
     fetchDatasets();
     fetchNotebooks();
@@ -76,6 +78,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     setSelectedOption,
     step,
     setStep,
+    rightBarContent,
+    setRightBarContent,
   };
 
   return (

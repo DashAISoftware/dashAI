@@ -9,8 +9,6 @@ import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetsCenterContent({
   t,
-  setRightBarContent,
-  handleDatasetCreated,
   handleNotebookCreated,
   handleNewNotebookFromDataset,
   handleAddDatasetFromNotebook,
@@ -84,9 +82,6 @@ export default function DatasetsCenterContent({
           fetchDatasets();
           setRightBarContent(null);
         }}
-        handleDatasetCreated={handleDatasetCreated}
-        existingDatasets={datasets}
-        renderRightBar={setRightBarContent}
       />
     );
   }
