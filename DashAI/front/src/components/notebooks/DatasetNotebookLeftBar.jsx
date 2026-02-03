@@ -12,7 +12,7 @@ import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
-export default function DatasetsNotebooksBar({
+export default function DatasetsNotebooksLeftBar({
   datasets = [],
   selectedDatasetId,
   notebooks = [],

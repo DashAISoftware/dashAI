@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTourContext } from "../../components/tour/TourProvider";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
-import LeftBar from "../../components/notebooks/LeftBar";
+import DatasetsNotebooksLeftBar from "../../components/notebooks/DatasetNotebookLeftBar";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
 import RightBar from "../../components/notebooks/RightBar";
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
@@ -162,7 +162,7 @@ export default function DatasetsContent() {
       <ThreePanelLayoutContext.Provider value={threePanelLayout}>
         <ModuleContainer>
           <LeftPanel>
-            <LeftBar
+            <DatasetsNotebooksLeftBar
               datasets={datasets}
               notebooks={notebooks}
               selectedDatasetId={selectedDatasetId}
