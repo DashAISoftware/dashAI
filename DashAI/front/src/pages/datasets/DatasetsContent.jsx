@@ -1,4 +1,3 @@
-import { useTourContext } from "../../components/tour/TourProvider";
 import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import DatasetsNotebooksLeftBar from "../../components/notebooks/DatasetNotebookLeftBar";
@@ -11,47 +10,16 @@ import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useTranslation } from "react-i18next";
-import { useDatasetUIState } from "../../hooks/datasets/useDatasetUIState";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
-import { useDatasetFlow } from "../../hooks/datasets/useDatasetFlow";
 import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetsContent() {
-  const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
   const threePanelLayout = useThreePanelLayout();
 
-  const {
-    datasets,
-    selectedDatasetId,
-    fetchDatasets,
-    selectDataset,
-    clearSelectedDataset,
-    deleteDatasetLocal,
-    deleteDatasetRemote,
-    editDataset,
-    addDatasetOptimistically,
-    enrichDatasetsWithInfo,
-    replaceDatasets,
-    startDatasetPolling,
-    notebooks,
-    selectedNotebookId,
-    fetchNotebooks,
-    selectNotebook,
-    clearSelectedNotebook,
-    deleteNotebookById,
-    editNotebook,
-    removeNotebooksByDatasetId,
-    rightBarContent,
-  } = useDatasetsAndNotebooks();
-
-  const {
-    resetUI,
-    goToNotebookCreation,
-    selectDatasetView,
-    selectNotebookView,
-  } = useDatasetUIState();
+  const { notebooks, selectedNotebookId, rightBarContent } =
+    useDatasetsAndNotebooks();
 
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
