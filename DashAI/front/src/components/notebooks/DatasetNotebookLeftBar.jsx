@@ -15,9 +15,7 @@ import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetsNotebooksLeftBar({
-  onDatasetEdit,
   onNotebookClick,
-  onNotebookDelete,
   onNotebookEdit,
   onToggle,
   handleNewSessionButton,
@@ -35,6 +33,8 @@ export default function DatasetsNotebooksLeftBar({
     deleteDatasetLocal,
     deleteDatasetRemote,
     removeNotebooksByDatasetId,
+    editDataset,
+    deleteNotebookById,
   } = useDatasetsAndNotebooks();
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
@@ -109,6 +109,16 @@ export default function DatasetsNotebooksLeftBar({
     await deleteDatasetRemote(id);
   };
 
+  const onNotebookDelete = (id) => {
+    deleteNotebookById(id);
+
+    if (id === selectedNotebookId) {
+      clearSelectedNotebook();
+      setStep(0);
+      setSelectedOption(null);
+    }
+  };
+
   return (
     <SideBar>
       {/* Header */}
@@ -163,7 +173,7 @@ export default function DatasetsNotebooksLeftBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
-          onItemEdit={onDatasetEdit}
+          onItemEdit={editDataset}
           defaultOpen={true}
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}

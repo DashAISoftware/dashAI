@@ -72,15 +72,6 @@ export default function DatasetsContent() {
     selectNotebookView();
   };
 
-  const handleNotebookDelete = (id) => {
-    deleteNotebookById(id);
-
-    if (id === selectedNotebookId) {
-      clearSelectedNotebook();
-      resetUI();
-    }
-  };
-
   const handleNotebookCreated = async (createdNotebook) => {
     await fetchNotebooks();
     selectNotebookView();
@@ -105,9 +96,7 @@ export default function DatasetsContent() {
       <ModuleContainer>
         <LeftPanel>
           <DatasetsNotebooksLeftBar
-            onDatasetEdit={editDataset}
             onNotebookClick={handleNotebookClick}
-            onNotebookDelete={handleNotebookDelete}
             onNotebookEdit={editNotebook}
             handleNewSessionButton={handleNewSessionButton}
             onToggle={threePanelLayout.handleToggleLeft}
