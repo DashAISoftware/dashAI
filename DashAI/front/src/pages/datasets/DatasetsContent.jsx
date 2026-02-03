@@ -66,12 +66,6 @@ export default function DatasetsContent() {
     deleteDatasetRemote,
   });
 
-  const handleNotebookClick = (id) => {
-    selectNotebook(id);
-    clearSelectedDataset();
-    selectNotebookView();
-  };
-
   const handleNotebookCreated = async (createdNotebook) => {
     await fetchNotebooks();
     selectNotebookView();
@@ -96,7 +90,6 @@ export default function DatasetsContent() {
       <ModuleContainer>
         <LeftPanel>
           <DatasetsNotebooksLeftBar
-            onNotebookClick={handleNotebookClick}
             handleNewSessionButton={handleNewSessionButton}
             onToggle={threePanelLayout.handleToggleLeft}
           />
