@@ -16,7 +16,6 @@ import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooks
 
 export default function DatasetsNotebooksLeftBar({
   onNotebookClick,
-  onNotebookEdit,
   onToggle,
   handleNewSessionButton,
 }) {
@@ -34,6 +33,7 @@ export default function DatasetsNotebooksLeftBar({
     deleteDatasetRemote,
     removeNotebooksByDatasetId,
     editDataset,
+    editNotebook,
     deleteNotebookById,
   } = useDatasetsAndNotebooks();
 
@@ -187,7 +187,7 @@ export default function DatasetsNotebooksLeftBar({
           selectedItemId={selectedNotebookId}
           onItemClick={onNotebookClick}
           onItemDelete={onNotebookDelete}
-          onItemEdit={onNotebookEdit}
+          onItemEdit={editNotebook}
           onItemInfo={handleNotebookInfo}
           defaultOpen={true}
           title={t("datasets:label.notebooks")}

@@ -97,7 +97,6 @@ export default function DatasetsContent() {
         <LeftPanel>
           <DatasetsNotebooksLeftBar
             onNotebookClick={handleNotebookClick}
-            onNotebookEdit={editNotebook}
             handleNewSessionButton={handleNewSessionButton}
             onToggle={threePanelLayout.handleToggleLeft}
           />
