@@ -66,10 +66,6 @@ export default function DatasetsContent() {
     deleteDatasetRemote,
   });
 
-  const handleNewNotebookFromDataset = () => {
-    goToNotebookCreation();
-  };
-
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
@@ -88,7 +84,6 @@ export default function DatasetsContent() {
                 <CenterPanel>
                   <DatasetsCenterContent
                     t={t}
-                    handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                     handleAddDatasetFromNotebook={createDatasetFromNotebook}
                   />
                 </CenterPanel>
@@ -110,7 +105,6 @@ export default function DatasetsContent() {
               <CenterPanel>
                 <DatasetsCenterContent
                   t={t}
-                  handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                   handleAddDatasetFromNotebook={createDatasetFromNotebook}
                 />
               </CenterPanel>

@@ -9,7 +9,6 @@ import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetsCenterContent({
   t,
-  handleNewNotebookFromDataset,
   handleAddDatasetFromNotebook,
 }) {
   const {
@@ -71,6 +70,11 @@ export default function DatasetsCenterContent({
     setSelectedOption("notebook");
     selectNotebook(createdNotebook.id);
     clearSelectedDataset();
+  };
+
+  const handleNewNotebookFromDataset = () => {
+    setSelectedOption("notebook");
+    setStep(1);
   };
 
   if (selectedNotebookId) {
