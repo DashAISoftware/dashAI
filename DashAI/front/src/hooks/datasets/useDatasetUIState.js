@@ -17,16 +17,6 @@ export function useDatasetUIState() {
     setSelectedOption(null);
   }, []);
 
-  const goToDatasetFlow = useCallback(() => {
-    setStep(1);
-    setSelectedOption("dataset");
-  }, []);
-
-  const goToNotebookFlow = useCallback(() => {
-    setStep(1);
-    setSelectedOption("notebook");
-  }, []);
-
   const selectDatasetView = useCallback(() => {
     setStep(0);
     setSelectedOption("dataset");
@@ -43,12 +33,7 @@ export function useDatasetUIState() {
   };
 
   return {
-    step,
-    selectedOption,
-
     resetUI,
-    goToDatasetFlow,
-    goToNotebookFlow,
     goToNotebookCreation,
     selectDatasetView,
     selectNotebookView,

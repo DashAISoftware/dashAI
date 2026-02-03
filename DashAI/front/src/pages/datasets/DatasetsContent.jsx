@@ -12,8 +12,6 @@ import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
 import { useTranslation } from "react-i18next";
-import { useDatasets } from "../../hooks/datasets/useDatasets";
-import { useNotebooks } from "../../hooks/datasets/useNotebooks";
 import { useDatasetUIState } from "../../hooks/datasets/useDatasetUIState";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
@@ -50,11 +48,7 @@ export default function DatasetsContent() {
   } = useDatasetsAndNotebooks();
 
   const {
-    step,
-    selectedOption,
     resetUI,
-    goToDatasetFlow,
-    goToNotebookFlow,
     goToNotebookCreation,
     selectDatasetView,
     selectNotebookView,
@@ -72,12 +66,6 @@ export default function DatasetsContent() {
     resetUI,
     deleteDatasetRemote,
   });
-
-  const handleDatasetClick = (id) => {
-    selectDataset(id);
-    clearSelectedNotebook();
-    selectDatasetView();
-  };
 
   const handleNotebookClick = (id) => {
     selectNotebook(id);
@@ -116,23 +104,6 @@ export default function DatasetsContent() {
     goToNotebookCreation();
   };
 
-  const goToNextStep = (option) => {
-    if (option === "dataset") {
-      goToDatasetFlow();
-    } else {
-      goToNotebookFlow();
-    }
-
-    clearSelectedDataset();
-    clearSelectedNotebook();
-
-    if (option === "dataset" && tourContext?.run) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 600);
-    }
-  };
-
   const handleNewSessionButton = () => {
     clearSelectedDataset();
     clearSelectedNotebook();
@@ -147,7 +118,6 @@ export default function DatasetsContent() {
     startDatasetPolling(newDataset, datasetJob);
   };
 
-  const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
   return (
@@ -155,7 +125,6 @@ export default function DatasetsContent() {
       <ModuleContainer>
         <LeftPanel>
           <DatasetsNotebooksLeftBar
-            onDatasetClick={handleDatasetClick}
             onDatasetDelete={handleDatasetDelete}
             onDatasetEdit={editDataset}
             onNotebookClick={handleNotebookClick}
@@ -172,19 +141,7 @@ export default function DatasetsContent() {
               <>
                 <CenterPanel>
                   <DatasetsCenterContent
-                    selectedNotebookId={selectedNotebookId}
-                    selectedNotebook={selectedNotebook}
-                    step={step}
-                    selectedOption={selectedOption}
-                    selectedDatasetId={selectedDatasetId}
-                    selectedDataset={selectedDataset}
-                    datasets={datasets}
-                    notebooks={notebooks}
                     t={t}
-                    goToNextStep={goToNextStep}
-                    resetUI={resetUI}
-                    fetchDatasets={fetchDatasets}
-                    fetchNotebooks={fetchNotebooks}
                     setRightBarContent={setRightBarContent}
                     handleDatasetCreated={handleDatasetCreated}
                     handleNotebookCreated={handleNotebookCreated}
@@ -209,19 +166,7 @@ export default function DatasetsContent() {
             <>
               <CenterPanel>
                 <DatasetsCenterContent
-                  selectedNotebookId={selectedNotebookId}
-                  selectedNotebook={selectedNotebook}
-                  step={step}
-                  selectedOption={selectedOption}
-                  selectedDatasetId={selectedDatasetId}
-                  selectedDataset={selectedDataset}
-                  datasets={datasets}
-                  notebooks={notebooks}
                   t={t}
-                  goToNextStep={goToNextStep}
-                  resetUI={resetUI}
-                  fetchDatasets={fetchDatasets}
-                  fetchNotebooks={fetchNotebooks}
                   setRightBarContent={setRightBarContent}
                   handleDatasetCreated={handleDatasetCreated}
                   handleNotebookCreated={handleNotebookCreated}

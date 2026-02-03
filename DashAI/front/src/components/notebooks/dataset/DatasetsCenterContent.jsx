@@ -1,29 +1,72 @@
+import { useCallback } from "react";
 import NotebookVisualization from "../notebook/NotebookVisualization";
 import UploadDatasetSteps from "../datasetCreation/UploadDatasetSteps";
 import UploadNotebookSteps from "../notebookCreation/UploadNotebookSteps";
 import DatasetVisualization from "../../DatasetVisualization";
 import SelectOptionMenu from "../../threeSectionLayout/SelectOptionMenu";
+import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetsCenterContent({
-  selectedNotebookId,
-  selectedNotebook,
-  step,
-  selectedOption,
-  selectedDatasetId,
-  selectedDataset,
-  datasets,
-  notebooks,
   t,
-  goToNextStep,
-  resetUI,
-  fetchDatasets,
-  fetchNotebooks,
   setRightBarContent,
   handleDatasetCreated,
   handleNotebookCreated,
   handleNewNotebookFromDataset,
   handleAddDatasetFromNotebook,
 }) {
+  const {
+    datasets,
+    notebooks,
+    selectedDatasetId,
+    selectedNotebookId,
+    step,
+    fetchDatasets,
+    fetchNotebooks,
+    selectedOption,
+    setStep,
+    setSelectedOption,
+    clearSelectedDataset,
+    clearSelectedNotebook,
+  } = useDatasetsAndNotebooks();
+
+  const tourContext = useTourContext();
+
+  const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
+  const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
+
+  const resetUI = useCallback(() => {
+    setStep(0);
+    setSelectedOption(null);
+  }, []);
+
+  const goToDatasetFlow = useCallback(() => {
+    setStep(1);
+    setSelectedOption("dataset");
+  }, []);
+
+  const goToNotebookFlow = useCallback(() => {
+    setStep(1);
+    setSelectedOption("notebook");
+  }, []);
+
+  const goToNextStep = (option) => {
+    if (option === "dataset") {
+      goToDatasetFlow();
+    } else {
+      goToNotebookFlow();
+    }
+
+    clearSelectedDataset();
+    clearSelectedNotebook();
+
+    if (option === "dataset" && tourContext?.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 600);
+    }
+  };
+
   if (selectedNotebookId) {
     return (
       <NotebookVisualization

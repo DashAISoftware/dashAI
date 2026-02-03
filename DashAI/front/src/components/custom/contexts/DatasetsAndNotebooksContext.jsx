@@ -74,6 +74,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     removeNotebooksByDatasetId,
     selectedOption,
     setSelectedOption,
+    step,
+    setStep,
   };
 
   return (
