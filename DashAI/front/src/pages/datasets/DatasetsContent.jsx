@@ -72,17 +72,6 @@ export default function DatasetsContent() {
     selectNotebookView();
   };
 
-  const handleDatasetDelete = async (id) => {
-    if (id === selectedDatasetId) {
-      clearSelectedDataset();
-      resetUI();
-    }
-
-    deleteDatasetLocal(id);
-    removeNotebooksByDatasetId(id);
-    await deleteDatasetRemote(id);
-  };
-
   const handleNotebookDelete = (id) => {
     deleteNotebookById(id);
 
@@ -116,7 +105,6 @@ export default function DatasetsContent() {
       <ModuleContainer>
         <LeftPanel>
           <DatasetsNotebooksLeftBar
-            onDatasetDelete={handleDatasetDelete}
             onDatasetEdit={editDataset}
             onNotebookClick={handleNotebookClick}
             onNotebookDelete={handleNotebookDelete}
