@@ -66,21 +66,8 @@ export default function DatasetsContent() {
     deleteDatasetRemote,
   });
 
-  const handleNotebookCreated = async (createdNotebook) => {
-    await fetchNotebooks();
-    selectNotebookView();
-    selectNotebook(createdNotebook.id);
-    clearSelectedDataset();
-  };
-
   const handleNewNotebookFromDataset = () => {
     goToNotebookCreation();
-  };
-
-  const handleNewSessionButton = () => {
-    clearSelectedDataset();
-    clearSelectedNotebook();
-    resetUI();
   };
 
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
@@ -90,7 +77,6 @@ export default function DatasetsContent() {
       <ModuleContainer>
         <LeftPanel>
           <DatasetsNotebooksLeftBar
-            handleNewSessionButton={handleNewSessionButton}
             onToggle={threePanelLayout.handleToggleLeft}
           />
         </LeftPanel>
@@ -102,7 +88,6 @@ export default function DatasetsContent() {
                 <CenterPanel>
                   <DatasetsCenterContent
                     t={t}
-                    handleNotebookCreated={handleNotebookCreated}
                     handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                     handleAddDatasetFromNotebook={createDatasetFromNotebook}
                   />
@@ -125,7 +110,6 @@ export default function DatasetsContent() {
               <CenterPanel>
                 <DatasetsCenterContent
                   t={t}
-                  handleNotebookCreated={handleNotebookCreated}
                   handleNewNotebookFromDataset={handleNewNotebookFromDataset}
                   handleAddDatasetFromNotebook={createDatasetFromNotebook}
                 />

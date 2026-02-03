@@ -9,13 +9,13 @@ import { useTourContext } from "../../tour/TourProvider";
 
 export default function DatasetsCenterContent({
   t,
-  handleNotebookCreated,
   handleNewNotebookFromDataset,
   handleAddDatasetFromNotebook,
 }) {
   const {
     datasets,
     notebooks,
+    selectNotebook,
     selectedDatasetId,
     selectedNotebookId,
     step,
@@ -63,6 +63,14 @@ export default function DatasetsCenterContent({
         tourContext.nextStep();
       }, 600);
     }
+  };
+
+  const handleNotebookCreated = async (createdNotebook) => {
+    await fetchNotebooks();
+    setStep(0);
+    setSelectedOption("notebook");
+    selectNotebook(createdNotebook.id);
+    clearSelectedDataset();
   };
 
   if (selectedNotebookId) {
