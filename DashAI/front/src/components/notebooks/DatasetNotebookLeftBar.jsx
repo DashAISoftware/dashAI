@@ -111,9 +111,9 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     removeNotebooksByDatasetId(id);
   };
 
-  const onNotebookDelete = (id) => {
-    deleteNotebookById(id);
-
+  const onNotebookDelete = async (id) => {
+    const success = await deleteNotebookById(id);
+    if (!success) return;
     if (id === selectedNotebookId) {
       clearSelectedNotebook();
       setStep(0);

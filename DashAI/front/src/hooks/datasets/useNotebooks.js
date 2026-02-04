@@ -34,8 +34,17 @@ export function useNotebooks({ t }) {
   };
 
   const deleteNotebookById = async (id) => {
-    setNotebooks((prev) => prev.filter((n) => n.id !== id));
-    await deleteNotebook(id);
+    try {
+      await deleteNotebook(id);
+      setNotebooks((prev) => prev.filter((n) => n.id !== id));
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToDeleteNotebook"), {
+        variant: "error",
+      });
+      console.error("Error deleting notebook:", error);
+    }
+    return false;
   };
 
   const editNotebook = async (id, newName) => {
