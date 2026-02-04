@@ -41,7 +41,7 @@ export default function DatasetPreviewNotebook({
     fetchDatasets,
     selectDataset,
     clearSelectedDataset,
-    deleteDatasetRemote,
+    deleteDataset,
     enrichDatasetsWithInfo,
     replaceDatasets,
     setStep,
@@ -172,7 +172,11 @@ export default function DatasetPreviewNotebook({
           { variant: "error" },
         );
 
-        deleteDatasetRemote(datasetId).catch(console.error);
+        try {
+          await deleteDataset(datasetId);
+        } catch (e) {
+          console.error(e);
+        }
         clearSelectedDataset();
         setStep(0);
         setSelectedOption(null);

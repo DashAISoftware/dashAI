@@ -152,6 +152,7 @@ export function useDatasets({ t }) {
     fetchDatasets,
     selectDataset,
     clearSelectedDataset,
+    deleteDataset,
     deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
