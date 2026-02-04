@@ -52,6 +52,10 @@ export default function DatasetVisualization({
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
 
+  const [datasetInfo, setDatasetInfo] = useState(null);
+  const [tab, setTab] = useState(0);
+  const tourContext = useTourContext();
+
   if (!dataset) {
     return (
       <Box
@@ -62,10 +66,6 @@ export default function DatasetVisualization({
       </Box>
     );
   }
-
-  const [datasetInfo, setDatasetInfo] = useState(null);
-  const [tab, setTab] = useState(0);
-  const tourContext = useTourContext();
 
   useEffect(() => {
     setTab(0);
