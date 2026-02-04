@@ -31,37 +31,27 @@ export default function DatasetsCenterContent() {
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
-  const resetUI = useCallback(() => {
-    setStep(0);
-    setSelectedOption(null);
-  }, []);
+  const goToNextStep = useCallback(
+    (option) => {
+      if (option === "dataset") {
+        setStep(1);
+        setSelectedOption("dataset");
+      } else {
+        setStep(1);
+        setSelectedOption("notebook");
+      }
 
-  const goToDatasetFlow = useCallback(() => {
-    setStep(1);
-    setSelectedOption("dataset");
-  }, []);
+      clearSelectedDataset();
+      clearSelectedNotebook();
 
-  const goToNotebookFlow = useCallback(() => {
-    setStep(1);
-    setSelectedOption("notebook");
-  }, []);
-
-  const goToNextStep = (option) => {
-    if (option === "dataset") {
-      goToDatasetFlow();
-    } else {
-      goToNotebookFlow();
-    }
-
-    clearSelectedDataset();
-    clearSelectedNotebook();
-
-    if (option === "dataset" && tourContext?.run) {
-      setTimeout(() => {
-        tourContext.nextStep();
-      }, 600);
-    }
-  };
+      if (option === "dataset" && tourContext?.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 600);
+      }
+    },
+    [tourContext],
+  );
 
   const handleNotebookCreated = async (createdNotebook) => {
     await fetchNotebooks();
@@ -102,7 +92,8 @@ export default function DatasetsCenterContent() {
     return (
       <UploadDatasetSteps
         backHome={() => {
-          resetUI();
+          setStep(0);
+          setSelectedOption(null);
           fetchDatasets();
           setRightBarContent(null);
         }}
@@ -113,7 +104,8 @@ export default function DatasetsCenterContent() {
     return (
       <UploadNotebookSteps
         backHome={() => {
-          resetUI();
+          setStep(0);
+          setSelectedOption(null);
           fetchNotebooks();
         }}
         datasets={datasets}
