@@ -56,37 +56,25 @@ export default function DatasetVisualization({
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
 
-  if (!dataset) {
-    return (
-      <Box
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <CircularProgress sx={{ color: theme.palette.primary.main }} />
-        <Typography>{t("common:loading")}</Typography>
-      </Box>
-    );
-  }
-
   useEffect(() => {
+    if (!dataset) return;
     setTab(0);
     const fetchDatasetInfo = async () => {
       if (isProcessing) return;
-
       try {
-        const info = await getDatasetInfo(dataset.id);
+        const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
       } catch (error) {
         setDatasetInfo(null);
       }
     };
-
     fetchDatasetInfo();
-  }, [dataset.id, dataset.status]);
+  }, [dataset && dataset.id, dataset && dataset.status]);
 
   // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
-      if (isProcessing) return { rows: [], total: 0 };
+      if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
         // Use getDatasetFile if no filters, else use getDatasetFileFiltered
         const hasFilters =
@@ -109,8 +97,23 @@ export default function DatasetVisualization({
         return { rows: [], total: 0 };
       }
     },
-    [dataset.file_path, dataset.status, dataset.id],
+    [
+      dataset && dataset.file_path,
+      dataset && dataset.status,
+      dataset && dataset.id,
+    ],
   );
+
+  if (!dataset) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+        <Typography>{t("common:loading")}</Typography>
+      </Box>
+    );
+  }
 
   const status = dataset.status;
   const isProcessing = !(status === 3 || status === 4); // Finished or Error
