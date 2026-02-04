@@ -67,11 +67,22 @@ export function useDatasets({ t }) {
   };
 
   const deleteDatasetById = async (id) => {
-    setDatasets((prev) => prev.filter((d) => d.id !== id));
-    if (id === selectedDatasetId) {
-      setSelectedDatasetId(null);
+    try {
+      const response = await deleteDataset(id);
+      console.log("Delete dataset response:", response);
+
+      setDatasets((prev) => prev.filter((d) => d.id !== id));
+      if (id === selectedDatasetId) {
+        setSelectedDatasetId(null);
+      }
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToDeleteDataset"), {
+        variant: "error",
+      });
+      console.error("Error deleting dataset:", error);
     }
-    await deleteDataset(id);
+    return false;
   };
 
   const editDataset = async (id, newName) => {

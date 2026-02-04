@@ -101,14 +101,14 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
   };
 
   const onDatasetDelete = async (id) => {
+    const success = await deleteDatasetById(id);
+    if (!success) return;
     if (id === selectedDatasetId) {
       clearSelectedDataset();
       setStep(0);
       setSelectedOption(null);
     }
-
     removeNotebooksByDatasetId(id);
-    await deleteDatasetById(id);
   };
 
   const onNotebookDelete = (id) => {

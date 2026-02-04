@@ -30,6 +30,7 @@
     "failedToCreateDataset": "Error al crear dataset: {{error}}",
     "failedToCreateDatasetFromNotebook": "Fallo al crear dataset desde cuaderno",
     "failedToCreateExplorer": "Fallo al crear explorador",
+    "failedToDeleteDataset": "Fallo al eliminar dataset",
     "failedToFetchDatasets": "Fallo al obtener datasets",
     "failedToFetchNotebooks": "Fallo al obtener cuadernos",
     "failedToLoadDatasetInfo": "Fallo al obtener información del dataset",

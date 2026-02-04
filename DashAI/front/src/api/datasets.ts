@@ -81,7 +81,7 @@ export const updateDataset = async (
 
 export const deleteDataset = async (id: string): Promise<object> => {
   const response = await api.delete(`${datasetEndpoint}/${id}`);
-  return response.data;
+  return response;
 };
 
 export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
