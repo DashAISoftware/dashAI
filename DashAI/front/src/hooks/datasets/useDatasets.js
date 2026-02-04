@@ -68,9 +68,7 @@ export function useDatasets({ t }) {
 
   const deleteDatasetById = async (id) => {
     try {
-      const response = await deleteDataset(id);
-      console.log("Delete dataset response:", response);
-
+      await deleteDataset(id);
       setDatasets((prev) => prev.filter((d) => d.id !== id));
       if (id === selectedDatasetId) {
         setSelectedDatasetId(null);
