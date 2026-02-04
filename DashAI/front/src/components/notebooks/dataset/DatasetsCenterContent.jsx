@@ -6,8 +6,9 @@ import DatasetVisualization from "../../DatasetVisualization";
 import SelectOptionMenu from "../../threeSectionLayout/SelectOptionMenu";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
 
-export default function DatasetsCenterContent({ t }) {
+export default function DatasetsCenterContent() {
   const {
     datasets,
     notebooks,
@@ -25,6 +26,7 @@ export default function DatasetsCenterContent({ t }) {
   } = useDatasetsAndNotebooks();
 
   const tourContext = useTourContext();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const selectedDataset = datasets.find((n) => n.id === selectedDatasetId);
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);

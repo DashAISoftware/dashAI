@@ -9,13 +9,11 @@ import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { ExplorersAndConvertersProvider } from "../../components/notebooks/context/ExplorersAndConvertersContext";
-import { useTranslation } from "react-i18next";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetsContent() {
-  const { t } = useTranslation(["datasets", "common"]);
   const threePanelLayout = useThreePanelLayout();
 
   const { notebooks, selectedNotebookId, rightBarContent } =
@@ -37,7 +35,7 @@ export default function DatasetsContent() {
             <TourProvider tourKey={TOUR_KEYS.NOTEBOOK}>
               <>
                 <CenterPanel>
-                  <DatasetsCenterContent t={t} />
+                  <DatasetsCenterContent />
                 </CenterPanel>
                 <RightPanel toggleButtonTop="calc(50% + 60px)">
                   {rightBarContent ? (
@@ -55,7 +53,7 @@ export default function DatasetsContent() {
           ) : (
             <>
               <CenterPanel>
-                <DatasetsCenterContent t={t} />
+                <DatasetsCenterContent />
               </CenterPanel>
               <RightPanel toggleButtonTop="50%">
                 {rightBarContent ? (
