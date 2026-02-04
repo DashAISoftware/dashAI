@@ -26,8 +26,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     setStep,
     setSelectedOption,
     clearSelectedDataset,
-    deleteDatasetLocal,
-    deleteDatasetRemote,
+    deleteDatasetById,
     removeNotebooksByDatasetId,
     editDataset,
     editNotebook,
@@ -108,9 +107,8 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
       setSelectedOption(null);
     }
 
-    deleteDatasetLocal(id);
     removeNotebooksByDatasetId(id);
-    await deleteDatasetRemote(id);
+    await deleteDatasetById(id);
   };
 
   const onNotebookDelete = (id) => {

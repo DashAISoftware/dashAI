@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { useSnackbar } from "notistack";
-import { enqueueDatasetJob } from "../../api/job";
 import {
   getDatasets,
   deleteDataset,
@@ -59,10 +58,6 @@ export function useDatasets({ t }) {
     setDatasets(enriched);
   }, [datasets, enrichDatasetsWithInfo]);
 
-  const fetchFreshDatasets = async () => {
-    return await getDatasets();
-  };
-
   const selectDataset = (id) => {
     setSelectedDatasetId(id);
   };
@@ -71,14 +66,11 @@ export function useDatasets({ t }) {
     setSelectedDatasetId(null);
   };
 
-  const deleteDatasetLocal = (id) => {
+  const deleteDatasetById = async (id) => {
     setDatasets((prev) => prev.filter((d) => d.id !== id));
     if (id === selectedDatasetId) {
       setSelectedDatasetId(null);
     }
-  };
-
-  const deleteDatasetRemote = async (id) => {
     await deleteDataset(id);
   };
 
@@ -131,17 +123,12 @@ export function useDatasets({ t }) {
         enqueueSnackbar(t("datasets:error.failedToCreateDataset"), {
           variant: "error",
         });
-        deleteDatasetLocal(newDataset.id);
+        setDatasets((prev) => prev.filter((d) => d.id !== newDataset.id));
+        if (newDataset.id === selectedDatasetId) {
+          setSelectedDatasetId(null);
+        }
       },
     );
-  };
-
-  const removeDatasetById = (id) => {
-    setDatasets((prev) => prev.filter((d) => d.id !== id));
-
-    if (id === selectedDatasetId) {
-      setSelectedDatasetId(null);
-    }
   };
 
   const replaceDatasets = (datasets) => {
@@ -154,15 +141,12 @@ export function useDatasets({ t }) {
     enrichDatasetsWithInfo,
     createDataset,
     fetchDatasets,
-    fetchFreshDatasets,
     selectDataset,
     clearSelectedDataset,
-    deleteDatasetLocal,
-    deleteDatasetRemote,
+    deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
     startDatasetPolling,
-    removeDatasetById,
     replaceDatasets,
   };
 }
