@@ -407,6 +407,10 @@ class OpusMtEnESTransformer(TranslationModel):
             learning_rate=custom_params.get("learning_rate"),
             device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
+            log_train_every_n_epochs=None,
+            log_train_every_n_steps=None,
+            log_validation_every_n_epochs=None,
+            log_validation_every_n_steps=None,
         )
         loaded_model.fitted = custom_params.get("fitted", False)
 
