@@ -36,17 +36,14 @@ import { useTranslation } from "react-i18next";
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
  * @param {Object} props
  * @param {Object} props.dataset - Dataset object containing id, name, file_path, status, and created date
- * @param {Function} props.onItemCreated - Callback function when a new item (notebook/session) is created
  * @param {Function} props.onNewItem - Callback function when "New Item" button is clicked
  * @param {string} [props.newItemButtonText="New Item"] - Custom text for the action button (e.g., "New Notebook", "New Session")
  * @param {Array} [props.existingItems=[]] - Array of existing items (notebooks/sessions) for validation
  */
 export default function DatasetVisualization({
   dataset,
-  onItemCreated,
   onNewItem,
   newItemButtonText = "New Item",
-  existingItems = [],
   tourContextType = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
