@@ -1,7 +1,4 @@
-import pyarrow as pa
-import torch
-from datasets import Dataset, concatenate_datasets
-from transformers import AutoModel, AutoTokenizer
+"""HuggingFace embedding converter with lazy-loaded dependencies."""
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -104,16 +101,23 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float32 as the output type for embeddings."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float32())
 
     def _load_model(self):
         """Load the embedding model and tokenizer."""
+        from transformers import AutoModel, AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
         self.model.eval()
 
     def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
         """Process a batch of text into embeddings."""
+        import torch
+        from datasets import Dataset, concatenate_datasets
+
         all_column_embeddings = []
 
         for column in batch.column_names:
