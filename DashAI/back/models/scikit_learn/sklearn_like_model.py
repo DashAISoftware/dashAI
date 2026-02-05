@@ -1,8 +1,5 @@
 from enum import Enum
-from typing import List, Optional
-
-import joblib
-from sklearn.preprocessing import OneHotEncoder
+from typing import Any, List, Optional
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dataloaders.classes.dashai_dataset_utils import (
@@ -41,17 +38,21 @@ class SklearnLikeModel(BaseModel):
         """Initialize the SklearnLikeModel."""
         super().__init__(*args, **kwargs)
         self.encodings = {}
-        self.one_hot_encoder: Optional[OneHotEncoder] = None
+        self.one_hot_encoder: Optional[Any] = None
         self.categorical_columns: List[str] = []
         self.output_encodings = {}
 
     def save(self, filename: str) -> None:
         """Save the model in the specified path."""
+        import joblib
+
         joblib.dump(self, filename)
 
     @staticmethod
     def load(filename: str) -> None:
         """Load the model of the specified path."""
+        import joblib
+
         model = joblib.load(filename)
         return model
 
