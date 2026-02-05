@@ -1,8 +1,5 @@
 from typing import Union
 
-import pyarrow as pa
-from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
-
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -51,6 +48,8 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         If the encoder has been fitted and has classes_, use them to create
         a proper categorical type.
         """
+        import pyarrow as pa
+
         if column_name and column_name in self.encoders:
             encoder = self.encoders[column_name]
             if hasattr(encoder, "classes_"):
@@ -63,6 +62,8 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
 
     def fit(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None):
         """Fit label encoders to each column in the dataset."""
+        from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
+
         x_pandas = x.to_pandas()
 
         for col in x_pandas.columns:
