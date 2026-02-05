@@ -2,10 +2,7 @@ import enum
 import os
 import pathlib
 
-import plotly.express as px
-import plotly.io as pio
 from beartype.typing import Any, Dict, List, Union
-from plotly.graph_objs import Figure
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -151,6 +148,8 @@ class ECDFPlotExplorer(DistributionExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
@@ -180,7 +179,7 @@ class ECDFPlotExplorer(DistributionExplorer):
         __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: Figure,
+        result: Any,
     ) -> str:
         filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
@@ -193,6 +192,7 @@ class ECDFPlotExplorer(DistributionExplorer):
     ) -> Dict[str, Any]:
         resultType = "plotly_json"
         config = {}
+        import plotly.io as pio
 
         result = pio.read_json(exploration_path)
         result = result.to_json()

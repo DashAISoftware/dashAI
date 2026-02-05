@@ -2,11 +2,7 @@ import enum
 import os
 import pathlib
 
-import numpy as np
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objs as go
-from beartype.typing import Any, Dict, Union
+from beartype.typing import Any, Dict
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -125,7 +121,10 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
 
     def launch_exploration(
         self, dataset: DashAIDataset, explorer_info: Explorer
-    ) -> Union[pd.DataFrame, go.Figure]:
+    ) -> Any:
+        import pandas as pd
+        import plotly.express as px
+
         result = dataset.to_pandas().corr(
             method=self.method,
             min_periods=(
@@ -153,8 +152,11 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: Union[pd.DataFrame, go.Figure],
+        result: Any,
     ) -> str:
+        import pandas as pd
+        import plotly.graph_objs as go
+
         filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
 
@@ -179,5 +181,8 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         config = {"orient": "dict"}
 
         path = pathlib.Path(exploration_path)
+        import numpy as np
+        import pandas as pd
+
         result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}

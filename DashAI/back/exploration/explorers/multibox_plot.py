@@ -1,10 +1,7 @@
 import os
 import pathlib
 
-import plotly.graph_objects as go
 from beartype.typing import Any, Dict, List
-from plotly.graph_objs import Figure
-from plotly.io import read_json
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -132,6 +129,8 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         return super().prepare_dataset(loaded_dataset, columns)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+        import plotly.graph_objects as go
+
         _df = dataset.to_pandas()
         cols = [col["columnName"] for col in explorer_info.columns]
 
@@ -167,7 +166,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
         __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: Figure,
+        result: Any,
     ) -> str:
         filename = f"{explorer_info.id}.pickle"
         path = pathlib.Path(os.path.join(save_path, filename))
@@ -181,6 +180,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     ) -> Dict[str, Any]:
         resultType = "plotly_json"
         config = {}
+        from plotly.io import read_json
 
         result = read_json(exploration_path)
         result = result.to_json()

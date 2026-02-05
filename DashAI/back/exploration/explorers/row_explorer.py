@@ -1,8 +1,6 @@
 import os
 import pathlib
 
-import numpy as np
-import pandas as pd
 from beartype.typing import Any, Dict
 
 from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
@@ -111,7 +109,7 @@ class RowExplorer(PreviewInspectionExplorer):
         __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: pd.DataFrame,
+        result: Any,
     ) -> str:
         filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
@@ -127,5 +125,8 @@ class RowExplorer(PreviewInspectionExplorer):
         config = {"orient": orientation}
 
         path = pathlib.Path(exploration_path)
+        import numpy as np
+        import pandas as pd
+
         result = pd.read_json(path).replace({np.nan: None}).to_dict(orient=orientation)
         return {"type": resultType, "data": result, "config": config}

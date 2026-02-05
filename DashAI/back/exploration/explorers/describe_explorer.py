@@ -1,8 +1,6 @@
 import os
 import pathlib
 
-import numpy as np
-import pandas as pd
 from beartype.typing import Any, Dict
 
 from DashAI.back.core.schema_fields import (
@@ -143,7 +141,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
 
     def launch_exploration(
         self, dataset: DashAIDataset, __explorer_info__: Explorer
-    ) -> pd.DataFrame:
+    ) -> Any:
         return dataset.to_pandas().describe(
             percentiles=self.percentiles, include=self.include, exclude=self.exclude
         )
@@ -153,7 +151,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
         __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: pd.DataFrame,
+        result: Any,
     ) -> str:
         filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))
@@ -169,6 +167,9 @@ class DescribeExplorer(PreviewInspectionExplorer):
         config = {"orient": orientation}
 
         path = pathlib.Path(exploration_path)
+        import numpy as np
+        import pandas as pd
+
         result = (
             pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)
         )

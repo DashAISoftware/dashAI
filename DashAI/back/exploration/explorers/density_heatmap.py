@@ -1,9 +1,7 @@
 import os
 import pathlib
 
-import plotly.express as px
 from beartype.typing import Any, Dict
-from plotly.graph_objs import Figure
 
 from DashAI.back.core.schema_fields import int_field, none_type, schema_field
 from DashAI.back.core.utils import MultilingualString
@@ -71,6 +69,8 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+        import plotly.express as px
+
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
@@ -93,7 +93,7 @@ class DensityHeatmapExplorer(RelationshipExplorer):
         __notebook_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: Figure,
+        result: Any,
     ) -> str:
         filename = f"{explorer_info.id}.json"
         path = pathlib.Path(os.path.join(save_path, filename))

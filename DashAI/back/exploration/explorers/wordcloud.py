@@ -3,8 +3,6 @@ import os
 import pathlib
 
 from beartype.typing import Any, Dict
-from PIL.Image import Image
-from wordcloud import STOPWORDS, WordCloud
 
 from DashAI.back.core.schema_fields import (
     int_field,
@@ -84,6 +82,8 @@ class WordcloudExplorer(DistributionExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+        from wordcloud import STOPWORDS, WordCloud
+
         _df = dataset.to_pandas()
         cols = [col["columnName"] for col in explorer_info.columns]
 
@@ -107,7 +107,7 @@ class WordcloudExplorer(DistributionExplorer):
         __exploration_info__: Notebook,
         explorer_info: Explorer,
         save_path: pathlib.Path,
-        result: Image,
+        result: Any,
     ) -> str:
         filename = f"{explorer_info.id}.png"
         path = pathlib.Path(os.path.join(save_path, filename))
