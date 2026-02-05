@@ -1,5 +1,3 @@
-import pyarrow as pa
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
@@ -65,4 +63,6 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
         This converter removes columns, so it doesn't change types.
         Return a placeholder type.
         """
+        import pyarrow as pa
+
         return Text(arrow_type=pa.string())

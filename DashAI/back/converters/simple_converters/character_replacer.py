@@ -1,7 +1,5 @@
 from typing import List, Union
 
-import pyarrow as pa
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
@@ -174,4 +172,6 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         to int. Since this is determined dynamically during transform, we
         return Text as default.
         """
+        import pyarrow as pa
+
         return Text(arrow_type=pa.string())

@@ -1,6 +1,3 @@
-import numpy as np
-import pyarrow as pa
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
@@ -83,6 +80,8 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
 
     def _is_null_value(self, value) -> bool:
         """Check if a value should be treated as null."""
+        import numpy as np
+
         if value is None:
             return True
         if isinstance(value, float) and np.isnan(value):
@@ -95,6 +94,8 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         Remove the nan rows from the columns selected in the scope.
         Also handles string representations of null values like "None", "nan", etc.
         """
+        import numpy as np
+
         missing = [col for col in self.columns if col not in x.column_names]
         if missing:
             raise ValueError(
@@ -141,6 +142,8 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
         This converter removes rows with NaN, doesn't change column types.
         Return the original type if available.
         """
+        import pyarrow as pa
+
         if column_name and column_name in self.column_types:
             return self.column_types[column_name]
         return Text(arrow_type=pa.string())
