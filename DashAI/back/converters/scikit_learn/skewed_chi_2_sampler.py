@@ -1,4 +1,3 @@
-import pyarrow as pa
 from sklearn.kernel_approximation import SkewedChi2Sampler as SkewedChi2SamplerOperation
 
 from DashAI.back.api.utils import create_random_state
@@ -89,4 +88,6 @@ class SkewedChi2Sampler(
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for transformed data."""
+        import pyarrow as pa
+
         return Float(arrow_type=pa.float64())
