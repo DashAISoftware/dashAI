@@ -4,17 +4,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Union
 
-import torch
 from sklearn.exceptions import NotFittedError
-from torch.utils.data import DataLoader
-from transformers import (
-    AutoConfig,
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    DataCollatorWithPadding,
-    Trainer,
-    TrainingArguments,
-)
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -215,6 +205,8 @@ class DistilBertTransformer(TextClassificationModel):
 
         kwargs = self.validate_and_transform(kwargs)
 
+        from transformers import AutoTokenizer
+
         self.model_name = "distilbert-base-uncased"
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -243,6 +235,8 @@ class DistilBertTransformer(TextClassificationModel):
                 if self.num_labels > 1:
                     self.model.config.problem_type = "single_label_classification"
         else:
+            from transformers import AutoConfig, AutoModelForSequenceClassification
+
             model_config = AutoConfig.from_pretrained(self.model_name)
             if self.num_labels is not None:
                 model_config.num_labels = self.num_labels
@@ -257,6 +251,15 @@ class DistilBertTransformer(TextClassificationModel):
         self.encodings = {}  # Store encodings for categorical columns
 
     def train(self, x_train, y_train, x_validation, y_validation):
+        import torch
+        from transformers import (
+            AutoConfig,
+            AutoModelForSequenceClassification,
+            DataCollatorWithPadding,
+            Trainer,
+            TrainingArguments,
+        )
+
         output_column_name = y_train.column_names[0]
 
         if self.num_labels is None:
@@ -354,6 +357,9 @@ class DistilBertTransformer(TextClassificationModel):
 
         pred_dataset = self.prepare_dataset(x_pred)
 
+        from torch.utils.data import DataLoader
+        from transformers import DataCollatorWithPadding
+
         data_collator = DataCollatorWithPadding(tokenizer=self.tokenizer)
         text_columns = [col for col in x_pred.column_names if col != "label"]
         if len(text_columns) != 1:
@@ -439,6 +445,8 @@ class DistilBertTransformer(TextClassificationModel):
         )
 
     def save(self, filename: Union[str, Path]) -> None:
+        from transformers import AutoConfig
+
         self.model.save_pretrained(filename)
         config = AutoConfig.from_pretrained(filename)
         config.custom_params = {
@@ -455,6 +463,8 @@ class DistilBertTransformer(TextClassificationModel):
 
     @classmethod
     def load(cls, filename: Union[str, Path]) -> Any:
+        from transformers import AutoConfig, AutoModelForSequenceClassification
+
         config = AutoConfig.from_pretrained(filename)
         custom_params = getattr(config, "custom_params", {})
 
