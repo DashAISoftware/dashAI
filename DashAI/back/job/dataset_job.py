@@ -1,4 +1,3 @@
-import gc
 import json
 import logging
 import os
@@ -6,7 +5,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from kink import inject
+from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
@@ -19,7 +18,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 )
 from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.types.inf.type_inference import infer_types
 
 log = logging.getLogger(__name__)
 
@@ -98,7 +96,9 @@ class DatasetJob(BaseJob):
     def run(
         self,
     ) -> None:
-        from kink import di
+        import gc
+
+        from DashAI.back.types.inf.type_inference import infer_types
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
