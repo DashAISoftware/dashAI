@@ -30,7 +30,7 @@ import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
-
+import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
@@ -53,11 +53,22 @@ export default function DatasetVisualization({
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
 
+  const status = dataset.status;
+  const isProcessing = !(status === 3 || status === 4); // Finished or Error
+
+  const { fetchDatasets } = useDatasetsAndNotebooks();
+
   useEffect(() => {
     if (!dataset) return;
+
     setTab(0);
     const fetchDatasetInfo = async () => {
-      if (isProcessing) return;
+      if (isProcessing) {
+        setTimeout(() => {
+          fetchDatasets();
+        }, 1000);
+        return;
+      }
       try {
         const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
@@ -66,7 +77,7 @@ export default function DatasetVisualization({
       }
     };
     fetchDatasetInfo();
-  }, [dataset && dataset.id, dataset && dataset.status]);
+  }, [dataset]);
 
   // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
@@ -111,9 +122,6 @@ export default function DatasetVisualization({
       </Box>
     );
   }
-
-  const status = dataset.status;
-  const isProcessing = !(status === 3 || status === 4); // Finished or Error
 
   return (
     <>
