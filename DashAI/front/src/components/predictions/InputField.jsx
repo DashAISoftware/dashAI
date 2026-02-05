@@ -104,8 +104,8 @@ function InputField({
             e.target.value === ""
               ? ""
               : isInteger
-              ? parseInt(e.target.value)
-              : parseFloat(e.target.value);
+                ? parseInt(e.target.value)
+                : parseFloat(e.target.value);
           handleChange(rowIndex, col, val);
         }}
         sx={commonStyles}
