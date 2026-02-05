@@ -1,10 +1,6 @@
 from abc import ABCMeta
 from typing import Type, Union
 
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.job.base_job import JobError
@@ -44,6 +40,10 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         Fit the sampler using imbalanced-learn's fit_resample and store the combined
         result.
         """
+        import numpy as np
+        import pandas as pd
+        import pyarrow as pa
+
         if y is None or len(y) == 0:
             raise ValueError(
                 "Imbalanced-learn samplers require a non-empty target dataset (y)."
