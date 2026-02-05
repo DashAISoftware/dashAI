@@ -1,6 +1,3 @@
-from datasets import Dataset, concatenate_datasets
-from transformers import AutoTokenizer
-
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
@@ -87,12 +84,16 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     def _load_model(self):
         """Load tokenizer only."""
+        from transformers import AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
     def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
         """
         Tokenize a batch of text columns and store each input_id in a separate column.
         """
+        from datasets import Dataset, concatenate_datasets
+
         all_column_tokens = []
 
         for column in batch.column_names:
