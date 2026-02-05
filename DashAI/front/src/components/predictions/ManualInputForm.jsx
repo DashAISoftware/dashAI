@@ -106,17 +106,54 @@ export default function ManualInputForm({
 
       <TableContainer
         component={Paper}
-        sx={{ p: 1, bgcolor: theme.palette.background.box }}
+        sx={{
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 1,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        }}
       >
-        <Table size="small">
+        <Table
+          size="small"
+          sx={{
+            "& .MuiTableCell-root": {
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              padding: "8px 12px",
+            },
+          }}
+        >
           <TableHead>
-            <TableRow>
+            <TableRow
+              sx={{
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.05)"
+                    : "rgba(0, 0, 0, 0.02)",
+              }}
+            >
               {inputColumns.map((col) => (
-                <TableCell key={col} sx={{ fontWeight: 600 }}>
+                <TableCell
+                  key={col}
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    color: theme.palette.text.primary,
+                    textTransform: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {col}
                 </TableCell>
               ))}
-              <TableCell sx={{ fontWeight: 600 }}>
+              <TableCell
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  color: theme.palette.text.primary,
+                  width: "60px",
+                  textAlign: "center",
+                }}
+              >
                 {t("common:remove")}
               </TableCell>
             </TableRow>
@@ -124,11 +161,27 @@ export default function ManualInputForm({
 
           <TableBody>
             {rows.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
+              <TableRow
+                key={rowIndex}
+                sx={{
+                  "&:hover": {
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.03)"
+                        : "rgba(0, 0, 0, 0.01)",
+                  },
+                  "&:last-child .MuiTableCell-root": {
+                    borderBottom: "none",
+                  },
+                }}
+              >
                 {inputColumns.map((col) => (
                   <TableCell
                     key={col}
-                    sx={{ color: theme.palette.text.primary }}
+                    sx={{
+                      color: theme.palette.text.primary,
+                      padding: "6px 12px",
+                    }}
                   >
                     <InputField
                       handleChange={handleChange}
@@ -140,13 +193,19 @@ export default function ManualInputForm({
                     />
                   </TableCell>
                 ))}
-                <TableCell>
+                <TableCell sx={{ padding: "6px 12px", textAlign: "center" }}>
                   <IconButton
-                    sx={{ color: theme.palette.error.main }}
+                    size="small"
+                    sx={{
+                      color: theme.palette.error.main,
+                      "&:hover": {
+                        backgroundColor: theme.palette.error.light + "20",
+                      },
+                    }}
                     onClick={() => handleDeleteRow(rowIndex)}
                     disabled={rows.length === 1}
                   >
-                    <DeleteOutline />
+                    <DeleteOutline fontSize="small" />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -155,12 +214,15 @@ export default function ManualInputForm({
         </Table>
       </TableContainer>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
         <Button
           startIcon={<AddCircleOutline />}
-          variant="contained"
-          color="primary"
+          variant="outlined"
           onClick={handleAddRow}
+          sx={{
+            textTransform: "none",
+            fontWeight: 500,
+          }}
         >
           {t("common:addRow")}
         </Button>
