@@ -108,6 +108,7 @@ class GenerativeJob(BaseJob):
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
+        # (Lazy imports removed to avoid duplicate and unused imports warnings)
         model = None
         generative_process = None
         with session_factory() as db:
