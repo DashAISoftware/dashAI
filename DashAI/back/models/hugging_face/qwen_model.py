@@ -1,10 +1,5 @@
 from typing import List
 
-try:
-    from llama_cpp import Llama
-except ImportError:
-    Llama = None
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -128,7 +123,9 @@ class QwenModel(TextToTextGenerationTaskModel):
     )
 
     def __init__(self, **kwargs):
-        if Llama is None:
+        try:
+            from llama_cpp import Llama
+        except ImportError:
             raise RuntimeError(
                 "llama-cpp-python is not installed. Please install it to use QwenModel."
             )
