@@ -8,10 +8,7 @@ from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-from DashAI.back.dependencies.database.models import (
-    Explorer,
-    Notebook,
-)
+from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
 
