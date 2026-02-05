@@ -157,7 +157,6 @@ class DashAIDataset(Dataset):
             if column_types[column] == "Categorical":
                 new_features[column] = encode_labels(self, column)
             elif column_types[column] == "Numerical":
-
                 new_features[column] = HFValue("float32")
         dataset = self.cast(new_features)
         return dataset

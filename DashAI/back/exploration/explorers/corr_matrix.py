@@ -122,7 +122,6 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
     def launch_exploration(
         self, dataset: DashAIDataset, explorer_info: Explorer
     ) -> Any:
-        import pandas as pd
         import plotly.express as px
 
         result = dataset.to_pandas().corr(
