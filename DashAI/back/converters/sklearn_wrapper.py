@@ -1,10 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import Union
 
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -110,6 +106,10 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         DashAIDataset
             The transformed dataset with proper DashAI types.
         """
+        import numpy as np
+        import pandas as pd
+        import pyarrow as pa
+
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
 
         sklearn_cls = next(
