@@ -1,8 +1,5 @@
 """DashAI precision classification metric implementation."""
 
-import numpy as np
-from sklearn.metrics import precision_score
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -19,9 +16,7 @@ class Precision(ClassificationMetric):
     )
 
     @staticmethod
-    def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
-    ) -> float:
+    def score(true_labels: DashAIDataset, probs_pred_labels, multiclass=None) -> float:
         """Calculate precision between true labels and predicted labels.
 
         Parameters
@@ -46,6 +41,8 @@ class Precision(ClassificationMetric):
         # Use the provided multiclass parameter or determine it using is_multiclass
         if multiclass is None:
             multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        from sklearn.metrics import precision_score
 
         if multiclass:
             return precision_score(true_labels, pred_labels, average="macro")

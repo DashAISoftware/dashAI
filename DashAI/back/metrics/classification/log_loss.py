@@ -1,8 +1,5 @@
 """DashAI log loss implementation."""
 
-import numpy as np
-from sklearn.metrics import log_loss
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -23,9 +20,7 @@ class LogLoss(ClassificationMetric):
     MAXIMIZE: bool = False
 
     @staticmethod
-    def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
-    ) -> float:
+    def score(true_labels: DashAIDataset, probs_pred_labels, multiclass=None) -> float:
         """Calculate Log Loss score between true labels and predicted labels.
 
         Parameters
@@ -45,6 +40,8 @@ class LogLoss(ClassificationMetric):
         float
             Log Loss score between true labels and predicted labels
         """
+        from sklearn.metrics import log_loss
+
         true_labels, _ = prepare_to_metric(true_labels, probs_pred_labels)
 
         return log_loss(true_labels, probs_pred_labels)

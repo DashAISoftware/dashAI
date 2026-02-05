@@ -1,8 +1,5 @@
 """DashAI Hamming Distance implementation."""
 
-import numpy as np
-from sklearn.metrics import hamming_loss
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -21,9 +18,7 @@ class HammingDistance(ClassificationMetric):
     )
 
     @staticmethod
-    def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
-    ) -> float:
+    def score(true_labels: DashAIDataset, probs_pred_labels, multiclass=None) -> float:
         """Calculate Hamming Distance between true labels and predicted labels.
 
         Parameters
@@ -43,5 +38,7 @@ class HammingDistance(ClassificationMetric):
         float
             Hamming Distance between true labels and predicted labels
         """
+        from sklearn.metrics import hamming_loss
+
         true_labels, pred_labels = prepare_to_metric(true_labels, probs_pred_labels)
         return hamming_loss(true_labels, pred_labels)
