@@ -4,9 +4,7 @@ import shutil
 from itertools import islice
 from typing import Any, Dict
 
-import pandas as pd
 from beartype import beartype
-from datasets import Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -315,6 +313,8 @@ class CSVDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
+        from datasets import Dataset, IterableDatasetDict, load_dataset
+
         clean_params = self._check_params(params)
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
@@ -343,7 +343,7 @@ class CSVDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 100,
-    ) -> pd.DataFrame:
+    ) -> "pd.DataFrame":
         """
         Load a preview of the CSV dataset using streaming.
 
@@ -361,6 +361,9 @@ class CSVDataLoader(BaseDataLoader):
         pd.DataFrame
             A DataFrame containing the preview rows.
         """
+        import pandas as pd
+        from datasets import load_dataset
+
         clean_params = self._check_params(params)
 
         dataset_stream = load_dataset(

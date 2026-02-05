@@ -1,13 +1,8 @@
 """DashAI Excel Dataloader."""
 
-import glob
-import shutil
 from typing import Any, Dict
 
-import pandas as pd
 from beartype import beartype
-from datasets import Dataset, DatasetDict
-from datasets.builder import DatasetGenerationError
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -288,6 +283,13 @@ class ExcelDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
+        import glob
+        import shutil
+
+        import pandas as pd
+        from datasets import Dataset, DatasetDict
+        from datasets.builder import DatasetGenerationError
+
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         print("path prepared", prepared_path)
 
@@ -344,7 +346,7 @@ class ExcelDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 10,
-    ) -> pd.DataFrame:
+    ) -> "pd.DataFrame":
         """
         Load a preview of the Excel dataset.
 
@@ -367,6 +369,8 @@ class ExcelDataLoader(BaseDataLoader):
         """
         pandas_params = self._prepare_pandas_params(params)
         pandas_params["nrows"] = n_rows
+
+        import pandas as pd
 
         df_preview = pd.read_excel(
             io=filepath_or_buffer,

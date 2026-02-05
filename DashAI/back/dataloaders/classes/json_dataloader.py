@@ -1,12 +1,8 @@
 """DashAI JSON Dataloader."""
 
-import shutil
-from itertools import islice
 from typing import Any, Dict
 
-import pandas as pd
 from beartype import beartype
-from datasets import Dataset, IterableDatasetDict, load_dataset
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -129,6 +125,10 @@ class JSONDataLoader(BaseDataLoader):
         DatasetDict
             A HuggingFace's Dataset with the loaded data.
         """
+        import shutil
+
+        from datasets import Dataset, IterableDatasetDict, load_dataset
+
         self._check_params(params)
         field = params["data_key"]
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
@@ -156,7 +156,7 @@ class JSONDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 100,
-    ) -> pd.DataFrame:
+    ) -> "pd.DataFrame":
         """
         Load a preview of the JSON dataset using streaming.
 
@@ -174,6 +174,11 @@ class JSONDataLoader(BaseDataLoader):
         pd.DataFrame
             A DataFrame containing the preview rows.
         """
+        from itertools import islice
+
+        import pandas as pd
+        from datasets import load_dataset
+
         self._check_params(params)
         field = params.get("data_key")
 
