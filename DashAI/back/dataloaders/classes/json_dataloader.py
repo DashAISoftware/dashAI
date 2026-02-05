@@ -156,7 +156,7 @@ class JSONDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 100,
-    ) -> "pd.DataFrame":
+    ):
         """
         Load a preview of the JSON dataset using streaming.
 

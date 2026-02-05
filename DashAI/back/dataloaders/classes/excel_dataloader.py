@@ -346,7 +346,7 @@ class ExcelDataLoader(BaseDataLoader):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 10,
-    ) -> "pd.DataFrame":
+    ):
         """
         Load a preview of the Excel dataset.
 

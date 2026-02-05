@@ -107,6 +107,8 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
         Replaces or removes characters in the target string columns of the dataset x.
         If all values in a column become numeric after replacement, converts to int.
         """
+        import pyarrow as pa
+
         if not self._target_columns:
             # if no target columns were set, return the dataset unchanged
             return x

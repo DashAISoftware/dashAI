@@ -16,7 +16,7 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.fitted = False
-        self._resampled_table: Union[pa.Table, None] = None
+        self._resampled_table = None
         self.original_X_column_names_: list = []
         self.original_target_column_name_: str = ""
 
