@@ -6,7 +6,7 @@ from typing import Any, List
 import numpy as np
 from fastapi import status
 from fastapi.exceptions import HTTPException
-from kink import inject
+from kink import di, inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
@@ -71,8 +71,6 @@ class PredictJob(BaseJob):
         dataset_id = self.kwargs.get("dataset_id")
 
         if prediction_id:
-            from kink import di
-
             session_factory = di["session_factory"]
 
             try:
@@ -90,8 +88,6 @@ class PredictJob(BaseJob):
     def run(
         self,
     ) -> List[Any]:
-        from kink import di
-
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
