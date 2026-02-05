@@ -1,8 +1,5 @@
 """DashAI Cohen Kappa classification metric implementation."""
 
-import numpy as np
-from sklearn.metrics import cohen_kappa_score
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -19,9 +16,7 @@ class CohenKappa(ClassificationMetric):
     )
 
     @staticmethod
-    def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
-    ) -> float:
+    def score(true_labels: DashAIDataset, probs_pred_labels, multiclass=None) -> float:
         """Calculate Cohen Kappa score between true labels and predicted labels.
 
         Parameters
@@ -41,6 +36,8 @@ class CohenKappa(ClassificationMetric):
         float
             Cohen Kappa score between true labels and predicted labels
         """
+        from sklearn.metrics import cohen_kappa_score
+
         true_labels, pred_labels = prepare_to_metric(true_labels, probs_pred_labels)
 
         return cohen_kappa_score(true_labels, pred_labels)
