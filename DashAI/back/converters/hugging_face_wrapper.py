@@ -1,8 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import Type
 
-from datasets import concatenate_datasets
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -49,6 +47,8 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
 
     def transform(self, x: DashAIDataset, y: DashAIDataset = None) -> DashAIDataset:
         """Transform the input data using the model."""
+        from datasets import concatenate_datasets
+
         all_results = []
 
         # Process in batches
