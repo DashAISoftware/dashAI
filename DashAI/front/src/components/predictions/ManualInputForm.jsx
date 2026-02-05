@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline, DeleteOutline } from "@mui/icons-material";
-import { renderInputField } from "./renderInputField";
+import InputField from "./InputField";
 import { useTranslation } from "react-i18next";
 
 export default function ManualInputForm({
@@ -130,14 +130,14 @@ export default function ManualInputForm({
                     key={col}
                     sx={{ color: theme.palette.text.primary }}
                   >
-                    {renderInputField(
-                      handleChange,
-                      rowIndex,
-                      col,
-                      types[col],
-                      row[col],
-                      sample[col][0],
-                    )}
+                    <InputField
+                      handleChange={handleChange}
+                      rowIndex={rowIndex}
+                      col={col}
+                      typeInfo={types[col]}
+                      value={row[col]}
+                      placeholder={sample[col][0]}
+                    />
                   </TableCell>
                 ))}
                 <TableCell>

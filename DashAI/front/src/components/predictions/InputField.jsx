@@ -3,14 +3,14 @@ import { TextField, Select, MenuItem, FormControl } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
-export const renderInputField = (
+function InputField({
   handleChange,
   rowIndex,
   col,
   typeInfo,
   value,
   placeholder,
-) => {
+}) {
   const { dtype, type, categories } = typeInfo || {};
   const effectiveType = type || dtype || "string";
   const theme = useTheme();
@@ -67,8 +67,8 @@ export const renderInputField = (
             e.target.value === ""
               ? ""
               : isInteger
-                ? parseInt(e.target.value)
-                : parseFloat(e.target.value);
+              ? parseInt(e.target.value)
+              : parseFloat(e.target.value);
           handleChange(rowIndex, col, val);
         }}
         sx={{
@@ -130,4 +130,6 @@ export const renderInputField = (
       }}
     />
   );
-};
+}
+
+export default InputField;
