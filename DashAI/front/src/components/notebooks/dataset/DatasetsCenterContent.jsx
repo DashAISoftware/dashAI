@@ -79,9 +79,7 @@ export default function DatasetsCenterContent() {
     return (
       <DatasetVisualization
         dataset={selectedDataset}
-        onItemCreated={handleNotebookCreated}
         onNewItem={handleNewNotebookFromDataset}
-        existingItems={notebooks}
         newItemButtonText={t("datasets:button.newNotebook")}
         tourContextType="datasets"
       />
