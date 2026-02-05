@@ -1,6 +1,3 @@
-import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -90,6 +87,8 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     def __init__(self, **kwargs):
         super().__init__()
+        from sklearn.feature_extraction.text import CountVectorizer
+
         self.vectorizer = CountVectorizer(
             max_features=kwargs.get("max_features", 1000),
             lowercase=kwargs.get("lowercase", True),
@@ -111,6 +110,8 @@ class BagOfWordsConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     def transform(self, x: DashAIDataset, y=None) -> DashAIDataset:
         """Transform text into Bag-of-Words frequency columns."""
+        import pandas as pd
+
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
 
