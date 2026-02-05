@@ -1,6 +1,3 @@
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -94,6 +91,8 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     def __init__(self, **kwargs):
         super().__init__()
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
         self.vectorizer = TfidfVectorizer(
             max_features=kwargs.get("max_features", 1000),
             lowercase=kwargs.get("lowercase", True),
@@ -115,6 +114,8 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
 
     def transform(self, x: DashAIDataset, y=None) -> DashAIDataset:
         """Transform text into TF-IDF weighted columns."""
+        import pandas as pd
+
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
 
