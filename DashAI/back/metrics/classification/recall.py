@@ -1,8 +1,5 @@
 """DashAI recall classification metric implementation."""
 
-import numpy as np
-from sklearn.metrics import recall_score
-
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
@@ -19,9 +16,7 @@ class Recall(ClassificationMetric):
     )
 
     @staticmethod
-    def score(
-        true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None
-    ) -> float:
+    def score(true_labels: DashAIDataset, probs_pred_labels, multiclass=None) -> float:
         """Calculate recall between true labels and predicted labels.
 
         Parameters
@@ -46,6 +41,8 @@ class Recall(ClassificationMetric):
         # Use the provided multiclass parameter or determine it using is_multiclass
         if multiclass is None:
             multiclass = ClassificationMetric.is_multiclass(true_labels)
+
+        from sklearn.metrics import recall_score
 
         if multiclass:
             return recall_score(true_labels, pred_labels, average="macro")
