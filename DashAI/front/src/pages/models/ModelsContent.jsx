@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSnackbar } from "notistack";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
@@ -8,7 +8,7 @@ import ModuleContainer from "../../components/layout/ModuleContainer";
 import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
-import LeftBar from "../../components/models/LeftBar";
+import ModelsLeftBar from "../../components/models/ModelsLeftBar";
 import RightBar from "../../components/models/RightBar";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
@@ -30,7 +30,6 @@ import { useModels } from "../../components/models/ModelsContext";
 
 export default function ModelsContent() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [runs, setRuns] = useState([]);
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
@@ -57,7 +56,6 @@ export default function ModelsContent() {
     editSession,
     step,
     setStep,
-    selectedTask,
     setSelectedTask,
     selectedSessionId,
     setSelectedSessionId,
@@ -120,16 +118,6 @@ export default function ModelsContent() {
       setSelectedSession(session || null);
     }
   }, [selectedSessionId, sessions]);
-
-  const handleBackToTaskSelection = () => {
-    setSelectedTask(null);
-    setStep(0);
-  };
-
-  const handleSessionCreated = (newSession) => {
-    setSessions((prev) => [...prev, newSession]);
-    setSelectedSessionId(newSession.id);
-  };
 
   const handleSessionClick = (sessionId) => {
     setSelectedSessionId(sessionId);
@@ -327,34 +315,12 @@ export default function ModelsContent() {
     setStep(0);
   };
 
-  const handleNewSessionFromDataset = () => {
-    // Keep the selectedDatasetId but go to task selection
-    setSelectedSessionId(null);
-    setSelectedTask(null);
-    setStep(0);
-  };
-
-  const handleBackToDataset = () => {
-    // Go back to dataset visualization from task selection
-    setSelectedTask(null);
-    setStep(2);
-  };
-
-  const handleGoToDatasets = () => {
-    navigate("/app/data");
-  };
-
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         {/* Left Panel */}
         <LeftPanel data-tour="models-left-panel">
-          <LeftBar
-            datasets={datasets}
-            selectedDatasetId={selectedDatasetId}
-            sessions={sessions}
-            selectedSessionId={selectedSessionId}
-            tasks={tasks}
+          <ModelsLeftBar
             onDatasetDelete={handleDatasetDelete}
             onDatasetEdit={editDataset}
             onSessionClick={handleSessionClick}
@@ -387,13 +353,7 @@ export default function ModelsContent() {
         ) : (
           <>
             <CenterPanel data-tour="models-center-panel">
-              <ModelsCenterContent
-                handleBackToTaskSelection={handleBackToTaskSelection}
-                handleGoToDatasets={handleGoToDatasets}
-                handleSessionCreated={handleSessionCreated}
-                handleNewSessionFromDataset={handleNewSessionFromDataset}
-                handleBackToDataset={handleBackToDataset}
-              />
+              <ModelsCenterContent />
             </CenterPanel>
 
             {/* Right Panel */}

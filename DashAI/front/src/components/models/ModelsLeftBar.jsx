@@ -16,11 +16,6 @@ import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
 
 export default function ModelsLeftBar({
-  datasets = [],
-  selectedDatasetId,
-  sessions = [],
-  selectedSessionId,
-  tasks = [],
   onDatasetDelete,
   onDatasetEdit,
   onSessionClick,
@@ -28,14 +23,6 @@ export default function ModelsLeftBar({
   onToggle,
   handleNewSessionButton,
 }) {
-  const theme = useTheme();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredDatasets, setFilteredDatasets] = useState(datasets);
-  const [filteredSessions, setFilteredSessions] = useState(sessions);
-  const [openSections, setOpenSections] = useState({});
-  const [selectedInfoSession, setSelectedInfoSession] = useState(null);
-  const { t } = useTranslation(["models", "datasets", "common"]);
-
   const {
     deleteSessionById,
     setSelectedSessionId,
@@ -43,7 +30,20 @@ export default function ModelsLeftBar({
     setSelectedTask,
     setStep,
     selectDataset,
+    datasets,
+    selectedDatasetId,
+    sessions,
+    tasks,
+    selectedSessionId,
   } = useModels();
+
+  const theme = useTheme();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredDatasets, setFilteredDatasets] = useState(datasets);
+  const [filteredSessions, setFilteredSessions] = useState(sessions);
+  const [openSections, setOpenSections] = useState({});
+  const [selectedInfoSession, setSelectedInfoSession] = useState(null);
+  const { t } = useTranslation(["models", "datasets", "common"]);
 
   const getTaskDisplayName = React.useCallback(
     (taskName) => {
