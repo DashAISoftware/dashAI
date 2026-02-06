@@ -30,7 +30,6 @@ import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
-import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
@@ -45,6 +44,7 @@ export default function DatasetVisualization({
   onNewItem,
   newItemButtonText = "New Item",
   tourContextType = null,
+  fetchDatasets = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -56,14 +56,12 @@ export default function DatasetVisualization({
   const status = dataset.status;
   const isProcessing = !(status === 3 || status === 4); // Finished or Error
 
-  const { fetchDatasets } = useDatasetsAndNotebooks();
-
   useEffect(() => {
     if (!dataset) return;
 
     setTab(0);
     const fetchDatasetInfo = async () => {
-      if (isProcessing) {
+      if (isProcessing && fetchDatasets) {
         setTimeout(() => {
           fetchDatasets();
         }, 1000);
@@ -77,7 +75,7 @@ export default function DatasetVisualization({
       }
     };
     fetchDatasetInfo();
-  }, [dataset]);
+  }, [dataset, fetchDatasets]);
 
   // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(

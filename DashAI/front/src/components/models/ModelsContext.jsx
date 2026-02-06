@@ -1,0 +1,110 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  use,
+} from "react";
+import { useTranslation } from "react-i18next";
+import { useDatasets } from "../../hooks/datasets/useDatasets";
+import { useSessions } from "../../hooks/models/useSessions";
+const ModelsContext = createContext(null);
+
+export const useModels = () => useContext(ModelsContext);
+
+export const OptionsEnum = Object.freeze({
+  DATASET: "dataset",
+  SESSION: "session",
+  NEW: "new",
+});
+
+export function ModelsProvider({ children }) {
+  const { t } = useTranslation(["models", "datasets", "common"]);
+
+  const {
+    datasets,
+    createDataset,
+    selectedDatasetId,
+    fetchDatasets,
+    selectDataset,
+    clearSelectedDataset,
+    deleteDataset,
+    deleteDatasetById,
+    editDataset,
+    addDatasetOptimistically,
+    enrichDatasetsWithInfo,
+    replaceDatasets,
+    startDatasetPolling,
+  } = useDatasets({ t });
+
+  const {
+    tasks,
+    selectedTask,
+    selectedSessionId,
+    selectedSession,
+    sessions,
+    setSessions,
+    fetchSessions,
+    fetchTasks,
+    editSession,
+    deleteSessionById,
+    setSelectedTask,
+    setSelectedSessionId,
+    setSelectedSession,
+  } = useSessions({ t });
+
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [step, setStep] = useState(0);
+
+  const selectModel = useCallback((model) => {
+    setSelectedModel(model);
+    setConfigOpen(true);
+  }, []);
+
+  const closeConfig = useCallback(() => {
+    setConfigOpen(false);
+    setSelectedModel(null);
+  }, []);
+
+  const value = {
+    selectedModel,
+    configOpen,
+    selectModel,
+    closeConfig,
+    setSelectedModel,
+    setConfigOpen,
+    datasets,
+    createDataset,
+    selectedDatasetId,
+    fetchDatasets,
+    selectDataset,
+    clearSelectedDataset,
+    deleteDataset,
+    deleteDatasetById,
+    editDataset,
+    addDatasetOptimistically,
+    enrichDatasetsWithInfo,
+    replaceDatasets,
+    startDatasetPolling,
+    tasks,
+    selectedTask,
+    selectedSessionId,
+    selectedSession,
+    sessions,
+    setSessions,
+    fetchSessions,
+    fetchTasks,
+    editSession,
+    deleteSessionById,
+    setSelectedTask,
+    setSelectedSessionId,
+    setSelectedSession,
+    step,
+    setStep,
+  };
+
+  return (
+    <ModelsContext.Provider value={value}>{children}</ModelsContext.Provider>
+  );
+}

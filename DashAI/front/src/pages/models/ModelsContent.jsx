@@ -15,20 +15,8 @@ import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMe
 import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import DatasetVisualization from "../../components/DatasetVisualization";
-import { ModelProvider } from "../../components/models/ModelProvider";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
-import { getComponents } from "../../api/component";
-import {
-  getDatasets,
-  getDatasetInfo,
-  updateDataset,
-  deleteDataset,
-} from "../../api/datasets";
-import {
-  getModelSessions,
-  updateModelSession,
-  deleteModelSession,
-} from "../../api/modelSession";
+import { updateModelSession, deleteModelSession } from "../../api/modelSession";
 import {
   getRuns,
   deleteRun,
@@ -42,18 +30,14 @@ import { startJobPolling } from "../../utils/jobPoller";
 import { useTranslation } from "react-i18next";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
+import { useModels } from "../../components/models/ModelsContext";
 
 export default function ModelsContent() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [selectedDatasetId, setSelectedDatasetId] = useState(null);
-  const [datasets, setDatasets] = useState([]);
-  const [sessions, setSessions] = useState([]);
   const [runs, setRuns] = useState([]);
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
@@ -65,93 +49,28 @@ export default function ModelsContent() {
 
   const threePanelLayout = useThreePanelLayout();
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = await getComponents({
-          selectTypes: ["Task"],
-          hasRelatedOfType: "Model",
-        });
-        setTasks(data);
-      } catch (error) {
-        enqueueSnackbar(t("models:error.failedToFetchTasks"), {
-          variant: "error",
-        });
-        console.error("Failed to fetch tasks:", error);
-      }
-    };
-    fetchTasks();
-  }, [enqueueSnackbar, t]);
-
-  const enrichDatasetsWithInfo = async (newDatasets, existingDatasets = []) => {
-    const enrichedDatasets = await Promise.all(
-      newDatasets.map(async (dataset) => {
-        const existingDataset = existingDatasets.find(
-          (d) => d.id === dataset.id,
-        );
-        if (
-          existingDataset &&
-          existingDataset.total_rows !== undefined &&
-          existingDataset.total_columns !== undefined
-        ) {
-          return {
-            ...dataset,
-            total_rows: existingDataset.total_rows,
-            total_columns: existingDataset.total_columns,
-          };
-        }
-
-        try {
-          const info = await getDatasetInfo(dataset.id);
-          return {
-            ...dataset,
-            total_rows: info.total_rows,
-            total_columns: info.total_columns,
-          };
-        } catch (error) {
-          console.warn(
-            `Failed to fetch info for dataset ${dataset.id}:`,
-            error,
-          );
-          return {
-            ...dataset,
-            description: dataset.description || "",
-          };
-        }
-      }),
-    );
-    return enrichedDatasets;
-  };
+  const {
+    datasets,
+    replaceDatasets,
+    selectedDatasetId,
+    selectDataset,
+    fetchDatasets,
+    editDataset,
+    deleteDataset,
+    sessions,
+    setSessions,
+    tasks,
+    fetchSessions,
+    fetchTasks,
+    editSession,
+    step,
+    setStep,
+  } = useModels();
 
   useEffect(() => {
-    const fetchDatasets = async () => {
-      try {
-        const data = await getDatasets();
-        const enrichedData = await enrichDatasetsWithInfo(data, []);
-        setDatasets(enrichedData);
-      } catch (error) {
-        enqueueSnackbar(t("datasets:error.failedToFetchDatasets"), {
-          variant: "error",
-        });
-        console.error("Failed to fetch datasets:", error);
-      }
-    };
     fetchDatasets();
-  }, []);
-
-  useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        const data = await getModelSessions();
-        setSessions(data);
-      } catch (error) {
-        enqueueSnackbar(t("models:error.failedToFetchSessions"), {
-          variant: "error",
-        });
-        console.error("Failed to fetch sessions:", error);
-      }
-    };
     fetchSessions();
+    fetchTasks();
   }, []);
 
   useEffect(() => {
@@ -239,77 +158,20 @@ export default function ModelsContent() {
   };
 
   const handleDatasetClick = (datasetId) => {
-    setSelectedDatasetId(datasetId);
+    selectDataset(datasetId);
     setSelectedSessionId(null);
     setSelectedTask(null);
     setStep(2); // Use a different step to show DatasetVisualization
   };
 
-  const handleSessionDelete = async (sessionId) => {
-    if (sessionId === selectedSessionId) {
-      setSelectedSessionId(null);
-      setSelectedSession(null);
-      setStep(0);
-      setSelectedTask(null);
-    }
-
-    setSessions((prevSessions) =>
-      prevSessions.filter((session) => session.id !== sessionId),
-    );
-
-    try {
-      await deleteModelSession(sessionId.toString());
-      enqueueSnackbar(t("models:message.sessionDeleted"), {
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Failed to delete session:", error);
-      enqueueSnackbar(t("models:error.failedToDeleteSession"), {
-        variant: "error",
-      });
-    }
-  };
-
-  const handleDatasetEdit = async (id, newName) => {
-    try {
-      const updatedDataset = await updateDataset(id, { name: newName });
-      setDatasets((prevDatasets) =>
-        prevDatasets.map((dataset) =>
-          dataset.id === id
-            ? { ...dataset, name: updatedDataset.name }
-            : dataset,
-        ),
-      );
-      enqueueSnackbar(t("datasets:message.datasetUpdateSuccess"), {
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Failed to update dataset:", error);
-      if (error.response?.status === 409) {
-        enqueueSnackbar(t("datasets:error.datasetNameExists"), {
-          variant: "error",
-        });
-      } else if (error.response?.status === 422) {
-        enqueueSnackbar(t("datasets:error.datasetNameEmpty"), {
-          variant: "error",
-        });
-      } else {
-        enqueueSnackbar(t("datasets:error.failedToUpdateDataset"), {
-          variant: "error",
-        });
-      }
-      throw error;
-    }
-  };
-
   const handleDatasetDelete = (id) => {
     if (id === selectedDatasetId) {
-      setSelectedDatasetId(null);
+      selectDataset(null);
       setStep(0);
       setSelectedTask(null);
     }
 
-    setDatasets((prevDatasets) =>
+    replaceDatasets((prevDatasets) =>
       prevDatasets.filter((dataset) => dataset.id !== id),
     );
 
@@ -487,44 +349,9 @@ export default function ModelsContent() {
     }
   };
 
-  const handleSessionEdit = async (sessionId, newName) => {
-    try {
-      const result = await updateModelSession({
-        id: sessionId,
-        formData: { name: newName },
-      });
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === sessionId
-            ? { ...session, name: result.name }
-            : session,
-        ),
-      );
-      enqueueSnackbar(t("models:message.sessionUpdated"), {
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Failed to update session:", error);
-      if (error.response?.status === 409) {
-        enqueueSnackbar(t("models:error.sessionNameExists"), {
-          variant: "error",
-        });
-      } else if (error.response?.status === 422) {
-        enqueueSnackbar(t("models:error.sessionNameEmpty"), {
-          variant: "error",
-        });
-      } else {
-        enqueueSnackbar(t("models:error.failedToUpdateSession"), {
-          variant: "error",
-        });
-      }
-      throw error;
-    }
-  };
-
   const handleNewSessionButton = () => {
     setSelectedSessionId(null);
-    setSelectedDatasetId(null);
+    selectDataset(null);
     setSelectedTask(null);
     setStep(0);
   };
@@ -559,118 +386,113 @@ export default function ModelsContent() {
             tasks={tasks}
             onDatasetClick={handleDatasetClick}
             onDatasetDelete={handleDatasetDelete}
-            onDatasetEdit={handleDatasetEdit}
+            onDatasetEdit={editDataset}
             onSessionClick={handleSessionClick}
-            onSessionDelete={handleSessionDelete}
-            onSessionEdit={handleSessionEdit}
+            onSessionEdit={editSession}
             onToggle={threePanelLayout.handleToggleLeft}
             handleNewSessionButton={handleNewSessionButton}
           />
         </LeftPanel>
-        <ModelProvider>
-          {selectedSessionId ? (
-            <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
-              <CenterPanel data-tour="models-center-panel">
-                <SessionVisualization
-                  session={selectedSession}
-                  runs={runs}
-                  onTrain={handleTrainRun}
-                  onEditRun={handleEditRun}
-                  onDeleteRun={handleDeleteRun}
+        {selectedSessionId ? (
+          <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
+            <CenterPanel data-tour="models-center-panel">
+              <SessionVisualization
+                session={selectedSession}
+                runs={runs}
+                onTrain={handleTrainRun}
+                onEditRun={handleEditRun}
+                onDeleteRun={handleDeleteRun}
+              />
+            </CenterPanel>
+            <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+              <RightBar
+                session={selectedSession}
+                existingRuns={runs}
+                onRunCreated={handleRunCreated}
+                onToggle={threePanelLayout.handleToggleRight}
+              />
+            </RightPanel>
+            <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
+          </TourProvider>
+        ) : (
+          <>
+            <CenterPanel data-tour="models-center-panel">
+              {step === 1 && selectedTask ? (
+                <CreateSessionSteps
+                  backHome={handleBackToTaskSelection}
+                  selectedTask={selectedTask}
+                  datasets={datasets}
+                  handleSessionCreated={handleSessionCreated}
+                  existingSessions={sessions}
+                  preselectedDatasetId={selectedDatasetId}
                 />
-              </CenterPanel>
-              <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-                <RightBar
-                  session={selectedSession}
-                  existingRuns={runs}
-                  onRunCreated={handleRunCreated}
-                  onToggle={threePanelLayout.handleToggleRight}
+              ) : step === 2 && selectedDatasetId ? (
+                <DatasetVisualization
+                  dataset={datasets.find((d) => d.id === selectedDatasetId)}
+                  onItemCreated={handleSessionCreated}
+                  onNewItem={handleNewSessionFromDataset}
+                  existingItems={sessions}
+                  newItemButtonText={t("models:button.createSession")}
                 />
-              </RightPanel>
-              <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
-            </TourProvider>
-          ) : (
-            <>
-              <CenterPanel data-tour="models-center-panel">
-                {step === 1 && selectedTask ? (
-                  <CreateSessionSteps
-                    backHome={handleBackToTaskSelection}
-                    selectedTask={selectedTask}
-                    datasets={datasets}
-                    handleSessionCreated={handleSessionCreated}
-                    existingSessions={sessions}
-                    preselectedDatasetId={selectedDatasetId}
-                  />
-                ) : step === 2 && selectedDatasetId ? (
-                  <DatasetVisualization
-                    dataset={datasets.find((d) => d.id === selectedDatasetId)}
-                    onItemCreated={handleSessionCreated}
-                    onNewItem={handleNewSessionFromDataset}
-                    existingItems={sessions}
-                    newItemButtonText={t("models:button.createSession")}
-                  />
-                ) : step === 0 ? (
-                  <SelectOptionMenu
-                    title={
-                      selectedDatasetId
-                        ? t("models:label.selectTaskForSession")
-                        : t("models:label.modelsModule")
-                    }
-                    subtitle={
-                      selectedDatasetId
-                        ? t("models:label.chooseTaskForSessionWithDataset", {
-                            datasetName: datasets.find(
-                              (d) => d.id === selectedDatasetId,
-                            )?.name,
-                          })
-                        : t("models:label.configureTasksTrainCompareModels")
-                    }
-                    options={tasks.map((task) => ({
-                      name: task.name,
-                      display_name:
-                        task.display_name ||
-                        task.name
-                          .replace("Task", "")
-                          .replace(/([A-Z])/g, " $1")
-                          .trim(),
-                      description:
-                        task.description ||
-                        task.metadata?.short_description ||
-                        "",
-                      Icon: null,
-                    }))}
-                    searchBar={true}
-                    goToNextStep={handleTaskSelect}
-                    goToPrevStep={
-                      selectedDatasetId ? handleBackToDataset : null
-                    }
-                    showNoDatasetAlert={
-                      !selectedDatasetId && datasets.length === 0
-                    }
-                    onGoToDatasets={handleGoToDatasets}
-                  />
-                ) : null}
-              </CenterPanel>
+              ) : step === 0 ? (
+                <SelectOptionMenu
+                  title={
+                    selectedDatasetId
+                      ? t("models:label.selectTaskForSession")
+                      : t("models:label.modelsModule")
+                  }
+                  subtitle={
+                    selectedDatasetId
+                      ? t("models:label.chooseTaskForSessionWithDataset", {
+                          datasetName: datasets.find(
+                            (d) => d.id === selectedDatasetId,
+                          )?.name,
+                        })
+                      : t("models:label.configureTasksTrainCompareModels")
+                  }
+                  options={tasks.map((task) => ({
+                    name: task.name,
+                    display_name:
+                      task.display_name ||
+                      task.name
+                        .replace("Task", "")
+                        .replace(/([A-Z])/g, " $1")
+                        .trim(),
+                    description:
+                      task.description ||
+                      task.metadata?.short_description ||
+                      "",
+                    Icon: null,
+                  }))}
+                  searchBar={true}
+                  goToNextStep={handleTaskSelect}
+                  goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
+                  showNoDatasetAlert={
+                    !selectedDatasetId && datasets.length === 0
+                  }
+                  onGoToDatasets={handleGoToDatasets}
+                />
+              ) : null}
+            </CenterPanel>
 
-              {/* Right Panel */}
-              <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-                <RightBar
-                  session={selectedSession}
-                  onToggle={threePanelLayout.handleToggleRight}
-                />
-              </RightPanel>
-            </>
-          )}
+            {/* Right Panel */}
+            <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
+              <RightBar
+                session={selectedSession}
+                onToggle={threePanelLayout.handleToggleRight}
+              />
+            </RightPanel>
+          </>
+        )}
 
-          {/* Retrain Confirmation Dialog */}
-          <RetrainConfirmDialog
-            open={retrainDialogOpen}
-            onClose={handleCancelRetrain}
-            onConfirm={handleConfirmRetrain}
-            run={runToRetrain}
-            operationsCount={operationsCount}
-          />
-        </ModelProvider>
+        {/* Retrain Confirmation Dialog */}
+        <RetrainConfirmDialog
+          open={retrainDialogOpen}
+          onClose={handleCancelRetrain}
+          onConfirm={handleConfirmRetrain}
+          run={runToRetrain}
+          operationsCount={operationsCount}
+        />
       </ModuleContainer>
       {!selectedSessionId && (
         <TourButton

@@ -13,6 +13,7 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import InfoSessionModal from "./InfoSessionModal";
 import { useTranslation } from "react-i18next";
+import { useModels } from "./ModelsContext";
 
 export default function ModelsLeftBar({
   datasets = [],
@@ -24,7 +25,6 @@ export default function ModelsLeftBar({
   onDatasetDelete,
   onDatasetEdit,
   onSessionClick,
-  onSessionDelete,
   onSessionEdit,
   onToggle,
   handleNewSessionButton,
@@ -36,6 +36,14 @@ export default function ModelsLeftBar({
   const [openSections, setOpenSections] = useState({});
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const { t } = useTranslation(["models", "datasets", "common"]);
+
+  const {
+    deleteSessionById,
+    setSelectedSessionId,
+    setSelectedSession,
+    setSelectedTask,
+    setStep,
+  } = useModels();
 
   const getTaskDisplayName = React.useCallback(
     (taskName) => {
@@ -127,6 +135,17 @@ export default function ModelsLeftBar({
     groups[displayName].push(session);
     return groups;
   }, {});
+
+  const onSessionDelete = async (id) => {
+    const success = await deleteSessionById(id);
+    if (!success) return;
+    if (id === selectedSessionId) {
+      setSelectedSessionId(null);
+      setSelectedSession(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+  };
 
   return (
     <SideBar>

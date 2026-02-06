@@ -15,7 +15,7 @@ import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
-import { useModelContext } from "./ModelProvider";
+import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 
 export default function ModelsRightBar({
@@ -78,8 +78,7 @@ export default function ModelsRightBar({
   }, [searchQuery, models]);
 
   const tourContext = useTourContext();
-  const { selectModel, configOpen, selectedModel, closeConfig } =
-    useModelContext();
+  const { selectModel, configOpen, selectedModel, closeConfig } = useModels();
 
   const handleModelClick = (model) => {
     if (!session) {
