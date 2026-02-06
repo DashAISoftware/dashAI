@@ -85,7 +85,7 @@ export default function ManualInputForm({
     <Box
       sx={{
         borderRadius: 1,
-        color: "white",
+        color: theme.palette.text.primary,
         maxWidth: "100%",
         mx: "auto",
         height: "100%",
@@ -104,16 +104,19 @@ export default function ManualInputForm({
         {t("prediction:label.provideManualInput")}
       </Typography>
 
-      <TableContainer component={Paper} sx={{ p: 1 }}>
+      <TableContainer
+        component={Paper}
+        sx={{ p: 1, bgcolor: theme.palette.background.box }}
+      >
         <Table size="small">
           <TableHead>
             <TableRow>
               {inputColumns.map((col) => (
-                <TableCell key={col} sx={{ color: "#fff", fontWeight: 600 }}>
+                <TableCell key={col} sx={{ fontWeight: 600 }}>
                   {col}
                 </TableCell>
               ))}
-              <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
+              <TableCell sx={{ fontWeight: 600 }}>
                 {t("common:remove")}
               </TableCell>
             </TableRow>
@@ -123,7 +126,10 @@ export default function ManualInputForm({
             {rows.map((row, rowIndex) => (
               <TableRow key={rowIndex}>
                 {inputColumns.map((col) => (
-                  <TableCell key={col} sx={{ color: "#fff" }}>
+                  <TableCell
+                    key={col}
+                    sx={{ color: theme.palette.text.primary }}
+                  >
                     {renderInputField(
                       handleChange,
                       rowIndex,
@@ -136,7 +142,7 @@ export default function ManualInputForm({
                 ))}
                 <TableCell>
                   <IconButton
-                    color="error"
+                    sx={{ color: theme.palette.error.main }}
                     onClick={() => handleDeleteRow(rowIndex)}
                     disabled={rows.length === 1}
                   >
