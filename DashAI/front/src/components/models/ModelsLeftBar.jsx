@@ -15,14 +15,7 @@ import InfoSessionModal from "./InfoSessionModal";
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
 
-export default function ModelsLeftBar({
-  onDatasetDelete,
-  onDatasetEdit,
-  onSessionClick,
-  onSessionEdit,
-  onToggle,
-  handleNewSessionButton,
-}) {
+export default function ModelsLeftBar({ onToggle }) {
   const {
     deleteSessionById,
     setSelectedSessionId,
@@ -32,9 +25,14 @@ export default function ModelsLeftBar({
     selectDataset,
     datasets,
     selectedDatasetId,
+    replaceDatasets,
     sessions,
     tasks,
     selectedSessionId,
+    setSessions,
+    deleteDataset,
+    editDataset,
+    editSession,
   } = useModels();
 
   const theme = useTheme();
@@ -154,6 +152,51 @@ export default function ModelsLeftBar({
     }
   };
 
+  const onDatasetDelete = (id) => {
+    if (id === selectedDatasetId) {
+      selectDataset(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+
+    replaceDatasets((prevDatasets) =>
+      prevDatasets.filter((dataset) => dataset.id !== id),
+    );
+
+    setSessions((prevSessions) => {
+      const filteredSessions = prevSessions.filter(
+        (session) => session.dataset_id !== id,
+      );
+
+      if (
+        selectedSessionId &&
+        prevSessions.find(
+          (session) =>
+            session.id === selectedSessionId && session.dataset_id === id,
+        )
+      ) {
+        setSelectedSessionId(null);
+        setStep(0);
+        setSelectedTask(null);
+      }
+
+      return filteredSessions;
+    });
+
+    deleteDataset(id);
+  };
+
+  const onSessionClick = (sessionId) => {
+    setSelectedSessionId(sessionId);
+  };
+
+  const handleNewSessionButton = () => {
+    setSelectedSessionId(null);
+    selectDataset(null);
+    setSelectedTask(null);
+    setStep(0);
+  };
+
   return (
     <SideBar>
       {/* Header */}
@@ -210,7 +253,7 @@ export default function ModelsLeftBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
-          onItemEdit={onDatasetEdit}
+          onItemEdit={editDataset}
           defaultOpen={true}
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
@@ -230,7 +273,7 @@ export default function ModelsLeftBar({
           selectedItemId={selectedSessionId}
           onItemClick={onSessionClick}
           onItemDelete={onSessionDelete}
-          onItemEdit={onSessionEdit}
+          onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
           title={t("common:sessions")}
           Icon={Biotech}

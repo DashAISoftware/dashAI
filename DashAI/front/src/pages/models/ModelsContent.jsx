@@ -119,44 +119,6 @@ export default function ModelsContent() {
     }
   }, [selectedSessionId, sessions]);
 
-  const handleSessionClick = (sessionId) => {
-    setSelectedSessionId(sessionId);
-  };
-
-  const handleDatasetDelete = (id) => {
-    if (id === selectedDatasetId) {
-      selectDataset(null);
-      setStep(0);
-      setSelectedTask(null);
-    }
-
-    replaceDatasets((prevDatasets) =>
-      prevDatasets.filter((dataset) => dataset.id !== id),
-    );
-
-    setSessions((prevSessions) => {
-      const filteredSessions = prevSessions.filter(
-        (session) => session.dataset_id !== id,
-      );
-
-      if (
-        selectedSessionId &&
-        prevSessions.find(
-          (session) =>
-            session.id === selectedSessionId && session.dataset_id === id,
-        )
-      ) {
-        setSelectedSessionId(null);
-        setStep(0);
-        setSelectedTask(null);
-      }
-
-      return filteredSessions;
-    });
-
-    deleteDataset(id);
-  };
-
   const handleRunCreated = (newRun) => {
     setRuns((prev) => [...prev, newRun]);
     enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
@@ -308,26 +270,12 @@ export default function ModelsContent() {
     }
   };
 
-  const handleNewSessionButton = () => {
-    setSelectedSessionId(null);
-    selectDataset(null);
-    setSelectedTask(null);
-    setStep(0);
-  };
-
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         {/* Left Panel */}
         <LeftPanel data-tour="models-left-panel">
-          <ModelsLeftBar
-            onDatasetDelete={handleDatasetDelete}
-            onDatasetEdit={editDataset}
-            onSessionClick={handleSessionClick}
-            onSessionEdit={editSession}
-            onToggle={threePanelLayout.handleToggleLeft}
-            handleNewSessionButton={handleNewSessionButton}
-          />
+          <ModelsLeftBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
         {selectedSessionId ? (
           <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
