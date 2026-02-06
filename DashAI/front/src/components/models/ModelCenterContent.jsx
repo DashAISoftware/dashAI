@@ -4,25 +4,24 @@ import CreateSessionSteps from "./CreateSessionSteps";
 import DatasetVisualization from "../DatasetVisualization";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import { useTourContext } from "../tour/TourProvider";
+import { useNavigate } from "react-router-dom";
 
-export default function ModelsCenterContent({
-  handleBackToTaskSelection,
-  handleGoToDatasets,
-  handleSessionCreated,
-  handleNewSessionFromDataset,
-  handleBackToDataset,
-}) {
+export default function ModelsCenterContent() {
   const { t } = useTranslation(["models", "datasets", "common"]);
   const tourContext = useTourContext();
+  const navigate = useNavigate();
   const {
     sessions,
+    setSessions,
     selectedTask,
     tasks,
     datasets,
     selectedDatasetId,
     step,
     setSelectedTask,
+    setSelectedSessionId,
     setStep,
+    selectDataset,
   } = useModels();
 
   const goToNextStep = (taskName) => {
@@ -43,6 +42,34 @@ export default function ModelsCenterContent({
       };
       setTimeout(waitForElement, 100);
     }
+  };
+
+  const handleBackToTaskSelection = () => {
+    setSelectedTask(null);
+    setStep(0);
+  };
+
+  const handleGoToDatasets = () => {
+    navigate("/app/data");
+  };
+
+  const handleSessionCreated = (newSession) => {
+    setSessions((prev) => [...prev, newSession]);
+    setSelectedSessionId(newSession.id);
+    selectDataset(null);
+  };
+
+  const handleNewSessionFromDataset = () => {
+    // Keep the selectedDatasetId but go to task selection
+    setSelectedSessionId(null);
+    setSelectedTask(null);
+    setStep(0);
+  };
+
+  const handleBackToDataset = () => {
+    // Go back to dataset visualization from task selection
+    setSelectedTask(null);
+    setStep(2);
   };
 
   return (
