@@ -95,17 +95,18 @@ export function useSessions({ t }) {
 
   return {
     tasks,
+    setTasks,
     selectedTask,
+    setSelectedTask,
     selectedSessionId,
+    setSelectedSessionId,
     selectedSession,
+    setSelectedSession,
     sessions,
     setSessions,
     fetchSessions,
     fetchTasks,
     editSession,
     deleteSessionById,
-    setSelectedTask,
-    setSelectedSessionId,
-    setSelectedSession,
   };
 }

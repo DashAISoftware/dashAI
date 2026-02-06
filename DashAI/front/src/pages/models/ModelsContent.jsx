@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSnackbar } from "notistack";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useTourContext } from "../../components/tour/TourProvider";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
@@ -11,12 +10,9 @@ import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel"
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import LeftBar from "../../components/models/LeftBar";
 import RightBar from "../../components/models/RightBar";
-import SelectOptionMenu from "../../components/threeSectionLayout/SelectOptionMenu";
-import CreateSessionSteps from "../../components/models/CreateSessionSteps";
 import SessionVisualization from "../../components/models/SessionVisualization";
-import DatasetVisualization from "../../components/DatasetVisualization";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
-import { updateModelSession, deleteModelSession } from "../../api/modelSession";
+import ModelsCenterContent from "../../components/models/ModelCenterContent";
 import {
   getRuns,
   deleteRun,
@@ -35,9 +31,6 @@ import { useModels } from "../../components/models/ModelsContext";
 export default function ModelsContent() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
-  const [selectedSession, setSelectedSession] = useState(null);
   const [runs, setRuns] = useState([]);
   const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
   const [runToRetrain, setRunToRetrain] = useState(null);
@@ -45,7 +38,6 @@ export default function ModelsContent() {
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "datasets", "common"]);
-  const tourContext = useTourContext(); // This is for MODELS tour
 
   const threePanelLayout = useThreePanelLayout();
 
@@ -65,6 +57,12 @@ export default function ModelsContent() {
     editSession,
     step,
     setStep,
+    selectedTask,
+    setSelectedTask,
+    selectedSessionId,
+    setSelectedSessionId,
+    selectedSession,
+    setSelectedSession,
   } = useModels();
 
   useEffect(() => {
@@ -123,26 +121,6 @@ export default function ModelsContent() {
     }
   }, [selectedSessionId, sessions]);
 
-  const handleTaskSelect = (taskName) => {
-    const task = tasks.find((t) => t.name === taskName);
-    setSelectedTask(task);
-    setStep(1);
-
-    if (tourContext?.run && tourContext?.stepIndex === 4) {
-      const waitForElement = () => {
-        const element = document.querySelector(
-          '[data-tour="models-dataset-selection"]',
-        );
-        if (element) {
-          tourContext.nextStep();
-        } else {
-          setTimeout(waitForElement, 100);
-        }
-      };
-      setTimeout(waitForElement, 100);
-    }
-  };
-
   const handleBackToTaskSelection = () => {
     setSelectedTask(null);
     setStep(0);
@@ -155,13 +133,6 @@ export default function ModelsContent() {
 
   const handleSessionClick = (sessionId) => {
     setSelectedSessionId(sessionId);
-  };
-
-  const handleDatasetClick = (datasetId) => {
-    selectDataset(datasetId);
-    setSelectedSessionId(null);
-    setSelectedTask(null);
-    setStep(2); // Use a different step to show DatasetVisualization
   };
 
   const handleDatasetDelete = (id) => {
@@ -384,7 +355,6 @@ export default function ModelsContent() {
             sessions={sessions}
             selectedSessionId={selectedSessionId}
             tasks={tasks}
-            onDatasetClick={handleDatasetClick}
             onDatasetDelete={handleDatasetDelete}
             onDatasetEdit={editDataset}
             onSessionClick={handleSessionClick}
@@ -417,62 +387,13 @@ export default function ModelsContent() {
         ) : (
           <>
             <CenterPanel data-tour="models-center-panel">
-              {step === 1 && selectedTask ? (
-                <CreateSessionSteps
-                  backHome={handleBackToTaskSelection}
-                  selectedTask={selectedTask}
-                  datasets={datasets}
-                  handleSessionCreated={handleSessionCreated}
-                  existingSessions={sessions}
-                  preselectedDatasetId={selectedDatasetId}
-                />
-              ) : step === 2 && selectedDatasetId ? (
-                <DatasetVisualization
-                  dataset={datasets.find((d) => d.id === selectedDatasetId)}
-                  onItemCreated={handleSessionCreated}
-                  onNewItem={handleNewSessionFromDataset}
-                  existingItems={sessions}
-                  newItemButtonText={t("models:button.createSession")}
-                />
-              ) : step === 0 ? (
-                <SelectOptionMenu
-                  title={
-                    selectedDatasetId
-                      ? t("models:label.selectTaskForSession")
-                      : t("models:label.modelsModule")
-                  }
-                  subtitle={
-                    selectedDatasetId
-                      ? t("models:label.chooseTaskForSessionWithDataset", {
-                          datasetName: datasets.find(
-                            (d) => d.id === selectedDatasetId,
-                          )?.name,
-                        })
-                      : t("models:label.configureTasksTrainCompareModels")
-                  }
-                  options={tasks.map((task) => ({
-                    name: task.name,
-                    display_name:
-                      task.display_name ||
-                      task.name
-                        .replace("Task", "")
-                        .replace(/([A-Z])/g, " $1")
-                        .trim(),
-                    description:
-                      task.description ||
-                      task.metadata?.short_description ||
-                      "",
-                    Icon: null,
-                  }))}
-                  searchBar={true}
-                  goToNextStep={handleTaskSelect}
-                  goToPrevStep={selectedDatasetId ? handleBackToDataset : null}
-                  showNoDatasetAlert={
-                    !selectedDatasetId && datasets.length === 0
-                  }
-                  onGoToDatasets={handleGoToDatasets}
-                />
-              ) : null}
+              <ModelsCenterContent
+                handleBackToTaskSelection={handleBackToTaskSelection}
+                handleGoToDatasets={handleGoToDatasets}
+                handleSessionCreated={handleSessionCreated}
+                handleNewSessionFromDataset={handleNewSessionFromDataset}
+                handleBackToDataset={handleBackToDataset}
+              />
             </CenterPanel>
 
             {/* Right Panel */}

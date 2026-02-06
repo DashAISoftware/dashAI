@@ -21,7 +21,6 @@ export default function ModelsLeftBar({
   sessions = [],
   selectedSessionId,
   tasks = [],
-  onDatasetClick,
   onDatasetDelete,
   onDatasetEdit,
   onSessionClick,
@@ -43,6 +42,7 @@ export default function ModelsLeftBar({
     setSelectedSession,
     setSelectedTask,
     setStep,
+    selectDataset,
   } = useModels();
 
   const getTaskDisplayName = React.useCallback(
@@ -135,6 +135,13 @@ export default function ModelsLeftBar({
     groups[displayName].push(session);
     return groups;
   }, {});
+
+  const onDatasetClick = (datasetId) => {
+    selectDataset(datasetId);
+    setSelectedSessionId(null);
+    setSelectedTask(null);
+    setStep(2); // Use a different step to show DatasetVisualization
+  };
 
   const onSessionDelete = async (id) => {
     const success = await deleteSessionById(id);
