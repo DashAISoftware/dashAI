@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSnackbar } from "notistack";
+import { startJobPolling } from "../../../utils/jobPoller";
+import { enqueueDatasetJob } from "../../../api/job";
 import {
   Box,
   Accordion,
@@ -21,14 +24,29 @@ import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetPreviewNotebook({
   notebook,
-  handleAddDatasetFromNotebook,
   existingDatasets = [],
   onAccordionChange,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const {
+    datasets,
+    createDataset,
+    fetchDatasets,
+    selectDataset,
+    clearSelectedDataset,
+    deleteDataset,
+    enrichDatasetsWithInfo,
+    replaceDatasets,
+    setStep,
+    setSelectedOption,
+  } = useDatasetsAndNotebooks();
 
   const theme = useTheme();
   if (!notebook) {
@@ -101,6 +119,104 @@ export default function DatasetPreviewNotebook({
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
+
+  const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
+    if (!jobId) return;
+
+    startJobPolling(
+      jobId,
+
+      //Success
+      async () => {
+        enqueueSnackbar(
+          t("datasets:message.datasetCreationSuccess", { datasetName }),
+          { variant: "success" },
+        );
+
+        try {
+          const freshDatasets = await fetchDatasets(true);
+          const dataset = freshDatasets.find((d) => d.id === datasetId);
+
+          if (dataset) {
+            const enriched = await enrichDatasetsWithInfo(
+              freshDatasets,
+              datasets,
+            );
+            replaceDatasets(enriched);
+            selectDataset(datasetId);
+            setStep(0);
+            setSelectedOption("dataset");
+          } else {
+            await fetchDatasets();
+            selectDataset(datasetId);
+            setStep(0);
+            setSelectedOption("dataset");
+          }
+        } catch (error) {
+          console.error("Error after dataset job completion:", error);
+          await fetchDatasets();
+          selectDataset(datasetId);
+          setStep(0);
+          setSelectedOption("dataset");
+        }
+      },
+
+      //Failure
+      async (result) => {
+        console.error("Dataset job failed:", result);
+
+        enqueueSnackbar(
+          t("datasets:error.failedToCreateDataset", {
+            error: result?.error || t("common:unknownError"),
+          }),
+          { variant: "error" },
+        );
+
+        try {
+          await deleteDataset(datasetId);
+        } catch (e) {
+          console.error(e);
+        }
+        clearSelectedDataset();
+        setStep(0);
+        setSelectedOption(null);
+      },
+    );
+  };
+
+  const handleAddDatasetFromNotebook = async (name, notebookId) => {
+    try {
+      console.log(
+        "Creating dataset from notebook:",
+        notebookId,
+        "with name:",
+        name,
+      );
+      const dataset = await createDataset(name);
+
+      enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
+        variant: "success",
+      });
+
+      // optimistic
+      replaceDatasets((prev) => [...prev, dataset]);
+      selectDataset(dataset.id);
+      setStep(0);
+      setSelectedOption("dataset");
+
+      const job = await enqueueDatasetJob(dataset.id, null, "", {}, notebookId);
+
+      pollForDataset(
+        { datasetId: dataset.id, datasetName: name },
+        { jobId: job.id },
+      );
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToCreateDatasetFromNotebook"), {
+        variant: "error",
+      });
+      console.error("Failed to create dataset from notebook:", error);
+    }
+  };
 
   return (
     <Box>
@@ -206,7 +322,9 @@ export default function DatasetPreviewNotebook({
       <SaveDatasetModal
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
-        onSaveDataset={handleAddDatasetFromNotebook}
+        onSaveDataset={(name) =>
+          handleAddDatasetFromNotebook(name, notebook.id)
+        }
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,
         )}

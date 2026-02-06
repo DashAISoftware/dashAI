@@ -1,7 +1,6 @@
 {
   "description": {
     "datasets": "Create and manage the datasets registered in the application.",
-    "experiments": "Create and manage and view the status of your experiments.",
     "explainers": "Explore and understand the decision-making process behind your models.",
     "generative": "Interact with AI models to inference and generate new content.",
     "models": "Configure tasks, train and compare models in organized sessions.",

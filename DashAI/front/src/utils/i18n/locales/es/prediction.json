@@ -52,6 +52,7 @@
     "resultsPreviewDownloadInfo": "La tabla a continuación muestra una vista previa de los resultados de la predicción. Puede descargar los resultados completos como un archivo CSV usando el botón \"Descargar CSV\" a continuación.",
     "reviewDetails": "Revise la configuración de su predicción antes de enviar",
     "runFirstPrediction": "Ejecute su primera predicción para verla aquí",
+    "selectCategory": "Selecciona una categoría",
     "selectDataset": "Seleccione un dataset para la predicción",
     "selectDatasetFromPlatform": "Seleccione un dataset de la plataforma",
     "selectMode": "Seleccionar Modo",

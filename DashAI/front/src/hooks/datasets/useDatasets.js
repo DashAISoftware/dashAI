@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useSnackbar } from "notistack";
 import {
   getDatasets,
   deleteDataset,
@@ -7,9 +8,9 @@ import {
   createDataset,
 } from "../../api/datasets";
 import { startJobPolling } from "../../utils/jobPoller";
-import { replace } from "formik";
 
-export function useDatasets({ enqueueSnackbar, t }) {
+export function useDatasets({ t }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
 
@@ -57,10 +58,6 @@ export function useDatasets({ enqueueSnackbar, t }) {
     setDatasets(enriched);
   }, [datasets, enrichDatasetsWithInfo]);
 
-  const fetchFreshDatasets = async () => {
-    return await getDatasets();
-  };
-
   const selectDataset = (id) => {
     setSelectedDatasetId(id);
   };
@@ -69,15 +66,21 @@ export function useDatasets({ enqueueSnackbar, t }) {
     setSelectedDatasetId(null);
   };
 
-  const deleteDatasetLocal = (id) => {
-    setDatasets((prev) => prev.filter((d) => d.id !== id));
-    if (id === selectedDatasetId) {
-      setSelectedDatasetId(null);
+  const deleteDatasetById = async (id) => {
+    try {
+      await deleteDataset(id);
+      setDatasets((prev) => prev.filter((d) => d.id !== id));
+      if (id === selectedDatasetId) {
+        setSelectedDatasetId(null);
+      }
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToDeleteDataset"), {
+        variant: "error",
+      });
+      console.error("Error deleting dataset:", error);
     }
-  };
-
-  const deleteDatasetRemote = async (id) => {
-    await deleteDataset(id);
+    return false;
   };
 
   const editDataset = async (id, newName) => {
@@ -129,17 +132,12 @@ export function useDatasets({ enqueueSnackbar, t }) {
         enqueueSnackbar(t("datasets:error.failedToCreateDataset"), {
           variant: "error",
         });
-        deleteDatasetLocal(newDataset.id);
+        setDatasets((prev) => prev.filter((d) => d.id !== newDataset.id));
+        if (newDataset.id === selectedDatasetId) {
+          setSelectedDatasetId(null);
+        }
       },
     );
-  };
-
-  const removeDatasetById = (id) => {
-    setDatasets((prev) => prev.filter((d) => d.id !== id));
-
-    if (id === selectedDatasetId) {
-      setSelectedDatasetId(null);
-    }
   };
 
   const replaceDatasets = (datasets) => {
@@ -150,22 +148,15 @@ export function useDatasets({ enqueueSnackbar, t }) {
     datasets,
     selectedDatasetId,
     enrichDatasetsWithInfo,
-
     createDataset,
-
     fetchDatasets,
-    fetchFreshDatasets,
     selectDataset,
     clearSelectedDataset,
-
-    deleteDatasetLocal,
-    deleteDatasetRemote,
-
+    deleteDataset,
+    deleteDatasetById,
     editDataset,
     addDatasetOptimistically,
     startDatasetPolling,
-
-    removeDatasetById,
     replaceDatasets,
   };
 }

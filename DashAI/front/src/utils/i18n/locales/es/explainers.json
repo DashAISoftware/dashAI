@@ -6,6 +6,7 @@
     "showPlot": "Mostrar Gráfico"
   },
   "error": {
+    "explainerFailed": "Error al generar el explicador.",
     "fetchDataError": "Error al intentar obtener datos del explicador con id: {{explainerId}}",
     "fetchDatasets": "Error al intentar obtener los datasets.",
     "fetchExplainers": "Error al intentar obtener los explicadores.",

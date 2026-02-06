@@ -1,11 +1,13 @@
 import { useState, useCallback } from "react";
+import { useSnackbar } from "notistack";
 import {
   getNotebooks,
   deleteNotebook,
   updateNotebook,
 } from "../../api/notebook";
 
-export function useNotebooks({ enqueueSnackbar, t }) {
+export function useNotebooks({ t }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [notebooks, setNotebooks] = useState([]);
   const [selectedNotebookId, setSelectedNotebookId] = useState(null);
 
@@ -32,8 +34,17 @@ export function useNotebooks({ enqueueSnackbar, t }) {
   };
 
   const deleteNotebookById = async (id) => {
-    setNotebooks((prev) => prev.filter((n) => n.id !== id));
-    await deleteNotebook(id);
+    try {
+      await deleteNotebook(id);
+      setNotebooks((prev) => prev.filter((n) => n.id !== id));
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToDeleteNotebook"), {
+        variant: "error",
+      });
+      console.error("Error deleting notebook:", error);
+    }
+    return false;
   };
 
   const editNotebook = async (id, newName) => {
