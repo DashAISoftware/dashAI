@@ -41,22 +41,12 @@ export default function ModelsContent() {
   const threePanelLayout = useThreePanelLayout();
 
   const {
-    datasets,
-    replaceDatasets,
-    selectedDatasetId,
-    selectDataset,
     fetchDatasets,
-    editDataset,
-    deleteDataset,
     sessions,
-    setSessions,
-    tasks,
     fetchSessions,
     fetchTasks,
-    editSession,
     step,
     setStep,
-    setSelectedTask,
     selectedSessionId,
     setSelectedSessionId,
     selectedSession,
