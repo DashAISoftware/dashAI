@@ -280,7 +280,6 @@ export default function ModelsContent() {
             </CenterPanel>
             <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
               <ModelsRightBar
-                session={selectedSession}
                 existingRuns={runs}
                 onRunCreated={handleRunCreated}
                 onToggle={threePanelLayout.handleToggleRight}
