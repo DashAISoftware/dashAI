@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { useSnackbar } from "notistack";
+import { useEffect, useState } from "react";
+import { Box, CircularProgress } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
@@ -11,34 +11,15 @@ import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import ModelsLeftBar from "../../components/models/ModelsLeftBar";
 import ModelsRightBar from "../../components/models/ModelsRightBar";
 import SessionVisualization from "../../components/models/SessionVisualization";
-import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import ModelsCenterContent from "../../components/models/ModelCenterContent";
-import {
-  getRuns,
-  deleteRun,
-  resetRunById,
-  getRunById,
-  getRunOperationsCount,
-  deleteRunOperations,
-} from "../../api/run";
-import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
-import { startJobPolling } from "../../utils/jobPoller";
-import { useTranslation } from "react-i18next";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useModels } from "../../components/models/ModelsContext";
 
 export default function ModelsContent() {
   const location = useLocation();
-  const [runs, setRuns] = useState([]);
-  const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
-  const [runToRetrain, setRunToRetrain] = useState(null);
-  const [operationsCount, setOperationsCount] = useState(null);
-
-  const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["models", "datasets", "common"]);
-
   const threePanelLayout = useThreePanelLayout();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const {
     fetchDatasets,
@@ -49,14 +30,17 @@ export default function ModelsContent() {
     setStep,
     selectedSessionId,
     setSelectedSessionId,
-    selectedSession,
     setSelectedSession,
+    setRuns,
+    fetchRuns,
   } = useModels();
 
   useEffect(() => {
-    fetchDatasets();
-    fetchSessions();
-    fetchTasks();
+    const loadInitialData = async () => {
+      await Promise.all([fetchDatasets(), fetchSessions(), fetchTasks()]);
+      setIsInitialLoading(false);
+    };
+    loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -72,24 +56,6 @@ export default function ModelsContent() {
       }
     }
   }, [location.state, sessions]);
-
-  const fetchRuns = useCallback(async () => {
-    if (!selectedSessionId) return;
-    try {
-      const data = await getRuns(selectedSessionId.toString());
-
-      setRuns(data);
-    } catch (error) {
-      if (error.response?.status !== 404) {
-        enqueueSnackbar(t("models:error.failedToFetchRuns"), {
-          variant: "error",
-        });
-        console.error("Failed to fetch runs:", error);
-      } else {
-        setRuns([]);
-      }
-    }
-  }, [selectedSessionId, enqueueSnackbar]);
 
   // Fetch runs when session is selected
   useEffect(() => {
@@ -109,156 +75,20 @@ export default function ModelsContent() {
     }
   }, [selectedSessionId, sessions]);
 
-  const handleRunCreated = (newRun) => {
-    setRuns((prev) => [...prev, newRun]);
-    enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
-      variant: "success",
-    });
-  };
-
-  const handleTrainRun = async (run) => {
-    try {
-      // Check if run has been trained before (has metrics)
-      const hasBeenTrained =
-        run.test_metrics ||
-        run.train_metrics ||
-        run.validation_metrics ||
-        run.status === 3; // Finished
-
-      if (hasBeenTrained) {
-        // Check for existing operations
-        const opsCount = await getRunOperationsCount(run.id.toString());
-        const hasOperations =
-          opsCount.explainers > 0 || opsCount.predictions > 0;
-
-        if (hasOperations) {
-          // Show confirmation dialog
-          setRunToRetrain(run);
-          setOperationsCount(opsCount);
-          setRetrainDialogOpen(true);
-          return;
-        }
-      }
-
-      // Proceed with training if no confirmation needed
-      await executeTraining(run);
-    } catch (error) {
-      console.error("Error checking operations:", error);
-      // If check fails, proceed with training anyway
-      await executeTraining(run);
-    }
-  };
-
-  const executeTraining = async (run) => {
-    try {
-      // Delete operations if they exist
-      if (
-        operationsCount &&
-        (operationsCount.explainers > 0 || operationsCount.predictions > 0)
-      ) {
-        await deleteRunOperations(run.id.toString());
-      }
-
-      const updatedRun = await resetRunById(run.id.toString());
-
-      const response = await enqueueRunnerJobRequest(run.id);
-
-      if (!response || !response.id) {
-        enqueueSnackbar(
-          t("models:error.failedToStartRun", { runName: run.name }),
-          {
-            variant: "error",
-          },
-        );
-        return;
-      }
-
-      enqueueSnackbar(t("models:message.runStarted", { runName: run.name }), {
-        variant: "success",
-      });
-
-      setRuns((prevRuns) =>
-        prevRuns.map((r) =>
-          r.id === run.id ? { ...updatedRun, status: 1 } : r,
-        ),
-      );
-
-      startJobPolling(
-        response.id,
-        async () => {
-          const updated = await getRunById(run.id.toString());
-          setRuns((prevRuns) =>
-            prevRuns.map((r) => (r.id === run.id ? updated : r)),
-          );
-          enqueueSnackbar(
-            t("models:message.runCompleted", { runName: run.name }),
-            {
-              variant: "success",
-            },
-          );
-        },
-        async (result) => {
-          const updated = await getRunById(run.id.toString());
-          setRuns((prevRuns) =>
-            prevRuns.map((r) => (r.id === run.id ? updated : r)),
-          );
-          enqueueSnackbar(
-            t("models:error.runFailed", {
-              runName: run.name,
-              error: result.error || t("common:unknownError"),
-            }),
-            { variant: "error" },
-          );
-        },
-      );
-
-      setRetrainDialogOpen(false);
-      setRunToRetrain(null);
-      setOperationsCount(null);
-    } catch (error) {
-      console.error("Error training run:", error);
-      enqueueSnackbar(
-        t("models:error.failedToStartRun", { runName: run.name }),
-        {
-          variant: "error",
-        },
-      );
-    }
-  };
-
-  const handleConfirmRetrain = () => {
-    if (runToRetrain) {
-      executeTraining(runToRetrain);
-    }
-  };
-
-  const handleCancelRetrain = () => {
-    setRetrainDialogOpen(false);
-    setRunToRetrain(null);
-    setOperationsCount(null);
-  };
-
-  const handleEditRun = async (run) => {
-    enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
-  };
-
-  const handleDeleteRun = async (run) => {
-    try {
-      await deleteRun(run.id.toString());
-      setRuns((prev) => prev.filter((r) => r.id !== run.id));
-      enqueueSnackbar(t("models:message.runDeleted", { runName: run.name }), {
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Error deleting run:", error);
-      enqueueSnackbar(
-        t("models:error.failedToDeleteRun", { runName: run.name }),
-        {
-          variant: "error",
-        },
-      );
-    }
-  };
+  if (isInitialLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -270,20 +100,10 @@ export default function ModelsContent() {
         {selectedSessionId ? (
           <TourProvider tourKey={TOUR_KEYS.MODELS_SESSION}>
             <CenterPanel data-tour="models-center-panel">
-              <SessionVisualization
-                session={selectedSession}
-                runs={runs}
-                onTrain={handleTrainRun}
-                onEditRun={handleEditRun}
-                onDeleteRun={handleDeleteRun}
-              />
+              <SessionVisualization />
             </CenterPanel>
             <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-              <ModelsRightBar
-                existingRuns={runs}
-                onRunCreated={handleRunCreated}
-                onToggle={threePanelLayout.handleToggleRight}
-              />
+              <ModelsRightBar onToggle={threePanelLayout.handleToggleRight} />
             </RightPanel>
             <TourButton tourKey={TOUR_KEYS.MODELS_SESSION} />
           </TourProvider>
@@ -299,15 +119,6 @@ export default function ModelsContent() {
             </RightPanel>
           </>
         )}
-
-        {/* Retrain Confirmation Dialog */}
-        <RetrainConfirmDialog
-          open={retrainDialogOpen}
-          onClose={handleCancelRetrain}
-          onConfirm={handleConfirmRetrain}
-          run={runToRetrain}
-          operationsCount={operationsCount}
-        />
       </ModuleContainer>
       {!selectedSessionId && (
         <TourButton

@@ -6,6 +6,17 @@ import {
   deleteModelSession,
 } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
+import {
+  getRuns,
+  deleteRun,
+  resetRunById,
+  getRunById,
+  getRunOperationsCount,
+  deleteRunOperations,
+} from "../../api/run";
+
+import { enqueueRunnerJob as enqueueRunnerJobRequest } from "../../api/job";
+import { startJobPolling } from "../../utils/jobPoller";
 
 export function useSessions({ t }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -14,6 +25,10 @@ export function useSessions({ t }) {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [runs, setRuns] = useState([]);
+  const [retrainDialogOpen, setRetrainDialogOpen] = useState(false);
+  const [runToRetrain, setRunToRetrain] = useState(null);
+  const [operationsCount, setOperationsCount] = useState(null);
 
   // -------- actions --------
 
@@ -93,6 +108,175 @@ export function useSessions({ t }) {
     return false;
   };
 
+  const fetchRuns = useCallback(async () => {
+    if (!selectedSessionId) return;
+    try {
+      const data = await getRuns(selectedSessionId.toString());
+
+      setRuns(data);
+    } catch (error) {
+      if (error.response?.status !== 404) {
+        enqueueSnackbar(t("models:error.failedToFetchRuns"), {
+          variant: "error",
+        });
+        console.error("Failed to fetch runs:", error);
+      } else {
+        setRuns([]);
+      }
+    }
+  }, [selectedSessionId, enqueueSnackbar]);
+
+  const executeTraining = async (run) => {
+    try {
+      // Delete operations if they exist
+      if (
+        operationsCount &&
+        (operationsCount.explainers > 0 || operationsCount.predictions > 0)
+      ) {
+        await deleteRunOperations(run.id.toString());
+      }
+
+      const updatedRun = await resetRunById(run.id.toString());
+
+      const response = await enqueueRunnerJobRequest(run.id);
+
+      if (!response || !response.id) {
+        enqueueSnackbar(
+          t("models:error.failedToStartRun", { runName: run.name }),
+          {
+            variant: "error",
+          },
+        );
+        return;
+      }
+
+      enqueueSnackbar(t("models:message.runStarted", { runName: run.name }), {
+        variant: "success",
+      });
+
+      setRuns((prevRuns) =>
+        prevRuns.map((r) =>
+          r.id === run.id ? { ...updatedRun, status: 1 } : r,
+        ),
+      );
+
+      startJobPolling(
+        response.id,
+        async () => {
+          const updated = await getRunById(run.id.toString());
+          setRuns((prevRuns) =>
+            prevRuns.map((r) => (r.id === run.id ? updated : r)),
+          );
+          enqueueSnackbar(
+            t("models:message.runCompleted", { runName: run.name }),
+            {
+              variant: "success",
+            },
+          );
+        },
+        async (result) => {
+          const updated = await getRunById(run.id.toString());
+          setRuns((prevRuns) =>
+            prevRuns.map((r) => (r.id === run.id ? updated : r)),
+          );
+          enqueueSnackbar(
+            t("models:error.runFailed", {
+              runName: run.name,
+              error: result.error || t("common:unknownError"),
+            }),
+            { variant: "error" },
+          );
+        },
+      );
+
+      setRetrainDialogOpen(false);
+      setRunToRetrain(null);
+      setOperationsCount(null);
+    } catch (error) {
+      console.error("Error training run:", error);
+      enqueueSnackbar(
+        t("models:error.failedToStartRun", { runName: run.name }),
+        {
+          variant: "error",
+        },
+      );
+    }
+  };
+
+  const onRunCreated = (newRun) => {
+    setRuns((prev) => [...prev, newRun]);
+    enqueueSnackbar(t("models:message.runAdded", { runName: newRun.name }), {
+      variant: "success",
+    });
+  };
+
+  const onTrainRun = async (run) => {
+    try {
+      // Check if run has been trained before (has metrics)
+      const hasBeenTrained =
+        run.test_metrics ||
+        run.train_metrics ||
+        run.validation_metrics ||
+        run.status === 3; // Finished
+
+      if (hasBeenTrained) {
+        // Check for existing operations
+        const opsCount = await getRunOperationsCount(run.id.toString());
+        const hasOperations =
+          opsCount.explainers > 0 || opsCount.predictions > 0;
+
+        if (hasOperations) {
+          // Show confirmation dialog
+          setRunToRetrain(run);
+          setOperationsCount(opsCount);
+          setRetrainDialogOpen(true);
+          return;
+        }
+      }
+
+      // Proceed with training if no confirmation needed
+      await executeTraining(run);
+    } catch (error) {
+      console.error("Error checking operations:", error);
+      // If check fails, proceed with training anyway
+      await executeTraining(run);
+    }
+  };
+
+  const onEditRun = async (run) => {
+    enqueueSnackbar("Edit functionality coming soon", { variant: "info" });
+  };
+
+  const onDeleteRun = async (run) => {
+    try {
+      await deleteRun(run.id.toString());
+      setRuns((prev) => prev.filter((r) => r.id !== run.id));
+      enqueueSnackbar(t("models:message.runDeleted", { runName: run.name }), {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting run:", error);
+      enqueueSnackbar(
+        t("models:error.failedToDeleteRun", { runName: run.name }),
+        {
+          variant: "error",
+        },
+      );
+    }
+  };
+
+  const handleConfirmRetrain = () => {
+    if (runToRetrain) {
+      executeTraining(runToRetrain);
+    }
+  };
+
+  const handleCancelRetrain = () => {
+    setRetrainDialogOpen(false);
+    setRunToRetrain(null);
+    setOperationsCount(null);
+  };
+
   return {
     tasks,
     setTasks,
@@ -108,5 +292,21 @@ export function useSessions({ t }) {
     fetchTasks,
     editSession,
     deleteSessionById,
+    runs,
+    setRuns,
+    retrainDialogOpen,
+    setRetrainDialogOpen,
+    runToRetrain,
+    setRunToRetrain,
+    operationsCount,
+    setOperationsCount,
+    fetchRuns,
+    executeTraining,
+    onRunCreated,
+    onTrainRun,
+    onEditRun,
+    onDeleteRun,
+    handleCancelRetrain,
+    handleConfirmRetrain,
   };
 }

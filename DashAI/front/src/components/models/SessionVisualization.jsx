@@ -23,17 +23,12 @@ import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
 import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { useTranslation } from "react-i18next";
-
+import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
 
-export default function SessionVisualization({
-  session,
-  runs = [],
-  onTrain,
-  onEditRun,
-  onDeleteRun,
-}) {
+export default function SessionVisualization() {
   const sessionTourContext = useTourContext();
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
@@ -49,6 +44,19 @@ export default function SessionVisualization({
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
+
+  const {
+    selectedSession: session,
+    runs,
+    onTrainRun: onTrain,
+    onEditRun,
+    onDeleteRun,
+    retrainDialogOpen,
+    runToRetrain,
+    operationsCount,
+    handleCancelRetrain,
+    handleConfirmRetrain,
+  } = useModels();
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -504,19 +512,16 @@ export default function SessionVisualization({
         }}
       />
 
+      {/* Retrain Confirmation Dialog */}
+      <RetrainConfirmDialog
+        open={retrainDialogOpen}
+        onClose={handleCancelRetrain}
+        onConfirm={handleConfirmRetrain}
+        run={runToRetrain}
+        operationsCount={operationsCount}
+      />
+
       <JobQueueWidget />
     </>
   );
 }
-
-SessionVisualization.propTypes = {
-  session: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    task_name: PropTypes.string,
-  }),
-  runs: PropTypes.array,
-  onTrain: PropTypes.func.isRequired,
-  onEditRun: PropTypes.func.isRequired,
-  onDeleteRun: PropTypes.func.isRequired,
-};

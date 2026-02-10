@@ -1,9 +1,9 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
   useCallback,
-  use,
+  useEffect,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
@@ -51,6 +51,22 @@ export function ModelsProvider({ children }) {
     setSelectedTask,
     setSelectedSessionId,
     setSelectedSession,
+    runs,
+    setRuns,
+    retrainDialogOpen,
+    setRetrainDialogOpen,
+    runToRetrain,
+    setRunToRetrain,
+    operationsCount,
+    setOperationsCount,
+    fetchRuns,
+    executeTraining,
+    onRunCreated,
+    onTrainRun,
+    onDeleteRun,
+    onEditRun,
+    handleCancelRetrain,
+    handleConfirmRetrain,
   } = useSessions({ t });
 
   const [selectedModel, setSelectedModel] = useState(null);
@@ -66,6 +82,12 @@ export function ModelsProvider({ children }) {
   const closeConfig = useCallback(() => {
     setConfigOpen(false);
     setSelectedModel(null);
+  }, []);
+
+  useEffect(() => {
+    fetchDatasets();
+    fetchSessions();
+    fetchTasks();
   }, []);
 
   const value = {
@@ -103,6 +125,22 @@ export function ModelsProvider({ children }) {
     setSelectedSession,
     step,
     setStep,
+    runs,
+    setRuns,
+    retrainDialogOpen,
+    setRetrainDialogOpen,
+    runToRetrain,
+    setRunToRetrain,
+    operationsCount,
+    setOperationsCount,
+    fetchRuns,
+    executeTraining,
+    onRunCreated,
+    onTrainRun,
+    onEditRun,
+    onDeleteRun,
+    handleCancelRetrain,
+    handleConfirmRetrain,
   };
 
   return (

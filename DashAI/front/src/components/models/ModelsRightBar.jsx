@@ -18,11 +18,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 
-export default function ModelsRightBar({
-  existingRuns,
-  onRunCreated,
-  onToggle,
-}) {
+export default function ModelsRightBar({ existingRuns, onToggle }) {
   const theme = useTheme();
   const [models, setModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
@@ -31,7 +27,7 @@ export default function ModelsRightBar({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models"]);
 
-  const { selectedSession: session } = useModels();
+  const { selectedSession: session, onRunCreated } = useModels();
 
   const fetchModels = React.useCallback(async () => {
     try {
