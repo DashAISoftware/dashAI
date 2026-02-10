@@ -9,7 +9,7 @@ import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
 import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import ModelsLeftBar from "../../components/models/ModelsLeftBar";
-import RightBar from "../../components/models/RightBar";
+import ModelsRightBar from "../../components/models/ModelsRightBar";
 import SessionVisualization from "../../components/models/SessionVisualization";
 import RetrainConfirmDialog from "../../components/models/RetrainConfirmDialog";
 import ModelsCenterContent from "../../components/models/ModelCenterContent";
@@ -279,7 +279,7 @@ export default function ModelsContent() {
               />
             </CenterPanel>
             <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-              <RightBar
+              <ModelsRightBar
                 session={selectedSession}
                 existingRuns={runs}
                 onRunCreated={handleRunCreated}
@@ -296,7 +296,7 @@ export default function ModelsContent() {
 
             {/* Right Panel */}
             <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-              <RightBar onToggle={threePanelLayout.handleToggleRight} />
+              <ModelsRightBar onToggle={threePanelLayout.handleToggleRight} />
             </RightPanel>
           </>
         )}
