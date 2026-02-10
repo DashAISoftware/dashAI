@@ -296,10 +296,7 @@ export default function ModelsContent() {
 
             {/* Right Panel */}
             <RightPanel data-tour="models-right-panel" toggleButtonTop="50%">
-              <RightBar
-                session={selectedSession}
-                onToggle={threePanelLayout.handleToggleRight}
-              />
+              <RightBar onToggle={threePanelLayout.handleToggleRight} />
             </RightPanel>
           </>
         )}

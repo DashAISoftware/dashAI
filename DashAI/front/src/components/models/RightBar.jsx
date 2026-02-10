@@ -19,7 +19,6 @@ import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 
 export default function ModelsRightBar({
-  session,
   existingRuns,
   onRunCreated,
   onToggle,
@@ -31,6 +30,8 @@ export default function ModelsRightBar({
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models"]);
+
+  const { selectedSession: session } = useModels();
 
   const fetchModels = React.useCallback(async () => {
     try {
