@@ -31,6 +31,12 @@ class Prediction(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Prediction executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("Prediction encountered an error.")
+
+    def get_job_name(self) -> str:
+        return "Prediction Node"
+
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         loaded_dataset = context["dataset"]
         model = context["model_class"]
@@ -40,10 +46,17 @@ class Prediction(BaseJob):
         try:
             prepared_dataset = loaded_dataset.select_columns(context["input_columns"])
             y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+            
+            # Check if it's classification (2D array with probabilities) or regression (1D array)
             if isinstance(y_pred_proba[0], str):
+                # Text/categorical predictions
                 y_pred = y_pred_proba
-            else:
+            elif y_pred_proba.ndim == 2:
+                # Classification: multi-class probabilities, get class with highest probability
                 y_pred = np.argmax(y_pred_proba, axis=1)
+            else:
+                # Regression: predictions are already the final values
+                y_pred = y_pred_proba
 
         except ValueError as ve:
             log.error(f"Validation Error: {ve}")

@@ -31,6 +31,12 @@ class DataSelector(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("DataSelector executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("DataSelector encountered an error.")
+
+    def get_job_name(self) -> str:
+        return f"DataSelector: {self.kwargs.get('name', 'Unknown')}"
+
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         context["dataset_name"] = self.kwargs["name"]
         dataset_dir = pathlib.Path(self.kwargs["file_path"])

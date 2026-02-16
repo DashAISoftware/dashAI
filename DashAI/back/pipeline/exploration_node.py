@@ -6,7 +6,6 @@ from typing import Any, Dict, Type
 from kink import di
 
 from DashAI.back.config import DefaultSettings
-from DashAI.back.dependencies.database.models import Explorer
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -44,6 +43,12 @@ class DataExploration(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("DataExploration executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("DataExploration encountered an error.")
+
+    def get_job_name(self) -> str:
+        return "DataExploration Node"
+
     async def run(
         self,
         context: Dict[str, Any],
@@ -70,8 +75,8 @@ class DataExploration(BaseJob):
                     exploration_type = option["exploration_type"]
                     parameters = option.get("parameters", {})
                     columns = option.get("columns", [])
-                    id = option.get("id", str(idx))
-                    name = option.get("name")
+                    explorer_id = option.get("id", str(idx))
+                    name = option.get("name", "")
 
                     explorer_component_class: Type[BaseExplorer] = component_registry(
                         di
@@ -83,11 +88,22 @@ class DataExploration(BaseJob):
                         loaded_dataset, columns
                     )
 
-                    explorer_info = Explorer(
+                    # Create a simple explorer info object for pipeline execution
+                    # This is not a database object, just a container for explorer metadata
+                    class ExplorerInfo:
+                        def __init__(self, exploration_type, columns, parameters, id, name):
+                            self.exploration_type = exploration_type
+                            self.columns = columns
+                            self.parameters = parameters
+                            self.id = id
+                            self.name = name
+                    
+                    explorer_info = ExplorerInfo(
                         exploration_type=exploration_type,
                         columns=columns,
                         parameters=parameters,
-                        id=id,
+                        id=explorer_id,
+                        name=name,
                     )
 
                     result = explorer_instance.launch_exploration(
@@ -101,7 +117,7 @@ class DataExploration(BaseJob):
                         result=result,
                     )
 
-                    results[str(id)] = {
+                    results[str(explorer_id)] = {
                         "exploration_type": exploration_type,
                         "path": str(save_path),
                         "parameters": parameters,

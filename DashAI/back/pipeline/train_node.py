@@ -75,6 +75,12 @@ class Train(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Train executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("Train encountered an error.")
+
+    def get_job_name(self) -> str:
+        return f"Train: {self.model}"
+
     async def run(
         self,
         context: Dict[str, Any],
@@ -109,7 +115,9 @@ class Train(BaseJob):
 
         try:
             prepared_dataset = task_instance.prepare_for_task(
-                dataset, output_columns_names
+                dataset=dataset,
+                input_columns=input_columns_names,
+                output_columns=output_columns_names,
             )
             n_labels = None
             if self.task in [
@@ -130,8 +138,8 @@ class Train(BaseJob):
             x, y = select_columns(
                 prepared_dataset, input_columns_names, output_columns_names
             )
-            x = split_dataset(x)
-            y = split_dataset(y)
+            x_splits = split_dataset(x)
+            y_splits = split_dataset(y)
 
         except Exception as e:
             log.exception(e)
@@ -159,7 +167,32 @@ class Train(BaseJob):
             ) from e
 
         try:
-            model.fit(x["train"], y["train"])
+            # Check if model uses .train() (text models) or .fit() (sklearn models)
+            if hasattr(model, "train") and callable(getattr(model, "train")):
+                # Text models expect Dataset objects, not numpy arrays
+                model.train(
+                    x_splits["train"],
+                    y_splits["train"],
+                    x_splits.get("validation"),
+                    y_splits.get("validation"),
+                )
+                # Keep splits as DashAIDataset for evaluation
+                x = x_splits
+                y = y_splits
+            elif hasattr(model, "fit") and callable(getattr(model, "fit")):
+                # Sklearn models expect numpy arrays
+                # Convert DashAIDataset to numpy arrays
+                x = {}
+                y = {}
+                for split in ["train", "validation", "test"]:
+                    if split in x_splits:
+                        x[split] = x_splits[split].to_pandas().values
+                    if split in y_splits:
+                        y[split] = y_splits[split].to_pandas().values.ravel()
+                
+                model.fit(x["train"], y["train"])
+            else:
+                raise AttributeError(f"Model {model_class} has neither 'train' nor 'fit' method")
         except Exception as e:
             log.exception(e)
             raise JobError(

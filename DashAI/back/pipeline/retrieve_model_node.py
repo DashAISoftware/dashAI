@@ -38,6 +38,12 @@ class RetrieveModel(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("RetrieveModel executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("RetrieveModel encountered an error.")
+
+    def get_job_name(self) -> str:
+        return f"RetrieveModel: {self.model}"
+
     async def run(
         self,
         context: Dict[str, Any],
