@@ -142,18 +142,18 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const handleSave = async () => {
     const maxValue = datasetInfo?.total_columns;
     const columnNames = datasetInfo?.column_names || [];
-    
+
     const parsedInputIndices = inputColumns
       ? parseRangeToIndex(inputColumns, maxValue)
       : [];
     const parsedOutputIndices = outputColumns
       ? parseRangeToIndex(outputColumns, maxValue)
       : [];
-    
+
     // Convert indices to column names (1-based to 0-based and then get names)
     const inputColumnNames = parsedInputIndices.map(idx => columnNames[idx - 1] || `Column_${idx}`);
     const outputColumnNames = parsedOutputIndices.map(idx => columnNames[idx - 1] || `Column_${idx}`);
-    
+
     const payload = {
       input_columns: parsedInputIndices,
       output_columns: parsedOutputIndices,
@@ -294,7 +294,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
           errorsMap[r.name] = r.error;
         }
       });
-      
+
       setValidationErrors(errorsMap);
       const valid = validTasksList;
       setValidTasks(valid);
