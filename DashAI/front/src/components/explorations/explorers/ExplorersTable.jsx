@@ -5,7 +5,8 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Grid, Paper, Typography } from "@mui/material";
 
 import DeleteItemModal from "../../custom/DeleteItemModal";
-import { EditParametersDialog, EditColumnsDialog } from "..";
+import EditParametersDialog from "./EditParametersDialog";
+import EditColumnsDialog from "./EditColumnsDialog";
 import { useExplorationsContext } from "../context";
 
 /**
@@ -70,11 +71,13 @@ function ExplorersTable({ explorerTypes = [] }) {
         headerName: "Type",
         minWidth: 200,
         flex: 1,
-        valueGetter: (params) => {
+        valueGetter: (value, row) => {
+          const actualRow = value && value.row ? value.row : row;
+          if (!actualRow) return "";
           const explorerType = explorerTypes.find(
-            (explorer) => explorer.type === params.row.exploration_type,
+            (explorer) => explorer.type === actualRow.exploration_type,
           );
-          return explorerType.label;
+          return explorerType?.label || actualRow.exploration_type || "";
         },
       },
       {

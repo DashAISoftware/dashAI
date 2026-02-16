@@ -3,13 +3,13 @@ import PropTypes from "prop-types";
 
 import { Box, ButtonGroup, Paper, Typography } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 import {
   PlayArrow as PlayArrowIcon,
   Check as CheckIcon,
 } from "@mui/icons-material";
 
-import { LoadingButton } from "@mui/material";
 import { useSnackbar } from "notistack";
 
 import { getComponents } from "../../api/component";

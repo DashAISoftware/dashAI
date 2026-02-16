@@ -22,7 +22,7 @@ import ConfigureAndUploadDataset from "./ConfigureAndUploadDataset";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../api/job";
 import DatasetPreviewStep from "./DatasetPreviewStep";
-import { loadPreview } from "../../api/datasets";
+import { loadPreview, createDataset } from "../../api/datasets";
 
 const steps = [
   { name: "selectDataloader", label: "Select a way to upload" },
@@ -67,13 +67,18 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           ? newDataset.file.name
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
-      await enqueueDatasetRequest(newDataset.file, name, newDataset.url, {
+      
+      // First, create the dataset record in the database
+      const data = await createDataset(name);
+      
+      // Then, enqueue the job with the dataset ID
+      await enqueueDatasetRequest(data.id, newDataset.file, newDataset.url, {
         ...newDataset.params,
         schema: columnsSpec,
       });
 
       enqueueSnackbar("Dataset upload job started", { variant: "success" });
-      updateDatasets();
+      updateDatasets(data.id);
       handleCloseDialog();
     } catch (error) {
       console.error(error);

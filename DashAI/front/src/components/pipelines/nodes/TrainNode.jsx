@@ -48,6 +48,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const [availableTasks, setAvailableTasks] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState([]);
+  const [validationErrors, setValidationErrors] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const datasetNode = prevNodes?.find((node) => node?.file_path && node?.id);
   const datasetId = datasetNode?.id ?? null;
@@ -140,15 +141,22 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
 
   const handleSave = async () => {
     const maxValue = datasetInfo?.total_columns;
-    const parsedInput = inputColumns
+    const columnNames = datasetInfo?.column_names || [];
+    
+    const parsedInputIndices = inputColumns
       ? parseRangeToIndex(inputColumns, maxValue)
       : [];
-    const parsedOutput = outputColumns
+    const parsedOutputIndices = outputColumns
       ? parseRangeToIndex(outputColumns, maxValue)
       : [];
+    
+    // Convert indices to column names (1-based to 0-based and then get names)
+    const inputColumnNames = parsedInputIndices.map(idx => columnNames[idx - 1] || `Column_${idx}`);
+    const outputColumnNames = parsedOutputIndices.map(idx => columnNames[idx - 1] || `Column_${idx}`);
+    
     const payload = {
-      input_columns: parsedInput,
-      output_columns: parsedOutput,
+      input_columns: parsedInputIndices,
+      output_columns: parsedOutputIndices,
       splits: {
         train: splits.train,
         validation: splits.validation,
@@ -221,6 +229,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
       }
 
       const maxValue = datasetInfo?.total_columns;
+      const columnNames = datasetInfo?.column_names || [];
       let input = [];
       let output = [];
       let parseError = false;
@@ -252,24 +261,42 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
         return;
       }
 
+      // Convert indices to column names
+      const inputColumnNames = input.map(idx => columnNames[idx - 1] || `Column_${idx}`);
+      const outputColumnNames = output.map(idx => columnNames[idx - 1] || `Column_${idx}`);
+
       const results = await Promise.all(
         availableTasks.map(async (taskObj) => {
           try {
             const validation = await validateColumnsRequest(
               taskObj.name,
               datasetId,
-              input,
-              output,
+              inputColumnNames,
+              outputColumnNames,
             );
-            return validation.dataset_status === "valid" ? taskObj.name : null;
+            if (validation.dataset_status === "valid") {
+              return { name: taskObj.name, valid: true };
+            } else {
+              return { name: taskObj.name, valid: false, error: validation.error };
+            }
           } catch (error) {
             console.warn(`Error validating task ${taskObj.name}`, error);
-            return null;
+            return { name: taskObj.name, valid: false, error: "Request failed" };
           }
         }),
       );
 
-      const valid = results.filter(Boolean);
+      // Extract valid tasks and errors
+      const validTasksList = results.filter(r => r.valid).map(r => r.name);
+      const errorsMap = {};
+      results.forEach(r => {
+        if (!r.valid) {
+          errorsMap[r.name] = r.error;
+        }
+      });
+      
+      setValidationErrors(errorsMap);
+      const valid = validTasksList;
       setValidTasks(valid);
     };
 
@@ -371,6 +398,19 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             <Typography variant="body1">Task and Model:</Typography>
           </Grid>
 
+          {validTasks.length === 0 && Object.keys(validationErrors).length > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="body2" sx={{ color: "warning.main", mb: 2 }}>
+                ⚠️ No compatible tasks available. Validation errors:
+              </Typography>
+              {Object.entries(validationErrors).map(([taskName, error]) => (
+                <Typography key={taskName} variant="caption" sx={{ display: "block", mb: 1 }}>
+                  <strong>{taskName}:</strong> {error}
+                </Typography>
+              ))}
+            </Grid>
+          )}
+
           <Grid size={{ xs: 12 }}>
             <TextField
               label="Task"
@@ -384,6 +424,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
                 setModelParams({});
               }}
               margin="normal"
+              disabled={validTasks.length === 0}
             >
               {availableTasks.map((taskObj) => (
                 <MenuItem
