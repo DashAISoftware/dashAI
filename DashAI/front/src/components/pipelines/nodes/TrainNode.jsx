@@ -151,8 +151,12 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
       : [];
 
     // Convert indices to column names (1-based to 0-based and then get names)
-    const inputColumnNames = parsedInputIndices.map(idx => columnNames[idx - 1] || `Column_${idx}`);
-    const outputColumnNames = parsedOutputIndices.map(idx => columnNames[idx - 1] || `Column_${idx}`);
+    const inputColumnNames = parsedInputIndices.map(
+      (idx) => columnNames[idx - 1] || `Column_${idx}`,
+    );
+    const outputColumnNames = parsedOutputIndices.map(
+      (idx) => columnNames[idx - 1] || `Column_${idx}`,
+    );
 
     const payload = {
       input_columns: parsedInputIndices,
@@ -262,8 +266,12 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
       }
 
       // Convert indices to column names
-      const inputColumnNames = input.map(idx => columnNames[idx - 1] || `Column_${idx}`);
-      const outputColumnNames = output.map(idx => columnNames[idx - 1] || `Column_${idx}`);
+      const inputColumnNames = input.map(
+        (idx) => columnNames[idx - 1] || `Column_${idx}`,
+      );
+      const outputColumnNames = output.map(
+        (idx) => columnNames[idx - 1] || `Column_${idx}`,
+      );
 
       const results = await Promise.all(
         availableTasks.map(async (taskObj) => {
@@ -277,19 +285,27 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             if (validation.dataset_status === "valid") {
               return { name: taskObj.name, valid: true };
             } else {
-              return { name: taskObj.name, valid: false, error: validation.error };
+              return {
+                name: taskObj.name,
+                valid: false,
+                error: validation.error,
+              };
             }
           } catch (error) {
             console.warn(`Error validating task ${taskObj.name}`, error);
-            return { name: taskObj.name, valid: false, error: "Request failed" };
+            return {
+              name: taskObj.name,
+              valid: false,
+              error: "Request failed",
+            };
           }
         }),
       );
 
       // Extract valid tasks and errors
-      const validTasksList = results.filter(r => r.valid).map(r => r.name);
+      const validTasksList = results.filter((r) => r.valid).map((r) => r.name);
       const errorsMap = {};
-      results.forEach(r => {
+      results.forEach((r) => {
         if (!r.valid) {
           errorsMap[r.name] = r.error;
         }
@@ -398,18 +414,26 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
             <Typography variant="body1">Task and Model:</Typography>
           </Grid>
 
-          {validTasks.length === 0 && Object.keys(validationErrors).length > 0 && (
-            <Grid size={{ xs: 12 }}>
-              <Typography variant="body2" sx={{ color: "warning.main", mb: 2 }}>
-                ⚠️ No compatible tasks available. Validation errors:
-              </Typography>
-              {Object.entries(validationErrors).map(([taskName, error]) => (
-                <Typography key={taskName} variant="caption" sx={{ display: "block", mb: 1 }}>
-                  <strong>{taskName}:</strong> {error}
+          {validTasks.length === 0 &&
+            Object.keys(validationErrors).length > 0 && (
+              <Grid size={{ xs: 12 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "warning.main", mb: 2 }}
+                >
+                  ⚠️ No compatible tasks available. Validation errors:
                 </Typography>
-              ))}
-            </Grid>
-          )}
+                {Object.entries(validationErrors).map(([taskName, error]) => (
+                  <Typography
+                    key={taskName}
+                    variant="caption"
+                    sx={{ display: "block", mb: 1 }}
+                  >
+                    <strong>{taskName}:</strong> {error}
+                  </Typography>
+                ))}
+              </Grid>
+            )}
 
           <Grid size={{ xs: 12 }}>
             <TextField
