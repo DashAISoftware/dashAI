@@ -123,28 +123,44 @@ async def pipeline_predict_summary(
             if isinstance(data[0], str):
                 summary["data_type"] = "string"
             else:
-                summary["data_type"] = "numeric"
-                class_set = set(data)
-                classes = [str(item) for item in class_set]
-                summary["Unique_classes"] = len(classes)
-                class_distribution = []
-                id = 1
-                for class_name in classes:
-                    try:
-                        occurrences = data.count(int(class_name))
-                    except ValueError as e:
-                        raise HTTPException(
-                            status_code=400, detail=f"Invalid class value: {class_name}"
-                        ) from e
-                    distribution = {
-                        "id": id,
-                        "Class": class_name,
-                        "Ocurrences": occurrences,
-                        "Percentage": round(occurrences / len(data) * 100, 2),
+                # Check if data looks like classification (integers) or regression (floats)
+                is_classification = all(isinstance(x, int) or (isinstance(x, float) and x.is_integer()) for x in data)
+                unique_values = len(set(data))
+                
+                # If there are many unique values relative to total, it's likely regression
+                if not is_classification or unique_values > len(data) * 0.5:
+                    # Regression: provide statistics
+                    summary["data_type"] = "regression"
+                    import numpy as np
+                    data_array = np.array(data)
+                    summary["statistics"] = {
+                        "mean": float(np.mean(data_array)),
+                        "median": float(np.median(data_array)),
+                        "std": float(np.std(data_array)),
+                        "min": float(np.min(data_array)),
+                        "max": float(np.max(data_array)),
                     }
-                    id += 1
-                    class_distribution.append(distribution)
-                summary["class_distribution"] = class_distribution
+                else:
+                    # Classification: count class occurrences
+                    summary["data_type"] = "classification"
+                    class_set = set(data)
+                    classes = [str(item) for item in class_set]
+                    summary["Unique_classes"] = len(classes)
+                    class_distribution = []
+                    id = 1
+                    for class_name in classes:
+                        # Count occurrences of the actual value (int or float)
+                        original_value = int(float(class_name)) if '.' not in class_name else float(class_name)
+                        occurrences = data.count(original_value)
+                        distribution = {
+                            "id": id,
+                            "Class": class_name,
+                            "Ocurrences": occurrences,
+                            "Percentage": round(occurrences / len(data) * 100, 2),
+                        }
+                        id += 1
+                        class_distribution.append(distribution)
+                    summary["class_distribution"] = class_distribution
 
             sample_data = [
                 {"id": idx, "value": value} for idx, value in enumerate(data[:50], 1)
