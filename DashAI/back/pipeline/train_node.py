@@ -168,7 +168,7 @@ class Train(BaseJob):
 
         try:
             # Check if model uses .train() (text models) or .fit() (sklearn models)
-            if hasattr(model, "train") and callable(getattr(model, "train")):
+            if hasattr(model, "train") and callable(model.train):
                 # Text models expect Dataset objects, not numpy arrays
                 model.train(
                     x_splits["train"],
@@ -179,7 +179,7 @@ class Train(BaseJob):
                 # Keep splits as DashAIDataset for evaluation
                 x = x_splits
                 y = y_splits
-            elif hasattr(model, "fit") and callable(getattr(model, "fit")):
+            elif hasattr(model, "fit") and callable(model.fit):
                 # Sklearn models expect numpy arrays
                 # Convert DashAIDataset to numpy arrays
                 x = {}
@@ -189,10 +189,12 @@ class Train(BaseJob):
                         x[split] = x_splits[split].to_pandas().values
                     if split in y_splits:
                         y[split] = y_splits[split].to_pandas().values.ravel()
-                
+
                 model.fit(x["train"], y["train"])
             else:
-                raise AttributeError(f"Model {model_class} has neither 'train' nor 'fit' method")
+                raise AttributeError(
+                    f"Model {model_class} has neither 'train' nor 'fit' method"
+                )
         except Exception as e:
             log.exception(e)
             raise JobError(

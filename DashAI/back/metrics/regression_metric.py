@@ -30,7 +30,6 @@ def prepare_to_metric(
     tuple[np.ndarray, np.ndarray]
         Tuple containing true values and predicted values as numpy arrays.
     """
-    #true_values = np.array(y.to_pandas().to_numpy().flatten())
     # Handle both DashAIDataset and numpy array inputs
     if isinstance(y, np.ndarray):
         true_values = np.array(y).flatten()

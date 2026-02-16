@@ -67,10 +67,10 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
           ? newDataset.file.name
           : newDataset.params.name;
       newDataset.params["dataloader"] = newDataset.dataloader;
-      
+
       // First, create the dataset record in the database
       const data = await createDataset(name);
-      
+
       // Then, enqueue the job with the dataset ID
       await enqueueDatasetRequest(data.id, newDataset.file, newDataset.url, {
         ...newDataset.params,

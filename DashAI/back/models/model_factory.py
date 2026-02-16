@@ -1,5 +1,5 @@
-from kink import di
 import numpy as np
+from kink import di
 
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.metrics.classification_metric import ClassificationMetric

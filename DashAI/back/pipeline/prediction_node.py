@@ -46,13 +46,15 @@ class Prediction(BaseJob):
         try:
             prepared_dataset = loaded_dataset.select_columns(context["input_columns"])
             y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-            
-            # Check if it's classification (2D array with probabilities) or regression (1D array)
+
+            # Check if it's classification (2D array with probabilities)
+            # or regression (1D array)
             if isinstance(y_pred_proba[0], str):
                 # Text/categorical predictions
                 y_pred = y_pred_proba
             elif y_pred_proba.ndim == 2:
-                # Classification: multi-class probabilities, get class with highest probability
+                # Classification: multi-class probabilities,
+                # get class with highest probability
                 y_pred = np.argmax(y_pred_proba, axis=1)
             else:
                 # Regression: predictions are already the final values

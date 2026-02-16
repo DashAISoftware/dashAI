@@ -70,7 +70,8 @@ class PipelineJob(BaseJob):
                     node_config = step.get("config", {})
 
                     log.debug(
-                        f"Pipeline {pipeline_id}: Executing step {idx + 1}/{len(steps)} - "
+                        f"Pipeline {pipeline_id}: "
+                        f"Executing step {idx + 1}/{len(steps)} - "
                         f"{node_type} ({node_id})"
                     )
 
@@ -96,9 +97,7 @@ class PipelineJob(BaseJob):
                         )
                         log.debug(f"Node {node_id} executed successfully.")
                     except Exception as e:
-                        error_msg = (
-                            f"Error in node {node_id} ({node_type}): {str(e)}"
-                        )
+                        error_msg = f"Error in node {node_id} ({node_type}): {str(e)}"
                         log.exception(error_msg)
                         raise JobError(error_msg) from e
 

@@ -89,15 +89,18 @@ class DataExploration(BaseJob):
                     )
 
                     # Create a simple explorer info object for pipeline execution
-                    # This is not a database object, just a container for explorer metadata
+                    # This is not a database object,
+                    # just a container for explorer metadata
                     class ExplorerInfo:
-                        def __init__(self, exploration_type, columns, parameters, id, name):
+                        def __init__(
+                            self, exploration_type, columns, parameters, id, name
+                        ):
                             self.exploration_type = exploration_type
                             self.columns = columns
                             self.parameters = parameters
                             self.id = id
                             self.name = name
-                    
+
                     explorer_info = ExplorerInfo(
                         exploration_type=exploration_type,
                         columns=columns,

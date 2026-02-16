@@ -123,15 +123,19 @@ async def pipeline_predict_summary(
             if isinstance(data[0], str):
                 summary["data_type"] = "string"
             else:
-                # Check if data looks like classification (integers) or regression (floats)
-                is_classification = all(isinstance(x, int) or (isinstance(x, float) and x.is_integer()) for x in data)
+                # Check if data looks like integers or floats
+                is_classification = all(
+                    isinstance(x, int) or (isinstance(x, float) and x.is_integer())
+                    for x in data
+                )
                 unique_values = len(set(data))
-                
-                # If there are many unique values relative to total, it's likely regression
+
+                # If there are many unique values relative to total -> regression
                 if not is_classification or unique_values > len(data) * 0.5:
                     # Regression: provide statistics
                     summary["data_type"] = "regression"
                     import numpy as np
+
                     data_array = np.array(data)
                     summary["statistics"] = {
                         "mean": float(np.mean(data_array)),
@@ -150,7 +154,11 @@ async def pipeline_predict_summary(
                     id = 1
                     for class_name in classes:
                         # Count occurrences of the actual value (int or float)
-                        original_value = int(float(class_name)) if '.' not in class_name else float(class_name)
+                        original_value = (
+                            int(float(class_name))
+                            if "." not in class_name
+                            else float(class_name)
+                        )
                         occurrences = data.count(original_value)
                         distribution = {
                             "id": id,
