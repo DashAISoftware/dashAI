@@ -8,7 +8,7 @@ from diffusers import (
     StableDiffusionXLControlNetPipeline,
 )
 from PIL import Image
-from transformers import DPTFeatureExtractor, DPTForDepthEstimation
+from transformers import DPTImageProcessor, DPTForDepthEstimation
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -51,7 +51,7 @@ def get_depth_map(image, device):
     depth_estimator = DPTForDepthEstimation.from_pretrained(
         "Intel/dpt-hybrid-midas"
     ).to(device)
-    feature_extractor = DPTFeatureExtractor.from_pretrained(
+    feature_extractor = DPTImageProcessor.from_pretrained(
         "Intel/dpt-hybrid-midas", device=device
     )
 
