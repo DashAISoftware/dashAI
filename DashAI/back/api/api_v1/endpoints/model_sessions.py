@@ -159,6 +159,11 @@ async def validate_columns(
     except (TypeError, ValueError) as e:
         validation_response["dataset_status"] = "invalid"
         validation_response["error"] = str(e)
+    except Exception as e:
+        log.exception(f"[VALIDATION] Unexpected error in task {params.task_name}")
+        validation_response["dataset_status"] = "invalid"
+        validation_response["error"] = f"Unexpected error: {str(e)}"
+    
     return validation_response
 
 

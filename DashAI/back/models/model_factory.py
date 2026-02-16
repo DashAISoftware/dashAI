@@ -1,4 +1,5 @@
 from kink import di
+import numpy as np
 
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.metrics.classification_metric import ClassificationMetric
@@ -217,10 +218,14 @@ class ModelFactory:
                 results[split] = split_results
                 continue
             predictions = self.model.predict(x[split])
-            if hasattr(self.model, "prepare_output"):
-                transformed_y = self.model.prepare_output(y[split])
+            # Handle both numpy arrays and DashAIDataset objects
+            if isinstance(y[split], np.ndarray):
+                transformed_y = y[split]
             else:
-                transformed_y = self.model.prepare_dataset(y[split])
+                if hasattr(self.model, "prepare_output"):
+                    transformed_y = self.model.prepare_output(y[split])
+                else:
+                    transformed_y = self.model.prepare_dataset(y[split])
             for metric in metrics:
                 if (
                     isinstance(metric, type)
