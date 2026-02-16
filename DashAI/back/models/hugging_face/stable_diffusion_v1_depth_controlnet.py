@@ -8,7 +8,7 @@ from diffusers import (
     StableDiffusionXLControlNetPipeline,
 )
 from PIL import Image
-from transformers import DPTImageProcessor, DPTForDepthEstimation
+from transformers import DPTForDepthEstimation, DPTImageProcessor
 
 from DashAI.back.core.schema_fields import (
     enum_field,
