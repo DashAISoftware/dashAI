@@ -11,6 +11,7 @@ import {
   Button,
   Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 const AVAILABLE_METHODS = [
   { name: "PtypeCat (Basic and Categorical Types)", value: "DashAIPtype" },
@@ -24,6 +25,7 @@ function InferenceMethodDialog({
   defaultSelected = [],
 }) {
   const [selectedMethods, setSelectedMethods] = useState(defaultSelected);
+  const { t } = useTranslation(["custom", "common"]);
 
   useEffect(() => {
     setSelectedMethods(defaultSelected);
@@ -46,10 +48,10 @@ function InferenceMethodDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Inference Methods</DialogTitle>
+      <DialogTitle>{t("custom:inferenceMethods")}</DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" gutterBottom>
-          Select the inference methods you want to apply:
+          {t("custom:selectInferenceMethods")}:
         </Typography>
         <FormGroup>
           {AVAILABLE_METHODS.map((method) => (
@@ -68,14 +70,14 @@ function InferenceMethodDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="secondary">
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button
           variant="contained"
           onClick={handleConfirm}
           disabled={selectedMethods.length === 0}
         >
-          Confirm
+          {t("common:confirm")}
         </Button>
       </DialogActions>
     </Dialog>

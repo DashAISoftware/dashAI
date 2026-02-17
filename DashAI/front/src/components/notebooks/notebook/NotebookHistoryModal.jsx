@@ -19,6 +19,7 @@ import {
   getExplorersByNotebookId,
 } from "../../../api/notebook";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import { useTranslation } from "react-i18next";
 
 export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
   const { explorersAndConverters, setExplorersAndConverters } =
@@ -28,6 +29,7 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
   const [converterToDelete, setConverterToDelete] = useState(null);
   const [deleteModalContent, setDeleteModalContent] = useState("");
   const [itemsToDelete, setItemsToDelete] = useState([]);
+  const { t } = useTranslation(["datasets", "common"]);
 
   const fetchExplorersAndConverters = useCallback(async () => {
     try {
@@ -73,7 +75,9 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
       setItemsToDelete(items);
 
       setDeleteModalContent(
-        `Are you sure you want to delete the converter "${converter?.converter}"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.`,
+        t("datasets:label.deleteConverterConfirmation", {
+          converter: converter?.converter,
+        }),
       );
       setOpenDeleteConverterConfirmation(true);
     },
@@ -110,7 +114,7 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
     <>
       <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          Notebook History: {notebook.name}
+          {t("datasets:label.notebookHistory", { notebook: notebook.name })}
           <IconButton
             onClick={onClose}
             sx={{ position: "absolute", right: 8, top: 8 }}
@@ -127,7 +131,7 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
                 textAlign="center"
                 sx={{ py: 4 }}
               >
-                No transformations applied yet.
+                {t("datasets:label.noTransformationsAppliedYet")}
               </Typography>
             ) : (
               <ConverterHistoryList
@@ -139,7 +143,7 @@ export function NotebookHistoryModal({ open, onClose, notebook, converters }) {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>{t("common:close")}</Button>
         </DialogActions>
       </Dialog>
 

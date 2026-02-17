@@ -11,7 +11,7 @@ const IssueCard = ({ title, count, items, severity = "info" }) => {
         p: 2,
         border: `1px solid ${palette.light}`,
         borderRadius: 2,
-        bgcolor: "#2C2C2C",
+        bgcolor: theme.palette.ui.panelDark,
         color: palette.main,
         display: "flex",
         flexDirection: "column",

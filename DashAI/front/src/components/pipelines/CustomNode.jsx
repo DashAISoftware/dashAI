@@ -27,9 +27,13 @@ const CustomNode = ({ data, isConnectable }) => {
   const borderColor =
     data.notConfigured && !isDisabled
       ? `2px solid ${theme.palette.warning.main}`
-      : "1px solid #ccc";
-  const iconColor = isDisabled ? "#aaa" : "#555";
-  const bgColor = isDisabled ? "#f0f0f0" : "#fff";
+      : `1px solid ${theme.palette.ui.borderLight}`;
+  const iconColor = isDisabled
+    ? theme.palette.text.secondary
+    : theme.palette.text.primary;
+  const bgColor = isDisabled
+    ? theme.palette.ui.panelMedium
+    : theme.palette.background.paper;
 
   const nodeContent = (
     <Box
@@ -66,7 +70,9 @@ const CustomNode = ({ data, isConnectable }) => {
             },
           }}
         >
-          <CloseIcon sx={{ fontSize: 10, color: "#888" }} />
+          <CloseIcon
+            sx={{ fontSize: 10, color: theme.palette.text.secondary }}
+          />
         </IconButton>
       )}
 
@@ -76,10 +82,10 @@ const CustomNode = ({ data, isConnectable }) => {
           position={Position.Left}
           style={{
             background: isDisabled
-              ? "#ccc"
+              ? theme.palette.ui.border
               : data.hasError
                 ? theme.palette.error.main
-                : "#555",
+                : theme.palette.text.primary,
             width: 8,
             height: 8,
             borderRadius: "50%",
@@ -95,7 +101,9 @@ const CustomNode = ({ data, isConnectable }) => {
           type="source"
           position={Position.Right}
           style={{
-            background: isDisabled ? "#ccc" : "#555",
+            background: isDisabled
+              ? theme.palette.ui.border
+              : theme.palette.text.primary,
             width: 8,
             height: 8,
             borderRadius: "50%",
@@ -114,7 +122,9 @@ const CustomNode = ({ data, isConnectable }) => {
         alignItems: "center",
       }}
     >
-      <Typography sx={{ fontSize: 11, mb: 0.5, color: "#000" }}>
+      <Typography
+        sx={{ fontSize: 11, mb: 0.5, color: theme.palette.text.primary }}
+      >
         {data.name || data.label}
       </Typography>
 

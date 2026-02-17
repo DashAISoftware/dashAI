@@ -12,6 +12,7 @@ from DashAI.back.core.schema_fields import (
     optimizer_int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.regression_model import RegressionModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
@@ -28,13 +29,21 @@ class MLPRegressorSchema(BaseSchema):
             "lower_bound": 1,
             "upper_bound": 15,
         },
-        description="Number of neurons in the hidden layer.",
+        description=MultilingualString(
+            en="Number of neurons in the hidden layer.",
+            es="Número de neuronas en la capa oculta.",
+        ),
+        alias=MultilingualString(en="Hidden size", es="Tamaño oculto"),
     )  # type: ignore
 
     activation: schema_field(
         enum_field(enum=["relu", "tanh", "sigmoid", "identity"]),
         placeholder="relu",
-        description="Activation function.",
+        description=MultilingualString(
+            en="Activation function.",
+            es="Función de activación.",
+        ),
+        alias=MultilingualString(en="Activation", es="Activación"),
     )  # type: ignore
 
     learning_rate: schema_field(
@@ -45,7 +54,11 @@ class MLPRegressorSchema(BaseSchema):
             "lower_bound": 1e-6,
             "upper_bound": 1.0,
         },
-        description="Initial learning rate for the optimizer.",
+        description=MultilingualString(
+            en="Initial learning rate for the optimizer.",
+            es="Tasa de aprendizaje inicial para el optimizador.",
+        ),
+        alias=MultilingualString(en="Learning rate", es="Tasa de aprendizaje"),
     )  # type: ignore
 
     epochs: schema_field(
@@ -56,48 +69,110 @@ class MLPRegressorSchema(BaseSchema):
             "lower_bound": 1,
             "upper_bound": 15,
         },
-        description="Total number of training passes over the dataset.",
+        description=MultilingualString(
+            en="Total number of training passes over the dataset.",
+            es="Número total de pasadas de entrenamiento sobre el conjunto de datos.",
+        ),
+        alias=MultilingualString(en="Epochs", es="Épocas"),
     )  # type: ignore
 
     batch_size: schema_field(
         none_type(int_field(ge=1)),
         placeholder=32,
-        description="Number of samples per gradient update during training. "
-        "If greater than dataset size or None, uses full dataset.",
+        description=MultilingualString(
+            en=(
+                "Number of samples per gradient update during training. "
+                "If greater than dataset size or None, uses full dataset."
+            ),
+            es=(
+                "Número de muestras por actualización de gradiente durante el "
+                "entrenamiento. Si es mayor que el tamaño del dataset o None, "
+                "usa el dataset completo."
+            ),
+        ),
+        alias=MultilingualString(en="Batch size", es="Tamaño de lote"),
     )  # type: ignore
 
     device: schema_field(
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
-        description="Hardware device (CPU/GPU).",
+        description=MultilingualString(
+            en="Hardware device (CPU/GPU).",
+            es="Dispositivo de hardware (CPU/GPU).",
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
 
     log_train_every_n_epochs: schema_field(
         none_type(int_field(ge=1)),
         placeholder=1,
-        description="Log metrics for train split every n epochs during training. "
-        "If None, it won't log per epoch.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for train split every n epochs during training. "
+                "If None, it won't log per epoch."
+            ),
+            es=(
+                "Registrar métricas del split de entrenamiento cada n épocas. "
+                "Si es None, no registrará por época."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log train every N epochs", es="Registrar entrenamiento cada N épocas"
+        ),
     )  # type: ignore
 
     log_train_every_n_steps: schema_field(
         none_type(int_field(ge=1)),
         placeholder=None,
-        description="Log metrics for train split every n steps during training. "
-        "If None, it won't log per step.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for train split every n steps during training. "
+                "If None, it won't log per step."
+            ),
+            es=(
+                "Registrar métricas del split de entrenamiento cada n pasos. "
+                "Si es None, no registrará por paso."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log train every N steps", es="Registrar entrenamiento cada N pasos"
+        ),
     )  # type: ignore
 
     log_validation_every_n_epochs: schema_field(
         none_type(int_field(ge=1)),
         placeholder=1,
-        description="Log metrics for validation split every n epochs during training. "
-        "If None, it won't log per epoch.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for validation split every n epochs during training. "
+                "If None, it won't log per epoch."
+            ),
+            es=(
+                "Registrar métricas del split de validación cada n épocas. "
+                "Si es None, no registrará por época."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log validation every N epochs", es="Registrar validación cada N épocas"
+        ),
     )  # type: ignore
 
     log_validation_every_n_steps: schema_field(
         none_type(int_field(ge=1)),
         placeholder=None,
-        description="Log metrics for validation split every n steps during training. "
-        "If None, it won't log per step.",
+        description=MultilingualString(
+            en=(
+                "Log metrics for validation split every n steps during training. "
+                "If None, it won't log per step."
+            ),
+            es=(
+                "Registrar métricas del split de validación cada n pasos. "
+                "Si es None, no registrará por paso."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Log validation every N steps", es="Registrar validación cada N pasos"
+        ),
     )  # type: ignore
 
 
@@ -122,8 +197,14 @@ class MLP(nn.Module):
 
 class MLPRegression(RegressionModel):
     SCHEMA = MLPRegressorSchema
-    DISPLAY_NAME: str = "Multi-layer Perceptron (MLP) Regression"
-    DESCRIPTION: str = "Neural network with multiple hidden layers for regression."
+    DISPLAY_NAME: str = MultilingualString(
+        en="Multi-layer Perceptron (MLP) Regression",
+        es="Perceptrón Multicapa (MLP) Regresión",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Neural network with multiple hidden layers for regression.",
+        es="Red neuronal con múltiples capas ocultas para regresión.",
+    )
     COLOR: str = "#FF7043"
     ICON: str = "Psychology"
 

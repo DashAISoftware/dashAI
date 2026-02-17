@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { Box, Button, CircularProgress, Grid, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { previewWithTypes } from "../../../api/datasets";
 import PreviewDatasetTable from "./PreviewDatasetTable";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component shows a preview of the dataset before final upload.
@@ -19,12 +21,14 @@ function PreviewDataset({
   onPreviewError,
   onTypesChanged,
 }) {
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const [previewData, setPreviewData] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const onTypesChangedRef = useRef(onTypesChanged);
+  const { t } = useTranslation(["common", "datasets"]);
 
   useEffect(() => {
     onTypesChangedRef.current = onTypesChanged;
@@ -39,7 +43,7 @@ function PreviewDataset({
   useEffect(() => {
     const loadPreview = async () => {
       if (!datasetData) {
-        setError("No dataset data available");
+        setError(t("datasets:error.noDatasetDataAvailable"));
         setLoading(false);
         return;
       }
@@ -68,7 +72,7 @@ function PreviewDataset({
         setError(null);
       } catch (err) {
         console.error("Error loading preview:", err);
-        setError("Failed to load preview");
+        setError(t("datasets:error.loadingDatasetPreview"));
       } finally {
         setLoading(false);
       }
@@ -101,7 +105,7 @@ function PreviewDataset({
         return updatedTypes;
       });
 
-      enqueueSnackbar("Column types updated successfully", {
+      enqueueSnackbar(t("datasets:message.columnTypesUpdated"), {
         variant: "success",
       });
     },
@@ -166,7 +170,7 @@ function PreviewDataset({
                 fontSize: "1.3rem",
                 color: "text.secondary",
                 "&:hover": {
-                  backgroundColor: "action.hover",
+                  backgroundColor: theme.palette.ui.hover,
                 },
               }}
             >
@@ -194,12 +198,12 @@ function PreviewDataset({
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                Showing {previewData.sample.length} of{" "}
-                {previewData.preview_row_count} rows analyzed for type
-                inference.
+                {t("datasets:label.showingRowsInference", {
+                  sampleLength: previewData.sample.length,
+                  previewRowCount: previewData.preview_row_count,
+                })}
                 <br />
-                You can change column types by clicking on the dropdown in each
-                column header.
+                {t("datasets:label.changeColumnTypesInfo")}
               </Typography>
 
               <Button
@@ -215,7 +219,7 @@ function PreviewDataset({
                   flexShrink: 0,
                 }}
               >
-                Re-upload dataset
+                {t("datasets:button.reUploadDataset")}
               </Button>
             </Box>
 

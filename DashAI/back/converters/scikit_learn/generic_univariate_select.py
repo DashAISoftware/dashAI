@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
@@ -22,14 +23,23 @@ class GenericUnivariateSelectSchema(BaseSchema):
     mode: schema_field(
         enum_field(["percentile", "k_best", "fpr", "fdr", "fwe"]),
         "percentile",
-        "Select features according to a percentile of the highest scores.",
+        description=MultilingualString(
+            en="Select features according to a percentile of the highest scores.",
+            es=(
+                "Selecciona características según un percentil de las "
+                "puntuaciones más altas."
+            ),
+        ),
     )  # type: ignore
     param: schema_field(
         none_type(
             union_type(enum_field(["all"]), union_type(float_field(), int_field()))
         ),
         1e-5,
-        "Parameter of the mode.",
+        description=MultilingualString(
+            en="Parameter of the mode.",
+            es="Parámetro del modo.",
+        ),
     )  # type: ignore
 
 
@@ -39,14 +49,17 @@ class GenericUnivariateSelect(
     """SciKit-Learn's GenericUnivariateSelect wrapper for DashAI."""
 
     SCHEMA = GenericUnivariateSelectSchema
-    DESCRIPTION = "Univariate feature selector with configurable strategy."
+    DESCRIPTION = MultilingualString(
+        en="Univariate feature selector with configurable strategy.",
+        es="Selector univariante de características con estrategia configurable.",
+    )
     SUPERVISED = True
-    DISPLAY_NAME = "Generic Univariate Select"
+    DISPLAY_NAME = MultilingualString(
+        en="Generic Univariate Select", es="Selección Univariante Genérica"
+    )
     IMAGE_PREVIEW = "generic_univariate_select.png"
     metadata = {}
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Returns Float64 as the output type for selected features."""
         return Float(arrow_type=pa.float64())
-
-    CATEGORY = "Feature Selection"

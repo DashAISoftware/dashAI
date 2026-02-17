@@ -21,6 +21,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float
 
@@ -29,12 +30,18 @@ class FastICASchema(BaseSchema):
     n_components: schema_field(
         none_type(int_field(ge=1)),
         None,
-        "Number of components to extract.",
+        description=MultilingualString(
+            en="Number of components to extract.",
+            es="Número de componentes a extraer.",
+        ),
     )  # type: ignore
     algorithm: schema_field(
         enum_field(["parallel", "deflation"]),
         "parallel",
-        "Apply parallel or deflational algorithm for FastICA.",
+        description=MultilingualString(
+            en="Apply parallel or deflational algorithm for FastICA.",
+            es="Aplica el algoritmo paralelo o deflacional para FastICA.",
+        ),
     )  # type: ignore
     # Deprecated since version 1.1
     whiten: schema_field(
@@ -44,50 +51,79 @@ class FastICASchema(BaseSchema):
             )
         ),
         "unit-variance",
-        "If True, the data is whitened.",
+        description=MultilingualString(
+            en="If True, the data is whitened.",
+            es="Si es True, los datos se blanquean.",
+        ),
     )  # type: ignore
     fun: schema_field(
-        enum_field(
-            ["logcosh", "exp", "cube"]
-        ),  # {‘logcosh’, ‘exp’, ‘cube’} or callable
+        enum_field(["logcosh", "exp", "cube"]),
         "logcosh",
-        (
-            "The functional form of the G function used in "
-            "the approximation to neg-entropy."
+        description=MultilingualString(
+            en=(
+                "Functional form of the G function used in the approximation "
+                "to neg-entropy."
+            ),
+            es=(
+                "Forma funcional de la función G utilizada en la aproximación "
+                "a la neg-entropía."
+            ),
         ),
     )  # type: ignore
     fun_args: schema_field(
-        none_type(string_field()),  # {"logcosh": 1.0, "exp": 1.0, "cube": 1.0},
+        none_type(string_field()),
         None,
-        "Arguments to the G function.",
+        description=MultilingualString(
+            en="Arguments to the G function.",
+            es="Argumentos de la función G.",
+        ),
     )  # type: ignore
     max_iter: schema_field(
         int_field(ge=1),
         200,
-        "Maximum number of iterations to perform.",
+        description=MultilingualString(
+            en="Maximum number of iterations to perform.",
+            es="Número máximo de iteraciones a realizar.",
+        ),
     )  # type: ignore
     tol: schema_field(
         float_field(ge=0.0),
         1e-04,
-        "Tolerance on update at each iteration.",
+        description=MultilingualString(
+            en="Tolerance on update at each iteration.",
+            es="Tolerancia en la actualización en cada iteración.",
+        ),
     )  # type: ignore
     w_init: schema_field(
-        none_type(string_field()),  # array-like of shape (n_components, n_components)
+        none_type(string_field()),
         None,
-        "Initial guess for the unmixing matrix.",
+        description=MultilingualString(
+            en="Initial guess for the unmixing matrix.",
+            es="Estimación inicial de la matriz de separación.",
+        ),
     )  # type: ignore
     whiten_solver: schema_field(
         enum_field(["eigh", "svd"]),
         "svd",
-        "The solver to use for whitening.",
+        description=MultilingualString(
+            en="The solver to use for whitening.",
+            es="Método a utilizar para el blanqueo.",
+        ),
     )  # type: ignore
     random_state: schema_field(
-        none_type(
-            union_type(int_field(), enum_field(["RandomState"]))
-        ),  # int, RandomState instance or None
+        none_type(union_type(int_field(), enum_field(["RandomState"]))),
         None,
-        "Used to initialize w_init when not specified, with a normal distribution. "
-        "Pass an int, for reproducible results across multiple function calls.",
+        description=MultilingualString(
+            en=(
+                "Used to initialize w_init when not specified, with a normal "
+                "distribution. Pass an int for reproducible results."
+            ),
+            es=(
+                "Usado para inicializar w_init cuando no se especifica, con "
+                "una distribución normal. Pasa un entero para resultados "
+                "reproducibles."
+            ),
+        ),
     )  # type: ignore
 
 
@@ -95,9 +131,14 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     """Scikit-learn's FastICA wrapper for DashAI."""
 
     SCHEMA = FastICASchema
-    DESCRIPTION = "FastICA: a fast algorithm for Independent Component Analysis."
-    CATEGORY = "Dimensionality Reduction"
-    DISPLAY_NAME = "Fast ICA"
+    DESCRIPTION = MultilingualString(
+        en="FastICA: a fast algorithm for Independent Component Analysis.",
+        es=(
+            "FastICA: un algoritmo rápido para "
+            "el Análisis de Componentes Independientes."
+        ),
+    )
+    DISPLAY_NAME = MultilingualString(en="Fast ICA", es="Fast ICA")
     IMAGE_PREVIEW = "fast_ica.png"
 
     def __init__(self, **kwargs):

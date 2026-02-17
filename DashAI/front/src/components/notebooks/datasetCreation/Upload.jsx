@@ -7,12 +7,15 @@ import {
   DialogContentText,
   Grid,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import PreviewDataset from "./PreviewDataset";
 
 import { useSnackbar } from "notistack";
 import JSZip from "jszip";
+import { useTranslation } from "react-i18next";
+
 /**
  * Renders a drag and drop to upload a file (dataset).
  * The upload (send to API) doesn't happen here, this component just adds the file "uploaded" to the
@@ -48,6 +51,8 @@ function Upload({
   };
 
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
 
   // helper to extract allowed extensions from acceptAttr (returns lowercase extensions like ".csv")
   const getAllowedExtensions = (accept) => {
@@ -125,6 +130,9 @@ function Upload({
       return found;
     } catch (err) {
       // If zip can't be read, treat as invalid
+      enqueueSnackbar(t("datasets:error.loadingDatasetPreview"), {
+        variant: "error",
+      });
       console.error("Error reading zip for validation:", err);
       return false;
     }
@@ -150,7 +158,7 @@ function Upload({
 
     // fast check based on filename/mime
     if (!isAcceptedFile(f)) {
-      enqueueSnackbar("File type not allowed for selected dataloader", {
+      enqueueSnackbar(t("datasets:error.fileTypeNotAllowed"), {
         variant: "error",
       });
       // clear input so the same file can be selected again later
@@ -163,12 +171,9 @@ function Upload({
     if (name.endsWith(".zip")) {
       const ok = await validateZipContents(f);
       if (!ok) {
-        enqueueSnackbar(
-          "ZIP does not contain files compatible with the selected dataloader",
-          {
-            variant: "error",
-          },
-        );
+        enqueueSnackbar(t("datasets:error.zipContentsNotCompatible"), {
+          variant: "error",
+        });
         if (inputRef && inputRef.current) inputRef.current.value = "";
         return;
       }
@@ -187,7 +192,7 @@ function Upload({
     if (!f) return;
 
     if (!isAcceptedFile(f)) {
-      enqueueSnackbar("Dropped file type not allowed for selected dataloader", {
+      enqueueSnackbar(t("datasets:error.fileTypeNotAllowed"), {
         variant: "error",
       });
       return;
@@ -197,12 +202,9 @@ function Upload({
     if (name.endsWith(".zip")) {
       const ok = await validateZipContents(f);
       if (!ok) {
-        enqueueSnackbar(
-          "ZIP does not contain files compatible with the selected dataloader",
-          {
-            variant: "error",
-          },
-        );
+        enqueueSnackbar(t("datasets:error.zipContentsNotCompatible"), {
+          variant: "error",
+        });
         return;
       }
     }
@@ -273,15 +275,21 @@ function Upload({
               </Grid>
               {dragActive ? (
                 <Grid>
-                  <Typography variant="subtitle1">
-                    Click to upload your dataset file
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: theme.palette.text.secondary }}
+                  >
+                    {t("datasets:label.clickToUpload")}
                   </Typography>
                 </Grid>
               ) : (
                 <React.Fragment>
                   <Grid>
-                    <Typography variant="subtitle1">
-                      Drag and drop a file here, or
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ color: theme.palette.text.secondary }}
+                    >
+                      {t("datasets:label.dragAndDropFileHere")}
                     </Typography>
                   </Grid>
                   <Grid>
@@ -292,7 +300,7 @@ function Upload({
                         handleButtonClick();
                       }}
                     >
-                      Upload a file
+                      {t("datasets:button.uploadFile")}
                     </Button>
                   </Grid>
                 </React.Fragment>
@@ -339,16 +347,22 @@ function Upload({
   );
 
   return (
-    <Grid container direction="column" rowSpacing={1} sx={{ width: "100%" }}>
+    <Grid
+      container
+      direction="column"
+      rowSpacing={1}
+      sx={{ width: "100%", bgcolor: theme.palette.ui.box }}
+      data-tour="upload-area"
+    >
       {/* state text */}
       <Grid sx={{ textAlign: "center" }}>
-        <DialogContentText>
-          {datasetState === EMPTY && "Upload your dataset"}
-          {datasetState === LOADING && "Dataset Loading..."}
-          {datasetState === LOADED && "Dataset preview"}
+        <DialogContentText sx={{ color: theme.palette.text.primary }}>
+          {datasetState === EMPTY && t("datasets:label.uploadYourDataset")}
+          {datasetState === LOADING && t("datasets:label.datasetLoading")}
+          {datasetState === LOADED && t("datasets:label.datasetPreview")}
           {datasetState === EMPTY && (
             <Typography variant="body2" component="div">
-              If your dataset have splits, upload it as a zip file
+              {t("datasets:label.ifYourDatasetHaveSplits")}
             </Typography>
           )}
         </DialogContentText>

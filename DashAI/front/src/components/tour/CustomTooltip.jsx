@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 export const CustomTooltip = ({
   continuous,
@@ -12,6 +13,7 @@ export const CustomTooltip = ({
   size,
   isLastStep,
 }) => {
+  const { t } = useTranslation(["common"]);
   const isInteractive = step.isInteractive;
 
   return (
@@ -78,7 +80,7 @@ export const CustomTooltip = ({
                 },
               }}
             >
-              Back
+              {t("common:back")}
             </Button>
           )}
         </Box>{" "}
@@ -95,7 +97,7 @@ export const CustomTooltip = ({
                 },
               }}
             >
-              Skip Tour
+              {t("common:skipTour")}
             </Button>
           )}
 
@@ -128,7 +130,7 @@ export const CustomTooltip = ({
                 gap: 1,
               }}
             >
-              {isLastStep ? "Finish" : "Next"}
+              {isLastStep ? t("common:finish") : t("common:next")}
               {continuous && (
                 <Typography
                   component="span"

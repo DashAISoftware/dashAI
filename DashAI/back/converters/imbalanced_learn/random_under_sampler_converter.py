@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
@@ -18,12 +19,21 @@ class RUSchema(BaseSchema):
     sampling_strategy: schema_field(
         union_type(float_field(gt=0.0, le=1.0), enum_field(["auto"])),
         "auto",
-        "Sampling strategy (float or 'auto') to reduce majority class.",
+        description=MultilingualString(
+            en="Sampling strategy (float or 'auto') to reduce majority class.",
+            es=(
+                "Estrategia de muestreo (float o 'auto') para reducir la clase "
+                "mayoritaria."
+            ),
+        ),
     )  # type: ignore
     random_state: schema_field(
         none_type(int_field()),
         None,
-        "Seed for reproducibility.",
+        description=MultilingualString(
+            en="Seed for reproducibility.",
+            es="Semilla para reproducibilidad.",
+        ),
     )  # type: ignore
 
 
@@ -31,11 +41,13 @@ class RandomUnderSamplerConverter(
     SamplingConverter, ImbalancedLearnWrapper, RandomUnderSampler
 ):
     SCHEMA = RUSchema
-    DESCRIPTION = (
-        "Randomly remove samples from the majority class to balance the dataset."
+    DESCRIPTION = MultilingualString(
+        en="Randomly remove samples from the majority class to balance the dataset.",
+        es="Elimina aleatoriamente muestras de la clase mayoritaria para balancear.",
     )
-    CATEGORY = "Resampling & Class Balancing"
-    DISPLAY_NAME = "Random Under-Sampler"
+    DISPLAY_NAME = MultilingualString(
+        en="Random Under-Sampler", es="Submuestreador Aleatorio"
+    )
     IMAGE_PREVIEW = "random_under_sampler.png"
 
     def __init__(self, **kwargs):

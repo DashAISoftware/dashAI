@@ -7,6 +7,7 @@ import {
   Typography,
 } from "@mui/material";
 import ParameterListItem from "./ParameterListItem";
+import { useTranslation } from "react-i18next";
 
 /**
  * Component that displays the parameters associated with a explainer.
@@ -14,6 +15,7 @@ import ParameterListItem from "./ParameterListItem";
  */
 function ExplainerParametersTab({ explainerData }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
+  const { t } = useTranslation(["common"]);
   return (
     <Grid container direction="column">
       {/* Toggle to select the mode of displaying the JSON object. */}
@@ -28,8 +30,8 @@ function ExplainerParametersTab({ explainerData }) {
           }}
           sx={{ float: "right" }}
         >
-          <ToggleButton value="nested-list">List</ToggleButton>
-          <ToggleButton value="json">JSON</ToggleButton>
+          <ToggleButton value="nested-list">{t("common:list")}</ToggleButton>
+          <ToggleButton value="json">{t("common:json")}</ToggleButton>
         </ToggleButtonGroup>
       </Grid>
 
@@ -37,7 +39,7 @@ function ExplainerParametersTab({ explainerData }) {
       <Grid>
         {displayMode === "nested-list" && (
           <ParameterListItem
-            name="Parameters"
+            name={t("common:parameters")}
             value={explainerData.parameters}
           />
         )}

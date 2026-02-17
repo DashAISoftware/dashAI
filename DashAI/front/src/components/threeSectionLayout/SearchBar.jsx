@@ -1,7 +1,10 @@
 import { TextField, InputAdornment } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 
 export default function SearchBar({ placeholder, onChange, value }) {
+  const theme = useTheme();
+
   return (
     <TextField
       placeholder={placeholder}
@@ -11,16 +14,16 @@ export default function SearchBar({ placeholder, onChange, value }) {
       variant="outlined"
       sx={{
         "& .MuiOutlinedInput-root": {
-          bgcolor: "background.default",
+          bgcolor: theme.palette.background.default,
           borderRadius: 1,
         },
         "& .MuiInputBase-input": {
-          color: "white",
+          color: theme.palette.text.primary,
           py: 1,
           fontSize: "0.875rem",
         },
         "& .MuiInputBase-input::placeholder": {
-          color: "text.secondary",
+          color: theme.palette.text.secondary,
           opacity: 1,
           fontSize: "0.875rem",
         },
@@ -29,7 +32,7 @@ export default function SearchBar({ placeholder, onChange, value }) {
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: "text.secondary" }} />
+              <SearchIcon color="action" />
             </InputAdornment>
           ),
         },

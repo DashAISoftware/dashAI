@@ -2,6 +2,7 @@ import React from "react";
 import { Box, TextField } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
+import { useTranslation } from "react-i18next";
 
 const FONT_LIST = [
   "Arial",
@@ -19,10 +20,12 @@ const FONT_LIST = [
 ];
 
 export default function GeneralForm({ layout, handleChange }) {
+  const { t } = useTranslation(["datasets"]);
+
   return (
     <>
       <TextField
-        label="Title"
+        label={t("datasets:label.title")}
         variant="filled"
         value={layout.title?.text || ""}
         onChange={(e) =>
@@ -32,7 +35,7 @@ export default function GeneralForm({ layout, handleChange }) {
       />
 
       <TextField
-        label="Title Font Size"
+        label={t("datasets:label.titleFontSize")}
         variant="filled"
         type="number"
         value={layout.title?.font?.size || 16}
@@ -46,7 +49,7 @@ export default function GeneralForm({ layout, handleChange }) {
       />
 
       <DebouncedColorPicker
-        label="Title Color"
+        label={t("datasets:label.titleColor")}
         value={layout.title?.font?.color || "#2A3F5F"}
         onChange={(color) =>
           handleChange("title", {
@@ -58,7 +61,7 @@ export default function GeneralForm({ layout, handleChange }) {
 
       <TextField
         select
-        label="Font Family"
+        label={t("datasets:label.fontFamily")}
         variant="filled"
         value={layout.font?.family || "Arial"}
         onChange={(e) =>
@@ -75,20 +78,20 @@ export default function GeneralForm({ layout, handleChange }) {
       </TextField>
 
       <DebouncedColorPicker
-        label="Background Color"
+        label={t("datasets:label.backgroundColor")}
         value={layout.paper_bgcolor || "#ffffff"}
         onChange={(color) => handleChange("paper_bgcolor", color)}
       />
 
       <DebouncedColorPicker
-        label="Plot Background Color"
+        label={t("datasets:label.plotBackgroundColor")}
         value={layout.plot_bgcolor || "#E5ECF6"}
         onChange={(color) => handleChange("plot_bgcolor", color)}
       />
 
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
-          label="Margin Left"
+          label={t("datasets:label.marginLeft")}
           variant="filled"
           type="number"
           value={layout.margin?.l || 80}
@@ -101,7 +104,7 @@ export default function GeneralForm({ layout, handleChange }) {
           fullWidth
         />
         <TextField
-          label="Margin Right"
+          label={t("datasets:label.marginRight")}
           variant="filled"
           type="number"
           value={layout.margin?.r || 80}
@@ -117,7 +120,7 @@ export default function GeneralForm({ layout, handleChange }) {
 
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
-          label="Margin Top"
+          label={t("datasets:label.marginTop")}
           variant="filled"
           type="number"
           value={layout.margin?.t || 100}
@@ -130,7 +133,7 @@ export default function GeneralForm({ layout, handleChange }) {
           fullWidth
         />
         <TextField
-          label="Margin Bottom"
+          label={t("datasets:label.marginBottom")}
           variant="filled"
           type="number"
           value={layout.margin?.b || 80}

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaLayout from "../../shared/FormSchemaLayout";
 import { generateSequentialName } from "../../../utils/nameGenerator";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component is a form to configure a dataloader
@@ -20,6 +21,8 @@ function DataloaderConfiguration({
   existingDatasets = [],
   onValuesChange,
 }) {
+  const { t } = useTranslation(["datasets"]);
+
   const { defaultName } = useMemo(
     () =>
       generateSequentialName({
@@ -33,7 +36,9 @@ function DataloaderConfiguration({
     <Stack spacing={3}>
       {/* Form title */}
       <DialogContentText sx={{ alignSelf: "center" }}>
-        {selectedDataloader} configuration
+        {t("datasets:label.selectedDataloaderConfiguration", {
+          dataloader: selectedDataloader,
+        })}
       </DialogContentText>
 
       <FormSchemaLayout>

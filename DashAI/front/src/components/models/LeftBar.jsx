@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Divider, Typography, IconButton } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { ChevronLeft } from "@mui/icons-material";
 import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
@@ -11,6 +12,7 @@ import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import InfoSessionModal from "./InfoSessionModal";
+import { useTranslation } from "react-i18next";
 
 export default function ModelsLeftBar({
   datasets = [],
@@ -27,15 +29,17 @@ export default function ModelsLeftBar({
   onToggle,
   handleNewSessionButton,
 }) {
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [openSections, setOpenSections] = useState({});
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
+  const { t } = useTranslation(["models", "datasets", "common"]);
 
   const getTaskDisplayName = React.useCallback(
     (taskName) => {
-      if (!taskName) return "Other";
+      if (!taskName) return t("common:other");
       const task = tasks.find((t) => t.name === taskName);
       return (
         task?.metadata?.display_name ||
@@ -96,10 +100,10 @@ export default function ModelsLeftBar({
   );
 
   const getDatasetDescription = (dataset) => {
-    return (
-      dataset.description ||
-      `${dataset.total_rows || 0} rows, ${dataset.total_columns || 0} cols`
-    );
+    return t("datasets:label.datasetDescription", {
+      rows: dataset.total_rows || 0,
+      columns: dataset.total_columns || 0,
+    });
   };
 
   const getSessionDescription = (session) => {
@@ -144,18 +148,18 @@ export default function ModelsLeftBar({
           <ChevronLeft />
         </IconButton>
       </Box>
-      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+      <Divider sx={{ width: "100%", bgcolor: theme.palette.ui.borderDark }} />
 
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title="New Dataset/Session"
+            title={t("models:button.newSession")}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
-            Models Module
+            {t("models:label.modelsModule")}
           </Typography>
         )}
       </Box>
@@ -163,13 +167,15 @@ export default function ModelsLeftBar({
       {/* Search bar global */}
       <Box px={2} pb={2} flex={"0 0 auto"}>
         <SearchBar
-          placeholder="Search Datasets and Sessions"
+          placeholder={t("models:label.searchDatasetsSessions")}
           value={searchQuery}
           onChange={handleSearchChange}
         />
       </Box>
 
-      <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+      <Divider
+        sx={{ width: "90%", bgcolor: theme.palette.ui.borderDark, mx: "auto" }}
+      />
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
@@ -180,12 +186,18 @@ export default function ModelsLeftBar({
           onItemDelete={onDatasetDelete}
           onItemEdit={onDatasetEdit}
           defaultOpen={true}
-          title="Available Datasets"
+          title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
         />
 
-        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+        <Divider
+          sx={{
+            width: "90%",
+            bgcolor: theme.palette.ui.borderDark,
+            mx: "auto",
+          }}
+        />
 
         <GroupedCollapsibleList
           groups={groupedSessions}
@@ -194,7 +206,7 @@ export default function ModelsLeftBar({
           onItemDelete={onSessionDelete}
           onItemEdit={onSessionEdit}
           onItemInfo={handleSessionInfo}
-          title="Sessions"
+          title={t("common:sessions")}
           Icon={Biotech}
           getItemDescription={getSessionDescription}
           initialOpenGroups={openSections}

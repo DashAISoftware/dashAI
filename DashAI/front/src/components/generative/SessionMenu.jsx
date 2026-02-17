@@ -12,6 +12,7 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
 import DeleteSessionConfirmationModal from "./DeleteSessionConfirmationModal";
+import { useTranslation } from "react-i18next";
 
 const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
   color: theme.palette.error.main,
@@ -23,6 +24,7 @@ const DeleteMenuItem = styled(MenuItem)(({ theme }) => ({
 export default function SessionMenu({ sessionId, onInfo, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const { t } = useTranslation(["common"]);
   const open = Boolean(anchorEl);
 
   const handleClick = (event) => {
@@ -53,7 +55,7 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
   return (
     <>
       <IconButton
-        aria-label="more options"
+        aria-label={t("common:moreOptions")}
         aria-controls={open ? "session-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
@@ -93,7 +95,7 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
           <ListItemIcon>
             <InfoIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Info</ListItemText>
+          <ListItemText>{t("common:info")}</ListItemText>
         </MenuItem>
         <Divider />
         <DeleteMenuItem
@@ -105,7 +107,7 @@ export default function SessionMenu({ sessionId, onInfo, onDelete }) {
           <ListItemIcon>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
+          <ListItemText>{t("common:delete")}</ListItemText>
         </DeleteMenuItem>
       </Menu>
       {/* Confirmation Modal */}

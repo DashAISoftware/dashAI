@@ -7,6 +7,7 @@ import {
   Box,
   Checkbox,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 function ResultsGraphsParameters({
   showCustomMetrics,
@@ -18,9 +19,10 @@ function ResultsGraphsParameters({
   setSelectedParameters,
   concatenatedMetrics,
 }) {
+  const theme = useTheme();
   return (
     <Box
-      bgcolor="#2F2F2F"
+      bgcolor={theme.palette.ui.panelLight}
       p={2}
       mr={1}
       display="flex"

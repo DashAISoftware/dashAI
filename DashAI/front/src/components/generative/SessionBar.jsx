@@ -1,16 +1,18 @@
 import { Box, Typography, Divider } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
-import SearchBar from "./SearchBar";
+import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
-import SessionBarHeader from "./SessionBarHeader";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
+import { useTranslation } from "react-i18next";
 
 export default function SessionBar({
+  tasks,
   sessions,
   selectedSessionId,
   handleSessionClick,
@@ -18,22 +20,39 @@ export default function SessionBar({
   handleSessionDelete,
   stepIndex,
 }) {
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
   const [openSections, setOpenSections] = useState({});
+  const { t } = useTranslation(["generative", "common"]);
+
+  console.log(tasks);
+  console.log(sessions);
+
+  // Create a map of task_name to display_name for quick lookup
+  const taskDisplayNameMap =
+    tasks?.reduce((map, task) => {
+      map[task.name] = task.display_name;
+      return map;
+    }, {}) || {};
 
   useEffect(() => {
-    // Initialize all sections as closed
-    const taskNames = [
-      ...new Set(sessions.map((session) => session.task_name || "Other")),
+    // Initialize all sections as closed based on unique task display names
+    const uniqueDisplayNames = [
+      ...new Set(
+        sessions.map(
+          (session) =>
+            taskDisplayNameMap[session.task_name] || t("common:other"),
+        ),
+      ),
     ];
     const initialOpenState = {};
-    taskNames.forEach((task) => {
-      initialOpenState[task] = false;
+    uniqueDisplayNames.forEach((displayName) => {
+      initialOpenState[displayName] = false;
     });
     setOpenSections(initialOpenState);
-  }, []);
+  }, [sessions, tasks]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -65,9 +84,12 @@ export default function SessionBar({
     }));
   };
 
-  // Group sessions by display_name
+  // Group sessions by task display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
-    const displayName = session.display_name || "Other";
+    // Get the display name from the task using the session's task_name
+    const displayName =
+      taskDisplayNameMap[session.task_name] || t("common:other");
+
     if (!groups[displayName]) {
       groups[displayName] = [];
     }
@@ -95,7 +117,7 @@ export default function SessionBar({
         >
           <BarHeader />
         </Box>
-        <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
         <Box
           p={2}
@@ -105,11 +127,11 @@ export default function SessionBar({
           {selectedSessionId ? (
             <NewItemButton
               onClick={handleNewSessionButton}
-              title="New Session"
+              title={t("generative:button.createSession")}
             />
           ) : (
             <Typography variant="body1" color="textSecondary">
-              Generative Module
+              {t("generative:label.generativeModule")}
             </Typography>
           )}
         </Box>
@@ -117,13 +139,13 @@ export default function SessionBar({
         {/* Search Bar */}
         <Box px={2} pb={2} flex={"0 0 auto"}>
           <SearchBar
-            placeholder={"Search Sessions"}
+            placeholder={t("generative:label.searchSessions")}
             value={searchQuery}
             onChange={handleSearchChange}
           />
         </Box>
 
-        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
         {/* Sessions */}
         <Box
@@ -140,12 +162,14 @@ export default function SessionBar({
           {/* Header */}
           <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
             <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
-            <Typography>Sessions</Typography>
+            <Typography color="text.primary">
+              {t("generative:label.sessions")}
+            </Typography>
             <Box
               sx={{
                 ml: 1,
-                bgcolor: "#374151",
-                color: "white",
+                bgcolor: theme.palette.ui.border,
+                color: "text.primary",
                 borderRadius: "50%",
                 width: 20,
                 height: 20,

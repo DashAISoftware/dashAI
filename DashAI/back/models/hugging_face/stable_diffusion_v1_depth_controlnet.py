@@ -17,6 +17,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -25,25 +26,48 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,
-        description=(
-            "Number of denoising steps. Higher usually leads to better quality but "
-            "slower inference."
+        description=MultilingualString(
+            en=(
+                "Number of denoising steps. Higher usually leads to better quality "
+                "but slower inference."
+            ),
+            es=(
+                "Número de pasos de eliminación de ruido. Más alto generalmente "
+                "lleva a mejor calidad pero inferencia más lenta."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Num inference steps", es="Número de pasos de inferencia"
         ),
     )  # type: ignore
 
     controlnet_conditioning_scale: schema_field(
         float_field(ge=0.0),
         placeholder=1.0,
-        description=(
-            "Scale for the ControlNet conditioning. Higher values make the model "
-            "follow the controlnet more closely."
+        description=MultilingualString(
+            en=(
+                "Scale for the ControlNet conditioning. Higher values make the model "
+                "follow the controlnet more closely."
+            ),
+            es=(
+                "Escala para el condicionamiento de ControlNet. Valores más altos "
+                "hacen que el modelo siga el controlnet más de cerca."
+            ),
+        ),
+        alias=MultilingualString(
+            en="ControlNet conditioning scale",
+            es="Escala de condicionamiento ControlNet",
         ),
     )  # type: ignore
 
     device: schema_field(
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
-        description="Device for generation. Use 'cuda' if GPU is available.",
+        description=MultilingualString(
+            en="Device for generation. Use 'cuda' if GPU is available.",
+            es="Dispositivo para generación. Use 'cuda' si GPU está disponible.",
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
 
 
@@ -81,6 +105,17 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
     diffusion xl 1.0 as pipeline."""
 
     SCHEMA = StableDiffusionXLV1ControlNetSchema
+    DISPLAY_NAME: str = MultilingualString(
+        en="Stable Diffusion XL V1 ControlNet",
+        es="Stable Diffusion XL V1 ControlNet",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="ControlNet with depth preprocessing and Stable Diffusion XL pipeline.",
+        es=(
+            "ControlNet con preprocesamiento de profundidad y pipeline de "
+            "Stable Diffusion XL."
+        ),
+    )
 
     def __init__(self, **kwargs: Any):
         """Initialize the generative model."""

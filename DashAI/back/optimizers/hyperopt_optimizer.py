@@ -9,6 +9,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
@@ -16,19 +17,41 @@ class HyperOptSchema(BaseSchema):
     n_trials: schema_field(
         int_field(gt=0),
         placeholder=10,
-        description="The parameter 'n_trials' is the quantity of trials"
-        "per study. It must be of type positive integer.",
+        description=MultilingualString(
+            en=(
+                "The quantity of trials per study. It must be of type positive integer."
+            ),
+            es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
+        ),
+        alias=MultilingualString(en="N trials", es="N pruebas"),
     )  # type: ignore
     sampler: schema_field(
         enum_field(enum=["tpe", "rand"]),
         placeholder="tpe",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
-        ". Must be in string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en=(
+                "The sampler algorithm to use for hyperparameter optimization. "
+                "Must be 'tpe' (Tree-structured Parzen Estimator) or 'rand' (Random)."
+            ),
+            es=(
+                "El algoritmo de muestreo a usar para la optimización de "
+                "hiperparámetros. Debe ser 'tpe' (Tree-structured Parzen Estimator) "
+                "o 'rand' (Aleatorio)."
+            ),
+        ),
+        alias=MultilingualString(en="Sampler", es="Muestreador"),
     )  # type: ignore
 
 
 class HyperOptOptimizer(BaseOptimizer):
-    DISPLAY_NAME: str = "HyperOpt Optimizer"
+    DISPLAY_NAME: str = MultilingualString(
+        en="HyperOpt Optimizer",
+        es="Optimizador HyperOpt",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Hyperparameter optimization using HyperOpt library.",
+        es="Optimización de hiperparámetros usando la librería HyperOpt.",
+    )
     COLOR: str = "#FF5722"
     SCHEMA = HyperOptSchema
 

@@ -18,6 +18,7 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import DebouncedColorPicker from "./DebouncedColorPicker";
+import { useTranslation } from "react-i18next";
 
 const COLORMAPS = [
   "Blackbody",
@@ -52,6 +53,7 @@ export default function ColorscaleSelector({ value, onChange }) {
           [1, "rgb(255,255,255)"],
         ],
   );
+  const { t } = useTranslation(["datasets"]);
 
   const applyArrayChange = (updated) => {
     setLocalArray(updated);
@@ -108,7 +110,7 @@ export default function ColorscaleSelector({ value, onChange }) {
               mb: 1.5,
             }}
           >
-            Color Scale Mode
+            {t("datasets:label.colorscaleMode")}
           </Typography>
           <ToggleButtonGroup
             value={mode}
@@ -133,8 +135,12 @@ export default function ColorscaleSelector({ value, onChange }) {
               },
             }}
           >
-            <ToggleButton value="preset">Preset Scale</ToggleButton>
-            <ToggleButton value="array">Custom Array</ToggleButton>
+            <ToggleButton value="preset">
+              {t("datasets:label.presetScale")}
+            </ToggleButton>
+            <ToggleButton value="array">
+              {t("datasets:label.customArray")}
+            </ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -159,11 +165,11 @@ export default function ColorscaleSelector({ value, onChange }) {
                 mb: 1.5,
               }}
             >
-              Select Colorscale
+              {t("datasets:label.selectColorscale")}
             </Typography>
             <TextField
               select
-              label="Colorscale"
+              label={t("datasets:label.colorscale")}
               variant="outlined"
               size="small"
               value={typeof value === "string" ? value : ""}
@@ -212,19 +218,18 @@ export default function ColorscaleSelector({ value, onChange }) {
                 mb: 1.5,
               }}
             >
-              Color Stops
+              {t("datasets:label.colorStops")}
             </Typography>
             {localArray.length < 2 && (
               <Alert severity="warning" sx={{ mb: 2 }}>
-                No color stops defined. Please add at least two color stops.
+                {t("datasets:label.atLeastTwoColorStopsRequired")}
               </Alert>
             )}
             {localArray.length >= 2 &&
               (localArray[0][0] !== 0 ||
                 localArray[localArray.length - 1][0] !== 1) && (
                 <Alert severity="warning" sx={{ mb: 2 }}>
-                  Color stops must include positions 0 at the start and 1 at the
-                  end.
+                  {t("datasets:label.firstLastStopsAtExtremes")}
                 </Alert>
               )}
 
@@ -306,7 +311,7 @@ export default function ColorscaleSelector({ value, onChange }) {
                       />
 
                       <DebouncedColorPicker
-                        label="Color"
+                        label={t("datasets:label.color")}
                         value={item[1]}
                         onChange={(color) => handleArrayColorChange(i, color)}
                       />
@@ -351,7 +356,7 @@ export default function ColorscaleSelector({ value, onChange }) {
                   },
                 }}
               >
-                Add Color Stop
+                {t("datasets:button.addColorStop")}
               </Button>
             </Stack>
           </Box>
