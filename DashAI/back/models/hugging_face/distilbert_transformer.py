@@ -476,8 +476,12 @@ class DistilBertTransformer(TextClassificationModel):
             weight_decay=custom_params.get("weight_decay"),
             log_train_every_n_epochs=custom_params.get("log_train_every_n_epochs"),
             log_train_every_n_steps=custom_params.get("log_train_every_n_steps"),
-            log_validation_every_n_epochs=custom_params.get("log_validation_every_n_epochs"),
-            log_validation_every_n_steps=custom_params.get("log_validation_every_n_steps"),
+            log_validation_every_n_epochs=custom_params.get(
+                "log_validation_every_n_epochs"
+            ),
+            log_validation_every_n_steps=custom_params.get(
+                "log_validation_every_n_steps"
+            ),
         )
         loaded_model.fitted = custom_params.get("fitted")
 
