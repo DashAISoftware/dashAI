@@ -29,7 +29,6 @@ transformers<5.0.0
 sacrebleu
 sentencepiece
 optuna
-setuptools
 hyperopt
 openpyxl
 httpx
