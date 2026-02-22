@@ -47,6 +47,7 @@ sentencepiece
 
 # Optimization / hyperparam tuning
 optuna
+setuptools
 hyperopt
 
 # Excel / IO / Utils
