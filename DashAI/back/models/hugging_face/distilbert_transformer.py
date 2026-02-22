@@ -449,6 +449,10 @@ class DistilBertTransformer(TextClassificationModel):
             "weight_decay": self.training_args_params.get("weight_decay"),
             "num_labels": self.num_labels,
             "fitted": self.fitted,
+            "log_train_every_n_epochs": self.log_train_every_n_epochs,
+            "log_train_every_n_steps": self.log_train_every_n_steps,
+            "log_validation_every_n_epochs": self.log_validation_every_n_epochs,
+            "log_validation_every_n_steps": self.log_validation_every_n_steps,
         }
 
         config.save_pretrained(filename)
@@ -470,6 +474,10 @@ class DistilBertTransformer(TextClassificationModel):
             learning_rate=custom_params.get("learning_rate"),
             device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
+            log_train_every_n_epochs=custom_params.get("log_train_every_n_epochs"),
+            log_train_every_n_steps=custom_params.get("log_train_every_n_steps"),
+            log_validation_every_n_epochs=custom_params.get("log_validation_every_n_epochs"),
+            log_validation_every_n_steps=custom_params.get("log_validation_every_n_steps"),
         )
         loaded_model.fitted = custom_params.get("fitted")
 
