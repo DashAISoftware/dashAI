@@ -280,7 +280,7 @@ class OpusMtEnESTransformer(TranslationModel):
         dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
 
         training_args = Seq2SeqTrainingArguments(
-            output_dir="DashAI/back/user_models/temp_checkpoints_opus-mt-en-es",
+            output_dir=None,
             save_steps=1,
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
@@ -312,9 +312,6 @@ class OpusMtEnESTransformer(TranslationModel):
 
         self.fitted = True
         trainer.train()
-        shutil.rmtree(
-            "DashAI/back/user_models/temp_checkpoints_opus-mt-en-es", ignore_errors=True
-        )
         return self
 
     def predict(self, x_pred: DashAIDataset) -> List:
