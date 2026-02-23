@@ -51,7 +51,7 @@ jobs:
           key: ${{ env.pythonLocation }}-${{ hashFiles('setup.py') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
 
       - name: Upgrade pip tools
-        run: python -m pip install --upgrade pip setuptools wheel
+        run: python -m pip install --upgrade "pip<24" "setuptools<82" "wheel<0.45"
       - run: python -m pip install --upgrade --upgrade-strategy eager -r requirements.txt
       - run: python -m pip install --upgrade --upgrade-strategy eager -r requirements-dev.txt
 

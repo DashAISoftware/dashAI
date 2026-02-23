@@ -28,6 +28,7 @@ torchvision
 transformers<5.0.0
 sacrebleu
 sentencepiece
+setuptools<82
 optuna
 hyperopt
 openpyxl
