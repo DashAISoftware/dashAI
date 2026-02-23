@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -6,6 +6,7 @@ import {
   DialogTitle,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactFlowProvider } from "reactflow";
 import CustomLayout from "../../components/custom/CustomLayout";
@@ -26,6 +27,8 @@ function NewPipeline() {
   const { pipelineId } = useParams();
   const navigate = useNavigate();
   const flowWrapperRef = useRef(null);
+  const theme = useTheme();
+  const [canvasMode, setCanvasMode] = useState("dark");
 
   const {
     // State
@@ -125,7 +128,7 @@ function NewPipeline() {
                 nodeHelp={nodeHelp}
               />
 
-              <Box sx={{ flexGrow: 1, p: 2, backgroundColor: "#f5f5f5" }}>
+              <Box sx={{ flexGrow: 1, p: 2, backgroundColor: theme.palette.background.default }}>
                 <PipelineToolbar
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}
@@ -133,6 +136,8 @@ function NewPipeline() {
                   nameError={nameError}
                   nameErrorMessage={nameErrorMessage}
                   handlePipelineNameChange={handlePipelineNameChange}
+                  canvasMode={canvasMode}
+                  setCanvasMode={setCanvasMode}
                 />
 
                 <PipelineDesigner
@@ -157,6 +162,7 @@ function NewPipeline() {
                   nodeIdCounter={nodeIdCounter}
                   setNodeIdCounter={setNodeIdCounter}
                   availableNodes={availableNodes}
+                  canvasMode={canvasMode}
                 />
               </Box>
 

@@ -21,19 +21,46 @@ const CustomNode = ({ data, isConnectable }) => {
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
 
+  const isLightCanvas = data.canvasMode === "light";
+
   const IconComponent = iconMap[data.icon] || SettingsIcon;
   const isDisabled =
     data.errors?.some((err) => err.includes("already exists")) ?? false;
-  const borderColor =
-    data.notConfigured && !isDisabled
+
+  // Light canvas mode: white nodes, yellow borders, black text
+  // Dark canvas mode: theme-aware colors
+  const borderColor = isLightCanvas
+    ? data.notConfigured && !isDisabled
+      ? "2px solid #f9a825"
+      : "1px solid #f9a825"
+    : data.notConfigured && !isDisabled
       ? `2px solid ${theme.palette.warning.main}`
       : `1px solid ${theme.palette.ui.borderLight}`;
-  const iconColor = isDisabled
-    ? theme.palette.text.secondary
-    : theme.palette.text.primary;
-  const bgColor = isDisabled
-    ? theme.palette.ui.panelMedium
-    : theme.palette.background.paper;
+
+  const iconColor = isLightCanvas
+    ? isDisabled
+      ? "#999999"
+      : "#333333"
+    : isDisabled
+      ? theme.palette.text.secondary
+      : theme.palette.text.primary;
+
+  const bgColor = isLightCanvas
+    ? isDisabled
+      ? "#f5f5f5"
+      : "#ffffff"
+    : isDisabled
+      ? theme.palette.ui.panelMedium
+      : theme.palette.background.paper;
+
+  const textColor = isLightCanvas ? "#1a1a1a" : theme.palette.text.primary;
+  const secondaryTextColor = isLightCanvas
+    ? "#666666"
+    : theme.palette.text.secondary;
+  const handleColor = isLightCanvas ? "#333333" : theme.palette.text.primary;
+  const handleDisabledColor = isLightCanvas
+    ? "#cccccc"
+    : theme.palette.ui.border;
 
   const nodeContent = (
     <Box
@@ -71,7 +98,7 @@ const CustomNode = ({ data, isConnectable }) => {
           }}
         >
           <CloseIcon
-            sx={{ fontSize: 10, color: theme.palette.text.secondary }}
+            sx={{ fontSize: 10, color: secondaryTextColor }}
           />
         </IconButton>
       )}
@@ -82,10 +109,10 @@ const CustomNode = ({ data, isConnectable }) => {
           position={Position.Left}
           style={{
             background: isDisabled
-              ? theme.palette.ui.border
+              ? handleDisabledColor
               : data.hasError
                 ? theme.palette.error.main
-                : theme.palette.text.primary,
+                : handleColor,
             width: 8,
             height: 8,
             borderRadius: "50%",
@@ -102,8 +129,8 @@ const CustomNode = ({ data, isConnectable }) => {
           position={Position.Right}
           style={{
             background: isDisabled
-              ? theme.palette.ui.border
-              : theme.palette.text.primary,
+              ? handleDisabledColor
+              : handleColor,
             width: 8,
             height: 8,
             borderRadius: "50%",
@@ -123,7 +150,7 @@ const CustomNode = ({ data, isConnectable }) => {
       }}
     >
       <Typography
-        sx={{ fontSize: 11, mb: 0.5, color: theme.palette.text.primary }}
+        sx={{ fontSize: 11, mb: 0.5, color: textColor }}
       >
         {data.name || data.label}
       </Typography>

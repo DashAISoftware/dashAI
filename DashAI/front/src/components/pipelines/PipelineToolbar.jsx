@@ -1,5 +1,8 @@
 import React from "react";
-import { Box, TextField, Button } from "@mui/material";
+import { Box, TextField, Button, IconButton, Tooltip } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
 
 function PipelineToolbar({
   pipelineName,
@@ -8,7 +11,15 @@ function PipelineToolbar({
   nameError,
   nameErrorMessage,
   handlePipelineNameChange,
+  canvasMode,
+  setCanvasMode,
 }) {
+  const theme = useTheme();
+
+  const toggleCanvasMode = () => {
+    setCanvasMode((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   return (
     <Box
       sx={{
@@ -16,6 +27,10 @@ function PipelineToolbar({
         justifyContent: "space-between",
         alignItems: "center",
         mb: 2,
+        p: 1.5,
+        borderRadius: 2,
+        backgroundColor: theme.palette.background.box,
+        border: `1px solid ${theme.palette.ui.borderLight}`,
       }}
     >
       <TextField
@@ -30,14 +45,37 @@ function PipelineToolbar({
         helperText={nameErrorMessage}
         sx={{
           mr: 2,
-          input: { color: "black" },
-          "& .MuiOutlinedInput-root fieldset": { borderColor: "black" },
-          "& label": { color: "black" },
+          input: { color: theme.palette.text.primary },
+          "& .MuiOutlinedInput-root fieldset": {
+            borderColor: theme.palette.ui.border,
+          },
+          "& label": { color: theme.palette.text.secondary },
         }}
       />
-      <Button variant="contained" color="primary" onClick={onRun}>
-        Run
-      </Button>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <Tooltip
+          title={
+            canvasMode === "dark"
+              ? "Switch to light canvas"
+              : "Switch to dark canvas"
+          }
+        >
+          <IconButton onClick={toggleCanvasMode} size="small">
+            {canvasMode === "dark" ? (
+              <LightModeIcon
+                sx={{ color: theme.palette.text.primary, fontSize: 22 }}
+              />
+            ) : (
+              <DarkModeIcon
+                sx={{ color: theme.palette.text.primary, fontSize: 22 }}
+              />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Button variant="contained" color="primary" onClick={onRun}>
+          Run
+        </Button>
+      </Box>
     </Box>
   );
 }
