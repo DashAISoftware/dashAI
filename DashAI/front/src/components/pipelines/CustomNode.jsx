@@ -97,9 +97,7 @@ const CustomNode = ({ data, isConnectable }) => {
             },
           }}
         >
-          <CloseIcon
-            sx={{ fontSize: 10, color: secondaryTextColor }}
-          />
+          <CloseIcon sx={{ fontSize: 10, color: secondaryTextColor }} />
         </IconButton>
       )}
 
@@ -128,9 +126,7 @@ const CustomNode = ({ data, isConnectable }) => {
           type="source"
           position={Position.Right}
           style={{
-            background: isDisabled
-              ? handleDisabledColor
-              : handleColor,
+            background: isDisabled ? handleDisabledColor : handleColor,
             width: 8,
             height: 8,
             borderRadius: "50%",
@@ -149,9 +145,7 @@ const CustomNode = ({ data, isConnectable }) => {
         alignItems: "center",
       }}
     >
-      <Typography
-        sx={{ fontSize: 11, mb: 0.5, color: textColor }}
-      >
+      <Typography sx={{ fontSize: 11, mb: 0.5, color: textColor }}>
         {data.name || data.label}
       </Typography>
 

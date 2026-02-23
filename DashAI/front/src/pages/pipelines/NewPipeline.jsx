@@ -128,7 +128,13 @@ function NewPipeline() {
                 nodeHelp={nodeHelp}
               />
 
-              <Box sx={{ flexGrow: 1, p: 2, backgroundColor: theme.palette.background.default }}>
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  p: 2,
+                  backgroundColor: theme.palette.background.default,
+                }}
+              >
                 <PipelineToolbar
                   pipelineName={pipelineName}
                   setPipelineName={setPipelineName}
