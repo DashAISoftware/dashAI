@@ -119,21 +119,6 @@ class SVCSchema(BaseSchema):
         ),
         alias=MultilingualString(en="max iterations", es="max iteraciones"),
     )  # type: ignore
-    probability: schema_field(
-        bool_field(),
-        placeholder=True,
-        description=MultilingualString(
-            en=(
-                "The parameter 'probability' indicates whether or not "
-                "to predict with probabilities."
-            ),
-            es=(
-                "El parámetro 'probabilidad' indica si "
-                "se debe predecir o no con probabilidades."
-            ),
-        ),
-        alias=MultilingualString(en="probability", es="probabilidad"),
-    )  # type: ignore
     shrinking: schema_field(
         bool_field(),
         placeholder=True,
@@ -205,4 +190,5 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
     CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
+        kwargs["probability"] = True
         super().__init__(**kwargs)

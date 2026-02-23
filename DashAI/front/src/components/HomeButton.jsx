@@ -20,7 +20,7 @@ function HomeButton({ title, description, to, Icon }) {
         to={to}
         component={RouterLink}
         underline="hover"
-        color="primary.contrastText"
+        color={theme.palette.text.primary}
       >
         {matches && (
           <Grid

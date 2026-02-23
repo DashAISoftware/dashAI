@@ -7,29 +7,36 @@ import BarHeader from "../threeSectionLayout/BarHeader";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
-export default function DatasetsNotebooksBar({
-  datasets = [],
-  selectedDatasetId,
-  notebooks = [],
-  selectedNotebookId,
-  onDatasetClick,
-  onDatasetDelete,
-  onDatasetEdit,
-  onNotebookClick,
-  onNotebookDelete,
-  onNotebookEdit,
-  onToggle,
-  handleNewSessionButton,
-}) {
-  const [searchQuery, setSearchQuery] = useState("");
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+
+export default function DatasetsNotebooksLeftBar({ onToggle }) {
+  const {
+    datasets,
+    notebooks,
+    selectedDatasetId,
+    selectedNotebookId,
+    selectDataset,
+    selectNotebook,
+    clearSelectedNotebook,
+    setStep,
+    setSelectedOption,
+    clearSelectedDataset,
+    deleteDatasetById,
+    removeNotebooksByDatasetId,
+    editDataset,
+    editNotebook,
+    deleteNotebookById,
+  } = useDatasetsAndNotebooks();
+
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
@@ -77,6 +84,48 @@ export default function DatasetsNotebooksBar({
         : t("datasets:label.noDataset");
     }
     return notebook.description || "";
+  };
+
+  const onDatasetClick = (id) => {
+    selectDataset(id);
+    clearSelectedNotebook();
+    setStep(0);
+    setSelectedOption("dataset");
+  };
+
+  const onNotebookClick = (id) => {
+    selectNotebook(id);
+    clearSelectedDataset();
+    setStep(0);
+    setSelectedOption("notebook");
+  };
+
+  const onDatasetDelete = async (id) => {
+    const success = await deleteDatasetById(id);
+    if (!success) return;
+    if (id === selectedDatasetId) {
+      clearSelectedDataset();
+      setStep(0);
+      setSelectedOption(null);
+    }
+    removeNotebooksByDatasetId(id);
+  };
+
+  const onNotebookDelete = async (id) => {
+    const success = await deleteNotebookById(id);
+    if (!success) return;
+    if (id === selectedNotebookId) {
+      clearSelectedNotebook();
+      setStep(0);
+      setSelectedOption(null);
+    }
+  };
+
+  const handleNewSessionButton = () => {
+    clearSelectedDataset();
+    clearSelectedNotebook();
+    setStep(0);
+    setSelectedOption(null);
   };
 
   return (
@@ -133,7 +182,7 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
-          onItemEdit={onDatasetEdit}
+          onItemEdit={editDataset}
           defaultOpen={true}
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
@@ -147,7 +196,7 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedNotebookId}
           onItemClick={onNotebookClick}
           onItemDelete={onNotebookDelete}
-          onItemEdit={onNotebookEdit}
+          onItemEdit={editNotebook}
           onItemInfo={handleNotebookInfo}
           defaultOpen={true}
           title={t("datasets:label.notebooks")}

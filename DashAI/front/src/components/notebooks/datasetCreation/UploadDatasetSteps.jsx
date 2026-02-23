@@ -4,13 +4,19 @@ import ConfigureAndUploadDatasetStep from "./ConfigureAndUploadDatasetStep";
 import DataloaderConfigBar from "./DataloaderConfigBar";
 import CustomLayout from "../../custom/CustomLayout";
 import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
-export default function UploadDatasetSteps({
-  backHome,
-  handleDatasetCreated,
-  existingDatasets = [],
-  renderRightBar,
-}) {
+export default function UploadDatasetSteps({ backHome }) {
+  const {
+    datasets,
+    addDatasetOptimistically,
+    setStep: setGlobalStep,
+    setSelectedOption,
+    clearSelectedNotebook,
+    startDatasetPolling,
+    setRightBarContent,
+  } = useDatasetsAndNotebooks();
+
   const [step, setStep] = useState(0);
   const [selectedDataloader, setSelectedDataloader] = useState({});
   const [formValues, setFormValues] = useState({});
@@ -46,22 +52,31 @@ export default function UploadDatasetSteps({
 
   // Update the right sidebar based on current step
   useEffect(() => {
-    if (renderRightBar) {
+    if (setRightBarContent) {
       if (step === 1 && Object.entries(selectedDataloader).length !== 0) {
-        renderRightBar(
+        setRightBarContent(
           <DataloaderConfigBar
             selectedDataloader={selectedDataloader.name}
             formSubmitRef={formSubmitRef}
             setError={setError}
-            existingDatasets={existingDatasets}
+            existingDatasets={datasets}
             onValuesChange={setFormValues}
           />,
         );
       } else {
-        renderRightBar(null);
+        setRightBarContent(null);
       }
     }
-  }, [step, selectedDataloader, existingDatasets, renderRightBar]);
+  }, [step, selectedDataloader, datasets, setRightBarContent]);
+
+  const handleDatasetCreated = (newDataset, datasetJob) => {
+    addDatasetOptimistically(newDataset);
+    setGlobalStep(0);
+    setSelectedOption("dataset");
+    clearSelectedNotebook();
+    setRightBarContent(null);
+    startDatasetPolling(newDataset, datasetJob);
+  };
 
   return (
     <CustomLayout

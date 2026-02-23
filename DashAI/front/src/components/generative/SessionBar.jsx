@@ -1,13 +1,13 @@
 import { Box, Typography, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
-import SearchBar from "./SearchBar";
+import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
 import { useTranslation } from "react-i18next";
 

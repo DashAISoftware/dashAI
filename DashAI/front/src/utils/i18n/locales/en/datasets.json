@@ -30,6 +30,8 @@
     "failedToCreateDataset": "Error creating dataset: {{error}}",
     "failedToCreateDatasetFromNotebook": "Failed to create dataset from notebook",
     "failedToCreateExplorer": "Failed to create explorer",
+    "failedToDeleteDataset": "Failed to delete dataset",
+    "failedToDeleteNotebook": "Failed to delete notebook",
     "failedToFetchDatasets": "Failed to fetch datasets",
     "failedToFetchNotebooks": "Failed to fetch notebooks",
     "failedToLoadDatasetInfo": "Failed to fetch dataset info",

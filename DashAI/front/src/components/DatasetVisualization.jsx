@@ -2,32 +2,23 @@ import { useCallback, useState, useEffect } from "react";
 import {
   Button,
   Grid,
-  Paper,
   Typography,
   CircularProgress,
   Box,
-  Chip,
   Alert,
   Divider,
   Tabs,
   Tab,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {
-  AddCircleOutline as AddIcon,
-  CheckCircle as CheckIcon,
-} from "@mui/icons-material";
+import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import {
   getDatasetFile,
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../api/datasets";
-import DatasetTable from "./notebooks/dataset/DatasetTable";
-import { getComponents } from "../api/component";
 import { useTourContext } from "./tour/TourProvider";
-import { useSnackbar } from "notistack";
 import JobQueueWidget from "./jobs/JobQueueWidget";
-import { getDatasetStatus } from "../utils/datasetStatus";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
@@ -39,63 +30,59 @@ import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
 import { useTranslation } from "react-i18next";
-
+import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
  * @param {Object} props
  * @param {Object} props.dataset - Dataset object containing id, name, file_path, status, and created date
- * @param {Function} props.onItemCreated - Callback function when a new item (notebook/session) is created
  * @param {Function} props.onNewItem - Callback function when "New Item" button is clicked
  * @param {string} [props.newItemButtonText="New Item"] - Custom text for the action button (e.g., "New Notebook", "New Session")
  * @param {Array} [props.existingItems=[]] - Array of existing items (notebooks/sessions) for validation
  */
 export default function DatasetVisualization({
   dataset,
-  onItemCreated,
   onNewItem,
   newItemButtonText = "New Item",
-  existingItems = [],
   tourContextType = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
 
-  if (!dataset) {
-    return (
-      <Box
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <CircularProgress sx={{ color: theme.palette.primary.main }} />
-        <Typography>{t("common:loading")}</Typography>
-      </Box>
-    );
-  }
-
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
 
+  const status = dataset.status;
+  const isProcessing = !(status === 3 || status === 4); // Finished or Error
+
+  const { fetchDatasets } = useDatasetsAndNotebooks();
+
   useEffect(() => {
+    if (!dataset) return;
+
     setTab(0);
     const fetchDatasetInfo = async () => {
-      if (isProcessing) return;
-
+      if (isProcessing) {
+        setTimeout(() => {
+          fetchDatasets();
+        }, 1000);
+        return;
+      }
       try {
-        const info = await getDatasetInfo(dataset.id);
+        const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
       } catch (error) {
         setDatasetInfo(null);
       }
     };
-
     fetchDatasetInfo();
-  }, [dataset.id, dataset.status]);
+  }, [dataset]);
 
   // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
-      if (isProcessing) return { rows: [], total: 0 };
+      if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
         // Use getDatasetFile if no filters, else use getDatasetFileFiltered
         const hasFilters =
@@ -118,11 +105,23 @@ export default function DatasetVisualization({
         return { rows: [], total: 0 };
       }
     },
-    [dataset.file_path, dataset.status, dataset.id],
+    [
+      dataset && dataset.file_path,
+      dataset && dataset.status,
+      dataset && dataset.id,
+    ],
   );
 
-  const status = dataset.status;
-  const isProcessing = !(status === 3 || status === 4); // Finished or Error
+  if (!dataset) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+        <Typography>{t("common:loading")}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <>

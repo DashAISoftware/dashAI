@@ -18,7 +18,7 @@ export default function SearchBar({ placeholder, onChange, value }) {
           borderRadius: 1,
         },
         "& .MuiInputBase-input": {
-          color: "white",
+          color: theme.palette.text.primary,
           py: 1,
           fontSize: "0.875rem",
         },

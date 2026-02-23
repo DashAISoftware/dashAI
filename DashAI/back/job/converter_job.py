@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import List
 
 from kink import inject
@@ -258,18 +257,6 @@ class ConverterListJob(BaseJob):
                 raise JobError(f"Cannot load dataset from {dataset_path}") from e
 
             try:
-                # Get the absolute path to the converters directory
-                current_file = Path(__file__)
-                project_root = (
-                    current_file.parent.parent.parent
-                )  # Go up three levels to reach project root
-                converters_base_path = project_root / "back" / "converters"
-
-                if not converters_base_path.exists():
-                    raise JobError(
-                        f"Converters directory not found at {converters_base_path}"
-                    )
-
                 # Get stored converter configurations
                 converters_stored_info = {
                     converter_list.converter: converter_list.parameters

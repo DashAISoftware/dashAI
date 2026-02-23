@@ -15,7 +15,6 @@
     "parameterChangeEvent": "Parámetros actualizados: <1></1>",
     "parameterChangeHistory": "Historial de cambios de parámetros para la sesión actual",
     "searchSessions": "Buscar Sesiones",
-    "searchTasks": "Buscar Tareas",
     "selectGenerativeTask": "Seleccione una tarea generativa para comenzar una nueva sesión",
     "selectModelAndConfigureParameters": "Seleccione un modelo y configure sus parámetros.",
     "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",

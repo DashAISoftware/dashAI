@@ -2,7 +2,6 @@ import api from "./api";
 import { INotebook } from "../types/notebook";
 import { IExplorer } from "../types/explorer";
 import { IConverter } from "../types/converter";
-import { IDataset } from "../types/dataset";
 
 const notebookEndpoint = "/v1/notebook";
 
@@ -39,8 +38,9 @@ export const getConvertersByNotebookId = async (
   return response.data;
 };
 
-export const deleteNotebook = async (id: number): Promise<void> => {
-  await api.delete(`${notebookEndpoint}/${id}`);
+export const deleteNotebook = async (id: number): Promise<object> => {
+  const response = await api.delete(`${notebookEndpoint}/${id}`);
+  return response;
 };
 
 export const updateNotebook = async (
