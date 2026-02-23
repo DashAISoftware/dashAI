@@ -1,6 +1,5 @@
 """OpusMtEnESTransformer model for english-spanish translation DashAI implementation."""
 
-import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 

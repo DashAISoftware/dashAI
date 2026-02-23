@@ -1,6 +1,5 @@
 """DashAI implementation of DistilBERT model for english classification."""
 
-import shutil
 from pathlib import Path
 from typing import Any, Union
 
