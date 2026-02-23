@@ -1,7 +1,6 @@
 # Nota: Tuvimos que volver a usar este tipo de requirements en vez de compilar el .in
 # pip-compile rompia todo el CI/CD ya que no dejaba elegir bien que version de torch usar
-
-setuptools>=65.0.0
+setuptools>=65.0.0,<82
 fastapi[all]
 SQLAlchemy
 streaming_form_data
