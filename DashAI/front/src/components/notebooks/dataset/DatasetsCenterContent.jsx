@@ -23,6 +23,7 @@ export default function DatasetsCenterContent() {
     setSelectedOption,
     clearSelectedDataset,
     clearSelectedNotebook,
+    setRightBarContent,
   } = useDatasetsAndNotebooks();
 
   const tourContext = useTourContext();
