@@ -6,7 +6,12 @@ export default function SelectTaskMenu({ tasks, goToNextStep }) {
 
   return (
     <SelectOptionMenu
-      goToNextStep={() => goToNextStep(task.name, task.display_name)}
+      goToNextStep={(taskName) =>
+        goToNextStep(
+          taskName,
+          tasks.find((t) => t.name === taskName).display_name,
+        )
+      }
       title={t("generative:label.generativeModule")}
       subtitle={t("generative:label.selectGenerativeTask")}
       options={tasks.map((task) => ({

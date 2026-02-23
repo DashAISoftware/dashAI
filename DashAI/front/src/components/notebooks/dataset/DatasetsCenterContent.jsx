@@ -15,6 +15,7 @@ export default function DatasetsCenterContent() {
     selectNotebook,
     selectedDatasetId,
     selectedNotebookId,
+    setRightBarContent,
     step,
     fetchDatasets,
     fetchNotebooks,
