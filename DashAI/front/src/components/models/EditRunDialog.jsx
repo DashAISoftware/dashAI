@@ -185,9 +185,9 @@ function EditRunDialog({
   const isStep1Valid = Boolean(run?.model_name && name.trim() !== "");
   const isStep2Valid = Boolean(
     selectedOptimizer &&
-      optimizerParameters &&
-      Object.keys(optimizerParameters).length > 0 &&
-      goalMetric,
+    optimizerParameters &&
+    Object.keys(optimizerParameters).length > 0 &&
+    goalMetric,
   );
 
   if (!run) {
