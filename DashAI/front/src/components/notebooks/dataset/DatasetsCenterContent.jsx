@@ -15,6 +15,7 @@ export default function DatasetsCenterContent() {
     selectNotebook,
     selectedDatasetId,
     selectedNotebookId,
+    setRightBarContent,
     step,
     fetchDatasets,
     fetchNotebooks,
@@ -23,7 +24,6 @@ export default function DatasetsCenterContent() {
     setSelectedOption,
     clearSelectedDataset,
     clearSelectedNotebook,
-    setRightBarContent,
   } = useDatasetsAndNotebooks();
 
   const tourContext = useTourContext();
