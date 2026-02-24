@@ -10,7 +10,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { ChevronRight, Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
 import { useTranslation } from "react-i18next";

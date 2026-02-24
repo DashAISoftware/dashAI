@@ -6,8 +6,7 @@ import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
 import { getSessions, removeSession } from "../../api/session";
-import JobQueueWidget from "../../components/jobs/JobQueueWidget";
-import CenterBox from "../../components/threeSectionLayout/CenterBox";
+import CenterBox from "../../components/threeSectionLayout/panelContainers/CenterBox";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 

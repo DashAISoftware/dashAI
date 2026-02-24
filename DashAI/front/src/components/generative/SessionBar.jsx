@@ -7,7 +7,7 @@ import InfoSessionModal from "./InfoSessionModal";
 import Footer from "./Footer";
 import SessionList from "./SessionList";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
 import { useTranslation } from "react-i18next";
 
