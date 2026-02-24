@@ -30,7 +30,8 @@ function PipelineResults({ pipelineId, onClose }) {
   /** Returns true when the pipeline has at least one result section populated. */
   const hasAnyResult = useCallback((data) => {
     if (!data) return false;
-    const hasExpl = data.exploration && data.exploration !== "No exploration data";
+    const hasExpl =
+      data.exploration && data.exploration !== "No exploration data";
     const hasTr = data.train && Object.keys(data.train).length > 0;
     const hasPred = data.prediction && data.prediction !== "No prediction data";
     return hasExpl || hasTr || hasPred;
