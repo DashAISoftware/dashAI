@@ -12,8 +12,10 @@ import {
   Paper,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline, DeleteOutline } from "@mui/icons-material";
-import { renderInputField } from "./renderInputField";
+import InputField from "./InputField";
+import { useTranslation } from "react-i18next";
 
 export default function ManualInputForm({
   types,
@@ -23,7 +25,9 @@ export default function ManualInputForm({
   manualInputData,
   setManualInputData,
 }) {
+  const theme = useTheme();
   const [rows, setRows] = useState(createInitialRows());
+  const { t } = useTranslation(["prediction"]);
 
   function createInitialRows() {
     if (manualInputData && manualInputData.length > 0) {
@@ -81,7 +85,7 @@ export default function ManualInputForm({
     <Box
       sx={{
         borderRadius: 1,
-        color: "white",
+        color: theme.palette.text.primary,
         maxWidth: "100%",
         mx: "auto",
         height: "100%",
@@ -90,50 +94,118 @@ export default function ManualInputForm({
       onSubmit={handleSubmit}
     >
       <Typography variant="h6" mb={2} fontWeight={600}>
-        Manual Input
+        {t("prediction:label.manualInputData")}
       </Typography>
-      <Typography variant="body2" mb={3} color="text.secondary">
-        Enter data manually for prediction. Fill in the fields below and submit
-        when ready.
+      <Typography
+        variant="body2"
+        mb={3}
+        sx={{ color: theme.palette.text.secondary }}
+      >
+        {t("prediction:label.provideManualInput")}
       </Typography>
 
-      <TableContainer component={Paper} sx={{ p: 1 }}>
-        <Table size="small">
+      <TableContainer
+        component={Paper}
+        sx={{
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 1,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        }}
+      >
+        <Table
+          size="small"
+          sx={{
+            "& .MuiTableCell-root": {
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              padding: "8px 12px",
+            },
+          }}
+        >
           <TableHead>
-            <TableRow>
+            <TableRow
+              sx={{
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? "rgba(255, 255, 255, 0.05)"
+                    : "rgba(0, 0, 0, 0.02)",
+              }}
+            >
               {inputColumns.map((col) => (
-                <TableCell key={col} sx={{ color: "#fff", fontWeight: 600 }}>
+                <TableCell
+                  key={col}
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    color: theme.palette.text.primary,
+                    textTransform: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {col}
                 </TableCell>
               ))}
-              <TableCell sx={{ color: "#fff", fontWeight: 600 }}>
-                Remove
+              <TableCell
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  color: theme.palette.text.primary,
+                  width: "60px",
+                  textAlign: "center",
+                }}
+              >
+                {t("common:remove")}
               </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {rows.map((row, rowIndex) => (
-              <TableRow key={rowIndex}>
+              <TableRow
+                key={rowIndex}
+                sx={{
+                  "&:hover": {
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255, 255, 255, 0.03)"
+                        : "rgba(0, 0, 0, 0.01)",
+                  },
+                  "&:last-child .MuiTableCell-root": {
+                    borderBottom: "none",
+                  },
+                }}
+              >
                 {inputColumns.map((col) => (
-                  <TableCell key={col} sx={{ color: "#fff" }}>
-                    {renderInputField(
-                      handleChange,
-                      rowIndex,
-                      col,
-                      types[col],
-                      row[col],
-                      sample[col][0],
-                    )}
+                  <TableCell
+                    key={col}
+                    sx={{
+                      color: theme.palette.text.primary,
+                      padding: "6px 12px",
+                    }}
+                  >
+                    <InputField
+                      handleChange={handleChange}
+                      rowIndex={rowIndex}
+                      col={col}
+                      typeInfo={types[col]}
+                      value={row[col]}
+                      placeholder={sample[col][0]}
+                    />
                   </TableCell>
                 ))}
-                <TableCell>
+                <TableCell sx={{ padding: "6px 12px", textAlign: "center" }}>
                   <IconButton
-                    color="error"
+                    size="small"
+                    sx={{
+                      color: theme.palette.error.main,
+                      "&:hover": {
+                        backgroundColor: theme.palette.error.light + "20",
+                      },
+                    }}
                     onClick={() => handleDeleteRow(rowIndex)}
                     disabled={rows.length === 1}
                   >
-                    <DeleteOutline />
+                    <DeleteOutline fontSize="small" />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -142,14 +214,17 @@ export default function ManualInputForm({
         </Table>
       </TableContainer>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
         <Button
           startIcon={<AddCircleOutline />}
-          variant="contained"
-          color="primary"
+          variant="outlined"
           onClick={handleAddRow}
+          sx={{
+            textTransform: "none",
+            fontWeight: 500,
+          }}
         >
-          Add row
+          {t("common:addRow")}
         </Button>
       </Box>
     </Box>

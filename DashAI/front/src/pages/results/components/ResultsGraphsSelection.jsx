@@ -1,8 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Button } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import { useTheme } from "@mui/material/styles";
 
 function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
+  const { t } = useTranslation(["models"]);
+  const theme = useTheme();
   return (
     <Box p={2} mb={2}>
       <Button
@@ -12,13 +16,13 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
         style={{
           borderBottom:
             selectedChart === "radar"
-              ? "2px solid #00bebb"
-              : "2px solid #ffffff",
+              ? `2px solid ${theme.palette.primary.main}`
+              : `2px solid ${theme.palette.text.primary}`,
           marginRight: "30px",
           marginTop: "-15px",
         }}
       >
-        Radar
+        {t("models:label.radar")}
       </Button>
       <Button
         variant="text"
@@ -26,11 +30,13 @@ function ResultsGraphsSelection({ selectedChart, handleChangeChart }) {
         onClick={() => handleChangeChart("bar")}
         style={{
           borderBottom:
-            selectedChart === "bar" ? "2px solid #00bebb" : "2px solid #ffffff",
+            selectedChart === "bar"
+              ? `2px solid ${theme.palette.primary.main}`
+              : `2px solid ${theme.palette.text.primary}`,
           marginTop: "-15px",
         }}
       >
-        Bar
+        {t("models:label.bar")}
       </Button>
       {/* <Button
         variant="text"

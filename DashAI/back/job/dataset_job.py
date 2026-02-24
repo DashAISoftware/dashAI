@@ -170,13 +170,15 @@ class DatasetJob(BaseJob):
                         n_sample=n_sample,
                     )
 
-                if "inferred_types" in params:
-                    schema = params["inferred_types"]
-                else:
-                    schema = infer_types(new_dataset.to_pandas(), method="DashAIPtype")
+                    if "inferred_types" in params:
+                        schema = params["inferred_types"]
+                    else:
+                        schema = infer_types(
+                            new_dataset.to_pandas(), method="DashAIPtype"
+                        )
 
-                # Cast dataset to inferred types
-                new_dataset = transform_dataset_with_schema(new_dataset, schema)
+                    # Cast dataset to inferred types
+                    new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
                 # Calculate metadata
                 new_dataset.compute_metadata()

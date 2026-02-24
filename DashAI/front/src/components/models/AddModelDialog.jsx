@@ -23,6 +23,7 @@ import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
+import { useTranslation } from "react-i18next";
 
 /**
  * Dialog for adding a new model run to a session
@@ -52,6 +53,7 @@ function AddModelDialog({
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
+  const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: selectedModel,
@@ -85,8 +87,8 @@ function AddModelDialog({
   }, [modelParameters]);
 
   const steps = hasOptimizableParams
-    ? ["Configure Model", "Configure Optimizer"]
-    : ["Configure Model"];
+    ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
+    : [t("models:label.configureModel")];
 
   const handleModelParametersChange = useCallback((values) => {
     setModelParameters(values);
@@ -158,7 +160,7 @@ function AddModelDialog({
   const handleNext = () => {
     if (activeStep === 0) {
       if (!selectedModel) {
-        enqueueSnackbar("No model selected", {
+        enqueueSnackbar(t("models:error.noModelSelected"), {
           variant: "error",
         });
         handleClose();
@@ -166,7 +168,7 @@ function AddModelDialog({
       }
 
       if (name.trim() === "") {
-        enqueueSnackbar("Please enter a name for the model", {
+        enqueueSnackbar(t("models:error.enterModelName"), {
           variant: "warning",
         });
         return;
@@ -177,7 +179,7 @@ function AddModelDialog({
           run.name && run.name.toLowerCase() === name.trim().toLowerCase(),
       );
       if (nameExists) {
-        enqueueSnackbar("A run with this name already exists", {
+        enqueueSnackbar(t("models:error.runNameExists", { name }), {
           variant: "error",
         });
         return;
@@ -218,7 +220,7 @@ function AddModelDialog({
         "",
       );
 
-      enqueueSnackbar(`Run "${name}" created successfully`, {
+      enqueueSnackbar(t("models:message.runCreatedSuccess", { name }), {
         variant: "success",
       });
 
@@ -238,7 +240,7 @@ function AddModelDialog({
         console.error("Unknown Error", error.message);
       }
 
-      enqueueSnackbar(`Error while trying to create a new run: ${name}`, {
+      enqueueSnackbar(t("models:error.createRun", { name }), {
         variant: "error",
       });
     } finally {
@@ -279,7 +281,7 @@ function AddModelDialog({
             justifyContent: "space-between",
           }}
         >
-          Add Model to Session
+          {t("models:label.addModelToSession")}
           <IconButton
             onClick={handleClose}
             size="small"
@@ -302,7 +304,7 @@ function AddModelDialog({
         {activeStep === 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <TextField
-              label="Model Name"
+              label={t("common:modelName")}
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -310,14 +312,14 @@ function AddModelDialog({
               }}
               fullWidth
               required
-              placeholder="Model Name"
+              placeholder={t("common:modelName")}
               helperText={selectedModel ? `Model: ${selectedModel}` : ""}
             />
 
             {selectedModel && (
               <Box data-tour="model-config">
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                  Model Parameters
+                  {t("common:modelParameters")}
                 </Typography>
                 <FormSchemaContainer key={selectedModel}>
                   <FormSchemaWithSelectedModel
@@ -337,12 +339,12 @@ function AddModelDialog({
         {activeStep === 1 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             <Typography variant="subtitle2">
-              Configure Hyperparameter Optimizer
+              {t("models:label.optimizerConfiguration")}
             </Typography>
 
             <Box>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                Goal Metric *
+                {t("models:label.goalMetric")} *
               </Typography>
               <ModelsTableSelectMetric
                 taskName={session?.task_name}
@@ -361,7 +363,7 @@ function AddModelDialog({
             {selectedOptimizer && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                  Optimizer Parameters
+                  {t("models:label.optimizerParameters")}
                 </Typography>
                 <FormSchemaContainer>
                   <FormSchemaWithSelectedModel
@@ -381,11 +383,11 @@ function AddModelDialog({
 
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} disabled={loading}>
-          Cancel
+          {t("common:cancel")}
         </Button>
         {activeStep > 0 && (
           <Button onClick={handleBack} disabled={loading}>
-            Back
+            {t("common:back")}
           </Button>
         )}
         <Button
@@ -398,7 +400,9 @@ function AddModelDialog({
             (activeStep === 1 && !isStep2Valid)
           }
         >
-          {activeStep === steps.length - 1 ? "Add Model" : "Next"}
+          {activeStep === steps.length - 1
+            ? t("common:addModel")
+            : t("common:next")}
         </Button>
       </DialogActions>
     </Dialog>

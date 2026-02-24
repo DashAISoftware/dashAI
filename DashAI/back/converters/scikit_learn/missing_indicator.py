@@ -6,6 +6,7 @@ from DashAI.back.converters.category.basic_preprocessing import (
 )
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer
 
@@ -19,10 +20,14 @@ class MissingIndicator(
 ):
     """Scikit-learn's MissingIndicator wrapper for DashAI."""
 
-    CATEGORY = "Basic Preprocessing"
     SCHEMA = MissingIndicatorSchema
-    DESCRIPTION = "Binary indicators for missing values."
-    DISPLAY_NAME = "Missing Indicator"
+    DESCRIPTION = MultilingualString(
+        en="Binary indicators for missing values.",
+        es="Indicadores binarios para valores faltantes.",
+    )
+    DISPLAY_NAME = MultilingualString(
+        en="Missing Indicator", es="Indicador de Faltantes"
+    )
     IMAGE_PREVIEW = "missing_indicator.png"
 
     def __init__(self, **kwargs):

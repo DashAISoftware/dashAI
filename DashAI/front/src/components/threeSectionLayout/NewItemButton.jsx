@@ -1,7 +1,11 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Box, Button } from "@mui/material";
+import { t } from "i18next";
 
-export default function NewItemButton({ onClick, title = "New Item" }) {
+export default function NewItemButton({
+  onClick,
+  title = t("common:newItem", "New Item"),
+}) {
   return (
     <Button
       variant="contained"

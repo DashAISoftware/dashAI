@@ -25,7 +25,7 @@ import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
 import PredictionCreationDialog from "./PredictionCreationDialog";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
-import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 /**
  * RunOperations component - Shows explainers and predictions for a finished run
@@ -52,6 +52,8 @@ export default function RunOperations({
     localExplainers: false,
     predictions: false,
   });
+
+  const { t } = useTranslation(["models"]);
 
   const fetchOperations = useCallback(async () => {
     if (!run || !run.id) return;
@@ -141,7 +143,9 @@ export default function RunOperations({
           endIcon={operationsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           sx={{ textTransform: "none" }}
         >
-          {operationsVisible ? "Hide Operations" : "Show Operations"}
+          {operationsVisible
+            ? t("models:button.hideOperations")
+            : t("models:button.showOperations")}
           <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
         </Button>
       </Box>
@@ -158,7 +162,7 @@ export default function RunOperations({
               sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}
             >
               <Typography variant="body2" fontWeight="medium">
-                Global Explainers
+                {t("models:label.globalExplainers")}
               </Typography>
               <Chip
                 label={globalExplainers.length}
@@ -176,7 +180,7 @@ export default function RunOperations({
                 onClick={() => setGlobalDialogOpen(true)}
                 fullWidth
               >
-                New Global Explainer
+                {t("models:button.createGlobalExplainer")}
               </Button>
               {globalExplainers.length === 0 ? (
                 <Typography
@@ -184,7 +188,7 @@ export default function RunOperations({
                   color="text.secondary"
                   align="center"
                 >
-                  No global explainers yet
+                  {t("models:label.noGlobalExplainersYet")}
                 </Typography>
               ) : (
                 globalExplainers.map((explainer) => (
@@ -212,7 +216,7 @@ export default function RunOperations({
               sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}
             >
               <Typography variant="body2" fontWeight="medium">
-                Local Explainers
+                {t("models:label.localExplainers")}
               </Typography>
               <Chip
                 label={localExplainers.length}
@@ -230,7 +234,7 @@ export default function RunOperations({
                 onClick={() => setLocalDialogOpen(true)}
                 fullWidth
               >
-                New Local Explainer
+                {t("models:button.createLocalExplainer")}
               </Button>
               {localExplainers.length === 0 ? (
                 <Typography
@@ -238,7 +242,7 @@ export default function RunOperations({
                   color="text.secondary"
                   align="center"
                 >
-                  No local explainers yet
+                  {t("models:label.noLocalExplainersYet")}
                 </Typography>
               ) : (
                 localExplainers.map((explainer) => (
@@ -265,7 +269,7 @@ export default function RunOperations({
               sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}
             >
               <Typography variant="body2" fontWeight="medium">
-                Predictions
+                {t("models:label.predictions")}
               </Typography>
               <Chip label={predictions.length} size="small" color="primary" />
             </Box>
@@ -279,7 +283,7 @@ export default function RunOperations({
                 onClick={() => setPredictionDialogOpen(true)}
                 fullWidth
               >
-                New Prediction
+                {t("models:button.newPrediction")}
               </Button>
               {predictions.length === 0 ? (
                 <Typography
@@ -287,7 +291,7 @@ export default function RunOperations({
                   color="text.secondary"
                   align="center"
                 >
-                  No predictions yet
+                  {t("models:label.noPredictionsYet")}
                 </Typography>
               ) : (
                 predictions.map((prediction) => (

@@ -10,11 +10,7 @@ import NewLocalExplainerModal from "./NewLocalExplainerModal";
 import ExplainersGrid from "./ExplainersGrid";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
-
-const tabs = [
-  { label: "Global Explanations", value: 0, disabled: false },
-  { label: "Local Explanations", value: 1, disabled: false },
-];
+import { useTranslation } from "react-i18next";
 
 export default function ExplainersDashboard() {
   const { id } = useParams();
@@ -26,6 +22,7 @@ export default function ExplainersDashboard() {
     useState(false);
   const [showNewLocalExplainerModal, setShowNewLocalExplainerModal] =
     useState(false);
+  const { t } = useTranslation(["explainers"]);
 
   const handleNewGlobalExplainerModal = () => {
     setShowNewGlobalExplainerModal(true);
@@ -37,6 +34,19 @@ export default function ExplainersDashboard() {
 
   const [currentTab, setCurrentTab] = useState(0);
 
+  const tabs = [
+    {
+      label: t("explainers:label.globalExplanations"),
+      value: 0,
+      disabled: false,
+    },
+    {
+      label: t("explainers:label.localExplanations"),
+      value: 1,
+      disabled: false,
+    },
+  ];
+
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
   };
@@ -46,7 +56,12 @@ export default function ExplainersDashboard() {
     taskName: taskName,
   };
 
-  const ExplainersTable = ({ scope, handleNewExplainer, description }) => {
+  const ExplainersTable = ({
+    scope,
+    title,
+    handleNewExplainer,
+    description,
+  }) => {
     return (
       <Grid size={{ xs: 12 }}>
         <Paper sx={{ py: 2, px: 2 }}>
@@ -58,7 +73,7 @@ export default function ExplainersDashboard() {
             sx={{ mb: 4 }}
           >
             <Typography variant="h4" component="h2">
-              {scope.charAt(0).toUpperCase() + scope.slice(1)} explanations
+              {title}
             </Typography>
             <Grid>
               <TimestampWrapper
@@ -73,7 +88,7 @@ export default function ExplainersDashboard() {
                   onClick={handleNewExplainer}
                   endIcon={<AddIcon />}
                 >
-                  Add {scope} Explainer
+                  {t("explainers:button.addExplainer")}
                 </Button>
               </TimestampWrapper>
             </Grid>
@@ -105,11 +120,12 @@ export default function ExplainersDashboard() {
         explainerConfig={explainerConfig}
       />
       <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-        Explanations dashboard for model {modelName}
+        {t("explainers:label.explainersDashboardTitle", {
+          modelName: modelName,
+        })}
       </Typography>
       <Typography variant="h6" component="h1" sx={{ mb: 3 }}>
-        Configure global or local explainers for your trained model to explore
-        and understand its decision-making process.
+        {t("explainers:label.explainersDashboardDescription")}
       </Typography>
       <TimestampWrapper eventName={TIMESTAMP_KEYS.explainer.leavingDashboard}>
         <Button
@@ -118,7 +134,7 @@ export default function ExplainersDashboard() {
             navigate(`/app/explainers`);
           }}
         >
-          Return to table
+          {t("explainers:button.backToExplainers")}
         </Button>
       </TimestampWrapper>
 
@@ -136,19 +152,17 @@ export default function ExplainersDashboard() {
         {currentTab === 0 && (
           <ExplainersTable
             scope={"global"}
+            title={t("explainers:label.globalExplanations")}
             handleNewExplainer={handleNewGlobalExplainerModal}
-            description={
-              "Global explanations describe how the overall machine learning model works."
-            }
+            description={t("explainers:label.globalExplanationsDescription")}
           />
         )}
         {currentTab === 1 && (
           <ExplainersTable
             scope={"local"}
+            title={t("explainers:label.localExplanations")}
             handleNewExplainer={handleNewLocalExplainerModal}
-            description={
-              "Local explanations explain model predictions for an specific instance."
-            }
+            description={t("explainers:label.localExplanationsDescription")}
           />
         )}
       </Grid>

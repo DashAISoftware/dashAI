@@ -6,12 +6,15 @@ import {
   CardActionArea,
 } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 export default function TaskSelector({ tasks, selectedTask, onTaskSelect }) {
+  const { t } = useTranslation(["models"]);
+
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        Select a Task
+        {t("models:label.selectTask")}
       </Typography>
       <Box
         sx={{

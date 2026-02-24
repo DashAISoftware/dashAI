@@ -2,6 +2,7 @@ import { updatePlugin as updatePluginRequest } from "../../../api/plugins";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 import { PluginStatus } from "../../../types/plugin";
+import { useTranslation } from "react-i18next";
 
 /**
  * custom hook for updating a plugin status
@@ -13,6 +14,7 @@ import { PluginStatus } from "../../../types/plugin";
 export default function usePluginsUpdate({ pluginId, newStatus, onSuccess }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation(["plugins"]);
 
   const updatePlugin = async () => {
     try {
@@ -22,18 +24,18 @@ export default function usePluginsUpdate({ pluginId, newStatus, onSuccess }) {
       onSuccess && onSuccess();
       switch (newStatus) {
         case PluginStatus.INSTALLED:
-          enqueueSnackbar("Plugin installed", {
+          enqueueSnackbar(t("plugins:message.pluginInstalled"), {
             variant: "success",
           });
           break;
         case PluginStatus.REGISTERED:
-          enqueueSnackbar("Plugin uninstalled", {
+          enqueueSnackbar(t("plugins:message.pluginUninstalled"), {
             variant: "success",
           });
           break;
       }
     } catch (error) {
-      enqueueSnackbar("Error while installing plugin.", {
+      enqueueSnackbar(t("plugins:error.installingPlugin"), {
         variant: "error",
       });
     }

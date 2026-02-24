@@ -10,6 +10,7 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   Edit as EditIcon,
   Settings as SettingsIcon,
@@ -32,12 +33,15 @@ import { useSnackbar } from "notistack";
 import OptimizationTableSelectOptimizer from "../../../components/experiments/OptimizationTableSelectOptimizer";
 import { getColorByStatus } from "../../../utils";
 import LiveMetricsChart from "./LiveMetricsChart";
+import { useTranslation } from "react-i18next";
+import { getRunStatus } from "../../../utils/runStatus";
 
 /**
  * Component that displays general information associated with a run.
  * @param {object} runData object that contains all the necessary info of the run
  */
 function ResultsTabInfo({ runData, handleRun }) {
+  const theme = useTheme();
   const [localRun, setLocalRun] = React.useState(structuredClone(runData));
   const [openParametersDialog, setOpenParametersDialog] = useState(false);
   const [openOptimizerParametersDialog, setOpenOptimizerParametersDialog] =
@@ -46,6 +50,7 @@ function ResultsTabInfo({ runData, handleRun }) {
   const [optimizers, setOptimizers] = useState([]);
   const experiment = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["models", "common"]);
 
   useEffect(() => {
     const fetchMetricsAndOptimizers = async () => {
@@ -97,12 +102,13 @@ function ResultsTabInfo({ runData, handleRun }) {
       localRun.optimizer_parameters,
       localRun.goal_metric,
     );
-    enqueueSnackbar("Parameters updated successfully", { variant: "success" });
+    enqueueSnackbar(t("models:message.parametersUpdatedSuccessfully"), {
+      variant: "success",
+    });
     handleRun(localRun);
   };
 
-  const isLocked =
-    runData.status === "Started" || runData.status === "Delivered";
+  const isLocked = runData.status === 1 || runData.status === 2; // Delivered or Started
 
   return (
     <Grid container direction="column">
@@ -120,14 +126,16 @@ function ResultsTabInfo({ runData, handleRun }) {
               }}
             >
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                Run Details
+                {t("models:label.runDetails")}
               </Typography>
               {/* Status Badge */}
               {runData.status && (
                 <Box>
                   <Chip
-                    label={runData.status}
-                    sx={{ backgroundColor: getColorByStatus(runData.status) }}
+                    label={getRunStatus(runData.status, t)}
+                    sx={{
+                      backgroundColor: getColorByStatus(runData.status, theme),
+                    }}
                     size="medium"
                   />
                 </Box>
@@ -137,7 +145,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               {runData.model_name && (
                 <Grid item xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
-                    Model
+                    {t("common:model")}
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
                     {runData.model_name}
@@ -147,7 +155,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               {runData.start_time && (
                 <Grid item xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
-                    Start Time
+                    {t("common:startTime")}
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
                     {new Date(runData.start_time).toLocaleString()}
@@ -157,33 +165,34 @@ function ResultsTabInfo({ runData, handleRun }) {
               {runData.end_time && (
                 <Grid item xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
-                    End Time
+                    {t("common:endTime")}
                   </Typography>
                   <Typography variant="body2" fontWeight="medium">
                     {new Date(runData.end_time).toLocaleString()}
                   </Typography>
                 </Grid>
               )}
-              {runData.start_time && runData.status !== "Error" && (
-                <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    Duration
-                  </Typography>
-                  <Typography variant="body2" fontWeight="medium">
-                    {runData.status === "Finished"
-                      ? (
-                          (new Date(runData.end_time) -
-                            new Date(runData.start_time)) /
-                          1000
-                        ).toFixed(2)
-                      : (
-                          (new Date() - new Date(runData.start_time)) /
-                          1000
-                        ).toFixed(2)}
-                    s
-                  </Typography>
-                </Grid>
-              )}
+              {runData.start_time &&
+                runData.status !== 4 && ( // Not Failed
+                  <Grid item xs={6} md={3}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t("common:duration")}
+                    </Typography>
+                    <Typography variant="body2" fontWeight="medium">
+                      {runData.status === 3 // Finished
+                        ? (
+                            (new Date(runData.end_time) -
+                              new Date(runData.start_time)) /
+                            1000
+                          ).toFixed(2)
+                        : (
+                            (new Date() - new Date(runData.start_time)) /
+                            1000
+                          ).toFixed(2)}{" "}
+                      {t("common:seconds")}
+                    </Typography>
+                  </Grid>
+                )}
             </Grid>
           </Paper>
         </>
@@ -193,7 +202,7 @@ function ResultsTabInfo({ runData, handleRun }) {
       <Divider sx={{ mt: 3, mb: 2 }} />
 
       <Typography variant="h6" gutterBottom>
-        Live Metrics
+        {t("models:label.liveMetrics")}
       </Typography>
 
       <Paper variant="outlined" sx={{ p: 2 }}>
@@ -206,7 +215,7 @@ function ResultsTabInfo({ runData, handleRun }) {
         runData.test_metrics) && (
         <>
           <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Metrics
+            {t("common:metrics")}
           </Typography>
           <Box
             sx={{
@@ -220,7 +229,7 @@ function ResultsTabInfo({ runData, handleRun }) {
             {runData.train_metrics && (
               <Box sx={{ flex: 1, minWidth: 300 }}>
                 <MetricsCard
-                  title="Training Metrics"
+                  title={t("models:label.trainingMetrics")}
                   metrics={runData.train_metrics}
                 />
               </Box>
@@ -229,7 +238,7 @@ function ResultsTabInfo({ runData, handleRun }) {
             {runData.validation_metrics && (
               <Box sx={{ flex: 1, minWidth: 300 }}>
                 <MetricsCard
-                  title="Validation Metrics"
+                  title={t("models:label.validationMetrics")}
                   metrics={runData.validation_metrics}
                 />
               </Box>
@@ -238,7 +247,7 @@ function ResultsTabInfo({ runData, handleRun }) {
             {runData.test_metrics && (
               <Box sx={{ flex: 1, minWidth: 300 }}>
                 <MetricsCard
-                  title="Test Metrics"
+                  title={t("models:label.testMetrics")}
                   metrics={runData.test_metrics}
                 />
               </Box>
@@ -252,18 +261,18 @@ function ResultsTabInfo({ runData, handleRun }) {
       {/* Run edition */}
       {isLocked && (
         <Alert severity="info">
-          Run is currently in progress and cannot be edited.
+          {t("models:label.runInProgressCannotEdit")}
         </Alert>
       )}
       {!isLocked && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-            Edit parameters and re-run the model
+            {t("models:label.editRunParameters")}
           </Typography>
           {(localRun.goal_metric === null || localRun.goal_metric === "") &&
           optimizables ? (
             <Alert severity="warning">
-              Please select a metric to optimize.
+              {t("models:label.pleaseSelectMetricToOptimize")}
             </Alert>
           ) : null}
           <Box
@@ -286,7 +295,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                 startIcon={<EditIcon />}
                 onClick={onEditParameters}
               >
-                Modify Parameters
+                {t("models:button.modifyParameters")}
               </Button>
             </Box>
             {/* Optimization Section */}
@@ -299,10 +308,12 @@ function ResultsTabInfo({ runData, handleRun }) {
               >
                 <Box>
                   <FormControl sx={{ width: "300px" }}>
-                    <InputLabel>Metric to Optimize</InputLabel>
+                    <InputLabel>
+                      {t("models:label.metricToOptimize")}
+                    </InputLabel>
                     <Select
                       value={localRun.goal_metric || ""}
-                      label="Metric to Optimize"
+                      label={t("models:label.metricToOptimize")}
                       onChange={(e) =>
                         setLocalRun({
                           ...localRun,
@@ -399,7 +410,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               }}
               disabled={JSON.stringify(localRun) === JSON.stringify(runData)}
             >
-              Cancel
+              {t("common:cancel")}
             </Button>
             <Button
               variant="contained"
@@ -412,8 +423,8 @@ function ResultsTabInfo({ runData, handleRun }) {
               }
             >
               {JSON.stringify(localRun) === JSON.stringify(runData)
-                ? "Run Model"
-                : "Save and Run Model"}
+                ? t("models:button.runModel")
+                : t("models:button.saveAndRunModel")}
             </Button>
           </Box>
         </Box>
@@ -424,7 +435,7 @@ function ResultsTabInfo({ runData, handleRun }) {
 
 ResultsTabInfo.propTypes = {
   runData: PropTypes.shape({
-    status: PropTypes.string,
+    status: PropTypes.number,
     model_name: PropTypes.string,
     start_time: PropTypes.string,
     end_time: PropTypes.string,

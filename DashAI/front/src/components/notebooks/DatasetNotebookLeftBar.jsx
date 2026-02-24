@@ -7,28 +7,37 @@ import BarHeader from "../threeSectionLayout/BarHeader";
 import CollapsibleList from "../threeSectionLayout/CollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import InfoNotebookModal from "./notebook/InfoNotebookModal";
 import { ChevronLeft } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
-export default function DatasetsNotebooksBar({
-  datasets = [],
-  selectedDatasetId,
-  notebooks = [],
-  selectedNotebookId,
-  onDatasetClick,
-  onDatasetDelete,
-  onDatasetEdit,
-  onNotebookClick,
-  onNotebookDelete,
-  onNotebookEdit,
-  onToggle,
-  handleNewSessionButton,
-}) {
-  const [searchQuery, setSearchQuery] = useState("");
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+
+export default function DatasetsNotebooksLeftBar({ onToggle }) {
+  const {
+    datasets,
+    notebooks,
+    selectedDatasetId,
+    selectedNotebookId,
+    selectDataset,
+    selectNotebook,
+    clearSelectedNotebook,
+    setStep,
+    setSelectedOption,
+    clearSelectedDataset,
+    deleteDatasetById,
+    removeNotebooksByDatasetId,
+    editDataset,
+    editNotebook,
+    deleteNotebookById,
+  } = useDatasetsAndNotebooks();
+
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
   const [filteredNotebooks, setFilteredNotebooks] = useState(notebooks);
   const [selectedInfoNotebook, setSelectedInfoNotebook] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { t } = useTranslation(["datasets", "common"]);
 
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -57,7 +66,9 @@ export default function DatasetsNotebooksBar({
   const getDatasetDescription = (dataset) => {
     return (
       dataset.description ||
-      `${dataset.total_rows || 0} rows, ${dataset.total_columns || 0} cols`
+      `${dataset.total_rows} ${t("common:rows")}, ${dataset.total_columns} ${t(
+        "common:columns",
+      )}`
     );
   };
 
@@ -67,10 +78,54 @@ export default function DatasetsNotebooksBar({
         (dataset) => dataset.id === notebook.dataset_id,
       );
       return associatedDataset?.name
-        ? `from ${associatedDataset.name} dataset`
-        : "No dataset";
+        ? t("datasets:label.fromDataset", {
+            datasetName: associatedDataset.name,
+          })
+        : t("datasets:label.noDataset");
     }
     return notebook.description || "";
+  };
+
+  const onDatasetClick = (id) => {
+    selectDataset(id);
+    clearSelectedNotebook();
+    setStep(0);
+    setSelectedOption("dataset");
+  };
+
+  const onNotebookClick = (id) => {
+    selectNotebook(id);
+    clearSelectedDataset();
+    setStep(0);
+    setSelectedOption("notebook");
+  };
+
+  const onDatasetDelete = async (id) => {
+    const success = await deleteDatasetById(id);
+    if (!success) return;
+    if (id === selectedDatasetId) {
+      clearSelectedDataset();
+      setStep(0);
+      setSelectedOption(null);
+    }
+    removeNotebooksByDatasetId(id);
+  };
+
+  const onNotebookDelete = async (id) => {
+    const success = await deleteNotebookById(id);
+    if (!success) return;
+    if (id === selectedNotebookId) {
+      clearSelectedNotebook();
+      setStep(0);
+      setSelectedOption(null);
+    }
+  };
+
+  const handleNewSessionButton = () => {
+    clearSelectedDataset();
+    clearSelectedNotebook();
+    setStep(0);
+    setSelectedOption(null);
   };
 
   return (
@@ -93,18 +148,18 @@ export default function DatasetsNotebooksBar({
           <ChevronLeft />
         </IconButton>
       </Box>
-      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
+      <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
       {/* Create new item button */}
       <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedNotebookId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title="New Dataset/Notebook"
+            title={t("datasets:button.newDatasetNotebook")}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
-            Dataset Module
+            {t("datasets:label.datasetModule")}
           </Typography>
         )}
       </Box>
@@ -112,13 +167,13 @@ export default function DatasetsNotebooksBar({
       {/* Search bar global */}
       <Box px={2} pb={2} flex={"0 0 auto"}>
         <SearchBar
-          placeholder="Search Datasets and Notebooks"
+          placeholder={t("datasets:label.searchDatasetsNotebooks")}
           value={searchQuery}
           onChange={handleSearchChange}
         />
       </Box>
 
-      <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+      <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
@@ -127,24 +182,24 @@ export default function DatasetsNotebooksBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
-          onItemEdit={onDatasetEdit}
+          onItemEdit={editDataset}
           defaultOpen={true}
-          title="Available Datasets"
+          title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
         />
 
-        <Divider sx={{ width: "90%", bgcolor: "#252836", mx: "auto" }} />
+        <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
         <CollapsibleList
           items={filteredNotebooks}
           selectedItemId={selectedNotebookId}
           onItemClick={onNotebookClick}
           onItemDelete={onNotebookDelete}
-          onItemEdit={onNotebookEdit}
+          onItemEdit={editNotebook}
           onItemInfo={handleNotebookInfo}
           defaultOpen={true}
-          title="Notebooks"
+          title={t("datasets:label.notebooks")}
           Icon={DescriptionIcon}
           datasets={datasets}
           getItemDescription={getNotebookDescription}

@@ -2,31 +2,23 @@ import { useCallback, useState, useEffect } from "react";
 import {
   Button,
   Grid,
-  Paper,
   Typography,
   CircularProgress,
   Box,
-  Chip,
   Alert,
   Divider,
   Tabs,
   Tab,
 } from "@mui/material";
-import {
-  AddCircleOutline as AddIcon,
-  CheckCircle as CheckIcon,
-} from "@mui/icons-material";
+import { useTheme } from "@mui/material/styles";
+import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import {
   getDatasetFile,
   getDatasetInfo,
   getDatasetFileFiltered,
 } from "../api/datasets";
-import DatasetTable from "./notebooks/dataset/DatasetTable";
-import { getComponents } from "../api/component";
 import { useTourContext } from "./tour/TourProvider";
-import { useSnackbar } from "notistack";
 import JobQueueWidget from "./jobs/JobQueueWidget";
-import { getDatasetStatus } from "../utils/datasetStatus";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
@@ -37,60 +29,60 @@ import QualityTab from "./notebooks/dataset/tabs/QualityTab";
 import CorrelationsTab from "./notebooks/dataset/tabs/CorrelationsTab";
 import { QualityAlerts } from "./notebooks/dataset/QualityAlerts";
 import { TextTab } from "./notebooks/dataset/tabs/TextTab";
-
+import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "./custom/contexts/DatasetsAndNotebooksContext";
 /**
  * Component to visualize dataset information including quality metrics, statistics, and data preview.
  * Can be used across different modules (Notebooks, Models) with customizable action buttons.
  * @param {Object} props
  * @param {Object} props.dataset - Dataset object containing id, name, file_path, status, and created date
- * @param {Function} props.onItemCreated - Callback function when a new item (notebook/session) is created
  * @param {Function} props.onNewItem - Callback function when "New Item" button is clicked
  * @param {string} [props.newItemButtonText="New Item"] - Custom text for the action button (e.g., "New Notebook", "New Session")
  * @param {Array} [props.existingItems=[]] - Array of existing items (notebooks/sessions) for validation
  */
 export default function DatasetVisualization({
   dataset,
-  onItemCreated,
   onNewItem,
   newItemButtonText = "New Item",
-  existingItems = [],
+  tourContextType = null,
 }) {
-  if (!dataset) {
-    return (
-      <Box
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
-        <Typography>Loading...</Typography>
-      </Box>
-    );
-  }
+  const { t } = useTranslation(["datasets", "common"]);
+  const theme = useTheme();
 
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
-  const { enqueueSnackbar } = useSnackbar();
+
+  const status = dataset.status;
+  const isProcessing = !(status === 3 || status === 4); // Finished or Error
+
+  const { fetchDatasets } = useDatasetsAndNotebooks();
 
   useEffect(() => {
+    if (!dataset) return;
+
     setTab(0);
     const fetchDatasetInfo = async () => {
-      if (isProcessing) return;
-
+      if (isProcessing) {
+        setTimeout(() => {
+          fetchDatasets();
+        }, 1000);
+        return;
+      }
       try {
-        const info = await getDatasetInfo(dataset.id);
+        const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
       } catch (error) {
         setDatasetInfo(null);
       }
     };
-
     fetchDatasetInfo();
-  }, [dataset.id, dataset.status]);
+  }, [dataset]);
 
   // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
-      if (isProcessing) return { rows: [], total: 0 };
+      if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
         // Use getDatasetFile if no filters, else use getDatasetFileFiltered
         const hasFilters =
@@ -113,11 +105,23 @@ export default function DatasetVisualization({
         return { rows: [], total: 0 };
       }
     },
-    [dataset.file_path, dataset.status, dataset.id],
+    [
+      dataset && dataset.file_path,
+      dataset && dataset.status,
+      dataset && dataset.id,
+    ],
   );
 
-  const status = getDatasetStatus(dataset.status);
-  const isProcessing = !(status === "Finished" || status === "Error");
+  if (!dataset) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress sx={{ color: theme.palette.primary.main }} />
+        <Typography>{t("common:loading")}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -141,7 +145,7 @@ export default function DatasetVisualization({
               </Box>
               <Box>
                 <Tooltip
-                  title="Data Quality Score is calculated based on various factors including missing values, duplicate rows, and data consistency. A higher score indicates better data quality."
+                  title={t("datasets:label.dataQualityScoreTooltip")}
                   arrow
                 >
                   <Alert
@@ -162,11 +166,18 @@ export default function DatasetVisualization({
                       p: "0 12px",
                     }}
                   >
-                    Quality Score:{" "}
-                    {datasetInfo?.quality_info?.data_quality_score?.toFixed(
-                      2,
-                    ) ?? "N/A"}
-                    {datasetInfo?.quality_info?.data_quality_score ? "%" : ""}
+                    {t("datasets:label.qualityScore", {
+                      value:
+                        datasetInfo?.quality_info?.data_quality_score != null
+                          ? datasetInfo.quality_info.data_quality_score.toFixed(
+                              2,
+                            )
+                          : t("common:na"),
+                      unit:
+                        datasetInfo?.quality_info?.data_quality_score != null
+                          ? "%"
+                          : "",
+                    })}
                   </Alert>
                 </Tooltip>
               </Box>
@@ -214,15 +225,39 @@ export default function DatasetVisualization({
                     endIcon={<AddIcon />}
                     disabled={isProcessing}
                     className="new-notebook-button"
+                    {...(tourContextType === "datasets"
+                      ? { "data-tour": "datasets-new-notebook-button" }
+                      : {})}
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onNewItem) {
                         onNewItem();
                       }
                       if (tourContext && tourContext.run) {
-                        setTimeout(() => {
-                          tourContext.nextStep();
-                        }, 200);
+                        const waitForNoteBox = (attempts = 0) => {
+                          const noteBox =
+                            document.querySelector(".notebook-note-box");
+                          if (noteBox) {
+                            setTimeout(() => {
+                              if (
+                                tourContext &&
+                                typeof tourContext.nextStep === "function"
+                              ) {
+                                tourContext.nextStep();
+                              }
+                            }, 300);
+                          } else if (attempts < 50) {
+                            setTimeout(() => waitForNoteBox(attempts + 1), 100);
+                          } else {
+                            if (
+                              tourContext &&
+                              typeof tourContext.nextStep === "function"
+                            ) {
+                              tourContext.nextStep();
+                            }
+                          }
+                        };
+                        waitForNoteBox();
                       }
                     }}
                     sx={{ height: "40px" }}
@@ -250,7 +285,7 @@ export default function DatasetVisualization({
             {/* Tabs */}
             <Tabs
               sx={{
-                bgcolor: "#2C2C2C",
+                bgcolor: theme.palette.ui.box,
                 borderRadius: 1,
                 minHeight: "48px",
                 "& .MuiTabs-indicator": {
@@ -264,12 +299,12 @@ export default function DatasetVisualization({
                   border: "1px solid transparent",
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.05)",
+                    bgcolor: theme.palette.action.hover,
                   },
                   "&.Mui-disabled": {
-                    color: "rgb(150, 150, 150)",
-                    bgcolor: "rgb(32, 32, 32)",
-                    borderColor: "rgb(39, 39, 42)",
+                    color: theme.palette.text.disabled,
+                    bgcolor: theme.palette.ui.disabled,
+                    borderColor: theme.palette.ui.border,
                     opacity: 0.6,
                     cursor: "not-allowed",
                     filter: "grayscale(0.6)",
@@ -289,31 +324,34 @@ export default function DatasetVisualization({
               value={tab}
               onChange={(_, newValue) => setTab(newValue)}
             >
-              <Tab label="Overview" />
+              <Tab label={t("datasets:label.overview")} />
               <Tab
-                label="Numerical Analysis"
+                label={t("datasets:label.numericalAnalysis")}
                 disabled={
                   !datasetInfo?.numeric_stats ||
                   Object.keys(datasetInfo.numeric_stats).length === 0
                 }
               />
               <Tab
-                label="Categorical"
+                label={t("datasets:label.categorical")}
                 disabled={
                   !datasetInfo?.categorical_stats ||
                   Object.keys(datasetInfo.categorical_stats).length === 0
                 }
               />
               <Tab
-                label="Text"
+                label={t("datasets:label.text")}
                 disabled={
                   !datasetInfo?.text_stats ||
                   Object.keys(datasetInfo.text_stats).length === 0
                 }
               />
-              <Tab label="Data Quality" disabled={!datasetInfo?.quality_info} />
               <Tab
-                label="Correlations"
+                label={t("datasets:label.dataQuality")}
+                disabled={!datasetInfo?.quality_info}
+              />
+              <Tab
+                label={t("datasets:label.correlations")}
                 disabled={
                   !datasetInfo?.correlations ||
                   Object.keys(datasetInfo.correlations).length === 0
@@ -367,14 +405,14 @@ export default function DatasetVisualization({
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: "#00BEBB" }} />
+            <CircularProgress color="primary" />
             <Typography>Processing your dataset...</Typography>
             <Typography
               variant="body2"
               color="text.secondary"
               textAlign="center"
             >
-              This may take a few moments depending on the size of your data.
+              {t("datasets:label.processingMessage")}
             </Typography>
           </Box>
         )}

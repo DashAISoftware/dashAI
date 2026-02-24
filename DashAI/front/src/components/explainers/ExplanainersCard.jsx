@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Grid,
   Typography,
@@ -21,6 +21,8 @@ import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
 import { deleteExplainer } from "../../api/explainer";
+import { useTranslation } from "react-i18next";
+import { getComponentById } from "../../api/component";
 
 /**
  * GlobalExplainersCard
@@ -35,6 +37,8 @@ export default function ExplainersCard({
 }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [componentData, setComponentData] = useState(null);
+  const { t } = useTranslation(["explainers"]);
 
   function plotName(name) {
     return name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
@@ -60,6 +64,16 @@ export default function ExplainersCard({
     }
   };
 
+  useEffect(() => {
+    getComponentById(explainer.explainer_name)
+      .then((data) => {
+        setComponentData(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching component data:", error);
+      });
+  }, [explainer.explainer_name]);
+
   if (compact) {
     return (
       <>
@@ -74,7 +88,9 @@ export default function ExplainersCard({
             >
               <Grid item>
                 <Typography variant="subtitle2" fontWeight="medium">
-                  {plotName(explainer.explainer_name)}
+                  {componentData
+                    ? componentData.display_name
+                    : plotName(explainer.explainer_name)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {explainer.name}
@@ -100,7 +116,9 @@ export default function ExplainersCard({
                 endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 sx={{ textTransform: "none" }}
               >
-                {expanded ? "Hide Plot" : "Show Plot"}
+                {expanded
+                  ? t("explainers:button.hidePlot")
+                  : t("explainers:button.showPlot")}
               </Button>
 
               <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -119,18 +137,17 @@ export default function ExplainersCard({
           aria-describedby="alert-dialog-description"
         >
           <DialogTitle id="alert-dialog-title">
-            {"Delete explainer?"}
+            {t("explainers:label.deleteExplainer")}
           </DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              If you delete the explainer it will be removed with its
-              corresponding plot, in case it has one.
+              {t("explainers:label.deleteExplainerConfirmation")}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose}>{t("common:cancel")}</Button>
             <Button onClick={handleConfirmDelete} color="error" autoFocus>
-              Delete
+              {t("common:delete")}
             </Button>
           </DialogActions>
         </Dialog>
@@ -151,10 +168,10 @@ export default function ExplainersCard({
         >
           <Grid>
             <Typography variant="h6">
-              {plotName(explainer.explainer_name)} Plot
+              {plotName(explainer.explainer_name)}
             </Typography>
             <Typography variant="h7">
-              Explainer name: {explainer.name}
+              {t("explainers:label.forExplainer", { name: explainer.name })}
             </Typography>
           </Grid>
           <Grid>
@@ -182,18 +199,17 @@ export default function ExplainersCard({
               aria-describedby="alert-dialog-description"
             >
               <DialogTitle id="alert-dialog-title">
-                {"Delete explainer?"}
+                {t("explainers:label.deleteExplainer")}
               </DialogTitle>
               <DialogContent>
                 <DialogContentText id="alert-dialog-description">
-                  If you delete the explainer it will be removed with its
-                  corresponding plot, in case it has one.
+                  {t("explainers:label.deleteExplainerConfirmation")}
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={handleClose}>{t("common:cancel")}</Button>
                 <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                  Delete
+                  {t("common:delete")}
                 </Button>
               </DialogActions>
             </Dialog>

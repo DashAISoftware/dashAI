@@ -1,0 +1,10 @@
+{
+  "advancedConfiguration": "Advanced Configuration",
+  "enterValue": "Enter a value",
+  "error": {
+    "splitsParams": "The sum of the split sizes must be 1"
+  },
+  "lowerBound": "Lower bound of search space",
+  "optimize": "Optimize hyperparameter {{name}}",
+  "upperBound": "Upper bound of search space"
+}

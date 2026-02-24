@@ -6,6 +6,7 @@ import EditOptimizerDialog from "./EditOptimizerDialog";
 import OptimizationTableSelectOptimizer from "./OptimizationTableSelectOptimizer";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { getComponents } from "../../api/component";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -15,6 +16,7 @@ import { getComponents } from "../../api/component";
 function OptimizationTable({ newExp, setNewExp }) {
   const [selectedOptimizer, setSelectedOptimizer] = useState({});
   const [models, setModels] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -83,13 +85,13 @@ function OptimizationTable({ newExp, setNewExp }) {
   const columns = React.useMemo(() => [
     {
       field: "name",
-      headerName: "Name",
+      headerName: t("common:name"),
       minWidth: 300,
       editable: false,
     },
     {
       field: "model",
-      headerName: "Model",
+      headerName: t("common:model"),
       minWidth: 300,
       editable: false,
       valueGetter: (value) => {
@@ -99,7 +101,7 @@ function OptimizationTable({ newExp, setNewExp }) {
     },
     {
       field: "optimizer",
-      headerName: "Select Optimizer",
+      headerName: t("experiments:label.configureOptimizer"),
       minWidth: 300,
       renderCell: (params) => (
         <OptimizationTableSelectOptimizer
@@ -113,6 +115,7 @@ function OptimizationTable({ newExp, setNewExp }) {
     },
     {
       field: "actions",
+      headerName: t("common:actions"),
       type: "actions",
       minWidth: 100,
       getActions: (params) => {
@@ -143,7 +146,7 @@ function OptimizationTable({ newExp, setNewExp }) {
         sx={{ mb: 2 }}
       >
         <Typography variant="subtitle1" component="h3">
-          Current models in the experiment
+          {t("experiments:label.modelsInExperiment")}
         </Typography>
       </Grid>
 

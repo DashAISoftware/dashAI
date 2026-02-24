@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Grid, CircularProgress } from "@mui/material";
+import { Grid, CircularProgress, useTheme } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
-import DataloaderConfiguration from "./DataloaderConfiguration";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
 import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
 
 export default function ConfigureAndUploadDatasetStep({
   selectedDataloader,
@@ -27,6 +27,8 @@ export default function ConfigureAndUploadDatasetStep({
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["common", "datasets"]);
+  const theme = useTheme();
 
   useEffect(() => {
     if (onPreviewError) {
@@ -36,25 +38,15 @@ export default function ConfigureAndUploadDatasetStep({
 
   useEffect(() => {
     if (previewError) {
-      enqueueSnackbar("Error loading dataset preview", {
+      enqueueSnackbar(t("datasets:error.loadingDatasetPreview"), {
         variant: "error",
       });
     }
   }, [previewError, enqueueSnackbar]);
 
-  useEffect(() => {
-    if (formSubmitRef.current && tourContext?.run) {
-      setTimeout(() => {
-        if (formSubmitRef.current?.setFieldValue) {
-          formSubmitRef.current.setFieldValue("name", "Personality Dataset");
-        }
-      }, 100);
-    }
-  }, [tourContext, selectedDataloader]);
-
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
-      enqueueSnackbar("No dataset file available", {
+      enqueueSnackbar(t("datasets:error.noDatasetFileAvailable"), {
         variant: "error",
       });
       return;
@@ -95,20 +87,18 @@ export default function ConfigureAndUploadDatasetStep({
         handleDatasetCreated(data, job);
 
         if (tourContext?.run) {
-          setTimeout(() => {
-            tourContext.nextStep();
-          }, 500);
+          tourContext.nextStep();
         }
       } catch (err) {
         console.error("Error enqueuing dataset job:", err);
-        enqueueSnackbar("Error when trying to enqueue the dataset job.", {
+        enqueueSnackbar(t("datasets:error.enqueueDatasetJob"), {
           variant: "error",
         });
         backHome();
       }
     } catch (error) {
       console.error("Error creating dataset:", error);
-      enqueueSnackbar("Error creating dataset", {
+      enqueueSnackbar(t("datasets:error.createDatasetError"), {
         variant: "error",
       });
       backHome();
@@ -166,7 +156,8 @@ export default function ConfigureAndUploadDatasetStep({
         spacing={2}
         sx={{
           width: "100%",
-          backgroundColor: "#212121",
+          backgroundColor: theme.palette.ui.box,
+          border: `1px solid ${theme.palette.ui.border}`,
           padding: 4,
           borderRadius: 2,
         }}
@@ -192,10 +183,10 @@ export default function ConfigureAndUploadDatasetStep({
             formik={{
               errors: uploadEnabled
                 ? {}
-                : { dataset: "Required fields missing" },
+                : { dataset: t("datasets:error.requiredFieldsMissing") },
             }}
-            saveButtonText="Upload"
-            backButtonText="Back"
+            saveButtonText={t("common:upload")}
+            backButtonText={t("common:back")}
             dataTour="dataset-step-upload-button"
           />
         )}

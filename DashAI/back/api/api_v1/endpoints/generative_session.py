@@ -159,7 +159,6 @@ async def get_generative_session(
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
 ):
     """Get all generative sessions ordered by creation date.
 
@@ -207,9 +206,6 @@ async def get_all_generative_sessions(
                     "description": session.description,
                     "created": session.created,
                     "last_modified": session.last_modified,
-                    "display_name": component_registry[session.task_name][
-                        "display_name"
-                    ],
                 }
             )
         return session_list

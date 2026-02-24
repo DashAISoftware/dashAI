@@ -24,7 +24,8 @@ export const extractColumns = (
     field: `${metric.name}`,
     headerName: `${metric.name}`,
     renderCell: ({ row, value }) => {
-      if (["Not Started", "Started", "Delivered"].includes(row.status))
+      if ([0, 1, 2].includes(row.status))
+        // Not Started, Delivered, Started
         return "-";
 
       return row.test_metrics[metric.name] !== undefined

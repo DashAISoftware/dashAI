@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box, Typography, Tooltip } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import HoverModelInfo from "./HoverModelInfo";
 import { ModelIcon } from "./ModelIcon";
 
@@ -9,6 +10,7 @@ export default function ModelListItem({
   onClick,
   ...props
 }) {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [hoveredModel, setHoveredModel] = useState(null);
 
@@ -25,7 +27,8 @@ export default function ModelListItem({
   };
 
   // Get color and icon from metadata or use defaults
-  const color = model.color || model.metadata?.color || "#795548";
+  const color =
+    model.color || model.metadata?.color || theme.palette.text.secondary;
   const iconName = model.metadata?.icon || "Science";
 
   return (
@@ -37,16 +40,16 @@ export default function ModelListItem({
         slotProps={{
           tooltip: {
             sx: {
-              bgcolor: "rgb(33, 33, 33)",
-              color: "rgb(255, 255, 255)",
+              bgcolor: theme.palette.background.paper,
+              color: theme.palette.text.primary,
               display: disabled ? "block" : "none",
-              border: "1px solid rgb(63, 63, 70)",
+              border: `1px solid ${theme.palette.divider}`,
               fontSize: "0.75rem",
               maxWidth: 300,
               "& .MuiTooltip-arrow": {
-                color: "rgb(33, 33, 33)",
+                color: theme.palette.background.paper,
                 "&::before": {
-                  border: "1px solid rgb(63, 63, 70)",
+                  border: `1px solid ${theme.palette.divider}`,
                 },
               },
             },
@@ -64,8 +67,10 @@ export default function ModelListItem({
             alignItems: "center",
             gap: 1.5,
             p: 1.5,
-            bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(44, 44, 44)",
-            border: "1px solid rgb(39, 39, 42)",
+            bgcolor: disabled
+              ? theme.palette.ui.disabled
+              : theme.palette.ui.box,
+            border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1,
             cursor: disabled ? "not-allowed" : "pointer",
             transition: "all 0.2s",
@@ -73,8 +78,10 @@ export default function ModelListItem({
             filter: disabled ? "grayscale(0.6)" : "none",
             position: "relative",
             "&:hover": {
-              bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(60, 60, 60)",
-              borderColor: disabled ? "rgb(39, 39, 42)" : color,
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.action.hover,
+              borderColor: disabled ? theme.palette.ui.border : color,
               transform: disabled ? "none" : "translateX(4px)",
             },
             "&::after": disabled
@@ -99,14 +106,18 @@ export default function ModelListItem({
               width: 36,
               height: 36,
               borderRadius: 1,
-              bgcolor: disabled ? "rgb(50, 50, 50)" : "rgb(63, 63, 70)",
-              color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
+              bgcolor: disabled
+                ? theme.palette.ui.disabled
+                : theme.palette.ui.border,
+              color: disabled
+                ? theme.palette.text.disabled
+                : theme.palette.text.primary,
               flexShrink: 0,
             }}
           >
             <ModelIcon
               iconName={iconName}
-              color={disabled ? "rgb(100, 100, 100)" : color}
+              color={disabled ? theme.palette.text.disabled : color}
             />
           </Box>
 
@@ -115,7 +126,9 @@ export default function ModelListItem({
             <Typography
               variant="body2"
               sx={{
-                color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
+                color: disabled
+                  ? theme.palette.text.disabled
+                  : theme.palette.text.primary,
                 fontWeight: 500,
                 overflow: "hidden",
                 textOverflow: "ellipsis",

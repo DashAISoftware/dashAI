@@ -1,39 +1,29 @@
 import { Divider, Grid, Typography } from "@mui/material";
 import React from "react";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+import { formatDate } from "../../utils";
 
-const explainerInfo = [
-  { key: "id", label: "Explainer ID" },
-  { key: "name", label: "Name" },
-  { key: "run_id", label: "Run ID" },
-  { key: "explainer_name", label: "Explainer Name" },
-  { key: "dataset_id", label: "Dataset ID" },
-  { key: "explanation_path", label: "Explanation Path" },
-  { key: "plot_path", label: "Plot Path" },
-  { key: "status", label: "Status" },
-];
-
-const explainerDateInfo = [{ key: "created", label: "Created" }];
-
-const formatDate = (dateStr) => {
-  const date = new Date(dateStr);
-  const options = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    locale: "en-US",
-  };
-
-  return date.toLocaleString("en-US", options);
-};
 /**
  * Component that displays general information associated with a explainer.
  * @param {object} explainerData object that contains all the necesary info of the explainer
  */
 function ExplainerInfoTab({ explainerData }) {
+  const { t } = useTranslation(["explainers", "common"]);
+
+  const explainerInfo = [
+    { key: "id", label: t("common:id") },
+    { key: "name", label: t("common:name") },
+    { key: "run_id", label: t("explainers:label.runId") },
+    { key: "explainer_name", label: t("explainers:label.explainerName") },
+    { key: "dataset_id", label: t("explainers:label.datasetId") },
+    { key: "explanation_path", label: t("explainers:label.explanationPath") },
+    { key: "plot_path", label: t("explainers:label.plotPath") },
+    { key: "status", label: t("common:status") },
+  ];
+
+  const explainerDateInfo = [{ key: "created", label: t("common:created") }];
+
   return (
     <Grid container direction="column">
       {/* Explainer name related info */}

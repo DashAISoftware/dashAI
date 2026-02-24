@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 import { Clear as ClearIcon } from "@mui/icons-material";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+
 /**
  *This component renders a list of items so that the user can select one.
  * @param {object[]} itemsList The list of items to select from
@@ -22,9 +24,18 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
   const [itemsToShow, setItemsToShow] = useState(itemsList.map(() => true));
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     setItemsToShow(itemsList.map(() => true));
+  }, [itemsList]);
+
+  useEffect(() => {
+    if (selectedItem) {
+      setSelectedItem(
+        itemsList.find((item) => item.name === selectedItem.name) || {},
+      );
+    }
   }, [itemsList]);
 
   const handleClearSearchField = (event) => {
@@ -65,7 +76,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
           <TextField
             id="item-search-input"
             fullWidth
-            label="Search..."
+            label={t("search")}
             type="search"
             variant="standard"
             value={searchField}

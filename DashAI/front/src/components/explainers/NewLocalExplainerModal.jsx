@@ -34,12 +34,7 @@ import { flags } from "../../constants/flags";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
-
-const steps = [
-  { name: "selectExplainer", label: "Set name and explainer" },
-  { name: "SelectDataset", label: "Select dataset" },
-  { name: "ConfigureExplainer", label: "Configure explainer parameters" },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a modal that takes the user through the process of creating a new experiment.
@@ -57,6 +52,21 @@ export default function NewLocalExplainerModal({
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
   const formSubmitRef = useRef(null);
+  const { t } = useTranslation(["explainers", "common"]);
+  const steps = [
+    {
+      name: "selectExplainer",
+      label: t("explainers:label.selectExplainer"),
+    },
+    {
+      name: "selectDataset",
+      label: t("explainers:label.selectDataset"),
+    },
+    {
+      name: "configureExplainer",
+      label: t("explainers:label.configureExplainerParameters"),
+    },
+  ];
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -101,7 +111,7 @@ export default function NewLocalExplainerModal({
   const enqueueLocalExplainerJob = async (explainerId) => {
     try {
       const response = await enqueueExplainerJobRequest(explainerId, "local");
-      enqueueSnackbar("Local explainer job successfully created.", {
+      enqueueSnackbar(t("explainers:message.localExplainerJobCreated"), {
         variant: "success",
       });
 
@@ -111,7 +121,9 @@ export default function NewLocalExplainerModal({
           response.id,
           (result) => {
             enqueueSnackbar(
-              `Explainer "${newLocalExpl.name}" completed successfully`,
+              t("explainers:message.explainerJobCompleted", {
+                name: newLocalExpl.name,
+              }),
               {
                 variant: "success",
               },
@@ -124,7 +136,9 @@ export default function NewLocalExplainerModal({
           (result) => {
             console.error("Local explainer job failed:", result);
             enqueueSnackbar(
-              `Error processing explainer: ${result.error || "Unknown error"}`,
+              t("explainers:error.localExplainerJobFailed", {
+                error: result.error || "Unknown error",
+              }),
               { variant: "error" },
             );
             updateExplainers();
@@ -137,7 +151,7 @@ export default function NewLocalExplainerModal({
 
       return response;
     } catch (error) {
-      enqueueSnackbar("Error while trying to enqueue Local explainer job");
+      enqueueSnackbar(t("explainers:error.localExplainerJobEnqueueError"));
       console.error("Error details:", error);
       throw error;
     }
@@ -159,7 +173,9 @@ export default function NewLocalExplainerModal({
       await enqueueLocalExplainerJob(explainerId);
       await loadExistingExplainers();
     } catch (error) {
-      enqueueSnackbar("Error while trying to create a new explainer");
+      enqueueSnackbar(t("explainers:error.localExplainerCreationError"), {
+        variant: "error",
+      });
       console.error("Error details:", error);
     } finally {
       setIsLoading(false);
@@ -239,7 +255,7 @@ export default function NewLocalExplainerModal({
                   align={matches ? "center" : "left"}
                   sx={{ mb: { sm: 2, md: 0 } }}
                 >
-                  New local explainer
+                  {t("explainers:label.newLocalExplainer")}
                 </Typography>
               </Grid>
             </Grid>
@@ -314,7 +330,7 @@ export default function NewLocalExplainerModal({
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
+            {activeStep === 0 ? t("common:close") : t("common:back")}
           </Button>
           <TimestampWrapper
             eventName={
@@ -329,7 +345,7 @@ export default function NewLocalExplainerModal({
               disabled={!nextEnabled}
               loading={isLoading}
             >
-              {activeStep === 1 ? "Save" : "Next"}
+              {activeStep === 1 ? t("common:save") : t("common:next")}
             </LoadingButton>
           </TimestampWrapper>
         </ButtonGroup>
