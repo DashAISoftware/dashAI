@@ -198,14 +198,13 @@ export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
       <Box
         sx={{
           width: "100%",
-          height: "30px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
           alignItems: "center",
           borderRadius: 1,
           opacity: 0.5,
-          mb: 1,
+          mb: 0.8,
         }}
       >
         <Box

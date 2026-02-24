@@ -1,5 +1,9 @@
 import { Box } from "@mui/material";
 import { useState, useEffect } from "react";
+import ModuleContainer from "../../components/layout/ModuleContainer";
+import LeftPanel from "../../components/threeSectionLayout/panels/LeftPanel";
+import CenterPanel from "../../components/threeSectionLayout/panels/CenterPanel";
+import RightPanel from "../../components/threeSectionLayout/panels/RightPanel";
 import SessionBar from "../../components/generative/SessionBar";
 import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
@@ -9,6 +13,8 @@ import { getSessions, removeSession } from "../../api/session";
 import CenterBox from "../../components/threeSectionLayout/panelContainers/CenterBox";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
+import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
+import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 
 export default function Generative() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -20,6 +26,7 @@ export default function Generative() {
   const [sessions, setSessions] = useState([]);
   const [paramsVersion, setParamsVersion] = useState(0);
   const { t } = useTranslation(["generative", "common"]);
+  const threePanelLayout = useThreePanelLayout();
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     setSelectedTaskName(taskName);
@@ -71,20 +78,21 @@ export default function Generative() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" display="flex">
-      <Box width="20%">
-        <SessionBar
-          tasks={tasks}
-          sessions={sessions}
-          selectedSessionId={selectedSessionId}
-          handleSessionClick={handleSessionClick}
-          handleNewSessionButton={handleNewSessionButton}
-          handleSessionDelete={handleSessionDelete}
-          stepIndex={stepIndex}
-        />
-      </Box>
-      <Box width="60%">
-        <CenterBox>
+    <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+      <ModuleContainer>
+        <LeftPanel>
+          <SessionBar
+            tasks={tasks}
+            sessions={sessions}
+            selectedSessionId={selectedSessionId}
+            handleSessionClick={handleSessionClick}
+            handleNewSessionButton={handleNewSessionButton}
+            handleSessionDelete={handleSessionDelete}
+            stepIndex={stepIndex}
+            onToggle={threePanelLayout.handleToggleLeft}
+          />
+        </LeftPanel>
+        <CenterPanel>
           {selectedSessionId ? (
             <GenerativeChat
               sessionId={selectedSessionId}
@@ -110,15 +118,17 @@ export default function Generative() {
               existingSessions={sessions}
             />
           )}
-        </CenterBox>
-      </Box>
-      <Box width="20%">
-        <ParamsBar
-          selectedSessionId={selectedSessionId}
-          onParamsUpdate={onParamsUpdate}
-          taskName={selectedTaskName}
-        />
-      </Box>
-    </Box>
+        </CenterPanel>
+
+        <RightPanel toggleButtonTop="50%">
+          <ParamsBar
+            selectedSessionId={selectedSessionId}
+            onParamsUpdate={onParamsUpdate}
+            taskName={selectedTaskName}
+            onToggle={threePanelLayout.handleToggleRight}
+          />
+        </RightPanel>
+      </ModuleContainer>
+    </ThreePanelLayoutContext.Provider>
   );
 }

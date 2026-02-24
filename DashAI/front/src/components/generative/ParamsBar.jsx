@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import { Box, Typography, Button, IconButton, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useFormik } from "formik";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
@@ -14,11 +14,13 @@ import {
 import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
+import { ChevronRight } from "@mui/icons-material";
 
 export default function ParamsBar({
   selectedSessionId,
   onParamsUpdate,
   taskName,
+  onToggle,
 }) {
   const [parameters, setParameters] = useState({});
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
@@ -104,14 +106,20 @@ export default function ParamsBar({
         <Box
           sx={{
             p: 2,
-            borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            height: 64,
+            justifyContent: "flex-start",
+            height: 70,
           }}
         >
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            sx={{ color: "text.secondary" }}
+          >
+            <ChevronRight />
+          </IconButton>
           <Typography variant="h6">{t("common:modelParameters")}</Typography>
 
           {/* Parameter History Modal */}
@@ -135,6 +143,8 @@ export default function ParamsBar({
             </IconButton>
           )}
         </Box>
+        {/* Divider */}
+        <Divider sx={{ width: "100%", bgcolor: "divider" }} />
         {selectedSessionId ? (
           <Box sx={{ flex: 1, overflowY: "auto", pt: 2 }}>
             <form onSubmit={formik.handleSubmit}>

@@ -1,4 +1,4 @@
-import { Box, Typography, Divider } from "@mui/material";
+import { Box, Typography, Divider, IconButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
@@ -9,6 +9,7 @@ import SessionList from "./SessionList";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
+import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
 export default function SessionBar({
@@ -19,6 +20,7 @@ export default function SessionBar({
   handleNewSessionButton,
   handleSessionDelete,
   stepIndex,
+  onToggle,
 }) {
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
@@ -116,6 +118,13 @@ export default function SessionBar({
           }}
         >
           <BarHeader />
+          <IconButton
+            size="small"
+            onClick={onToggle}
+            sx={{ color: "text.secondary" }}
+          >
+            <ChevronLeft />
+          </IconButton>
         </Box>
         <Divider sx={{ width: "100%", bgcolor: "divider" }} />
 
