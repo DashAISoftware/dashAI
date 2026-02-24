@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -9,6 +9,7 @@ import {
   Tab,
   Paper,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { ExpandMore, ArrowBackIosNew } from "@mui/icons-material";
 import { getPipelineById } from "../../../api/pipeline";
@@ -18,15 +19,52 @@ import PipelineResultsPrediction from "./ResultsPrediction";
 import ResultsTabParameters from "../../../pages/results/components/ResultsTabParameters";
 import ResultsExploration from "./ResultsExploration";
 
+const POLL_INTERVAL_MS = 3000;
+
 function PipelineResults({ pipelineId, onClose }) {
   const [results, setResults] = useState(null);
   const [trainTab, setTrainTab] = useState(0);
+  const [polling, setPolling] = useState(false);
+  const pollingRef = useRef(null);
+
+  /** Returns true when the pipeline has at least one result section populated. */
+  const hasAnyResult = useCallback((data) => {
+    if (!data) return false;
+    const hasExpl = data.exploration && data.exploration !== "No exploration data";
+    const hasTr = data.train && Object.keys(data.train).length > 0;
+    const hasPred = data.prediction && data.prediction !== "No prediction data";
+    return hasExpl || hasTr || hasPred;
+  }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchResults = async () => {
       try {
         const response = await getPipelineById(pipelineId);
+        if (cancelled) return;
         setResults(response);
+
+        // If results are not yet available, start polling
+        if (!hasAnyResult(response)) {
+          setPolling(true);
+          // Clear any previous interval before setting a new one
+          if (pollingRef.current) clearInterval(pollingRef.current);
+          pollingRef.current = setInterval(async () => {
+            try {
+              const updated = await getPipelineById(pipelineId);
+              if (cancelled) return;
+              setResults(updated);
+              if (hasAnyResult(updated)) {
+                clearInterval(pollingRef.current);
+                pollingRef.current = null;
+                setPolling(false);
+              }
+            } catch (err) {
+              console.error("Error polling pipeline results:", err);
+            }
+          }, POLL_INTERVAL_MS);
+        }
       } catch (error) {
         console.error("Error fetching results:", error);
       }
@@ -35,7 +73,15 @@ function PipelineResults({ pipelineId, onClose }) {
     if (pipelineId) {
       fetchResults();
     }
-  }, [pipelineId]);
+
+    return () => {
+      cancelled = true;
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [pipelineId, hasAnyResult]);
 
   const handleTabChange = (event, newValue) => {
     setTrainTab(newValue);
@@ -66,7 +112,16 @@ function PipelineResults({ pipelineId, onClose }) {
             Volver
           </Button>
         )}
-        <Typography>No results available</Typography>
+        {polling ? (
+          <Box display="flex" alignItems="center" gap={2} mt={2}>
+            <CircularProgress size={24} />
+            <Typography>
+              Pipeline is running. Results will appear automatically…
+            </Typography>
+          </Box>
+        ) : (
+          <Typography>No results available</Typography>
+        )}
       </Box>
     );
   }
