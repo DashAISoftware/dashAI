@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import {
   Box,
   Typography,
