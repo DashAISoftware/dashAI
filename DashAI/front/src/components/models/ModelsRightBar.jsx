@@ -10,12 +10,15 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { ChevronRight, Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import SideBar from "../threeSectionLayout/SideBar";
+import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
 import { useTranslation } from "react-i18next";
+import { useTourContext } from "../tour/TourProvider";
+import { useModels } from "./ModelsContext";
+import AddModelDialog from "./AddModelDialog";
 
-export default function ModelsRightBar({ session, onToggle, onModelClick }) {
+export default function ModelsRightBar({ existingRuns, onToggle }) {
   const theme = useTheme();
   const [models, setModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
@@ -23,6 +26,8 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models"]);
+
+  const { selectedSession: session, onRunCreated } = useModels();
 
   const fetchModels = React.useCallback(async () => {
     try {
@@ -69,9 +74,27 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
     }
   }, [searchQuery, models]);
 
+  const tourContext = useTourContext();
+  const { selectModel, configOpen, selectedModel, closeConfig } = useModels();
+
   const handleModelClick = (model) => {
-    if (onModelClick) {
-      onModelClick(model);
+    if (!session) {
+      enqueueSnackbar(t("models:error.selectSessionFirst"), {
+        variant: "warning",
+      });
+      return;
+    }
+    selectModel(model);
+    if (tourContext?.run && tourContext?.stepIndex === 2) {
+      const waitForElement = () => {
+        const element = document.querySelector('[data-tour="model-config"]');
+        if (element) {
+          tourContext.nextStep();
+        } else {
+          setTimeout(waitForElement, 100);
+        }
+      };
+      setTimeout(waitForElement, 300);
     }
   };
 
@@ -195,6 +218,15 @@ export default function ModelsRightBar({ session, onToggle, onModelClick }) {
           </>
         )}
       </Box>
+      {/* Modal de modelo */}
+      <AddModelDialog
+        open={configOpen}
+        onClose={closeConfig}
+        preselectedModel={selectedModel?.name}
+        session={session}
+        existingRuns={existingRuns}
+        onRunCreated={onRunCreated}
+      />
     </SideBar>
   );
 }
@@ -206,5 +238,4 @@ ModelsRightBar.propTypes = {
     task_name: PropTypes.string,
   }),
   onToggle: PropTypes.func.isRequired,
-  onModelClick: PropTypes.func,
 };

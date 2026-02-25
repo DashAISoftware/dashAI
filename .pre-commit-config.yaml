@@ -15,13 +15,13 @@ repos:
     rev: v0.12.10
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, "--show-fixes"]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v4.0.0-alpha.8"
     hooks:
       - id: prettier
-        files: \.[jt]sx?$  # *.js, *.jsx, *.ts, *.tsx
+        files: \.[jt]sx?$ # *.js, *.jsx, *.ts, *.tsx
         types: [file]
         args:
           - "--config=DashAI/front/.prettierrc"

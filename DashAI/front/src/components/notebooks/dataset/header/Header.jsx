@@ -32,7 +32,7 @@ export default function Header({
           flexDirection: "row",
           gap: 1,
           justifyContent: "flex-start",
-          alignItems: "flex-start",
+          alignItems: "stretch",
           width: "100%",
           flexWrap: "wrap",
           flexGrow: 0,
