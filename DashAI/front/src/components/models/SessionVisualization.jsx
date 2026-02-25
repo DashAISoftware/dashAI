@@ -222,34 +222,31 @@ export default function SessionVisualization({
               {t("models:label.modelComparison")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {/* Metric Split Selector */}
-              {showTable &&
-                (hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
-                  <ToggleButtonGroup
-                    value={metricSplit}
-                    exclusive
-                    onChange={(e, newValue) => {
-                      if (newValue !== null) setMetricSplit(newValue);
-                    }}
-                    size="small"
-                  >
-                    {hasTrainMetrics && (
-                      <ToggleButton value="train">
-                        {t("common:train")}
-                      </ToggleButton>
-                    )}
-                    {hasValidationMetrics && (
-                      <ToggleButton value="validation">
-                        {t("common:validation")}
-                      </ToggleButton>
-                    )}
-                    {hasTestMetrics && (
-                      <ToggleButton value="test">
-                        {t("common:test")}
-                      </ToggleButton>
-                    )}
-                  </ToggleButtonGroup>
-                )}
+              {/* Metric Split Selector — controls both table and graph views */}
+              {(hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
+                <ToggleButtonGroup
+                  value={metricSplit}
+                  exclusive
+                  onChange={(e, newValue) => {
+                    if (newValue !== null) setMetricSplit(newValue);
+                  }}
+                  size="small"
+                >
+                  {hasTrainMetrics && (
+                    <ToggleButton value="train">
+                      {t("common:train")}
+                    </ToggleButton>
+                  )}
+                  {hasValidationMetrics && (
+                    <ToggleButton value="validation">
+                      {t("common:validation")}
+                    </ToggleButton>
+                  )}
+                  {hasTestMetrics && (
+                    <ToggleButton value="test">{t("common:test")}</ToggleButton>
+                  )}
+                </ToggleButtonGroup>
+              )}
 
               {/* Toggle between Table and Graphs */}
               <ButtonGroup size="small" variant="outlined">
@@ -313,7 +310,11 @@ export default function SessionVisualization({
                   metricSplit={metricSplit}
                 />
               ) : (
-                <ResultsGraphs runs={runs} />
+                <ResultsGraphs
+                  runs={runs}
+                  selectedSplit={metricSplit}
+                  onSplitChange={setMetricSplit}
+                />
               )}
             </Box>
           )}

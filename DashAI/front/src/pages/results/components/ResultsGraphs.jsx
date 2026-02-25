@@ -9,15 +9,20 @@ import graphsMaking from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
 
-function ResultsGraphs({ runs }) {
+function ResultsGraphs({ runs, selectedSplit: splitProp, onSplitChange }) {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const { t } = useTranslation(["models"]);
 
   const [selectedChart, setSelectedChart] = useState("bar");
-  const [selectedSplit, setSelectedSplit] = useState("test");
+  // Internal split state — used only when no controlled prop is provided
+  const [internalSplit, setInternalSplit] = useState("test");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [chartData, setChartData] = useState({});
+
+  // Controlled or uncontrolled split
+  const selectedSplit = splitProp ?? internalSplit;
+  const handleChangeSplit = onSplitChange ?? setInternalSplit;
 
   const finishedRuns = useMemo(
     () => runs.filter((r) => r.status === 3),
@@ -43,12 +48,14 @@ function ResultsGraphs({ runs }) {
     };
   }, [finishedRuns]);
 
+  // Auto-select a split only when running in uncontrolled mode
   useEffect(() => {
-    if (availableMetrics.test.length > 0) setSelectedSplit("test");
+    if (splitProp !== undefined) return;
+    if (availableMetrics.test.length > 0) setInternalSplit("test");
     else if (availableMetrics.validation.length > 0)
-      setSelectedSplit("validation");
-    else if (availableMetrics.train.length > 0) setSelectedSplit("train");
-  }, [availableMetrics]);
+      setInternalSplit("validation");
+    else if (availableMetrics.train.length > 0) setInternalSplit("train");
+  }, [availableMetrics, splitProp]);
 
   useEffect(() => {
     setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
@@ -98,7 +105,6 @@ function ResultsGraphs({ runs }) {
   ]);
 
   const handleChangeChart = (chartType) => setSelectedChart(chartType);
-  const handleChangeSplit = (split) => setSelectedSplit(split);
   const handleToggleMetric = (metric) => {
     const canonicalOrder = availableMetrics[selectedSplit] ?? [];
     setSelectedMetrics((prev) => {
@@ -122,13 +128,13 @@ function ResultsGraphs({ runs }) {
     );
   }
 
+  const currentMetrics = availableMetrics[selectedSplit] ?? [];
+
   return (
     <ResultsGraphsLayout
       selectedChart={selectedChart}
       handleChangeChart={handleChangeChart}
-      selectedSplit={selectedSplit}
-      handleChangeSplit={handleChangeSplit}
-      availableMetrics={availableMetrics}
+      currentMetrics={currentMetrics}
       selectedMetrics={selectedMetrics}
       handleToggleMetric={handleToggleMetric}
       handleSelectAll={handleSelectAll}
@@ -140,6 +146,13 @@ function ResultsGraphs({ runs }) {
 
 ResultsGraphs.propTypes = {
   runs: PropTypes.array.isRequired,
+  selectedSplit: PropTypes.string,
+  onSplitChange: PropTypes.func,
+};
+
+ResultsGraphs.defaultProps = {
+  selectedSplit: undefined,
+  onSplitChange: undefined,
 };
 
 export default ResultsGraphs;

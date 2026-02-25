@@ -9,9 +9,7 @@ import ResultsGraphsPlot from "./ResultsGraphsPlot";
 function ResultsGraphsLayout({
   selectedChart,
   handleChangeChart,
-  selectedSplit,
-  handleChangeSplit,
-  availableMetrics,
+  currentMetrics,
   selectedMetrics,
   handleToggleMetric,
   handleSelectAll,
@@ -33,11 +31,9 @@ function ResultsGraphsLayout({
       />
 
       <Box display="flex" flex={1} width="100%">
-        {/* Split + metric filter sidebar */}
+        {/* Metric filter sidebar */}
         <ResultsGraphsParameters
-          selectedSplit={selectedSplit}
-          handleChangeSplit={handleChangeSplit}
-          availableMetrics={availableMetrics}
+          currentMetrics={currentMetrics}
           selectedMetrics={selectedMetrics}
           handleToggleMetric={handleToggleMetric}
           handleSelectAll={handleSelectAll}
@@ -57,13 +53,7 @@ function ResultsGraphsLayout({
 ResultsGraphsLayout.propTypes = {
   selectedChart: PropTypes.string.isRequired,
   handleChangeChart: PropTypes.func.isRequired,
-  selectedSplit: PropTypes.string.isRequired,
-  handleChangeSplit: PropTypes.func.isRequired,
-  availableMetrics: PropTypes.shape({
-    train: PropTypes.array,
-    validation: PropTypes.array,
-    test: PropTypes.array,
-  }).isRequired,
+  currentMetrics: PropTypes.array.isRequired,
   selectedMetrics: PropTypes.array.isRequired,
   handleToggleMetric: PropTypes.func.isRequired,
   handleSelectAll: PropTypes.func.isRequired,

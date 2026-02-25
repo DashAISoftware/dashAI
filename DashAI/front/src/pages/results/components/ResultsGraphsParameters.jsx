@@ -5,17 +5,13 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 function ResultsGraphsParameters({
-  selectedSplit,
-  handleChangeSplit,
-  availableMetrics,
+  currentMetrics,
   selectedMetrics,
   handleToggleMetric,
   handleSelectAll,
@@ -24,67 +20,18 @@ function ResultsGraphsParameters({
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
 
-  const splits = [
-    { key: "train", label: t("common:train") },
-    { key: "validation", label: t("common:validation") },
-    { key: "test", label: t("common:test") },
-  ];
-
-  const currentMetrics = availableMetrics[selectedSplit] ?? [];
-
   return (
     <Box
       display="flex"
       flexDirection="column"
       sx={{
-        width: 220,
-        minWidth: 180,
+        width: 200,
+        minWidth: 160,
         flexShrink: 0,
         bgcolor: theme.palette.ui.panelLight,
         borderRight: `1px solid ${theme.palette.ui.border}`,
       }}
     >
-      {/* ── Split selector ── */}
-      <Box
-        sx={{
-          p: 1.5,
-          borderBottom: `1px solid ${theme.palette.ui.border}`,
-        }}
-      >
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            display: "block",
-            mb: 0.75,
-            fontWeight: 600,
-            letterSpacing: 0.5,
-          }}
-        >
-          {t("common:split", "Split")}
-        </Typography>
-        <ToggleButtonGroup
-          exclusive
-          value={selectedSplit}
-          onChange={(_, v) => {
-            if (v) handleChangeSplit(v);
-          }}
-          size="small"
-          fullWidth
-        >
-          {splits.map(({ key, label }) => (
-            <ToggleButton
-              key={key}
-              value={key}
-              disabled={availableMetrics[key].length === 0}
-              sx={{ flex: 1, py: 0.5, fontSize: "0.7rem" }}
-            >
-              {label}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Box>
-
       {/* ── Metric checkboxes ── */}
       <Box sx={{ p: 1.5, flex: 1, overflowY: "auto" }}>
         <Box
@@ -159,13 +106,7 @@ function ResultsGraphsParameters({
 }
 
 ResultsGraphsParameters.propTypes = {
-  selectedSplit: PropTypes.string.isRequired,
-  handleChangeSplit: PropTypes.func.isRequired,
-  availableMetrics: PropTypes.shape({
-    train: PropTypes.array,
-    validation: PropTypes.array,
-    test: PropTypes.array,
-  }).isRequired,
+  currentMetrics: PropTypes.array.isRequired,
   selectedMetrics: PropTypes.array.isRequired,
   handleToggleMetric: PropTypes.func.isRequired,
   handleSelectAll: PropTypes.func.isRequired,
