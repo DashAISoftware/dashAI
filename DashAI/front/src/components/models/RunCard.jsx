@@ -41,6 +41,7 @@ import OptimizationTableSelectOptimizer from "../experiments/OptimizationTableSe
 import ModelsTableSelectMetric from "../experiments/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../../api/run";
+import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -78,6 +79,7 @@ function RunCard({
   );
   const [operationsCount, setOperationsCount] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
 
   const { defaultValues: defaultOptimizerParams } = useSchema({
     modelName: editedOptimizer,
@@ -145,6 +147,44 @@ function RunCard({
     setEditedGoalMetric(run.goal_metric || "");
   };
 
+  const doSave = async () => {
+    setSaveConfirmOpen(false);
+    setIsSaving(true);
+    try {
+      await updateRunParameters(
+        run.id.toString(),
+        editedName.trim(),
+        editedParameters,
+        editedOptimizer || "",
+        editedOptimizerParams || {},
+        editedGoalMetric || "",
+      );
+
+      enqueueSnackbar(
+        `Run "${editedName}" updated successfully. Status changed to Not Started.`,
+        {
+          variant: "success",
+        },
+      );
+
+      setIsEditing(false);
+
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (error) {
+      console.error("Error updating run:", error);
+      enqueueSnackbar(
+        `Error updating run: ${error.message || "Unknown error"}`,
+        {
+          variant: "error",
+        },
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editedName.trim()) {
       enqueueSnackbar("Run name cannot be empty", { variant: "warning" });
@@ -180,40 +220,16 @@ function RunCard({
       }
     }
 
-    setIsSaving(true);
-    try {
-      await updateRunParameters(
-        run.id.toString(),
-        editedName.trim(),
-        editedParameters,
-        editedOptimizer || "",
-        editedOptimizerParams || {},
-        editedGoalMetric || "",
-      );
-
-      enqueueSnackbar(
-        `Run "${editedName}" updated successfully. Status changed to Not Started.`,
-        {
-          variant: "success",
-        },
-      );
-
-      setIsEditing(false);
-
-      if (onRefresh) {
-        await onRefresh();
-      }
-    } catch (error) {
-      console.error("Error updating run:", error);
-      enqueueSnackbar(
-        `Error updating run: ${error.message || "Unknown error"}`,
-        {
-          variant: "error",
-        },
-      );
-    } finally {
-      setIsSaving(false);
+    // If operations exist, warn before saving (they will be deleted on next train)
+    if (
+      operationsCount &&
+      (operationsCount.explainers > 0 || operationsCount.predictions > 0)
+    ) {
+      setSaveConfirmOpen(true);
+      return;
     }
+
+    await doSave();
   };
 
   const handleParametersChange = useCallback((values) => {
@@ -699,6 +715,14 @@ function RunCard({
             explainerRefreshTrigger={explainerRefreshTrigger}
           />
         </Box>
+        <RetrainConfirmDialog
+          mode="save"
+          open={saveConfirmOpen}
+          onClose={() => setSaveConfirmOpen(false)}
+          onConfirm={doSave}
+          run={run}
+          operationsCount={operationsCount}
+        />
       </CardContent>
     </Card>
   );

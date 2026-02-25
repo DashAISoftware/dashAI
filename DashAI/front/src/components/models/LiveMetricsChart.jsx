@@ -146,6 +146,8 @@ export function LiveMetricsChart({ run }) {
   }, [run.id, run.test_metrics]);
 
   useEffect(() => {
+    if (!run.model_session_id) return;
+
     let mounted = true;
 
     getModelSessionById(run.model_session_id.toString()).then((session) => {
@@ -161,7 +163,7 @@ export function LiveMetricsChart({ run }) {
     return () => {
       mounted = false;
     };
-  }, [run.experiment_id]);
+  }, [run.model_session_id]);
 
   const metrics = data[split]?.[level] ?? {};
   const allowed = availableMetrics[split] ?? [];

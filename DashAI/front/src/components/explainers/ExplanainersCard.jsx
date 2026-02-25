@@ -23,7 +23,6 @@ import { useNavigate } from "react-router-dom";
 import { deleteExplainer } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import { getComponentById } from "../../api/component";
-import { maxWidth } from "@mui/system";
 
 /**
  * GlobalExplainersCard
