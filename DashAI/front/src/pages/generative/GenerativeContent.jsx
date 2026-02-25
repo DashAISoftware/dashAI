@@ -62,7 +62,7 @@ export default function GenerativeContent() {
   }, [t]);
 
   const handleAddSession = (session) => {
-    setSessions((prevSessions) => [session, ...prevSessions]);
+    setSessions((prevSessions) => [...prevSessions, session]);
   };
 
   const handleSessionDelete = (id) => {
