@@ -161,10 +161,8 @@ function RunCard({
       );
 
       enqueueSnackbar(
-        `Run "${editedName}" updated successfully. Status changed to Not Started.`,
-        {
-          variant: "success",
-        },
+        t("models:message.runUpdatedSuccess", { runName: editedName }),
+        { variant: "success" },
       );
 
       setIsEditing(false);
@@ -175,10 +173,10 @@ function RunCard({
     } catch (error) {
       console.error("Error updating run:", error);
       enqueueSnackbar(
-        `Error updating run: ${error.message || "Unknown error"}`,
-        {
-          variant: "error",
-        },
+        t("models:error.failedToUpdateRun", {
+          error: error.message || t("common:unknownError"),
+        }),
+        { variant: "error" },
       );
     } finally {
       setIsSaving(false);
@@ -187,7 +185,7 @@ function RunCard({
 
   const handleSaveEdit = async () => {
     if (!editedName.trim()) {
-      enqueueSnackbar("Run name cannot be empty", { variant: "warning" });
+      enqueueSnackbar(t("models:error.runNameEmpty"), { variant: "warning" });
       return;
     }
 
@@ -198,22 +196,22 @@ function RunCard({
         r.name.toLowerCase() === editedName.trim().toLowerCase(),
     );
     if (nameExists) {
-      enqueueSnackbar("A run with this name already exists", {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        t("models:error.runNameExists", { name: editedName.trim() }),
+        { variant: "error" },
+      );
       return;
     }
 
     if (hasOptimizableParams) {
       if (!editedOptimizer) {
-        enqueueSnackbar(
-          "Please select an optimizer for optimizable parameters",
-          { variant: "warning" },
-        );
+        enqueueSnackbar(t("models:error.selectOptimizerRequired"), {
+          variant: "warning",
+        });
         return;
       }
       if (!editedGoalMetric) {
-        enqueueSnackbar("Please select a goal metric for optimization", {
+        enqueueSnackbar(t("models:error.selectGoalMetricRequired"), {
           variant: "warning",
         });
         return;

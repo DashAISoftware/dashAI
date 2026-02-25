@@ -72,7 +72,11 @@ export function LiveMetricsChart({ run }) {
       socketRef.current.close();
     }
 
-    const ws = new WebSocket(`ws://localhost:8000/api/v1/metrics/ws/${run.id}`);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = window.location.host;
+    const ws = new WebSocket(
+      `${protocol}//${host}/api/v1/metrics/ws/${run.id}`,
+    );
 
     ws.onmessage = (event) => {
       const incoming = JSON.parse(event.data);

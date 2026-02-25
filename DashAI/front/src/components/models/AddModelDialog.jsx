@@ -283,9 +283,9 @@ function AddModelDialog({
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(
     selectedOptimizer &&
-      optimizerParameters &&
-      Object.keys(optimizerParameters).length > 0 &&
-      goalMetric,
+    optimizerParameters &&
+    Object.keys(optimizerParameters).length > 0 &&
+    goalMetric,
   );
 
   return (

@@ -28,6 +28,7 @@ import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
 import { getPredictions } from "../../api/predict";
 import { checkHowManyOptimazers } from "../../utils/schema";
+import { useTranslation } from "react-i18next";
 
 export default function RunResults({
   run,
@@ -58,6 +59,7 @@ export default function RunResults({
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
   const isRunning = run.status === 1 || run.status === 2;
+  const { t } = useTranslation("models");
 
   const fetchOperations = useCallback(async () => {
     if (!run || !run.id) return;
@@ -156,7 +158,9 @@ export default function RunResults({
           endIcon={resultsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           sx={{ textTransform: "none" }}
         >
-          {resultsVisible ? "Hide Results" : "Show Results"}
+          {resultsVisible
+            ? t("models:label.hideResults")
+            : t("models:label.showResults")}
           {isFinished && (
             <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
           )}
@@ -170,11 +174,11 @@ export default function RunResults({
             onChange={(e, newValue) => setActiveTab(newValue)}
             aria-label="Results tabs"
           >
-            <Tab label="Live Metrics" />
+            <Tab label={t("models:label.liveMetrics")} />
             <Tab
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <span>Explainability</span>
+                  <span>{t("models:label.explainability")}</span>
                   {isFinished && (
                     <Chip
                       label={globalExplainers.length + localExplainers.length}
@@ -189,7 +193,7 @@ export default function RunResults({
             <Tab
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <span>Predictions</span>
+                  <span>{t("models:label.predictions")}</span>
                   {isFinished && (
                     <Chip
                       label={predictions.length}
@@ -202,7 +206,7 @@ export default function RunResults({
               disabled={!isFinished}
             />
             <Tab
-              label="Hyperparameters"
+              label={t("models:label.hyperparameters")}
               disabled={!isFinished || optimizables === 0}
             />
           </Tabs>
@@ -238,7 +242,7 @@ export default function RunResults({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Global Explainers
+                        {t("models:label.globalExplainers")}
                       </Typography>
                       <Chip
                         label={globalExplainers.length}
@@ -255,7 +259,7 @@ export default function RunResults({
                       onClick={() => setGlobalDialogOpen(true)}
                       fullWidth
                     >
-                      New Global Explainer
+                      {t("models:button.createGlobalExplainer")}
                     </Button>
                     {globalExplainers.length === 0 ? (
                       <Typography
@@ -264,7 +268,7 @@ export default function RunResults({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No global explainers yet
+                        {t("models:label.noGlobalExplainersYet")}
                       </Typography>
                     ) : (
                       globalExplainers.map((explainer) => (
@@ -302,7 +306,7 @@ export default function RunResults({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Local Explainers
+                        {t("models:label.localExplainers")}
                       </Typography>
                       <Chip
                         label={localExplainers.length}
@@ -319,7 +323,7 @@ export default function RunResults({
                       onClick={() => setLocalDialogOpen(true)}
                       fullWidth
                     >
-                      New Local Explainer
+                      {t("models:button.createLocalExplainer")}
                     </Button>
                     {localExplainers.length === 0 ? (
                       <Typography
@@ -328,7 +332,7 @@ export default function RunResults({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No local explainers yet
+                        {t("models:label.noLocalExplainersYet")}
                       </Typography>
                     ) : (
                       localExplainers.map((explainer) => (
@@ -371,7 +375,7 @@ export default function RunResults({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Dataset Predictions
+                        {t("models:label.datasetPredictions")}
                       </Typography>
                       <Chip
                         label={predictions.filter((p) => p.dataset_id).length}
@@ -388,7 +392,7 @@ export default function RunResults({
                       onClick={() => setDatasetPredictionDialogOpen(true)}
                       fullWidth
                     >
-                      New Dataset Prediction
+                      {t("models:button.newDatasetPrediction")}
                     </Button>
                     {predictions.filter((p) => p.dataset_id).length === 0 ? (
                       <Typography
@@ -397,7 +401,7 @@ export default function RunResults({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No dataset predictions yet
+                        {t("models:label.noDatasetPredictionsYet")}
                       </Typography>
                     ) : (
                       predictions
@@ -435,7 +439,7 @@ export default function RunResults({
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Typography variant="body1" fontWeight="medium">
-                        Manual Predictions
+                        {t("models:label.manualPredictions")}
                       </Typography>
                       <Chip
                         label={predictions.filter((p) => !p.dataset_id).length}
@@ -452,7 +456,7 @@ export default function RunResults({
                       onClick={() => setManualPredictionDialogOpen(true)}
                       fullWidth
                     >
-                      New Manual Prediction
+                      {t("models:button.newManualPrediction")}
                     </Button>
                     {predictions.filter((p) => !p.dataset_id).length === 0 ? (
                       <Typography
@@ -461,7 +465,7 @@ export default function RunResults({
                         align="center"
                         sx={{ py: 3 }}
                       >
-                        No manual predictions yet
+                        {t("models:label.noManualPredictionsYet")}
                       </Typography>
                     ) : (
                       predictions
@@ -539,6 +543,8 @@ RunResults.propTypes = {
     status: PropTypes.number,
     experiment_id: PropTypes.number,
     parameters: PropTypes.object,
+    model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    test_metrics: PropTypes.object,
   }).isRequired,
   session: PropTypes.shape({
     id: PropTypes.number,

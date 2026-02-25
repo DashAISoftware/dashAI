@@ -61,7 +61,7 @@ function HyperparameterPlots({ run }) {
     } else {
       setLoading(false);
     }
-  }, [run.id, run.status]);
+  }, [run.id, run.status, run.parameters]);
 
   if (loading) {
     return (
