@@ -215,9 +215,9 @@ export default function RunResults({
         )}
 
         {activeTab === 1 && isFinished && (
-          <Box sx={{ py: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+          <Box sx={{ py: 2, width: "100%" }}>
+            <Grid container spacing={2} alignItems="stretch">
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
@@ -225,6 +225,7 @@ export default function RunResults({
                     borderRadius: 1,
                     p: 2,
                     height: "100%",
+                    minHeight: 180,
                   }}
                 >
                   <Box
@@ -280,7 +281,7 @@ export default function RunResults({
                 </Box>
               </Grid>
 
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     border: 1,
@@ -288,6 +289,7 @@ export default function RunResults({
                     borderRadius: 1,
                     p: 2,
                     height: "100%",
+                    minHeight: 180,
                   }}
                 >
                   <Box

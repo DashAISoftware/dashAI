@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteExplainer } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import { getComponentById } from "../../api/component";
+import { maxWidth } from "@mui/system";
 
 /**
  * GlobalExplainersCard
@@ -87,7 +88,7 @@ export default function ExplainersCard({
   if (compact) {
     return (
       <>
-        <Paper elevation={2} sx={{ p: 2, width: "100%" }}>
+        <Paper elevation={2} sx={{ p: 2 }}>
           <Grid container direction="column" gap={1}>
             <Grid
               item
@@ -96,7 +97,7 @@ export default function ExplainersCard({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Grid item>
+              <Grid item sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
                 <Typography
                   variant="subtitle2"
                   fontWeight="medium"
@@ -105,6 +106,7 @@ export default function ExplainersCard({
                     alignItems: "center",
                     gap: 1,
                     flexWrap: "wrap",
+                    wordBreak: "break-word",
                   }}
                 >
                   {componentData
@@ -181,7 +183,7 @@ export default function ExplainersCard({
   // Full mode for standalone page
   return (
     <Paper elevation={3}>
-      <Grid container item minWidth={800} maxWidth={800} p={4} gap={2}>
+      <Grid container item sx={{ width: 800 }} p={4} gap={2}>
         <Grid
           item
           container
