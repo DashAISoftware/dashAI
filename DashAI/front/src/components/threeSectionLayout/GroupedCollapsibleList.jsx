@@ -41,13 +41,13 @@ export default function GroupedCollapsibleList({
   // Scroll to selected item after group is opened
   useEffect(() => {
     if (selectedItemId && selectedItemRef.current) {
-      // Use setTimeout to ensure the Collapse animation has started
+      // Use setTimeout to ensure the Collapse animation has completed
       setTimeout(() => {
         selectedItemRef.current?.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
         });
-      }, 100);
+      }, 350);
     }
   }, [selectedItemId, openGroups]);
 
