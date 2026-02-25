@@ -17,22 +17,19 @@ import {
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getRunStatus } from "../../utils/runStatus";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
 import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { useTranslation } from "react-i18next";
+import { useModels } from "./ModelsContext";
+import { useTourContext } from "../tour/TourProvider";
 
-export default function SessionVisualization({
-  session,
-  runs = [],
-  onTrain,
-  onEditRun,
-  onDeleteRun,
-}) {
+export default function SessionVisualization() {
+  const sessionTourContext = useTourContext();
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
@@ -47,6 +44,19 @@ export default function SessionVisualization({
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
+
+  const {
+    selectedSession: session,
+    runs,
+    onTrainRun: onTrain,
+    onEditRun,
+    onDeleteRun,
+    retrainDialogOpen,
+    runToRetrain,
+    operationsCount,
+    handleCancelRetrain,
+    handleConfirmRetrain,
+  } = useModels();
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -76,6 +86,33 @@ export default function SessionVisualization({
   useEffect(() => {
     fetchModels();
   }, [fetchModels]);
+
+  useEffect(() => {
+    const handleGraphsButtonClick = (e) => {
+      const graphsButton = e.target.closest('[data-tour="graphs-button"]');
+      if (graphsButton && sessionTourContext?.stepIndex === 7) {
+        setTimeout(() => {
+          sessionTourContext.nextStep();
+        }, 500);
+      }
+    };
+
+    document.addEventListener("click", handleGraphsButtonClick, true);
+    return () => {
+      document.removeEventListener("click", handleGraphsButtonClick, true);
+    };
+  }, [sessionTourContext]);
+
+  // Check if tour should start from previous tutorial
+  useEffect(() => {
+    const shouldStartTour = sessionStorage.getItem("startModelsSessionTour");
+    if (shouldStartTour === "true" && sessionTourContext) {
+      sessionStorage.removeItem("startModelsSessionTour");
+      setTimeout(() => {
+        sessionTourContext.startTour();
+      }, 1000);
+    }
+  }, [sessionTourContext]);
 
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
@@ -129,6 +166,15 @@ export default function SessionVisualization({
   const hasTestMetrics = runs.some(
     (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
   );
+
+  const handleTrainWithTour = (run) => {
+    if (onTrain) onTrain(run);
+    if (sessionTourContext?.run && sessionTourContext?.stepIndex === 5) {
+      setTimeout(() => {
+        sessionTourContext.nextStep();
+      }, 500);
+    }
+  };
 
   const handleMouseMove = React.useCallback((e) => {
     if (isResizing.current) {
@@ -391,7 +437,7 @@ export default function SessionVisualization({
                     run={run}
                     models={models}
                     session={session}
-                    onTrain={onTrain}
+                    onTrain={handleTrainWithTour}
                     onEdit={onEditRun}
                     onExplainer={handleExplainer}
                     onDelete={onDeleteRun}
@@ -467,19 +513,16 @@ export default function SessionVisualization({
         }}
       />
 
+      {/* Retrain Confirmation Dialog */}
+      <RetrainConfirmDialog
+        open={retrainDialogOpen}
+        onClose={handleCancelRetrain}
+        onConfirm={handleConfirmRetrain}
+        run={runToRetrain}
+        operationsCount={operationsCount}
+      />
+
       <JobQueueWidget />
     </>
   );
 }
-
-SessionVisualization.propTypes = {
-  session: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    task_name: PropTypes.string,
-  }),
-  runs: PropTypes.array,
-  onTrain: PropTypes.func.isRequired,
-  onEditRun: PropTypes.func.isRequired,
-  onDeleteRun: PropTypes.func.isRequired,
-};

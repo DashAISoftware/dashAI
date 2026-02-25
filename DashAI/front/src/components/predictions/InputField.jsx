@@ -3,18 +3,40 @@ import { TextField, Select, MenuItem, FormControl } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
-export const renderInputField = (
+function InputField({
   handleChange,
   rowIndex,
   col,
   typeInfo,
   value,
   placeholder,
-) => {
+}) {
   const { dtype, type, categories } = typeInfo || {};
   const effectiveType = type || dtype || "string";
   const theme = useTheme();
   const { t } = useTranslation(["prediction"]);
+
+  const commonStyles = {
+    "& .MuiOutlinedInput-root": {
+      fontSize: "0.875rem",
+      backgroundColor: theme.palette.background.paper,
+      "& fieldset": {
+        borderColor: theme.palette.divider,
+        borderWidth: "1px",
+      },
+      "&:hover fieldset": {
+        borderColor: theme.palette.primary.main,
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: theme.palette.primary.main,
+        borderWidth: "2px",
+      },
+    },
+    "& .MuiInputBase-input": {
+      padding: "6px 10px",
+      color: theme.palette.text.primary,
+    },
+  };
 
   if (effectiveType === "Categorical" && categories && categories.length > 0) {
     return (
@@ -24,19 +46,33 @@ export const renderInputField = (
           onChange={(e) => handleChange(rowIndex, col, e.target.value)}
           displayEmpty
           sx={{
-            color: theme.palette.text.primary,
-            ".MuiOutlinedInput-notchedOutline": {
+            fontSize: "0.875rem",
+            backgroundColor: theme.palette.background.paper,
+            "& .MuiOutlinedInput-notchedOutline": {
               borderColor: theme.palette.divider,
+              borderWidth: "1px",
             },
-            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#888" },
-            ".MuiSvgIcon-root": { color: theme.palette.text.primary },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: theme.palette.primary.main,
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: theme.palette.primary.main,
+              borderWidth: "2px",
+            },
+            "& .MuiSelect-select": {
+              padding: "6px 10px",
+              color: theme.palette.text.primary,
+            },
+            "& .MuiSvgIcon-root": {
+              color: theme.palette.text.secondary,
+            },
           }}
         >
-          <MenuItem value="" disabled>
+          <MenuItem value="" disabled sx={{ fontSize: "0.875rem" }}>
             {t("prediction:label.selectCategory")}
           </MenuItem>
           {categories.map((cat, idx) => (
-            <MenuItem key={idx} value={cat}>
+            <MenuItem key={idx} value={cat} sx={{ fontSize: "0.875rem" }}>
               {cat}
             </MenuItem>
           ))}
@@ -55,6 +91,7 @@ export const renderInputField = (
 
     return (
       <TextField
+        fullWidth
         size="small"
         type="number"
         value={value}
@@ -71,13 +108,7 @@ export const renderInputField = (
                 : parseFloat(e.target.value);
           handleChange(rowIndex, col, val);
         }}
-        sx={{
-          input: { color: theme.palette.text.primary },
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: theme.palette.divider },
-            "&:hover fieldset": { borderColor: "#888" },
-          },
-        }}
+        sx={commonStyles}
       />
     );
   }
@@ -89,45 +120,49 @@ export const renderInputField = (
   ) {
     return (
       <TextField
+        fullWidth
         size="small"
         value={value}
         placeholder={placeholder}
         onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-        sx={{
-          input: { color: theme.palette.text.primary },
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: theme.palette.divider },
-            "&:hover fieldset": { borderColor: "#888" },
-          },
-        }}
+        sx={commonStyles}
       />
     );
   }
 
   if (effectiveType === "Image" || dtype === "image") {
     return (
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
-        style={{ color: theme.palette.text.primary }}
-      />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleChange(rowIndex, col, e.target.files?.[0])}
+          style={{
+            fontSize: "0.875rem",
+            color: theme.palette.text.primary,
+            padding: "4px 0",
+          }}
+        />
+      </Box>
     );
   }
 
   return (
-    <TextField1
+    <TextField
+      fullWidth
       size="small"
       value={value}
       placeholder={placeholder}
       onChange={(e) => handleChange(rowIndex, col, e.target.value)}
-      sx={{
-        input: { color: theme.palette.text.primary },
-        "& .MuiOutlinedInput-root": {
-          "& fieldset": { borderColor: theme.palette.divider },
-          "&:hover fieldset": { borderColor: "#888" },
-        },
-      }}
+      sx={commonStyles}
     />
   );
-};
+}
+
+export default InputField;
