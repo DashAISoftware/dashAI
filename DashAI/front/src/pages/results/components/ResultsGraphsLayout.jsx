@@ -3,22 +3,19 @@ import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 
 import ResultsGraphsSelection from "./ResultsGraphsSelection";
-import ResultsGraphsSwitch from "./ResultsGraphsSwitch";
 import ResultsGraphsParameters from "./ResultsGraphsParameters";
 import ResultsGraphsPlot from "./ResultsGraphsPlot";
 
 function ResultsGraphsLayout({
   selectedChart,
   handleChangeChart,
-  showCustomMetrics,
-  handleToggleMetrics,
-  tabularMetrics,
-  selectedParameters,
-  handleToggleParameter,
-  selectedGeneralMetric,
-  setSelectedGeneralMetric,
-  setSelectedParameters,
-  concatenatedMetrics,
+  selectedSplit,
+  handleChangeSplit,
+  availableMetrics,
+  selectedMetrics,
+  handleToggleMetric,
+  handleSelectAll,
+  handleClearAll,
   chartData,
 }) {
   return (
@@ -26,36 +23,28 @@ function ResultsGraphsLayout({
       display="flex"
       flexDirection="column"
       alignItems="stretch"
-      textAlign="center"
       width="100%"
       height="100%"
     >
-      {/* Chart selection buttons */}
+      {/* Chart type selector */}
       <ResultsGraphsSelection
         selectedChart={selectedChart}
         handleChangeChart={handleChangeChart}
       />
 
-      {/* Switch Container */}
-      <ResultsGraphsSwitch
-        showCustomMetrics={showCustomMetrics}
-        handleToggleMetrics={handleToggleMetrics}
-      />
-
-      <Box display="flex" justifyContent="center" width="100%" height="100%">
-        {/* Parameter container */}
+      <Box display="flex" flex={1} width="100%">
+        {/* Split + metric filter sidebar */}
         <ResultsGraphsParameters
-          showCustomMetrics={showCustomMetrics}
-          tabularMetrics={tabularMetrics}
-          selectedParameters={selectedParameters}
-          handleToggleParameter={handleToggleParameter}
-          selectedGeneralMetric={selectedGeneralMetric}
-          setSelectedGeneralMetric={setSelectedGeneralMetric}
-          setSelectedParameters={setSelectedParameters}
-          concatenatedMetrics={concatenatedMetrics}
+          selectedSplit={selectedSplit}
+          handleChangeSplit={handleChangeSplit}
+          availableMetrics={availableMetrics}
+          selectedMetrics={selectedMetrics}
+          handleToggleMetric={handleToggleMetric}
+          handleSelectAll={handleSelectAll}
+          handleClearAll={handleClearAll}
         />
 
-        {/* Plotly Chart */}
+        {/* Plotly chart area */}
         <ResultsGraphsPlot
           selectedChart={selectedChart}
           chartData={chartData}
@@ -68,15 +57,17 @@ function ResultsGraphsLayout({
 ResultsGraphsLayout.propTypes = {
   selectedChart: PropTypes.string.isRequired,
   handleChangeChart: PropTypes.func.isRequired,
-  showCustomMetrics: PropTypes.bool.isRequired,
-  handleToggleMetrics: PropTypes.func.isRequired,
-  tabularMetrics: PropTypes.array.isRequired,
-  selectedParameters: PropTypes.array.isRequired,
-  handleToggleParameter: PropTypes.func.isRequired,
-  selectedGeneralMetric: PropTypes.string.isRequired,
-  setSelectedGeneralMetric: PropTypes.func.isRequired,
-  setSelectedParameters: PropTypes.func.isRequired,
-  concatenatedMetrics: PropTypes.array.isRequired,
+  selectedSplit: PropTypes.string.isRequired,
+  handleChangeSplit: PropTypes.func.isRequired,
+  availableMetrics: PropTypes.shape({
+    train: PropTypes.array,
+    validation: PropTypes.array,
+    test: PropTypes.array,
+  }).isRequired,
+  selectedMetrics: PropTypes.array.isRequired,
+  handleToggleMetric: PropTypes.func.isRequired,
+  handleSelectAll: PropTypes.func.isRequired,
+  handleClearAll: PropTypes.func.isRequired,
   chartData: PropTypes.object.isRequired,
 };
 
