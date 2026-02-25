@@ -1,18 +1,12 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Box, Typography, TextField } from "@mui/material";
 import ItemMenu from "./ItemMenu";
 import { useTheme } from "@mui/material/styles";
 
-export default function ItemBox({
-  isSelected,
-  name,
-  description,
-  id,
-  onClick,
-  onDelete,
-  onEdit,
-  onInfo,
-}) {
+const ItemBox = forwardRef(function ItemBox(
+  { isSelected, name, description, id, onClick, onDelete, onEdit, onInfo },
+  ref,
+) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
   const inputRef = useRef(null);
@@ -76,6 +70,7 @@ export default function ItemBox({
 
   return (
     <Box
+      ref={ref}
       sx={{
         width: "100%",
         height: "50px",
@@ -154,4 +149,6 @@ export default function ItemBox({
       />
     </Box>
   );
-}
+});
+
+export default ItemBox;

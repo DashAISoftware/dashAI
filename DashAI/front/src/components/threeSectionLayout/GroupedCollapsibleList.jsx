@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Collapse } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
@@ -20,6 +20,36 @@ export default function GroupedCollapsibleList({
 }) {
   const theme = useTheme();
   const [openGroups, setOpenGroups] = useState(initialOpenGroups);
+  const selectedItemRef = useRef(null);
+
+  // Auto-open group when an item is selected
+  useEffect(() => {
+    if (selectedItemId) {
+      // Find which group contains the selected item
+      for (const [groupName, items] of Object.entries(groups)) {
+        if (items?.some((item) => item.id === selectedItemId)) {
+          setOpenGroups((prev) => ({
+            ...prev,
+            [groupName]: true,
+          }));
+          break;
+        }
+      }
+    }
+  }, [selectedItemId, groups]);
+
+  // Scroll to selected item after group is opened
+  useEffect(() => {
+    if (selectedItemId && selectedItemRef.current) {
+      // Use setTimeout to ensure the Collapse animation has started
+      setTimeout(() => {
+        selectedItemRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }, 100);
+    }
+  }, [selectedItemId, openGroups]);
 
   const toggleGroup = (groupName) => {
     setOpenGroups((prev) => ({
@@ -170,6 +200,7 @@ export default function GroupedCollapsibleList({
                   items.map((item) => (
                     <ItemBox
                       key={item.id ?? item.name}
+                      ref={item.id === selectedItemId ? selectedItemRef : null}
                       isSelected={item.id === selectedItemId}
                       name={item.name}
                       description={
