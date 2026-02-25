@@ -14,6 +14,8 @@ import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
+import { TourButton } from "../../components/tour/TourButton";
+import { TOUR_KEYS } from "../../constants/tours";
 
 export default function GenerativeContent() {
   const [stepIndex, setStepIndex] = useState(0);
@@ -126,6 +128,7 @@ export default function GenerativeContent() {
             taskName={selectedTaskName}
             onToggle={threePanelLayout.handleToggleRight}
           />
+          <TourButton tourKey={TOUR_KEYS.GENERATIVE} />
         </RightPanel>
       </ModuleContainer>
     </ThreePanelLayoutContext.Provider>
