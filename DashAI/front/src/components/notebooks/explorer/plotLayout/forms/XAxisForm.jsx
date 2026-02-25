@@ -5,6 +5,7 @@ import {
   Switch,
   Box,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
@@ -17,6 +18,7 @@ export default function XAxisForm({
   handleTraceChange,
 }) {
   const { t } = useTranslation(["datasets"]);
+  const theme = useTheme();
   const tickvalsArray = Array.isArray(data[0]?.x) ? data[0].x : [];
 
   return (
@@ -53,7 +55,7 @@ export default function XAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisTitleColor", { axis: "X" })}
-        value={layout.xaxis?.title?.font?.color || "#2A3F5F"}
+        value={layout.xaxis?.title?.font?.color || theme.palette.text.primary}
         onChange={(color) =>
           handleAxisChange("xaxis", "title", {
             ...layout.xaxis?.title,
@@ -78,7 +80,7 @@ export default function XAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisTickFontColor", { axis: "X" })}
-        value={layout.xaxis?.tickfont?.color || "#2A3F5F"}
+        value={layout.xaxis?.tickfont?.color || theme.palette.text.secondary}
         onChange={(color) =>
           handleAxisChange("xaxis", "tickfont", {
             ...layout.xaxis?.tickfont,
@@ -99,7 +101,7 @@ export default function XAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisLineColor", { axis: "X" })}
-        value={layout.xaxis?.linecolor || "#FFFFFF"}
+        value={layout.xaxis?.linecolor || theme.palette.text.primary}
         onChange={(color) => handleAxisChange("xaxis", "linecolor", color)}
       />
 
@@ -116,7 +118,7 @@ export default function XAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisGridColor", { axis: "X" })}
-        value={layout.xaxis?.gridcolor || "#FFFFFF"}
+        value={layout.xaxis?.gridcolor || theme.palette.ui.divider}
         onChange={(color) => handleAxisChange("xaxis", "gridcolor", color)}
       />
 
@@ -141,7 +143,7 @@ export default function XAxisForm({
             color="primary"
           />
         }
-        label={t("datasets:label.showGrid")}
+        label={t("datasets:label.showGrid", { axis: "X" })}
       />
 
       <FormControlLabel
@@ -154,7 +156,7 @@ export default function XAxisForm({
             color="primary"
           />
         }
-        label={t("datasets:label.showZeroLine")}
+        label={t("datasets:label.showZeroLine", { axis: "X" })}
       />
       {/* X Axis Tick Labels */}
       {tickvalsArray.length > 0 &&
@@ -162,16 +164,7 @@ export default function XAxisForm({
           const rawTicktext = data[0].x[idx];
 
           return (
-            <Box
-              key={idx}
-              sx={{
-                mt: 2,
-                p: 2,
-                border: "1px solid #444",
-                borderRadius: 1,
-                bgcolor: "#333",
-              }}
-            >
+            <Box key={idx}>
               {/* Label input */}
               <TextField
                 label={t("datasets:label.axisTickLabel", { axis: "X", tick })}

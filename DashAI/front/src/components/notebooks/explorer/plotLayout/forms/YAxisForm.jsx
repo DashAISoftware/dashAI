@@ -5,6 +5,7 @@ import {
   Switch,
   Box,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
@@ -17,6 +18,7 @@ export default function YAxisForm({
   handleTraceChange,
 }) {
   const { t } = useTranslation(["datasets"]);
+  const theme = useTheme();
   const tickvalsArray = Array.isArray(data[0]?.y) ? data[0].y : [];
 
   return (
@@ -53,7 +55,7 @@ export default function YAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisTitleColor", { axis: "Y" })}
-        value={layout.yaxis?.title?.font?.color || "#2A3F5F"}
+        value={layout.yaxis?.title?.font?.color || theme.palette.text.primary}
         onChange={(color) =>
           handleAxisChange("yaxis", "title", {
             ...layout.yaxis?.title,
@@ -77,7 +79,7 @@ export default function YAxisForm({
       />
       <DebouncedColorPicker
         label={t("datasets:label.axisTickFontColor", { axis: "Y" })}
-        value={layout.yaxis?.tickfont?.color || "#2A3F5F"}
+        value={layout.yaxis?.tickfont?.color || theme.palette.text.secondary}
         onChange={(color) =>
           handleAxisChange("yaxis", "tickfont", {
             ...layout.yaxis?.tickfont,
@@ -99,7 +101,7 @@ export default function YAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisLineColor", { axis: "Y" })}
-        value={layout.yaxis?.linecolor || "#FFFFFF"}
+        value={layout.yaxis?.linecolor || theme.palette.text.primary}
         onChange={(color) => handleAxisChange("yaxis", "linecolor", color)}
       />
 
@@ -116,7 +118,7 @@ export default function YAxisForm({
 
       <DebouncedColorPicker
         label={t("datasets:label.axisGridColor", { axis: "Y" })}
-        value={layout.yaxis?.gridcolor || "#FFFFFF"}
+        value={layout.yaxis?.gridcolor || theme.palette.ui.divider}
         onChange={(color) => handleAxisChange("yaxis", "gridcolor", color)}
       />
 
@@ -141,7 +143,7 @@ export default function YAxisForm({
             color="primary"
           />
         }
-        label={t("datasets:label.showGrid")}
+        label={t("datasets:label.showGrid", { axis: "Y" })}
       />
 
       <FormControlLabel
@@ -154,7 +156,7 @@ export default function YAxisForm({
             color="primary"
           />
         }
-        label={t("datasets:label.showZeroLine")}
+        label={t("datasets:label.showZeroLine", { axis: "Y" })}
       />
       {/* Y Axis Tick Labels */}
       {tickvalsArray.length > 0 &&
@@ -162,16 +164,7 @@ export default function YAxisForm({
           const rawTicktext = data[0].y[idx];
 
           return (
-            <Box
-              key={idx}
-              sx={{
-                mt: 2,
-                p: 2,
-                border: "1px solid #444",
-                borderRadius: 1,
-                bgcolor: "#333",
-              }}
-            >
+            <Box key={idx}>
               {/* Label input */}
               <TextField
                 label={t("datasets:label.axisTickLabel", { axis: "Y", tick })}
