@@ -38,7 +38,7 @@ export default function ExplorerDetailsModal({
   if (!explorer) return null;
   if (!data) return null;
   const [currentTab, setCurrentTab] = useState(3);
-  const [localData, setLocalData] = useState(structuredClone(data));
+  const [localData, setLocalData] = useState(data);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
 
