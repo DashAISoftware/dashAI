@@ -4,8 +4,8 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import { useEffect, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
+import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import Footer from "./Footer";
-import SessionList from "./SessionList";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
@@ -79,13 +79,6 @@ export default function SessionBar({
     }
   };
 
-  const toggleSection = (taskName) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [taskName]: !prev[taskName],
-    }));
-  };
-
   // Group sessions by task display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
     // Get the display name from the task using the session's task_name
@@ -157,53 +150,17 @@ export default function SessionBar({
         <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
 
         {/* Sessions */}
-        <Box
-          minHeight={0}
-          pb={1}
-          overflow="auto"
-          sx={{
-            flex: 1,
-            pl: 2,
-            pr: 2,
-            pt: 2,
-          }}
-        >
-          {/* Header */}
-          <Box display="flex" alignItems="center" py={0.5} px={1} mb={0.5}>
-            <FolderIcon sx={{ color: "#16FFFF", mr: 1, fontSize: 20 }} />
-            <Typography color="text.primary">
-              {t("generative:label.sessions")}
-            </Typography>
-            <Box
-              sx={{
-                ml: 1,
-                bgcolor: theme.palette.ui.border,
-                color: "text.primary",
-                borderRadius: "50%",
-                width: 20,
-                height: 20,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-              }}
-            >
-              {filteredSessions?.length}
-            </Box>
-          </Box>
-          {/* Sessions Display Grouped by Task */}
-          <Box>
-            <SessionList
-              selectedSessionId={selectedSessionId}
-              groupedSessions={groupedSessions}
-              openSections={openSections}
-              handleSessionClick={handleSessionClick}
-              handleSessionDelete={handleSessionDelete}
-              handleSessionInfo={handleSessionInfo}
-              toggleSection={toggleSection}
-            />
-          </Box>
-        </Box>
+        <GroupedCollapsibleList
+          groups={groupedSessions}
+          selectedItemId={selectedSessionId}
+          onItemClick={handleSessionClick}
+          onItemDelete={handleSessionDelete}
+          //onItemEdit={editSession} TODO: Edit session functionality to be implemented in the future
+          onItemInfo={handleSessionInfo}
+          title={t("common:generative")}
+          Icon={FolderIcon}
+          initialOpenGroups={openSections}
+        />
       </Box>
 
       {/* Footer */}
