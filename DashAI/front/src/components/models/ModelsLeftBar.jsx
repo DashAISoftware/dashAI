@@ -113,10 +113,11 @@ export default function ModelsLeftBar({ onToggle }) {
   };
 
   const getSessionDescription = (session) => {
-    if (session.dataloader_name && datasets.length > 0) {
+    if (session.dataset_id && datasets.length > 0) {
       const associatedDataset = datasets.find(
-        (dataset) => dataset.name === session.dataloader_name,
+        (dataset) => dataset.id === session.dataset_id,
       );
+
       return associatedDataset?.name
         ? `from ${associatedDataset.name} dataset`
         : "No dataset";
