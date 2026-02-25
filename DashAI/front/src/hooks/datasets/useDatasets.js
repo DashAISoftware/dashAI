@@ -22,7 +22,11 @@ export function useDatasets({ t }) {
         newDatasets.map(async (dataset) => {
           const existing = existingDatasets.find((d) => d.id === dataset.id);
 
-          if (existing) {
+          if (
+            existing &&
+            existing.total_rows !== undefined &&
+            existing.total_columns !== undefined
+          ) {
             return {
               ...dataset,
               total_rows: existing.total_rows,
