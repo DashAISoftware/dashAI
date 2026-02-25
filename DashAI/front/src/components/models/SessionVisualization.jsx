@@ -11,7 +11,6 @@ import {
   ToggleButton,
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
-import JobQueueWidget from "../jobs/JobQueueWidget";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
@@ -198,7 +197,6 @@ export default function SessionVisualization() {
             {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
-        <JobQueueWidget />
       </>
     );
   }
@@ -423,7 +421,6 @@ export default function SessionVisualization() {
         </Box>
       </Box>
 
-      <JobQueueWidget />
       <RetrainConfirmDialog
         open={retrainDialogOpen}
         onClose={handleCancelRetrain}

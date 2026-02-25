@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Box, Divider } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
-import JobQueueWidget from "../../jobs/JobQueueWidget";
 
 export default function NotebookVisualization({
   notebook,
@@ -32,7 +31,6 @@ export default function NotebookVisualization({
           <NotebookView notebook={notebook} />
         </Box>
       </Box>
-      <JobQueueWidget />
     </>
   );
 }
