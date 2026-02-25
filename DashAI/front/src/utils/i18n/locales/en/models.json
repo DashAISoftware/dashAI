@@ -140,7 +140,6 @@
     "runStarted": "Run \"{{runName}}\" started",
     "runStartedSuccessfully": "Run {{runId}} started successfully",
     "sessionCreatedSuccess": "Session successfully created.",
-    "sessionDeleted": "Session deleted successfully",
     "sessionUpdated": "Session updated successfully"
   }
 }

@@ -283,7 +283,7 @@ export default function ColorscaleSelector({ value, onChange }) {
                       </Box>
 
                       <TextField
-                        label="Position"
+                        label={t("datasets:label.position")}
                         type="number"
                         variant="outlined"
                         size="small"

@@ -141,7 +141,6 @@
     "runStarted": "Ejecución \"{{runName}}\" iniciada",
     "runStartedSuccessfully": "Ejecución {{runId}} iniciada exitosamente",
     "sessionCreatedSuccess": "Sesión creada exitosamente.",
-    "sessionDeleted": "Sesión eliminada exitosamente",
     "sessionUpdated": "Sesión actualizada exitosamente"
   }
 }
