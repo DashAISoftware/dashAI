@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, use } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
+import { useTourContext } from "../tour/TourProvider";
 
 /**
  * Dialog for adding a new model run to a session
@@ -61,6 +62,8 @@ function AddModelDialog({
   const { defaultValues: defaultOptimizerParams } = useSchema({
     modelName: selectedOptimizer,
   });
+
+  const tourContext = useTourContext();
 
   useEffect(() => {
     if (open && selectedModel) {
@@ -224,11 +227,33 @@ function AddModelDialog({
         variant: "success",
       });
 
+      let shouldDelayClose = false;
       if (onRunCreated) {
         onRunCreated(newRun);
       }
 
-      handleClose();
+      if (tourContext?.run && tourContext?.stepIndex === 3) {
+        shouldDelayClose = true;
+        setTimeout(() => {
+          const runCard = document.querySelector(
+            '[data-tour="first-run-card"]',
+          );
+          if (runCard) {
+            runCard.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "nearest",
+            });
+          }
+          setTimeout(() => {
+            tourContext.nextStep();
+            handleClose();
+          }, 100);
+        }, 100);
+      }
+      if (!shouldDelayClose) {
+        handleClose();
+      }
     } catch (error) {
       console.error("Error creating run:", error);
 
@@ -258,9 +283,9 @@ function AddModelDialog({
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(
     selectedOptimizer &&
-    optimizerParameters &&
-    Object.keys(optimizerParameters).length > 0 &&
-    goalMetric,
+      optimizerParameters &&
+      Object.keys(optimizerParameters).length > 0 &&
+      goalMetric,
   );
 
   return (
