@@ -4,6 +4,7 @@
     "createSession": "Crear una sesión"
   },
   "error": {
+    "failedToDeleteSession": "Error al eliminar sesión",
     "failedToFetchHistory": "Error al obtener historial de parámetros",
     "failedToFetchMessages": "Error al obtener mensajes",
     "failedToFetchSessionInfo": "Error al obtener información de la sesión",

@@ -9,8 +9,7 @@ import SelectTaskMenu from "../../components/generative/SelectTaskMenu";
 import GenerativeChat from "../../components/generative/GenerativeChat";
 import SelectModelMenu from "../../components/generative/SelectModelMenu";
 import ParamsBar from "../../components/generative/ParamsBar";
-import { getSessions, removeSession } from "../../api/session";
-import { getComponents } from "../../api/component";
+import { removeSession } from "../../api/session";
 import { useTranslation } from "react-i18next";
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
@@ -28,16 +27,9 @@ export default function GenerativeContent() {
     selectedSessionId,
     setSelectedSessionId,
     setSelectedTaskName,
-    setSelectedDisplayName,
     setSessions,
     setParamsVersion,
   } = useGenerative();
-
-  const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
-    setSelectedTaskName(taskName);
-    setSelectedSessionId(sessionId);
-    setSelectedDisplayName(taskDisplayName);
-  };
 
   const handleNewSessionButton = () => {
     setSelectedSessionId(null);
@@ -53,27 +45,12 @@ export default function GenerativeContent() {
     setSessions((prevSessions) => [...prevSessions, session]);
   };
 
-  const handleSessionDelete = (id) => {
-    if (id === selectedSessionId) {
-      setSelectedSessionId(null);
-      setStepIndex(0);
-    }
-
-    setSessions((prevSessions) =>
-      prevSessions.filter((session) => session.id !== id),
-    );
-
-    removeSession(id);
-  };
-
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
         <LeftPanel>
           <SessionBar
-            handleSessionClick={handleSessionClick}
             handleNewSessionButton={handleNewSessionButton}
-            handleSessionDelete={handleSessionDelete}
             onToggle={threePanelLayout.handleToggleLeft}
           />
         </LeftPanel>

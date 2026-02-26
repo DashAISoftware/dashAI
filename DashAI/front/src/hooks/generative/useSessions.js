@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useSnackbar } from "notistack";
-import { getSessions } from "../../api/session";
+import { getSessions, removeSession } from "../../api/session";
 import { getComponents } from "../../api/component";
 
 export function useSessions({ t }) {
@@ -40,6 +40,25 @@ export function useSessions({ t }) {
     }
   }, [enqueueSnackbar, t]);
 
+  const deleteSessionById = async (id) => {
+    try {
+      await removeSession(id);
+
+      if (id === selectedSessionId) {
+        setSelectedSessionId(null);
+      }
+
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("generative:error.failedToDeleteSession"), {
+        variant: "error",
+      });
+      console.error("Error deleting session:", error);
+    }
+    return false;
+  };
+
   return {
     selectedSessionId,
     setSelectedSessionId,
@@ -55,5 +74,6 @@ export function useSessions({ t }) {
     setParamsVersion,
     fetchSessions,
     fetchTasks,
+    deleteSessionById,
   };
 }

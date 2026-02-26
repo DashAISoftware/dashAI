@@ -13,14 +13,17 @@ import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 
-export default function SessionBar({
-  handleSessionClick,
-  handleNewSessionButton,
-  handleSessionDelete,
-  onToggle,
-}) {
+export default function SessionBar({ handleNewSessionButton, onToggle }) {
   const theme = useTheme();
-  const { tasks, sessions, selectedSessionId } = useGenerative();
+  const {
+    tasks,
+    sessions,
+    selectedSessionId,
+    setSelectedTaskName,
+    setSelectedSessionId,
+    setSelectedDisplayName,
+    deleteSessionById,
+  } = useGenerative();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
@@ -80,6 +83,18 @@ export default function SessionBar({
     const session = sessions.find((session) => session.id === id);
     if (session) {
       setSelectedInfoSession(session);
+    }
+  };
+
+  const handleSessionClick = (sessionId) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (session) {
+      const displayName =
+        taskDisplayNameMap[session.task_name] || t("common:other");
+      //handleSessionClick(sessionId, session.task_name, displayName);
+      setSelectedTaskName(session.task_name);
+      setSelectedSessionId(sessionId);
+      setSelectedDisplayName(displayName);
     }
   };
 
@@ -158,7 +173,7 @@ export default function SessionBar({
           groups={groupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={handleSessionClick}
-          onItemDelete={handleSessionDelete}
+          onItemDelete={deleteSessionById}
           //onItemEdit={editSession} TODO: Edit session functionality to be implemented in the future
           onItemInfo={handleSessionInfo}
           title={t("common:generative")}

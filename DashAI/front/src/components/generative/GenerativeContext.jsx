@@ -29,6 +29,7 @@ export function GenerativeProvider({ children }) {
     setParamsVersion,
     fetchSessions,
     fetchTasks,
+    deleteSessionById,
   } = useSessions({ t });
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -54,6 +55,7 @@ export function GenerativeProvider({ children }) {
     fetchTasks,
     stepIndex,
     setStepIndex,
+    deleteSessionById,
   };
 
   return (
