@@ -7,6 +7,7 @@ import {
   Button,
 } from "@mui/material";
 import { useFormik } from "formik";
+import { useSnackbar } from "notistack";
 import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
 import { getRelatedComponents } from "../../api/generativeTask";
 import { createGenerativeSession } from "../../api/generativeTask";
@@ -40,6 +41,7 @@ export default function SelectModelMenu() {
   const [nameErrorMessage, setNameErrorMessage] = useState("");
 
   const { t } = useTranslation(["generative", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
 
   const goToBackStep = () => {
     setStepIndex(0);
@@ -130,8 +132,27 @@ export default function SelectModelMenu() {
 
         setSelectedSessionId(createdSession.id);
         handleAddSession(createdSession);
+
+        enqueueSnackbar(t("generative:message.sessionCreatedSuccess"), {
+          variant: "success",
+        });
       } catch (error) {
         console.error("Error creating session:", error);
+
+        const errorDetail = error?.response?.data?.detail || "";
+
+        if (
+          error?.response?.status === 409 ||
+          errorDetail.includes("already exists")
+        ) {
+          enqueueSnackbar(t("generative:error.sessionNameExists"), {
+            variant: "error",
+          });
+        } else {
+          enqueueSnackbar(t("generative:error.failedToCreateSession"), {
+            variant: "error",
+          });
+        }
       }
     },
   });

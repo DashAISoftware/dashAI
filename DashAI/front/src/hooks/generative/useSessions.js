@@ -53,6 +53,11 @@ export function useSessions({ t }) {
       }
 
       setSessions((prev) => prev.filter((s) => s.id !== id));
+
+      enqueueSnackbar(t("generative:message.sessionDeleted"), {
+        variant: "success",
+      });
+
       return true;
     } catch (error) {
       enqueueSnackbar(t("generative:error.failedToDeleteSession"), {

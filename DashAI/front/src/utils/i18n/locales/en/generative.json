@@ -4,6 +4,7 @@
     "createSession": "Create a session"
   },
   "error": {
+    "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
     "failedToFetchHistory": "Failed to fetch parameter history",
     "failedToFetchMessages": "Failed to fetch messages",
