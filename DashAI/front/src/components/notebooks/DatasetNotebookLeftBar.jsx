@@ -31,6 +31,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     editDataset,
     editNotebook,
     deleteNotebookById,
+    setRightBarContent,
   } = useDatasetsAndNotebooks();
 
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
@@ -91,6 +92,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     clearSelectedNotebook();
     setStep(0);
     setSelectedOption("dataset");
+    setRightBarContent(null);
   };
 
   const onNotebookClick = (id) => {
@@ -98,6 +100,7 @@ export default function DatasetsNotebooksLeftBar({ onToggle }) {
     clearSelectedDataset();
     setStep(0);
     setSelectedOption("notebook");
+    setRightBarContent(null);
   };
 
   const onDatasetDelete = async (id) => {
