@@ -135,6 +135,16 @@ export default function ModelsLeftBar({ onToggle }) {
     return groups;
   }, {});
 
+  // Sort grouped sessions to maintain consistent order
+  const sortedGroupedSessions = groupedSessions
+    ? Object.keys(groupedSessions)
+        .sort()
+        .reduce((sorted, key) => {
+          sorted[key] = groupedSessions[key];
+          return sorted;
+        }, {})
+    : {};
+
   const onDatasetClick = (datasetId) => {
     selectDataset(datasetId);
     setSelectedSessionId(null);
@@ -270,7 +280,7 @@ export default function ModelsLeftBar({ onToggle }) {
         />
 
         <GroupedCollapsibleList
-          groups={groupedSessions}
+          groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={onSessionClick}
           onItemDelete={onSessionDelete}

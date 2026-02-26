@@ -111,6 +111,16 @@ export default function SessionBar({ handleNewSessionButton, onToggle }) {
     return groups;
   }, {});
 
+  // Sort grouped sessions to maintain consistent order
+  const sortedGroupedSessions = groupedSessions
+    ? Object.keys(groupedSessions)
+        .sort()
+        .reduce((sorted, key) => {
+          sorted[key] = groupedSessions[key];
+          return sorted;
+        }, {})
+    : {};
+
   return (
     <SideBar>
       <Box
@@ -170,7 +180,7 @@ export default function SessionBar({ handleNewSessionButton, onToggle }) {
 
         {/* Sessions */}
         <GroupedCollapsibleList
-          groups={groupedSessions}
+          groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={handleSessionClick}
           onItemDelete={deleteSessionById}
