@@ -1,6 +1,10 @@
 import { useState, useCallback } from "react";
 import { useSnackbar } from "notistack";
-import { getSessions, removeSession } from "../../api/session";
+import {
+  getSessions,
+  removeSession,
+  updateGenerativeSession,
+} from "../../api/session";
 import { getComponents } from "../../api/component";
 
 export function useSessions({ t }) {
@@ -59,6 +63,41 @@ export function useSessions({ t }) {
     return false;
   };
 
+  const editSession = async (sessionId, newName) => {
+    try {
+      const result = await updateGenerativeSession({
+        id: sessionId,
+        formData: { name: newName },
+      });
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId
+            ? { ...session, name: result.name }
+            : session,
+        ),
+      );
+      enqueueSnackbar(t("generative:message.sessionUpdated"), {
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Failed to update session:", error);
+      if (error.response?.status === 409) {
+        enqueueSnackbar(t("generative:error.sessionNameExists"), {
+          variant: "error",
+        });
+      } else if (error.response?.status === 422) {
+        enqueueSnackbar(t("generative:error.sessionNameEmpty"), {
+          variant: "error",
+        });
+      } else {
+        enqueueSnackbar(t("generative:error.failedToUpdateSession"), {
+          variant: "error",
+        });
+      }
+      throw error;
+    }
+  };
+
   return {
     selectedSessionId,
     setSelectedSessionId,
@@ -75,5 +114,6 @@ export function useSessions({ t }) {
     fetchSessions,
     fetchTasks,
     deleteSessionById,
+    editSession,
   };
 }

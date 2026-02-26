@@ -24,6 +24,7 @@ export default function SessionBar({ onToggle }) {
     setSelectedDisplayName,
     deleteSessionById,
     setStepIndex,
+    editSession,
   } = useGenerative();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
@@ -191,7 +192,7 @@ export default function SessionBar({ onToggle }) {
           selectedItemId={selectedSessionId}
           onItemClick={handleSessionClick}
           onItemDelete={deleteSessionById}
-          //onItemEdit={editSession} TODO: Edit session functionality to be implemented in the future
+          onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
           title={t("common:generative")}
           Icon={FolderIcon}

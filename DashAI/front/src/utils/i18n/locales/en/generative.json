@@ -10,8 +10,11 @@
     "failedToFetchSessionInfo": "Failed to fetch session information",
     "failedToFetchSessions": "Failed to fetch sessions",
     "failedToFetchTasks": "Failed to fetch generative tasks",
+    "failedToUpdateSession": "Failed to update session",
     "nameRequired": "Name is required",
-    "processError": "The process has failed. Deleting it... {{error}}"
+    "processError": "The process has failed. Deleting it... {{error}}",
+    "sessionNameEmpty": "Session name cannot be empty",
+    "sessionNameExists": "A session with this name already exists"
   },
   "label": {
     "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
@@ -30,5 +33,11 @@
     "sessions": "Sessions",
     "typeYourMessage": "Type a message",
     "untitledSession": "Untitled Session"
+  },
+
+  "message": {
+    "sessionCreatedSuccess": "Session successfully created.",
+    "sessionDeleted": "Session deleted successfully",
+    "sessionUpdated": "Session updated successfully"
   }
 }
