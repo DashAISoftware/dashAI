@@ -15,13 +15,10 @@ import { preprocessSchema, buildYupSchema } from "./utils";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "@mui/icons-material";
+import { useGenerative } from "./GenerativeContext";
 
-export default function ParamsBar({
-  selectedSessionId,
-  onParamsUpdate,
-  taskName,
-  onToggle,
-}) {
+export default function ParamsBar({ onParamsUpdate, onToggle }) {
+  const { selectedSessionId, selectedTaskName: taskName } = useGenerative();
   const [parameters, setParameters] = useState({});
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [history, setHistory] = useState([]);

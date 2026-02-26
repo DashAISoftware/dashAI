@@ -4,6 +4,11 @@
     "createSession": "Create a session"
   },
   "error": {
+    "failedToFetchHistory": "Failed to fetch parameter history",
+    "failedToFetchMessages": "Failed to fetch messages",
+    "failedToFetchSessionInfo": "Failed to fetch session information",
+    "failedToFetchSessions": "Failed to fetch sessions",
+    "failedToFetchTasks": "Failed to fetch generative tasks",
     "nameRequired": "Name is required",
     "processError": "The process has failed. Deleting it... {{error}}"
   },

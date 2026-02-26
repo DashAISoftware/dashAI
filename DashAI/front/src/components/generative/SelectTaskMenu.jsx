@@ -1,8 +1,17 @@
 import { useTranslation } from "react-i18next";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
+import { useGenerative } from "./GenerativeContext";
 
-export default function SelectTaskMenu({ tasks, goToNextStep }) {
+export default function SelectTaskMenu() {
   const { t } = useTranslation(["generative", "common"]);
+  const { tasks, setSelectedDisplayName, setSelectedTaskName, setStepIndex } =
+    useGenerative();
+
+  const goToNextStep = (taskName, displayName) => {
+    setSelectedDisplayName(displayName);
+    setSelectedTaskName(taskName);
+    setStepIndex(1);
+  };
 
   return (
     <SelectOptionMenu

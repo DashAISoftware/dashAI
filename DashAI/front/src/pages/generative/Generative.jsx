@@ -1,12 +1,14 @@
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TOUR_KEYS } from "../../constants/tours";
-//import { DatasetsAndNotebooksProvider } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
+import { GenerativeProvider } from "../../components/generative/GenerativeContext";
 import GenerativeContent from "./GenerativeContent";
 
 export default function Generative() {
   return (
     <TourProvider tourKey={TOUR_KEYS.GENERATIVE}>
-      <GenerativeContent />
+      <GenerativeProvider>
+        <GenerativeContent />
+      </GenerativeProvider>
     </TourProvider>
   );
 }

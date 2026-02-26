@@ -16,18 +16,22 @@ import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
+import { useGenerative } from "../../components/generative/GenerativeContext";
 
 export default function GenerativeContent() {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  // TODO: Combine selectedTaskName and selectedDisplayName into a single selectedTask State
-  const [selectedTaskName, setSelectedTaskName] = useState("");
-  const [selectedDisplayName, setSelectedDisplayName] = useState("");
-  const [sessions, setSessions] = useState([]);
-  const [paramsVersion, setParamsVersion] = useState(0);
   const { t } = useTranslation(["generative", "common"]);
   const threePanelLayout = useThreePanelLayout();
+
+  const {
+    stepIndex,
+    setStepIndex,
+    selectedSessionId,
+    setSelectedSessionId,
+    setSelectedTaskName,
+    setSelectedDisplayName,
+    setSessions,
+    setParamsVersion,
+  } = useGenerative();
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     setSelectedTaskName(taskName);
@@ -44,22 +48,6 @@ export default function GenerativeContent() {
   const onParamsUpdate = (newParams) => {
     setParamsVersion((prev) => prev + 1);
   };
-
-  useEffect(() => {
-    getSessions().then((data) => {
-      setSessions(data);
-    });
-  }, []);
-
-  useEffect(() => {
-    try {
-      getComponents({ selectTypes: "GenerativeTask" }).then((data) => {
-        setTasks(data);
-      });
-    } catch (error) {
-      console.error("Error fetching generative tasks:", error);
-    }
-  }, [t]);
 
   const handleAddSession = (session) => {
     setSessions((prevSessions) => [...prevSessions, session]);
@@ -83,49 +71,25 @@ export default function GenerativeContent() {
       <ModuleContainer>
         <LeftPanel>
           <SessionBar
-            tasks={tasks}
-            sessions={sessions}
-            selectedSessionId={selectedSessionId}
             handleSessionClick={handleSessionClick}
             handleNewSessionButton={handleNewSessionButton}
             handleSessionDelete={handleSessionDelete}
-            stepIndex={stepIndex}
             onToggle={threePanelLayout.handleToggleLeft}
           />
         </LeftPanel>
         <CenterPanel>
           {selectedSessionId ? (
-            <GenerativeChat
-              sessionId={selectedSessionId}
-              taskName={selectedTaskName}
-              paramsVersion={paramsVersion}
-            />
+            <GenerativeChat />
           ) : stepIndex === 0 ? (
-            <SelectTaskMenu
-              tasks={tasks}
-              goToNextStep={(taskName, displayName) => {
-                setSelectedDisplayName(displayName);
-                setSelectedTaskName(taskName);
-                setStepIndex(1);
-              }}
-            />
+            <SelectTaskMenu />
           ) : (
-            <SelectModelMenu
-              goToBackStep={() => setStepIndex(0)}
-              handleAddSession={handleAddSession}
-              selectedTaskName={selectedTaskName}
-              selectedDisplayName={selectedDisplayName}
-              setSelectedSessionId={setSelectedSessionId}
-              existingSessions={sessions}
-            />
+            <SelectModelMenu handleAddSession={handleAddSession} />
           )}
         </CenterPanel>
 
         <RightPanel toggleButtonTop="50%">
           <ParamsBar
-            selectedSessionId={selectedSessionId}
             onParamsUpdate={onParamsUpdate}
-            taskName={selectedTaskName}
             onToggle={threePanelLayout.handleToggleRight}
           />
           <TourButton tourKey={TOUR_KEYS.GENERATIVE} />

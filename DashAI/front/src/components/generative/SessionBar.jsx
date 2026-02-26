@@ -11,18 +11,16 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import BarHeader from "../threeSectionLayout/BarHeader";
 import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import { useGenerative } from "./GenerativeContext";
 
 export default function SessionBar({
-  tasks,
-  sessions,
-  selectedSessionId,
   handleSessionClick,
   handleNewSessionButton,
   handleSessionDelete,
-  stepIndex,
   onToggle,
 }) {
   const theme = useTheme();
+  const { tasks, sessions, selectedSessionId } = useGenerative();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);

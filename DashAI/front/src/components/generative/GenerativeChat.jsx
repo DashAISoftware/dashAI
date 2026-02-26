@@ -1,6 +1,5 @@
 import { Box, Divider, IconButton, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import React from "react";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ChatBubble } from "./ChatBubble";
@@ -19,11 +18,18 @@ import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getRunStatus } from "../../utils/runStatus";
 import { Trans, useTranslation } from "react-i18next";
+import { useGenerative } from "./GenerativeContext";
 
-export default function GenerativeChat({ sessionId, taskName, paramsVersion }) {
+export default function GenerativeChat() {
   const theme = useTheme();
+
+  const {
+    selectedSessionId: sessionId,
+    selectedTaskName: taskName,
+    paramsVersion,
+  } = useGenerative();
+
   const [history, setHistory] = useState([]);
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);

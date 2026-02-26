@@ -13,6 +13,7 @@ import { createGenerativeSession } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
+import { useGenerative } from "../../components/generative/GenerativeContext";
 
 // Helper function to convert TaskName to readable format
 const formatTaskNameForSession = (taskName) => {
@@ -21,14 +22,15 @@ const formatTaskNameForSession = (taskName) => {
   return cleaned;
 };
 
-export default function SelectModelMenu({
-  goToBackStep,
-  selectedTaskName,
-  selectedDisplayName,
-  setSelectedSessionId,
-  handleAddSession,
-  existingSessions = [],
-}) {
+export default function SelectModelMenu({ handleAddSession }) {
+  const {
+    selectedTaskName,
+    selectedDisplayName,
+    setSelectedSessionId,
+    sessions: existingSessions,
+    setStepIndex,
+  } = useGenerative();
+
   const [relatedComponents, setRelatedComponents] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
@@ -37,6 +39,10 @@ export default function SelectModelMenu({
   const [nameErrorMessage, setNameErrorMessage] = useState("");
 
   const { t } = useTranslation(["generative", "common"]);
+
+  const goToBackStep = () => {
+    setStepIndex(0);
+  };
 
   // Generate default name based on task and existing sessions
   const { defaultName } = useMemo(() => {

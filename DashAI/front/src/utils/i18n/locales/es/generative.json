@@ -4,6 +4,11 @@
     "createSession": "Crear una sesión"
   },
   "error": {
+    "failedToFetchHistory": "Error al obtener historial de parámetros",
+    "failedToFetchMessages": "Error al obtener mensajes",
+    "failedToFetchSessionInfo": "Error al obtener información de la sesión",
+    "failedToFetchSessions": "Error al obtener sesiones",
+    "failedToFetchTasks": "Error al obtener tareas generativas",
     "nameRequired": "Se requiere un nombre",
     "processError": "El proceso ha fallado. Eliminándolo... {{error}}"
   },
