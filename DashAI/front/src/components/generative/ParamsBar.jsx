@@ -17,8 +17,12 @@ import { useTranslation } from "react-i18next";
 import { ChevronRight } from "@mui/icons-material";
 import { useGenerative } from "./GenerativeContext";
 
-export default function ParamsBar({ onParamsUpdate, onToggle }) {
-  const { selectedSessionId, selectedTaskName: taskName } = useGenerative();
+export default function ParamsBar({ onToggle }) {
+  const {
+    selectedSessionId,
+    selectedTaskName: taskName,
+    setParamsVersion,
+  } = useGenerative();
   const [parameters, setParameters] = useState({});
   const [historyInfoVisible, setHistoryInfoVisible] = useState(false);
   const [history, setHistory] = useState([]);
@@ -62,6 +66,10 @@ export default function ParamsBar({ onParamsUpdate, onToggle }) {
       setValidationSchema(buildYupSchema(processedProps));
     }
   }, [selectedModel]);
+
+  const onParamsUpdate = () => {
+    setParamsVersion((prev) => prev + 1);
+  };
 
   const handleUpdateParameters = async (updatedParams) => {
     try {

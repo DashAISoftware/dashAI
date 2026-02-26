@@ -22,13 +22,14 @@ const formatTaskNameForSession = (taskName) => {
   return cleaned;
 };
 
-export default function SelectModelMenu({ handleAddSession }) {
+export default function SelectModelMenu() {
   const {
     selectedTaskName,
     selectedDisplayName,
     setSelectedSessionId,
     sessions: existingSessions,
     setStepIndex,
+    setSessions,
   } = useGenerative();
 
   const [relatedComponents, setRelatedComponents] = useState([]);
@@ -85,6 +86,10 @@ export default function SelectModelMenu({ handleAddSession }) {
       formik.setValues(initialValues);
     }
   }, [selectedModel, defaultName]);
+
+  const handleAddSession = (session) => {
+    setSessions((prevSessions) => [...prevSessions, session]);
+  };
 
   const handleNameInputChange = (event) => {
     formik.handleChange(event);

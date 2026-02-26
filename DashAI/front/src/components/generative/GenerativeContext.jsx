@@ -12,7 +12,7 @@ const GenerativeContext = createContext(null);
 export const useGenerative = () => useContext(GenerativeContext);
 
 export function GenerativeProvider({ children }) {
-  const { t } = useTranslation(["models", "datasets", "common"]);
+  const { t } = useTranslation(["generative", "common"]);
 
   const {
     selectedSessionId,

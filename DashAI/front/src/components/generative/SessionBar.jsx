@@ -13,7 +13,7 @@ import { ChevronLeft } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 
-export default function SessionBar({ handleNewSessionButton, onToggle }) {
+export default function SessionBar({ onToggle }) {
   const theme = useTheme();
   const {
     tasks,
@@ -23,6 +23,7 @@ export default function SessionBar({ handleNewSessionButton, onToggle }) {
     setSelectedSessionId,
     setSelectedDisplayName,
     deleteSessionById,
+    setStepIndex,
   } = useGenerative();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
@@ -84,6 +85,12 @@ export default function SessionBar({ handleNewSessionButton, onToggle }) {
     if (session) {
       setSelectedInfoSession(session);
     }
+  };
+
+  const handleNewSessionButton = () => {
+    setSelectedSessionId(null);
+    setStepIndex(0);
+    setSelectedTaskName("");
   };
 
   const handleSessionClick = (sessionId) => {
