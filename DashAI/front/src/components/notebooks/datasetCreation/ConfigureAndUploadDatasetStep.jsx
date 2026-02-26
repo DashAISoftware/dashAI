@@ -4,6 +4,7 @@ import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
+import { forceRefreshNow } from "../../../utils/jobPoller";
 import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
@@ -84,6 +85,7 @@ export default function ConfigureAndUploadDatasetStep({
 
       try {
         const job = await enqueueDatasetRequest(data.id, file, url, params);
+        forceRefreshNow();
         handleDatasetCreated(data, job);
 
         if (tourContext?.run) {

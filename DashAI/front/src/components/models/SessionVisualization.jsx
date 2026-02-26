@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import {
   Box,
   Typography,
@@ -8,49 +7,38 @@ import {
   Divider,
   Button,
   ButtonGroup,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
-import JobQueueWidget from "../jobs/JobQueueWidget";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
-import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
-import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { useTranslation } from "react-i18next";
+
 import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
 
 export default function SessionVisualization() {
-  const sessionTourContext = useTourContext();
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
-  const [selectedRunForExplainer, setSelectedRunForExplainer] = useState(null);
-  const [explainerDialogOpen, setExplainerDialogOpen] = useState(false);
-  const [globalExplainerModalOpen, setGlobalExplainerModalOpen] =
-    useState(false);
-  const [localExplainerModalOpen, setLocalExplainerModalOpen] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
+  const sessionTourContext = useTourContext();
 
   const {
     selectedSession: session,
     runs,
     onTrainRun: onTrain,
-    onEditRun,
     onDeleteRun,
+    fetchRuns,
     retrainDialogOpen,
     runToRetrain,
     operationsCount,
@@ -131,25 +119,6 @@ export default function SessionVisualization() {
     }
   }, []);
 
-  const handleExplainer = React.useCallback((run) => {
-    setSelectedRunForExplainer(run);
-    setExplainerDialogOpen(true);
-  }, []);
-
-  const handleCloseExplainerDialog = () => {
-    setExplainerDialogOpen(false);
-  };
-
-  const handleGlobalExplainer = () => {
-    setGlobalExplainerModalOpen(true);
-    setExplainerDialogOpen(false);
-  };
-
-  const handleLocalExplainer = () => {
-    setLocalExplainerModalOpen(true);
-    setExplainerDialogOpen(false);
-  };
-
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
     [runs],
@@ -228,7 +197,6 @@ export default function SessionVisualization() {
             {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
-        <JobQueueWidget />
       </>
     );
   }
@@ -437,11 +405,14 @@ export default function SessionVisualization() {
                     models={models}
                     session={session}
                     onTrain={handleTrainWithTour}
-                    onEdit={onEditRun}
-                    onExplainer={handleExplainer}
                     onDelete={onDeleteRun}
                     explainerRefreshTrigger={explainerRefreshTrigger}
+                    onOperationsRefresh={() =>
+                      setExplainerRefreshTrigger((prev) => prev + 1)
+                    }
                     isLastRun={index === sortedRuns.length - 1}
+                    existingRuns={runs}
+                    onRefresh={fetchRuns}
                   />
                 </Box>
               ))}
@@ -450,69 +421,6 @@ export default function SessionVisualization() {
         </Box>
       </Box>
 
-      {/* Explainer Type Selection Dialog */}
-      <Dialog
-        open={explainerDialogOpen}
-        onClose={handleCloseExplainerDialog}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Select Explainer Type</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleGlobalExplainer}
-              size="large"
-            >
-              {t("models:label.globalExplainer")}
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleLocalExplainer}
-              size="large"
-            >
-              {t("models:label.localExplainer")}
-            </Button>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseExplainerDialog}>
-            {t("common:cancel")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Global Explainer Modal */}
-      <NewGlobalExplainerModal
-        open={globalExplainerModalOpen}
-        setOpen={setGlobalExplainerModalOpen}
-        explainerConfig={{
-          runId: selectedRunForExplainer?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={() => {
-          setExplainerRefreshTrigger((prev) => prev + 1);
-        }}
-      />
-
-      {/* Local Explainer Modal */}
-      <NewLocalExplainerModal
-        open={localExplainerModalOpen}
-        setOpen={setLocalExplainerModalOpen}
-        explainerConfig={{
-          runId: selectedRunForExplainer?.id,
-          sessionId: session?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={() => {
-          setExplainerRefreshTrigger((prev) => prev + 1);
-        }}
-      />
-
-      {/* Retrain Confirmation Dialog */}
       <RetrainConfirmDialog
         open={retrainDialogOpen}
         onClose={handleCancelRetrain}
@@ -520,8 +428,6 @@ export default function SessionVisualization() {
         run={runToRetrain}
         operationsCount={operationsCount}
       />
-
-      <JobQueueWidget />
     </>
   );
 }

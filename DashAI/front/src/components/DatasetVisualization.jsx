@@ -18,7 +18,6 @@ import {
   getDatasetFileFiltered,
 } from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
-import JobQueueWidget from "./jobs/JobQueueWidget";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
@@ -415,8 +414,6 @@ export default function DatasetVisualization({
           </Box>
         )}
       </Box>
-
-      <JobQueueWidget />
     </>
   );
 }

@@ -36,7 +36,17 @@ export default function ExplainersCard({
   compact = false,
 }) {
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => {
+    const saved = localStorage.getItem(`explainer-${explainer.id}-expanded`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(
+      `explainer-${explainer.id}-expanded`,
+      JSON.stringify(expanded),
+    );
+  }, [expanded, explainer.id]);
   const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
 
@@ -77,7 +87,7 @@ export default function ExplainersCard({
   if (compact) {
     return (
       <>
-        <Paper elevation={2} sx={{ p: 2, width: "100%" }}>
+        <Paper elevation={2} sx={{ p: 2 }}>
           <Grid container direction="column" gap={1}>
             <Grid
               item
@@ -86,14 +96,28 @@ export default function ExplainersCard({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Grid item>
-                <Typography variant="subtitle2" fontWeight="medium">
+              <Grid item sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="medium"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
                   {componentData
                     ? componentData.display_name
                     : plotName(explainer.explainer_name)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {explainer.name}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    component="span"
+                  >
+                    {explainer.name}
+                  </Typography>
                 </Typography>
               </Grid>
               <Grid item>
@@ -158,7 +182,7 @@ export default function ExplainersCard({
   // Full mode for standalone page
   return (
     <Paper elevation={3}>
-      <Grid container item minWidth={800} maxWidth={800} p={4} gap={2}>
+      <Grid container item sx={{ width: 800 }} p={4} gap={2}>
         <Grid
           item
           container

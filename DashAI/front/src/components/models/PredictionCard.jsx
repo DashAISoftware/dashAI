@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -38,10 +38,21 @@ const RUNNING_STATUSES = [1, 2]; // Delivered or Started
  * PredictionCard - Displays a single prediction with results table
  */
 export default function PredictionCard({ prediction, onDelete, onUpdate }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => {
+    const saved = localStorage.getItem(`prediction-${prediction.id}-expanded`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "datasets", "common"]);
+
+  // Persist expanded state
+  useEffect(() => {
+    localStorage.setItem(
+      `prediction-${prediction.id}-expanded`,
+      JSON.stringify(expanded),
+    );
+  }, [expanded, prediction.id]);
 
   const statusText = prediction.status;
 
