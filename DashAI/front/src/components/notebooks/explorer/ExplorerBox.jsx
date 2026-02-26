@@ -152,7 +152,7 @@ export default function ExplorerBox({
                     "&:hover": { bgcolor: "error.dark" },
                   }}
                 >
-                  <Delete sx={{ fontSize: 16 }} />
+                  <Delete sx={{ fontSize: 16, color: "white" }} />
                 </IconButton>
               )}
             </>
