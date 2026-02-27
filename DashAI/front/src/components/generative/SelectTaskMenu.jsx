@@ -1,16 +1,30 @@
 import { useTranslation } from "react-i18next";
 import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import { useGenerative } from "./GenerativeContext";
+import { useTourContext } from "../tour/TourProvider";
 
 export default function SelectTaskMenu() {
   const { t } = useTranslation(["generative", "common"]);
   const { tasks, setSelectedDisplayName, setSelectedTaskName, setStepIndex } =
     useGenerative();
+  const tourContext = useTourContext();
 
   const goToNextStep = (taskName, displayName) => {
     setSelectedDisplayName(displayName);
     setSelectedTaskName(taskName);
     setStepIndex(1);
+
+    if (tourContext?.run && tourContext?.stepIndex === 2) {
+      const waitForElement = () => {
+        const element = document.querySelector('[data-tour="model-selection"]');
+        if (element) {
+          tourContext.nextStep();
+        } else {
+          setTimeout(waitForElement, 100);
+        }
+      };
+      setTimeout(waitForElement, 100);
+    }
   };
 
   return (
@@ -29,11 +43,8 @@ export default function SelectTaskMenu() {
         description: task.description,
       }))}
       searchBar={true}
-      dataTour={
-        tasks.find((t) => t.name === "TextToTextGenerationTask")
-          ? "task-selection"
-          : undefined
-      }
+      dataTour="task-selection"
+      dataTourTarget="TextToTextGenerationTask"
     />
   );
 }

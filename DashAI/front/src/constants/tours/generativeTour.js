@@ -50,6 +50,30 @@ export const generativeTourSteps = [
     spotlightClicks: true,
     isInteractive: true,
   },
+
+  {
+    target: '[data-tour="model-selection"]',
+    content: (
+      <Trans i18nKey="generativeTour:selectModel">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+          <p></p>
+          <p>
+            <strong></strong>
+          </p>
+        </div>
+      </Trans>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    spotlightClicks: true,
+    disableOverlay: true,
+    isInteractive: true,
+    disableBackButton: true,
+    maxWidth: "320px",
+  },
 ];
 
 export const generativeTourConfig = {

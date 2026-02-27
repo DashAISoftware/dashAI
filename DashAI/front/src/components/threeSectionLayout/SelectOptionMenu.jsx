@@ -15,6 +15,7 @@ export default function SelectOptionMenu({
   onGoToDatasets = null,
   goToNextStep = null,
   dataTour = null,
+  dataTourTarget = null,
 }) {
   const [search, setSearch] = useState("");
   const filteredOptions = options.filter((option) =>
@@ -78,7 +79,13 @@ export default function SelectOptionMenu({
                   description={description}
                   onClick={() => goToNextStep(option.name)}
                   Icon={Icon}
-                  dataTour={dataTour}
+                  dataTour={
+                    dataTour && dataTourTarget && name === dataTourTarget
+                      ? dataTour
+                      : dataTour && !dataTourTarget
+                        ? dataTour
+                        : undefined
+                  }
                   {...otherProps}
                 />
               </Grid>

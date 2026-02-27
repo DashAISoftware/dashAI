@@ -196,6 +196,7 @@ export default function SelectModelMenu() {
         }}
         sx={{ mb: 5 }}
         renderInput={(params) => <TextField {...params} label="Model" />}
+        data-tour="model-selection"
       />
       {!selectedModel && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
