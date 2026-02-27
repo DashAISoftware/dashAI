@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
   Box,
   Typography,
@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { useFormik } from "formik";
 import { useSnackbar } from "notistack";
+import { useTourContext } from "../tour/TourProvider";
 import FormSchemaRenderFields from "../../components/shared/FormSchemaRenderFields";
 import { getRelatedComponents } from "../../api/generativeTask";
 import { createGenerativeSession } from "../../api/generativeTask";
@@ -42,6 +43,8 @@ export default function SelectModelMenu() {
 
   const { t } = useTranslation(["generative", "common"]);
   const { enqueueSnackbar } = useSnackbar();
+  const tourContext = useTourContext();
+  const hasAdvancedTourRef = useRef(false);
 
   const goToBackStep = () => {
     setStepIndex(0);
@@ -136,6 +139,23 @@ export default function SelectModelMenu() {
         enqueueSnackbar(t("generative:message.sessionCreatedSuccess"), {
           variant: "success",
         });
+
+        // Advance tour to sessions panel if tour is running
+        if (tourContext?.run && tourContext?.stepIndex === 5) {
+          const waitForElement = () => {
+            const element = document.querySelector(
+              '[data-tour="sessions-left-panel"]',
+            );
+            if (element) {
+              setTimeout(() => {
+                tourContext.nextStep();
+              }, 100);
+            } else {
+              setTimeout(waitForElement, 100);
+            }
+          };
+          setTimeout(waitForElement, 100);
+        }
       } catch (error) {
         console.error("Error creating session:", error);
 
@@ -193,6 +213,28 @@ export default function SelectModelMenu() {
             (model) => model.name === newValue,
           );
           setSelectedModel(selected);
+
+          if (
+            tourContext?.run &&
+            tourContext?.stepIndex === 3 &&
+            selected &&
+            !hasAdvancedTourRef.current
+          ) {
+            hasAdvancedTourRef.current = true;
+            const waitForElement = () => {
+              const element = document.querySelector(
+                '[data-tour="model-parameters"]',
+              );
+              if (element) {
+                setTimeout(() => {
+                  tourContext.nextStep();
+                }, 100);
+              } else {
+                setTimeout(waitForElement, 100);
+              }
+            };
+            setTimeout(waitForElement, 200);
+          }
         }}
         sx={{ mb: 5 }}
         renderInput={(params) => <TextField {...params} label="Model" />}
@@ -212,7 +254,33 @@ export default function SelectModelMenu() {
       {selectedModel && selectedModel.schema && (
         <form onSubmit={formik.handleSubmit}>
           <Box sx={{ mb: 5 }}>
-            <Box width="60%">
+            <Box data-tour="model-parameters">
+              <Box width="60% ">
+                <Typography
+                  sx={{
+                    fontSize: "16px",
+                    whiteSpace: "normal",
+                    wordBreak: "break-word",
+                    mb: 2,
+                  }}
+                >
+                  {t("common:parameters")}
+                </Typography>
+                <FormSchemaRenderFields
+                  modelSchema={processedProperties}
+                  formik={formik}
+                  autoSave={false}
+                  handleUpdateSchema={(updatedValues) => {
+                    formik.setValues((prevValues) => ({
+                      ...prevValues,
+                      ...updatedValues,
+                    }));
+                  }}
+                  onFormSubmit={formik.handleSubmit}
+                  setError={(error) => console.error(error)}
+                  errorsMessage={formik.errors}
+                />
+              </Box>
               <Typography
                 sx={{
                   fontSize: "16px",
@@ -221,55 +289,31 @@ export default function SelectModelMenu() {
                   mb: 2,
                 }}
               >
-                {t("common:parameters")}
+                {t("generative:label.nameYourSession")}
               </Typography>
-              <FormSchemaRenderFields
-                modelSchema={processedProperties}
-                formik={formik}
-                autoSave={false}
-                handleUpdateSchema={(updatedValues) => {
-                  formik.setValues((prevValues) => ({
-                    ...prevValues,
-                    ...updatedValues,
-                  }));
-                }}
-                onFormSubmit={formik.handleSubmit}
-                setError={(error) => console.error(error)}
-                errorsMessage={formik.errors}
+              {/* Session name */}
+              <TextField
+                fullWidth
+                label={t("generative:label.sessionName")}
+                name="name"
+                value={formik.values.name}
+                onChange={handleNameInputChange}
+                error={nameError}
+                helperText={nameErrorMessage}
+                sx={{ mb: 2 }}
+              />
+              {/* Session description */}
+              <TextField
+                fullWidth
+                label={t("generative:label.sessionDescription")}
+                name="description"
+                value={formik.values.description}
+                onChange={formik.handleChange}
+                error={Boolean(formik.errors.description)}
+                helperText={formik.errors.description}
+                sx={{ mb: 2 }}
               />
             </Box>
-            <Typography
-              sx={{
-                fontSize: "16px",
-                whiteSpace: "normal",
-                wordBreak: "break-word",
-                mb: 2,
-              }}
-            >
-              {t("generative:label.nameYourSession")}
-            </Typography>
-            {/* Session name */}
-            <TextField
-              fullWidth
-              label={t("generative:label.sessionName")}
-              name="name"
-              value={formik.values.name}
-              onChange={handleNameInputChange}
-              error={nameError}
-              helperText={nameErrorMessage}
-              sx={{ mb: 2 }}
-            />
-            {/* Session description */}
-            <TextField
-              fullWidth
-              label={t("generative:label.sessionDescription")}
-              name="description"
-              value={formik.values.description}
-              onChange={formik.handleChange}
-              error={Boolean(formik.errors.description)}
-              helperText={formik.errors.description}
-              sx={{ mb: 2 }}
-            />
 
             <Box
               sx={{
@@ -281,7 +325,11 @@ export default function SelectModelMenu() {
               <Button variant="outlined" onClick={goToBackStep} sx={{ mr: 1 }}>
                 {t("generative:button.backToTaskSelection")}
               </Button>
-              <Button type="submit" variant="contained">
+              <Button
+                type="submit"
+                variant="contained"
+                data-tour="create-session-button"
+              >
                 {t("generative:button.createSession")}
               </Button>
             </Box>

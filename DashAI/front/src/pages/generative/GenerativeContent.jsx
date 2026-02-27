@@ -20,7 +20,7 @@ export default function GenerativeContent() {
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
       <ModuleContainer>
-        <LeftPanel>
+        <LeftPanel data-tour="sessions-left-panel">
           <SessionBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
         <CenterPanel data-tour="task-gallery">
