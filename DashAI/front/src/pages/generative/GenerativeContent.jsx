@@ -23,7 +23,7 @@ export default function GenerativeContent() {
         <LeftPanel>
           <SessionBar onToggle={threePanelLayout.handleToggleLeft} />
         </LeftPanel>
-        <CenterPanel>
+        <CenterPanel data-tour="task-gallery">
           {selectedSessionId ? (
             <GenerativeChat />
           ) : stepIndex === 0 ? (

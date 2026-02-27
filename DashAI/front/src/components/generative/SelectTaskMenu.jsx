@@ -29,6 +29,11 @@ export default function SelectTaskMenu() {
         description: task.description,
       }))}
       searchBar={true}
+      dataTour={
+        tasks.find((t) => t.name === "TextToTextGenerationTask")
+          ? "task-selection"
+          : undefined
+      }
     />
   );
 }

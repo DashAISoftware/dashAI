@@ -15,6 +15,41 @@ export const generativeTourSteps = [
     placement: "center",
     disableBeacon: true,
   },
+  {
+    target: '[data-tour="task-gallery"]',
+    content: (
+      <Trans i18nKey="generativeTour:taskGallery">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+          <p></p>
+        </div>
+      </Trans>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    maxWidth: "320px",
+  },
+  {
+    target: '[data-tour="task-selection"]',
+    content: (
+      <Trans i18nKey="generativeTour:taskCard">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p></p>
+          <p></p>
+          <p></p>
+          <strong></strong>
+        </div>
+      </Trans>
+    ),
+    placement: "right",
+    disableBeacon: true,
+    spotlightClicks: true,
+    isInteractive: true,
+  },
 ];
 
 export const generativeTourConfig = {

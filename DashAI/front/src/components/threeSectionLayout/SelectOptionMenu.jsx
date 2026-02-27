@@ -14,6 +14,7 @@ export default function SelectOptionMenu({
   showNoDatasetAlert = false,
   onGoToDatasets = null,
   goToNextStep = null,
+  dataTour = null,
 }) {
   const [search, setSearch] = useState("");
   const filteredOptions = options.filter((option) =>
@@ -77,6 +78,7 @@ export default function SelectOptionMenu({
                   description={description}
                   onClick={() => goToNextStep(option.name)}
                   Icon={Icon}
+                  dataTour={dataTour}
                   {...otherProps}
                 />
               </Grid>

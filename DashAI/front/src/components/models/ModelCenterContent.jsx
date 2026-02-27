@@ -123,6 +123,7 @@ export default function ModelsCenterContent() {
           showNoDatasetAlert={!selectedDatasetId && datasets.length === 0}
           onGoToDatasets={handleGoToDatasets}
           goToNextStep={goToNextStep}
+          dataTour="task-selection"
         />
       ) : null}
     </>
