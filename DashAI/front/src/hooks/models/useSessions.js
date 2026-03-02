@@ -128,11 +128,9 @@ export function useSessions({ t }) {
 
   const executeTraining = async (run) => {
     try {
-      // Delete operations if they exist
-      if (
-        operationsCount &&
-        (operationsCount.explainers > 0 || operationsCount.predictions > 0)
-      ) {
+      // Always silently delete any existing operations before training
+      const opsCount = await getRunOperationsCount(run.id.toString());
+      if (opsCount.explainers > 0 || opsCount.predictions > 0) {
         await deleteRunOperations(run.id.toString());
       }
 
@@ -212,7 +210,7 @@ export function useSessions({ t }) {
 
   const onTrainRun = async (run) => {
     try {
-      // Check if run has been trained before (has metrics)
+      // Only show confirmation dialog for previously trained runs (Retrain flow)
       const hasBeenTrained =
         run.test_metrics ||
         run.train_metrics ||
@@ -220,13 +218,11 @@ export function useSessions({ t }) {
         run.status === 3; // Finished
 
       if (hasBeenTrained) {
-        // Check for existing operations
         const opsCount = await getRunOperationsCount(run.id.toString());
         const hasOperations =
           opsCount.explainers > 0 || opsCount.predictions > 0;
 
         if (hasOperations) {
-          // Show confirmation dialog
           setRunToRetrain(run);
           setOperationsCount(opsCount);
           setRetrainDialogOpen(true);
@@ -234,7 +230,6 @@ export function useSessions({ t }) {
         }
       }
 
-      // Proceed with training if no confirmation needed
       await executeTraining(run);
     } catch (error) {
       console.error("Error checking operations:", error);

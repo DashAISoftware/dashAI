@@ -18,7 +18,6 @@ import {
   getDatasetFileFiltered,
 } from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
-import JobQueueWidget from "./jobs/JobQueueWidget";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
 import Tooltip from "@mui/material/Tooltip";
@@ -53,14 +52,12 @@ export default function DatasetVisualization({
   const [tab, setTab] = useState(0);
   const tourContext = useTourContext();
 
-  const status = dataset.status;
-  const isProcessing = !(status === 3 || status === 4); // Finished or Error
-
   useEffect(() => {
     if (!dataset) return;
 
     setTab(0);
     const fetchDatasetInfo = async () => {
+      const isProcessing = !(dataset.status === 3 || dataset.status === 4);
       if (isProcessing && fetchDatasets) {
         setTimeout(() => {
           fetchDatasets();
@@ -77,12 +74,12 @@ export default function DatasetVisualization({
     fetchDatasetInfo();
   }, [dataset, fetchDatasets]);
 
-  // fetchPage compatible with server-side filtering
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
+      const isProcessing =
+        dataset && !(dataset.status === 3 || dataset.status === 4);
       if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
-        // Use getDatasetFile if no filters, else use getDatasetFileFiltered
         const hasFilters =
           filterModel &&
           Array.isArray(filterModel.items) &&
@@ -120,6 +117,9 @@ export default function DatasetVisualization({
       </Box>
     );
   }
+
+  const status = dataset.status;
+  const isProcessing = !(status === 3 || status === 4);
 
   return (
     <>
@@ -415,8 +415,6 @@ export default function DatasetVisualization({
           </Box>
         )}
       </Box>
-
-      <JobQueueWidget />
     </>
   );
 }

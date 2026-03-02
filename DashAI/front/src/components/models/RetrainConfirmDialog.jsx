@@ -23,6 +23,7 @@ export default function RetrainConfirmDialog({
   onConfirm,
   run,
   operationsCount,
+  mode = "retrain",
 }) {
   const { t } = useTranslation(["models", "common"]);
 
@@ -35,7 +36,11 @@ export default function RetrainConfirmDialog({
       <DialogTitle>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {hasOperations && <WarningIcon color="warning" />}
-          <Typography variant="h6">{t("models:label.retrainModel")}</Typography>
+          <Typography variant="h6">
+            {mode === "save"
+              ? t("models:label.saveParameterChanges")
+              : t("models:label.retrainModel")}
+          </Typography>
         </Box>
       </DialogTitle>
 
@@ -43,13 +48,22 @@ export default function RetrainConfirmDialog({
         {hasOperations ? (
           <>
             <Alert severity="warning" sx={{ mb: 2 }}>
-              {t("models:label.retrainWillDeleteOperations")}
+              {mode === "save"
+                ? t("models:message.saveWillDeleteOperations")
+                : t("models:label.retrainWillDeleteOperations")}
             </Alert>
             <DialogContentText>
-              <Trans i18nKey="models:label.retrainWillDeleteOperationsDetails">
-                Re-training run "<strong>{{ runName: run?.name }}</strong>" will
-                delete:
-              </Trans>
+              {mode === "save" ? (
+                <Trans i18nKey="models:label.saveWillDeleteOperationsDetails">
+                  Saving "<strong>{{ runName: run?.name }}</strong>" will reset
+                  the run. The following will be deleted when you train again:
+                </Trans>
+              ) : (
+                <Trans i18nKey="models:label.retrainWillDeleteOperationsDetails">
+                  Re-training run "<strong>{{ runName: run?.name }}</strong>"
+                  will delete:
+                </Trans>
+              )}
             </DialogContentText>
             <Box sx={{ mt: 2, pl: 2 }}>
               {operationsCount.explainers > 0 && (
@@ -98,9 +112,11 @@ export default function RetrainConfirmDialog({
           color={hasOperations ? "warning" : "primary"}
           autoFocus
         >
-          {hasOperations
-            ? t("models:button.deleteAndRetrain")
-            : t("models:button.retrain")}
+          {mode === "save"
+            ? t("common:saveChanges")
+            : hasOperations
+              ? t("models:button.deleteAndRetrain")
+              : t("models:button.retrain")}
         </Button>
       </DialogActions>
     </Dialog>
@@ -111,6 +127,7 @@ RetrainConfirmDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,
+  mode: PropTypes.oneOf(["retrain", "save"]),
   run: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

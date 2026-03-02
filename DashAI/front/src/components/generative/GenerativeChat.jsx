@@ -17,7 +17,6 @@ import InfoSessionModal from "./InfoSessionModal";
 import { useSnackbar } from "notistack";
 import { TextInput } from "./TextInput";
 import { MediaInput } from "./MediaInput";
-import JobQueueWidget from "../jobs/JobQueueWidget";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
@@ -348,8 +347,6 @@ export default function GenerativeChat() {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
-
-      <JobQueueWidget />
     </Box>
   );
 }

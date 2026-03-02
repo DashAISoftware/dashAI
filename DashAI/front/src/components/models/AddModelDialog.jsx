@@ -29,7 +29,7 @@ import { useTourContext } from "../tour/TourProvider";
 /**
  * Dialog for adding a new model run to a session
  * Step 1: Configure model name and parameters
- * Step 2: Configure optimizer
+ * Step 2: Configure optimizer for train
  */
 function AddModelDialog({
   open,
