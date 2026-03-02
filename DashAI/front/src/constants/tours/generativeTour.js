@@ -114,19 +114,55 @@ export const generativeTourSteps = [
   {
     target: '[data-tour="sessions-left-panel"]',
     content: (
-      <Trans i18nKey="modelsTour:sessionsPanel">
+      <Trans i18nKey="generativeTour:sessionsPanel">
         <div>
           <h3></h3>
           <p></p>
-          <p>
-            <strong></strong>
-          </p>
           <p></p>
         </div>
       </Trans>
     ),
     placement: "right",
     disableBeacon: true,
+  },
+  {
+    target: '[data-tour="parameters-right-panel"]',
+    content: (
+      <Trans i18nKey="generativeTour:parametersPanel">
+        <div>
+          <h3></h3>
+          <p></p>
+          <p>
+            <strong></strong>
+          </p>
+          <p>
+            <strong></strong>
+          </p>
+        </div>
+      </Trans>
+    ),
+    placement: "left",
+    disableBeacon: true,
+    spotlightClicks: true,
+    isInteractive: true,
+  },
+  {
+    target: '[data-tour="chat-input"]',
+    content: (
+      <Trans i18nKey="generativeTour:sendMessage">
+        <div>
+          <h3></h3>
+          <p>
+            <strong></strong>
+          </p>
+        </div>
+      </Trans>
+    ),
+    placement: "top",
+    disableBeacon: true,
+    disableOverlay: true,
+    spotlightClicks: true,
+    isInteractive: true,
   },
 ];
 

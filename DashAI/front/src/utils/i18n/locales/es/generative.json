@@ -32,7 +32,8 @@
     "sessionInformation": "Información de la Sesión",
     "sessionName": "Nombre de la Sesión",
     "sessions": "Sesiones",
-    "typeYourMessage": "Escriba un mensaje",
+    "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
+    "typeYourMessage": "Escribe un mensaje",
     "untitledSession": "Sesión Sin Título"
   },
 

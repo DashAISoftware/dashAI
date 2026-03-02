@@ -20,6 +20,7 @@ import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
+import { useTourContext } from "../tour/TourProvider";
 
 export default function GenerativeChat() {
   const theme = useTheme();
@@ -39,6 +40,7 @@ export default function GenerativeChat() {
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
+  const tourContext = useTourContext();
 
   const scrollToBottom = () => {
     if (chatContainerRef.current) {
@@ -79,6 +81,13 @@ export default function GenerativeChat() {
           setIsLoadingMessage(false);
         });
       });
+
+      // End tour if on final step
+      if (tourContext?.run && tourContext?.stepIndex === 8) {
+        setTimeout(() => {
+          tourContext.stopTour();
+        }, 100);
+      }
     });
   };
 

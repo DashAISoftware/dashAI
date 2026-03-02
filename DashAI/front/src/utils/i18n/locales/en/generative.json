@@ -32,6 +32,7 @@
     "sessionInformation": "Session Information",
     "sessionName": "Session Name",
     "sessions": "Sessions",
+    "tourDisabledMessage": "Return to home to start the tour",
     "typeYourMessage": "Type a message",
     "untitledSession": "Untitled Session"
   },

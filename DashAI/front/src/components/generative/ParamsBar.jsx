@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Box, Typography, Button, IconButton, Divider } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useFormik } from "formik";
@@ -16,6 +16,7 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "@mui/icons-material";
 import { useGenerative } from "./GenerativeContext";
+import { useTourContext } from "../tour/TourProvider";
 
 export default function ParamsBar({ onToggle }) {
   const {
@@ -30,6 +31,8 @@ export default function ParamsBar({ onToggle }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [validationSchema, setValidationSchema] = useState(null);
   const { t } = useTranslation(["generative", "common"]);
+  const tourContext = useTourContext();
+  const hasAdvancedTourRef = useRef(false);
 
   const getHistory = () => {
     getHistoryBySessionId(selectedSessionId).then((response) => {
@@ -79,6 +82,26 @@ export default function ParamsBar({ onToggle }) {
       );
       setParameters(updatedSession.parameters);
       onParamsUpdate(updatedSession.parameters);
+
+      // Advance tour to chat input if tour is running
+      if (
+        tourContext?.run &&
+        tourContext?.stepIndex === 7 &&
+        !hasAdvancedTourRef.current
+      ) {
+        hasAdvancedTourRef.current = true;
+        const waitForElement = () => {
+          const element = document.querySelector('[data-tour="chat-input"]');
+          if (element) {
+            setTimeout(() => {
+              tourContext.nextStep();
+            }, 100);
+          } else {
+            setTimeout(waitForElement, 100);
+          }
+        };
+        setTimeout(waitForElement, 100);
+      }
     } catch (error) {
       console.error("Failed to update session parameters:", error);
     }

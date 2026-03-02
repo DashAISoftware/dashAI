@@ -12,10 +12,12 @@ import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/pan
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
 import { useGenerative } from "../../components/generative/GenerativeContext";
+import { useTranslation } from "react-i18next";
 
 export default function GenerativeContent() {
   const threePanelLayout = useThreePanelLayout();
   const { stepIndex, selectedSessionId } = useGenerative();
+  const { t } = useTranslation(["generative"]);
 
   return (
     <ThreePanelLayoutContext.Provider value={threePanelLayout}>
@@ -33,9 +35,13 @@ export default function GenerativeContent() {
           )}
         </CenterPanel>
 
-        <RightPanel toggleButtonTop="50%">
+        <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
           <ParamsBar onToggle={threePanelLayout.handleToggleRight} />
-          <TourButton tourKey={TOUR_KEYS.GENERATIVE} />
+          <TourButton
+            tourKey={TOUR_KEYS.GENERATIVE}
+            disabled={stepIndex !== 0 || selectedSessionId}
+            disabledMessage={t("generative:label.tourDisabledMessage")}
+          />
         </RightPanel>
       </ModuleContainer>
     </ThreePanelLayoutContext.Provider>
