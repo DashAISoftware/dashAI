@@ -47,7 +47,7 @@ function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
     setSearchField(event.target.value.toLowerCase());
     setItemsToShow(
       itemsList.map((val) =>
-        val.name.toLowerCase().includes(event.target.value),
+        val.display_name.toLowerCase().includes(event.target.value),
       ),
     );
   };
