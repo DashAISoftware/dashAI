@@ -88,7 +88,9 @@ function SplitDatasetTemporal({
       return false;
     }
 
-    if (train + validation + test !== 1) {
+    // Use tolerance for floating point comparison (0.7 + 0.2 + 0.1 !== 1 in JS)
+    const sum = train + validation + test;
+    if (Math.abs(sum - 1) > 0.0001) {
       setSplitErrorText(
         "Splits should be numbers between 0 and 1 and should add 1 in total",
       );

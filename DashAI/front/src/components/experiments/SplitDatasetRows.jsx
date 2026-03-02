@@ -44,7 +44,9 @@ function SplitDatasetRows({
     testDatasetPercentage > 0;
 
   const checkSplit = (train, validation, test) => {
-    return train + validation + test === 1;
+    // Use tolerance for floating point comparison (0.7 + 0.2 + 0.1 !== 1 in JS)
+    const sum = train + validation + test;
+    return Math.abs(sum - 1) < 0.0001;
   };
 
   // handle rows numbers change state

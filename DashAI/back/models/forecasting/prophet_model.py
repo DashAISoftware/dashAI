@@ -455,7 +455,28 @@ class ProphetModel(ForecastingModel):
             For timestamps that don't exist in Prophet's forecast (gaps in data),
             returns NaN. These will be filtered out by prepare_to_metric().
             """
-            aligned = forecast_df.set_index("ds").reindex(requested_ds)
+            # Normalize both forecast and requested timestamps to ensure matching
+            # Prophet internally normalizes dates, so we need to do the same
+            forecast_df = forecast_df.copy()
+            forecast_df["ds"] = pd.to_datetime(forecast_df["ds"]).dt.normalize()
+            requested_ds_normalized = pd.to_datetime(requested_ds).dt.normalize()
+
+            # Debug: Show sample of dates
+            print(
+                f"[ProphetModel] _extract_predictions: "
+                f"forecast has {len(forecast_df)} rows, "
+                f"requested {len(requested_ds_normalized)} timestamps"
+            )
+            print(
+                f"[ProphetModel] Forecast dates range: "
+                f"{forecast_df['ds'].min()} to {forecast_df['ds'].max()}"
+            )
+            print(
+                f"[ProphetModel] Requested dates range: "
+                f"{requested_ds_normalized.min()} to {requested_ds_normalized.max()}"
+            )
+
+            aligned = forecast_df.set_index("ds").reindex(requested_ds_normalized)
 
             # Check for missing predictions
             missing_mask = aligned["yhat"].isna()
@@ -467,8 +488,16 @@ class ProphetModel(ForecastingModel):
                     f"have no predictions (gaps in data). These will be excluded "
                     f"from metrics calculation."
                 )
-                # Don't raise error - return NaN for missing dates
-                # The prepare_to_metric() function will filter these out
+                # Debug: Show which dates are missing
+                if missing_count <= 10:
+                    missing_dates = requested_ds_normalized[missing_mask.to_numpy()]
+                    print(f"[ProphetModel] Missing dates: {list(missing_dates)}")
+                else:
+                    missing_dates = requested_ds_normalized[missing_mask.to_numpy()]
+                    print(
+                        f"[ProphetModel] First 5 missing dates: "
+                        f"{list(missing_dates[:5])}"
+                    )
 
             if return_components:
                 return aligned.reset_index()
@@ -509,7 +538,8 @@ class ProphetModel(ForecastingModel):
                 if timestamp_col != "ds":
                     input_df = input_df.rename(columns={timestamp_col: "ds"})
 
-                input_df["ds"] = pd.to_datetime(input_df["ds"])
+                # Normalize timestamps to ensure consistent comparison
+                input_df["ds"] = pd.to_datetime(input_df["ds"]).dt.normalize()
                 input_df = input_df.sort_values("ds").reset_index(drop=True)
 
                 # Check if we need in-sample predictions (for explainability)
@@ -521,7 +551,10 @@ class ProphetModel(ForecastingModel):
                         "Prophet model has no training history. "
                         "Ensure the model was fitted before prediction."
                     )
-                last_train_date = self.model.history_dates.max()
+                # Normalize history dates for consistent comparison
+                history_dates = pd.Series(self.model.history_dates)
+                history_dates_normalized = history_dates.dt.normalize()
+                last_train_date = history_dates_normalized.max()
                 has_historical = (input_df["ds"] <= last_train_date).any()
 
                 if has_historical:
@@ -598,7 +631,22 @@ class ProphetModel(ForecastingModel):
 
                 # Add cap/floor for logistic growth
                 future_df = self._add_cap_floor_columns(future_df)
+
+                # Debug: Log what we're predicting
+                print(
+                    f"[ProphetModel] Predicting for {len(future_df)} dates: "
+                    f"{future_df['ds'].min()} to {future_df['ds'].max()}"
+                )
+                print(f"[ProphetModel] has_historical={has_historical}")
+
                 forecast = self.model.predict(future_df)
+
+                # Debug: Log what Prophet returned
+                print(
+                    f"[ProphetModel] Prophet returned {len(forecast)} predictions: "
+                    f"{forecast['ds'].min()} to {forecast['ds'].max()}"
+                )
+
                 return _extract_predictions(forecast, input_df["ds"])
 
         # Handle periods/horizon compatibility
