@@ -23,7 +23,6 @@ export const generativeTourSteps = [
           <h3></h3>
           <p></p>
           <p></p>
-          <p></p>
         </div>
       </Trans>
     ),
@@ -40,12 +39,13 @@ export const generativeTourSteps = [
           <p></p>
           <p></p>
           <p></p>
-          <p></p>
-          <strong></strong>
+          <p>
+            <strong></strong>
+          </p>
         </div>
       </Trans>
     ),
-    placement: "right",
+    placement: "bottom",
     disableBeacon: true,
     spotlightClicks: true,
     isInteractive: true,
@@ -57,7 +57,6 @@ export const generativeTourSteps = [
       <Trans i18nKey="generativeTour:selectModel">
         <div>
           <h3></h3>
-          <p></p>
           <p></p>
           <p></p>
           <p>
@@ -85,7 +84,6 @@ export const generativeTourSteps = [
           <p>
             <strong></strong>
           </p>
-          <p></p>
           <p></p>
         </div>
       </Trans>
@@ -124,6 +122,7 @@ export const generativeTourSteps = [
     ),
     placement: "right",
     disableBeacon: true,
+    disableBackButton: true,
   },
   {
     target: '[data-tour="parameters-right-panel"]',
