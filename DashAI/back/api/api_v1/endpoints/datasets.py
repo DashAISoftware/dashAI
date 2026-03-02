@@ -1,18 +1,10 @@
-import contextlib
-import io
 import json
 import logging
 import os
-import shutil
-import tempfile
-import zipfile
-from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
-import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
-import pyarrow.csv as csv
 import pyarrow.ipc as ipc
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
@@ -29,13 +21,6 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     get_dataset_info,
 )
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
-from DashAI.back.types.inf.type_inference import infer_types
-from DashAI.back.types.type_validation import validate_multiple_type_changes
-from DashAI.back.types.utils import (
-    arrow_to_dashai_schema,
-    get_types_from_arrow_metadata,
-    save_types_in_arrow_metadata,
-)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -649,9 +634,9 @@ async def get_types_by_file_path(
 @router.post("/copy", status_code=status.HTTP_201_CREATED)
 @inject
 async def copy_dataset(
-    dataset: Dict[str, int],
+    dataset: dict[str, int],
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: Dict[str, Any] = Depends(lambda: di["config"]),
+    config: dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Copy an existing dataset to create a new one.
 
@@ -665,6 +650,8 @@ async def copy_dataset(
     Dataset
         The newly created dataset.
     """
+    import shutil
+
     dataset_id = dataset["dataset_id"]
     logger.debug(f"Copying dataset with ID {dataset_id}.")
 
@@ -761,6 +748,8 @@ async def delete_dataset(
             ) from e
 
     try:
+        import shutil
+
         shutil.rmtree(dataset.file_path, ignore_errors=True)
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -778,7 +767,7 @@ async def update_dataset(
     dataset_id: int,
     params: schemas.DatasetUpdateParams,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-    config: Dict[str, Any] = Depends(lambda: di["config"]),
+    config: dict[str, Any] = Depends(lambda: di["config"]),
 ):
     """Updates the name of a dataset with the provided ID.
 
@@ -909,6 +898,13 @@ async def rename_dataset_column(
         dataset_path = f"{dataset.file_path}/dataset"
         arrow_file_path = f"{dataset_path}/data.arrow"
         try:
+            from datetime import datetime, timezone
+
+            from DashAI.back.types.utils import (
+                get_types_from_arrow_metadata,
+                save_types_in_arrow_metadata,
+            )
+
             with pa.OSFile(arrow_file_path, "rb") as source:
                 reader = pa.ipc.open_file(source)
                 table = reader.read_all()
@@ -1096,6 +1092,10 @@ async def export_dataset_as_csv(
 
         # Read the complete Arrow file
         with pa.memory_map(arrow_file_path, "r") as source:
+            import io
+
+            import pyarrow.csv as csv
+
             reader = ipc.RecordBatchFileReader(source)
 
             # Read all batches and combine them into a single table
@@ -1188,6 +1188,10 @@ async def export_dataset_csv_by_id(
 
             # Read the complete Arrow file
             with pa.memory_map(arrow_file_path, "r") as source:
+                import io
+
+                import pyarrow.csv as csv
+
                 reader = ipc.RecordBatchFileReader(source)
 
                 # Read all batches and combine them into a single table
@@ -1237,7 +1241,7 @@ async def export_dataset_csv_by_id(
 async def preview_with_types(
     file: UploadFile = File(...),
     params: str = Form(None),
-    component_registry: Dict = Depends(lambda: di["component_registry"]),
+    component_registry: dict = Depends(lambda: di["component_registry"]),
 ):
     """
     Load preview AND infer types in a single call.
@@ -1248,18 +1252,28 @@ async def preview_with_types(
         The file uploaded by the user.
     params : str
         JSON string with parameters for the dataloader.
-    component_registry : Dict
+    component_registry : dict
         Registry of available dataloaders.
 
     Returns
     -------
-    Dict
+    dict
         A dictionary containing:
         - sample: First 10 rows of the dataset
         - schema: Column types from Arrow
         - inferred_types: Detailed type inference (DashAI types)
         - preview_row_count: Number of rows used for inference
     """
+    import contextlib
+    import shutil
+    import tempfile
+    import zipfile
+
+    import numpy as np
+
+    from DashAI.back.types.inf.type_inference import infer_types
+    from DashAI.back.types.utils import arrow_to_dashai_schema
+
     try:
         parsed_params = json.loads(params) if params else {}
 
@@ -1414,11 +1428,15 @@ async def validate_type_changes(
     file: UploadFile = File(...),
     type_changes: str = Form(...),
     params: str = Form(None),
-    component_registry: Dict = Depends(lambda: di["component_registry"]),
+    component_registry: dict = Depends(lambda: di["component_registry"]),
 ):
     """
     Validate proposed type changes for dataset columns.
     """
+    import tempfile
+
+    from DashAI.back.types.type_validation import validate_multiple_type_changes
+
     try:
         parsed_params = json.loads(params) if params else {}
         parsed_type_changes = json.loads(type_changes)
