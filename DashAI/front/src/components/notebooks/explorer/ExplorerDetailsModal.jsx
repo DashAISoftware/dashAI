@@ -94,7 +94,7 @@ export default function ExplorerDetailsModal({
       }}
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Typography variant="h6">
+        <Typography variant="h6" component="div">
           {t("datasets:label.detailsForExplorer", {
             name: explorerComponent.display_name,
           })}
