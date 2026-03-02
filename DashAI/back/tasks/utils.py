@@ -167,9 +167,7 @@ _TYPE_EXTRACTORS = {
 }
 
 
-def extract_file_metadata(
-    data: bytes, file_type: Optional[str] = None
-) -> FileMetadata:
+def extract_file_metadata(data: bytes, file_type: Optional[str] = None) -> FileMetadata:
     """
     Extract structured metadata from raw file bytes.
 
