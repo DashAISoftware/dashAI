@@ -87,7 +87,9 @@ export default function ItemBox({
         bgcolor: isSelected ? theme.palette.action.selected : "transparent",
         p: 0.5,
         "&:hover": {
-          backgroundColor: theme.palette.action.hover,
+          backgroundColor: isSelected
+            ? theme.palette.action.selected
+            : theme.palette.action.hover,
         },
       }}
       onClick={isSelected || isEditing ? undefined : onClick}
