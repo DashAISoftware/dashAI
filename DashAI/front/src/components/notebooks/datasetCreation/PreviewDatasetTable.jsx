@@ -1,9 +1,17 @@
 import { useMemo, useState } from "react";
-import { Typography, Select, MenuItem, Box } from "@mui/material";
+import {
+  Typography,
+  Select,
+  MenuItem,
+  Box,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { TypeChangeValidator } from "./TypeChangeValidator";
+import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
-// Mapeo de tipos a dtypes por defecto
 const TYPE_TO_DEFAULT_DTYPE = {
   Integer: "int64",
   Float: "float64",
@@ -27,6 +35,7 @@ const TYPE_TO_DEFAULT_DTYPE = {
  * @param {File} file - The uploaded file (needed for validation)
  * @param {Object} params - Dataloader parameters (needed for validation)
  * @param {Function} onTypeChange - Callback when types are successfully changed
+ * @param {Function} onColumnRename - Callback when a column is renamed (oldName, newName) => void
  */
 export default function PreviewDatasetTable({
   rows,
@@ -34,36 +43,36 @@ export default function PreviewDatasetTable({
   file,
   params,
   onTypeChange,
+  onColumnRename,
 }) {
+  const { t } = useTranslation(["common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const [showValidator, setShowValidator] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({});
+  const [editingColumn, setEditingColumn] = useState(null);
+  const [editValue, setEditValue] = useState("");
+  const [columnNames, setColumnNames] = useState({});
 
-  // Handler cuando el usuario selecciona un nuevo tipo en el dropdown
   const handleTypeChangeRequest = (columnName, newType) => {
     const currentType = columnTypes[columnName]?.type;
 
-    // Si no cambió el tipo, no hacer nada
     if (currentType === newType) {
       return;
     }
 
-    // Obtener el dtype correcto para el nuevo tipo
     const newDtype = TYPE_TO_DEFAULT_DTYPE[newType] || "string";
 
-    // Preparar el cambio pendiente con el dtype correcto
     setPendingChanges({
       [columnName]: {
         current_type: currentType,
         new_type: newType,
-        new_dtype: newDtype, // Ya normalizado aquí
+        new_dtype: newDtype,
       },
     });
 
-    // Mostrar el validador
     setShowValidator(true);
   };
 
-  // Handler cuando el usuario confirma los cambios después de la validación
   const handleConfirmChanges = (changes) => {
     if (onTypeChange) {
       onTypeChange(changes);
@@ -72,26 +81,93 @@ export default function PreviewDatasetTable({
     setPendingChanges({});
   };
 
-  // Handler cuando el usuario cancela
   const handleCancelChanges = () => {
     setShowValidator(false);
     setPendingChanges({});
   };
 
-  // Crear las columnas del DataGrid
+  const handleStartEdit = (columnName) => {
+    setEditingColumn(columnName);
+    setEditValue(columnNames[columnName] || columnName);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingColumn(null);
+    setEditValue("");
+  };
+
+  const handleConfirmEdit = (oldName) => {
+    const newName = editValue.trim();
+
+    if (!newName) {
+      enqueueSnackbar(t("common:columnNameCannotBeEmpty"), {
+        variant: "warning",
+      });
+      handleCancelEdit();
+      return;
+    }
+
+    const columnNameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!columnNameRegex.test(newName)) {
+      enqueueSnackbar(t("common:columnNameInvalidCharacters"), {
+        variant: "warning",
+      });
+      handleCancelEdit();
+      return;
+    }
+
+    if (newName === oldName || newName === (columnNames[oldName] || oldName)) {
+      handleCancelEdit();
+      return;
+    }
+
+    const allColumnNames = Object.keys(columnTypes).map(
+      (col) => columnNames[col] || col,
+    );
+
+    if (allColumnNames.includes(newName)) {
+      enqueueSnackbar(t("common:columnNameAlreadyExists"), {
+        variant: "warning",
+      });
+      handleCancelEdit();
+      return;
+    }
+
+    setColumnNames((prev) => ({
+      ...prev,
+      [oldName]: newName,
+    }));
+
+    if (onColumnRename) {
+      onColumnRename(oldName, newName);
+    }
+
+    handleCancelEdit();
+  };
+
+  const handleKeyDown = (e, columnName) => {
+    if (e.key === "Enter") {
+      handleConfirmEdit(columnName);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
   const columns = useMemo(() => {
     if (!rows || rows.length === 0) return [];
 
     const firstRow = rows[0];
     return Object.keys(firstRow).map((field) => {
       const columnType = columnTypes[field];
+      const displayName = columnNames[field] || field;
 
       return {
         field,
-        headerName: field,
+        headerName: displayName,
         minWidth: 150,
         flex: 1,
-        // Custom header con el selector de tipo
+        sortable: false,
+        disableColumnMenu: true,
         renderHeader: () => (
           <Box
             sx={{
@@ -102,22 +178,48 @@ export default function PreviewDatasetTable({
               gap: 0.5,
             }}
           >
-            {/* Nombre de la columna */}
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                fontSize: "0.875rem",
-              }}
-            >
-              {field}
-            </Typography>
+            {editingColumn === field ? (
+              <TextField
+                autoFocus
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, field)}
+                onBlur={() => handleConfirmEdit(field)}
+                size="small"
+                sx={{
+                  width: "100%",
+                  "& .MuiInputBase-input": {
+                    fontSize: "0.875rem",
+                    paddingY: 0.5,
+                  },
+                }}
+              />
+            ) : (
+              <Tooltip title={t("common:renameColumn")} arrow>
+                <Typography
+                  variant="subtitle2"
+                  onDoubleClick={() => handleStartEdit(field)}
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      color: "primary.main",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  {displayName}
+                </Typography>
+              </Tooltip>
+            )}
 
-            {/* Selector de tipo */}
             <Select
               value={columnType?.type || "Text"}
               onChange={(e) => handleTypeChangeRequest(field, e.target.value)}
               size="small"
+              disabled={editingColumn === field}
               sx={{
                 fontSize: "0.75rem",
                 minWidth: 120,
@@ -131,16 +233,12 @@ export default function PreviewDatasetTable({
               <MenuItem value="Float">Float</MenuItem>
               <MenuItem value="Text">Text</MenuItem>
               <MenuItem value="Categorical">Categorical</MenuItem>
-              {/* <MenuItem value="Date">Date</MenuItem> */}
-              {/* <MenuItem value="Time">Time</MenuItem> */}
-              {/* <MenuItem value="Timestamp">Timestamp</MenuItem> */}
-              {/* <MenuItem value="Boolean">Boolean</MenuItem> */}
             </Select>
           </Box>
         ),
       };
     });
-  }, [rows, columnTypes]);
+  }, [rows, columnTypes, columnNames, editingColumn, editValue, t]);
 
   const rowsWithIds = useMemo(() => {
     if (!rows) return [];
@@ -170,7 +268,6 @@ export default function PreviewDatasetTable({
         }}
       />
 
-      {/* Diálogo de validación */}
       <TypeChangeValidator
         open={showValidator}
         onClose={handleCancelChanges}

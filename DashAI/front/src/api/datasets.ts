@@ -79,9 +79,26 @@ export const updateDataset = async (
   return response.data;
 };
 
+export const renameDatasetColumn = async (
+  id: number,
+  oldName: string,
+  newName: string,
+): Promise<{
+  message: string;
+  old_name: string;
+  new_name: string;
+  columns: object;
+}> => {
+  const response = await api.patch(`${datasetEndpoint}/${id}/columns/rename`, {
+    old_name: oldName,
+    new_name: newName,
+  });
+  return response.data;
+};
+
 export const deleteDataset = async (id: string): Promise<object> => {
   const response = await api.delete(`${datasetEndpoint}/${id}`);
-  return response.data;
+  return response;
 };
 
 export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {

@@ -1,6 +1,5 @@
 """OpusMtEnESTransformer model for english-spanish translation DashAI implementation."""
 
-import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -278,7 +277,7 @@ class OpusMtEnESTransformer(TranslationModel):
         from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
         training_args = Seq2SeqTrainingArguments(
-            output_dir="DashAI/back/user_models/temp_checkpoints_opus-mt-en-es",
+            output_dir=None,
             save_steps=1,
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
@@ -310,9 +309,6 @@ class OpusMtEnESTransformer(TranslationModel):
 
         self.fitted = True
         trainer.train()
-        shutil.rmtree(
-            "DashAI/back/user_models/temp_checkpoints_opus-mt-en-es", ignore_errors=True
-        )
         return self
 
     def predict(self, x_pred: DashAIDataset) -> List:
@@ -408,6 +404,10 @@ class OpusMtEnESTransformer(TranslationModel):
             learning_rate=custom_params.get("learning_rate"),
             device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
+            log_train_every_n_epochs=None,
+            log_train_every_n_steps=None,
+            log_validation_every_n_epochs=None,
+            log_validation_every_n_steps=None,
         )
         loaded_model.fitted = custom_params.get("fitted", False)
 

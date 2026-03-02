@@ -41,7 +41,7 @@ torch --index-url https://download.pytorch.org/whl/cpu
 torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Transformers ecosystem
-transformers<5.0.0
+transformers==4.50.0
 sacrebleu
 sentencepiece
 

@@ -1,0 +1,556 @@
+import React, { useState, useEffect, useCallback } from "react";
+import PropTypes from "prop-types";
+import {
+  Box,
+  Typography,
+  Button,
+  Chip,
+  Stack,
+  CircularProgress,
+  Collapse,
+  Tabs,
+  Tab,
+  Grid,
+} from "@mui/material";
+import {
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Add as AddIcon,
+  TrendingUp as TrendingUpIcon,
+} from "@mui/icons-material";
+import ExplainersCard from "../explainers/ExplanainersCard";
+import PredictionCard from "./PredictionCard";
+import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
+import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import PredictionCreationDialog from "./PredictionCreationDialog";
+import LiveMetricsChart from "./LiveMetricsChart";
+import HyperparameterPlots from "./HyperparameterPlots";
+import { getExplainers } from "../../api/explainer";
+import { getPredictions } from "../../api/predict";
+import { checkHowManyOptimazers } from "../../utils/schema";
+import { useTranslation } from "react-i18next";
+
+export default function RunResults({
+  run,
+  session,
+  onRefresh,
+  explainerRefreshTrigger,
+}) {
+  const [globalExplainers, setGlobalExplainers] = useState([]);
+  const [localExplainers, setLocalExplainers] = useState([]);
+  const [predictions, setPredictions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [resultsVisible, setResultsVisible] = useState(() => {
+    const saved = localStorage.getItem(`run-${run.id}-results-visible`);
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = localStorage.getItem(`run-${run.id}-active-tab`);
+    return saved ? JSON.parse(saved) : 0;
+  });
+
+  const [globalDialogOpen, setGlobalDialogOpen] = useState(false);
+  const [localDialogOpen, setLocalDialogOpen] = useState(false);
+  const [datasetPredictionDialogOpen, setDatasetPredictionDialogOpen] =
+    useState(false);
+  const [manualPredictionDialogOpen, setManualPredictionDialogOpen] =
+    useState(false);
+
+  const optimizables = checkHowManyOptimazers({ params: run.parameters });
+  const isFinished = run.status === 3;
+  const isRunning = run.status === 1 || run.status === 2;
+  const { t } = useTranslation("models");
+
+  const fetchOperations = useCallback(async () => {
+    if (!run || !run.id) return;
+
+    setLoading(true);
+    try {
+      const [globalExpls, localExpls, preds] = await Promise.all([
+        getExplainers(run.id, "global").catch(() => []),
+        getExplainers(run.id, "local").catch(() => []),
+        getPredictions(run.id).catch(() => []),
+      ]);
+
+      setGlobalExplainers(globalExpls);
+      setLocalExplainers(localExpls);
+      setPredictions(preds);
+    } catch (error) {
+      console.error("Error fetching operations:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [run]);
+
+  useEffect(() => {
+    fetchOperations();
+  }, [fetchOperations, explainerRefreshTrigger]);
+
+  useEffect(() => {
+    const handleOpenDialog = (event) => {
+      if (event.detail.runId === run.id) {
+        setDatasetPredictionDialogOpen(true);
+      }
+    };
+    window.addEventListener("openPredictionDialog", handleOpenDialog);
+    return () =>
+      window.removeEventListener("openPredictionDialog", handleOpenDialog);
+  }, [run.id]);
+
+  useEffect(() => {
+    if (isRunning && !resultsVisible) {
+      setResultsVisible(true);
+      setActiveTab(0); // Live Metrics tab
+    }
+  }, [isRunning, resultsVisible]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      `run-${run.id}-results-visible`,
+      JSON.stringify(resultsVisible),
+    );
+  }, [resultsVisible, run.id]);
+
+  useEffect(() => {
+    localStorage.setItem(`run-${run.id}-active-tab`, JSON.stringify(activeTab));
+  }, [activeTab, run.id]);
+
+  const handleExplainerCreated = () => {
+    fetchOperations();
+    if (onRefresh) onRefresh();
+  };
+
+  const handlePredictionCreated = (prediction) => {
+    if (prediction) {
+      setPredictions((prev) => [prediction, ...prev]);
+    }
+    fetchOperations();
+    if (onRefresh) onRefresh();
+  };
+
+  const handleExplainerDeleted = () => {
+    fetchOperations();
+    if (onRefresh) onRefresh();
+  };
+
+  const handlePredictionDeleted = () => {
+    fetchOperations();
+    if (onRefresh) onRefresh();
+  };
+
+  const totalOperations =
+    globalExplainers.length + localExplainers.length + predictions.length;
+
+  if (loading && isFinished) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+        <CircularProgress size={24} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box id={`run-results-${run.id}`}>
+      <Box sx={{ mb: 2 }}>
+        <Button
+          size="small"
+          onClick={() => setResultsVisible(!resultsVisible)}
+          endIcon={resultsVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          sx={{ textTransform: "none" }}
+        >
+          {resultsVisible
+            ? t("models:label.hideResults")
+            : t("models:label.showResults")}
+          {isFinished && (
+            <Chip label={totalOperations} size="small" sx={{ ml: 1 }} />
+          )}
+        </Button>
+      </Box>
+
+      <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+          <Tabs
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            aria-label="Results tabs"
+          >
+            <Tab label={t("models:label.liveMetrics")} />
+            <Tab
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <span>{t("models:label.explainability")}</span>
+                  {isFinished && (
+                    <Chip
+                      label={globalExplainers.length + localExplainers.length}
+                      size="small"
+                      color="primary"
+                    />
+                  )}
+                </Box>
+              }
+              disabled={!isFinished}
+            />
+            <Tab
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <span>{t("models:label.predictions")}</span>
+                  {isFinished && (
+                    <Chip
+                      label={predictions.length}
+                      size="small"
+                      color="primary"
+                    />
+                  )}
+                </Box>
+              }
+              disabled={!isFinished}
+            />
+            <Tab
+              label={t("models:label.hyperparameters")}
+              disabled={!isFinished || optimizables === 0}
+            />
+          </Tabs>
+        </Box>
+
+        {activeTab === 0 && (
+          <Box sx={{ py: 2 }}>
+            <LiveMetricsChart run={run} />
+          </Box>
+        )}
+
+        {activeTab === 1 && isFinished && (
+          <Box sx={{ py: 2, width: "100%" }}>
+            <Grid container spacing={2} alignItems="stretch">
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
+                <Box
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    height: "100%",
+                    minHeight: 180,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {t("models:label.globalExplainers")}
+                      </Typography>
+                      <Chip
+                        label={globalExplainers.length}
+                        size="small"
+                        color="primary"
+                      />
+                    </Box>
+                  </Box>
+                  <Stack spacing={2}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<AddIcon />}
+                      onClick={() => setGlobalDialogOpen(true)}
+                      fullWidth
+                    >
+                      {t("models:button.createGlobalExplainer")}
+                    </Button>
+                    {globalExplainers.length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ py: 3 }}
+                      >
+                        {t("models:label.noGlobalExplainersYet")}
+                      </Typography>
+                    ) : (
+                      globalExplainers.map((explainer) => (
+                        <ExplainersCard
+                          key={explainer.id}
+                          explainer={explainer}
+                          scope="global"
+                          onDelete={handleExplainerDeleted}
+                          compact
+                        />
+                      ))
+                    )}
+                  </Stack>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
+                <Box
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    height: "100%",
+                    minHeight: 180,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {t("models:label.localExplainers")}
+                      </Typography>
+                      <Chip
+                        label={localExplainers.length}
+                        size="small"
+                        color="primary"
+                      />
+                    </Box>
+                  </Box>
+                  <Stack spacing={2}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<AddIcon />}
+                      onClick={() => setLocalDialogOpen(true)}
+                      fullWidth
+                    >
+                      {t("models:button.createLocalExplainer")}
+                    </Button>
+                    {localExplainers.length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ py: 3 }}
+                      >
+                        {t("models:label.noLocalExplainersYet")}
+                      </Typography>
+                    ) : (
+                      localExplainers.map((explainer) => (
+                        <ExplainersCard
+                          key={explainer.id}
+                          explainer={explainer}
+                          scope="local"
+                          onDelete={handleExplainerDeleted}
+                          compact
+                        />
+                      ))
+                    )}
+                  </Stack>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {activeTab === 2 && isFinished && (
+          <Box sx={{ py: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    height: "100%",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {t("models:label.datasetPredictions")}
+                      </Typography>
+                      <Chip
+                        label={predictions.filter((p) => p.dataset_id).length}
+                        size="small"
+                        color="primary"
+                      />
+                    </Box>
+                  </Box>
+                  <Stack spacing={2}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<TrendingUpIcon />}
+                      onClick={() => setDatasetPredictionDialogOpen(true)}
+                      fullWidth
+                    >
+                      {t("models:button.newDatasetPrediction")}
+                    </Button>
+                    {predictions.filter((p) => p.dataset_id).length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ py: 3 }}
+                      >
+                        {t("models:label.noDatasetPredictionsYet")}
+                      </Typography>
+                    ) : (
+                      predictions
+                        .filter((p) => p.dataset_id)
+                        .map((prediction) => (
+                          <PredictionCard
+                            key={prediction.id}
+                            prediction={prediction}
+                            onDelete={handlePredictionDeleted}
+                            onUpdate={fetchOperations}
+                          />
+                        ))
+                    )}
+                  </Stack>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    height: "100%",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="body1" fontWeight="medium">
+                        {t("models:label.manualPredictions")}
+                      </Typography>
+                      <Chip
+                        label={predictions.filter((p) => !p.dataset_id).length}
+                        size="small"
+                        color="primary"
+                      />
+                    </Box>
+                  </Box>
+                  <Stack spacing={2}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<TrendingUpIcon />}
+                      onClick={() => setManualPredictionDialogOpen(true)}
+                      fullWidth
+                    >
+                      {t("models:button.newManualPrediction")}
+                    </Button>
+                    {predictions.filter((p) => !p.dataset_id).length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ py: 3 }}
+                      >
+                        {t("models:label.noManualPredictionsYet")}
+                      </Typography>
+                    ) : (
+                      predictions
+                        .filter((p) => !p.dataset_id)
+                        .map((prediction) => (
+                          <PredictionCard
+                            key={prediction.id}
+                            prediction={prediction}
+                            onDelete={handlePredictionDeleted}
+                            onUpdate={fetchOperations}
+                          />
+                        ))
+                    )}
+                  </Stack>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {activeTab === 3 && isFinished && optimizables > 0 && (
+          <Box sx={{ py: 2 }}>
+            <HyperparameterPlots run={run} />
+          </Box>
+        )}
+      </Collapse>
+
+      <NewGlobalExplainerModal
+        open={globalDialogOpen}
+        setOpen={setGlobalDialogOpen}
+        explainerConfig={{
+          runId: run.id,
+          taskName: session?.task_name,
+        }}
+        onExplainerCreated={handleExplainerCreated}
+      />
+
+      <NewLocalExplainerModal
+        open={localDialogOpen}
+        setOpen={setLocalDialogOpen}
+        explainerConfig={{
+          runId: run.id,
+          sessionId: session?.id,
+          taskName: session?.task_name,
+        }}
+        onExplainerCreated={handleExplainerCreated}
+      />
+
+      <PredictionCreationDialog
+        open={datasetPredictionDialogOpen}
+        onClose={() => setDatasetPredictionDialogOpen(false)}
+        run={run}
+        session={session}
+        onPredictionCreated={handlePredictionCreated}
+        defaultMode="dataset"
+      />
+
+      <PredictionCreationDialog
+        open={manualPredictionDialogOpen}
+        onClose={() => setManualPredictionDialogOpen(false)}
+        run={run}
+        session={session}
+        onPredictionCreated={handlePredictionCreated}
+        defaultMode="manual"
+      />
+    </Box>
+  );
+}
+
+RunResults.propTypes = {
+  run: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string,
+    model_name: PropTypes.string,
+    status: PropTypes.number,
+    experiment_id: PropTypes.number,
+    parameters: PropTypes.object,
+    model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    test_metrics: PropTypes.object,
+  }).isRequired,
+  session: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    task_name: PropTypes.string,
+  }),
+  onRefresh: PropTypes.func,
+  explainerRefreshTrigger: PropTypes.number,
+};

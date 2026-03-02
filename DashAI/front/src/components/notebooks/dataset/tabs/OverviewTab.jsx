@@ -59,6 +59,8 @@ const OverviewTab = ({
             deps={[dataset.file_path]}
             initialPageSize={10}
             datasetPath={dataset.file_path}
+            datasetId={dataset.id}
+            editableColumns={true}
           />
         </CardContent>
       </Card>

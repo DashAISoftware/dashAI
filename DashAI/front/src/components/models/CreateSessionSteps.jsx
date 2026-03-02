@@ -7,7 +7,6 @@ import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "../experiments/PrepareDatasetStep";
 import FormSchemaButtonGroup from "../shared/FormSchemaButtonGroup";
-import JobQueueWidget from "../jobs/JobQueueWidget";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import { generateSequentialName } from "../../utils/nameGenerator";
@@ -309,9 +308,7 @@ function CreateSessionSteps({
           right: "20px",
           zIndex: 1000,
         }}
-      >
-        <JobQueueWidget />
-      </Box>
+      ></Box>
     </>
   );
 }

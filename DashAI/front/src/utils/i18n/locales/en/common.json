@@ -124,6 +124,11 @@
   "todo": "TODO...",
   "train": "Train",
   "trainVerb": "Train",
+  "retrain": "Retrain",
+  "saving": "Saving...",
+  "saveChanges": "Save Changes",
+  "important": "Important",
+  "optimizerParameters": "Optimizer Parameters",
   "type": "Type",
   "unknown": "Unknown",
   "unknownError": "Unknown error",
@@ -133,5 +138,12 @@
   "validation": "Validation",
   "value": "Value",
   "vertical": "Vertical",
-  "viewDetails": "View Details"
+  "viewDetails": "View Details",
+  "renameColumn": "Rename column",
+  "columnNameEmpty": "Column name cannot be empty",
+  "columnNameInvalid": "Column name can only contain letters, numbers and underscores",
+  "columnNameCannotBeEmpty": "Column name cannot be empty",
+  "columnNameInvalidCharacters": "Column name can only contain letters, numbers and underscores",
+  "columnNameAlreadyExists": "A column with this name already exists",
+  "errorRenamingColumn": "Error renaming column"
 }

@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { Grid, CircularProgress, useTheme } from "@mui/material";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Grid, CircularProgress } from "@mui/material";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import Upload from "./Upload";
 import { useSnackbar } from "notistack";
 import { enqueueDatasetJob as enqueueDatasetRequest } from "../../../api/job";
+import { forceRefreshNow } from "../../../utils/jobPoller";
 import { useTourContext } from "../../tour/TourProvider";
 
 import { createDataset } from "../../../api/datasets";
@@ -28,7 +29,6 @@ export default function ConfigureAndUploadDatasetStep({
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
-  const theme = useTheme();
 
   useEffect(() => {
     if (onPreviewError) {
@@ -84,6 +84,7 @@ export default function ConfigureAndUploadDatasetStep({
 
       try {
         const job = await enqueueDatasetRequest(data.id, file, url, params);
+        forceRefreshNow();
         handleDatasetCreated(data, job);
 
         if (tourContext?.run) {
@@ -156,8 +157,7 @@ export default function ConfigureAndUploadDatasetStep({
         spacing={2}
         sx={{
           width: "100%",
-          backgroundColor: theme.palette.ui.box,
-          border: `1px solid ${theme.palette.ui.border}`,
+          backgroundColor: "#212121",
           padding: 4,
           borderRadius: 2,
         }}

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import {
   Box,
   Typography,
@@ -8,45 +7,44 @@ import {
   Divider,
   Button,
   ButtonGroup,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
-import JobQueueWidget from "../jobs/JobQueueWidget";
-import { getRunStatus } from "../../utils/runStatus";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
-import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
-import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
+import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import { useTranslation } from "react-i18next";
 
-export default function SessionVisualization({
-  session,
-  runs = [],
-  onTrain,
-  onEditRun,
-  onDeleteRun,
-}) {
+import { useModels } from "./ModelsContext";
+import { useTourContext } from "../tour/TourProvider";
+
+export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
   const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
-  const [selectedRunForExplainer, setSelectedRunForExplainer] = useState(null);
-  const [explainerDialogOpen, setExplainerDialogOpen] = useState(false);
-  const [globalExplainerModalOpen, setGlobalExplainerModalOpen] =
-    useState(false);
-  const [localExplainerModalOpen, setLocalExplainerModalOpen] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
+  const sessionTourContext = useTourContext();
+
+  const {
+    selectedSession: session,
+    runs,
+    onTrainRun: onTrain,
+    onDeleteRun,
+    fetchRuns,
+    retrainDialogOpen,
+    runToRetrain,
+    operationsCount,
+    handleCancelRetrain,
+    handleConfirmRetrain,
+  } = useModels();
 
   // Auto-expand when switching to graphs
   const handleToggleView = React.useCallback(
@@ -77,6 +75,33 @@ export default function SessionVisualization({
     fetchModels();
   }, [fetchModels]);
 
+  useEffect(() => {
+    const handleGraphsButtonClick = (e) => {
+      const graphsButton = e.target.closest('[data-tour="graphs-button"]');
+      if (graphsButton && sessionTourContext?.stepIndex === 7) {
+        setTimeout(() => {
+          sessionTourContext.nextStep();
+        }, 500);
+      }
+    };
+
+    document.addEventListener("click", handleGraphsButtonClick, true);
+    return () => {
+      document.removeEventListener("click", handleGraphsButtonClick, true);
+    };
+  }, [sessionTourContext]);
+
+  // Check if tour should start from previous tutorial
+  useEffect(() => {
+    const shouldStartTour = sessionStorage.getItem("startModelsSessionTour");
+    if (shouldStartTour === "true" && sessionTourContext) {
+      sessionStorage.removeItem("startModelsSessionTour");
+      setTimeout(() => {
+        sessionTourContext.startTour();
+      }, 1000);
+    }
+  }, [sessionTourContext]);
+
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
     const element = document.getElementById(`run-card-${runId}`);
@@ -94,25 +119,6 @@ export default function SessionVisualization({
     }
   }, []);
 
-  const handleExplainer = React.useCallback((run) => {
-    setSelectedRunForExplainer(run);
-    setExplainerDialogOpen(true);
-  }, []);
-
-  const handleCloseExplainerDialog = () => {
-    setExplainerDialogOpen(false);
-  };
-
-  const handleGlobalExplainer = () => {
-    setGlobalExplainerModalOpen(true);
-    setExplainerDialogOpen(false);
-  };
-
-  const handleLocalExplainer = () => {
-    setLocalExplainerModalOpen(true);
-    setExplainerDialogOpen(false);
-  };
-
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
     [runs],
@@ -129,6 +135,15 @@ export default function SessionVisualization({
   const hasTestMetrics = runs.some(
     (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
   );
+
+  const handleTrainWithTour = (run) => {
+    if (onTrain) onTrain(run);
+    if (sessionTourContext?.run && sessionTourContext?.stepIndex === 5) {
+      setTimeout(() => {
+        sessionTourContext.nextStep();
+      }, 500);
+    }
+  };
 
   const handleMouseMove = React.useCallback((e) => {
     if (isResizing.current) {
@@ -182,7 +197,6 @@ export default function SessionVisualization({
             {t("models:label.selectSessionToViewModels")}
           </Typography>
         </Box>
-        <JobQueueWidget />
       </>
     );
   }
@@ -222,34 +236,31 @@ export default function SessionVisualization({
               {t("models:label.modelComparison")}
             </Typography>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {/* Metric Split Selector */}
-              {showTable &&
-                (hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
-                  <ToggleButtonGroup
-                    value={metricSplit}
-                    exclusive
-                    onChange={(e, newValue) => {
-                      if (newValue !== null) setMetricSplit(newValue);
-                    }}
-                    size="small"
-                  >
-                    {hasTrainMetrics && (
-                      <ToggleButton value="train">
-                        {t("common:train")}
-                      </ToggleButton>
-                    )}
-                    {hasValidationMetrics && (
-                      <ToggleButton value="validation">
-                        {t("common:validation")}
-                      </ToggleButton>
-                    )}
-                    {hasTestMetrics && (
-                      <ToggleButton value="test">
-                        {t("common:test")}
-                      </ToggleButton>
-                    )}
-                  </ToggleButtonGroup>
-                )}
+              {/* Metric Split Selector — controls both table and graph views */}
+              {(hasTrainMetrics || hasValidationMetrics || hasTestMetrics) && (
+                <ToggleButtonGroup
+                  value={metricSplit}
+                  exclusive
+                  onChange={(e, newValue) => {
+                    if (newValue !== null) setMetricSplit(newValue);
+                  }}
+                  size="small"
+                >
+                  {hasTrainMetrics && (
+                    <ToggleButton value="train">
+                      {t("common:train")}
+                    </ToggleButton>
+                  )}
+                  {hasValidationMetrics && (
+                    <ToggleButton value="validation">
+                      {t("common:validation")}
+                    </ToggleButton>
+                  )}
+                  {hasTestMetrics && (
+                    <ToggleButton value="test">{t("common:test")}</ToggleButton>
+                  )}
+                </ToggleButtonGroup>
+              )}
 
               {/* Toggle between Table and Graphs */}
               <ButtonGroup size="small" variant="outlined">
@@ -313,7 +324,11 @@ export default function SessionVisualization({
                   metricSplit={metricSplit}
                 />
               ) : (
-                <ResultsGraphs runs={runs} />
+                <ResultsGraphs
+                  runs={runs}
+                  selectedSplit={metricSplit}
+                  onSplitChange={setMetricSplit}
+                />
               )}
             </Box>
           )}
@@ -390,12 +405,15 @@ export default function SessionVisualization({
                     run={run}
                     models={models}
                     session={session}
-                    onTrain={onTrain}
-                    onEdit={onEditRun}
-                    onExplainer={handleExplainer}
+                    onTrain={handleTrainWithTour}
                     onDelete={onDeleteRun}
                     explainerRefreshTrigger={explainerRefreshTrigger}
+                    onOperationsRefresh={() =>
+                      setExplainerRefreshTrigger((prev) => prev + 1)
+                    }
                     isLastRun={index === sortedRuns.length - 1}
+                    existingRuns={runs}
+                    onRefresh={fetchRuns}
                   />
                 </Box>
               ))}
@@ -404,81 +422,13 @@ export default function SessionVisualization({
         </Box>
       </Box>
 
-      {/* Explainer Type Selection Dialog */}
-      <Dialog
-        open={explainerDialogOpen}
-        onClose={handleCloseExplainerDialog}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Select Explainer Type</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleGlobalExplainer}
-              size="large"
-            >
-              {t("models:label.globalExplainer")}
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={handleLocalExplainer}
-              size="large"
-            >
-              {t("models:label.localExplainer")}
-            </Button>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseExplainerDialog}>
-            {t("common:cancel")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Global Explainer Modal */}
-      <NewGlobalExplainerModal
-        open={globalExplainerModalOpen}
-        setOpen={setGlobalExplainerModalOpen}
-        explainerConfig={{
-          runId: selectedRunForExplainer?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={() => {
-          setExplainerRefreshTrigger((prev) => prev + 1);
-        }}
+      <RetrainConfirmDialog
+        open={retrainDialogOpen}
+        onClose={handleCancelRetrain}
+        onConfirm={handleConfirmRetrain}
+        run={runToRetrain}
+        operationsCount={operationsCount}
       />
-
-      {/* Local Explainer Modal */}
-      <NewLocalExplainerModal
-        open={localExplainerModalOpen}
-        setOpen={setLocalExplainerModalOpen}
-        explainerConfig={{
-          runId: selectedRunForExplainer?.id,
-          sessionId: session?.id,
-          taskName: session?.task_name,
-        }}
-        onExplainerCreated={() => {
-          setExplainerRefreshTrigger((prev) => prev + 1);
-        }}
-      />
-
-      <JobQueueWidget />
     </>
   );
 }
-
-SessionVisualization.propTypes = {
-  session: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    task_name: PropTypes.string,
-  }),
-  runs: PropTypes.array,
-  onTrain: PropTypes.func.isRequired,
-  onEditRun: PropTypes.func.isRequired,
-  onDeleteRun: PropTypes.func.isRequired,
-};
