@@ -1,30 +1,51 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import Plot from "react-plotly.js";
+import { useTranslation } from "react-i18next";
 
 function ResultsGraphsPlot({ selectedChart, chartData }) {
+  const { t } = useTranslation(["models"]);
+
+  const traceData =
+    selectedChart === "radar" ? (chartData.radar ?? []) : (chartData.bar ?? []);
+
+  const hasData = traceData.length > 0;
+
+  if (!hasData) {
+    return (
+      <Box
+        flex={1}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        sx={{
+          minHeight: 400,
+          border: "1px dashed",
+          borderColor: "divider",
+          borderRadius: 1,
+          m: 2,
+        }}
+      >
+        <Typography color="text.secondary">
+          {t("models:label.noMetricsAvailableForThisView")}
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box width="100%" sx={{ flex: 1 }}>
+    <Box flex={1} sx={{ minHeight: 400, overflow: "hidden" }}>
       <Plot
-        data={
-          selectedChart === "radar"
-            ? chartData.radarValues
-            : selectedChart === "bar"
-              ? chartData.barValues
-              : selectedChart === "pie"
-                ? chartData.pieValues
-                : []
-        }
+        data={traceData}
         layout={{
-          ...(selectedChart === "pie"
-            ? chartData.pieLayout
-            : chartData.generalLayout),
+          ...(chartData.generalLayout ?? {}),
           autosize: true,
           width: undefined,
         }}
-        useResizeHandler={true}
+        useResizeHandler
         style={{ width: "100%", height: "100%" }}
+        config={{ responsive: true, displayModeBar: false }}
       />
     </Box>
   );
