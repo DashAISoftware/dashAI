@@ -18,8 +18,21 @@ import typer
 import uvicorn
 from typing_extensions import Annotated
 
-from DashAI.back.app import create_app
 from DashAI.back.core.enums.logging_levels import LoggingLevel
+
+print("  ╔═══════════════════════════════════════════════════════╗")
+print("  ║                                                       ║")
+print("  ║   ██████╗   █████╗  ███████╗ ██╗  ██╗  █████╗  ██╗    ║")
+print("  ║   ██╔══██╗ ██╔══██╗ ██╔════╝ ██║  ██║ ██╔══██╗ ██║    ║")
+print("  ║   ██║  ██║ ███████║ ███████╗ ███████║ ███████║ ██║    ║")
+print("  ║   ██║  ██║ ██╔══██║ ╚════██║ ██╔══██║ ██╔══██║ ██║    ║")
+print("  ║   ██████╔╝ ██║  ██║ ███████║ ██║  ██║ ██║  ██║ ██║    ║")
+print("  ║   ╚═════╝  ╚═╝  ╚═╝ ╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝    ║")
+print("  ║                                                       ║")
+print("  ║   Loading application, please wait...                 ║")
+print("  ║                                                       ║")
+print("  ╚═══════════════════════════════════════════════════════╝")
+print()
 
 
 def open_browser() -> None:
@@ -79,6 +92,8 @@ def main(
         ),
     ] = False,
 ) -> None:
+    from DashAI.back.app import create_app
+
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
     logger = logging.getLogger(__name__)
 
