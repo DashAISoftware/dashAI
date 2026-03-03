@@ -25,3 +25,16 @@ export const getHistoryBySessionId = async (
   );
   return response.data;
 };
+
+export const updateGenerativeSession = async ({
+  id,
+  formData,
+}: {
+  id: string;
+  formData: { name?: string; task_name?: string };
+}): Promise<object> => {
+  const response = await api.patch(`/v1/generative-session/${id}`, null, {
+    params: formData,
+  });
+  return response.data;
+};

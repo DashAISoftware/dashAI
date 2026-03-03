@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime
+from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
@@ -287,6 +288,102 @@ async def delete_generative_session(
         finally:
             db.rollback()
             db.close()
+
+
+@router.patch("/{session_id}", status_code=status.HTTP_200_OK)
+async def update_generative_session(
+    session_id: int,
+    name: Union[str, None] = None,
+    description: Union[str, None] = None,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Update the generative session associated with the provided ID.
+
+    Parameters
+    ----------
+    session_id : int
+        ID of the generative session to update.
+    name : Union[str, None], optional
+        New name for the session.
+    description : Union[str, None], optional
+        New description for the session.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing the updated generative session record.
+
+    Raises
+    ------
+    HTTPException
+        If the session does not exist, name is invalid, or name already exists.
+    """
+    with session_factory() as db:
+        try:
+            session = db.get(GenerativeSession, session_id)
+            if session is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Generative session not found",
+                )
+
+            # Validate name if provided
+            if name is not None:
+                if not name or not name.strip():
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Name cannot be empty",
+                    )
+
+                new_name = name.strip()
+
+                # Check if name is different from current name
+                if new_name != session.name:
+                    # Check if name already exists
+                    exists = db.execute(
+                        select(GenerativeSession.id).where(
+                            GenerativeSession.name == new_name,
+                            GenerativeSession.id != session_id,
+                        )
+                    ).scalar()
+                    if exists:
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail="Generative session name already exists",
+                        )
+                    setattr(session, "name", new_name)
+
+            if description is not None:
+                setattr(session, "description", description)
+
+            if name is not None or description is not None:
+                session.last_modified = datetime.now()
+                db.commit()
+                db.refresh(session)
+                return session
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_304_NOT_MODIFIED,
+                    detail="Record not modified",
+                )
+        except HTTPException:
+            raise
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Generative session name already exists",
+            ) from e
+        except exc.SQLAlchemyError as e:
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.put("/{session_id}/parameters", status_code=status.HTTP_200_OK)

@@ -113,10 +113,11 @@ export default function ModelsLeftBar({ onToggle }) {
   };
 
   const getSessionDescription = (session) => {
-    if (session.dataloader_name && datasets.length > 0) {
+    if (session.dataset_id && datasets.length > 0) {
       const associatedDataset = datasets.find(
-        (dataset) => dataset.name === session.dataloader_name,
+        (dataset) => dataset.id === session.dataset_id,
       );
+
       return associatedDataset?.name
         ? `from ${associatedDataset.name} dataset`
         : "No dataset";
@@ -133,6 +134,16 @@ export default function ModelsLeftBar({ onToggle }) {
     groups[displayName].push(session);
     return groups;
   }, {});
+
+  // Sort grouped sessions to maintain consistent order
+  const sortedGroupedSessions = groupedSessions
+    ? Object.keys(groupedSessions)
+        .sort()
+        .reduce((sorted, key) => {
+          sorted[key] = groupedSessions[key];
+          return sorted;
+        }, {})
+    : {};
 
   const onDatasetClick = (datasetId) => {
     selectDataset(datasetId);
@@ -269,7 +280,7 @@ export default function ModelsLeftBar({ onToggle }) {
         />
 
         <GroupedCollapsibleList
-          groups={groupedSessions}
+          groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={onSessionClick}
           onItemDelete={onSessionDelete}
