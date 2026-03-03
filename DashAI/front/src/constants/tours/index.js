@@ -7,6 +7,7 @@ import {
   modelsSessionTourSteps,
   modelsSessionTourConfig,
 } from "./modelsSessionTour";
+import { generativeTourSteps, generativeTourConfig } from "./generativeTour";
 
 export const tours = {
   home: {
@@ -33,6 +34,10 @@ export const tours = {
     steps: modelsSessionTourSteps,
     config: modelsSessionTourConfig,
   },
+  generative: {
+    steps: generativeTourSteps,
+    config: generativeTourConfig,
+  },
 };
 
 export const TOUR_KEYS = {
@@ -45,4 +50,5 @@ export const TOUR_KEYS = {
   PREDICTIONS: "predictions",
   EXPLAINABILITY: "explainability",
   PIPELINES: "pipelines",
+  GENERATIVE: "generative",
 };

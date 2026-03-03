@@ -177,10 +177,36 @@ class DatasetJob(BaseJob):
                             new_dataset.to_pandas(), method="DashAIPtype"
                         )
 
-                    # Cast dataset to inferred types
+                    if "column_renames" in params:
+                        renames = params["column_renames"]
+                        original_names = new_dataset.arrow_table.schema.names
+                        new_names = [renames.get(col, col) for col in original_names]
+
+                        if len(new_names) != len(set(new_names)):
+                            duplicate_names = set()
+                            seen = set()
+                            for name in new_names:
+                                if name in seen:
+                                    duplicate_names.add(name)
+                                else:
+                                    seen.add(name)
+                            msg = (
+                                "Invalid column_renames: resulting column names "
+                                "contain duplicates: "
+                                f"{sorted(duplicate_names)}"
+                            )
+                            raise JobError(msg)
+
+                        arrow_table = new_dataset.arrow_table.rename_columns(new_names)
+                        new_dataset = new_dataset.__class__(
+                            arrow_table,
+                            splits=new_dataset.splits,
+                            types=new_dataset.types,
+                        )
+                        schema = {renames.get(col, col): schema[col] for col in schema}
+
                     new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
-                # Calculate metadata
                 new_dataset.compute_metadata()
                 gc.collect()
 

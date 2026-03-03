@@ -120,6 +120,46 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     }
   };
 
+  const handleColumnRename = (oldName, newName) => {
+    setColumnsSpec((prevSpec) => {
+      const updatedSpec = { ...prevSpec };
+
+      // Move the spec from old name to new name
+      if (updatedSpec[oldName]) {
+        updatedSpec[newName] = updatedSpec[oldName];
+        delete updatedSpec[oldName];
+      }
+
+      return updatedSpec;
+    });
+
+    // Also update previewData to reflect the new column name
+    setPreviewData((prevData) => {
+      if (!prevData || !prevData.schema) return prevData;
+
+      const updatedSchema = { ...prevData.schema };
+      if (updatedSchema[oldName]) {
+        updatedSchema[newName] = updatedSchema[oldName];
+        delete updatedSchema[oldName];
+      }
+
+      const updatedSample = prevData.sample.map((row) => {
+        const newRow = { ...row };
+        if (oldName in newRow) {
+          newRow[newName] = newRow[oldName];
+          delete newRow[oldName];
+        }
+        return newRow;
+      });
+
+      return {
+        ...prevData,
+        schema: updatedSchema,
+        sample: updatedSample,
+      };
+    });
+  };
+
   const handleInferDataTypes = async (methods) => {
     setLoading(true);
     const formData = new FormData();
@@ -288,6 +328,7 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
             setNextEnabled={setNextEnabled}
             columnsSpec={columnsSpec}
             setColumnsSpec={setColumnsSpec}
+            onColumnRename={handleColumnRename}
           />
         )}
       </DialogContent>

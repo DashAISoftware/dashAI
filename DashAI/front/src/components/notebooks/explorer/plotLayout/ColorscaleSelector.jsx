@@ -14,6 +14,7 @@ import {
   Divider,
   alpha,
   Alert,
+  useTheme,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -42,6 +43,7 @@ const COLORMAPS = [
 ];
 
 export default function ColorscaleSelector({ value, onChange }) {
+  const theme = useTheme();
   const isArrayMode = Array.isArray(value);
 
   const [mode, setMode] = useState(isArrayMode ? "array" : "preset");
@@ -92,9 +94,9 @@ export default function ColorscaleSelector({ value, onChange }) {
   return (
     <Box
       sx={{
-        bgcolor: "#474747",
+        bgcolor: theme.palette.ui.panelDark,
         p: 2,
-        borderBottom: "1px solid #7f7f7f",
+        borderBottom: `1px solid ${theme.palette.ui.borderLight}`,
       }}
     >
       <Stack spacing={3}>
@@ -122,15 +124,13 @@ export default function ColorscaleSelector({ value, onChange }) {
             size="small"
             sx={{
               "& .MuiToggleButton-root": {
-                border: (theme) =>
-                  `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                 fontWeight: 500,
                 color: "text.secondary",
                 "&.Mui-selected": {
-                  backgroundColor: (theme) =>
-                    alpha(theme.palette.primary.main, 0.2),
-                  color: (theme) => theme.palette.primary.main,
-                  borderColor: (theme) => theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                  color: theme.palette.primary.main,
+                  borderColor: theme.palette.primary.main,
                 },
               },
             }}
@@ -147,7 +147,7 @@ export default function ColorscaleSelector({ value, onChange }) {
         <Divider
           sx={{
             width: "100%",
-            borderColor: alpha("#ffffff", 0.2),
+            borderColor: theme.palette.ui.divider,
           }}
         />
 
@@ -179,13 +179,13 @@ export default function ColorscaleSelector({ value, onChange }) {
                 "& .MuiOutlinedInput-root": {
                   fontWeight: 500,
                   "& fieldset": {
-                    borderColor: alpha("#06b6d4", 0.3),
+                    borderColor: alpha(theme.palette.primary.main, 0.3),
                   },
                   "&:hover fieldset": {
-                    borderColor: "#06b6d4",
+                    borderColor: theme.palette.primary.main,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: "#06b6d4",
+                    borderColor: theme.palette.primary.main,
                   },
                 },
                 "& .MuiOutlinedInput-input": {
@@ -239,16 +239,18 @@ export default function ColorscaleSelector({ value, onChange }) {
                   key={i}
                   variant="outlined"
                   sx={{
-                    background: (theme) =>
-                      alpha(theme.palette.background.paper, 0.4),
-                    border: (theme) =>
-                      `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
+                    background: alpha(theme.palette.background.paper, 0.4),
+                    border: `1px solid ${alpha(
+                      theme.palette.primary.main,
+                      0.15,
+                    )}`,
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      border: (theme) =>
-                        `1px solid ${theme.palette.primary.main}`,
-                      boxShadow: (theme) =>
-                        `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
+                      border: `1px solid ${theme.palette.primary.main}`,
+                      boxShadow: `0 2px 8px ${alpha(
+                        theme.palette.primary.main,
+                        0.15,
+                      )}`,
                     },
                   }}
                 >
@@ -265,21 +267,23 @@ export default function ColorscaleSelector({ value, onChange }) {
                           minWidth: 32,
                           height: 32,
                           borderRadius: "50%",
-                          backgroundColor: (theme) =>
-                            alpha(theme.palette.primary.main, 0.15),
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.15,
+                          ),
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontWeight: 600,
                           fontSize: "0.875rem",
-                          color: "#06b6d4",
+                          color: theme.palette.primary.main,
                         }}
                       >
                         {i + 1}
                       </Box>
 
                       <TextField
-                        label="Position"
+                        label={t("datasets:label.position")}
                         type="number"
                         variant="outlined"
                         size="small"
@@ -298,13 +302,16 @@ export default function ColorscaleSelector({ value, onChange }) {
                           width: 100,
                           "& .MuiOutlinedInput-root": {
                             "& fieldset": {
-                              borderColor: alpha("#06b6d4", 0.3),
+                              borderColor: alpha(
+                                theme.palette.primary.main,
+                                0.3,
+                              ),
                             },
                             "&:hover fieldset": {
-                              borderColor: "#06b6d4",
+                              borderColor: theme.palette.primary.main,
                             },
                             "&.Mui-focused fieldset": {
-                              borderColor: "#06b6d4",
+                              borderColor: theme.palette.primary.main,
                             },
                           },
                         }}
@@ -324,8 +331,10 @@ export default function ColorscaleSelector({ value, onChange }) {
                         onClick={() => removeStop(i)}
                         sx={{
                           "&:hover": {
-                            backgroundColor: (theme) =>
-                              alpha(theme.palette.error.main, 0.1),
+                            backgroundColor: alpha(
+                              theme.palette.error.main,
+                              0.1,
+                            ),
                           },
                         }}
                       >
@@ -345,14 +354,12 @@ export default function ColorscaleSelector({ value, onChange }) {
                   textTransform: "none",
                   fontWeight: 500,
                   borderStyle: "dashed",
-                  borderColor: (theme) =>
-                    alpha(theme.palette.primary.main, 0.4),
-                  color: "#06b6d4",
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                  color: theme.palette.primary.main,
                   "&:hover": {
                     borderStyle: "dashed",
-                    backgroundColor: (theme) =>
-                      alpha(theme.palette.primary.main, 0.08),
-                    borderColor: (theme) => theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                    borderColor: theme.palette.primary.main,
                   },
                 }}
               >

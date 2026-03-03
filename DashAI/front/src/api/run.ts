@@ -60,12 +60,14 @@ export const deleteRun = async (runId: string): Promise<void> => {
 
 export const updateRunParameters = async (
   runId: string,
+  name?: string,
   parameters?: object,
   optimizer?: string,
   optimizer_parameters?: object,
   goal_metric?: string,
 ): Promise<IRun> => {
   const response = await api.patch<IRun>(`/v1/run/${runId}`, {
+    run_name: name,
     parameters,
     optimizer,
     optimizer_parameters,

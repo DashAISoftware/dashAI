@@ -34,6 +34,7 @@ export function TextInput({ onSendMessage, isLoading }) {
         onClick={handleSendMessage}
         endIcon={<SendIcon />}
         disabled={isLoading || !input.trim()}
+        data-tour="chat-input"
       >
         {isLoading ? t("common:sending") : t("common:send")}
       </Button>

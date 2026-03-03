@@ -2,7 +2,6 @@ import { React, useEffect, useState } from "react";
 import {
   FormControl,
   InputLabel,
-  Grid,
   MenuItem,
   Select,
   CircularProgress,
@@ -59,47 +58,49 @@ export default function ExplainersPlot({ explainer, scope }) {
   }, [explainer.status]);
 
   return (
-    <Grid container flexDirection={"row"} justifyContent={"space-between"}>
-      <Grid size={{ xs: 8 }}>
-        {!loading && isLocal && (
-          <FormControl variant="outlined" sx={{ minWidth: "200px" }}>
-            <InputLabel id="select-type-label">Select an instance</InputLabel>
-            <Select
-              id="select-type"
-              value={currentPlot}
-              onChange={(event) => setCurrentPlot(event.target.value)}
-              label="class"
-              autoWidth
-            >
-              {explainersPlots.map((_, i) => (
-                <MenuItem key={i} value={i}>
-                  {t("explainers:label.instanceNumber", { number: i + 1 })}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </Grid>
-      <Grid size={{ xs: 8 }}>
-        {!loading && explainer.status === 3 ? (
-          <Plot
-            data={explainersPlots[currentPlot].data}
-            layout={{
-              ...explainersPlots[currentPlot].layout,
-              width: 730,
-              height: 380,
-            }}
-            config={{ staticPlot: false }}
-          />
-        ) : explainer.status === 4 ? (
-          <Box>{t("explainers:error.explainerFailed")}</Box>
-        ) : (
-          <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
-            <CircularProgress />
-          </Box>
-        )}
-      </Grid>
-    </Grid>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+      }}
+    >
+      {!loading && isLocal && (
+        <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 1 }}>
+          <InputLabel id="select-type-label">Select an instance</InputLabel>
+          <Select
+            id="select-type"
+            value={currentPlot}
+            onChange={(event) => setCurrentPlot(event.target.value)}
+            label="class"
+            autoWidth
+          >
+            {explainersPlots.map((_, i) => (
+              <MenuItem key={i} value={i}>
+                {t("explainers:label.instanceNumber", { number: i + 1 })}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
+      {!loading && explainer.status === 3 ? (
+        <Plot
+          data={explainersPlots[currentPlot].data}
+          layout={{
+            ...explainersPlots[currentPlot].layout,
+            width: 730,
+            height: 380,
+          }}
+          config={{ staticPlot: false }}
+        />
+      ) : explainer.status === 4 ? (
+        <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>
+      ) : (
+        <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
+          <CircularProgress />
+        </Box>
+      )}
+    </Box>
   );
 }
 

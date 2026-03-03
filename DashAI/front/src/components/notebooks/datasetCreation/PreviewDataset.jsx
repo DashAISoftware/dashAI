@@ -14,12 +14,14 @@ import { useTranslation } from "react-i18next";
  * @param {function} onChangeDataset - Callback function when the user wants to change the dataset
  * @param {function} onPreviewError - Callback function to notify parent of preview errors
  * @param {function} onTypesChanged - Callback to notify parent when column types change
+ * @param {function} onColumnRename - Callback to notify parent when columns are renamed (oldName, newName)
  */
 function PreviewDataset({
   datasetData,
   onChangeDataset,
   onPreviewError,
   onTypesChanged,
+  onColumnRename,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -110,6 +112,15 @@ function PreviewDataset({
       });
     },
     [enqueueSnackbar, onTypesChanged],
+  );
+
+  const handleColumnRename = useCallback(
+    (oldName, newName) => {
+      if (onColumnRename) {
+        onColumnRename(oldName, newName);
+      }
+    },
+    [onColumnRename],
   );
 
   return (
@@ -230,6 +241,7 @@ function PreviewDataset({
                 file={datasetData.file}
                 params={datasetData.params}
                 onTypeChange={handleTypeChange}
+                onColumnRename={handleColumnRename}
               />
             </Box>
           </Box>
@@ -244,6 +256,7 @@ PreviewDataset.propTypes = {
   onChangeDataset: PropTypes.func,
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
+  onColumnRename: PropTypes.func,
 };
 
 export default PreviewDataset;

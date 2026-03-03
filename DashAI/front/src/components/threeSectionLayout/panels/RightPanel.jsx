@@ -1,7 +1,11 @@
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft } from "@mui/icons-material";
 import { useThreePanelLayoutContext } from "./ThreePanelLayoutContext";
-export default function RightPanel({ toggleButtonTop = "50%", children }) {
+export default function RightPanel({
+  toggleButtonTop = "50%",
+  children,
+  "data-tour": dataTour,
+}) {
   const {
     rightBarVisible,
     rightBarWidth,
@@ -41,6 +45,7 @@ export default function RightPanel({ toggleButtonTop = "50%", children }) {
           opacity: rightBarVisible ? 1 : 0,
           overflow: "hidden",
         }}
+        data-tour={dataTour}
       >
         {rightBarVisible && (
           <>

@@ -1,35 +1,70 @@
-// Add news graphs and how to generate if applies
-function layoutMaking(selectedChart, graphsToView) {
-  // General Layout
+/**
+ * Build a Plotly layout object that respects the current MUI theme.
+ * Colors update automatically whenever the user switches between light / dark mode.
+ *
+ * @param {string} selectedChart  "radar" | "bar"
+ * @param {object} _graphsToView  Unused – kept for API compatibility
+ * @param {object} theme          MUI theme object
+ * @returns {{ generalLayout: object }}
+ */
+function layoutMaking(selectedChart, _graphsToView, theme) {
+  const bgColor = theme.palette.background.paper;
+  const textColor = theme.palette.text.primary;
+  const gridColor = theme.palette.divider;
+
+  const axisConfig =
+    selectedChart === "radar"
+      ? {
+          polar: {
+            bgcolor: bgColor,
+            radialaxis: {
+              visible: true,
+              gridcolor: gridColor,
+              linecolor: gridColor,
+              tickfont: { color: textColor },
+            },
+            angularaxis: {
+              color: textColor,
+              gridcolor: gridColor,
+              linecolor: gridColor,
+            },
+          },
+        }
+      : {
+          barmode: "group",
+          xaxis: {
+            gridcolor: gridColor,
+            zerolinecolor: gridColor,
+            tickfont: { color: textColor },
+          },
+          yaxis: {
+            gridcolor: gridColor,
+            zerolinecolor: gridColor,
+            tickfont: { color: textColor },
+          },
+        };
+
   const generalLayout = {
-    polar: {
-      radialaxis: { visible: selectedChart === "radar", range: [0, 1] },
-    },
+    ...axisConfig,
     showlegend: true,
-    height: 480,
-    width: 800,
-  };
-
-  // Layout only for Pie Charts
-  let numRows, numColumns;
-  if (graphsToView.pie.length <= 2) {
-    numRows = 1;
-    numColumns = graphsToView.pie.length;
-  } else {
-    numRows = Math.ceil(graphsToView.pie.length / 2);
-    numColumns = Math.min(2, graphsToView.pie.length);
-  }
-
-  const pieLayout = {
-    height: 480,
-    width: 800,
-    grid: { rows: numRows, columns: numColumns },
-    legend: {
-      itemclick: false,
+    height: 460,
+    autosize: true,
+    paper_bgcolor: bgColor,
+    plot_bgcolor: bgColor,
+    font: {
+      color: textColor,
+      family: "Quicksand-Bold, sans-serif",
+      size: 12,
     },
+    legend: {
+      bgcolor: bgColor,
+      bordercolor: gridColor,
+      borderwidth: 1,
+    },
+    margin: { l: 60, r: 30, t: 40, b: 80 },
   };
 
-  return { generalLayout, pieLayout };
+  return { generalLayout };
 }
 
 export default layoutMaking;

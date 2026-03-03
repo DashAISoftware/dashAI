@@ -13,22 +13,28 @@ import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
 import InfoSessionModal from "./InfoSessionModal";
 import { useTranslation } from "react-i18next";
+import { useModels } from "./ModelsContext";
 
-export default function ModelsLeftBar({
-  datasets = [],
-  selectedDatasetId,
-  sessions = [],
-  selectedSessionId,
-  tasks = [],
-  onDatasetClick,
-  onDatasetDelete,
-  onDatasetEdit,
-  onSessionClick,
-  onSessionDelete,
-  onSessionEdit,
-  onToggle,
-  handleNewSessionButton,
-}) {
+export default function ModelsLeftBar({ onToggle }) {
+  const {
+    deleteSessionById,
+    setSelectedSessionId,
+    setSelectedSession,
+    setSelectedTask,
+    setStep,
+    selectDataset,
+    datasets,
+    selectedDatasetId,
+    replaceDatasets,
+    sessions,
+    tasks,
+    selectedSessionId,
+    setSessions,
+    deleteDataset,
+    editDataset,
+    editSession,
+  } = useModels();
+
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDatasets, setFilteredDatasets] = useState(datasets);
@@ -107,10 +113,11 @@ export default function ModelsLeftBar({
   };
 
   const getSessionDescription = (session) => {
-    if (session.dataloader_name && datasets.length > 0) {
+    if (session.dataset_id && datasets.length > 0) {
       const associatedDataset = datasets.find(
-        (dataset) => dataset.name === session.dataloader_name,
+        (dataset) => dataset.id === session.dataset_id,
       );
+
       return associatedDataset?.name
         ? `from ${associatedDataset.name} dataset`
         : "No dataset";
@@ -127,6 +134,79 @@ export default function ModelsLeftBar({
     groups[displayName].push(session);
     return groups;
   }, {});
+
+  // Sort grouped sessions to maintain consistent order
+  const sortedGroupedSessions = groupedSessions
+    ? Object.keys(groupedSessions)
+        .sort()
+        .reduce((sorted, key) => {
+          sorted[key] = groupedSessions[key];
+          return sorted;
+        }, {})
+    : {};
+
+  const onDatasetClick = (datasetId) => {
+    selectDataset(datasetId);
+    setSelectedSessionId(null);
+    setSelectedTask(null);
+    setStep(2); // Use a different step to show DatasetVisualization
+  };
+
+  const onSessionDelete = async (id) => {
+    const success = await deleteSessionById(id);
+    if (!success) return;
+    if (id === selectedSessionId) {
+      setSelectedSessionId(null);
+      setSelectedSession(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+  };
+
+  const onDatasetDelete = (id) => {
+    if (id === selectedDatasetId) {
+      selectDataset(null);
+      setStep(0);
+      setSelectedTask(null);
+    }
+
+    replaceDatasets((prevDatasets) =>
+      prevDatasets.filter((dataset) => dataset.id !== id),
+    );
+
+    setSessions((prevSessions) => {
+      const filteredSessions = prevSessions.filter(
+        (session) => session.dataset_id !== id,
+      );
+
+      if (
+        selectedSessionId &&
+        prevSessions.find(
+          (session) =>
+            session.id === selectedSessionId && session.dataset_id === id,
+        )
+      ) {
+        setSelectedSessionId(null);
+        setStep(0);
+        setSelectedTask(null);
+      }
+
+      return filteredSessions;
+    });
+
+    deleteDataset(id);
+  };
+
+  const onSessionClick = (sessionId) => {
+    setSelectedSessionId(sessionId);
+  };
+
+  const handleNewSessionButton = () => {
+    setSelectedSessionId(null);
+    selectDataset(null);
+    setSelectedTask(null);
+    setStep(0);
+  };
 
   return (
     <SideBar>
@@ -184,7 +264,7 @@ export default function ModelsLeftBar({
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
-          onItemEdit={onDatasetEdit}
+          onItemEdit={editDataset}
           defaultOpen={true}
           title={t("datasets:label.availableDatasets")}
           Icon={StorageIcon}
@@ -200,11 +280,11 @@ export default function ModelsLeftBar({
         />
 
         <GroupedCollapsibleList
-          groups={groupedSessions}
+          groups={sortedGroupedSessions}
           selectedItemId={selectedSessionId}
           onItemClick={onSessionClick}
           onItemDelete={onSessionDelete}
-          onItemEdit={onSessionEdit}
+          onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
           title={t("common:sessions")}
           Icon={Biotech}

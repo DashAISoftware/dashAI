@@ -62,7 +62,7 @@ export const modelsTourSteps = [
     disableBeacon: true,
   },
   {
-    target: '[data-tour="models-task-selection"]',
+    target: '[data-tour="task-selection"]',
     content: (
       <Trans i18nKey="modelsTour:selectTask">
         <div>

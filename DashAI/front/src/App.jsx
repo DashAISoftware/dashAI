@@ -17,6 +17,7 @@ import NewPipeline from "./pages/pipelines/NewPipeline";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
+import JobQueueWidget from "./components/jobs/JobQueueWidget";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <JobQueueWidget />
     </BrowserRouter>
   );
 }
