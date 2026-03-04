@@ -19,7 +19,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getModelSessionById } from "../../api/modelSession";
 
 export function LiveMetricsChart({ run }) {
@@ -72,11 +72,9 @@ export function LiveMetricsChart({ run }) {
       socketRef.current.close();
     }
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = window.location.host;
-    const ws = new WebSocket(
-      `${protocol}//${host}/api/v1/metrics/ws/${run.id}`,
-    );
+    const apiUrl = process.env.REACT_APP_API_URL || "";
+    const wsBase = apiUrl.replace(/^http/, "ws");
+    const ws = new WebSocket(`${wsBase}/v1/metrics/ws/${run.id}`);
 
     ws.onmessage = (event) => {
       const incoming = JSON.parse(event.data);
@@ -169,20 +167,20 @@ export function LiveMetricsChart({ run }) {
     };
   }, [run.model_session_id]);
 
-  const metrics = data[split]?.[level] ?? {};
-  const allowed = availableMetrics[split] ?? [];
+  const filteredMetrics = useMemo(() => {
+    const m = data[split]?.[level] ?? {};
+    const a = availableMetrics[split] ?? [];
+    return Object.fromEntries(
+      Object.entries(m).filter(([name]) => a.includes(name)),
+    );
+  }, [data, split, level, availableMetrics]);
 
-  const filteredMetrics = Object.fromEntries(
-    Object.entries(metrics).filter(([name]) => allowed.includes(name)),
-  );
-
-  const chartData = (() => {
+  const chartData = useMemo(() => {
     if (Object.keys(filteredMetrics).length === 0) return [];
 
     const allSteps = new Set();
     for (const metricName in filteredMetrics) {
       const metricData = filteredMetrics[metricName];
-
       if (Array.isArray(metricData)) {
         metricData.forEach((point) => {
           allSteps.add(point.step);
@@ -194,10 +192,8 @@ export function LiveMetricsChart({ run }) {
 
     return sortedSteps.map((step) => {
       const point = { x: step };
-
       for (const metricName in filteredMetrics) {
         const metricData = filteredMetrics[metricName];
-
         if (Array.isArray(metricData)) {
           const dataPoint = metricData.find((p) => p.step === step);
           point[metricName] = dataPoint?.value ?? null;
@@ -205,10 +201,9 @@ export function LiveMetricsChart({ run }) {
           point[metricName] = null;
         }
       }
-
       return point;
     });
-  })();
+  }, [filteredMetrics]);
 
   const hasTrialData =
     data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
