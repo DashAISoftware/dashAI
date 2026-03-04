@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useMemo, useState } from "react";
 import {
   FormControl,
   InputLabel,
@@ -7,6 +7,7 @@ import {
   CircularProgress,
   Box,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
@@ -14,13 +15,95 @@ import { useSnackbar } from "notistack";
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 
+function applyThemeToLayout(baseLayout, theme) {
+  const bg = theme.palette.background.paper;
+  const textColor = theme.palette.text.primary;
+  const gridColor = theme.palette.divider;
+
+  // Strip backend-provided fixed dimensions so our responsive sizing takes over
+  // eslint-disable-next-line no-unused-vars
+  const { width: _w, height: _h, ...rest } = baseLayout ?? {};
+
+  const axisOverride = {
+    gridcolor: gridColor,
+    zerolinecolor: gridColor,
+  };
+
+  return {
+    ...rest,
+    paper_bgcolor: bg,
+    plot_bgcolor: bg,
+    font: {
+      ...baseLayout?.font,
+      color: textColor,
+      family: "Quicksand-Bold, sans-serif",
+    },
+    xaxis: {
+      ...baseLayout?.xaxis,
+      ...axisOverride,
+      tickfont: { ...baseLayout?.xaxis?.tickfont, color: textColor },
+    },
+    yaxis: {
+      ...baseLayout?.yaxis,
+      ...axisOverride,
+      tickfont: { ...baseLayout?.yaxis?.tickfont, color: textColor },
+    },
+    legend: {
+      ...baseLayout?.legend,
+      bgcolor: bg,
+      bordercolor: gridColor,
+    },
+    title: {
+      ...baseLayout?.title,
+      font: { ...baseLayout?.title?.font, color: textColor },
+    },
+    ...(baseLayout?.updatemenus && {
+      updatemenus: baseLayout.updatemenus.map((menu) => ({
+        ...menu,
+        bgcolor:
+          theme.palette.ui?.borderLight ?? theme.palette.background.paper,
+        bordercolor: gridColor,
+        font: { color: "#000000" },
+        activecolor: theme.palette.primary.main,
+      })),
+    }),
+    ...(baseLayout?.polar && {
+      polar: {
+        ...baseLayout.polar,
+        bgcolor: bg,
+        radialaxis: {
+          ...baseLayout.polar.radialaxis,
+          gridcolor: gridColor,
+          linecolor: gridColor,
+          tickfont: {
+            ...baseLayout.polar.radialaxis?.tickfont,
+            color: textColor,
+          },
+        },
+        angularaxis: {
+          ...baseLayout.polar.angularaxis,
+          color: textColor,
+          gridcolor: gridColor,
+          linecolor: gridColor,
+        },
+      },
+    }),
+  };
+}
+
 export default function ExplainersPlot({ explainer, scope }) {
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
   const [explainersPlots, setExplainersPlots] = useState([]);
   const [currentPlot, setCurrentPlot] = useState(0);
   const [loading, setLoading] = useState(true);
   const isLocal = scope === "local";
   const { t } = useTranslation(["explainers"]);
+
+  const themedLayout = useMemo(() => {
+    if (!explainersPlots[currentPlot]) return {};
+    return applyThemeToLayout(explainersPlots[currentPlot].layout, theme);
+  }, [explainersPlots, currentPlot, theme]);
   function parseExplanationPlot(explanation) {
     const formattedPlot = JSON.parse(JSON.stringify(explanation));
     return formattedPlot.map(JSON.parse);
@@ -62,7 +145,7 @@ export default function ExplainersPlot({ explainer, scope }) {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        width: "100%",
       }}
     >
       {!loading && isLocal && (
@@ -87,11 +170,11 @@ export default function ExplainersPlot({ explainer, scope }) {
         <Plot
           data={explainersPlots[currentPlot].data}
           layout={{
-            ...explainersPlots[currentPlot].layout,
-            width: 730,
+            ...themedLayout,
+            width: 700,
             height: 380,
           }}
-          config={{ staticPlot: false }}
+          config={{ responsive: false, displayModeBar: false }}
         />
       ) : explainer.status === 4 ? (
         <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>
