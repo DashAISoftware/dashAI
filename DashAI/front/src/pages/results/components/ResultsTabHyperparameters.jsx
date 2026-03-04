@@ -1,39 +1,49 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
-import {
-  FormControl,
-  InputLabel,
-  Grid,
-  MenuItem,
-  Select,
-  CircularProgress,
-  Box,
-} from "@mui/material";
+import { Grid, CircularProgress, Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../../utils/schema";
+import { applyThemeToLayout } from "../../../utils/plotlyTheme";
 import { useTranslation } from "react-i18next";
 
 function ResultsTabHyperparameters({ runData }) {
-  const [displayMode, setDisplayMode] = useState("nested-list");
-  const [historicalPlot, setHistoricalPlot] = useState([]);
-  const [slicePlot, setSlicePlot] = useState([]);
-  const [contourPlot, setContourPlot] = useState([]);
-  const [importancePlot, setImportancePlot] = useState([]);
+  const theme = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [historicalPlot, setHistoricalPlot] = useState(null);
+  const [slicePlot, setSlicePlot] = useState(null);
+  const [contourPlot, setContourPlot] = useState(null);
+  const [importancePlot, setImportancePlot] = useState(null);
   const { t } = useTranslation(["models"]);
 
+  const themedHistoricalLayout = useMemo(
+    () => applyThemeToLayout(historicalPlot?.layout, theme),
+    [historicalPlot, theme],
+  );
+  const themedSliceLayout = useMemo(
+    () => applyThemeToLayout(slicePlot?.layout, theme),
+    [slicePlot, theme],
+  );
+  const themedContourLayout = useMemo(
+    () => applyThemeToLayout(contourPlot?.layout, theme),
+    [contourPlot, theme],
+  );
+  const themedImportanceLayout = useMemo(
+    () => applyThemeToLayout(importancePlot?.layout, theme),
+    [importancePlot, theme],
+  );
+
   function parsePlot(plot) {
-    const formattedPlot = JSON.parse(plot);
-    const data = formattedPlot.data;
-    const layout = formattedPlot.layout;
-    return formattedPlot;
+    return JSON.parse(plot);
   }
   const optimizables = checkHowManyOptimazers({
     params: runData.parameters,
   });
 
   const getHyperparameterPlot = async () => {
+    setLoading(true);
     try {
       if (optimizables >= 2) {
         const historicalPlot = await getHyperparameterPlotRequest(
@@ -74,6 +84,8 @@ function ResultsTabHyperparameters({ runData }) {
       } else {
         console.error("Unknown Error", error.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,13 +94,17 @@ function ResultsTabHyperparameters({ runData }) {
     getHyperparameterPlot();
   }, [runData]);
 
-  return runData.status === 1 || runData.status === 2 ? ( // Delivered or Started
-    <Box
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-    >
-      <CircularProgress />
-    </Box>
-  ) : runData.status === 4 ? ( // Failed
+  if (loading || runData.status === 1 || runData.status === 2) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return runData.status === 4 ? ( // Failed
     <Box>{t("models:label.runFailedNoHyperparameterPlots")}</Box>
   ) : runData.status === 0 ? ( // Not Started
     <Box>{t("models:label.runNotStartedNoHyperparameterPlots")}</Box>
@@ -96,23 +112,15 @@ function ResultsTabHyperparameters({ runData }) {
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">
         <Plot
-          data={historicalPlot["data"]}
-          layout={{
-            ...historicalPlot["layout"],
-            width: 900,
-            height: 380,
-          }}
+          data={historicalPlot?.data}
+          layout={{ ...themedHistoricalLayout, width: 900, height: 380 }}
           config={{ staticPlot: false }}
         />
       </Grid>
       <Grid container direction="column">
         <Plot
-          data={slicePlot["data"]}
-          layout={{
-            ...slicePlot["layout"],
-            width: 900,
-            height: 380,
-          }}
+          data={slicePlot?.data}
+          layout={{ ...themedSliceLayout, width: 900, height: 380 }}
           config={{ staticPlot: false }}
         />
       </Grid>
@@ -120,23 +128,15 @@ function ResultsTabHyperparameters({ runData }) {
         <>
           <Grid container direction="column">
             <Plot
-              data={contourPlot["data"]}
-              layout={{
-                ...contourPlot["layout"],
-                width: 900,
-                height: 380,
-              }}
+              data={contourPlot?.data}
+              layout={{ ...themedContourLayout, width: 900, height: 380 }}
               config={{ staticPlot: false }}
             />
           </Grid>
           <Grid container direction="column">
             <Plot
-              data={importancePlot["data"]}
-              layout={{
-                ...importancePlot["layout"],
-                width: 900,
-                height: 380,
-              }}
+              data={importancePlot?.data}
+              layout={{ ...themedImportanceLayout, width: 900, height: 380 }}
               config={{ staticPlot: false }}
             />
           </Grid>
