@@ -554,6 +554,8 @@ async def filter_models_endpoint(
         404: Dataset not found.
         500: Error filtering pipelines.
     """
+    from pathlib import Path
+
     from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 
     try:
