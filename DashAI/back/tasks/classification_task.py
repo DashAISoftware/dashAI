@@ -1,11 +1,13 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, encode_labels
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_value import DashAIValue
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ClassificationTask(BaseTask):
@@ -21,8 +23,8 @@ class ClassificationTask(BaseTask):
     }
 
     def process_predictions(
-        self, dataset: DashAIDataset, predictions: np.ndarray, output_column: str
-    ) -> np.ndarray:
+        self, dataset: "DashAIDataset", predictions: np.ndarray, output_column: str
+    ) -> "np.ndarray":
         """Process the predictions to return the class labels.
 
         Parameters
@@ -39,6 +41,8 @@ class ClassificationTask(BaseTask):
         np.ndarray
             Processed predictions with class labels
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import encode_labels
+
         predictions = np.argmax(predictions, axis=1)
 
         output_type = dataset.types.get(output_column)
@@ -52,10 +56,10 @@ class ClassificationTask(BaseTask):
 
     def prepare_for_task(
         self,
-        dataset: DashAIDataset,
+        dataset: "DashAIDataset",
         input_columns: List[str],
         output_columns: List[str],
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         dashai_dataset = super().prepare_for_task(
             dataset, input_columns, output_columns
         )
@@ -66,7 +70,7 @@ class ClassificationTask(BaseTask):
                 continue
         return dashai_dataset
 
-    def num_labels(self, dataset: DashAIDataset, output_column: str) -> int | None:
+    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
         """Get the number of unique labels in the output column.
 
         Parameters
@@ -81,5 +85,7 @@ class ClassificationTask(BaseTask):
         int | None
             Number of unique labels or None if not applicable
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import encode_labels
+
         class_labels = encode_labels(dataset, output_column)
         return len(class_labels.names)
