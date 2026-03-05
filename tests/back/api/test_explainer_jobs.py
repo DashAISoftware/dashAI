@@ -15,9 +15,9 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
-from DashAI.back.job import ExplainerJob
+from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.models.base_model import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.tasks.base_task import BaseTask
 
 input_columns = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 output_columns = ["Species"]
@@ -282,9 +282,9 @@ def test_enqueue_explainer_jobs(
     assert response.status_code == 200, response.text
     job_status = response.json()
 
-    assert job_status["status"] == "finished", (
-        f"Job should be finished, got {job_status['status']}"
-    )
+    assert (
+        job_status["status"] == "finished"
+    ), f"Job should be finished, got {job_status['status']}"
 
     response = client.get(f"/api/v1/explainer/global/?run_id={global_explainer_id}")
     assert response.status_code == 200, response.text
@@ -312,9 +312,9 @@ def test_enqueue_explainer_jobs(
     response = client.get(f"/api/v1/job/status/{job_id_2}")
     assert response.status_code == 200, response.text
     job_status_2 = response.json()
-    assert job_status_2["status"] == "finished", (
-        f"Job should be finished, got {job_status_2['status']}"
-    )
+    assert (
+        job_status_2["status"] == "finished"
+    ), f"Job should be finished, got {job_status_2['status']}"
 
     response = client.get("/api/v1/job")
     assert response.status_code == 200, response.text
@@ -384,26 +384,26 @@ def test_execute_jobs(
     response = client.get(f"/api/v1/explainer/global/?run_id={run_id}")
     data = response.json()
     for explainer in data:
-        assert explainer["status"] == 3, (
-            f"Explainer status should be 3 (finished), got {explainer['status']}"
-        )
+        assert (
+            explainer["status"] == 3
+        ), f"Explainer status should be 3 (finished), got {explainer['status']}"
 
     response = client.get(f"/api/v1/explainer/local/?run_id={run_id}")
     data = response.json()
     for explainer in data:
-        assert explainer["status"] == 3, (
-            f"Explainer status should be 3 (finished), got {explainer['status']}"
-        )
+        assert (
+            explainer["status"] == 3
+        ), f"Explainer status should be 3 (finished), got {explainer['status']}"
 
     response = client.get(f"/api/v1/job/status/{global_job_id}")
-    assert response.json()["status"] == "finished", (
-        f"Global job should be finished, got {response.json()['status']}"
-    )
+    assert (
+        response.json()["status"] == "finished"
+    ), f"Global job should be finished, got {response.json()['status']}"
 
     response = client.get(f"/api/v1/job/status/{local_job_id}")
-    assert response.json()["status"] == "finished", (
-        f"Local job should be finished, got {response.json()['status']}"
-    )
+    assert (
+        response.json()["status"] == "finished"
+    ), f"Local job should be finished, got {response.json()['status']}"
 
 
 def test_job_with_wrong_explainer(client: TestClient):
@@ -424,6 +424,6 @@ def test_job_with_wrong_explainer(client: TestClient):
     job_id = response.json()["id"]
 
     job_status = client.get(f"/api/v1/job/status/{job_id}").json()
-    assert job_status["status"] == "error", (
-        f"Job with wrong explainer should fail, got status {job_status['status']}"
-    )
+    assert (
+        job_status["status"] == "error"
+    ), f"Job with wrong explainer should fail, got status {job_status['status']}"
