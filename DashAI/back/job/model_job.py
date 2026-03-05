@@ -20,11 +20,11 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 )
 from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.metrics import BaseMetric
-from DashAI.back.models import BaseModel
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
-from DashAI.back.optimizers import BaseOptimizer
-from DashAI.back.tasks import BaseTask
+from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+from DashAI.back.tasks.base_task import BaseTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)

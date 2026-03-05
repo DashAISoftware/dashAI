@@ -25,8 +25,8 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.models import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.tasks.base_task import BaseTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)

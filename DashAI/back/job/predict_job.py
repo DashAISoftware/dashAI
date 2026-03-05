@@ -19,7 +19,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
-from DashAI.back.tasks import BaseTask
+from DashAI.back.tasks.base_task import BaseTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)

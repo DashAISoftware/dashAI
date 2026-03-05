@@ -14,7 +14,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.tasks import BaseGenerativeTask
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
