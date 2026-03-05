@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING, List
 
-import numpy as np
-
 from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_value import DashAIValue
 
 if TYPE_CHECKING:
+    from numpy import ndarray
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -23,8 +23,8 @@ class ClassificationTask(BaseTask):
     }
 
     def process_predictions(
-        self, dataset: "DashAIDataset", predictions: np.ndarray, output_column: str
-    ) -> "np.ndarray":
+        self, dataset: "DashAIDataset", predictions: "ndarray", output_column: str
+    ) -> "ndarray":
         """Process the predictions to return the class labels.
 
         Parameters
@@ -41,6 +41,8 @@ class ClassificationTask(BaseTask):
         np.ndarray
             Processed predictions with class labels
         """
+        import numpy as np
+
         from DashAI.back.dataloaders.classes.dashai_dataset import encode_labels
 
         predictions = np.argmax(predictions, axis=1)
