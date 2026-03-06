@@ -37,6 +37,7 @@ def prepare_to_metric(
     ValueError
         If the lengths of true and predicted labels do not match.
     """
+    import numpy as np
 
     column_name = y.column_names[0]
     true = np.array(y[column_name])
