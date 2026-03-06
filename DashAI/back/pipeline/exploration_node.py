@@ -1,15 +1,15 @@
 import logging
-import os
-import pathlib
-from typing import Any, Dict, Type
+from typing import TYPE_CHECKING, Any, Dict, Type
 
 from kink import di
 
 from DashAI.back.config import DefaultSettings
 from DashAI.back.dependencies.database.models import Explorer
-from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 log = logging.getLogger(__name__)
 
@@ -47,19 +47,19 @@ class DataExploration(BaseJob):
     async def run(
         self,
         context: Dict[str, Any],
-        component_registry: ComponentRegistry = lambda di: di["component_registry"],
+        component_registry: "ComponentRegistry" = lambda di: di["component_registry"],
     ) -> Dict[str, Any]:
         try:
+            import os
+            from pathlib import Path
+
             pipeline_id = context.get("pipeline_id")
             loaded_dataset = context.get("dataset")
 
             settings = DefaultSettings()
             sqlite_local = os.path.expanduser(settings.LOCAL_PATH)
             base_path = (
-                pathlib.Path(sqlite_local)
-                / "pipelines"
-                / "exploration"
-                / str(pipeline_id)
+                Path(sqlite_local) / "pipelines" / "exploration" / str(pipeline_id)
             )
             base_path.mkdir(parents=True, exist_ok=True)
 
