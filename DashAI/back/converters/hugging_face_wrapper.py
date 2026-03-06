@@ -1,9 +1,11 @@
 from abc import ABCMeta, abstractmethod
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
 from DashAI.back.converters.base_converter import BaseConverter
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
@@ -18,7 +20,7 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
+    def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
         """Process a batch of data through the model."""
         raise NotImplementedError
 
@@ -30,7 +32,7 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def fit(self, x: DashAIDataset, y: DashAIDataset = None) -> Type[BaseConverter]:
+    def fit(self, x: "DashAIDataset", y: "DashAIDataset" = None) -> Type[BaseConverter]:
         """Validate parameters and prepare for transformation."""
         if len(x) == 0:
             raise ValueError("Input dataset is empty")
@@ -45,9 +47,13 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
 
         return self
 
-    def transform(self, x: DashAIDataset, y: DashAIDataset = None) -> DashAIDataset:
+    def transform(
+        self, x: "DashAIDataset", y: "DashAIDataset" = None
+    ) -> "DashAIDataset":
         """Transform the input data using the model."""
         from datasets import concatenate_datasets
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         all_results = []
 
