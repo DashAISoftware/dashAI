@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-
-from beartype.typing import TYPE_CHECKING, Any, Dict, Final, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema

@@ -2,8 +2,6 @@
 
 from typing import TYPE_CHECKING, Any, Dict
 
-from beartype import beartype
-
 from DashAI.back.core.schema_fields import (
     bool_field,
     int_field,
@@ -255,7 +253,6 @@ class ExcelDataLoader(BaseDataLoader):
 
         return pandas_params
 
-    @beartype
     def load_data(
         self,
         filepath_or_buffer: str,

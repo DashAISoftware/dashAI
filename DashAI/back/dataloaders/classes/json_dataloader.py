@@ -2,8 +2,6 @@
 
 from typing import TYPE_CHECKING, Any, Dict
 
-from beartype import beartype
-
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
@@ -96,7 +94,6 @@ class JSONDataLoader(BaseDataLoader):
                 f"got {type(params['data_key'])}"
             )
 
-    @beartype
     def load_data(
         self,
         filepath_or_buffer: str,

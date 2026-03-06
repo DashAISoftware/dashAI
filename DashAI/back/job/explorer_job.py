@@ -1,7 +1,6 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
-from beartype.typing import Type
 from kink import inject
 from sqlalchemy import exc
 

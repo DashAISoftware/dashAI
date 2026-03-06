@@ -12,6 +12,7 @@ from DashAI.back.job.base_job import BaseJob, JobError
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
+
 log = logging.getLogger(__name__)
 
 
