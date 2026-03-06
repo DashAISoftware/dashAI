@@ -2,12 +2,14 @@
 
 import logging
 from abc import abstractmethod
-from typing import Any, Dict, Final
+from typing import TYPE_CHECKING, Any, Dict, Final
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseDataLoader(ConfigObject):
@@ -22,7 +24,7 @@ class BaseDataLoader(ConfigObject):
         temp_path: str,
         params: Dict[str, Any],
         n_sample: int | None = False,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load data abstract method.
 
         Parameters
