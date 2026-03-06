@@ -33,6 +33,8 @@ import homeEN from "./locales/en/home.json";
 import homeES from "./locales/es/home.json";
 import pluginsEN from "./locales/en/plugins.json";
 import pluginsES from "./locales/es/plugins.json";
+import generativeTourEN from "./locales/en/generativeTour.json";
+import generativeTourES from "./locales/es/generativeTour.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -55,6 +57,7 @@ const resources = {
     notebookTour: notebookTourEN,
     modelsTour: modelsTourEN,
     modelsSessionTour: modelsSessionTourEN,
+    generativeTour: generativeTourEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -73,6 +76,7 @@ const resources = {
     notebookTour: notebookTourES,
     modelsTour: modelsTourES,
     modelsSessionTour: modelsSessionTourES,
+    generativeTour: generativeTourES,
   },
 };
 
@@ -101,6 +105,7 @@ i18n
       "modelsTour",
       "modelsSessionTour",
       "plugins",
+      "generativeTour",
     ],
     defaultNS: "common",
 
