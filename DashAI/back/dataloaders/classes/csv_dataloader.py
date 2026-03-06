@@ -2,7 +2,7 @@
 
 import shutil
 from itertools import islice
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from beartype import beartype
 
@@ -16,11 +16,10 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class CSVDataloaderSchema(BaseSchema):
@@ -292,7 +291,7 @@ class CSVDataLoader(BaseDataLoader):
         temp_path: str,
         params: Dict[str, Any],
         n_sample: int | None = None,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load the uploaded CSV files into a DatasetDict.
 
         Parameters
@@ -314,6 +313,8 @@ class CSVDataLoader(BaseDataLoader):
             A HuggingFace's Dataset with the loaded data.
         """
         from datasets import Dataset, IterableDatasetDict, load_dataset
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         clean_params = self._check_params(params)
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
