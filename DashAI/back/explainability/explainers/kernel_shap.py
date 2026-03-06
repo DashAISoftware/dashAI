@@ -6,7 +6,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.types.categorical import Categorical
@@ -282,6 +281,7 @@ class KernelShap(BaseLocalExplainer):
         dict
             dictionary with the shap values for each instance.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         dataset_dashai = to_dashai_dataset(instances)
 
