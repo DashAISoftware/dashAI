@@ -1,7 +1,6 @@
 """OpusMtEnESTransformer model for english-spanish translation DashAI implementation."""
 
-from pathlib import Path
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from sklearn.exceptions import NotFittedError
 
@@ -14,10 +13,14 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.hugging_face.metrics_callback import MetricsCallback
 from DashAI.back.models.translation_model import TranslationModel
 from DashAI.back.models.utils import GPU_OR_CPU, GPU_OR_CPU_PLACEHOLDER
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class OpusMtEnESTransformerSchema(BaseSchema):
@@ -215,8 +218,8 @@ class OpusMtEnESTransformer(TranslationModel):
         self.fitted = model is not None
 
     def tokenize_data(
-        self, x: DashAIDataset, y: Optional[DashAIDataset] = None
-    ) -> DashAIDataset:
+        self, x: "DashAIDataset", y: Optional["DashAIDataset"] = None
+    ) -> "DashAIDataset":
         """Tokenize input and output.
 
         Parameters
@@ -231,6 +234,8 @@ class OpusMtEnESTransformer(TranslationModel):
         Dataset
             Dataset with the processed data.
         """
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
         is_y = bool(y)
         if not y:
             y = DashAIDataset.from_list([{"foo": 0}] * len(x))
@@ -266,10 +271,10 @@ class OpusMtEnESTransformer(TranslationModel):
 
     def train(
         self,
-        x_train: DashAIDataset,
-        y_train: DashAIDataset,
-        x_validation: DashAIDataset = None,
-        y_validation: DashAIDataset = None,
+        x_train: "DashAIDataset",
+        y_train: "DashAIDataset",
+        x_validation: "DashAIDataset" = None,
+        y_validation: "DashAIDataset" = None,
     ) -> "OpusMtEnESTransformer":
         dataset = self.tokenize_data(x_train, y_train)
         dataset.set_format("torch", columns=["input_ids", "attention_mask", "labels"])
@@ -311,7 +316,7 @@ class OpusMtEnESTransformer(TranslationModel):
         trainer.train()
         return self
 
-    def predict(self, x_pred: DashAIDataset) -> List:
+    def predict(self, x_pred: "DashAIDataset") -> List:
         """Predict with the fine-tuned model.
 
         Parameters
@@ -349,8 +354,8 @@ class OpusMtEnESTransformer(TranslationModel):
         return translations
 
     def prepare_dataset(
-        self, dataset: DashAIDataset, is_fit: bool = False
-    ) -> DashAIDataset:
+        self, dataset: "DashAIDataset", is_fit: bool = False
+    ) -> "DashAIDataset":
         """Apply the model transformations to the dataset.
 
         Parameters
@@ -370,7 +375,7 @@ class OpusMtEnESTransformer(TranslationModel):
         except Exception as e:
             print(f"Couldn't apply transformations to the dataset for the model: {e}")
 
-    def save(self, filename: Union[str, Path]) -> None:
+    def save(self, filename: Union[str, "Path"]) -> None:
         self.model.save_pretrained(filename)
         from transformers import AutoConfig
 
@@ -388,7 +393,7 @@ class OpusMtEnESTransformer(TranslationModel):
         config.save_pretrained(filename)
 
     @classmethod
-    def load(cls, filename: Union[str, Path]):
+    def load(cls, filename: Union[str, "Path"]):
         from transformers import AutoConfig, AutoModelForSeq2SeqLM
 
         model = AutoModelForSeq2SeqLM.from_pretrained(filename)
