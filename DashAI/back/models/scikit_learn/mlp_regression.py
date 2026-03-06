@@ -1,4 +1,4 @@
-import numpy as np
+from typing import TYPE_CHECKING
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
@@ -11,9 +11,13 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.regression_model import RegressionModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
+
+if TYPE_CHECKING:
+    from numpy import ndarray
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class MLPRegressorSchema(BaseSchema):
@@ -220,10 +224,10 @@ class MLPRegression(RegressionModel):
 
     def train(
         self,
-        x_train: DashAIDataset,
-        y_train: DashAIDataset,
-        x_validation: DashAIDataset = None,
-        y_validation: DashAIDataset = None,
+        x_train: "DashAIDataset",
+        y_train: "DashAIDataset",
+        x_validation: "DashAIDataset" = None,
+        y_validation: "DashAIDataset" = None,
     ) -> "MLPRegression":
         import torch
 
@@ -334,7 +338,7 @@ class MLPRegression(RegressionModel):
 
         return self
 
-    def predict(self, x: DashAIDataset) -> np.ndarray:
+    def predict(self, x: "DashAIDataset") -> "ndarray":
         import torch
 
         self.model.eval()
