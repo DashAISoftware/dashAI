@@ -1,31 +1,29 @@
 import logging
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    load_dataset,
-    modify_table,
-    save_dataset,
-)
 from DashAI.back.dependencies.database.models import ConverterList
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
 def _rebuild_dataset_with_transformed_columns(
-    base: DashAIDataset,
-    transformed: DashAIDataset,
+    base: "DashAIDataset",
+    transformed: "DashAIDataset",
     scope_column_names: List[str],
     scope_column_indexes: List[int],
-) -> DashAIDataset:
+) -> "DashAIDataset":
     """
     Replaces specific columns in the base dataset with columns from the transformed
     dataset, preserving their original positions. Also appends any additional columns
@@ -54,6 +52,8 @@ def _rebuild_dataset_with_transformed_columns(
         A new dataset with the specified columns replaced in-place, new columns
         appended, and original metadata and split information preserved.
     """
+    from DashAI.back.dataloaders.classes.dashai_dataset import modify_table
+
     original_columns = base.column_names
     transformed_cols = transformed.column_names
 
@@ -100,7 +100,7 @@ class ConverterListJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the list as delivered."""
         converter_list_id = self.kwargs["converter_list_id"]
@@ -123,7 +123,7 @@ class ConverterListJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the converter list as error."""
         converter_list_id = self.kwargs.get("converter_list_id")
@@ -176,7 +176,10 @@ class ConverterListJob(BaseJob):
     ) -> None:
         from kink import di
 
-        # (Lazy imports removed to avoid duplicate and unused imports warnings)
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            save_dataset,
+        )
 
         session_factory = di["session_factory"]
         component_registry = di["component_registry"]
