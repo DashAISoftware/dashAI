@@ -1,5 +1,4 @@
-from pathlib import Path
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -8,10 +7,14 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.text_classification_model import TextClassificationModel
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BagOfWordsTextClassificationModelSchema(BaseSchema):
@@ -198,7 +201,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
 
         return self.classifier.predict(tokenized_dataset)
 
-    def save(self, filename: Union[str, Path]) -> None:
+    def save(self, filename: Union[str, "Path"]) -> None:
         """Save the model in the specified path."""
         # Lazy import of joblib
         import joblib
@@ -206,7 +209,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         joblib.dump(self, filename)
 
     @staticmethod
-    def load(filename: Union[str, Path]) -> None:
+    def load(filename: Union[str, "Path"]) -> None:
         """Load the model of the specified path."""
         # Lazy import of joblib
         import joblib
@@ -214,7 +217,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         model = joblib.load(filename)
         return model
 
-    def prepare_dataset(self, dataset: DashAIDataset, is_fit=False):
+    def prepare_dataset(self, dataset: "DashAIDataset", is_fit=False):
         """Apply the model transformations to the dataset.
 
         Parameters
