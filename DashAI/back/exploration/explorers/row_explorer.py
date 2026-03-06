@@ -1,18 +1,17 @@
-import os
-import pathlib
-
-from beartype.typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.preview_inspection_explorer import (
     PreviewInspectionExplorer,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RowExplorerSchema(BaseExplorerSchema):
@@ -89,7 +88,7 @@ class RowExplorer(PreviewInspectionExplorer):
         self.from_top = kwargs.get("from_top", True)
         super().__init__(**kwargs)
 
-    def launch_exploration(self, dataset: DashAIDataset, __explorer_info__: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", __explorer_info__: Explorer):
         _df = dataset.to_pandas()
 
         # Shuffle rows
@@ -108,11 +107,14 @@ class RowExplorer(PreviewInspectionExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.to_json(path)
         return path.as_posix()
@@ -120,13 +122,16 @@ class RowExplorer(PreviewInspectionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        from pathlib import Path
+
+        import numpy as np
+        import pandas as pd
+
         resultType = "tabular"
         orientation = options.get("orientation", "dict")
         config = {"orient": orientation}
 
-        path = pathlib.Path(exploration_path)
-        import numpy as np
-        import pandas as pd
+        path = Path(exploration_path)
 
         result = pd.read_json(path).replace({np.nan: None}).to_dict(orient=orientation)
         return {"type": resultType, "data": result, "config": config}

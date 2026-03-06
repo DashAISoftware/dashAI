@@ -1,8 +1,5 @@
-import enum
-import os
-import pathlib
-
-from beartype.typing import Any, Dict
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -11,15 +8,17 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-class Method(enum.Enum):
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class Method(Enum):
     pearson = "pearson"
     kendall = "kendall"
     spearman = "spearman"
@@ -120,7 +119,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         super().__init__(**kwargs)
 
     def launch_exploration(
-        self, dataset: DashAIDataset, explorer_info: Explorer
+        self, dataset: "DashAIDataset", explorer_info: Explorer
     ) -> Any:
         import plotly.express as px
 
@@ -150,14 +149,17 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         import pandas as pd
         import plotly.graph_objs as go
 
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         if self.plot:
             assert isinstance(result, go.Figure)
@@ -170,6 +172,11 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        from pathlib import Path
+
+        import numpy as np
+        import pandas as pd
+
         if self.plot:
             resultType = "plotly_json"
             with open(exploration_path, "r", encoding="utf-8") as f:
@@ -179,9 +186,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         resultType = "tabular"
         config = {"orient": "dict"}
 
-        path = pathlib.Path(exploration_path)
-        import numpy as np
-        import pandas as pd
+        path = Path(exploration_path)
 
         result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}

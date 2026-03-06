@@ -1,7 +1,4 @@
-import os
-import pathlib
-
-from beartype.typing import Any, Dict, List, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Union
 
 from DashAI.back.core.schema_fields import (
     int_field,
@@ -11,12 +8,14 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ParallelCategoriesSchema(BaseExplorerSchema):
@@ -66,8 +65,8 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         super().__init__(**kwargs)
 
     def prepare_dataset(
-        self, loaded_dataset: DashAIDataset, columns: List[Dict[str, Any]]
-    ) -> DashAIDataset:
+        self, loaded_dataset: "DashAIDataset", columns: List[Dict[str, Any]]
+    ) -> "DashAIDataset":
         explorer_columns = [col["columnName"] for col in columns]
         dataset_columns = loaded_dataset.column_names
 
@@ -85,7 +84,7 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
 
         return super().prepare_dataset(loaded_dataset, columns)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
         import plotly.express as px
 
         _df = dataset.to_pandas()
@@ -107,11 +106,14 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.write_json(path.as_posix())
         return path.as_posix()
@@ -119,9 +121,10 @@ class ParallelCategoriesExplorer(MultidimensionalExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        import plotly.io as pio
+
         resultType = "plotly_json"
         config = {}
-        import plotly.io as pio
 
         result = pio.read_json(exploration_path)
         result = result.to_json()

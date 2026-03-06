@@ -1,7 +1,4 @@
-import os
-import pathlib
-
-from beartype.typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -10,14 +7,16 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.preview_inspection_explorer import (
     PreviewInspectionExplorer,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class DescribeExplorerSchema(BaseExplorerSchema):
@@ -140,7 +139,7 @@ class DescribeExplorer(PreviewInspectionExplorer):
         return True
 
     def launch_exploration(
-        self, dataset: DashAIDataset, __explorer_info__: Explorer
+        self, dataset: "DashAIDataset", __explorer_info__: Explorer
     ) -> Any:
         return dataset.to_pandas().describe(
             percentiles=self.percentiles, include=self.include, exclude=self.exclude
@@ -150,11 +149,14 @@ class DescribeExplorer(PreviewInspectionExplorer):
         self,
         __notebook_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.json"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
 
         result.to_json(path)
         return path.as_posix()
@@ -162,13 +164,14 @@ class DescribeExplorer(PreviewInspectionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        import numpy as np
+        import pandas as pd
+
         resultType = "tabular"
         orientation = options.get("orientation", "dict")
         config = {"orient": orientation}
 
-        path = pathlib.Path(exploration_path)
-        import numpy as np
-        import pandas as pd
+        path = Path(exploration_path)
 
         result = (
             pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)

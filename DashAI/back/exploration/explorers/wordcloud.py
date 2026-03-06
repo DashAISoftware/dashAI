@@ -1,8 +1,4 @@
-import base64
-import os
-import pathlib
-
-from beartype.typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from DashAI.back.core.schema_fields import (
     int_field,
@@ -11,12 +7,14 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
-    DashAIDataset,
-)
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorerSchema
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class WordcloudSchema(BaseExplorerSchema):
@@ -81,7 +79,7 @@ class WordcloudExplorer(DistributionExplorer):
         self.background_color = kwargs.get("background_color")
         super().__init__(**kwargs)
 
-    def launch_exploration(self, dataset: DashAIDataset, explorer_info: Explorer):
+    def launch_exploration(self, dataset: "DashAIDataset", explorer_info: Explorer):
         from wordcloud import STOPWORDS, WordCloud
 
         _df = dataset.to_pandas()
@@ -106,11 +104,14 @@ class WordcloudExplorer(DistributionExplorer):
         self,
         __exploration_info__: Notebook,
         explorer_info: Explorer,
-        save_path: pathlib.Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
+        import os
+        from pathlib import Path
+
         filename = f"{explorer_info.id}.png"
-        path = pathlib.Path(os.path.join(save_path, filename))
+        path = Path(os.path.join(save_path, filename))
         result.save(path, format="PNG")
 
         return path.as_posix()
@@ -118,6 +119,8 @@ class WordcloudExplorer(DistributionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        import base64
+
         resultType = "image_base64"
         config = {}
 

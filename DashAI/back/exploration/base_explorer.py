@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 
 from beartype.typing import TYPE_CHECKING, Any, Dict, Final, List
 
@@ -9,6 +8,8 @@ from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.static.icons import Icon
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -212,7 +213,7 @@ class BaseExplorer(ConfigObject, ABC):
         self,
         notebook_info: Notebook,
         explorer_info: Explorer,
-        save_path: Path,
+        save_path: "Path",
         result: Any,
     ) -> str:
         raise NotImplementedError
