@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
