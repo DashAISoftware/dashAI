@@ -1,12 +1,16 @@
+from typing import TYPE_CHECKING
+
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.basic_preprocessing import (
     BasicPreprocessingConverter,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Text
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ColumnRemoverSchema(BaseSchema):
@@ -36,7 +40,7 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
         super().__init__()
         self.columns = []
 
-    def fit(self, x: DashAIDataset, y: DashAIDataset = None) -> "ColumnRemover":
+    def fit(self, x: "DashAIDataset", y: "DashAIDataset" = None) -> "ColumnRemover":
         """
         Fit the column remover.
 
@@ -46,7 +50,9 @@ class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
         self.columns = x.column_names
         return self
 
-    def transform(self, x: DashAIDataset, y: DashAIDataset = None) -> DashAIDataset:
+    def transform(
+        self, x: "DashAIDataset", y: "DashAIDataset" = None
+    ) -> "DashAIDataset":
         """
         Remove the columns that were selected via scope.
         """
