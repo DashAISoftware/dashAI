@@ -1,15 +1,14 @@
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class LabelEncoderSchema(BaseSchema):
@@ -60,7 +59,7 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         # Default placeholder if not fitted yet
         return Categorical(values=pa.array(["0", "1"]))
 
-    def fit(self, x: DashAIDataset, y: Union[DashAIDataset, None] = None):
+    def fit(self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None):
         """Fit label encoders to each column in the dataset."""
         from sklearn.preprocessing import LabelEncoder as LabelEncoderOperation
 
@@ -87,9 +86,11 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         return self
 
     def transform(
-        self, x: DashAIDataset, y: Union[DashAIDataset, None] = None
-    ) -> DashAIDataset:
+        self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
+    ) -> "DashAIDataset":
         """Transform columns preserving NaN values."""
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
         x_pandas = x.to_pandas().copy()
 
         for col in self.fitted_columns:
