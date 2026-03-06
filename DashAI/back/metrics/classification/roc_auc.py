@@ -1,10 +1,14 @@
 """DashAI RoC AUC classification metric implementation."""
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from typing import TYPE_CHECKING
+
 from DashAI.back.metrics.classification_metric import (
     ClassificationMetric,
     prepare_to_metric,
 )
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class ROCAUC(ClassificationMetric):
@@ -18,7 +22,9 @@ class ROCAUC(ClassificationMetric):
     )
 
     @staticmethod
-    def score(true_labels: DashAIDataset, probs_pred_labels, multiclass=None) -> float:
+    def score(
+        true_labels: "DashAIDataset", probs_pred_labels, multiclass=None
+    ) -> float:
         """Calculate RoC AUC score between true labels and predicted labels.
 
         Parameters

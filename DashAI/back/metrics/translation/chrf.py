@@ -1,7 +1,11 @@
 """DashAI CHRF metric implementation for translation tasks."""
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from typing import TYPE_CHECKING
+
 from DashAI.back.metrics.translation_metric import TranslationMetric, prepare_to_metric
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class Chrf(TranslationMetric):
@@ -27,7 +31,7 @@ class Chrf(TranslationMetric):
     )
 
     @staticmethod
-    def score(source_sentences: DashAIDataset, target_sentences):
+    def score(source_sentences: "DashAIDataset", target_sentences):
         """Calculate the CHRF score between source and target sentences.
 
         Parameters

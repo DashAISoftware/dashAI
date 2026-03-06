@@ -1,7 +1,11 @@
 """DashAI RMSE regression metric implementation."""
 
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from typing import TYPE_CHECKING
+
 from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RMSE(RegressionMetric):
@@ -13,7 +17,7 @@ class RMSE(RegressionMetric):
     )
 
     @staticmethod
-    def score(true_values: DashAIDataset, predicted_values) -> float:
+    def score(true_values: "DashAIDataset", predicted_values) -> float:
         """Calculate the RMSE between true values and predicted values.
 
         Parameters
