@@ -1,7 +1,3 @@
-import importlib
-
-from hyperopt import Trials, fmin, hp, rand, tpe  # noqa: F401
-
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -63,7 +59,7 @@ class HyperOptOptimizer(BaseOptimizer):
 
     def __init__(self, n_trials=None, sampler=None):
         self.n_trials = n_trials
-        self.sampler = importlib.import_module(f"hyperopt.{sampler}").suggest
+        self.sampler = sampler
 
     def search_space(self, hyperparams_data):
         """
@@ -77,6 +73,8 @@ class HyperOptOptimizer(BaseOptimizer):
         -------
             search_space: Dict with the information for the search space .
         """
+        from hyperopt import hp
+
         search_space = {}
 
         for _, hyperparameter, values, dtype in hyperparams_data:
@@ -107,11 +105,17 @@ class HyperOptOptimizer(BaseOptimizer):
         -------
             None
         """
+        import importlib
+
+        from hyperopt import Trials, fmin
+
         self.model = model
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
         self.metric = metric["class"]
+
+        sampler = importlib.import_module(f"hyperopt.{self.sampler}").suggest
 
         param_mapping = {key: (obj, key) for obj, key, _, _ in self.parameters}
 
@@ -143,7 +147,7 @@ class HyperOptOptimizer(BaseOptimizer):
         fmin(
             fn=objective,
             space=search_space,
-            algo=self.sampler,
+            algo=sampler,
             max_evals=self.n_trials,
             trials=trials,
         )
