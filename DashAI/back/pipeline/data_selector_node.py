@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict
 from DashAI.back.job.base_job import BaseJob, JobError
 
 if TYPE_CHECKING:
-
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 log = logging.getLogger(__name__)
