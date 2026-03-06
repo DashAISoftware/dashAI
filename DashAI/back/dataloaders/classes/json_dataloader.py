@@ -1,17 +1,16 @@
 """DashAI JSON Dataloader."""
 
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from beartype import beartype
 
 from DashAI.back.core.schema_fields import none_type, schema_field, string_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class JSONDataloaderSchema(BaseSchema):
@@ -104,7 +103,7 @@ class JSONDataLoader(BaseDataLoader):
         temp_path: str,
         params: Dict[str, Any],
         n_sample: int | None = None,
-    ) -> DashAIDataset:
+    ) -> "DashAIDataset":
         """Load the uploaded JSON dataset into a DatasetDict.
 
         Parameters
@@ -128,6 +127,8 @@ class JSONDataLoader(BaseDataLoader):
         import shutil
 
         from datasets import Dataset, IterableDatasetDict, load_dataset
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         self._check_params(params)
         field = params["data_key"]
