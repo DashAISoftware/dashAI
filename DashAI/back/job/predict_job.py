@@ -1,25 +1,20 @@
 import logging
-import uuid
-from pathlib import Path
-from typing import Any, List
+from typing import TYPE_CHECKING, Any, List
 
-import numpy as np
 from fastapi import status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    load_dataset,
-    save_dataset,
-    to_dashai_dataset,
-)
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks.base_task import BaseTask
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -30,7 +25,7 @@ class PredictJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         prediction_id = self.kwargs.get("prediction_id")
@@ -48,7 +43,7 @@ class PredictJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the prediction job as error."""
         prediction_id = self.kwargs.get("prediction_id")
@@ -88,6 +83,17 @@ class PredictJob(BaseJob):
     def run(
         self,
     ) -> List[Any]:
+        import uuid
+        from pathlib import Path
+
+        import numpy as np
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            save_dataset,
+            to_dashai_dataset,
+        )
+
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
@@ -177,7 +183,7 @@ class PredictJob(BaseJob):
             # Load Dataset and make Predictions
             try:
                 # Load training dataset for type info and label processing
-                train_dataset: DashAIDataset = load_dataset(
+                train_dataset: "DashAIDataset" = load_dataset(
                     str(Path(f"{dataset_trained.file_path}/dataset/"))
                 )
             except Exception as e:
@@ -190,7 +196,7 @@ class PredictJob(BaseJob):
             try:
                 # Load or create prediction dataset
                 if dataset_id:
-                    loaded_dataset: DashAIDataset = load_dataset(
+                    loaded_dataset: "DashAIDataset" = load_dataset(
                         str(Path(f"{dataset.file_path}/dataset/"))
                     )
                 else:
