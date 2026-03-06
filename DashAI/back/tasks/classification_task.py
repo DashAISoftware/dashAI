@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class ClassificationTask(BaseTask):
     """Base class for classification tasks."""
 
-    COMPATIBLE_COMPONENTS = ["Accuracy", "F1", "Precision", "Recall"]
+    COMPATIBLE_COMPONENTS = ["Accuracy"]
 
     metadata: dict = {
         "inputs_types": [DashAIValue],
