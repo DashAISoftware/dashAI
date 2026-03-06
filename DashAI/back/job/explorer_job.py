@@ -1,16 +1,16 @@
 import logging
-import os
-import pathlib
+from typing import TYPE_CHECKING
 
 from beartype.typing import Type
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class ExplorerJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the explorer as delivered."""
         explorer_id: int = self.kwargs["explorer_id"]
@@ -43,7 +43,7 @@ class ExplorerJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the explorer as error."""
         explorer_id: int = self.kwargs.get("explorer_id")
@@ -86,7 +86,12 @@ class ExplorerJob(BaseJob):
     def run(
         self,
     ) -> None:
+        import os
+        import pathlib
+
         from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
