@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Final, List, Tuple
-
-from datasets import DatasetDict
+from typing import TYPE_CHECKING, Final, List, Tuple
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.models.base_model import BaseModel
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
 
 
 class BaseLocalExplainer(ConfigObject, ABC):
@@ -16,11 +17,11 @@ class BaseLocalExplainer(ConfigObject, ABC):
         self.model = model
         self.explanation = None
 
-    def fit(self, dataset: Tuple[DatasetDict, DatasetDict], *args, **kwargs):
+    def fit(self, dataset: Tuple["DatasetDict", "DatasetDict"], *args, **kwargs):
         return self
 
     @abstractmethod
-    def explain_instance(self, instances: DatasetDict) -> dict:
+    def explain_instance(self, instances: "DatasetDict") -> dict:
         raise NotImplementedError
 
     @abstractmethod
