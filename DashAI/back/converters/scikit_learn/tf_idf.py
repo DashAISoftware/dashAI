@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -11,10 +13,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-    to_dashai_dataset,
-)
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class TFIDFConverterSchema(BaseSchema):
@@ -104,7 +105,7 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         )
         self.fitted = False
 
-    def fit(self, x: DashAIDataset, y=None) -> "TFIDFConverter":
+    def fit(self, x: "DashAIDataset", y=None) -> "TFIDFConverter":
         """Fit TfidfVectorizer to the input text."""
         X_df = x.to_pandas()
         texts = X_df.iloc[:, 0].astype(str)
@@ -112,9 +113,11 @@ class TFIDFConverter(AdvancedPreprocessingConverter, BaseConverter):
         self.fitted = True
         return self
 
-    def transform(self, x: DashAIDataset, y=None) -> DashAIDataset:
+    def transform(self, x: "DashAIDataset", y=None) -> "DashAIDataset":
         """Transform text into TF-IDF weighted columns."""
         import pandas as pd
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         if not self.fitted:
             raise RuntimeError("The converter must be fitted before calling transform.")
