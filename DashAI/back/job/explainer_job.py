@@ -1,20 +1,9 @@
-import json
 import logging
-import os
-import pickle
-from typing import Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Tuple
 
-from datasets import DatasetDict
 from kink import inject
 from sqlalchemy import exc
-from sqlalchemy.orm import sessionmaker
 
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    load_dataset,
-    prepare_for_model_session,
-    select_columns,
-    split_dataset,
-)
 from DashAI.back.dependencies.database.models import (
     Dataset,
     GlobalExplainer,
@@ -28,6 +17,10 @@ from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks.base_task import BaseTask
 
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+    from sqlalchemy.orm import sessionmaker
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
@@ -37,7 +30,7 @@ class ExplainerJob(BaseJob):
 
     @inject
     def set_status_as_delivered(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the job as delivered."""
         explainer_id: int = self.kwargs["explainer_id"]
@@ -66,7 +59,7 @@ class ExplainerJob(BaseJob):
 
     @inject
     def set_status_as_error(
-        self, session_factory: sessionmaker = lambda di: di["session_factory"]
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
     ) -> None:
         """Set the status of the explainer as error."""
         explainer_id: int = self.kwargs.get("explainer_id")
@@ -127,8 +120,11 @@ class ExplainerJob(BaseJob):
     def _generate_global_explanation(
         self,
         explainer: BaseGlobalExplainer,
-        dataset=Tuple[DatasetDict, DatasetDict],
+        dataset=Tuple["DatasetDict", "DatasetDict"],
     ) -> None:
+        import os
+        import pickle
+
         from kink import di
 
         explainer_id: int = self.kwargs["explainer_id"]
@@ -175,13 +171,25 @@ class ExplainerJob(BaseJob):
     def _generate_local_explanation(
         self,
         explainer: BaseLocalExplainer,
-        dataset: Tuple[DatasetDict, DatasetDict],
+        dataset: Tuple["DatasetDict", "DatasetDict"],
         splits: Dict[str, Any],
         task: BaseTask,
         same_dataset: bool,
         trained_model: BaseModel,
     ) -> None:
+        import json
+        import os
+        import pickle
+
+        from datasets import DatasetDict
         from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            prepare_for_model_session,
+            select_columns,
+            split_dataset,
+        )
 
         explainer_id: int = self.kwargs["explainer_id"]
         session_factory = di["session_factory"]
@@ -301,7 +309,15 @@ class ExplainerJob(BaseJob):
     def run(
         self,
     ) -> None:
+        import json
+
         from kink import di
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            select_columns,
+            split_dataset,
+        )
 
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
@@ -378,7 +394,7 @@ class ExplainerJob(BaseJob):
                         f"Unable to instantiate {explainer_scope} explainer.",
                     ) from e
                 try:
-                    loaded_dataset: DatasetDict = load_dataset(
+                    loaded_dataset: "DatasetDict" = load_dataset(
                         f"{dataset.file_path}/dataset"
                     )
                 except Exception as e:
