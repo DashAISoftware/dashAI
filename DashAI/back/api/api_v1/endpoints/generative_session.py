@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
@@ -300,7 +300,7 @@ async def update_generative_session(
     session_id: int,
     name: Union[str, None] = None,
     description: Union[str, None] = None,
-    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the generative session associated with the provided ID.
 
