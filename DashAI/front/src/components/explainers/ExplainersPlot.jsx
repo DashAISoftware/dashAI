@@ -99,7 +99,7 @@ export default function ExplainersPlot({ explainer, scope }) {
             width: 700,
             height: 380,
           }}
-          config={{ responsive: false, displayModeBar: false }}
+          config={{ displayModeBar: false }}
         />
       ) : explainer.status === 4 ? (
         <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>

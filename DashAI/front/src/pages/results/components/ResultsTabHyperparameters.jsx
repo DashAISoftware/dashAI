@@ -108,6 +108,8 @@ function ResultsTabHyperparameters({ runData }) {
     <Box>{t("models:label.runFailedNoHyperparameterPlots")}</Box>
   ) : runData.status === 0 ? ( // Not Started
     <Box>{t("models:label.runNotStartedNoHyperparameterPlots")}</Box>
+  ) : !historicalPlot ? (
+    <Box>{t("models:label.noHyperparameterPlotsAvailable")}</Box>
   ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">
