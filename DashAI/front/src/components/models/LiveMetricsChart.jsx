@@ -72,9 +72,21 @@ export function LiveMetricsChart({ run }) {
       socketRef.current.close();
     }
 
-    const apiUrl = process.env.REACT_APP_API_URL || "";
-    const wsBase = apiUrl.replace(/^http/, "ws");
-    const ws = new WebSocket(`${wsBase}/v1/metrics/ws/${run.id}`);
+    const apiUrl =
+      process.env.REACT_APP_API_URL || `${window.location.origin}/api`;
+    let wsUrl;
+    try {
+      wsUrl = new URL(`/v1/metrics/ws/${run.id}`, apiUrl);
+    } catch (e) {
+      console.error("Invalid WebSocket base URL:", apiUrl, e);
+      return;
+    }
+    if (wsUrl.protocol === "http:") {
+      wsUrl.protocol = "ws:";
+    } else if (wsUrl.protocol === "https:") {
+      wsUrl.protocol = "wss:";
+    }
+    const ws = new WebSocket(wsUrl.toString());
 
     ws.onmessage = (event) => {
       const incoming = JSON.parse(event.data);
@@ -168,10 +180,10 @@ export function LiveMetricsChart({ run }) {
   }, [run.model_session_id]);
 
   const filteredMetrics = useMemo(() => {
-    const m = data[split]?.[level] ?? {};
-    const a = availableMetrics[split] ?? [];
+    const metrics = data[split]?.[level] ?? {};
+    const allowedMetrics = availableMetrics[split] ?? [];
     return Object.fromEntries(
-      Object.entries(m).filter(([name]) => a.includes(name)),
+      Object.entries(metrics).filter(([name]) => allowedMetrics.includes(name)),
     );
   }, [data, split, level, availableMetrics]);
 
