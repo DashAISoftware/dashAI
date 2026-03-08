@@ -20,9 +20,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 
 export function LiveMetricsChart({ run }) {
+  const { t } = useTranslation("models");
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");
   const [data, setData] = useState({});
@@ -224,6 +226,11 @@ export function LiveMetricsChart({ run }) {
   const hasEpochData =
     data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
 
+  const levelLabel = useMemo(() => {
+    if (!level) return "";
+    return t(`models:label.${level.toLowerCase()}`);
+  }, [level, t]);
+
   useEffect(() => {
     const currentLevelHasData =
       (level === "TRIAL" && hasTrialData) ||
@@ -278,7 +285,7 @@ export function LiveMetricsChart({ run }) {
           sx={{ minWidth: 250 }}
           disabled={Object.keys(filteredMetrics).length === 0}
         >
-          <InputLabel>Metrics</InputLabel>
+          <InputLabel>{t("models:label.metrics")}</InputLabel>
           <Select
             multiple
             value={selectedMetrics}
@@ -296,9 +303,9 @@ export function LiveMetricsChart({ run }) {
       </Box>
 
       <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 2 }}>
-        <Tab label="Train" value="TRAIN" />
-        <Tab label="Validation" value="VALIDATION" />
-        <Tab label="Test" value="TEST" />
+        <Tab label={t("models:label.train")} value="TRAIN" />
+        <Tab label={t("models:label.validation")} value="VALIDATION" />
+        <Tab label={t("models:label.test")} value="TEST" />
       </Tabs>
 
       {chartData.length === 0 || selectedMetrics.length === 0 ? (
@@ -310,7 +317,7 @@ export function LiveMetricsChart({ run }) {
           border="1px dashed grey"
         >
           <Typography color="textSecondary">
-            No metrics available for this view
+            {t("models:label.noMetricsAvailableForThisView")}
           </Typography>
         </Box>
       ) : (
@@ -318,7 +325,11 @@ export function LiveMetricsChart({ run }) {
           <LineChart data={chartData}>
             <XAxis
               dataKey="x"
-              label={{ value: level, position: "insideBottom", offset: -5 }}
+              label={{
+                value: levelLabel,
+                position: "insideBottom",
+                offset: -5,
+              }}
             />
             <YAxis />
             <Tooltip />
@@ -346,21 +357,21 @@ export function LiveMetricsChart({ run }) {
             onClick={() => handleLevelChange("TRIAL")}
             disabled={!hasTrialData}
           >
-            Trial
+            {t("models:label.trial")}
           </Button>
           <Button
             variant={level === "STEP" ? "contained" : "outlined"}
             onClick={() => handleLevelChange("STEP")}
             disabled={!hasStepData}
           >
-            Step
+            {t("models:label.step")}
           </Button>
           <Button
             variant={level === "EPOCH" ? "contained" : "outlined"}
             onClick={() => handleLevelChange("EPOCH")}
             disabled={!hasEpochData}
           >
-            Epoch
+            {t("models:label.epoch")}
           </Button>
         </ButtonGroup>
       </Box>
