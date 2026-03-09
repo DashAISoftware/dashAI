@@ -123,6 +123,7 @@
     "runFailedNoHyperparameterPlots": "Run Failed. No hyperparameter plots available.",
     "runInProgressCannotEdit": "Run is currently in progress and cannot be edited.",
     "runNotStartedNoHyperparameterPlots": "Run Not Started. No hyperparameter plots available.",
+    "noHyperparameterPlotsAvailable": "No hyperparameter plots available. Only runs with at least one optimizable parameter generate plots.",
     "searchDatasetsSessions": "Search Datasets and Sessions",
     "searchModels": "Search Models...",
     "selectDataset": "Select Dataset",
