@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Collapse } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
@@ -22,6 +22,27 @@ export default function CollapsibleList({
   const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
   const count = items?.length ?? 0;
+  const prevCountRef = useRef(count);
+  const lastItemRef = useRef(null);
+
+  useEffect(() => {
+    const prevCount = prevCountRef.current;
+
+    if (count > prevCount) {
+      setOpen(true);
+
+      setTimeout(() => {
+        if (lastItemRef.current) {
+          lastItemRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+          });
+        }
+      }, 300);
+    }
+
+    prevCountRef.current = count;
+  }, [count]);
 
   const defaultGetDescription = (item) => item.description || "";
 
@@ -116,9 +137,10 @@ export default function CollapsibleList({
       >
         <Box pl={2}>
           {items?.length ? (
-            items.map((ds) => (
+            items.map((ds, index) => (
               <ItemBox
                 key={ds.id ?? ds.name}
+                ref={index === items.length - 1 ? lastItemRef : null}
                 isSelected={ds.id === selectedItemId}
                 name={ds.name}
                 description={
