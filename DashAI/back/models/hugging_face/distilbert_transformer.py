@@ -1,5 +1,6 @@
 """DashAI implementation of DistilBERT model for english classification."""
 
+import shutil
 from pathlib import Path
 from typing import Any, Union
 
@@ -288,7 +289,7 @@ class DistilBertTransformer(TextClassificationModel):
 
         can_use_fp16 = torch.cuda.is_available() and self.device == "gpu"
         training_args_obj = TrainingArguments(
-            output_dir=None,
+            output_dir="DashAI/back/user_models/temp_checkpoints_distilbert",
             save_strategy="epoch",
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
@@ -325,6 +326,10 @@ class DistilBertTransformer(TextClassificationModel):
 
         self.fitted = True
         trainer.train()
+
+        shutil.rmtree(
+            "DashAI/back/user_models/temp_checkpoints_distilbert", ignore_errors=True
+        )
         return self
 
     def predict(self, x_pred: DashAIDataset):
