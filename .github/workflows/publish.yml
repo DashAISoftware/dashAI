@@ -112,7 +112,7 @@ jobs:
           if not exist "DashAI\back\user_models\temp_checkpoints" (
               mkdir "DashAI\back\user_models\temp_checkpoints"
           )
-              
+
           if exist "%SITEPKG%\llama_cpp\lib" (
               echo Found llama_cpp/lib — adding binaries
               pyinstaller -D -n DashAI-launcher-cpu --clean --noconfirm ^
