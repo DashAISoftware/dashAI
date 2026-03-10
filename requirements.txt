@@ -44,3 +44,4 @@ greenery==3.2
 xlrd
 filetype
 torchmetrics
+pywebview

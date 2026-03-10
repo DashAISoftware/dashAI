@@ -133,7 +133,7 @@ export default function ExplainersCard({
             </Grid>
 
             {/* Expandable plot section */}
-            <Grid item>
+            <Grid item sx={{ width: "100%" }}>
               <Button
                 size="small"
                 onClick={() => setExpanded(!expanded)}
@@ -181,8 +181,8 @@ export default function ExplainersCard({
 
   // Full mode for standalone page
   return (
-    <Paper elevation={3}>
-      <Grid container item sx={{ width: 800 }} p={4} gap={2}>
+    <Paper elevation={3} sx={{ width: "100%" }}>
+      <Grid container item p={4} gap={2}>
         <Grid
           item
           container
