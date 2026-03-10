@@ -52,7 +52,7 @@ export default function ConfigureToolModal({
     const offsetY = e.clientY - rect.top;
 
     // Limit min/max
-    const minHeight = 100;
+    const minHeight = 0;
     const maxHeight = rect.height - 150;
     const newHeight = Math.max(minHeight, Math.min(maxHeight, offsetY));
 
@@ -253,7 +253,7 @@ export default function ConfigureToolModal({
           <Box
             onMouseDown={handleMouseDown}
             sx={{
-              height: "16px",
+              height: "24px",
               cursor: "row-resize",
               backgroundColor: "divider",
               display: "flex",
