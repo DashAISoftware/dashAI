@@ -288,7 +288,9 @@
     "valueType": "Value Type",
     "viewMode": "View mode",
     "xAxis": "X Axis",
-    "yAxis": "Y Axis"
+    "yAxis": "Y Axis",
+    "tourDisabledMessage": "Return to home to start the tour",
+    "tourDisabledMessageNotebook": "Return to dataset visualization to start the tour"
   },
   "message": {
     "columnTypesUpdated": "Column types updated successfully",

@@ -28,7 +28,7 @@ export default function CollapsibleList({
   useEffect(() => {
     const prevCount = prevCountRef.current;
 
-    if (count > prevCount) {
+    if (count > prevCount && prevCount > 0) {
       setOpen(true);
 
       setTimeout(() => {

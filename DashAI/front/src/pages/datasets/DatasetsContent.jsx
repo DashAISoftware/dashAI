@@ -12,12 +12,19 @@ import { ExplorersAndConvertersProvider } from "../../components/notebooks/conte
 import { useThreePanelLayout } from "../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
+import { useTranslation } from "react-i18next";
 
 export default function DatasetsContent() {
+  const { t } = useTranslation();
   const threePanelLayout = useThreePanelLayout();
 
-  const { notebooks, selectedNotebookId, selectedDatasetId, rightBarContent } =
-    useDatasetsAndNotebooks();
+  const {
+    notebooks,
+    selectedNotebookId,
+    selectedDatasetId,
+    rightBarContent,
+    step,
+  } = useDatasetsAndNotebooks();
 
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
 
@@ -47,7 +54,11 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
+                <TourButton
+                  tourKey={TOUR_KEYS.NOTEBOOK}
+                  disabled={step !== 0}
+                  disabledMessage={t("datasets:label.tourDisabledMessage")}
+                />
               </>
             </TourProvider>
           ) : selectedDatasetId ? (
@@ -66,7 +77,13 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton tourKey={TOUR_KEYS.DATASET_VIEW} />
+                <TourButton
+                  tourKey={TOUR_KEYS.DATASET_VIEW}
+                  disabled={step !== 0}
+                  disabledMessage={t(
+                    "datasets:label.tourDisabledMessageNotebook",
+                  )}
+                />
               </>
             </TourProvider>
           ) : (
@@ -85,7 +102,11 @@ export default function DatasetsContent() {
                     />
                   )}
                 </RightPanel>
-                <TourButton tourKey={TOUR_KEYS.DATASETS} />
+                <TourButton
+                  tourKey={TOUR_KEYS.DATASETS}
+                  disabled={step !== 0}
+                  disabledMessage={t("datasets:label.tourDisabledMessage")}
+                />
               </>
             </TourProvider>
           )}

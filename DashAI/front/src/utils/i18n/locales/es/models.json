@@ -137,6 +137,7 @@
     "thereAreNoMetricsForThisRun": "no hay métricas asociadas con el {{set}} en esta ejecución",
     "trainingMetrics": "Métricas de Entrenamiento",
     "trainSet": "conjunto de entrenamiento",
+    "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
     "trial": "Ensayo",
     "validationMetrics": "Métricas de Validación",
     "validationSet": "conjunto de validación",
