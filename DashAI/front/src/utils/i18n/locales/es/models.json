@@ -124,6 +124,7 @@
     "runFailedNoHyperparameterPlots": "Ejecución Fallida. No hay gráficos de hiperparámetros disponibles.",
     "runInProgressCannotEdit": "La ejecución está actualmente en progreso y no puede ser editada.",
     "runNotStartedNoHyperparameterPlots": "Ejecución No Iniciada. No hay gráficos de hiperparámetros disponibles.",
+    "noHyperparameterPlotsAvailable": "No hay gráficos de hiperparámetros disponibles. Solo las ejecuciones con al menos un parámetro optimizable generan gráficos.",
     "searchDatasetsSessions": "Buscar Datasets y Sesiones",
     "searchModels": "Buscar Modelos...",
     "selectDataset": "Seleccionar Dataset",

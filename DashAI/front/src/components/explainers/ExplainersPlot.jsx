@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useMemo, useState } from "react";
 import {
   FormControl,
   InputLabel,
@@ -7,20 +7,28 @@ import {
   CircularProgress,
   Box,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
+import { applyThemeToLayout } from "../../utils/plotlyTheme";
 
 export default function ExplainersPlot({ explainer, scope }) {
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
   const [explainersPlots, setExplainersPlots] = useState([]);
   const [currentPlot, setCurrentPlot] = useState(0);
   const [loading, setLoading] = useState(true);
   const isLocal = scope === "local";
   const { t } = useTranslation(["explainers"]);
+
+  const themedLayout = useMemo(() => {
+    if (!explainersPlots[currentPlot]) return {};
+    return applyThemeToLayout(explainersPlots[currentPlot].layout, theme);
+  }, [explainersPlots, currentPlot, theme]);
   function parseExplanationPlot(explanation) {
     const formattedPlot = JSON.parse(JSON.stringify(explanation));
     return formattedPlot.map(JSON.parse);
@@ -62,7 +70,7 @@ export default function ExplainersPlot({ explainer, scope }) {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        width: "100%",
       }}
     >
       {!loading && isLocal && (
@@ -87,11 +95,11 @@ export default function ExplainersPlot({ explainer, scope }) {
         <Plot
           data={explainersPlots[currentPlot].data}
           layout={{
-            ...explainersPlots[currentPlot].layout,
-            width: 730,
+            ...themedLayout,
+            width: 700,
             height: 380,
           }}
-          config={{ staticPlot: false }}
+          config={{ displayModeBar: false }}
         />
       ) : explainer.status === 4 ? (
         <Box sx={{ p: 2 }}>{t("explainers:error.explainerFailed")}</Box>

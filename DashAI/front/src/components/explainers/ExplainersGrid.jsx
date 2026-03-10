@@ -63,7 +63,7 @@ export default function ExplainersGrid(explainerConfig) {
       overflow={"auto"}
       rowGap={5}
       justifyContent="center"
-      alignItems="center"
+      alignItems="stretch"
     >
       {getFilteredExplainers(explainers).map((explainer, i) => (
         <ExplainersCard explainer={explainer} key={i} scope={scope} />
