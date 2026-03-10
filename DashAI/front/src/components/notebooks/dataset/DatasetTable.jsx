@@ -7,7 +7,7 @@ import {
   GridToolbarDensitySelector,
   useGridApiContext,
 } from "@mui/x-data-grid";
-import { Button, Menu, MenuItem, Typography } from "@mui/material";
+import { Box, Button, Menu, MenuItem, Typography } from "@mui/material";
 import { Download } from "@mui/icons-material";
 import { LinearProgress } from "@mui/material";
 import {
@@ -323,32 +323,34 @@ export default function DatasetTable({
   }, [filterModel]);
 
   return (
-    <DataGrid
-      ref={gridRef}
-      rows={rows}
-      columns={columns}
-      rowCount={rowCount}
-      loading={loading}
-      autoHeight={autoHeight}
-      disableRowSelectionOnClick
-      paginationMode="server"
-      filterMode="server"
-      paginationModel={paginationModel}
-      onPaginationModelChange={setPaginationModel}
-      pageSizeOptions={pageSizeOptions}
-      density={density}
-      filterModel={filterModel}
-      onFilterModelChange={handleFilterModelChange}
-      initialState={{
-        density: "compact",
-        pagination: { paginationModel: { pageSize: initialPageSize } },
-      }}
-      slots={{
-        toolbar: CustomToolbar,
-        loadingOverlay: LinearProgress,
-      }}
-      columnHeaderHeight={editableColumns ? 95 : 85}
-      {...props}
-    />
+    <Box>
+      <DataGrid
+        ref={gridRef}
+        rows={rows}
+        columns={columns}
+        rowCount={rowCount}
+        loading={loading}
+        autoHeight={autoHeight}
+        disableRowSelectionOnClick
+        paginationMode="server"
+        filterMode="server"
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        pageSizeOptions={pageSizeOptions}
+        density={density}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterModelChange}
+        initialState={{
+          density: "compact",
+          pagination: { paginationModel: { pageSize: initialPageSize } },
+        }}
+        slots={{
+          toolbar: CustomToolbar,
+          loadingOverlay: LinearProgress,
+        }}
+        columnHeaderHeight={editableColumns ? 95 : 85}
+        {...props}
+      />
+    </Box>
   );
 }
