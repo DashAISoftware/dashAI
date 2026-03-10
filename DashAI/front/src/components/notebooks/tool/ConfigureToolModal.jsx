@@ -35,7 +35,7 @@ export default function ConfigureToolModal({
   const [activeTab, setActiveTab] = useState(0);
   const [step, setStep] = useState(0);
   const containerRef = useRef(null);
-  const [topHeight, setTopHeight] = useState(150);
+  const [topHeight, setTopHeight] = useState(100);
   const isResizingRef = useRef(false);
   const { t } = useTranslation(["datasets", "common"]);
 
