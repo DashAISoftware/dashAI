@@ -16,7 +16,7 @@ import { useDatasetsAndNotebooks } from "../../components/custom/contexts/Datase
 export default function DatasetsContent() {
   const threePanelLayout = useThreePanelLayout();
 
-  const { notebooks, selectedNotebookId, rightBarContent } =
+  const { notebooks, selectedNotebookId, selectedDatasetId, rightBarContent } =
     useDatasetsAndNotebooks();
 
   const selectedNotebook = notebooks.find((n) => n.id === selectedNotebookId);
@@ -50,26 +50,47 @@ export default function DatasetsContent() {
                 <TourButton tourKey={TOUR_KEYS.NOTEBOOK} />
               </>
             </TourProvider>
+          ) : selectedDatasetId ? (
+            <TourProvider tourKey={TOUR_KEYS.DATASET_VIEW}>
+              <>
+                <CenterPanel>
+                  <DatasetsCenterContent />
+                </CenterPanel>
+                <RightPanel toggleButtonTop="50%">
+                  {rightBarContent ? (
+                    rightBarContent
+                  ) : (
+                    <RightBar
+                      notebook={null}
+                      onToggle={threePanelLayout.handleToggleRight}
+                    />
+                  )}
+                </RightPanel>
+                <TourButton tourKey={TOUR_KEYS.DATASET_VIEW} />
+              </>
+            </TourProvider>
           ) : (
-            <>
-              <CenterPanel>
-                <DatasetsCenterContent />
-              </CenterPanel>
-              <RightPanel toggleButtonTop="50%">
-                {rightBarContent ? (
-                  rightBarContent
-                ) : (
-                  <RightBar
-                    notebook={null}
-                    onToggle={threePanelLayout.handleToggleRight}
-                  />
-                )}
-              </RightPanel>
-            </>
+            <TourProvider tourKey={TOUR_KEYS.DATASETS}>
+              <>
+                <CenterPanel>
+                  <DatasetsCenterContent />
+                </CenterPanel>
+                <RightPanel toggleButtonTop="50%">
+                  {rightBarContent ? (
+                    rightBarContent
+                  ) : (
+                    <RightBar
+                      notebook={null}
+                      onToggle={threePanelLayout.handleToggleRight}
+                    />
+                  )}
+                </RightPanel>
+                <TourButton tourKey={TOUR_KEYS.DATASETS} />
+              </>
+            </TourProvider>
           )}
         </ExplorersAndConvertersProvider>
       </ModuleContainer>
-      {!selectedNotebookId && <TourButton tourKey={TOUR_KEYS.DATASETS} />}
     </ThreePanelLayoutContext.Provider>
   );
 }

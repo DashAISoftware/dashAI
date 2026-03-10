@@ -53,6 +53,18 @@ export default function DatasetVisualization({
   const tourContext = useTourContext();
 
   useEffect(() => {
+    if (sessionStorage.getItem("startDatasetViewTour") === "true") {
+      sessionStorage.removeItem("startDatasetViewTour");
+      // Esperar más tiempo para que termine todo el ajuste de scroll
+      setTimeout(() => {
+        if (tourContext && typeof tourContext.startTour === "function") {
+          tourContext.startTour();
+        }
+      }, 1500);
+    }
+  }, [tourContext]);
+
+  useEffect(() => {
     if (!dataset) return;
 
     setTab(0);
