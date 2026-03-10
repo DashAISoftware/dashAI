@@ -15,11 +15,13 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class ECDFNorm(enum.Enum):
@@ -32,42 +34,67 @@ class ECDFPlotSchema(BaseExplorerSchema):
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The column to use for coloring the ECDF plot."),
+        description=MultilingualString(
+            en=("Column used to color the ECDF plot."),
+            es=("Columna usada para colorear el gráfico ECDF."),
+        ),
+        alias=MultilingualString(en="Color column", es="Columna de color"),
     )  # type: ignore
     facet_col: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The column to use for faceting the ECDF plot in the column direction."),
+        description=MultilingualString(
+            en=("Column used to facet the ECDF plot by columns."),
+            es=("Columna usada para facetar el gráfico ECDF por columnas."),
+        ),
+        alias=MultilingualString(en="Facet column", es="Facetear por columnas"),
     )  # type: ignore
     facet_row: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The column to use for faceting the ECDF plot in the row direction."),
+        description=MultilingualString(
+            en=("Column used to facet the ECDF plot by rows."),
+            es=("Columna usada para facetar el gráfico ECDF por filas."),
+        ),
+        alias=MultilingualString(en="Facet row", es="Facetear por filas"),
     )  # type: ignore
     ecdf_norm: schema_field(
         enum_field([e.value for e in ECDFNorm]),
         ECDFNorm.PROBABILITY.value,
-        ("Specifies the type of normalization used for this ECDF plot."),
+        description=MultilingualString(
+            en=("Type of normalization used for the ECDF plot."),
+            es=("Tipo de normalización usada en el gráfico ECDF."),
+        ),
+        alias=MultilingualString(en="ECDF normalization", es="Normalización ECDF"),
     )  # type: ignore
 
 
-class ECDFPlotExplorer(BaseExplorer):
+class ECDFPlotExplorer(DistributionExplorer):
     """
     ECDFPlotExplorer is an explorer that creates an Empirical Cumulative
     Distribution Plot. It shows the proportion or count of observations
     falling below each unique value in the dataset.
     """
 
-    DISPLAY_NAME = "Empirical Cumulative Distribution Plot"
-    DESCRIPTION = (
-        "The ECDF plot is a non-parametric way to explore the distribution of a "
-        "variable. It shows the proportion or count of observations falling below "
-        "each unique value in the dataset."
+    DISPLAY_NAME = MultilingualString(
+        en="Empirical Cumulative Distribution Plot",
+        es="Gráfico ECDF (Distribución Acumulada Empírica)",
     )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Non-parametric plot showing the proportion or count of "
+            "observations below each unique value."
+        ),
+        es=(
+            "Gráfico no paramétrico que muestra la proporción o el conteo de "
+            "observaciones por debajo de cada valor único."
+        ),
+    )
+    IMAGE_PREVIEW = "ecdf_plot.png"
 
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["float64", "float32"],
+        "allowed_dtypes": ["float64", "float32", "int64"],
         "restricted_dtypes": [],
         "input_cardinality": {"min": 1},
     }

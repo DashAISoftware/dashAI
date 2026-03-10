@@ -1,6 +1,8 @@
+import pyarrow as pa
 from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type, parse_string_to_list
+from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -12,63 +14,86 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Integer
 
 
 class OneHotEncoderSchema(BaseSchema):
     categories: schema_field(
-        string_field(),  # ‘auto’ or a list of array-like
+        string_field(),
         "auto",
-        "The categories of each feature.",
+        description=MultilingualString(
+            en="The categories of each feature.",
+            es="Las categorías de cada característica.",
+        ),
     )  # type: ignore
     drop: schema_field(
-        none_type(
-            string_field()
-        ),  # {‘first’, ‘if_binary’} or an array-like of shape (n_features,)
+        none_type(string_field()),
         None,
-        "Specifies a methodology to use to drop one of the categories per feature.",
+        description=MultilingualString(
+            en=("Specifies a methodology to drop one of the categories per feature."),
+            es=(
+                "Especifica una metodología para eliminar una categoría por "
+                "característica."
+            ),
+        ),
     )  # type: ignore
-    # sparse_output: Sparse output is not supported in pandas
     dtype: schema_field(
-        enum_field(["int", "np.float32", "np.float64"]),  # number type
+        enum_field(["int", "np.float32", "np.float64"]),
         "np.float64",
-        "Desired dtype of output.",
+        description=MultilingualString(
+            en="Desired dtype of output.",
+            es="Tipo de dato de salida deseado.",
+        ),
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "ignore", "infrequent_if_exist"]),
         "error",
-        (
-            "Whether to raise an error or ignore if an unknown categorical feature "
-            "is present during transform."
+        description=MultilingualString(
+            en=("How to handle unknown categories during transform."),
+            es=("Cómo manejar categorías desconocidas durante la transformación."),
         ),
     )  # type: ignore
     min_frequency: schema_field(
         none_type(union_type(int_field(ge=0), float_field(ge=0.0, le=1.0))),
         None,
-        "Minimum frequency of a category to be considered as frequent.",
+        description=MultilingualString(
+            en="Minimum frequency of a category to be considered as frequent.",
+            es="Frecuencia mínima para considerar una categoría como frecuente.",
+        ),
     )  # type: ignore
     max_categories: schema_field(
         none_type(int_field(ge=1)),
         None,
-        "Maximum number of categories to encode.",
+        description=MultilingualString(
+            en="Maximum number of categories to encode.",
+            es="Número máximo de categorías a codificar.",
+        ),
     )  # type: ignore
-    # Added in version 1.3
     feature_name_combiner: schema_field(
-        enum_field(
-            [
-                "concat",
-            ]
-        ),  # “concat” or callable
+        enum_field(["concat"]),
         "concat",
-        "Method used to combine feature names.",
+        description=MultilingualString(
+            en="Method used to combine feature names.",
+            es="Método usado para combinar nombres de características.",
+        ),
     )  # type: ignore
 
 
-class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
+class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     """Scikit-learn's OneHotEncoder wrapper for DashAI."""
 
     SCHEMA = OneHotEncoderSchema
-    DESCRIPTION = "Encode categorical integer features as a one-hot numeric array."
-    DISPLAY_NAME = "One-Hot Encoder"
+    DESCRIPTION = MultilingualString(
+        en="Encode categorical integer features as a one-hot numeric array.",
+        es=(
+            "Codifica características categóricas enteras como un arreglo "
+            "numérico one-hot."
+        ),
+    )
+    DISPLAY_NAME = MultilingualString(en="One-Hot Encoder", es="Codificador One-Hot")
+    IMAGE_PREVIEW = "one_hot_encoder.png"
 
     def __init__(self, **kwargs):
         self.categories = kwargs.pop("categories", "auto")
@@ -90,3 +115,7 @@ class OneHotEncoder(SklearnWrapper, OneHotEncoderOperation):
         kwargs["sparse_output"] = self.sparse_output
 
         super().__init__(**kwargs)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Integer64 as the output type for one-hot encoded data."""
+        return Integer(arrow_type=pa.int64())

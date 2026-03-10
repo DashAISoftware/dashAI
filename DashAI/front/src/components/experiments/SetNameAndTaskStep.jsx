@@ -8,6 +8,9 @@ import { getComponents as getComponentsRequest } from "../../api/component";
 
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 
+import { useTourContext } from "../tour/TourProvider";
+import { useTranslation } from "react-i18next";
+
 function SetNameAndTaskStep({
   newExp,
   setNewExp,
@@ -21,14 +24,11 @@ function SetNameAndTaskStep({
   const [nModifications, setNModifications] = useState(0);
   const [expNameOk, setExpNameOk] = useState(true);
   const [expNameError, setExpNameError] = useState(false);
-
+  const tourContext = useTourContext();
+  const { t } = useTranslation(["experiments", "common"]);
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState({});
   const [taskNameOk, setTaskNameOk] = useState(false);
-
-  // useEffect(() => {
-  //   handleNameInputChange({ target: { value: defaultExperimentName } });
-  // }, [defaultExperimentName]);
 
   const getTasks = async () => {
     setLoading(true);
@@ -44,7 +44,9 @@ function SetNameAndTaskStep({
         setSelectedTask(previouslySelectedTask);
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the task list.");
+      enqueueSnackbar(t("experiments:error.errorFetchingTaskList"), {
+        variant: "error",
+      });
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -92,7 +94,7 @@ function SetNameAndTaskStep({
     }
 
     if (!currentName) {
-      return "Name is required";
+      return t("experiments:error.nameIsRequired");
     }
 
     const nameExists = existingExperiments.some(
@@ -101,11 +103,11 @@ function SetNameAndTaskStep({
         experiment.name.toLowerCase() === currentName.toLowerCase(),
     );
     if (nameExists) {
-      return "An experiment with this name already exists";
+      return t("experiments:error.nameAlreadyExists");
     }
 
     if (expNameError) {
-      return "The experiment name must have at least 4 alphanumeric characters.";
+      return t("experiments:error.nameTooShort");
     }
     return null;
   };
@@ -120,11 +122,25 @@ function SetNameAndTaskStep({
         runs: [],
       });
       setTaskNameOk(true);
+
+      if (tourContext && tourContext.run) {
+        if (selectedTask.name === "TabularClassificationTask") {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 300);
+        }
+      }
     }
   }, [selectedTask]);
 
   useEffect(() => {
-    if (defaultExperimentName && !newExp?.name) {
+    if (tourContext && tourContext.run) {
+      setNewExp((prev) => ({
+        ...prev,
+        name: "Exp actividad 2",
+      }));
+      setExpNameOk(true);
+    } else if (defaultExperimentName && !newExp?.name) {
       setNewExp((prev) => ({ ...prev, name: defaultExperimentName }));
       setExpNameOk(true);
     }
@@ -153,12 +169,13 @@ function SetNameAndTaskStep({
       {/* Set Name subcomponent */}
       <Grid size={{ xs: 12 }}>
         <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
-          Enter a name and select the task for the new experiment
+          {t("experiments:label.setNameAndTask")}
         </Typography>
 
         <TextField
           id="experiment-name-input"
-          label="Experiment name"
+          data-tour="experiment-name-input"
+          label={t("experiments:label.experimentName")}
           value={newExp.name}
           fullWidth
           onChange={handleNameInputChange}
@@ -171,7 +188,7 @@ function SetNameAndTaskStep({
         />
       </Grid>
       {/* Tasks Subcomponent */}
-      <Grid size={{ xs: 12 }}>
+      <Grid size={{ xs: 12 }} data-tour="exp-task-selector">
         <Grid>
           {/* Tasks list and description */}
           {!loading ? (
@@ -195,8 +212,8 @@ SetNameAndTaskStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

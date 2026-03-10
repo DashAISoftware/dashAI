@@ -5,8 +5,9 @@ from beartype.typing import Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, select_columns
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.dependencies.database.models import Explorer, Notebook
+from DashAI.back.static.icons import Icon
 
 
 class BaseExplorerSchema(BaseSchema):
@@ -28,7 +29,7 @@ class BaseExplorer(ConfigObject, ABC):
     - Create a new class that extends `BaseExplorer` and assign the
         previous schema to the `SCHEMA` attribute.
     - Implement the `launch_exploration` method.
-    - Implement the `save_notebook` method.
+    - Implement the `save_exploration` method.
     - Implement the `get_results` method.
 
     You can also optionally:
@@ -46,6 +47,10 @@ class BaseExplorer(ConfigObject, ABC):
     DISPLAY_NAME: Final[str] = ""
     DESCRIPTION: Final[str] = ""
     SHORT_DESCRIPTION: Final[str] = ""
+    IMAGE_PREVIEW: Final[str] = ""
+    CATEGORY: Final[str] = "Other"
+    ICON: Final[str] = Icon.Extension.value
+    COLOR: Final[str] = "rgb(255, 255, 255)"
     SCHEMA: BaseExplorerSchema
     metadata: Dict[str, Any] = {}
 
@@ -70,12 +75,12 @@ class BaseExplorer(ConfigObject, ABC):
         metadata["short_description"] = (
             cls.SHORT_DESCRIPTION if cls.SHORT_DESCRIPTION else ""
         )
+        metadata["image_preview"] = cls.IMAGE_PREVIEW if cls.IMAGE_PREVIEW else ""
+        metadata["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
+        metadata["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
+        metadata["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
         # Set default values if not present
         # TODO: Update the metadata when DashAI Types are implemented
-        if metadata.get("allowed_value_types", None) is None:
-            metadata["allowed_value_types"] = ["*"]
-        if metadata.get("restricted_value_types", None) is None:
-            metadata["restricted_value_types"] = []
         if metadata.get("allowed_dtypes", None) is None:
             metadata["allowed_dtypes"] = ["*"]
         if metadata.get("restricted_dtypes", None) is None:
@@ -146,17 +151,17 @@ class BaseExplorer(ConfigObject, ABC):
         # Check if the columns are of valid types
         for column in selected_columns:
             column_name = column["columnName"]
-            column_type = column_spec[column_name]["dtype"]
+            column_type = column_spec[column_name]["type"]
 
             # Check if the column's type is allowed
             if (
                 "*" not in metadata["allowed_dtypes"]
-                and column_type not in metadata["allowed_value_types"]
+                and column_type not in metadata["allowed_dtypes"]
             ):
                 return False
 
             # Check if the column's type is restricted
-            if column_type in metadata["restricted_value_types"]:
+            if column_type in metadata["restricted_dtypes"]:
                 return False
 
         return True
@@ -191,7 +196,7 @@ class BaseExplorer(ConfigObject, ABC):
         """
         # Select the columns
         columnNames = list({col["columnName"] for col in columns})
-        loaded_dataset = select_columns(loaded_dataset, columnNames, [])[0]
+        loaded_dataset = loaded_dataset.select_columns(columnNames)
         return loaded_dataset
 
     @abstractmethod

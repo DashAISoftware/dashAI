@@ -15,32 +15,60 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 
 
 class MultiColumnBoxPlotSchema(BaseExplorerSchema):
     horizontal: schema_field(
         bool_field(),
         False,
-        ("If True, the box plot will be horizontal, otherwise vertical."),
+        description=MultilingualString(
+            en=("If True, the box plot will be horizontal; otherwise vertical."),
+            es=(
+                "Si es True, el diagrama de caja será horizontal; en caso "
+                "contrario, vertical."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Horizontal plot",
+            es="Gráfico horizontal",
+        ),
     )  # type: ignore
     points: schema_field(
         enum_field(["all", "outliers", "False"]),
         "outliers",
-        ("One of 'all', 'outliers', or 'False'. Determines which points are shown."),
+        description=MultilingualString(
+            en=(
+                "One of 'all', 'outliers', or 'False'. Determines which points "
+                "are shown."
+            ),
+            es=(
+                "Una de 'all', 'outliers' o 'False'. Determina qué puntos se muestran."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Points shown",
+            es="Puntos mostrados",
+        ),
     )  # type: ignore
     opposite_axis: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for the opposite axis."),
+        description=MultilingualString(
+            en=("Column name or index to use for the opposite axis."),
+            es=("Nombre o índice de columna para el eje opuesto."),
+        ),
+        alias=MultilingualString(en="Opposite axis", es="Eje opuesto"),
     )  # type: ignore
 
 
-class MultiColumnBoxPlotExplorer(BaseExplorer):
+class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     """
     MultiColumnBoxPlotExplorer is an explorer that returns a figure with a box plot
     of multiple columns of a dataset in a single axis.
@@ -48,12 +76,21 @@ class MultiColumnBoxPlotExplorer(BaseExplorer):
     The other axis is selected through the opposite_axis parameter.
     """
 
-    DISPLAY_NAME = "Multiple Column Box Plot"
-    DESCRIPTION = (
-        "MultiColumnBoxPlotExplorer is an explorer that returns a figure with a box "
-        "plot of multiple columns of a dataset in a single axis. "
-        "The other axis is selected through the opposite_axis parameter."
+    DISPLAY_NAME = MultilingualString(
+        en="Multiple Column Box Plot",
+        es="Diagrama de Caja Multicolumna",
     )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Shows a box plot for multiple columns on one axis, using another "
+            "column as the opposite axis (if provided)."
+        ),
+        es=(
+            "Muestra un diagrama de caja para múltiples columnas en un eje, "
+            "usando otra columna como eje opuesto (si se proporciona)."
+        ),
+    )
+    IMAGE_PREVIEW = "multi_column_box_plot.png"
 
     SCHEMA = MultiColumnBoxPlotSchema
     metadata: Dict[str, Any] = {

@@ -1,15 +1,21 @@
+import pyarrow as pa
+
 from DashAI.back.converters.base_converter import BaseConverter
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
+from DashAI.back.converters.category.basic_preprocessing import (
+    BasicPreprocessingConverter,
 )
+from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Text
 
 
 class ColumnRemoverSchema(BaseSchema):
     pass
 
 
-class ColumnRemover(BaseConverter):
+class ColumnRemover(BasicPreprocessingConverter, BaseConverter):
     """
     Converter that removes specified columns from the dataset.
     This converter uses the scope columns defined in the converter job UI.
@@ -17,9 +23,16 @@ class ColumnRemover(BaseConverter):
     """
 
     SCHEMA = ColumnRemoverSchema
-    DESCRIPTION = "Removes the columns selected in scope from the dataset."
-    SHORT_DESCRIPTION = "Removes the columns selected in scope from the dataset."
-    DISPLAY_NAME = "Column Remover"
+    DESCRIPTION = MultilingualString(
+        en="Removes the columns selected in scope from the dataset.",
+        es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
+    )
+    SHORT_DESCRIPTION = MultilingualString(
+        en="Removes the columns selected in scope from the dataset.",
+        es="Elimina las columnas seleccionadas en el alcance del conjunto de datos.",
+    )
+    DISPLAY_NAME = MultilingualString(en="Column Remover", es="Removedor de Columnas")
+    IMAGE_PREVIEW = "column_remover.png"
 
     def __init__(self):
         super().__init__()
@@ -46,3 +59,10 @@ class ColumnRemover(BaseConverter):
             )
 
         return x.remove_columns(self.columns)
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        This converter removes columns, so it doesn't change types.
+        Return a placeholder type.
+        """
+        return Text(arrow_type=pa.string())

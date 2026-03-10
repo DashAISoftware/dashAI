@@ -9,12 +9,15 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { Button, Grid, Paper, Typography, LinearProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 
-import { deleteExperiment as deleteExperimentRequest } from "../../api/experiment";
+import { deleteModelSession as deleteModelSessionRequest } from "../../api/modelSession";
 import { formatDate } from "../../utils";
 import RunnerDialog from "./RunnerDialog";
 import Results from "../../pages/results/Results";
+import { useTourContext } from "../tour/TourProvider";
+import { getComponents } from "../../api/component";
 
 import DeleteItemModal from "../custom/DeleteItemModal";
+import { useTranslation } from "react-i18next";
 
 function ExperimentsTable({
   handleOpenNewExperimentModal,
@@ -25,6 +28,9 @@ function ExperimentsTable({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [expRunning, setExpRunning] = useState({});
+  const tourContext = useTourContext();
+  const [tasks, setTasks] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
 
   const datasetMap = React.useMemo(() => {
     return new Map(datasets.map((dataset) => [dataset.id, dataset.name]));
@@ -33,15 +39,29 @@ function ExperimentsTable({
   const deleteExperiment = async (id) => {
     try {
       await deleteExperimentRequest(id);
-      enqueueSnackbar("Experiment successfully deleted.", {
+      enqueueSnackbar(t("experiments:message.runDeletedSuccessfully"), {
         variant: "success",
       });
       onUpdateExperiments();
     } catch (error) {
       console.error(error);
-      enqueueSnackbar("Error when trying to delete the experiment.");
+      enqueueSnackbar(t("experiments:error.errorDeletingRun"), {
+        variant: "error",
+      });
     }
   };
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const components = await getComponents({ selectTypes: ["Task"] });
+        setTasks(components);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, []);
 
   // Initialize running state when experiments change
   useEffect(() => {
@@ -55,6 +75,15 @@ function ExperimentsTable({
     deleteExperiment(id);
   };
 
+  const handleNewExperiment = () => {
+    handleOpenNewExperimentModal();
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
+  };
+
   const columns = React.useMemo(
     () => [
       {
@@ -65,19 +94,23 @@ function ExperimentsTable({
       },
       {
         field: "name",
-        headerName: "Name",
+        headerName: t("common:name"),
         minWidth: 250,
         editable: false,
       },
       {
         field: "task_name",
-        headerName: "Task",
+        headerName: t("common:task"),
         minWidth: 200,
         editable: false,
+        valueGetter: (value) => {
+          const task = tasks.find((task) => task.name === value);
+          return task && task.display_name ? task.display_name : value;
+        },
       },
       {
         field: "dataset_id",
-        headerName: "Dataset",
+        headerName: t("common:dataset"),
         minWidth: 200,
         editable: false,
         valueGetter: (value) => {
@@ -87,30 +120,36 @@ function ExperimentsTable({
       },
       {
         field: "created",
-        headerName: "Created",
+        headerName: t("common:created"),
         minWidth: 140,
         editable: false,
         valueGetter: (value) => formatDate(value),
       },
       {
         field: "last_modified",
-        headerName: "Edited",
+        headerName: t("common:edited"),
         minWidth: 140,
         editable: false,
         valueGetter: (value) => formatDate(value),
       },
       {
         field: "actions",
+        headerName: t("common:actions"),
         type: "actions",
         minWidth: 180,
         getActions: (params) => [
-          <RunnerDialog
-            key="runner-dialog"
+          // <RunnerDialog
+          //   key="runner-dialog"
+          //   experiment={params.row}
+          //   expRunning={expRunning}
+          //   setExpRunning={setExpRunning}
+          //   deleteExperiment={() => handleDeleteExperiment(params.id)}
+          // />,
+          <Results
+            key="runs-dialog"
             experiment={params.row}
-            expRunning={expRunning}
-            setExpRunning={setExpRunning}
+            handleDeleteExperiment={handleDeleteExperiment}
           />,
-          <Results key="runs-dialog" experiment={params.row} />,
           <DeleteItemModal
             key="delete-button"
             deleteFromTable={() => handleDeleteExperiment(params.id)}
@@ -132,17 +171,18 @@ function ExperimentsTable({
         sx={{ mb: 4 }}
       >
         <Typography variant="h5" component="h2">
-          Current experiments
+          {t("experiments:label.currentExperiments")}
         </Typography>
         <Grid>
           <Grid container spacing={2}>
             <Grid>
               <Button
+                data-tour="new-experiment-button"
                 variant="contained"
-                onClick={handleOpenNewExperimentModal}
+                onClick={handleNewExperiment}
                 endIcon={<AddIcon />}
               >
-                New Experiment
+                {t("experiments:button.newExperiment")}
               </Button>
             </Grid>
             <Grid>
@@ -151,7 +191,7 @@ function ExperimentsTable({
                 onClick={onUpdateExperiments}
                 endIcon={<UpdateIcon />}
               >
-                Update
+                {t("common:update")}
               </Button>
             </Grid>
           </Grid>
@@ -160,6 +200,7 @@ function ExperimentsTable({
 
       {/* Experiments Table */}
       <DataGrid
+        data-tour="experiments-table"
         rows={experiments}
         columns={columns}
         initialState={{

@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSnackbar } from "notistack";
+import { startJobPolling } from "../../../utils/jobPoller";
+import { enqueueDatasetJob } from "../../../api/job";
 import {
   Box,
   Accordion,
@@ -7,7 +10,9 @@ import {
   Typography,
   Button,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Add } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
@@ -17,12 +22,33 @@ import { getDatasetFile } from "../../../api/datasets";
 import DatasetTable from "../dataset/DatasetTable";
 import { NotebookHistoryModal } from "./NotebookHistoryModal";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
+import { useTourContext } from "../../tour/TourProvider";
+import { useTranslation } from "react-i18next";
+import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
 export default function DatasetPreviewNotebook({
   notebook,
-  handleAddDatasetFromNotebook,
   existingDatasets = [],
+  onAccordionChange,
 }) {
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const {
+    datasets,
+    createDataset,
+    fetchDatasets,
+    selectDataset,
+    clearSelectedDataset,
+    deleteDataset,
+    enrichDatasetsWithInfo,
+    replaceDatasets,
+    setStep,
+    setSelectedOption,
+  } = useDatasetsAndNotebooks();
+
+  const theme = useTheme();
   if (!notebook) {
     return (
       <Box
@@ -33,16 +59,26 @@ export default function DatasetPreviewNotebook({
           height: "100vh",
         }}
       >
-        <CircularProgress sx={{ color: "#00BEBB" }} />
-        <Typography>Loading...</Typography>
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}...</Typography>
       </Box>
     );
   }
+
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
   const [converters, setConverters] = useState([]);
   const { explorersAndConverters } = useExplorersAndConverters();
+  const tourContext = useTourContext();
+
+  const getDatasetName = () => {
+    if (!notebook.dataset_id || !existingDatasets.length) {
+      return "Dataset";
+    }
+    const dataset = existingDatasets.find((d) => d.id === notebook.dataset_id);
+    return dataset ? dataset.name : "Dataset";
+  };
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
@@ -60,45 +96,143 @@ export default function DatasetPreviewNotebook({
         const response = await getConvertersByNotebookId(notebook.id);
         setConverters(response);
 
-        // Check if any converters are in a pending state (status < 3)
         const isPollingNeeded = response.some(
           (converter) => converter.status < 3,
         );
 
         if (isPollingNeeded) {
-          // If polling is needed, start the interval
           if (!intervalId) {
-            intervalId = setInterval(fetchConverters, 2000); // Poll every 2 seconds
+            intervalId = setInterval(fetchConverters, 2000);
           }
         } else {
-          // If all converters are in a final state, clear the interval
           clearInterval(intervalId);
         }
       } catch (error) {
         console.error("Error fetching converters:", error);
-        clearInterval(intervalId); // Clear interval on error
+        clearInterval(intervalId);
       }
     };
 
     fetchConverters();
 
-    // Cleanup function to clear the interval when the component unmounts
-    // or when the dependencies change
     return () => {
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
 
+  const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
+    if (!jobId) return;
+
+    startJobPolling(
+      jobId,
+
+      //Success
+      async () => {
+        enqueueSnackbar(
+          t("datasets:message.datasetCreationSuccess", { datasetName }),
+          { variant: "success" },
+        );
+
+        try {
+          const freshDatasets = await fetchDatasets(true);
+          const dataset = freshDatasets.find((d) => d.id === datasetId);
+
+          if (dataset) {
+            const enriched = await enrichDatasetsWithInfo(
+              freshDatasets,
+              datasets,
+            );
+            replaceDatasets(enriched);
+            selectDataset(datasetId);
+            setStep(0);
+            setSelectedOption("dataset");
+          } else {
+            await fetchDatasets();
+            selectDataset(datasetId);
+            setStep(0);
+            setSelectedOption("dataset");
+          }
+        } catch (error) {
+          console.error("Error after dataset job completion:", error);
+          await fetchDatasets();
+          selectDataset(datasetId);
+          setStep(0);
+          setSelectedOption("dataset");
+        }
+      },
+
+      //Failure
+      async (result) => {
+        console.error("Dataset job failed:", result);
+
+        enqueueSnackbar(
+          t("datasets:error.failedToCreateDataset", {
+            error: result?.error || t("common:unknownError"),
+          }),
+          { variant: "error" },
+        );
+
+        try {
+          await deleteDataset(datasetId);
+        } catch (e) {
+          console.error(e);
+        }
+        clearSelectedDataset();
+        setStep(0);
+        setSelectedOption(null);
+      },
+    );
+  };
+
+  const handleAddDatasetFromNotebook = async (name, notebookId) => {
+    try {
+      console.log(
+        "Creating dataset from notebook:",
+        notebookId,
+        "with name:",
+        name,
+      );
+      const dataset = await createDataset(name);
+
+      enqueueSnackbar(t("datasets:message.datasetCreationStarted"), {
+        variant: "success",
+      });
+
+      // optimistic
+      replaceDatasets((prev) => [...prev, dataset]);
+      selectDataset(dataset.id);
+      setStep(0);
+      setSelectedOption("dataset");
+
+      const job = await enqueueDatasetJob(dataset.id, null, "", {}, notebookId);
+
+      pollForDataset(
+        { datasetId: dataset.id, datasetName: name },
+        { jobId: job.id },
+      );
+    } catch (error) {
+      enqueueSnackbar(t("datasets:error.failedToCreateDatasetFromNotebook"), {
+        variant: "error",
+      });
+      console.error("Failed to create dataset from notebook:", error);
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        mb: 2,
-      }}
-    >
+    <Box>
       <Accordion
-        width="100%"
-        sx={{ bgcolor: "#212121", borderRadius: 2, boxShadow: "none" }}
+        data-tour="dataset-preview-section"
+        sx={{
+          bgcolor: theme.palette.ui.box,
+          borderRadius: 2,
+          boxShadow: "none",
+        }}
         defaultExpanded={true}
+        onChange={(event, expanded) => {
+          if (onAccordionChange) {
+            onAccordionChange(expanded);
+          }
+        }}
       >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
@@ -106,6 +240,10 @@ export default function DatasetPreviewNotebook({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            transition: "background-color 0.2s ease",
+            "&:hover": {
+              bgcolor: "rgba(255, 255, 255, 0.05)",
+            },
             "& .MuiAccordionSummary-content": {
               flexGrow: 1,
               display: "flex",
@@ -115,9 +253,10 @@ export default function DatasetPreviewNotebook({
             },
           }}
         >
-          <Typography variant="h6">Dataset Preview</Typography>
+          <Typography variant="h6">
+            {t("datasets:label.datasetPreviewFor", { name: getDatasetName() })}
+          </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* Save Dataset Button */}
             <Button
               variant="contained"
               size="small"
@@ -125,8 +264,12 @@ export default function DatasetPreviewNotebook({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSaveDatasetModal(true);
+                if (tourContext && tourContext.run) {
+                  setTimeout(() => {
+                    tourContext.nextStep();
+                  }, 500);
+                }
               }}
-              disabled={false}
               sx={{
                 fontSize: "0.7rem",
                 px: 1.5,
@@ -134,8 +277,9 @@ export default function DatasetPreviewNotebook({
                 textTransform: "uppercase",
                 minWidth: "auto",
               }}
+              className="save-dataset-button"
             >
-              Save as new Dataset
+              {t("datasets:button.saveAsNewDataset")}
             </Button>
             <IconButton
               size="small"
@@ -149,58 +293,49 @@ export default function DatasetPreviewNotebook({
             </IconButton>
           </Box>
         </AccordionSummary>
+
         <AccordionDetails>
-          <Box sx={{ height: 345, width: "100%" }}>
-            {" "}
-            {/* Table */}
+          <Box sx={{ width: "100%" }}>
             <DatasetTable
               fetchPage={fetchDatasetPage}
-              deps={[notebook.file_path]}
+              deps={[notebook.file_path, converters, explorersAndConverters]}
               initialPageSize={5}
               density="compact"
               datasetPath={notebook.file_path}
-              initialState={{
-                pagination: {
-                  paginationModel: {
-                    pageSize: 5,
-                  },
-                },
-              }}
-              pageSizeOptions={[5]}
-              autoHeight={false}
+              pageSizeOptions={[5, 10, 25]}
+              autoHeight={true}
+              disableColumnSelector
               disableDensitySelector
-              componentsProps={{
-                noRowsOverlay: {
-                  style: { height: "100%" },
-                },
-              }}
               sx={{
-                height: "100%",
-                "& .MuiDataGrid-virtualScroller": {
-                  "overflow-y": "hidden",
+                "& .MuiTablePagination-select": {
+                  display: "none",
                 },
-                "& .MuiDataGrid-overlay": {
-                  height: "100%",
+                "& .MuiTablePagination-selectLabel": {
+                  display: "none",
                 },
               }}
-            />{" "}
+            />
           </Box>
         </AccordionDetails>
       </Accordion>
+
       <SaveDatasetModal
         open={showSaveDatasetModal}
         onClose={() => setShowSaveDatasetModal(false)}
-        onSaveDataset={handleAddDatasetFromNotebook}
+        onSaveDataset={(name) =>
+          handleAddDatasetFromNotebook(name, notebook.id)
+        }
         appliedConverters={converters.filter(
           (converter) => converter.status === 3,
-        )} // Only show finished converters
+        )}
         existingDatasets={existingDatasets}
       />
+
       <NotebookHistoryModal
         open={showNotebookHistoryModal}
         onClose={() => setShowNotebookHistoryModal(false)}
         notebook={notebook}
-        converters={converters.filter((converter) => converter.status === 3)} // Only show finished converters
+        converters={converters.filter((converter) => converter.status === 3)}
       />
     </Box>
   );

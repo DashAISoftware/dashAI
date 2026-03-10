@@ -11,36 +11,54 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.preview_inspection_explorer import (
+    PreviewInspectionExplorer,
+)
 
 
 class DescribeExplorerSchema(BaseExplorerSchema):
     percentiles: schema_field(
         none_type(string_field()),
         "25, 50, 75",
-        (
-            "The percentiles to include in the exploration. "
-            "Must be a list of integers between 0 and 100.\n"
-            "Example: '25, 50, 75'"
+        description=MultilingualString(
+            en=(
+                "Percentiles to include in the exploration. Use integers between "
+                "0 and 100. Example: '25, 50, 75'"
+            ),
+            es=(
+                "Percentiles a incluir en la exploración. Use enteros entre 0 y "
+                "100. Ejemplo: '25, 50, 75'"
+            ),
         ),
+        alias=MultilingualString(en="Percentiles", es="Percentiles"),
     )  # type: ignore
     include: schema_field(
         none_type(enum_field(["all", "number", "object", "category", "datetime"])),
         "all",
-        ("The data types to include in the exploration.\n"),
+        description=MultilingualString(
+            en=("Data types to include in the exploration."),
+            es=("Tipos de datos a incluir en la exploración."),
+        ),
+        alias=MultilingualString(en="Include dtypes", es="Incluir tipos"),
     )  # type: ignore
     exclude: schema_field(
         none_type(enum_field(["object", "number", "category", "datetime"])),
         None,
-        ("The data types to exclude in the exploration."),
+        description=MultilingualString(
+            en=("Data types to exclude from the exploration."),
+            es=("Tipos de datos a excluir de la exploración."),
+        ),
+        alias=MultilingualString(en="Exclude dtypes", es="Excluir tipos"),
     )  # type: ignore
 
 
-class DescribeExplorer(BaseExplorer):
+class DescribeExplorer(PreviewInspectionExplorer):
     """
     DescribeExplorer is an explorer that uses the pandas describe method to
     describe the dataset. It returns a tabular representation of the dataset
@@ -51,18 +69,30 @@ class DescribeExplorer(BaseExplorer):
     data types to include or exclude.
     """
 
-    DISPLAY_NAME = "Describe Dataset"
-    DESCRIPTION = (
-        "DescribeExplorer is an explorer that describes the dataset. It returns"
-        " a tabular representation of the dataset with the count, mean, std, min,"
-        " 25%, 50%, 75%, and max values for numeric columns and count, unique,"
-        " top, and freq values for object columns."
-        "\n"
-        "The user can specify the percentiles to include in the exploration and"
-        " the data types to include or exclude."
+    DISPLAY_NAME = MultilingualString(
+        en="Describe Dataset",
+        es="Describir Dataset",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Generates a statistical summary of the dataset. For numeric "
+            "columns: count, mean, std, min, 25%, 50%, 75%, and max. For "
+            "object columns: count, unique, top, and freq. You can choose "
+            "percentiles and which dtypes to include or exclude."
+        ),
+        es=(
+            "Genera un resumen estadístico del dataset. Para columnas "
+            "numéricas: count, mean, std, min, 25%, 50%, 75% y max. Para "
+            "columnas de tipo objeto: count, unique, top y freq. Puede elegir "
+            "percentiles y qué tipos incluir o excluir."
+        ),
     )
 
-    SHORT_DESCRIPTION = "Generate a statistical summary of the dataset."
+    SHORT_DESCRIPTION = MultilingualString(
+        en="Generate a statistical summary of the dataset.",
+        es="Genera un resumen estadístico del dataset.",
+    )
+    IMAGE_PREVIEW = "describe_explorer.png"
 
     SCHEMA = DescribeExplorerSchema
     metadata: Dict[str, Any] = {

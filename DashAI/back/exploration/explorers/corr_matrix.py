@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
-import plotly.io as pio
 from beartype.typing import Any, Dict, Union
 
 from DashAI.back.core.schema_fields import (
@@ -15,11 +14,13 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 
 
 class Method(enum.Enum):
@@ -32,35 +33,58 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
     method: schema_field(
         enum_field([e.value for e in Method]),
         Method.pearson.value,
-        (
-            "The correlation method to use. "
-            "Must be one of 'pearson', 'kendall', or 'spearman'."
+        description=MultilingualString(
+            en=("Correlation method to use: 'pearson', 'kendall', or 'spearman'."),
+            es=("Método de correlación a usar: 'pearson', 'kendall' o 'spearman'."),
+        ),
+        alias=MultilingualString(
+            en="Correlation method",
+            es="Método de correlación",
         ),
     )  # type: ignore
     min_periods: schema_field(
         int_field(gt=0),
         1,
-        (
-            "The minimum number of observations required per pair of columns to"
-            " have a valid result. Only used if method is 'pearson' or 'spearman'."
+        description=MultilingualString(
+            en=(
+                "Minimum observations required per column pair to have a valid "
+                "result. Used only with 'pearson' or 'spearman'."
+            ),
+            es=(
+                "Número mínimo de observaciones requeridas por par de columnas "
+                "para obtener un resultado válido. Solo con 'pearson' o "
+                "'spearman'."
+            ),
         ),
+        alias=MultilingualString(en="Minimum periods", es="Períodos mínimos"),
     )  # type: ignore
     numeric_only: schema_field(
         bool_field(),
         True,
-        (
-            "If True, only include numeric columns when calculating correlation."
-            "If False, all columns are included."
+        description=MultilingualString(
+            en=(
+                "If True, include only numeric columns when calculating "
+                "correlation; otherwise include all columns."
+            ),
+            es=(
+                "Si es True, incluye solo columnas numéricas al calcular la "
+                "correlación; de lo contrario incluye todas."
+            ),
         ),
+        alias=MultilingualString(en="Numeric only", es="Solo numéricas"),
     )  # type: ignore
     plot: schema_field(
         bool_field(),
         True,
-        ("If True, the result will be plotted."),
+        description=MultilingualString(
+            en=("If True, the result will be plotted."),
+            es=("Si es True, el resultado será graficado."),
+        ),
+        alias=MultilingualString(en="Plot result", es="Graficar resultado"),
     )  # type: ignore
 
 
-class CorrelationMatrixExplorer(BaseExplorer):
+class CorrelationMatrixExplorer(StatisticalExplorer):
     """
     CorrelationMatrixExplorer is an explorer that returns a correlation matrix
     of a dataset.
@@ -68,14 +92,22 @@ class CorrelationMatrixExplorer(BaseExplorer):
     Its result is a heatmap by default, but can also be returned as a tabular result.
     """
 
-    DISPLAY_NAME = "Correlation Matrix"
-    DESCRIPTION = (
-        "CorrelationMatrixExplorer is an explorer that returns a correlation matrix"
-        " of a dataset."
-        "\n"
-        "Its result is a heatmap by default, "
-        "but can also be returned as a tabular result."
+    DISPLAY_NAME = MultilingualString(
+        en="Correlation Matrix",
+        es="Matriz de Correlación",
     )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Returns the correlation matrix of the dataset. The default output is "
+            "a heatmap, but a tabular result can also be returned."
+        ),
+        es=(
+            "Devuelve la matriz de correlación del dataset. Por defecto se "
+            "muestra como mapa de calor, pero también puede retornarse en "
+            "formato tabular."
+        ),
+    )
+    IMAGE_PREVIEW = "correlation_matrix.png"
 
     SCHEMA = CorrelationMatrixExplorerSchema
     metadata: Dict[str, Any] = {
@@ -139,16 +171,13 @@ class CorrelationMatrixExplorer(BaseExplorer):
     ) -> Dict[str, Any]:
         if self.plot:
             resultType = "plotly_json"
-            path = pathlib.Path(exploration_path)
-            result = pio.read_json(path).to_json()
+            with open(exploration_path, "r", encoding="utf-8") as f:
+                result = f.read()
             return {"type": resultType, "data": result, "config": {}}
 
         resultType = "tabular"
-        orientation = options.get("orientation", "dict")
-        config = {"orient": orientation}
+        config = {"orient": "dict"}
 
         path = pathlib.Path(exploration_path)
-        result = (
-            pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)
-        )
+        result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}

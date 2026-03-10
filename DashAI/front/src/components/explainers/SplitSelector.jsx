@@ -13,6 +13,7 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
+import { Trans, useTranslation } from "react-i18next";
 
 export function SplitSelector({
   totalRows,
@@ -23,6 +24,7 @@ export function SplitSelector({
 }) {
   const [selectedSplit, setSelectedSplit] = useState(initialSplit || "test");
   const [percentage, setPercentage] = useState(initialPercentage ?? 20);
+  const { t } = useTranslation(["explainers", "common"]);
 
   // Propagate changes
   useEffect(() => {
@@ -48,7 +50,9 @@ export function SplitSelector({
   return (
     <Box sx={{ p: 3 }}>
       <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
-        <FormLabel component="legend">Dataset Split</FormLabel>
+        <FormLabel component="legend">
+          {t("explainers:label.datasetSplit")}
+        </FormLabel>
 
         <Stack
           direction="row"
@@ -61,24 +65,38 @@ export function SplitSelector({
             value={selectedSplit}
             onChange={(e) => setSelectedSplit(e.target.value)}
           >
-            <FormControlLabel value="train" control={<Radio />} label="Train" />
-            <FormControlLabel value="test" control={<Radio />} label="Test" />
+            <FormControlLabel
+              value="train"
+              control={<Radio />}
+              label={t("common:train")}
+            />
+            <FormControlLabel
+              value="test"
+              control={<Radio />}
+              label={t("common:test")}
+            />
             <FormControlLabel
               value="validation"
               control={<Radio />}
-              label="Validation"
+              label={t("common:validation")}
             />
-            <FormControlLabel value="all" control={<Radio />} label="All" />
+            <FormControlLabel
+              value="all"
+              control={<Radio />}
+              label={t("common:all")}
+            />
           </RadioGroup>
 
           <Button variant="outlined" size="small" onClick={handleSelectAll}>
-            Select All
+            {t("common:selectAll")}
           </Button>
         </Stack>
       </FormControl>
 
       <Stack spacing={2} mb={2}>
-        <Typography gutterBottom>Percentage of Split to Use</Typography>
+        <Typography gutterBottom>
+          {t("explainers:label.percentageOfSplitToUse")}
+        </Typography>
 
         <Stack direction="row" spacing={2} alignItems="center">
           <Slider
@@ -115,14 +133,18 @@ export function SplitSelector({
 
       <Box mt={1}>
         <Typography variant="caption" color="text.secondary">
-          Selected split: <strong>{selectedSplit}</strong> | Percentage:{" "}
-          {percentage}% | Rows selected:{" "}
-          {percentage != 0
-            ? Math.round(
-                (percentage / 100) * (totalRows * splits[selectedSplit]),
-              )
-            : 1}{" "}
-          / {Math.round(totalRows * splits[selectedSplit])}
+          <Trans i18nKey="explainers:label.splitSelectionSummary">
+            Percentage: {{ percentage }}% | Rows selected:
+            {{
+              rowsSelected:
+                percentage != 0
+                  ? Math.round(
+                      (percentage / 100) * (totalRows * splits[selectedSplit]),
+                    )
+                  : 1,
+            }}
+            / {{ totalRows: Math.round(totalRows * splits[selectedSplit]) }}
+          </Trans>
         </Typography>
       </Box>
     </Box>

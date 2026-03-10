@@ -36,17 +36,14 @@ jobs:
             docs/requirements.txt
 
       - name: Install system build tools (gcc, g++, cmake, ninja)
-      # Compilará llama-cpp-python sin dramas
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build
 
       - name: Build docs
         env:
-          # Asegura que scikit-build encuentre el compilador
           CC: gcc
           CXX: g++
-          # Evita ruidos de pip
           PIP_DISABLE_PIP_VERSION_CHECK: "1"
         run: |
           python -m pip install -U pip setuptools wheel scikit-build-core

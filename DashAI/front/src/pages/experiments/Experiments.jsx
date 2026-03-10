@@ -5,8 +5,12 @@ import NewExperimentModal from "../../components/experiments/NewExperimentModal"
 import ExperimentsTable from "../../components/experiments/ExperimentsTable";
 import CustomLayout from "../../components/custom/CustomLayout";
 import { useLocation } from "react-router-dom";
-import { getExperiments as getExperimentsRequest } from "../../api/experiment";
+import { getModelSessions as getModelSessionsRequest } from "../../api/modelSession";
 import { getDatasets } from "../../api/datasets";
+import { TourProvider } from "../../components/tour/TourProvider";
+import { TourButton } from "../../components/tour/TourButton";
+import { TOUR_KEYS } from "../../constants/tours";
+import { useTranslation } from "react-i18next";
 
 function ExperimentsPage() {
   const location = useLocation();
@@ -18,14 +22,17 @@ function ExperimentsPage() {
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["experiments", "common"]);
 
   const getExperiments = async () => {
     setLoading(true);
     try {
-      const experimentsData = await getExperimentsRequest();
+      const experimentsData = await getModelSessionsRequest();
       setExperiments(experimentsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to get experiments.");
+      enqueueSnackbar(t("experiments:error.errorFetchingExperiments"), {
+        variant: "error",
+      });
       console.error(error);
     } finally {
       setLoading(false);
@@ -37,7 +44,9 @@ function ExperimentsPage() {
       const datasetsData = await getDatasets();
       setDatasets(datasetsData);
     } catch (error) {
-      enqueueSnackbar("Error while trying to get datasets.");
+      enqueueSnackbar(t("experiments:error.errorFetchingDatasets"), {
+        variant: "error",
+      });
       console.error(error);
     }
   };
@@ -56,32 +65,36 @@ function ExperimentsPage() {
   }, [updateTableFlag]);
 
   return (
-    <CustomLayout
-      title="Experiments Module"
-      subtitle="Configure experiments to train models"
-    >
-      {/* New experiment Modal */}
-      {!loading && (
-        <NewExperimentModal
-          open={showNewExperimentModal}
-          setOpen={setShowNewExperimentModal}
-          updateExperiments={() => setUpdateTableFlag(true)}
-          preselectedDataset={dataset}
-          setPreselectedDataset={setDataset}
-          existingExperiments={experiments}
-        />
-      )}
+    <TourProvider tourKey={TOUR_KEYS.EXPERIMENTS}>
+      <CustomLayout
+        title={t("experiments:label.experimentsModuleTitle")}
+        subtitle={t("experiments:label.configureExperimentsSubtitle")}
+      >
+        {/* New experiment Modal */}
+        {!loading && (
+          <NewExperimentModal
+            open={showNewExperimentModal}
+            setOpen={setShowNewExperimentModal}
+            updateExperiments={() => setUpdateTableFlag(true)}
+            preselectedDataset={dataset}
+            setPreselectedDataset={setDataset}
+            existingExperiments={experiments}
+          />
+        )}
 
-      <ExperimentsTable
-        handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
-        updateTableFlag={updateTableFlag}
-        setUpdateTableFlag={setUpdateTableFlag}
-        experiments={experiments}
-        datasets={datasets}
-        loading={loading}
-        onUpdateExperiments={getExperiments}
-      />
-    </CustomLayout>
+        <ExperimentsTable
+          handleOpenNewExperimentModal={() => setShowNewExperimentModal(true)}
+          updateTableFlag={updateTableFlag}
+          setUpdateTableFlag={setUpdateTableFlag}
+          experiments={experiments}
+          datasets={datasets}
+          loading={loading}
+          onUpdateExperiments={getExperiments}
+        />
+      </CustomLayout>
+
+      <TourButton tourKey={TOUR_KEYS.EXPERIMENTS} />
+    </TourProvider>
   );
 }
 

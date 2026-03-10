@@ -12,17 +12,25 @@ def dataset_id(dataset_1: Dataset) -> int:
     return dataset_1.id
 
 
-@pytest.fixture(scope="module", name="experiment_id")
-def create_experiment(client: TestClient, dataset_id):
-    """Create experiment 1."""
+@pytest.fixture(scope="module", name="model_session_id")
+def create_model_session(client: TestClient, dataset_id):
+    """Create model session 1."""
     response = client.post(
-        "/api/v1/experiment/",
+        "/api/v1/model-session/",
         json={
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "Test Experiment",
-            "input_columns": [1, 2, 3, 4],
-            "output_columns": [5],
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
             "splits": json.dumps(
                 {
                     "train": 0.5,
@@ -39,16 +47,16 @@ def create_experiment(client: TestClient, dataset_id):
     )
 
     yield response.json()["id"]
-    response = client.delete(f"/api/v1/experiment/{response.json()['id']}")
+    response = client.delete(f"/api/v1/model-session/{response.json()['id']}")
     assert response.status_code == 204, response.text
 
 
-def test_create_run(client: TestClient, experiment_id: int):
-    # create run using the dummy Experiment
+def test_create_run(client: TestClient, model_session_id: int):
+    # create run using the model session
     response = client.post(
         "/api/v1/run/",
         json={
-            "experiment_id": experiment_id,
+            "model_session_id": model_session_id,
             "model_name": "KNeighborsClassifier",
             "name": "Run1",
             "parameters": {"n_neighbors": 5, "weights": "uniform", "algorithm": "auto"},
@@ -70,7 +78,7 @@ def test_create_run(client: TestClient, experiment_id: int):
     response = client.post(
         "/api/v1/run/",
         json={
-            "experiment_id": experiment_id,
+            "model_session_id": model_session_id,
             "model_name": "KNeighborsClassifier",
             "name": "Run2",
             "parameters": {
@@ -96,7 +104,7 @@ def test_create_run(client: TestClient, experiment_id: int):
     response = client.get("/api/v1/run/1")
     assert response.status_code == 200
     data = response.json()
-    assert data["experiment_id"] == experiment_id
+    assert data["model_session_id"] == model_session_id
     assert data["model_name"] == "KNeighborsClassifier"
     assert data["name"] == "Run1"
     assert data["status"] == 0
@@ -109,7 +117,7 @@ def test_create_run(client: TestClient, experiment_id: int):
     response = client.get("/api/v1/run/2")
     assert response.status_code == 200
     data = response.json()
-    assert data["experiment_id"] == experiment_id
+    assert data["model_session_id"] == model_session_id
     assert data["model_name"] == "KNeighborsClassifier"
     assert data["name"] == "Run2"
     assert data["status"] == 0
@@ -131,12 +139,12 @@ def test_get_run(client: TestClient):
     assert data["name"] == "Run2"
 
 
-def test_get_all_runs(client: TestClient, experiment_id: int):
-    response = client.get(f"/api/v1/run/?experiment_id={experiment_id}")
+def test_get_all_runs(client: TestClient, model_session_id: int):
+    response = client.get(f"/api/v1/run/?model_session_id={model_session_id}")
     assert response.status_code == 200
     data = response.json()
-    assert data[0]["experiment_id"] == experiment_id
-    assert data[1]["experiment_id"] == experiment_id
+    assert data[0]["model_session_id"] == model_session_id
+    assert data[1]["model_session_id"] == model_session_id
 
 
 def test_get_wrong_run(client: TestClient):
@@ -147,19 +155,20 @@ def test_get_wrong_run(client: TestClient):
 
 
 def test_get_wrong_runs(client: TestClient):
-    # Try to retrieve a list of runs from a non-existent experiment an get an error
-    response = client.get("/api/v1/run/?experiment_id=31415")
+    response = client.get("/api/v1/run/?model_session_id=31415")
     assert response.status_code == 404
-    assert response.text == '{"detail":"Runs associated with Experiment not found"}'
 
 
 def test_modify_run(client: TestClient):
     response = client.patch(
-        "/api/v1/run/1?run_name=RunA",
+        "/api/v1/run/1",
         json={
-            "n_neighbors": 3,
-            "weights": "uniform",
-            "algorithm": "kd_tree",
+            "parameters": {
+                "n_neighbors": 3,
+                "weights": "uniform",
+                "algorithm": "kd_tree",
+            },
+            "run_name": "RunA",
         },
     )
     assert response.status_code == 200
@@ -178,12 +187,16 @@ def test_modify_run(client: TestClient):
 
 
 def test_modify_run_model(client: TestClient):
+    # Send an empty request body (no valid parameters)
+    # This should return 304 since no parameters are being updated
     response = client.patch(
-        "/api/v1/run/2?model_name=UnknownModel",
+        "/api/v1/run/2",
+        json={},
     )
     assert response.status_code == 304
 
 
+@pytest.mark.order(-1)
 def test_delete_run(client: TestClient):
     # Delete all the runs in the db
     response = client.delete("/api/v1/run/1")

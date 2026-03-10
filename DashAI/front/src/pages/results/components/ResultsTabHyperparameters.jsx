@@ -1,9 +1,19 @@
 import { React, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import Plot from "react-plotly.js";
-import { FormControl, InputLabel, Grid, MenuItem, Select } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  Grid,
+  MenuItem,
+  Select,
+  CircularProgress,
+  Box,
+} from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../../api/run";
 import { enqueueSnackbar } from "notistack";
+import { checkHowManyOptimazers } from "../../../utils/schema";
+import { useTranslation } from "react-i18next";
 
 function ResultsTabHyperparameters({ runData }) {
   const [displayMode, setDisplayMode] = useState("nested-list");
@@ -11,15 +21,18 @@ function ResultsTabHyperparameters({ runData }) {
   const [slicePlot, setSlicePlot] = useState([]);
   const [contourPlot, setContourPlot] = useState([]);
   const [importancePlot, setImportancePlot] = useState([]);
+  const { t } = useTranslation(["models"]);
+
   function parsePlot(plot) {
     const formattedPlot = JSON.parse(plot);
     const data = formattedPlot.data;
     const layout = formattedPlot.layout;
     return formattedPlot;
   }
-  const optimizables = Object.keys(runData.parameters).filter(
-    (key) => runData.parameters[key].optimize === true,
-  ).length;
+  const optimizables = checkHowManyOptimazers({
+    params: runData.parameters,
+  });
+
   const getHyperparameterPlot = async () => {
     try {
       if (optimizables >= 2) {
@@ -41,7 +54,7 @@ function ResultsTabHyperparameters({ runData }) {
         setSlicePlot(parsedSlicePlot);
         setContourPlot(parsedContourPlot);
         setImportancePlot(parsedImportancePlot);
-      } else {
+      } else if (optimizables === 1) {
         const historicalPlot = await getHyperparameterPlotRequest(
           runData.id,
           1,
@@ -53,7 +66,7 @@ function ResultsTabHyperparameters({ runData }) {
         setSlicePlot(parsedSlicePlot);
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the run data");
+      enqueueSnackbar(t("models:error.errorFetchingRunData"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -65,9 +78,21 @@ function ResultsTabHyperparameters({ runData }) {
   };
 
   useEffect(() => {
+    if (runData.status !== 3) return; // Finished
     getHyperparameterPlot();
-  }, []);
-  return (
+  }, [runData]);
+
+  return runData.status === 1 || runData.status === 2 ? ( // Delivered or Started
+    <Box
+      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+    >
+      <CircularProgress />
+    </Box>
+  ) : runData.status === 4 ? ( // Failed
+    <Box>{t("models:label.runFailedNoHyperparameterPlots")}</Box>
+  ) : runData.status === 0 ? ( // Not Started
+    <Box>{t("models:label.runNotStartedNoHyperparameterPlots")}</Box>
+  ) : (
     <Grid container spacing={2} direction="column">
       <Grid container direction="column">
         <Plot

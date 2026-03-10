@@ -11,6 +11,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import BooleanInput from "../configurableObject/Inputs/BooleanInput";
+import { useTranslation } from "react-i18next";
 
 function SplitDatasetRows({
   datasetInfo,
@@ -29,6 +30,8 @@ function SplitDatasetRows({
   seed,
   setSeed,
 }) {
+  const { t } = useTranslation(["experiments"]);
+
   const totalRows = datasetInfo.total_rows;
   const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
     2,
@@ -44,9 +47,9 @@ function SplitDatasetRows({
     testDatasetPercentage > 0;
 
   const checkSplit = (train, validation, test) => {
-    // Use tolerance for floating point comparison (0.7 + 0.2 + 0.1 !== 1 in JS)
     const sum = train + validation + test;
-    return Math.abs(sum - 1) < 0.0001;
+    const tolerance = 0.0001; // Allow small floating point errors
+    return Math.abs(sum - 1) < tolerance;
   };
 
   // handle rows numbers change state
@@ -58,79 +61,130 @@ function SplitDatasetRows({
       color: "#bbb",
     },
   };
-  const [rowsPartitionsError, setRowsPartitionsError] = useState(false);
-  const [rowsPartitionsErrorText, setRowsPartitionsErrorText] = useState("");
+  const [randomSplitError, setRandomSplitError] = useState(false);
+  const [randomSplitErrorText, setRandomSplitErrorText] = useState("");
+  const [manualSplitError, setManualSplitError] = useState(false);
+  const [manualSplitErrorText, setManualSplitErrorText] = useState("");
 
   const handleSplitTypeChange = (event) => {
     const newType = event.target.value;
     setSplitType(newType);
 
     if (newType === SPLIT_TYPES.PREDEFINED) {
-      setRowsPartitionsError(false);
       setSplitsReady(true);
     }
     if (newType === SPLIT_TYPES.RANDOM) {
-      setSplitType(newType);
-      setRowsPartitionsPercentage({ train: 0.6, test: 0.2, validation: 0.2 });
+      const newSplit = { train: 0.6, test: 0.2, validation: 0.2 };
+      setRowsPartitionsPercentage(newSplit);
+
+      // Validate the random split
+      const hasZero = newSplit.train === 0;
+      const sumsToOne = checkSplit(
+        newSplit.train,
+        newSplit.validation,
+        newSplit.test,
+      );
+
+      if (hasZero) {
+        setRandomSplitErrorText(
+          t("experiments:error.trainSplitMustBeGreaterThanZero"),
+        );
+        setRandomSplitError(true);
+      } else if (!sumsToOne) {
+        setRandomSplitErrorText(t("experiments:error.splitsMustSumToOne"));
+        setRandomSplitError(true);
+      } else {
+        setRandomSplitError(false);
+      }
     }
     if (newType === SPLIT_TYPES.MANUAL) {
-      setSplitType(newType);
-      setRowsPartitionsIndex({ train: [], test: [], validation: [] });
+      const newIndex = { train: [], test: [], validation: [] };
+      setRowsPartitionsIndex(newIndex);
+
+      // Validate the manual split
+      if (newIndex.train.length === 0) {
+        setManualSplitErrorText(
+          t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
+        );
+        setManualSplitError(true);
+      } else {
+        setManualSplitError(false);
+      }
     }
   };
 
   const handleRowsChange = (event) => {
     const value = event.target.value;
-    const id = event.target.id; // TODO: check that the training, validation and testing rows dont overlap
+    const id = event.target.id;
+
     if (splitType === SPLIT_TYPES.MANUAL) {
       try {
         const rowsIndex = parseRangeToIndex(value, totalRows);
+        let updatedIndex = { ...rowsPartitionsIndex };
+
         switch (id) {
           case "train":
-            setRowsPartitionsIndex({
-              ...rowsPartitionsIndex,
-              train: rowsIndex,
-            });
+            updatedIndex.train = rowsIndex;
             break;
           case "validation":
-            setRowsPartitionsIndex({
-              ...rowsPartitionsIndex,
-              validation: rowsIndex,
-            });
+            updatedIndex.validation = rowsIndex;
             break;
           case "test":
-            setRowsPartitionsIndex({
-              ...rowsPartitionsIndex,
-              test: rowsIndex,
-            });
+            updatedIndex.test = rowsIndex;
             break;
         }
-        setRowsPartitionsError(false);
+
+        setRowsPartitionsIndex(updatedIndex);
+
+        // Validate after update
+        if (updatedIndex.train.length === 0) {
+          setManualSplitErrorText(
+            t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
+          );
+          setManualSplitError(true);
+        } else {
+          setManualSplitError(false);
+        }
       } catch (error) {
-        setRowsPartitionsErrorText(error.message);
-        setRowsPartitionsError(true);
+        setManualSplitErrorText(error.message);
+        setManualSplitError(true);
       }
     } else {
-      let newSplit = rowsPartitionsPercentage;
+      let newSplit = { ...rowsPartitionsPercentage };
+      const numValue = parseFloat(value) || 0;
+
       switch (id) {
         case "train":
-          newSplit = { ...newSplit, train: parseFloat(value) };
+          newSplit = { ...newSplit, train: numValue };
           break;
         case "validation":
-          newSplit = { ...newSplit, validation: parseFloat(value) };
+          newSplit = { ...newSplit, validation: numValue };
           break;
         case "test":
-          newSplit = { ...newSplit, test: parseFloat(value) };
+          newSplit = { ...newSplit, test: numValue };
           break;
       }
+
       setRowsPartitionsPercentage(newSplit);
-      if (!checkSplit(newSplit.train, newSplit.validation, newSplit.test)) {
-        setRowsPartitionsErrorText(
-          "Splits should be numbers between 0 and 1 and should add 1 in total",
+
+      // Check if any value is 0 or if sum is not 1
+      const hasZero = newSplit.train === 0;
+      const sumsToOne = checkSplit(
+        newSplit.train,
+        newSplit.validation,
+        newSplit.test,
+      );
+
+      if (hasZero) {
+        setRandomSplitErrorText(
+          t("experiments:error.trainSplitMustBeGreaterThanZero"),
         );
-        setRowsPartitionsError(true);
+        setRandomSplitError(true);
+      } else if (!sumsToOne) {
+        setRandomSplitErrorText(t("experiments:error.splitsMustSumToOne"));
+        setRandomSplitError(true);
       } else {
-        setRowsPartitionsError(false);
+        setRandomSplitError(false);
       }
     }
   };
@@ -169,18 +223,14 @@ function SplitDatasetRows({
       setSplitsReady(true);
     } else if (
       splitType === SPLIT_TYPES.MANUAL &&
-      !rowsPartitionsError &&
-      rowsPartitionsIndex.train.length >= 1 &&
-      rowsPartitionsIndex.validation.length >= 1 &&
-      rowsPartitionsIndex.test.length >= 1
+      !manualSplitError &&
+      rowsPartitionsIndex.train.length >= 1
     ) {
       setSplitsReady(true);
     } else if (
       splitType === SPLIT_TYPES.RANDOM &&
-      !rowsPartitionsError &&
-      rowsPartitionsPercentage.train > 0 &&
-      rowsPartitionsPercentage.validation > 0 &&
-      rowsPartitionsPercentage.test > 0
+      !randomSplitError &&
+      rowsPartitionsPercentage.train > 0
     ) {
       setSplitsReady(true);
     } else {
@@ -189,7 +239,8 @@ function SplitDatasetRows({
   }, [
     rowsPartitionsIndex,
     rowsPartitionsPercentage,
-    rowsPartitionsError,
+    randomSplitError,
+    manualSplitError,
     splitType,
   ]);
 
@@ -198,12 +249,12 @@ function SplitDatasetRows({
       <Grid container spacing={1}>
         <Grid size={{ xs: 12 }}>
           <Typography variant="subtitle1" component="h3" sx={{ mb: 2 }}>
-            Select how to divide the dataset into training, validation and test
-            subsets.
+            {t("experiments:label.selectHowToDivideDataset")}
           </Typography>
         </Grid>
       </Grid>
       <RadioGroup
+        data-tour="exp-dataset-splits"
         value={splitType}
         onChange={handleSplitTypeChange}
         name="radio-buttons-group"
@@ -213,8 +264,10 @@ function SplitDatasetRows({
           control={<Radio />}
           label={
             hasPredefinedSplits
-              ? "Use predefined splits from dataset"
-              : "Use predefined splits from dataset (not available)"
+              ? t("experiments:label.usePredefinedSplitsFromDataset")
+              : t(
+                  "experiments:label.usePredefinedSplitsFromDatasetNotAvailable",
+                )
           }
           sx={{ my: 1 }}
           disabled={!hasPredefinedSplits}
@@ -262,11 +315,11 @@ function SplitDatasetRows({
         <FormControlLabel
           value={SPLIT_TYPES.RANDOM}
           control={<Radio />}
-          label="Use random rows by specifying which portion of the dataset you want to use for each subset"
+          label={t("experiments:label.useRandomRowsBySpecifyingPortion")}
           sx={{ my: 1 }}
         />
-        <React.Fragment>
-          {splitType === SPLIT_TYPES.RANDOM && (
+        {splitType === SPLIT_TYPES.RANDOM && (
+          <>
             <Grid container direction="row" spacing={4}>
               <Grid size={{ xs: 4 }}>
                 <TextField
@@ -275,9 +328,10 @@ function SplitDatasetRows({
                   autoComplete="off"
                   type="number"
                   size="small"
-                  error={rowsPartitionsError}
-                  defaultValue={rowsPartitionsPercentage.train}
+                  error={randomSplitError}
+                  value={rowsPartitionsPercentage.train}
                   onChange={handleRowsChange}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Grid>
               <Grid size={{ xs: 4 }}>
@@ -287,9 +341,10 @@ function SplitDatasetRows({
                   autoComplete="off"
                   type="number"
                   size="small"
-                  error={rowsPartitionsError}
-                  defaultValue={rowsPartitionsPercentage.validation}
+                  error={randomSplitError}
+                  value={rowsPartitionsPercentage.validation}
                   onChange={handleRowsChange}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Grid>
               <Grid size={{ xs: 4 }}>
@@ -299,94 +354,95 @@ function SplitDatasetRows({
                   type="number"
                   size="small"
                   autoComplete="off"
-                  error={rowsPartitionsError}
-                  defaultValue={rowsPartitionsPercentage.test}
+                  error={randomSplitError}
+                  value={rowsPartitionsPercentage.test}
                   onChange={handleRowsChange}
+                  InputLabelProps={{ shrink: true }}
                 />
               </Grid>
+              {randomSplitError && (
+                <Grid size={{ xs: 12 }}>
+                  <FormHelperText error>{randomSplitErrorText}</FormHelperText>
+                </Grid>
+              )}
               <Grid size={{ xs: 12 }} sx={{ ml: 3 }}>
                 <BooleanInput
                   name="shuffle"
                   value={shuffle}
-                  label="Shuffle"
+                  label={t("experiments:label.shuffle")}
                   onChange={handleShuffleChange}
-                  description="Determines whether the data will be shuffled when defining the sets or not. It must be true to shuffle the data, otherwise false."
+                  description={t("experiments:label.shuffleDescription")}
                 />
                 <BooleanInput
                   name="stratify"
                   value={stratify}
-                  label="Stratify"
+                  label={t("experiments:label.stratify")}
                   onChange={handleStratifyChange}
-                  description="Defines whether the data will be proportionally separated according to the distribution of classes in each set. Shuffle must be true to stratify the data."
+                  description={t("experiments:label.stratifyDescription")}
                 />
                 <TextField
                   id="seed"
-                  label="Seed"
+                  label={t("experiments:label.seed")}
                   value={seed}
                   onChange={handleSeedChange}
                   autoComplete="off"
                   type="number"
                   size="small"
-                  helperText="Enter a seed value (default: 42)."
+                  helperText={t("experiments:label.enterSeedValue")}
                 />
               </Grid>
             </Grid>
-          )}
-          {rowsPartitionsError ? (
-            <FormHelperText>{rowsPartitionsErrorText}</FormHelperText>
-          ) : (
-            <React.Fragment />
-          )}
-        </React.Fragment>
-        <React.Fragment />
+          </>
+        )}
         <FormControlLabel
           value={SPLIT_TYPES.MANUAL}
           control={<Radio />}
-          label="Use manual splitting by specifying the row indexes of each subset"
+          label={t(
+            "experiments:label.useManualSplittingBySpecifyingRowIndexes",
+          )}
           sx={{ my: 1 }}
         />
-        <React.Fragment>
-          {splitType === SPLIT_TYPES.MANUAL && (
+        {splitType === SPLIT_TYPES.MANUAL && (
+          <>
             <Grid container direction="row" spacing={4}>
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="train"
-                  label="Train"
+                  label={t("common:train")}
                   autoComplete="off"
                   size="small"
-                  error={rowsPartitionsError}
+                  error={manualSplitError}
                   onChange={handleRowsChange}
                 />
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="validation"
-                  label="Validation"
+                  label={t("common:validation")}
                   autoComplete="off"
                   size="small"
-                  error={rowsPartitionsError}
+                  error={manualSplitError}
                   onChange={handleRowsChange}
                 />
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <TextField
                   id="test"
-                  label="Test"
+                  label={t("common:test")}
                   autoComplete="off"
                   size="small"
-                  error={rowsPartitionsError}
+                  error={manualSplitError}
                   onChange={handleRowsChange}
                 />
               </Grid>
+              {manualSplitError && (
+                <Grid size={{ xs: 12 }}>
+                  <FormHelperText error>{manualSplitErrorText}</FormHelperText>
+                </Grid>
+              )}
             </Grid>
-          )}
-          {rowsPartitionsError ? (
-            <FormHelperText>{rowsPartitionsErrorText}</FormHelperText>
-          ) : (
-            <React.Fragment />
-          )}
-        </React.Fragment>
-        <React.Fragment />
+          </>
+        )}
       </RadioGroup>
     </React.Fragment>
   );
@@ -420,5 +476,8 @@ SplitDatasetRows.propTypes = {
   setShuffle: PropTypes.func.isRequired,
   stratify: PropTypes.bool.isRequired,
   setStratify: PropTypes.func.isRequired,
+  seed: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  setSeed: PropTypes.func.isRequired,
 };
+
 export default SplitDatasetRows;

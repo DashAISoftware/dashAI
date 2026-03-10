@@ -13,34 +13,49 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 
 
 class ParallelCategoriesSchema(BaseExplorerSchema):
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The column to use for coloring the data points. "),
+        description=MultilingualString(
+            en=("Column used to color the data points."),
+            es=("Columna usada para colorear los puntos."),
+        ),
+        alias=MultilingualString(en="Color column", es="Columna de color"),
     )  # type: ignore
 
 
-class ParallelCategoriesExplorer(BaseExplorer):
+class ParallelCategoriesExplorer(MultidimensionalExplorer):
     """
     Parallel Categories Explorer is a class that generates a parallel categories plot
     for a given dataset.
     """
 
-    DISPLAY_NAME = "Parallel Categories Plot"
-    DESCRIPTION = (
-        "A parallel categories plot is a common way to visualize "
-        "high-dimensional data. "
-        "Each vertical line represents one data point, and the lines are connected "
-        "by a series of horizontal lines. "
+    DISPLAY_NAME = MultilingualString(
+        en="Parallel Categories Plot",
+        es="Gráfico de Categorías Paralelas",
     )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Visualizes high-dimensional categorical data. Each vertical line is "
+            "a category level and connections show combinations across columns."
+        ),
+        es=(
+            "Visualiza datos categóricos de alta dimensión. Cada línea vertical "
+            "es un nivel de categoría y las conexiones muestran combinaciones "
+            "entre columnas."
+        ),
+    )
+    IMAGE_PREVIEW = "parallel_categories.png"
 
     SCHEMA = ParallelCategoriesSchema
     metadata: Dict[str, Any] = {

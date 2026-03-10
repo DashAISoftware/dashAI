@@ -2,12 +2,14 @@ import importlib
 
 from hyperopt import Trials, fmin, hp, rand, tpe  # noqa: F401
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
@@ -15,18 +17,42 @@ class HyperOptSchema(BaseSchema):
     n_trials: schema_field(
         int_field(gt=0),
         placeholder=10,
-        description="The parameter 'n_trials' is the quantity of trials"
-        "per study. It must be of type positive integer.",
+        description=MultilingualString(
+            en=(
+                "The quantity of trials per study. It must be of type positive integer."
+            ),
+            es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
+        ),
+        alias=MultilingualString(en="N trials", es="N pruebas"),
     )  # type: ignore
     sampler: schema_field(
         enum_field(enum=["tpe", "rand"]),
         placeholder="tpe",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
-        ". Must be in string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en=(
+                "The sampler algorithm to use for hyperparameter optimization. "
+                "Must be 'tpe' (Tree-structured Parzen Estimator) or 'rand' (Random)."
+            ),
+            es=(
+                "El algoritmo de muestreo a usar para la optimización de "
+                "hiperparámetros. Debe ser 'tpe' (Tree-structured Parzen Estimator) "
+                "o 'rand' (Aleatorio)."
+            ),
+        ),
+        alias=MultilingualString(en="Sampler", es="Muestreador"),
     )  # type: ignore
 
 
 class HyperOptOptimizer(BaseOptimizer):
+    DISPLAY_NAME: str = MultilingualString(
+        en="HyperOpt Optimizer",
+        es="Optimizador HyperOpt",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Hyperparameter optimization using HyperOpt library.",
+        es="Optimización de hiperparámetros usando la librería HyperOpt.",
+    )
+    COLOR: str = "#FF5722"
     SCHEMA = HyperOptSchema
 
     COMPATIBLE_COMPONENTS = [
@@ -53,15 +79,16 @@ class HyperOptOptimizer(BaseOptimizer):
         """
         search_space = {}
 
-        for hyperparameter, values in hyperparams_data.items():
-            if isinstance(values[0], int):
+        for _, hyperparameter, values, dtype in hyperparams_data:
+            if dtype == "integer":
                 search_space[hyperparameter] = hp.quniform(
                     hyperparameter, values[0], values[1], 1
                 )
-            elif isinstance(values[0], float):
+            elif dtype == "number":
                 search_space[hyperparameter] = hp.uniform(
                     hyperparameter, values[0], values[1]
                 )
+
         return search_space
 
     def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
@@ -85,47 +112,32 @@ class HyperOptOptimizer(BaseOptimizer):
         self.output_dataset = output_dataset
         self.parameters = parameters
         self.metric = metric["class"]
+
+        param_mapping = {key: (obj, key) for obj, key, _, _ in self.parameters}
+
         search_space = self.search_space(self.parameters)
 
-        # Determine optimization direction from metric class attribute
-        # HyperOpt's fmin always minimizes, so we need to negate scores for
-        # metrics where higher is better (e.g., Accuracy, F1)
-        metric_class = metric["class"]
-        if hasattr(metric_class, "HIGHER_IS_BETTER") and metric_class.HIGHER_IS_BETTER:
-            score_multiplier = -1  # Negate to maximize via minimization
-        else:
-            score_multiplier = 1  # Keep as-is to minimize
+        def objective(params):
+            for param_name, value in params.items():
+                obj, key = param_mapping[param_name]
+                setattr(obj, key, value)
 
-        if task == "TextClassificationTask":
+            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
+            y_pred = self.model.predict(input_dataset["validation"])
 
-            def objective(params):
-                model_eval = self.model
-                for key, value in params.items():
-                    setattr(model_eval, key, value)
-                model_eval.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_eval.predict(input_dataset["validation"])
-                score = score_multiplier * self.metric.score(
-                    output_dataset["validation"], y_pred
-                )
-                return score
+            # Calculate metric for train and validation data each trial
+            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+            self.model.calculate_metrics(
+                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            )
 
-        else:
+            output_dataset_transformed = self.model.prepare_output(
+                output_dataset["validation"], is_fit=False
+            )
 
-            def objective(params):
-                model_eval = self.model
-                for key, value in params.items():
-                    int_value = int(value)
-                    setattr(model_eval, key, int_value)
-                model_eval.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_eval.predict(input_dataset["validation"])
-                score = score_multiplier * self.metric.score(
-                    output_dataset["validation"], y_pred
-                )
-                return score
+            score = self.metric.score(output_dataset_transformed, y_pred)
+
+            return -score if metric["metadata"]["maximize"] else score
 
         trials = Trials()
         fmin(
@@ -147,3 +159,10 @@ class HyperOptOptimizer(BaseOptimizer):
                 params = {key: val[0] for key, val in trial["misc"]["vals"].items()}
                 trials.append({"params": params, "value": trial["result"]["loss"]})
         return trials
+
+    def get_best_params(self):
+        """Return the best parameters found during optimization."""
+        best_trial = min(
+            self.trials, key=lambda t: t["result"].get("loss", float("inf"))
+        )
+        return {key: val[0] for key, val in best_trial["misc"]["vals"].items()}

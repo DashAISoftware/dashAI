@@ -18,6 +18,11 @@ class F1(ClassificationMetric):
 
     HIGHER_IS_BETTER = True
 
+    DESCRIPTION: str = (
+        "Harmonic mean of precision and recall, "
+        "useful for imbalanced classification tasks."
+    )
+
     @staticmethod
     def score(
         true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None

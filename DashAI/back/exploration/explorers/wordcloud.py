@@ -12,43 +12,64 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class WordcloudSchema(BaseExplorerSchema):
     max_words: schema_field(
         t=int_field(gt=0),
         placeholder=200,
-        description="The maximum number of words to display in the wordcloud.",
+        description=MultilingualString(
+            en="Maximum number of words to display in the word cloud.",
+            es="Número máximo de palabras a mostrar en la nube de palabras.",
+        ),
+        alias=MultilingualString(en="Max words", es="Máximo de palabras"),
     )  # type: ignore
     background_color: schema_field(
         t=none_type(string_field()),
         placeholder=None,
-        description=(
-            "The background color of the wordcloud. "
-            "If None, the background will be transparent."
+        description=MultilingualString(
+            en=(
+                "Background color of the word cloud. If None, the background is "
+                "transparent."
+            ),
+            es=(
+                "Color de fondo de la nube de palabras. Si es None, el fondo es "
+                "transparente."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Background color",
+            es="Color de fondo",
         ),
     )  # type: ignore
 
 
-class WordcloudExplorer(BaseExplorer):
+class WordcloudExplorer(DistributionExplorer):
     """
     WordcloudExplorer is an explorer that generates a wordcloud
     from the concatenated strings of all selected columns in the dataset.
     """
 
-    DISPLAY_NAME = "Word Cloud"
-    DESCRIPTION = (
-        "A wordcloud is a visual representation of text data, "
-        "where the size of each word indicates its frequency in the text."
-        "\n"
-        "This explorer generates a wordcloud from the concatenated "
-        "strings of all selected columns in the dataset."
+    DISPLAY_NAME = MultilingualString(en="Word Cloud", es="Nube de Palabras")
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Visual representation of text where word size reflects frequency. "
+            "Generates a word cloud by concatenating selected text columns."
+        ),
+        es=(
+            "Representación visual del texto donde el tamaño de la palabra "
+            "refleja su frecuencia. Genera una nube de palabras concatenando "
+            "columnas de texto seleccionadas."
+        ),
     )
+    IMAGE_PREVIEW = "wordcloud.png"
 
     SCHEMA = WordcloudSchema
     metadata: Dict[str, Any] = {

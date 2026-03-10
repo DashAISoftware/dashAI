@@ -13,38 +13,52 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 
 
 class ParallelCordinatesSchema(BaseExplorerSchema):
     color_column: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The column to use for coloring the data points. "),
+        description=MultilingualString(
+            en=("Column used to color the data points."),
+            es=("Columna usada para colorear los puntos."),
+        ),
+        alias=MultilingualString(en="Color column", es="Columna de color"),
     )  # type: ignore
 
 
-class ParallelCordinatesExplorer(BaseExplorer):
+class ParallelCordinatesExplorer(MultidimensionalExplorer):
     """
     Parallel Cordinates Explorer is a class that generates a parallel cordinates plot
     for a given dataset.
     """
 
-    DISPLAY_NAME = "Parallel Cordinates Plot"
-    DESCRIPTION = (
-        "A parallel coordinates plot is a common way to visualize "
-        "high-dimensional data. "
-        "Each vertical line represents one data point, and the lines are connected "
-        "by a series of horizontal lines. "
+    DISPLAY_NAME = MultilingualString(
+        en="Parallel Coordinates Plot",
+        es="Gráfico de Coordenadas Paralelas",
     )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Common way to visualize high-dimensional numeric data. Each line is "
+            "a data point crossing axes for each feature."
+        ),
+        es=(
+            "Forma común de visualizar datos numéricos de alta dimensión. Cada "
+            "línea es un dato que cruza ejes para cada característica."
+        ),
+    )
+    IMAGE_PREVIEW = "parallel_cordinates.png"
 
     SCHEMA = ParallelCordinatesSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["float64", "float32"],
+        "allowed_dtypes": ["float64", "float32", "int64"],
         "restricted_dtypes": [],
         "input_cardinality": {"min": 2},
     }

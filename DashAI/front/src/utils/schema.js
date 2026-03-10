@@ -19,15 +19,14 @@ export const generateYupSchema = (schemaObj) => {
 
 const generateInitialValues = (subSchema) => {
   let initialValues = {};
-  if (subSchema.type !== "object") {
+
+  // Special case for optimizable fields
+  if (subSchema.placeholder?.optimize !== undefined) {
     initialValues = subSchema.placeholder;
-    // case of recursive parameter
-  } else if (
-    subSchema.type === "object" &&
-    subSchema.placeholder?.optimize !== undefined
-  ) {
+  } else if (subSchema.type !== "object") {
     initialValues = subSchema.placeholder;
   } else if (subSchema.parent) {
+    // If the object has a parent, we need to create the initial values accordingly
     initialValues = {
       properties: {
         component: subSchema.properties.component,
@@ -59,12 +58,76 @@ const generateInitialValues = (subSchema) => {
 const generateField = (subSchema) => {
   let field;
 
+  // SPECIAL CASE: If it has placeholder.optimize, it is an optimizable field
+  // It must be validated as an object regardless of the declared type
+  if (subSchema.placeholder?.optimize !== undefined) {
+    // Create base validators for optimizer fields with min/max constraints
+    let fixedValueValidator = Yup.number().nullable();
+    let lowerBoundValidator = Yup.number().nullable();
+    let upperBoundValidator = Yup.number().nullable();
+
+    // Apply min/max constraints from the schema to each field
+    fixedValueValidator = applyMinMax(
+      fixedValueValidator,
+      subSchema.minimum,
+      subSchema.maximum,
+      subSchema.exclusiveMinimum,
+      subSchema.exclusiveMaximum,
+    );
+
+    lowerBoundValidator = applyMinMax(
+      lowerBoundValidator,
+      subSchema.minimum,
+      subSchema.maximum,
+      subSchema.exclusiveMinimum,
+      subSchema.exclusiveMaximum,
+    );
+
+    upperBoundValidator = applyMinMax(
+      upperBoundValidator,
+      subSchema.minimum,
+      subSchema.maximum,
+      subSchema.exclusiveMinimum,
+      subSchema.exclusiveMaximum,
+    );
+
+    field = Yup.object()
+      .shape({
+        fixed_value: fixedValueValidator,
+        lower_bound: lowerBoundValidator,
+        upper_bound: upperBoundValidator,
+        optimize: Yup.boolean(),
+      })
+      .test(
+        "bounds-validation",
+        "Lower bound must be less than or equal to upper bound",
+        function (value) {
+          if (!value) return true;
+          const { lower_bound, upper_bound } = value;
+
+          // Only validate if both bounds are defined
+          if (lower_bound != null && upper_bound != null) {
+            return lower_bound <= upper_bound;
+          }
+          return true;
+        },
+      );
+
+    // Apply required validation if necessary
+    if (subSchema.required) {
+      field = field.required();
+    }
+
+    return field;
+  }
+
+  // For normal fields (non-optimizable)
   if (subSchema.anyOf) {
     field = Yup.mixed().nullable();
   } else if (subSchema.type === "object") {
     field = Yup.object();
 
-    if (!subSchema.parent && !(subSchema.placeholder?.optimize !== undefined)) {
+    if (!subSchema.parent) {
       const properties = {};
       Object.keys(subSchema.properties).forEach((key) => {
         properties[key] = generateField(subSchema.properties[key]);
@@ -115,7 +178,13 @@ const applyEnum = (validator, enumValues) => {
   return validator;
 };
 
-const applyMinMax = (validator, minimum, maximum, exclusiveMinimum) => {
+const applyMinMax = (
+  validator,
+  minimum,
+  maximum,
+  exclusiveMinimum,
+  exclusiveMaximum,
+) => {
   if (minimum !== undefined) {
     validator = validator.min(minimum);
   }
@@ -124,6 +193,9 @@ const applyMinMax = (validator, minimum, maximum, exclusiveMinimum) => {
   }
   if (exclusiveMinimum !== undefined) {
     validator = validator.min(exclusiveMinimum);
+  }
+  if (exclusiveMaximum !== undefined) {
+    validator = validator.max(exclusiveMaximum);
   }
   return validator;
 };
@@ -160,9 +232,8 @@ export const getValidator = (option) => {
     validator,
     option.minimum,
     option.maximum,
-    option.exclusiveMinimum
-      ? Math.min(option.exclusiveMinimum, option.default)
-      : undefined,
+    option.exclusiveMinimum,
+    option.exclusiveMaximum,
   );
   validator = applyRequired(validator, option.required);
 
@@ -234,27 +305,43 @@ export const formattedSubform = ({ parent, model, params }) => ({
 });
 
 export const checkIfHaveOptimazers = (values) => {
-  if (!values?.params) {
-    return false;
-  }
+  if (!values) return false;
 
-  for (let key in values.params) {
-    const param = values.params[key];
-    if (!param) continue;
+  for (const key of Object.keys(values)) {
+    const param = values[key];
+    if (!param || typeof param !== "object") continue;
 
     if (param.optimize) {
       return true;
     }
 
-    if (
-      param.properties &&
-      checkIfHaveOptimazers(param.properties.params.comp.params)
-    ) {
+    // Only return true if a recursive check finds something
+    if (checkIfHaveOptimazers(param)) {
       return true;
     }
   }
 
   return false;
+};
+
+export const checkHowManyOptimazers = (values) => {
+  let count = 0;
+
+  if (!values) return count;
+
+  for (const key of Object.keys(values)) {
+    const param = values[key];
+    if (!param || typeof param !== "object") continue;
+
+    if (param.optimize) {
+      count += 1;
+    }
+
+    // Recursively count optimizers in nested objects
+    count += checkHowManyOptimazers(param);
+  }
+
+  return count;
 };
 
 export const getParamsFromSubform = (subform) => {

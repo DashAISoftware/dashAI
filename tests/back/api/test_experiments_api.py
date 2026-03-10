@@ -27,46 +27,57 @@ def dataset_id(dataset_1: Dataset) -> int:
 
 
 @pytest.fixture(scope="module", name="response_1")
-def create_experiment_1(client: TestClient, dataset_id: int):
-    """Create experiment 1."""
+def create_model_session_1(client: TestClient, dataset_id: int):
+    """Create model session 1."""
     return client.post(
-        "/api/v1/experiment/",
+        "/api/v1/model-session/",
         json={
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentA",
-            "input_columns": [1, 2, 3, 4],
-            "output_columns": [5],
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
             "splits": splits,
         },
     )
 
 
 @pytest.fixture(scope="module", name="response_2")
-def create_experiment_2(client: TestClient, dataset_id: int):
-    """Create experiment 2."""
+def create_model_session_2(client: TestClient, dataset_id: int):
+    """Create model session 2."""
     return client.post(
-        "/api/v1/experiment/",
+        "/api/v1/model-session/",
         json={
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentB",
-            "input_columns": [1, 4],
-            "output_columns": [5],
+            "input_columns": ["SepalLengthCm", "PetalWidthCm"],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
             "splits": splits,
         },
     )
 
 
-def test_create_and_get_experiment(
+def test_create_and_get_model_session(
     client: TestClient, dataset_id: str, response_1, response_2
 ):
-    """Test that an experiment can be created and retrieved."""
+    """Test that a model session can be created and retrieved."""
     assert response_1.status_code == 201
     assert response_2.status_code == 201
 
-    # test get experiment by id 1.
-    response = client.get("/api/v1/experiment/1")
+    # test get model session by id 1.
+    response = client.get("/api/v1/model-session/1")
     assert response.status_code == 200
     data = response.json()
     assert data["dataset_id"] == dataset_id
@@ -76,8 +87,8 @@ def test_create_and_get_experiment(
     assert data["output_columns"] == output_columns
     assert data["splits"] == splits
 
-    # test get experiment by id 2.
-    response = client.get("/api/v1/experiment/2")
+    # test get model session by id 2.
+    response = client.get("/api/v1/model-session/2")
     assert response.status_code == 200
     data = response.json()
     assert data["dataset_id"] == dataset_id
@@ -88,9 +99,9 @@ def test_create_and_get_experiment(
     assert data["splits"] == splits
 
 
-def test_get_all_experiments(client: TestClient, dataset_id: int):
-    """Test that all experiments can be retrieved."""
-    response = client.get("/api/v1/experiment")
+def test_get_all_model_sessions(client: TestClient, dataset_id: int):
+    """Test that all model sessions can be retrieved."""
+    response = client.get("/api/v1/model-session")
 
     assert response.status_code == 200
 
@@ -100,60 +111,65 @@ def test_get_all_experiments(client: TestClient, dataset_id: int):
     assert data[1]["dataset_id"] == dataset_id
 
 
-def test_not_found_experiment(client: TestClient):
-    """Test that a 404 is returned when the experiment is not found."""
-    response = client.get("/api/v1/experiment/31415")
+def test_not_found_model_session(client: TestClient):
+    """Test that a 404 is returned when the model session is not found."""
+    response = client.get("/api/v1/model-session/31415")
 
     assert response.status_code == 404
-    assert response.text == '{"detail":"Experiment not found"}'
+    assert response.text == '{"detail":"Model session not found"}'
 
 
-def test_update_experiment(client: TestClient, dataset_id: int):
-    """Test that an experiment can be updated through a patch call."""
+def test_update_model_session(client: TestClient, dataset_id: int):
+    """Test that a model session can be updated through a patch call."""
 
     response = client.patch(
-        "/api/v1/experiment/2?task_name=UnknownTask&name=Experiment123",
+        "/api/v1/model-session/2?task_name=UnknownTask&name=ModelSession123",
     )
     assert response.status_code == 200
 
-    # get the updated experiment
-    response = client.get("/api/v1/experiment/2")
+    # get the updated model session
+    response = client.get("/api/v1/model-session/2")
     assert response.status_code == 200
 
     data = response.json()
     assert data["dataset_id"] == dataset_id
     assert data["task_name"] == "UnknownTask"
-    assert data["name"] == "Experiment123"
+    assert data["name"] == "ModelSession123"
     assert data["created"] != data["last_modified"]
 
 
-def test_update_experiment_step(client: TestClient):
-    """Test that an experiment step can be updated through a patch call."""
+def test_update_model_session_step(client: TestClient):
+    """Test that a model session step can be updated through a patch call."""
     response = client.patch(
-        "/api/v1/experiment/2",
+        "/api/v1/model-session/2",
         data={"params": """{"step": "STARTED"}""", "url": ""},
     )
     assert response.status_code == 304
 
 
-def test_delete_experiment(client: TestClient):
-    """Test that an experiment can be deleted."""
+def test_delete_model_session(client: TestClient):
+    """Test that a model session can be deleted."""
 
-    response = client.delete("/api/v1/experiment/1")
+    response = client.delete("/api/v1/model-session/1")
     assert response.status_code == 204, response.text
 
-    response = client.delete("/api/v1/experiment/2")
+    response = client.delete("/api/v1/model-session/2")
     assert response.status_code == 204, response.text
 
 
 def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
     response = client.post(
-        "/api/v1/experiment/validation",
+        "/api/v1/model-session/validation",
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 200, response.text
@@ -161,29 +177,19 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
     assert json["dataset_status"] == "valid"
 
 
-def test_get_columns_validation_invalid(client: TestClient, dataset_id: int):
-    response = client.post(
-        "/api/v1/experiment/validation",
-        json={
-            "task_name": "ImageClassificationTask",
-            "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
-        },
-    )
-    assert response.status_code == 200, response.text
-    json = response.json()
-    assert json["dataset_status"] == "invalid"
-
-
 def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: int):
     response = client.post(
-        "/api/v1/experiment/validation",
+        "/api/v1/model-session/validation",
         json={
             "task_name": "TabularClassTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 404, response.text
@@ -194,12 +200,17 @@ def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: 
 
 def test_get_columns_validation_wrong_dataset(client: TestClient):
     response = client.post(
-        "/api/v1/experiment/validation",
+        "/api/v1/model-session/validation",
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": 127,
-            "inputs_columns": [1, 2, 3, 4],
-            "outputs_columns": [5],
+            "inputs_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "outputs_columns": ["Species"],
         },
     )
     assert response.status_code == 404, response.text

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
-
 import { saveConverterList } from "../../../api/converter";
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
@@ -8,6 +7,7 @@ import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueConverterJob } from "../../../api/job";
+import { useTranslation } from "react-i18next";
 
 export default function FormConverterSection({
   step,
@@ -22,6 +22,7 @@ export default function FormConverterSection({
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["common", "datasets"]);
 
   const handleSaveConverter = async (params) => {
     const data = {
@@ -42,22 +43,24 @@ export default function FormConverterSection({
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
-        enqueueSnackbar(`Converter ${tool.name} created successfully`, {
-          variant: "success",
-        });
+        enqueueSnackbar(
+          t("datasets:message.converterCreated", { name: tool.name }),
+          {
+            variant: "success",
+          },
+        );
 
         enqueueConverterJob(data.id)
           .then((jobResponse) => {
             if (jobResponse && jobResponse.id) {
-              console.log(`Starting to track converter job: ${jobResponse.id}`);
-
               startJobPolling(
                 jobResponse.id,
 
                 (result) => {
-                  console.log("Converter job completed successfully:", result);
                   enqueueSnackbar(
-                    `Converter ${tool.name} processed successfully`,
+                    t("datasets:message.converterProcessed", {
+                      name: tool.name,
+                    }),
                     {
                       variant: "success",
                     },
@@ -75,9 +78,9 @@ export default function FormConverterSection({
                 (result) => {
                   console.error("Converter job failed:", result);
                   enqueueSnackbar(
-                    `Error processing converter: ${
-                      result.error || "Unknown error"
-                    }`,
+                    t("datasets:error.converterFailedWithInfo", {
+                      error: result.error || t("common:unknownError"),
+                    }),
                     { variant: "error" },
                   );
 
@@ -94,14 +97,16 @@ export default function FormConverterSection({
           })
           .catch((error) => {
             console.error("Error enqueuing converter job:", error);
-            enqueueSnackbar("Failed to process converter", {
+            enqueueSnackbar(t("datasets:error.processConverterError"), {
               variant: "error",
             });
           });
       })
       .catch((error) => {
         console.error("Error creating converter:", error);
-        enqueueSnackbar("Failed to create converter", { variant: "error" });
+        enqueueSnackbar(t("datasets:error.createConverterError"), {
+          variant: "error",
+        });
       })
       .finally(() => {
         handleClose();
@@ -111,13 +116,13 @@ export default function FormConverterSection({
   return (
     <Box
       sx={{
-        overflow: "auto",
+        overflow: "visible",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
+        maxHeight: "100%",
       }}
     >
-      {/* Step content */}
       {step === 0 && (
         <ScopeStepConverter
           supervised={tool.metadata.supervised}

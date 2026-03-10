@@ -6,6 +6,7 @@ function ModelsTableSelectMetric({
   taskName,
   metricName,
   handleSelectedMetric,
+  required = false,
 }) {
   const { compatibleMetrics } = useMetricsByTask({ taskName });
   const [selectedMetric, setSelectedMetric] = useState(metricName);
@@ -17,24 +18,31 @@ function ModelsTableSelectMetric({
   };
 
   return (
-    <>
-      <TextField
-        select
-        label="Goal metric for optimization"
-        value={selectedMetric || ""}
-        onChange={handleChange}
-        fullWidth
-        sx={{
-          marginTop: "-8px",
-        }}
-      >
-        {compatibleMetrics.map((metric) => (
-          <MenuItem key={metric.name} value={metric.name}>
-            {metric.name}
-          </MenuItem>
-        ))}
-      </TextField>
-    </>
+    <TextField
+      select
+      value={selectedMetric || ""}
+      onChange={handleChange}
+      size="small"
+      variant="standard"
+      fullWidth
+      required={required}
+      error={required && !selectedMetric}
+      slotProps={{
+        MenuProps: {
+          PaperProps: {
+            style: {
+              maxHeight: 300,
+            },
+          },
+        },
+      }}
+    >
+      {compatibleMetrics.map((metric) => (
+        <MenuItem key={metric.name} value={metric.name}>
+          {metric.name}
+        </MenuItem>
+      ))}
+    </TextField>
   );
 }
 

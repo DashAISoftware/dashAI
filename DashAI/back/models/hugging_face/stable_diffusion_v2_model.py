@@ -11,16 +11,11 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
-
-if torch.cuda.is_available():
-    DEVICE_ENUM = [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["cpu"]
-    DEVICE_PLACEHOLDER = "cuda:0"
-else:
-    DEVICE_ENUM = ["cpu"]
-    DEVICE_PLACEHOLDER = "cpu"
+from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
 class StableDiffusionSchema(BaseSchema):
@@ -36,65 +31,112 @@ class StableDiffusionSchema(BaseSchema):
             ]
         ),
         placeholder="stabilityai/stable-diffusion-2",
-        description="The specific Stable Diffusion model version to use.",
+        description=MultilingualString(
+            en="The specific Stable Diffusion model version to use.",
+            es="La versión específica del modelo Stable Diffusion a usar.",
+        ),
+        alias=MultilingualString(en="Model name", es="Nombre del modelo"),
     )  # type: ignore
 
     negative_prompt: Optional[
         schema_field(
             string_field(),
             placeholder="",
-            description="Text prompt for elements to avoid in the image.",
+            description=MultilingualString(
+                en="Text prompt for elements to avoid in the image.",
+                es="Prompt de texto para elementos a evitar en la imagen.",
+            ),
+            alias=MultilingualString(en="Negative prompt", es="Prompt negativo"),
         )  # type: ignore
     ]
 
     num_inference_steps: schema_field(
         int_field(ge=1),
         placeholder=15,
-        description=(
-            "Number of denoising steps. Higher usually leads to better quality but "
-            "slower inference."
+        description=MultilingualString(
+            en=(
+                "Number of denoising steps. Higher usually leads to better quality "
+                "but slower inference."
+            ),
+            es=(
+                "Número de pasos de eliminación de ruido. Más alto generalmente "
+                "lleva a mejor calidad pero inferencia más lenta."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Num inference steps", es="Número de pasos de inferencia"
         ),
     )  # type: ignore
 
     guidance_scale: schema_field(
         float_field(ge=0.0),
         placeholder=3.5,
-        description=(
-            "How strongly the model follows the prompt. Higher = closer to prompt, "
-            "but may reduce image quality."
+        description=MultilingualString(
+            en=(
+                "How strongly the model follows the prompt. Higher = closer to "
+                "prompt, but may reduce image quality."
+            ),
+            es=(
+                "Qué tan fuertemente el modelo sigue el prompt. Mayor = más cercano "
+                "al prompt, pero puede reducir la calidad de imagen."
+            ),
         ),
+        alias=MultilingualString(en="Guidance scale", es="Escala de guía"),
     )  # type: ignore
 
     device: schema_field(
         enum_field(enum=DEVICE_ENUM),
         placeholder=DEVICE_PLACEHOLDER,
-        description="Device for generation. Use 'cuda' if GPU is available.",
+        description=MultilingualString(
+            en="Device for generation. Use 'cuda' if GPU is available.",
+            es="Dispositivo para generación. Use 'cuda' si GPU está disponible.",
+        ),
+        alias=MultilingualString(en="Device", es="Dispositivo"),
     )  # type: ignore
 
     seed: schema_field(
         int_field(),
         placeholder=-1,
-        description=(
-            "Random seed for reproducibility. Use negative value for random seed."
+        description=MultilingualString(
+            en=("Random seed for reproducibility. Use negative value for random seed."),
+            es=(
+                "Semilla aleatoria para reproducibilidad. Use valor negativo para "
+                "semilla aleatoria."
+            ),
         ),
+        alias=MultilingualString(en="Seed", es="Semilla"),
     )  # type: ignore
 
     width: schema_field(
         int_field(ge=64, le=2048),
         placeholder=512,
-        description="Width of the generated image. Must be a multiple of 8.",
+        description=MultilingualString(
+            en="Width of the generated image. Must be a multiple of 8.",
+            es="Ancho de la imagen generada. Debe ser múltiplo de 8.",
+        ),
+        alias=MultilingualString(en="Width", es="Ancho"),
     )  # type: ignore
 
     height: schema_field(
         int_field(ge=64, le=2048),
         placeholder=512,
-        description="Height of the generated image. Must be a multiple of 8.",
+        description=MultilingualString(
+            en="Height of the generated image. Must be a multiple of 8.",
+            es="Altura de la imagen generada. Debe ser múltiplo de 8.",
+        ),
+        alias=MultilingualString(en="Height", es="Altura"),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
         int_field(ge=1),
         placeholder=1,
-        description="Number of images to generate per prompt.",
+        description=MultilingualString(
+            en="Number of images to generate per prompt.",
+            es="Número de imágenes a generar por prompt.",
+        ),
+        alias=MultilingualString(
+            en="Num images per prompt", es="Número de imágenes por prompt"
+        ),
     )  # type: ignore
 
 
@@ -102,11 +144,22 @@ class StableDiffusionV2Model(TextToImageGenerationTaskModel):
     """Wrapper model for all Stable Diffusion 2.x models from stability.ai."""
 
     SCHEMA = StableDiffusionSchema
+    DISPLAY_NAME: str = MultilingualString(
+        en="Stable Diffusion V2",
+        es="Stable Diffusion V2",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Stable Diffusion 2.x models for text-to-image generation.",
+        es="Modelos Stable Diffusion 2.x para generación de texto a imagen.",
+    )
 
     def __init__(self, **kwargs):
         """Initialize the model."""
         kwargs = self.validate_and_transform(kwargs)
-        self.device = kwargs.get("device")
+        use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
+        self.device = (
+            f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
+        )
         self.model_name = kwargs.get("model_name", "stabilityai/stable-diffusion-2")
 
         self.model = DiffusionPipeline.from_pretrained(

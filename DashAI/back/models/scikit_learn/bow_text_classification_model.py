@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 import joblib
 import numpy as np
+import pyarrow as pa
 from datasets import Dataset
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -12,9 +13,14 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
-from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    DashAIDataset,
+    to_dashai_dataset,
+)
 from DashAI.back.models.text_classification_model import TextClassificationModel
+from DashAI.back.types.categorical import Categorical
+from DashAI.back.types.value_types import Float
 
 
 class BagOfWordsTextClassificationModelSchema(BaseSchema):
@@ -26,32 +32,55 @@ class BagOfWordsTextClassificationModelSchema(BaseSchema):
     tabular_classifier: schema_field(
         component_field(parent="TabularClassificationModel"),
         placeholder={"component": "SVC", "params": {}},
-        description=(
-            "Tabular model used as the underlying model "
-            "to generate the text classifier."
+        description=MultilingualString(
+            en=(
+                "Tabular model used as the underlying model "
+                "to generate the text classifier."
+            ),
+            es=(
+                "Modelo tabular usado como el modelo subyacente "
+                "para generar el clasificador de texto."
+            ),
         ),
+        alias=MultilingualString(en="Tabular classifier", es="Clasificador tabular"),
     )  # type: ignore
     ngram_min_n: schema_field(
         int_field(ge=1),
         placeholder=1,
-        description=(
-            "The lower boundary of the range of n-values for different word n-grams "
-            "or char n-grams to be extracted. It must be an integer greater or equal "
-            "than 1"
+        description=MultilingualString(
+            en=(
+                "The lower boundary of the range of n-values for different word "
+                "n-grams or char n-grams to be extracted. It must be an integer "
+                "greater or equal than 1"
+            ),
+            es=(
+                "El límite inferior del rango de valores n para diferentes n-gramas "
+                "de palabras o caracteres a extraer. Debe ser un entero mayor o "
+                "igual a 1"
+            ),
         ),
+        alias=MultilingualString(en="Ngram min N", es="Ngrama mínimo N"),
     )  # type: ignore
     ngram_max_n: schema_field(
         int_field(ge=1),
         placeholder=1,
-        description=(
-            "The upper boundary of the range of n-values for different word n-grams "
-            "or char n-grams to be extracted. It must be an integer greater or equal "
-            "than 1"
+        description=MultilingualString(
+            en=(
+                "The upper boundary of the range of n-values for different word "
+                "n-grams or char n-grams to be extracted. It must be an integer "
+                "greater or equal than 1"
+            ),
+            es=(
+                "El límite superior del rango de valores n para diferentes n-gramas "
+                "de palabras o caracteres a extraer. Debe ser un entero mayor o "
+                "igual a 1"
+            ),
         ),
+        alias=MultilingualString(en="Ngram max N", es="Ngrama máximo N"),
     )  # type: ignore
 
 
-class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeModel):
+class BagOfWordsTextClassificationModel(TextClassificationModel):
     """Text classification meta-model.
 
     The metamodel has two main components:
@@ -70,6 +99,19 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
     To predict with the tabular_model the vectorizer is used to transform the dataset.
     """
 
+    DISPLAY_NAME: str = MultilingualString(
+        en="Bag of Words Text Classifier",
+        es="Clasificador de Texto Bolsa de Palabras",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Text classification using bag-of-words features and tabular classifiers.",
+        es=(
+            "Clasificación de texto usando bolsa de palabras y "
+            "clasificadores tabulares."
+        ),
+    )
+    COLOR: str = "#FF5722"
+    ICON: str = "TextFields"
     SCHEMA = BagOfWordsTextClassificationModelSchema
 
     def __init__(self, **kwargs) -> None:
@@ -80,86 +122,16 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         ----------
         kwargs : dict
             A dictionary containing the parameters for the model, including:
-            - tabular_classifier: Configuration for the underlying classifier.
+            - tabular_classifier:
+            The tabular classification model from DashAI to be used.
             - ngram_min_n: Minimum n-gram value.
             - ngram_max_n: Maximum n-gram value.
         """
-        transformed_kwargs = self._transform_parameters(kwargs)
-        self.SCHEMA.model_validate(transformed_kwargs)
-        params = transformed_kwargs["tabular_classifier"]["params"]
-        self.fixed_params, self.optimizable_params = self._extract_parameters(params)
-        transformed_kwargs["tabular_classifier"]["params"] = self.fixed_params
-        validated_kwargs = self.validate_and_transform(transformed_kwargs)
 
-        self.classifier = validated_kwargs["tabular_classifier"]
+        self.classifier = kwargs["tabular_classifier"]
         self.vectorizer = CountVectorizer(
             ngram_range=(kwargs["ngram_min_n"], kwargs["ngram_max_n"])
         )
-
-    def _transform_parameters(self, kwargs: dict) -> dict:
-        """
-        Transform the raw parameters from the frontend into a format compatible
-        with the model.
-
-        Parameters
-        ----------
-        kwargs : dict
-            Raw parameters from the frontend.
-
-        Returns
-        -------
-        dict
-            Transformed parameters.
-        """
-        transformed_dict = kwargs.copy()
-        if "tabular_classifier" in transformed_dict:
-            tabular_classifier = transformed_dict["tabular_classifier"]
-            if "properties" in tabular_classifier:
-                sub_model = tabular_classifier["properties"]["params"]["comp"]
-                transformed_dict["tabular_classifier"] = {
-                    "component": sub_model.get("component"),
-                    "params": sub_model.get("params", {}),
-                }
-        return transformed_dict
-
-    def _extract_parameters(self, parameters: dict) -> dict:
-        """
-        Extract fixed and optimizable parameters from a dictionary.
-
-        This method processes a dictionary of parameters and separates them into
-        fixed parameters and optimizable parameters. Fixed parameters are those
-        that are not intended to be optimized, while optimizable parameters are
-        those that have bounds defined for optimization.
-
-        Parameters
-        ----------
-        parameters : dict
-            A dictionary containing parameter names as keys and parameter
-            specifications as values.
-
-        Returns
-        -------
-        tuple
-            A tuple containing two dictionaries:
-            - fixed_params: A dictionary of parameters that are fixed and not
-            intended to be optimized.
-            - optimizable_params: A dictionary of parameters that are intended to
-            be optimized, with their respective lower and upper bounds.
-        """
-        fixed_params = {
-            key: (
-                param["fixed_value"]
-                if isinstance(param, dict) and "optimize" in param
-                else param
-            )
-            for key, param in parameters.items()
-        }
-        optimizable_params = {
-            key: (param["lower_bound"], param["upper_bound"])
-            for key, param in parameters.items()
-            if isinstance(param, dict) and param.get("optimize") is True
-        }
-        return fixed_params, optimizable_params
 
     def get_vectorizer(self, input_column: str, output_column: Optional[str] = None):
         """Factory that returns a function to transform a text classification dataset
@@ -199,20 +171,26 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
 
         return _vectorize
 
-    def fit(self, x: Dataset, y: Dataset):
+    def train(
+        self,
+        x: Dataset,
+        y: Dataset,
+        x_validation: Dataset = None,
+        y_validation: Dataset = None,
+    ):
         input_column = x.column_names[0]
         self.vectorizer.fit(x[input_column])
         tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
+        tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
-        self.classifier.fit(tokenized_dataset, y)
+        self.classifier.train(tokenized_dataset, y)
 
     def predict(self, x: Dataset):
         input_column = x.column_names[0]
 
         tokenizer_func = self.get_vectorizer(input_column)
-        tokenized_dataset = x.map(tokenizer_func, remove_columns="text")
+        tokenized_dataset = x.map(tokenizer_func, remove_columns=x.column_names)
         tokenized_dataset = to_dashai_dataset(tokenized_dataset)
 
         return self.classifier.predict(tokenized_dataset)
@@ -226,3 +204,51 @@ class BagOfWordsTextClassificationModel(TextClassificationModel, SklearnLikeMode
         """Load the model of the specified path."""
         model = joblib.load(filename)
         return model
+
+    def prepare_dataset(self, dataset: DashAIDataset, is_fit=False):
+        """Apply the model transformations to the dataset.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The dataset to be transformed.
+        is_fit : bool, optional
+            If True, the method will apply transformations needed for fitting the model.
+
+        Returns
+        -------
+        DashAIDataset
+            The prepared dataset ready to be converted to
+            an accepted format in the model.
+        """
+        try:
+            input_column = dataset.column_names[0]
+            input_type = dataset.types[input_column]
+
+            if isinstance(input_type, Categorical):
+                if is_fit:
+                    dataset = super().prepare_dataset(dataset, is_fit=True)
+                    return dataset
+                else:
+                    dataset = super().prepare_dataset(dataset, is_fit=False)
+                    return dataset
+
+            if is_fit:
+                self.vectorizer.fit(dataset[input_column])
+
+            tokenizer_func = self.get_vectorizer(input_column)
+            dataset = dataset.map(tokenizer_func, remove_columns=input_column)
+            dataset = to_dashai_dataset(dataset)
+
+            dataset.types = {
+                col: Float(arrow_type=pa.float32())
+                for col in dataset.column_names
+                if col.startswith(input_column)
+            }
+
+            return dataset
+        except Exception as e:
+            print(f"Couldn't apply transformations to the dataset for the model: {e}")
+
+    def prepare_output(self, dataset, is_fit=False):
+        return self.classifier.prepare_output(dataset, is_fit)

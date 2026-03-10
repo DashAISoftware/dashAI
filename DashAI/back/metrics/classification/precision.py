@@ -18,6 +18,11 @@ class Precision(ClassificationMetric):
 
     HIGHER_IS_BETTER = True
 
+    DESCRIPTION: str = (
+        "Fraction of predicted positives that are correct, "
+        "important when false positives are costly."
+    )
+
     @staticmethod
     def score(
         true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None

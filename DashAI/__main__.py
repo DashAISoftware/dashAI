@@ -27,6 +27,28 @@ def open_browser() -> None:
     webbrowser.open(url=url, new=0, autoraise=True)
 
 
+def _start_huey_thread() -> threading.Thread:
+    from huey.bin.huey_consumer import consumer_main
+
+    def dummy_signal(signalnum, handler):
+        return None
+
+    signal.signal = dummy_signal
+
+    sys.argv = [
+        "huey_consumer",
+        "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
+        "--delay",
+        "0.1",
+        "--backoff",
+        "1",
+    ]
+
+    t = threading.Thread(target=consumer_main, daemon=True)
+    t.start()
+    return t
+
+
 def main(
     local_path: Annotated[
         pathlib.Path,
@@ -57,7 +79,6 @@ def main(
         ),
     ] = False,
 ) -> None:
-    """Main function for DashAI package."""
     logging.getLogger(name=__package__).setLevel(level=logging_level.value)
     logger = logging.getLogger(__name__)
 
@@ -69,20 +90,26 @@ def main(
     os.environ["DASHAI_LOGGING_LEVEL"] = logging_level.value
     child_env = os.environ.copy()
 
-    logger.info("Starting Huey consumer process.")
-    huey_cmd = [
-        sys.executable,
-        "-m",
-        "huey.bin.huey_consumer",
-        "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
-        "--delay",
-        "0.1",
-        "--backoff",
-        "1",
-    ]
+    logger.info("Starting Huey consumer.")
 
-    huey_process = subprocess.Popen(huey_cmd, env=child_env)
-    logger.info(f"Started Huey consumer with PID: {huey_process.pid}")
+    if getattr(sys, "frozen", False):
+        # Ejecutable PyInstaller: usar hilo embebido (sin -m).
+        _start_huey_thread()
+        logger.info("Started embedded Huey consumer (thread).")
+    else:
+        # Desarrollo: proceso externo con python -m.
+        huey_cmd = [
+            sys.executable,
+            "-m",
+            "huey.bin.huey_consumer",
+            "DashAI.back.dependencies.job_queues.huey_job_queue.huey",
+            "--delay",
+            "0.1",
+            "--backoff",
+            "1",
+        ]
+        huey_process = subprocess.Popen(huey_cmd, env=child_env)
+        logger.info(f"Started external Huey consumer (PID: {huey_process.pid})")
 
     if not no_browser:
         logger.info("Opening browser.")
@@ -105,10 +132,8 @@ def main(
         if huey_process:
             logger.info(f"Terminating Huey consumer (PID: {huey_process.pid})")
             with suppress(Exception):
-                huey_process.send_signal(signal.SIGTERM)
+                huey_process.terminate()
                 huey_process.wait(timeout=5)
-                if huey_process.poll() is None:
-                    huey_process.terminate()
 
 
 def run():

@@ -18,7 +18,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     select_columns,
     split_dataset,
 )
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics import BaseMetric
 from DashAI.back.models import BaseModel
@@ -113,16 +113,16 @@ class ForecastingJob(BaseJob):
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
             try:
-                # Get the experiment, dataset, task, metrics and splits
-                experiment: Experiment = db.get(Experiment, run.experiment_id)
-                if not experiment:
+                # Get the model session, dataset, task, metrics and splits
+                model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+                if not model_session:
                     raise JobError(
-                        f"Experiment {run.experiment_id} does not exist in DB."
+                        f"Model session {run.model_session_id} does not exist in DB."
                     )
-                dataset: Dataset = db.get(Dataset, experiment.dataset_id)
+                dataset: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset:
                     raise JobError(
-                        f"Dataset {experiment.dataset_id} does not exist in DB."
+                        f"Dataset {model_session.dataset_id} does not exist in DB."
                     )
 
                 try:
@@ -136,21 +136,23 @@ class ForecastingJob(BaseJob):
                     ) from e
 
                 try:
-                    task: BaseTask = component_registry[experiment.task_name]["class"]()
+                    task: BaseTask = component_registry[model_session.task_name][
+                        "class"
+                    ]()
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         (
-                            f"Unable to find Task with name {experiment.task_name} "
+                            f"Unable to find Task with name {model_session.task_name} "
                             "in registry"
                         ),
                     ) from e
 
                 # Validate this is a forecasting task
-                if experiment.task_name != "ForecastingTask":
+                if model_session.task_name != "ForecastingTask":
                     raise JobError(
                         f"ForecastingJob can only be used with ForecastingTask, "
-                        f"got {experiment.task_name}"
+                        f"got {model_session.task_name}"
                     )
 
                 try:
@@ -166,7 +168,9 @@ class ForecastingJob(BaseJob):
                     # related components
                     selected_metrics = _intersect_component_lists(
                         all_metrics,
-                        component_registry.get_related_components(experiment.task_name),
+                        component_registry.get_related_components(
+                            model_session.task_name
+                        ),
                     )
                     metrics: List[BaseMetric] = [
                         metric["class"] for metric in selected_metrics.values()
@@ -175,32 +179,34 @@ class ForecastingJob(BaseJob):
                     log.exception(e)
                     raise JobError(
                         "Unable to find metrics associated with"
-                        f"Task {experiment.task_name} in registry",
+                        f"Task {model_session.task_name} in registry",
                     ) from e
 
                 try:
                     # Prepare dataset for forecasting task with auto-detection
                     prepared_dataset = task.prepare_for_task(
                         loaded_dataset,
-                        outputs_columns=experiment.output_columns,
-                        inputs_columns=experiment.input_columns,
+                        outputs_columns=model_session.output_columns,
+                        inputs_columns=model_session.input_columns,
                         # Optional: Override auto-detection if specified
-                        timestamp_column=getattr(experiment, "timestamp_column", None),
-                        frequency=getattr(experiment, "frequency", "auto"),
+                        timestamp_column=getattr(
+                            model_session, "timestamp_column", None
+                        ),
+                        frequency=getattr(model_session, "frequency", "auto"),
                     )
 
                     # Get temporal metadata for logging
                     temporal_metadata = task.get_temporal_metadata()
                     log.info(f"Temporal metadata: {temporal_metadata}")
 
-                    splits = json.loads(experiment.splits)
+                    splits = json.loads(model_session.splits)
 
                     # Use forecasting-specific preparation with temporal splitting
                     prepared_dataset, splits = prepare_for_forecasting_experiment(
                         dataset=prepared_dataset,
                         splits=splits,
                         timestamp_col=temporal_metadata.get("timestamp_col", "ds"),
-                        output_columns=experiment.output_columns,
+                        output_columns=model_session.output_columns,
                     )
 
                     run.split_indexes = json.dumps(
@@ -213,8 +219,8 @@ class ForecastingJob(BaseJob):
 
                     x, y = select_columns(
                         prepared_dataset,
-                        experiment.input_columns,
-                        experiment.output_columns,
+                        model_session.input_columns,
+                        model_session.output_columns,
                     )
 
                     x = split_dataset(x)
@@ -224,7 +230,7 @@ class ForecastingJob(BaseJob):
                     log.exception(e)
                     raise JobError(
                         f"""Can not prepare Dataset {dataset.id}
-                        for ForecastingTask {experiment.task_name}""",
+                        for ForecastingTask {model_session.task_name}""",
                     ) from e
 
                 try:
@@ -328,7 +334,7 @@ class ForecastingJob(BaseJob):
                             y,
                             run_optimizable_parameters,
                             goal_metric,
-                            experiment.task_name,
+                            model_session.task_name,
                         )
                         model = optimizer.get_model()
                         # Generate hyperparameter plot

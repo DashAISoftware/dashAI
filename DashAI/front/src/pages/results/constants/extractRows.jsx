@@ -20,10 +20,14 @@ const getPrefix = (property) => {
   }
 };
 
-export const extractRows = (rawRuns) => {
+export const extractRows = (rawRuns, models) => {
   let rows = [];
   rawRuns.forEach((run) => {
-    let newRun = { ...run };
+    let newRun = {
+      ...run,
+      model_name:
+        models.find((m) => m.name === run.model_name) || run.model_name,
+    };
     runObjectProperties.forEach((p) => {
       // adds its corresponding prefix to the metric name (e.g. train_F1) and
       // if the metric value is a number, it is rounded to two decimal places.
@@ -40,4 +44,12 @@ export const extractRows = (rawRuns) => {
     rows = [...rows, newRun];
   });
   return rows;
+};
+
+export const replaceModelNameForRuns = async (runs) => {
+  const models = await getModels();
+  return runs.map((run) => ({
+    ...run,
+    model_name: models.find((m) => m.name === run.model_name) || run.model_name,
+  }));
 };

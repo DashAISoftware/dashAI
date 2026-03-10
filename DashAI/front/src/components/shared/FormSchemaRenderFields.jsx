@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import FormSchemaField from "./FormSchemaField";
 import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
@@ -19,33 +19,35 @@ function FormSchemaRenderFields({
 }) {
   if (!modelSchema) return null;
 
+  // Handler to update formik values and trigger schema update
+  const handleChange = useCallback(
+    (name, subName) => (value) => {
+      const fieldPath = subName ? `${name}.${subName}` : name;
+      formik.setFieldValue(fieldPath, value, true);
+      handleUpdateSchema(
+        { [fieldPath]: value },
+        autoSave ? onFormSubmit : null,
+      );
+    },
+    [formik, handleUpdateSchema, autoSave, onFormSubmit],
+  );
+
   const renderFields = useCallback(() => {
     const fields = [];
-
-    const onChange = (name, subName) => (value) => {
-      if (subName) {
-        handleUpdateSchema(
-          { [name]: { ...formik?.values[name], [subName]: value } },
-          autoSave ? onFormSubmit : null,
-        );
-        formik?.setFieldValue(
-          name,
-          {
-            ...formik?.values[name],
-            [subName]: value,
-          },
-          true,
-        );
-        return;
-      }
-
-      handleUpdateSchema({ [name]: value }, autoSave ? onFormSubmit : null);
-      formik?.setFieldValue(name, value, true);
-    };
 
     for (const key in modelSchema) {
       const fieldSchema = modelSchema[key];
       const objName = key;
+      const value = formik?.values?.[objName];
+      const error = formik?.errors?.[objName];
+      const isOptimizable = fieldSchema.placeholder?.optimize !== undefined;
+
+      const baseField = {
+        value,
+        error,
+        onChange: handleChange(objName),
+      };
+
       if ("anyOf" in fieldSchema) {
         fields.push(
           <FormSchemaFieldWithOptions
@@ -56,38 +58,26 @@ function FormSchemaRenderFields({
             required={fieldSchema.required}
             objName={objName}
             setError={setError}
-            field={{
-              value: formik?.values[objName],
-              onChange: onChange(objName),
-              error: formik?.errors[objName],
-            }}
+            field={baseField}
+          />,
+        );
+      } else if (isOptimizable) {
+        fields.push(
+          <FormSchemaFieldWithOptimizers
+            key={objName}
+            objName={objName}
+            paramJsonSchema={fieldSchema}
+            field={baseField}
           />,
         );
       } else if (fieldSchema.type === "object") {
-        if (fieldSchema.placeholder?.optimize !== undefined) {
-          fields.push(
-            <FormSchemaFieldWithOptimizers
-              key={objName}
-              objName={objName}
-              paramJsonSchema={fieldSchema}
-              field={{
-                value: formik?.values[objName],
-                onChange: onChange(objName),
-                error: formik?.errors[objName],
-              }}
-            />,
-          );
-        } else if (Boolean(fieldSchema?.parent)) {
+        if (Boolean(fieldSchema?.parent)) {
           fields.push(
             <FormSchemaFieldWithParent
               key={objName}
               name={objName}
-              field={{
-                value: formik?.values[objName],
-                onChange: onChange(objName),
-                error: formik?.errors[objName],
-              }}
-              selectedModel={getModelFromSubform(formik.values[objName])}
+              field={baseField}
+              selectedModel={getModelFromSubform(value)}
               label={fieldSchema.title}
               description={fieldSchema.description}
             />,
@@ -104,26 +94,25 @@ function FormSchemaRenderFields({
               {fieldSchema?.properties &&
                 Object.keys(fieldSchema.properties).map((subField) => {
                   const fieldSubschema = fieldSchema.properties[subField];
-                  const subfieldName = objName + "." + subField;
+                  const subValue = value?.[subField];
+                  const subError = error?.[subField];
 
-                  const value = formik?.values[objName]
-                    ? formik?.values[objName][subField]
-                    : null;
-                  const error = formik?.errors[objName]
-                    ? formik?.errors[objName][subField]
-                    : undefined;
+                  const subFieldObj = useMemo(
+                    () => ({
+                      value: subValue,
+                      error: subError,
+                      onChange: handleChange(objName, subField),
+                    }),
+                    [subValue, subError, objName, subField, handleChange],
+                  );
 
                   return (
                     <FormSchemaField
-                      key={subfieldName}
-                      objName={subfieldName}
+                      key={`${objName}.${subField}`}
+                      objName={`${objName}.${subField}`}
                       setError={setError}
                       paramJsonSchema={fieldSubschema}
-                      field={{
-                        value,
-                        onChange: onChange(objName, subField),
-                        error,
-                      }}
+                      field={subFieldObj}
                     />
                   );
                 })}
@@ -136,18 +125,21 @@ function FormSchemaRenderFields({
             key={objName}
             objName={objName}
             paramJsonSchema={fieldSchema}
-            field={{
-              value: formik?.values[objName],
-              onChange: onChange(objName),
-              error: formik?.errors[objName],
-            }}
+            field={baseField}
           />,
         );
       }
     }
 
     return fields;
-  }, [JSON.stringify(formik.values), modelSchema, autoSave]);
+  }, [
+    modelSchema,
+    formik.values,
+    formik.errors,
+    handleChange,
+    setError,
+    errorsMessage,
+  ]);
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }

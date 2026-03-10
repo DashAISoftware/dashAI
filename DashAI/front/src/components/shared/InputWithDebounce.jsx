@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
 import { Input } from "../configurableObject/Inputs/InputStyles";
 import useDebounce from "../../hooks/useDebounce";
+import { width } from "@mui/system";
 
 /**
  * This is a HOC for an input with a debounce, it will update the value after a delay,

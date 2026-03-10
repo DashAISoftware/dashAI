@@ -6,30 +6,59 @@ on:
       - production
 
 jobs:
-  build:
+
+  # ============================================================
+  # 1. Frontend Build
+  # ============================================================
+  react-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: DashAI/front
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable Corepack and use Yarn 3
+        run: corepack enable
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'yarn'
+          cache-dependency-path: DashAI/front/yarn.lock
+      - name: Install and build
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: DashAI/front/build
+          retention-days: 1
+      - name: Run frontend tests
+        run: yarn test --passWithNoTests
+
+  # ============================================================
+  # 2. Publish to PyPI
+  # ============================================================
+  publish-pypi:
+    needs: react-build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
         with:
-          node-version: '18'
-
-      - name: Install frontend dependencies
-        run: yarn install
-        working-directory: DashAI/front
-
-      - name: Build frontend
-        run: yarn build
-        working-directory: DashAI/front
+          name: react-build
+          path: DashAI/front/build
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install build tools
         run: |
@@ -42,7 +71,7 @@ jobs:
       - name: Verify frontend is included in wheel
         run: |
           if ! zipinfo dist/*.whl | grep -q 'DashAI/front/build'; then
-            echo "❌ Archivos del frontend no encontrados en el wheel"
+            echo "Frontend files not found in the wheel package!"
             exit 1
           fi
 
@@ -51,3 +80,186 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: twine upload dist/*
+
+  # ============================================================
+  # 3. Build Windows Executable
+  # ============================================================
+  build-windows-executable:
+    needs: react-build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: DashAI/front/build
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies (CPU-only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-cpu.txt
+          pip install pyinstaller
+      - name: Build executable
+        shell: cmd
+        run: |
+          for /f "delims=" %%i in ('python -c "import site; s=site.getsitepackages(); print(s[-1])"') do set SITEPKG=%%i
+          echo SITEPKG=%SITEPKG%
+          if exist "%SITEPKG%\llama_cpp\lib" (
+              echo Found llama_cpp/lib — adding binaries
+              pyinstaller -D -n DashAI-launcher-cpu --clean --noconfirm ^
+                --add-data "DashAI/front/build;DashAI/front/build" ^
+                --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+                --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+                --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
+                --add-data "%SITEPKG%\transformers;transformers" ^
+                --add-data "DashAI/alembic;DashAI/alembic" ^
+                --add-binary "%SITEPKG%\llama_cpp\lib\*;llama_cpp/lib" ^
+                --additional-hooks-dir=hooks DashAI/__main__.py
+          ) else (
+              echo No llama_cpp/lib — building without binaries
+              pyinstaller -D -n DashAI-launcher-cpu --clean --noconfirm  ^
+                --add-data "DashAI/front/build;DashAI/front/build" ^
+                --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+                --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+                --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
+                --add-data "%SITEPKG%\transformers;transformers" ^
+                --add-data "DashAI/alembic;DashAI/alembic" ^
+                --additional-hooks-dir=hooks DashAI/__main__.py
+          )
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build Windows Installer
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/installer.iss
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: DashAI-windows-installer
+          path: installer/DashAI-Installer.exe
+          retention-days: 1
+
+  # ============================================================
+  # 4. Build macOS ARM64 Executable
+  # ============================================================
+  build-macos-arm64:
+    needs: react-build
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: DashAI/front/build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies (CPU-only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-cpu.txt
+          pip install pyinstaller
+          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+      - name: Build ARM64 executable
+        run: |
+          SITEPKG=$(python -c "import site; print(site.getsitepackages()[-1])")
+          echo "SITEPKG=$SITEPKG"
+          if [ -d "$SITEPKG/llama_cpp/lib" ]; then
+            echo "Found llama_cpp/lib — adding binaries"
+            pyinstaller -F -n DashAI-launcher-cpu-arm64 --clean \
+              --add-data "DashAI/front/build:DashAI/front/build" \
+              --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
+              --add-data "$SITEPKG/transformers:transformers" \
+              --add-data "DashAI/alembic;DashAI/alembic" \
+              --add-binary "$SITEPKG/llama_cpp/lib/*:llama_cpp/lib" \
+              --additional-hooks-dir=hooks DashAI/__main__.py
+          else
+            echo "No llama_cpp/lib — building without binaries"
+            pyinstaller -F -n DashAI-launcher-cpu-arm64 --clean \
+              --add-data "DashAI/front/build:DashAI/front/build" \
+              --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
+              --add-data "$SITEPKG/transformers:transformers" \
+              --add-data "DashAI/alembic;DashAI/alembic" \
+              --additional-hooks-dir=hooks DashAI/__main__.py
+          fi
+      - name: Sign ARM64 binary (ad-hoc)
+        run: |
+          chmod +x dist/DashAI-launcher-cpu-arm64
+          codesign --force --deep --sign - dist/DashAI-launcher-cpu-arm64
+      - name: Upload ARM64 executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: DashAI-macos-arm64
+          path: dist/DashAI-launcher-cpu-arm64
+          retention-days: 1
+
+  # ============================================================
+  # 5. Build macOS x86_64 Executable
+  # ============================================================
+  build-macos-x86_64:
+    needs: react-build
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download React build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: DashAI/front/build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies (CPU-only)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-cpu.txt
+          pip install pyinstaller
+          pip install --force-reinstall llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+      - name: Build x86_64 executable
+        run: |
+          SITEPKG=$(python -c "import site; print(site.getsitepackages()[-1])")
+          echo "SITEPKG=$SITEPKG"
+          if [ -d "$SITEPKG/llama_cpp/lib" ]; then
+            echo "Found llama_cpp/lib — adding binaries"
+            pyinstaller -F -n DashAI-launcher-cpu-x86_64 --clean \
+              --add-data "DashAI/front/build:DashAI/front/build" \
+              --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
+              --add-data "$SITEPKG/transformers:transformers" \
+              --add-data "DashAI/alembic;DashAI/alembic" \
+              --add-binary "$SITEPKG/llama_cpp/lib/*:llama_cpp/lib" \
+              --additional-hooks-dir=hooks DashAI/__main__.py
+          else
+            echo "No llama_cpp/lib — building without binaries"
+            pyinstaller -F -n DashAI-launcher-cpu-x86_64 --clean \
+              --add-data "DashAI/front/build:DashAI/front/build" \
+              --add-data "DashAI/back/static/images;DashAI/back/static/images" ^
+              --add-data "DashAI/back/types/inf/ptype/LR.sav;DashAI/back/types/inf/ptype" ^
+              --add-data "DashAI/back/types/inf/ptype/scaler.pkl;DashAI/back/types/inf/ptype" ^
+              --add-data "$SITEPKG/transformers:transformers" \
+              --add-data "DashAI/alembic;DashAI/alembic" \
+              --additional-hooks-dir=hooks DashAI/__main__.py
+          fi
+      - name: Sign x86_64 binary (ad-hoc)
+        run: |
+          chmod +x dist/DashAI-launcher-cpu-x86_64
+          codesign --force --deep --sign - dist/DashAI-launcher-cpu-x86_64
+      - name: Upload x86_64 executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: DashAI-macos-x86_64
+          path: dist/DashAI-launcher-cpu-x86_64
+          retention-days: 1

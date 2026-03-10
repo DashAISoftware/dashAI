@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import "./App.css";
 import DatasetsPage from "./pages/datasets/Datasets";
+import ModelsPage from "./pages/models/Models";
 import ExperimentsPage from "./pages/experiments/Experiments";
 import Home from "./pages/home/Home";
 import ExplainersDashboard from "./components/explainers/ExplainersDashboard";
@@ -14,9 +15,9 @@ import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import NewPipeline from "./pages/pipelines/NewPipeline";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
-import PredictionPage from "./pages/predictions/PredictionPage";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
+import JobQueueWidget from "./components/jobs/JobQueueWidget";
 
 function App() {
   return (
@@ -26,10 +27,10 @@ function App() {
       <ResponsiveAppBar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/app/predict" element={<PredictionPage />} />
         <Route path="/app" element={<Home />} />
         <Route path="/app/data/" element={<DatasetsPage />} />
         <Route path="/app/experiments" element={<ExperimentsPage />} />
+        <Route path="/app/models" element={<ModelsPage />} />
         <Route path="/app/explainers">
           <Route index element={<ExplainersPage />} />
           <Route path="runs/:id" element={<ExplainersDashboard />} />
@@ -53,6 +54,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
+      <JobQueueWidget />
     </BrowserRouter>
   );
 }

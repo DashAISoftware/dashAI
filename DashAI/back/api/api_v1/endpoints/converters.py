@@ -221,11 +221,14 @@ async def delete_converter_list(
                 dirs_exist_ok=True,
             )
 
-            # Enqueue all previous converters usando el sistema Huey existente
+            # Enqueue all previous converters
+            job_ids = []
             for converter in previous_converters:
                 # Crear instancia de ConverterListJob y encolarlo directamente
                 job = ConverterListJob(converter_list_id=converter.id)
                 job_queue.put(job)
+                if hasattr(job, "id"):
+                    job_ids.append(job.id)
 
             # Delete all the converters after the current one
             for converter in next_converters:
@@ -238,6 +241,9 @@ async def delete_converter_list(
             # Delete the current converter
             db.delete(converter_list)
             db.commit()
+
+            last_job_id = job_ids[-1] if job_ids else None
+            return {"jobId": last_job_id}
 
         except exc.SQLAlchemyError as e:
             logger.exception(e)

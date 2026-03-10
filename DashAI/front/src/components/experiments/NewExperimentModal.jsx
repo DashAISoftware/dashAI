@@ -19,14 +19,15 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useSnackbar } from "notistack";
 
-import { createExperiment as createExperimentRequest } from "../../api/experiment";
+import { createModelSession as createModelSessionRequest } from "../../api/modelSession";
 import { createRun as createRunRequest } from "../../api/run";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
-
+import { useTourContext } from "../tour/TourProvider";
 import { renderStep } from "./renderStep";
+import { useTranslation } from "react-i18next";
 
 export default function NewExperimentModal({
   open,
@@ -39,6 +40,8 @@ export default function NewExperimentModal({
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
+  const tourContext = useTourContext();
+  const { t } = useTranslation(["experiments", "common"]);
 
   const defaultNewExp = useMemo(
     () => ({
@@ -48,6 +51,9 @@ export default function NewExperimentModal({
       task_name: "",
       input_columns: [],
       output_columns: [],
+      train_metrics: [],
+      validation_metrics: [],
+      test_metrics: [],
       splits: {
         train: 0.6,
         validation: 0.2,
@@ -63,15 +69,21 @@ export default function NewExperimentModal({
 
   // Build steps dynamically
   const steps = [
-    { name: "selectTask", label: "Set name and task" },
+    { name: "selectTask", label: t("experiments:label.setNameAndTask") },
     ...(preselectedDataset
       ? []
-      : [{ name: "selectDataset", label: "Select dataset" }]),
-    { name: "prepareDataset", label: "Prepare dataset" },
-    { name: "configureModels", label: "Configure models" },
+      : [
+          {
+            name: "selectDataset",
+            label: t("experiments:label.selectDataset"),
+          },
+        ]),
+    { name: "prepareDataset", label: t("experiments:label.prepareDataset") },
+    { name: "metricsSelection", label: t("experiments:label.selectMetrics") },
+    { name: "configureModels", label: t("experiments:label.configureModels") },
     {
       name: "configureOptimizer",
-      label: "Configure hyperparameter optimization",
+      label: t("experiments:label.configureOptimizer"),
     },
   ];
 
@@ -115,7 +127,9 @@ export default function NewExperimentModal({
           "",
         );
       } catch (error) {
-        enqueueSnackbar(`Error while trying to create a new run: ${run.name}`);
+        enqueueSnackbar(
+          t("experiments:error.errorCreatingRun", { runName: run.name }),
+        );
 
         if (error.response) {
           console.error("Response error:", error.message);
@@ -135,23 +149,26 @@ export default function NewExperimentModal({
       const finalExperimentName =
         newExp.name.trim() === "" ? defaultName : newExp.name.trim();
 
-      const response = await createExperimentRequest(
+      const response = await createModelSessionRequest(
         newExp.dataset.id,
         newExp.task_name,
         finalExperimentName,
         newExp.input_columns,
         newExp.output_columns,
+        newExp.train_metrics,
+        newExp.validation_metrics,
+        newExp.test_metrics,
         JSON.stringify(newExp.splits),
       );
       const experimentId = response.id;
       await uploadRuns(experimentId);
 
-      enqueueSnackbar("Experiment successfully created.", {
+      enqueueSnackbar(t("experiments:message.experimentCreatedSuccessfully"), {
         variant: "success",
       });
       updateExperiments();
     } catch (error) {
-      enqueueSnackbar("Error while trying to create a new experiment");
+      enqueueSnackbar(t("experiments:error.errorCreatingExperiment"));
 
       if (error.response) {
         console.error("Response error:", error.message);
@@ -186,6 +203,11 @@ export default function NewExperimentModal({
     if (activeStep === steps.length - 1) {
       uploadNewExperiment();
       handleCloseDialog();
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 500);
+      }
       return;
     }
 
@@ -200,13 +222,52 @@ export default function NewExperimentModal({
           setNewExp(defaultNewExp);
           setNextEnabled(false);
         }, 100);
+        if (tourContext && tourContext.run) {
+          setTimeout(() => {
+            tourContext.nextStep();
+          }, 600);
+        }
         return;
       }
     }
 
     setActiveStep((prevStep) => prevStep + 1);
+    if (tourContext && tourContext.run) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 300);
+    }
     setNextEnabled(false);
   };
+
+  useEffect(() => {
+    if (steps[activeStep].name === "configureModels") {
+      const allModelsHaveMetric = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.goal_metric;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveMetric) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+    if (steps[activeStep].name === "configureOptimizer") {
+      const allModelsHaveOptimizers = newExp.runs.every((model) => {
+        if (checkIfHaveOptimazers(model)) {
+          return model.optimizer_name;
+        }
+        return true;
+      });
+      if (newExp.runs.length && allModelsHaveOptimizers) {
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
+    }
+  }, [open, newExp.runs]);
 
   return (
     <Dialog
@@ -214,7 +275,8 @@ export default function NewExperimentModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}} // No cerrar automáticamente
+      disableEscapeKeyDown // Evitar cierre con Escape
       aria-labelledby="new-experiment-dialog-title"
       aria-describedby="new-experiment-dialog-description"
       scroll="paper"
@@ -251,7 +313,7 @@ export default function NewExperimentModal({
                   align={matches ? "center" : "left"}
                   sx={{ mb: { sm: 2, md: 0 } }}
                 >
-                  New experiment
+                  {t("experiments:button.newExperiment")}
                 </Typography>
               </Grid>
             </Grid>
@@ -276,6 +338,19 @@ export default function NewExperimentModal({
             </Stepper>
           </Grid>
         </Grid>
+        {/* Close button for larger screens */}
+        <IconButton
+          onClick={handleCloseDialog}
+          sx={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+            display: { xs: "none", sm: "flex" },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
       {/* Main content - steps */}
       <DialogContent dividers>
@@ -292,7 +367,7 @@ export default function NewExperimentModal({
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
+            {activeStep === 0 ? t("common:close") : t("common:back")}
           </Button>
           <TimestampWrapper
             eventName={
@@ -306,13 +381,28 @@ export default function NewExperimentModal({
             }
           >
             <Button
+              data-tour={
+                steps[activeStep].name === "selectTask"
+                  ? "exp-task-selector-next-button"
+                  : steps[activeStep].name === "selectDataset"
+                    ? "exp-dataset-selector-next-button"
+                    : steps[activeStep].name === "prepareDataset"
+                      ? "exp-prepare-dataset-next-button"
+                      : steps[activeStep].name === "configureModels"
+                        ? "exp-configure-models-next-button"
+                        : steps[activeStep].name === "configureOptimizer"
+                          ? "exp-configure-optimizer-next-button"
+                          : undefined
+              }
               onClick={handleNextButton}
               autoFocus
               variant="contained"
               color="primary"
               disabled={!nextEnabled}
             >
-              {activeStep === steps.length - 1 ? "Save" : "Next"}
+              {activeStep === steps.length - 1
+                ? t("common:save")
+                : t("common:next")}
             </Button>
           </TimestampWrapper>
         </ButtonGroup>

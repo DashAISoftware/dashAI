@@ -1,10 +1,10 @@
-from typing import Union
+from typing import Dict, Optional, Union
 
 from pydantic import BaseModel
 
 
 class RunParams(BaseModel):
-    experiment_id: int
+    model_session_id: int
     model_name: str
     name: str
     parameters: dict
@@ -16,3 +16,12 @@ class RunParams(BaseModel):
     plot_importance_path: str
     goal_metric: str
     description: Union[str, None] = None
+
+
+class UpdateRunParams(BaseModel):
+    run_name: Optional[str] = None
+    run_description: Optional[str] = None
+    parameters: Optional[Dict] = None
+    optimizer: Optional[str] = None
+    optimizer_parameters: Optional[Dict] = None
+    goal_metric: Optional[str] = None

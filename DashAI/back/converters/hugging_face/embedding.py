@@ -1,11 +1,18 @@
+import pyarrow as pa
 import torch
 from datasets import Dataset, concatenate_datasets
 from transformers import AutoModel, AutoTokenizer
 
+from DashAI.back.converters.category.advanced_preprocessing import (
+    AdvancedPreprocessingConverter,
+)
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import enum_field, int_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.value_types import Float
 
 
 class EmbeddingSchema(BaseSchema):
@@ -29,36 +36,59 @@ class EmbeddingSchema(BaseSchema):
             ]
         ),
         "sentence-transformers/all-MiniLM-L6-v2",
-        "Name of the pre-trained model to use",
+        description=MultilingualString(
+            en="Name of the pre-trained model to use",
+            es="Nombre del modelo preentrenado a usar",
+        ),
     )  # type: ignore
 
     max_length: schema_field(
-        int_field(ge=1), 512, "Maximum sequence length for tokenization"
+        int_field(ge=1),
+        512,
+        description=MultilingualString(
+            en="Maximum sequence length for tokenization",
+            es="Longitud máxima de secuencia para la tokenización",
+        ),
     )  # type: ignore
 
     batch_size: schema_field(
-        int_field(ge=1), 32, "Number of samples to process at once"
+        int_field(ge=1),
+        32,
+        description=MultilingualString(
+            en="Number of samples to process at once",
+            es="Número de muestras a procesar a la vez",
+        ),
     )  # type: ignore
 
     device: schema_field(
         enum_field(["cuda", "cpu"]),
         "cpu",
-        "Device to use for computation",
+        description=MultilingualString(
+            en="Device to use for computation",
+            es="Dispositivo a usar para el cómputo",
+        ),
     )  # type: ignore
 
     pooling_strategy: schema_field(
         enum_field(["mean", "cls", "max"]),
         "mean",
-        "Strategy to pool token embeddings into sentence embedding",
+        description=MultilingualString(
+            en="Strategy to pool token embeddings into sentence embedding",
+            es="Estrategia para agrupar embeddings de tokens en uno de oración",
+        ),
     )  # type: ignore
 
 
-class Embedding(HuggingFaceWrapper):
+class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """HuggingFace embedding converter."""
 
     SCHEMA = EmbeddingSchema
-    DESCRIPTION = "Convert text to embeddings using HuggingFace transformer models."
-    DISPLAY_NAME = "Embedding"
+    DESCRIPTION = MultilingualString(
+        en="Convert text to embeddings using HuggingFace transformer models.",
+        es="Convierte texto a embeddings usando modelos de HuggingFace.",
+    )
+    DISPLAY_NAME = MultilingualString(en="Embedding", es="Embedding")
+    IMAGE_PREVIEW = "embedding.png"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -71,6 +101,10 @@ class Embedding(HuggingFaceWrapper):
         self.batch_size = kwargs.get("batch_size", 32)
         self.model = None
         self.tokenizer = None
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """Returns Float32 as the output type for embeddings."""
+        return Float(arrow_type=pa.float32())
 
     def _load_model(self):
         """Load the embedding model and tokenizer."""

@@ -1,4 +1,4 @@
-import { Box, Avatar, Divider } from "@mui/material";
+import { Box } from "@mui/material";
 
 export default function Footer() {
   return (
@@ -8,14 +8,6 @@ export default function Footer() {
       alignItems={"center"}
       flexDirection={"column"}
       py={2}
-    >
-      <Divider sx={{ width: "100%", bgcolor: "#252836" }} />
-      <Avatar
-        alt="DashAI Logo"
-        src="/images/logo.png"
-        variant="square"
-        sx={{ width: 120, p: 0, mt: 2 }}
-      />
-    </Box>
+    ></Box>
   );
 }

@@ -16,7 +16,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import useSchema from "../../../hooks/useSchema";
 import ParamsSettings from "../ParamsSettings";
 import { getComponents as getComponentsRequest } from "../../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../../api/experiment";
+import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getDatasetInfo as getDatasetInfoRequest } from "../../../api/datasets";
 import { parseRangeToIndex } from "../../../utils/parseRange";
@@ -279,10 +279,6 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   return (
     <>
       <DialogContent>
-        <Typography variant="h5" gutterBottom>
-          Select Train Parameters
-        </Typography>
-
         <Grid container>
           <Grid size={{ xs: 12 }}>
             <Typography variant="body1">Split Data:</Typography>
@@ -481,6 +477,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
           </Button>
         </Box>
       </DialogContent>
+
       <ParamsSettings
         open={openSettings}
         modelSchema={modelSchema}

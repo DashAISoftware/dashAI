@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { MenuItem } from "@mui/material";
+import { ListItemText, MenuItem } from "@mui/material";
 import FormInputWrapper from "./FormInputWrapper";
 import { Input } from "./InputStyles";
 /**
@@ -43,7 +43,20 @@ function SelectInput({
       >
         {options.map((option, index) => (
           <MenuItem key={option} value={option}>
-            {optionNames !== undefined ? optionNames[index] : option}
+            <ListItemText
+              slotProps={{
+                primary: {
+                  sx: {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: "100%",
+                    display: "block",
+                  },
+                },
+              }}
+              primary={optionNames !== undefined ? optionNames[index] : option}
+            />
           </MenuItem>
         ))}
       </Input>

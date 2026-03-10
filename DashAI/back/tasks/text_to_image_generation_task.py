@@ -4,6 +4,7 @@ from typing import Any, List, Tuple
 
 from PIL import Image
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -20,8 +21,16 @@ class TextToImageGenerationTask(BaseGenerativeTask):
         "inputs_cardinality": 1,
         "outputs_cardinality": "n",
     }
-    DISPLAY_NAME: str = "Text to Image Generation"
-    DESCRIPTION: str = "This task generates images based on the provided input text."
+    DISPLAY_NAME: str = MultilingualString(en="Text to Image", es="Texto a Imagen")
+    DESCRIPTION: str = MultilingualString(
+        en="""
+        This task generates images based on the provided input text.
+        """,
+        es="""
+        Esta tarea genera imágenes basadas en el
+        texto de entrada proporcionado.
+        """,
+    )
 
     def prepare_for_task(
         self,

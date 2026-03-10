@@ -1,17 +1,28 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-import { Grid, CircularProgress, Box, Alert, AlertTitle } from "@mui/material";
+import {
+  Grid,
+  CircularProgress,
+  Box,
+  Alert,
+  AlertTitle,
+  Chip,
+} from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
 import SplitDatasetTemporal from "./SplitDatasetTemporal";
 import {
   getDatasetInfo as getDatasetInfoRequest,
   getDatasetTemporalInfo,
+  getDatasetTypes as getDatasetTypesRequest,
 } from "../../api/datasets";
 import { getComponents as getComponentsRequest } from "../../api/component";
-import { validateColumns as validateColumnsRequest } from "../../api/experiment";
+import { validateColumns as validateColumnsRequest } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
+import { getColorByColumnType } from "../../utils";
+import { useTranslation } from "react-i18next";
+import { Trans } from "react-i18next";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing
@@ -21,8 +32,10 @@ import { useSnackbar } from "notistack";
  */
 function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [datasetInfo, setDatasetInfo] = useState({});
+  const [datasetTypes, setDatasetTypes] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const [infoLoading, setInfoLoading] = useState(true);
+  const { t } = useTranslation(["experiments", "common"]);
 
   const [taskRequirements, setTaskRequirements] = useState({
     name: "",
@@ -34,8 +47,13 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     },
   });
 
-  const [inputColumnNames, setInputColumnNames] = useState([]);
-  const [outputColumnNames, setOutputColumnNames] = useState([]);
+  const [inputColumnNames, setInputColumnNames] = useState(
+    newExp.input_columns,
+  );
+  const [outputColumnNames, setOutputColumnNames] = useState(
+    newExp.output_columns,
+  );
+
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [shuffle, setShuffle] = useState(true);
@@ -77,8 +95,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const getDatasetInfo = async () => {
     setInfoLoading(true);
     try {
-      const fetchedDatasetInfo = await getDatasetInfoRequest(newExp.dataset.id);
+      const [fetchedDatasetInfo, fetchedDatasetTypes] = await Promise.all([
+        getDatasetInfoRequest(newExp.dataset.id),
+        getDatasetTypesRequest(newExp.dataset.id),
+      ]);
       setDatasetInfo(fetchedDatasetInfo);
+      setDatasetTypes(fetchedDatasetTypes);
 
       if (fetchedDatasetInfo) {
         setDatasetPartitionsIndex({
@@ -103,16 +125,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           } else if (allNames.length === 1) {
             setInputColumnNames([allNames[0]]);
           }
-        } else if (
-          newExp.input_columns &&
-          newExp.input_columns.length > 0 &&
-          allNames.length > 0
-        ) {
-          setInputColumnNames(
-            newExp.input_columns
-              .map((index) => allNames[index])
-              .filter((name) => name !== undefined),
-          );
         }
 
         if (
@@ -122,20 +134,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
           if (allNames.length > 0) {
             setOutputColumnNames([allNames[allNames.length - 1]]);
           }
-        } else if (
-          newExp.output_columns &&
-          newExp.output_columns.length > 0 &&
-          allNames.length > 0
-        ) {
-          setOutputColumnNames(
-            newExp.output_columns
-              .map((index) => allNames[index])
-              .filter((name) => name !== undefined),
-          );
         }
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the dataset info.");
+      enqueueSnackbar(t("experiments:error.errorFetchingDatasetInfo"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -160,7 +162,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       if (currentTask) {
         setTaskRequirements(currentTask);
       } else {
-        enqueueSnackbar(`Task requirements for ${newExp.task_name} not found.`);
+        enqueueSnackbar(
+          t("experiments:error.taskRequirementsNotFound", {
+            taskName: newExp.task_name,
+          }),
+        );
         setTaskRequirements({
           name: newExp.task_name,
           metadata: {
@@ -172,7 +178,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         });
       }
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the task requirements.");
+      enqueueSnackbar(t("experiments:error.errorFetchingTaskRequirements"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -181,22 +187,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         console.error("Unknown Error", error.message);
       }
     }
-  };
-
-  const getIndicesFromNames = (selectedNames, allNames) => {
-    if (
-      !allNames ||
-      allNames.length === 0 ||
-      !selectedNames ||
-      selectedNames.length === 0
-    )
-      return [];
-    return selectedNames
-      .map((name) => {
-        const index = allNames.indexOf(name);
-        return index !== -1 ? index + 1 : -1;
-      })
-      .filter((index) => index !== -1);
   };
 
   const validateColumns = async () => {
@@ -209,16 +199,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       return;
     }
 
-    const inputIndices = getIndicesFromNames(
-      inputColumnNames,
-      datasetInfo.column_names,
-    );
-    const outputIndices = getIndicesFromNames(
-      outputColumnNames,
-      datasetInfo.column_names,
-    );
-
-    if (inputIndices.length === 0 || outputIndices.length === 0) {
+    if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
       setColumnsAreValid(false);
       return;
     }
@@ -227,12 +208,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       const validation = await validateColumnsRequest(
         newExp.task_name,
         newExp.dataset.id,
-        inputIndices,
-        outputIndices,
+        inputColumnNames,
+        outputColumnNames,
       );
       setColumnsAreValid(validation.dataset_status === "valid");
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the columns validation.");
+      enqueueSnackbar(t("experiments:error.errorFetchingColumnsValidation"));
       if (error.response) {
         console.error("Response error:", error.message);
       } else if (error.request) {
@@ -253,19 +234,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       return;
     }
 
-    const inputIndices = getIndicesFromNames(
-      inputColumnNames,
-      datasetInfo.column_names,
-    );
-    const outputIndices = getIndicesFromNames(
-      outputColumnNames,
-      datasetInfo.column_names,
-    );
-
     const updatedExpData = {
       ...newExp,
-      input_columns: inputIndices,
-      output_columns: outputIndices,
+      input_columns: inputColumnNames,
+      output_columns: outputColumnNames,
     };
 
     if (splitType === SPLIT_TYPES.MANUAL) {
@@ -398,9 +370,41 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     fetchTemporalInfo();
   }, [isForecastingTask, inputColumnNames, newExp.dataset?.id]);
 
-  const parseListOfStrings = (stringsList) => {
-    if (!stringsList || stringsList.length === 0) return "any";
-    return stringsList.join(" or ");
+  const renderTypesAsChips = (typesList) => {
+    if (!typesList || typesList.length === 0) {
+      return <span>{t("common:any")}</span>;
+    }
+
+    return (
+      <Box
+        component="span"
+        sx={{
+          display: "inline-flex",
+          gap: 0.5,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {typesList.map((type, index) => (
+          <React.Fragment key={type}>
+            <Chip
+              label={type}
+              size="small"
+              sx={{
+                backgroundColor: getColorByColumnType(type),
+                color: "#fff",
+                fontWeight: 600,
+                fontSize: "0.75rem",
+                height: "22px",
+              }}
+            />
+            {index < typesList.length - 1 && (
+              <span style={{ margin: "0 4px" }}>{t("common:or")}</span>
+            )}
+          </React.Fragment>
+        ))}
+      </Box>
+    );
   };
 
   // Determine if the issue is with splits rather than column validation
@@ -408,64 +412,90 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   return (
     <React.Fragment>
-      <Alert severity={columnsAreValid ? "success" : "error"} sx={{ mb: 1 }}>
+      <Alert
+        severity={columnsAreValid ? "success" : "error"}
+        sx={{ mb: 1 }}
+        data-tour="models-validation-alert"
+      >
         <AlertTitle>
-          {columnsAreValid
-            ? "Current Input and Output columns match"
-            : splitIssue
-              ? "Dataset split configuration is incomplete"
-              : "Current Input and Output columns doesn't match"}{" "}
-          {!splitIssue && taskRequirements.name}{" "}
-          {columnsAreValid ? "requirements" : splitIssue ? "" : "requirements"}
+          {taskRequirements
+            ? t(
+                columnsAreValid
+                  ? "experiments:label.columnsValidRequirements"
+                  : "experiments:label.columnsInvalidRequirements",
+                { taskName: taskRequirements.display_name },
+              )
+            : null}
         </AlertTitle>
-        {splitIssue ? (
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              Please configure valid train/validation/test splits below before
-              proceeding. Make sure the dataset has enough rows for the
-              configured split proportions.
-            </Grid>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
+                <span>The input columns must be of the types</span>
+                {taskRequirements
+                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
+                  : null}
+                <span>
+                  , and they should have a cardinality of
+                  <span>
+                    {{
+                      cardinality: taskRequirements.metadata.inputs_cardinality,
+                    }}
+                    .
+                  </span>
+                </span>
+              </Trans>
+            </Box>
           </Grid>
-        ) : (
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              The input columns must be of the types{" "}
-              {taskRequirements
-                ? parseListOfStrings(taskRequirements.metadata.inputs_types)
-                : null}
-              , and they should have a cardinality of{" "}
-              {taskRequirements.metadata.inputs_cardinality}.
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              The output columns must be of the types{" "}
-              {taskRequirements
-                ? parseListOfStrings(taskRequirements.metadata.outputs_types)
-                : null}
-              , and they should have a cardinality of{" "}
-              {taskRequirements.metadata.outputs_cardinality}.
-            </Grid>
+          <Grid size={{ xs: 12 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
+                <span>The output columns must be of the types</span>
+                {taskRequirements
+                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
+                  : null}
+                <span>
+                  , and they should have a cardinality of
+                  {{
+                    cardinality: taskRequirements.metadata.outputs_cardinality,
+                  }}
+                  .
+                </span>
+              </Trans>
+            </Box>
           </Grid>
-        )}
+        </Grid>
       </Alert>
       {!infoLoading && datasetInfo.nan ? (
         Object.values(datasetInfo.nan).some((v) => v > 0) ? (
           <Alert severity="warning" sx={{ mb: 1 }}>
             <AlertTitle>
-              The dataset contains missing values (NaN) in the columns:
+              {t("experiments:label.missingValuesDetected")}
             </AlertTitle>
             <Grid container spacing={2}>
               {Object.entries(datasetInfo.nan)
                 .filter(([_, count]) => count > 0)
                 .map(([col, count]) => (
                   <Grid item xs={12} key={col}>
-                    - {col}: {count} missing values
+                    - {col}: {count} {t("experiments:label.missingValues")}
                   </Grid>
                 ))}
             </Grid>
-            <p>
-              It's recommended to preprocess the dataset to handle these missing
-              values before training a model.
-            </p>
+            <p>{t("experiments:label.recommendPreprocessMissingValues")}</p>
           </Alert>
         ) : null
       ) : null}
@@ -474,6 +504,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         <Grid container spacing={1}>
           <DivideDatasetColumns
             allColumnNames={datasetInfo.column_names || []}
+            columnTypes={datasetTypes}
             selectedInputColumnNames={inputColumnNames}
             onInputColumnNamesChange={setInputColumnNames}
             selectedOutputColumnNames={outputColumnNames}
@@ -529,8 +560,8 @@ PrepareDatasetStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.object,
     step: PropTypes.string,
     created: PropTypes.instanceOf(Date),

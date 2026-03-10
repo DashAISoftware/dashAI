@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from kink import inject
 from sqlalchemy import exc
@@ -11,9 +12,14 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas.datasets_params import DatasetParams
 from DashAI.back.api.utils import parse_params
-from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset, save_dataset
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    load_dataset,
+    save_dataset,
+    transform_dataset_with_schema,
+)
 from DashAI.back.dependencies.database.models import Dataset, Notebook
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.types.inf.type_inference import infer_types
 
 log = logging.getLogger(__name__)
 
@@ -101,6 +107,7 @@ class DatasetJob(BaseJob):
         dataset_id = self.kwargs.get("dataset_id")
         notebook_id = self.kwargs.get("notebook_id", None)
         params = self.kwargs.get("params", {})
+        n_sample = self.kwargs.get("n_sample", None)
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
         url = self.kwargs.get("url", "")
@@ -115,17 +122,20 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
-            random_name = str(uuid.uuid4())
-            folder_path = config["DATASETS_PATH"] / random_name
+            if n_sample and dataset.file_path != "":
+                folder_path = Path(dataset.file_path)
+            else:
+                random_name = str(uuid.uuid4())
+                folder_path: Path = config["DATASETS_PATH"] / random_name
 
-            try:
-                log.debug("Trying to create a new dataset path: %s", folder_path)
-                folder_path.mkdir(parents=True)
-            except FileExistsError as e:
-                log.exception(e)
-                raise JobError(
-                    f"A dataset with the name {random_name} already exists."
-                ) from e
+                try:
+                    log.debug("Trying to create a new dataset path: %s", folder_path)
+                    folder_path.mkdir(parents=True)
+                except FileExistsError as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"A dataset with the name {random_name} already exists."
+                    ) from e
 
             try:
                 if notebook_id is not None:
@@ -157,10 +167,47 @@ class DatasetJob(BaseJob):
                         ),
                         temp_path=str(temp_dir),
                         params=parsed_params.model_dump(),
+                        n_sample=n_sample,
                     )
 
-                # Calculate nan per column
-                new_dataset.nan_per_column()
+                    if "inferred_types" in params:
+                        schema = params["inferred_types"]
+                    else:
+                        schema = infer_types(
+                            new_dataset.to_pandas(), method="DashAIPtype"
+                        )
+
+                    if "column_renames" in params:
+                        renames = params["column_renames"]
+                        original_names = new_dataset.arrow_table.schema.names
+                        new_names = [renames.get(col, col) for col in original_names]
+
+                        if len(new_names) != len(set(new_names)):
+                            duplicate_names = set()
+                            seen = set()
+                            for name in new_names:
+                                if name in seen:
+                                    duplicate_names.add(name)
+                                else:
+                                    seen.add(name)
+                            msg = (
+                                "Invalid column_renames: resulting column names "
+                                "contain duplicates: "
+                                f"{sorted(duplicate_names)}"
+                            )
+                            raise JobError(msg)
+
+                        arrow_table = new_dataset.arrow_table.rename_columns(new_names)
+                        new_dataset = new_dataset.__class__(
+                            arrow_table,
+                            splits=new_dataset.splits,
+                            types=new_dataset.types,
+                        )
+                        schema = {renames.get(col, col): schema[col] for col in schema}
+
+                    new_dataset = transform_dataset_with_schema(new_dataset, schema)
+
+                new_dataset.compute_metadata()
                 gc.collect()
 
                 dataset_save_path = folder_path / "dataset"

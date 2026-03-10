@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -7,20 +7,23 @@ import plotly.express as px
 from datasets import DatasetDict
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, make_scorer
+from sklearn.preprocessing import LabelEncoder
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
+    float_field,
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.models import BaseModel
 
 
 class PermutationFeatureImportanceSchema(BaseSchema):
     """
-    Permutation Feature Importance is a explanation method to asses the
+    Permutation Feature Importance is an explanation method to assess the
     importance of each feature in a model by evaluating how much the model's
     performance decreases when the values of a specific feature are randomly
     shuffled.
@@ -29,28 +32,62 @@ class PermutationFeatureImportanceSchema(BaseSchema):
     scoring: schema_field(
         enum_field(enum=["accuracy", "balanced_accuracy"]),
         placeholder="accuracy",
-        description="Scorer to evaluate how the perfomance of the model "
-        "changes when a particular feature is shuffled.",
+        description=MultilingualString(
+            en=(
+                "Metric used to evaluate how the model's performance changes when "
+                "a particular feature is shuffled."
+            ),
+            es=(
+                "Métrica utilizada para evaluar cómo cambia el rendimiento del "
+                "modelo cuando se baraja una característica particular."
+            ),
+        ),
+        alias=MultilingualString(en="Scoring metric", es="Métrica de evaluación"),
     )  # type: ignore
 
     n_repeats: schema_field(
         int_field(ge=1),
-        placeholder=10,
-        description="Number of times to permute a feature.",
+        placeholder=20,
+        description=MultilingualString(
+            en=("Number of times to permute a feature."),
+            es=("Número de veces que se permuta una característica."),
+        ),
+        alias=MultilingualString(en="Number of repeats", es="Número de repeticiones"),
     )  # type: ignore
 
     random_state: schema_field(
         int_field(),
         placeholder=0,
-        description="Seed for the random number generator to control the "
-        "permutations of each feature.",
+        description=MultilingualString(
+            en=(
+                "Seed for the random number generator to control permutations of "
+                "each feature."
+            ),
+            es=(
+                "Semilla del generador aleatorio para controlar las permutaciones "
+                "de cada característica."
+            ),
+        ),
+        alias=MultilingualString(en="Random state", es="Semilla aleatoria"),
     )  # type: ignore
 
-    max_samples: schema_field(
-        int_field(ge=1),
-        placeholder=100,
-        description="The number of samples to draw from the dataset to "
-        "calculate feature importance at each repetition.",
+    max_samples_fraction: schema_field(
+        float_field(ge=0.0, le=1.0),
+        placeholder=1.0,
+        description=MultilingualString(
+            en=(
+                "Fraction of samples to draw from the test set to calculate "
+                "feature importance at each repetition."
+            ),
+            es=(
+                "Fracción de muestras a extraer del conjunto de prueba para "
+                "calcular la importancia en cada repetición."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Max samples fraction",
+            es="Fracción máxima de muestras",
+        ),
     )  # type: ignore
 
 
@@ -61,6 +98,22 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     """
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
+    DISPLAY_NAME = MultilingualString(
+        en="Permutation Feature Importance",
+        es="Importancia por Permutación",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Assesses feature importance by measuring the drop in model "
+            "performance when a feature's values are randomly shuffled."
+        ),
+        es=(
+            "Evalúa la importancia de las características midiendo la caída en el "
+            "rendimiento del modelo cuando los valores de una característica se "
+            "barajan aleatoriamente."
+        ),
+    )
+    COLOR = "#800080"
     SCHEMA = PermutationFeatureImportanceSchema
 
     def __init__(
@@ -69,27 +122,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         scoring: Union[str, List[str], None] = None,
         n_repeats: int = 5,
         random_state: Union[int, None] = None,
-        max_samples: int = 1,
+        max_samples_fraction: float = 0.5,
     ):
-        """Initialize a new instance of PermutationFeatureImportance explainer.
-
-        Parameters
-        ----------
-        model: BaseModel
-            Model to be explained
-        scoring: Union[str, List[str], None]
-            Scorer to evaluate how the perfomance of the model
-            changes when a particular feature is shuffled
-        n_repeats: int
-            Numer of times to permute a feature
-        random_state: Union[int, None]
-            Seed for  the random number generator to control the
-            permutations of each feature
-        max_samples: int
-            The number of samples to draw from the dataset to calculate
-            feature importance at each repetition
-        """
-
         super().__init__(model)
 
         metrics = {
@@ -100,72 +134,173 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         self.scoring = metrics[scoring]
         self.n_repeats = n_repeats
         self.random_state = random_state
-        self.max_samples = max_samples
+        self.max_samples_fraction = max_samples_fraction
+
+    def _get_feature_groups(self, columns: List[str]) -> Dict[str, List[int]]:
+        """Group one-hot encoded columns back to their original feature."""
+        feature_groups = {}
+
+        if (
+            hasattr(self.model, "one_hot_encoder")
+            and self.model.one_hot_encoder is not None
+            and hasattr(self.model, "categorical_columns")
+            and self.model.categorical_columns
+        ):
+            encoder = self.model.one_hot_encoder
+            original_cat_cols = self.model.categorical_columns
+
+            encoded_feature_names = list(
+                encoder.get_feature_names_out(original_cat_cols)
+            )
+
+            for orig_col in original_cat_cols:
+                prefix = f"{orig_col}_"
+                indices = [
+                    columns.index(enc_col)
+                    for enc_col in encoded_feature_names
+                    if enc_col.startswith(prefix) and enc_col in columns
+                ]
+                if indices:
+                    feature_groups[orig_col] = indices
+
+            # Add non-categorical columns
+            for idx, col in enumerate(columns):
+                if col not in encoded_feature_names:
+                    feature_groups[col] = [idx]
+        else:
+            for idx, col in enumerate(columns):
+                feature_groups[col] = [idx]
+
+        return feature_groups
+
+    def _calculate_grouped_importance(
+        self,
+        x_data: pd.DataFrame,
+        y: pd.DataFrame,
+        feature_groups: Dict[str, List[int]],
+        max_samples: int,
+    ) -> Dict[str, Dict[str, np.ndarray]]:
+        """Calculate permutation importance for grouped features."""
+        rng = np.random.RandomState(self.random_state)
+
+        n_samples = min(max_samples, len(x_data))
+        sample_indices = rng.choice(len(x_data), size=n_samples, replace=False)
+        x_sample = x_data.iloc[sample_indices].copy().reset_index(drop=True)
+        y_sample = y.iloc[sample_indices].copy().reset_index(drop=True)
+
+        y_array = y_sample.to_numpy().ravel()
+        column_names = list(x_sample.columns)
+
+        # Access the underlying sklearn model
+        sklearn_model = self.model
+
+        def get_predictions(data):
+            # Keep as DataFrame to preserve column names
+            return sklearn_model.predict_proba(data)
+
+        def calc_score(y_true, y_pred_probas):
+            y_pred = np.argmax(y_pred_probas, axis=1)
+            return self.scoring(y_true, y_pred)
+
+        baseline_predictions = get_predictions(x_sample)
+        baseline_score = calc_score(y_array, baseline_predictions)
+
+        results = {"features": [], "importances_mean": [], "importances_std": []}
+
+        for feature_name, col_indices in feature_groups.items():
+            importances = []
+
+            # Get column names for this group
+            group_cols = [column_names[i] for i in col_indices]
+
+            for _ in range(self.n_repeats):
+                # Work with DataFrame to preserve column names
+                x_permuted = x_sample.copy()
+
+                # Permute rows for this group of columns
+                permutation = rng.permutation(n_samples)
+
+                # Get the block of columns, permute rows, put back
+                original_block = x_sample[group_cols].to_numpy()
+                permuted_block = original_block[permutation, :]
+                x_permuted[group_cols] = permuted_block
+
+                permuted_predictions = get_predictions(x_permuted)
+                permuted_score = calc_score(y_array, permuted_predictions)
+
+                importance = baseline_score - permuted_score
+                importances.append(importance)
+
+            results["features"].append(feature_name)
+            results["importances_mean"].append(np.mean(importances))
+            results["importances_std"].append(np.std(importances))
+
+        return results
 
     def explain(self, dataset: Tuple[DatasetDict, DatasetDict]):
-        """Method for calculating the importance of features in the model
-
-        Parameters
-        ----------
-        dataset: Tuple[DatasetDict, DatasetDict]
-        Tuple with (input_samples, targets) used to generate the explanation.
-
-        Returns
-        -------
-        dict
-            Dictionary with the features names and the avarage importance of
-            each feature
-        """
+        """Method for calculating the importance of features in the model."""
         x, y = dataset
 
-        # Select split
         x_test = x["test"]
         y_test = y["test"]
 
-        input_columns = list(x_test.features)
-        output_columns = list(y_test.features)
+        X_df = x_test.to_pandas()
+        y_df = y_test.to_pandas()
 
-        input_columns = list(x_test.features)
-        output_columns = list(y_test.features)
+        y_values = y_df.to_numpy().ravel()
+        if y_values.dtype == object or y_values.dtype.kind in ("U", "S"):
+            if (
+                hasattr(self.model, "label_encoder")
+                and self.model.label_encoder is not None
+            ):
+                y_encoded = self.model.label_encoder.transform(y_values)
+            else:
+                le = LabelEncoder()
+                y_encoded = le.fit_transform(y_values)
+            y_df = pd.DataFrame(y_encoded, columns=y_df.columns)
 
-        types = dict.fromkeys(output_columns, "Categorical")
-        y_test = y_test.change_columns_type(types)
+        input_columns = list(X_df.columns)
 
-        def patched_metric(y_true, y_pred_probas):
-            return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))
+        feature_groups = self._get_feature_groups(input_columns)
 
-        # TODO: binary and multi-label scorer
-        pfi = permutation_importance(
-            estimator=self.model,
-            X=x_test.to_pandas(),
-            y=y_test.to_pandas(),
-            scoring=make_scorer(patched_metric),
-            n_repeats=self.n_repeats,
-            random_state=self.random_state,
-            max_samples=self.max_samples,
+        max_samples = max(int(len(x_test) * self.max_samples_fraction), 1)
+
+        has_grouped_features = any(
+            len(indices) > 1 for indices in feature_groups.values()
         )
 
-        return {
-            "features": input_columns,
-            "importances_mean": np.round(pfi["importances_mean"], 3).tolist(),
-            "importances_std": np.round(pfi["importances_std"], 3).tolist(),
-        }
+        if has_grouped_features:
+            results = self._calculate_grouped_importance(
+                X_df, y_df, feature_groups, max_samples
+            )
+            return {
+                "features": results["features"],
+                "importances_mean": np.round(results["importances_mean"], 3).tolist(),
+                "importances_std": np.round(results["importances_std"], 3).tolist(),
+            }
+        else:
+
+            def patched_metric(y_true, y_pred_probas):
+                return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))
+
+            pfi = permutation_importance(
+                estimator=self.model,
+                X=X_df,
+                y=y_df,
+                scoring=make_scorer(patched_metric),
+                n_repeats=self.n_repeats,
+                random_state=self.random_state,
+                max_samples=max_samples,
+            )
+
+            return {
+                "features": input_columns,
+                "importances_mean": np.round(pfi["importances_mean"], 3).tolist(),
+                "importances_std": np.round(pfi["importances_std"], 3).tolist(),
+            }
 
     def _create_plot(self, data: pd.DataFrame, n_features: int):
-        """Helper method to create the explanation plot using plotly.
-
-        Parameters
-        ----------
-        data: pd.DataFrame
-            dataframe containing the data to be plotted.
-        n_features: int
-            number of features to be displayed initially in the plot.
-
-        Returns:
-        List[dict]
-            list of JSONs containing the information of the explanation plot
-            to be rendered.
-        """
+        """Helper method to create the explanation plot using plotly."""
         fig = px.bar(
             data.iloc[-n_features:],
             x=data.iloc[-n_features:]["importances_mean"],
@@ -215,18 +350,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         return [plotly.io.to_json(fig)]
 
     def plot(self, explanation: dict) -> List[dict]:
-        """Method to create the explanation plot.
-
-        Parameters
-        ----------
-        explanation: dict
-            dictionary with the explanation generated by the explainer.
-
-        Returns:
-        List[dict]
-            list of JSON containing the information of the explanation plot
-            to be rendered.
-        """
+        """Method to create the explanation plot."""
         n_features = 10
         data = pd.DataFrame.from_dict(explanation)
         data = data.sort_values(by=["importances_mean"], ascending=True)

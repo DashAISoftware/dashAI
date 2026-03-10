@@ -2,13 +2,16 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Grid, Typography } from "@mui/material";
 import ResultsTabParametersDisplayList from "./ResultsTabParametersDisplayList";
+import { useTranslation } from "react-i18next";
 
 function ResultsTabParametersDisplay({ displayMode, runData }) {
+  const { t } = useTranslation(["common"]);
+
   return (
     <Grid>
       {displayMode === "nested-list" && (
         <ResultsTabParametersDisplayList
-          name="Parameters"
+          name={t("common:parameters")}
           value={runData.parameters}
         />
       )}

@@ -122,17 +122,25 @@ export const enqueueExplorerJob = async (
 };
 
 export const enqueuePredictionJob = async (
-  run_id: number,
-  id: number | null,
-  json_filename: string,
+  prediction_id: number,
+  manual_input_data?: object[],
   forecast_periods?: number,
 ): Promise<object> => {
-  const kwargs: any = { run_id, json_filename };
+  const formData = new FormData();
 
-  // Add id only if provided (not needed when forecast_periods is used)
-  if (id !== null) {
-    kwargs.id = id;
-  }
+  const simpleManualData = manual_input_data?.map((obj, i) => {
+    const cleanObj: any = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(`file_${i}_${key}`, value); // attach file
+      } else {
+        cleanObj[key] = value;
+      }
+    });
+    return cleanObj;
+  });
+
+  const kwargs: any = { prediction_id, manual_input_data: simpleManualData };
 
   // Add forecast_periods only if provided (for ForecastingTask)
   if (forecast_periods !== undefined && forecast_periods > 0) {
@@ -141,10 +149,9 @@ export const enqueuePredictionJob = async (
 
   const data = {
     job_type: "PredictJob",
-    kwargs: kwargs,
+    kwargs,
   };
 
-  const formData = new FormData();
   formData.append("job_type", data.job_type);
   formData.append("kwargs", JSON.stringify(data.kwargs));
 

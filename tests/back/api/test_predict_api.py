@@ -1,14 +1,14 @@
 import json
-import os
 from pathlib import Path
 
 import joblib
 import pytest
+from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
-from DashAI.back.dependencies.database.models import Dataset, Experiment, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
@@ -21,6 +21,12 @@ from DashAI.back.tasks.tabular_classification_task import TabularClassificationT
 
 class DummyTask(BaseTask):
     name: str = "DummyTask"
+    metadata: dict = {
+        "inputs_types": [ClassLabel, Value],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": "n",
+        "outputs_cardinality": 1,
+    }
 
     def prepare_for_task(self, dataset, output_columns):
         return dataset
@@ -38,7 +44,10 @@ class DummyModel(BaseModel):
     def predict(self, x):
         return {}
 
-    def fit(self, x, y):
+    def train(self, x, y):
+        return
+
+    def prepare_dataset(self, dataset, is_fit=False):
         return
 
 
@@ -100,6 +109,13 @@ def create_dataset(client: TestClient):
                 "dataloader": "JSONDataLoader",
                 "name": json_dataset_entry.name,
                 "data_key": "data",
+                "schema": {
+                    "feature_0": {"type": "Float", "dtype": "float64"},
+                    "feature_1": {"type": "Float", "dtype": "float64"},
+                    "feature_2": {"type": "Float", "dtype": "float64"},
+                    "feature_3": {"type": "Float", "dtype": "float64"},
+                    "class": {"type": "Categorical", "dtype": "string"},
+                },
             },
             "file_path": abs_file_path,
         }
@@ -147,6 +163,13 @@ def create_dataset_2(client: TestClient):
                 "dataloader": "CSVDataLoader",
                 "separator": ",",
                 "name": csv_dataset_entry.name,
+                "schema": {
+                    "SepalLengthCm": {"type": "Float", "dtype": "float64"},
+                    "SepalWidthCm": {"type": "Float", "dtype": "float64"},
+                    "PetalLengthCm": {"type": "Float", "dtype": "float64"},
+                    "PetalWidthCm": {"type": "Float", "dtype": "float64"},
+                    "Species": {"type": "Categorical", "dtype": "string"},
+                },
             },
             "file_path": abs_file_path,
         }
@@ -170,17 +193,20 @@ def create_dataset_2(client: TestClient):
             db.commit()
 
 
-@pytest.fixture(scope="module", name="experiment_id", autouse=True)
-def create_experiment(client: TestClient, dataset: Dataset):
+@pytest.fixture(scope="module", name="model_session_id", autouse=True)
+def create_model_session(client: TestClient, dataset: Dataset):
     session_factory = client.app.container["session_factory"]
 
     with session_factory() as db:
-        experiment = Experiment(
+        model_session = ModelSession(
             dataset_id=dataset["id"],
             name="Experiment",
             task_name="TabularClassificationTask",
             input_columns=["feature_0", "feature_1", "feature_2", "feature_3"],
             output_columns=["class"],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -194,25 +220,25 @@ def create_experiment(client: TestClient, dataset: Dataset):
                 }
             ),
         )
-        db.add(experiment)
+        db.add(model_session)
         db.commit()
-        db.refresh(experiment)
+        db.refresh(model_session)
 
-        yield experiment.id
+        yield model_session.id
 
-        db.delete(experiment)
+        db.delete(model_session)
         db.commit()
         db.close()
 
 
 @pytest.fixture(scope="module", name="run_id")
-def create_run_id(client: TestClient, experiment_id: int):
+def create_run_id(client: TestClient, model_session_id: int):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
         run = Run(
-            experiment_id=experiment_id,
+            model_session_id=model_session_id,
             optimizer_name="OptunaOptimizer",
             optimizer_parameters={
                 "n_trials": 10,
@@ -252,89 +278,64 @@ def create_trained_run(client: TestClient, run_id: int):
     return run_id
 
 
-@pytest.fixture(scope="module", name="prediction_name", autouse=True)
+@pytest.fixture(scope="module", name="prediction_id", autouse=True)
 def create_prediction(client: TestClient, trained_run_id: int, dataset: Dataset):
-    kwargs = {
-        "run_id": trained_run_id,
-        "id": dataset["id"],
-        "json_filename": "predictTest",
+    response = client.post(
+        "/api/v1/predict/",
+        json={
+            "run_id": trained_run_id,
+            "dataset_id": dataset["id"],
+        },
+    )
+    assert response.status_code == 200, response.text
+
+    form_data = {
+        "job_type": "PredictJob",
+        "kwargs": json.dumps({"prediction_id": response.json()["id"]}),
     }
 
-    form_data = {"job_type": "PredictJob", "kwargs": json.dumps(kwargs)}
-
-    response = client.post(
+    enqueued_response = client.post(
         "/api/v1/job/",
         data=form_data,
     )
-    assert response.status_code == 201, response.text
 
-    job_id = response.json()["id"]
-    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
-    assert job_status["status"] == "finished", f"Predict job failed: {job_status}"
+    assert enqueued_response.status_code == 201, enqueued_response.text
 
-    return kwargs["json_filename"] + ".json"
+    prediction_id = response.json()["id"]
+    return prediction_id
 
 
-def test_get_metadata_prediction_json(client: TestClient):
-    config = client.app.container["config"]
-    path = Path(f"{config['DATASETS_PATH']}/predictions/")
-    response = client.get("/api/v1/predict/metadata_json/", params={"path": path})
+def test_get_all_predictions(
+    client: TestClient, trained_run_id: int, prediction_id: int
+):
+    """Test getting all predictions with optional filtering."""
+    # Get all predictions
+    response = client.get("/api/v1/predict/")
     assert response.status_code == 200, response.text
-    json_data = {
-        "id": 1,
-        "pred_name": "predictTest.json",
-        "run_name": "KNeighborsClassifier",
-        "model_name": "Run",
-        "dataset_name": "test_json",
-        "task_name": "TabularClassificationTask",
-    }
-    assert response.json() == [json_data]
+    predictions = response.json()
+    assert isinstance(predictions, list)
+    assert len(predictions) > 0
 
-
-def test_get_prediction_table(client: TestClient):
-    response = client.get("/api/v1/predict/prediction_table")
+    # Filter by run_id
+    response = client.get("/api/v1/predict/", params={"run_id": trained_run_id})
     assert response.status_code == 200, response.text
-    prediction_data = response.json()
+    predictions = response.json()
+    assert isinstance(predictions, list)
+    assert all(pred["run_id"] == trained_run_id for pred in predictions)
 
-    assert isinstance(prediction_data, list)
-    table_dict = prediction_data[0]
-    assert table_dict["id"] == 1
-    assert table_dict["run_name"] == "KNeighborsClassifier"
-    assert table_dict["model_name"] == "Run"
-    assert table_dict["dataset_name"] == "test_json"
-    assert table_dict["task_name"] == "TabularClassificationTask"
-
-
-def test_model_table(client: TestClient):
-    response = client.get("/api/v1/predict/model_table")
+    # Filter by prediction_id
+    response = client.get("/api/v1/predict/", params={"prediction_id": prediction_id})
     assert response.status_code == 200, response.text
-    model_data = response.json()
-    table_dict = model_data[0]
-    assert table_dict["id"] == 1
-    assert table_dict["experiment_name"] == "Experiment"
-    assert table_dict["run_name"] == "Run"
-    assert table_dict["task_name"] == "TabularClassificationTask"
-    assert table_dict["model_name"] == "KNeighborsClassifier"
-    assert table_dict["dataset_name"] == "test_json"
-    assert table_dict["dataset_id"] == 1
-
-
-def test_predict_summary(client: TestClient, prediction_name: str):
-    response = client.get(
-        f"/api/v1/predict/predict_summary?pred_name={prediction_name}"
-    )
-    assert response.status_code == 200, response.text
-    summary = response.json()
-
-    assert summary["total_data_points"] == 150
-    assert summary["Unique_classes"] == 3
-    assert len(summary["class_distribution"]) == 3
-    assert len(summary["sample_data"]) == 50
+    predictions = response.json()
+    assert isinstance(predictions, list)
+    assert len(predictions) == 1
+    assert predictions[0]["id"] == prediction_id
 
 
 def test_filter_datasets_endpoint(
     client: TestClient, trained_run_id: int, dataset: Dataset, dataset_2: Dataset
 ):
+    """Test filtering datasets that match the run's input columns."""
     response = client.get(
         "/api/v1/predict/filter_datasets",
         params={"run_id": trained_run_id},
@@ -348,40 +349,44 @@ def test_filter_datasets_endpoint(
     assert dataset_2["name"] not in dataset_names
 
 
-@pytest.fixture(name="json_data")
-def read_json_as_dict(client: TestClient, prediction_name: str):
-    config = client.app.container["config"]
-    path = Path(f"{config['DATASETS_PATH']}/predictions/{prediction_name}")
-    with open(path, mode="r", encoding="utf-8") as json_file:
-        data = json.load(json_file)  # Carga el JSON como diccionario o lista
-    return data["prediction"]
-
-
-def test_download_prediction(client: TestClient, json_data: list, prediction_name: str):
-    response = client.get(f"/api/v1/predict/download/{prediction_name}")
-    assert response.status_code == 200, response.text
-    assert response.headers["Content-Type"] == "application/json"
-    assert response.json() == json_data
-
-
-def test_rename_prediction(client: TestClient, prediction_name: str):
-    new_name = "renamed_prediction"
-    response = client.patch(
-        f"/api/v1/predict/{prediction_name}",
-        json={"predict_name": prediction_name, "new_name": new_name},
+def test_delete_prediction(client: TestClient, trained_run_id: int):
+    """Test deleting a prediction."""
+    # Create a new prediction for deletion test
+    response = client.post(
+        "/api/v1/predict/",
+        json={
+            "run_id": trained_run_id,
+        },
     )
     assert response.status_code == 200, response.text
-    data_path = client.app.container["config"]["DATASETS_PATH"]
-    assert os.path.exists(Path(f"{data_path}/predictions/{new_name}.json"))
-    old_name = f"{prediction_name}"[:-5]  # remove .json extension
-    client.patch(
-        f"/api/v1/predict/{new_name}.json",
-        json={"predict_name": new_name + ".json", "new_name": old_name},
-    )
+    prediction_id = response.json()["id"]
 
-
-def test_delete_prediction(client: TestClient, prediction_name: str):
-    response = client.delete(f"/api/v1/predict/{prediction_name}")
+    # Delete the prediction
+    response = client.delete(f"/api/v1/predict/{prediction_id}")
     assert response.status_code == 200, response.text
-    data_path = client.app.container["config"]["DATASETS_PATH"]
-    assert not os.path.exists(Path(f"{data_path}/predictions/{prediction_name}"))
+
+    # Verify it's deleted
+    response = client.get("/api/v1/predict/", params={"prediction_id": prediction_id})
+    assert response.status_code == 200, response.text
+    predictions = response.json()
+    assert len(predictions) == 0
+
+
+def test_prediction_not_found(client: TestClient):
+    """Test handling for non-existent prediction."""
+    non_existent_id = 99999
+
+    response = client.get("/api/v1/predict/", params={"prediction_id": non_existent_id})
+    assert response.status_code == 200, response.text
+    assert response.json() == []
+
+
+def test_run_not_found(client: TestClient):
+    """Test error handling for non-existent run."""
+    non_existent_run_id = 99999
+
+    response = client.get(
+        "/api/v1/predict/filter_datasets", params={"run_id": non_existent_run_id}
+    )
+    assert response.status_code == 404, response.text
+    assert response.json()["detail"] == "Run not found"

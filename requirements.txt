@@ -1,6 +1,6 @@
 # Nota: Tuvimos que volver a usar este tipo de requirements en vez de compilar el .in
 # pip-compile rompia todo el CI/CD ya que no dejaba elegir bien que version de torch usar
-
+setuptools>=65.0.0,<82
 fastapi[all]
 SQLAlchemy
 streaming_form_data
@@ -12,7 +12,7 @@ joblib
 pydantic
 pydantic-settings
 starlette
-scikit-learn
+scikit-learn<1.8.0
 datasets
 diffusers
 evaluate
@@ -25,7 +25,7 @@ typer
 rich
 torch
 torchvision
-transformers
+transformers==4.50.0
 sacrebleu
 sentencepiece
 optuna
@@ -39,3 +39,8 @@ imblearn
 numba
 llvmlite
 huey
+ijson
+greenery==3.2
+xlrd
+filetype
+torchmetrics

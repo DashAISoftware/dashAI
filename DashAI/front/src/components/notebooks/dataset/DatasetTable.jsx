@@ -1,5 +1,4 @@
-// src/components/common/ServerDataGrid.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   DataGrid,
   GridToolbarContainer,
@@ -14,17 +13,22 @@ import { LinearProgress } from "@mui/material";
 import {
   exportDatasetCsvByPath,
   getDatasetTypesByFilePath,
+  renameDatasetColumn,
 } from "../../../api/datasets";
+import { useTranslation } from "react-i18next";
+import EditableColumnHeader from "./EditableColumnHeader";
 
 /**
  * Props:
- * - fetchPage: async (page, pageSize) => { rows: Array<object>, total: number }
+ * - fetchPage: async (page, pageSize, filterModel) => { rows: Array<object>, total: number }
  * - initialPageSize?: number (default 5)
  * - columns?: GridColDef[] (optional)
  * - deps?: any[] (optional)
  * - autoHeight?: boolean (default true)
  * - pageSizeOptions?: number[] (default [5, 10, 25])
  * - datasetPath?: string (optional) - Path to dataset for CSV export
+ * - datasetId?: number (optional) - Dataset ID for column renaming
+ * - editableColumns?: boolean (default false) - Enable column name editing
  */
 export default function DatasetTable({
   fetchPage,
@@ -32,20 +36,25 @@ export default function DatasetTable({
   columns: columnsProp,
   deps = [],
   autoHeight = true,
-  density = "compact",
   pageSizeOptions = [5, 10, 25],
-  datasetPath, // Nueva prop para la ruta del dataset
+  datasetPath,
+  datasetId,
+  editableColumns = false,
+  density = "compact",
   ...props
 }) {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [columnTypes, setColumnTypes] = useState({});
+  const gridRef = useRef(null);
+  const { t } = useTranslation(["common"]);
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: initialPageSize,
   });
+  const [filterModel, setFilterModel] = useState({ items: [] });
 
   useEffect(() => {
     if (!datasetPath) return;
@@ -53,13 +62,11 @@ export default function DatasetTable({
       try {
         const types = await getDatasetTypesByFilePath(datasetPath);
         setColumnTypes(types);
-      } catch (e) {
-        console.error("Error fetching column types:", e);
-      }
+      } catch (e) {}
     };
 
     fetchColumnTypes();
-  }, [datasetPath]);
+  }, [datasetPath, ...deps]);
 
   useEffect(() => {
     let alive = true;
@@ -67,7 +74,7 @@ export default function DatasetTable({
       try {
         setLoading(true);
         const { page, pageSize } = paginationModel;
-        const data = await fetchPage(page, pageSize);
+        const data = await fetchPage(page, pageSize, filterModel);
         if (!alive) return;
 
         const withIds = (data?.rows ?? []).map((r, i) => ({
@@ -78,7 +85,6 @@ export default function DatasetTable({
         setRows(withIds);
         setRowCount(data?.total ?? withIds.length);
       } catch (e) {
-        console.error(e);
         setRows([]);
         setRowCount(0);
       } finally {
@@ -89,11 +95,56 @@ export default function DatasetTable({
     return () => {
       alive = false;
     };
-  }, [fetchPage, paginationModel, ...deps]);
+  }, [fetchPage, paginationModel, filterModel, ...deps]);
+  const handleFilterModelChange = useCallback((model) => {
+    setFilterModel((prev) => {
+      setPaginationModel((m) => ({ ...m, page: 0 }));
+      if (!model || !model.items || model.items.length === 0) {
+        return { items: [] };
+      }
+      return model;
+    });
+  }, []);
 
   useEffect(() => {
     setPaginationModel((m) => ({ ...m, page: 0 }));
   }, deps);
+
+  const handleColumnRename = useCallback(
+    async (oldName, newName) => {
+      if (!datasetId) {
+        throw new Error("Dataset ID is required for renaming columns");
+      }
+
+      try {
+        const result = await renameDatasetColumn(datasetId, oldName, newName);
+
+        const { page, pageSize } = paginationModel;
+        const data = await fetchPage(page, pageSize, filterModel);
+        const withIds = (data?.rows ?? []).map((r, i) => ({
+          id: page * pageSize + i,
+          ...r,
+        }));
+
+        setColumnTypes((prevTypes) => {
+          const newTypes = { ...prevTypes };
+          if (newTypes[oldName]) {
+            newTypes[newName] = newTypes[oldName];
+            delete newTypes[oldName];
+          }
+          return newTypes;
+        });
+
+        setRows(withIds);
+        setRowCount(data?.total ?? withIds.length);
+
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    },
+    [datasetId, paginationModel, filterModel, fetchPage],
+  );
 
   const columns = useMemo(() => {
     if (columnsProp?.length) return columnsProp;
@@ -104,41 +155,66 @@ export default function DatasetTable({
       .map((field) => ({
         field,
         headerName: field,
+        type:
+          columnTypes[field] &&
+          ["int", "integer", "float", "double", "number"].includes(
+            String(columnTypes[field].type).toLowerCase(),
+          )
+            ? "number"
+            : columnTypes[field] &&
+                ["bool", "boolean"].includes(
+                  String(columnTypes[field].type).toLowerCase(),
+                )
+              ? "boolean"
+              : columnTypes[field] &&
+                  ["date", "datetime", "timestamp"].includes(
+                    String(columnTypes[field].type).toLowerCase(),
+                  )
+                ? "date"
+                : "string",
         minWidth: 120,
         width: Math.max(120, field.length * 8 + 40),
-        renderHeader: () => (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
-              {field}
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              style={{ fontSize: "0.7rem" }}
+        sortable: !editableColumns,
+        disableColumnMenu: editableColumns,
+        renderHeader: () =>
+          editableColumns && datasetId ? (
+            <EditableColumnHeader
+              columnName={field}
+              columnType={columnTypes[field]?.type}
+              onRename={handleColumnRename}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                width: "100%",
+              }}
             >
-              {columnTypes[field]?.type || "unknown"}
-            </Typography>
-            {columnTypes[field]?.dtype && (
+              <Typography variant="subtitle2" style={{ fontWeight: "bold" }}>
+                {field}
+              </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
-                style={{ fontSize: "0.7rem", opacity: 0.8 }}
+                style={{ fontSize: "0.7rem" }}
               >
-                {columnTypes[field]?.dtype}
+                {columnTypes[field]?.type || t("common:unknown")}
               </Typography>
-            )}
-          </div>
-        ),
+            </div>
+          ),
       }));
-  }, [rows, columnsProp, columnTypes]);
+  }, [
+    rows,
+    columnsProp,
+    columnTypes,
+    editableColumns,
+    datasetId,
+    handleColumnRename,
+    t,
+  ]);
 
   // Custom CSV Export Button
   function CsvExportButton() {
@@ -156,15 +232,15 @@ export default function DatasetTable({
     const handleExportCsv = async () => {
       try {
         if (datasetPath) {
-          // Usar nuestro endpoint personalizado
+          // Use our custom endpoint
           const blob = await exportDatasetCsvByPath(datasetPath);
 
-          // Crear URL temporal y descargar
+          // Create temporary URL and download
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
 
-          // Extraer nombre del dataset desde la ruta
+          // Extract dataset name from path
           const datasetName = datasetPath.split("/").pop() || "dataset";
           link.download = `${datasetName}.csv`;
 
@@ -173,7 +249,7 @@ export default function DatasetTable({
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
         } else {
-          // Fallback al método original del DataGrid
+          // Fallback to original DataGrid method
           const apiRef = useGridApiContext();
           apiRef.current.exportDataAsCsv({
             fileName: "dataset-export",
@@ -183,7 +259,7 @@ export default function DatasetTable({
         }
       } catch (error) {
         console.error("Error exporting CSV:", error);
-        // Fallback al método original en caso de error
+        // Fallback to original method in case of error
         const apiRef = useGridApiContext();
         apiRef.current.exportDataAsCsv({
           fileName: "dataset-export",
@@ -205,7 +281,7 @@ export default function DatasetTable({
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
         >
-          Export
+          {t("common:export")}
         </Button>
         <Menu
           id="export-menu"
@@ -220,7 +296,7 @@ export default function DatasetTable({
         >
           <MenuItem onClick={handleExportCsv}>
             <Download sx={{ mr: 1, fontSize: 16 }} />
-            Download as CSV
+            {t("common:exportAsCSV")}
           </MenuItem>
         </Menu>
       </>
@@ -239,8 +315,16 @@ export default function DatasetTable({
     );
   }
 
+  // DEBUG: Log filterModel changes to see what is sent to the backend
+  useEffect(() => {
+    if (filterModel && filterModel.items && filterModel.items.length > 0) {
+      //
+    }
+  }, [filterModel]);
+
   return (
     <DataGrid
+      ref={gridRef}
       rows={rows}
       columns={columns}
       rowCount={rowCount}
@@ -248,18 +332,22 @@ export default function DatasetTable({
       autoHeight={autoHeight}
       disableRowSelectionOnClick
       paginationMode="server"
+      filterMode="server"
       paginationModel={paginationModel}
       onPaginationModelChange={setPaginationModel}
       pageSizeOptions={pageSizeOptions}
       density={density}
+      filterModel={filterModel}
+      onFilterModelChange={handleFilterModelChange}
       initialState={{
+        density: "compact",
         pagination: { paginationModel: { pageSize: initialPageSize } },
       }}
       slots={{
         toolbar: CustomToolbar,
         loadingOverlay: LinearProgress,
       }}
-      columnHeaderHeight={85}
+      columnHeaderHeight={editableColumns ? 95 : 85}
       {...props}
     />
   );

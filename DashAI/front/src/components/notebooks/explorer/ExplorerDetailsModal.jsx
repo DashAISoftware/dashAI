@@ -20,31 +20,55 @@ import {
 } from "@mui/icons-material";
 
 import { TabColumns, TabResults, TabInfo, TabParameters } from "./tabs";
-
-const tabs = [
-  { label: "Info", value: 0, icon: <InfoOutlined /> },
-  { label: "Columns", value: 1, icon: <ViewColumnOutlined /> },
-  { label: "Parameters", value: 2, icon: <TuneOutlined /> },
-  { label: "Results", value: 3, icon: <AnalyticsOutlined /> },
-];
-
-const defaultTab = tabs.find((tab) => tab.label === "Results").value;
-
-const MemoizedResultTab = React.memo(
-  TabResults,
-  (prev, next) => prev.id == next.id,
-);
+import PlotLayoutForm from "./plotLayout/PlotLayoutForm";
+import { updateExplorerResults } from "../../../api/explorer";
+import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 export default function ExplorerDetailsModal({
   open = false,
   onClose = () => {},
   explorer,
+  explorerComponent,
+  data,
+  setData,
+  dataType,
+  loading,
 }) {
   if (!explorer) return null;
-  const [currentTab, setCurrentTab] = useState(defaultTab);
+  if (!data) return null;
+  const [currentTab, setCurrentTab] = useState(3);
+  const [localData, setLocalData] = useState(structuredClone(data));
+  const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
+
+  const tabs = [
+    { label: t("common:info"), value: 0, icon: <InfoOutlined /> },
+    { label: t("common:columns"), value: 1, icon: <ViewColumnOutlined /> },
+    { label: t("common:parameters"), value: 2, icon: <TuneOutlined /> },
+    { label: t("common:results"), value: 3, icon: <AnalyticsOutlined /> },
+  ];
 
   const handleTabChange = (_, newValue) => {
     setCurrentTab(newValue);
+  };
+
+  const handleSaveChangesLayout = async () => {
+    try {
+      await updateExplorerResults(explorer.id, localData);
+      setData(localData);
+      enqueueSnackbar(
+        t("datasets:message.explorerResultsUpdatedSuccessfully"),
+        {
+          variant: "success",
+        },
+      );
+    } catch (error) {
+      console.error("Failed to update explorer results:", error);
+      enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
+        variant: "error",
+      });
+    }
   };
 
   return (
@@ -62,7 +86,7 @@ export default function ExplorerDetailsModal({
         paper: {
           sx: {
             width: 1400,
-            height: 700,
+            height: "90vh",
             maxWidth: "none",
             m: "auto",
           },
@@ -71,7 +95,9 @@ export default function ExplorerDetailsModal({
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Typography variant="h6">
-          Details for Explorer: {explorer.name}
+          {t("datasets:label.detailsForExplorer", {
+            name: explorerComponent.display_name,
+          })}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <IconButton onClick={onClose}>
@@ -108,7 +134,31 @@ export default function ExplorerDetailsModal({
                 height: "100%",
               }}
             >
-              <MemoizedResultTab id={explorer.id} />
+              <TabResults
+                id={explorer.id}
+                data={localData}
+                dataType={dataType}
+                loading={loading}
+              />
+              {dataType === "plotly_json" && (
+                <PlotLayoutForm
+                  data={localData.data}
+                  setData={(newData) => {
+                    setLocalData((prevData) => ({
+                      ...prevData,
+                      data: newData,
+                    }));
+                  }}
+                  layout={localData.layout}
+                  setLayout={(newLayout) => {
+                    setLocalData((prevData) => ({
+                      ...prevData,
+                      layout: newLayout,
+                    }));
+                  }}
+                  onSave={handleSaveChangesLayout}
+                />
+              )}
             </Box>
           </Box>
         </Box>

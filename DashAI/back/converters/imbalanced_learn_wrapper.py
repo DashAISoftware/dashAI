@@ -8,16 +8,17 @@ import pyarrow as pa
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.job.base_job import JobError
+from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.utils import save_types_in_arrow_metadata
 
 
 class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
     """Generic wrapper for imbalanced-learn samplers (e.g., SMOTE, ADASYN)."""
 
     SUPERVISED = True
-    metadata = {}
 
     def __init__(self, **kwargs):
-        super(ImbalancedLearnWrapper, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.fitted = False
         self._resampled_table: Union[pa.Table, None] = None
         self.original_X_column_names_: list = []
@@ -25,6 +26,18 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
 
     def changes_row_count(self) -> bool:
         return True
+
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        ImbalancedLearn samplers preserve the data types of the input columns.
+        This method should ideally return the original type for each column,
+        but since samplers don't change types, we raise NotImplementedError
+        and rely on the transform method to preserve types from the input.
+        """
+        raise NotImplementedError(
+            "ImbalancedLearn samplers preserve input types. "
+            "Types are handled in the transform method."
+        )
 
     def fit(self, x: DashAIDataset, y: DashAIDataset) -> Type[BaseConverter]:
         """
@@ -86,6 +99,16 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
             self._resampled_table = pa.Table.from_pandas(
                 combined_df, preserve_index=False
             )
+            combined_types = x.types.copy()
+            combined_types.update(y.types)
+            types_serialized = {
+                col: combined_types[col].to_string() for col in combined_types
+            }
+
+            self._resampled_table = save_types_in_arrow_metadata(
+                self._resampled_table, types_serialized
+            )
+
         except Exception as e:
             raise JobError(
                 f"Failed to prepare resampled data as PyArrow Table: {e}"
@@ -103,8 +126,14 @@ class ImbalancedLearnWrapper(BaseConverter, metaclass=ABCMeta):
         if self._resampled_table is None:
             raise RuntimeError("Resampled PyArrow Table not available. Call fit first.")
 
+        ds_types = x.types.copy()
+        if y is not None:
+            y_types = y.types.copy()
+            ds_types.update(y_types)
         try:
-            return DashAIDataset(table=self._resampled_table, splits={})
+            dataset = DashAIDataset(self._resampled_table, types=ds_types, splits={})
+            return dataset
+
         except Exception as e:
             raise JobError(
                 f"Failed to create DashAIDataset from resampled data: {e}"

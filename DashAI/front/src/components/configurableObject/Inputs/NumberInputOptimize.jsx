@@ -8,6 +8,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import InputWithDebounce from "../../shared/InputWithDebounce";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders an HPO form field for "number" parameters.
@@ -23,12 +24,37 @@ function OptimizeNumberInput({
   error,
   placeholder,
 }) {
+  const { t } = useTranslation("configurableObject");
+
+  // 0) Split errors into fixed_value vs upper/lower bound for display
+  const errors = error
+    ? value?.optimize
+      ? typeof error === "string"
+        ? error
+        : (error["upper_bound"] || "") + (error["lower_bound"] || "")
+      : error["fixed_value"]
+    : null;
+
+  const fixedError = error && !value?.optimize ? error["fixed_value"] : null;
+  const upperError =
+    error && value?.optimize
+      ? typeof error === "string"
+        ? error
+        : error["upper_bound"] || null
+      : null;
+
+  const lowerError =
+    error && value?.optimize
+      ? typeof error === "string"
+        ? error
+        : error["lower_bound"] || null
+      : null;
+
   // 1) Merge existing user data with defaults from placeholder (if user data is missing)
-  //    e.g. if 'value.optimize' is undefined, fallback to placeholder.optimize or false
-  const mergedOptimize = value.optimize ?? placeholder.optimize ?? false;
-  const mergedLower = value.lower_bound ?? placeholder.lower_bound ?? "";
-  const mergedUpper = value.upper_bound ?? placeholder.upper_bound ?? "";
-  const mergedFixed = value.fixed_value ?? placeholder.fixed_value ?? "";
+  const mergedOptimize = value?.optimize ?? placeholder?.optimize ?? false;
+  const mergedLower = value?.lower_bound ?? placeholder?.lower_bound ?? null;
+  const mergedUpper = value?.upper_bound ?? placeholder?.upper_bound ?? null;
+  const mergedFixed = value?.fixed_value ?? placeholder?.fixed_value ?? null;
 
   // 2) Keep local state for the switch, so toggling is immediate in the UI
   const [switchState, setSwitchState] = useState(mergedOptimize);
@@ -42,35 +68,58 @@ function OptimizeNumberInput({
   const handleSwitchChange = () => {
     const toggled = !switchState;
     setSwitchState(toggled);
-    // Spread the entire "value" and override 'optimize'
-    onChange({ ...value, optimize: toggled });
+
+    // If switching modes and there was an error, use placeholder values
+    const shouldUseePlaceholder = error !== undefined;
+
+    onChange({
+      fixed_value: shouldUseePlaceholder
+        ? (placeholder?.fixed_value ?? null)
+        : mergedFixed,
+      lower_bound: shouldUseePlaceholder
+        ? (placeholder?.lower_bound ?? null)
+        : mergedLower,
+      upper_bound: shouldUseePlaceholder
+        ? (placeholder?.upper_bound ?? null)
+        : mergedUpper,
+      optimize: toggled,
+    });
   };
 
   const handleChangeLower = (inputValue) => {
     const parsed = inputValue === "" ? null : parseFloat(inputValue);
-    onChange({ ...value, lower_bound: parsed });
+    onChange({
+      ...value,
+      lower_bound: isNaN(parsed) ? null : parsed,
+    });
   };
 
   const handleChangeUpper = (inputValue) => {
     const parsed = inputValue === "" ? null : parseFloat(inputValue);
-    onChange({ ...value, upper_bound: parsed });
+    onChange({
+      ...value,
+      upper_bound: isNaN(parsed) ? null : parsed,
+    });
   };
 
   const handleChangeFixed = (inputValue) => {
     const parsed = inputValue === "" ? null : parseFloat(inputValue);
-    onChange({ ...value, fixed_value: parsed });
+    onChange({
+      ...value,
+      fixed_value: isNaN(parsed) ? null : parsed,
+    });
   };
 
   // 4) If 'optimize' is recognized in placeholder, we show the switch & bound inputs
-  const canOptimize = placeholder.optimize !== undefined;
+  const canOptimize = placeholder?.optimize !== undefined;
 
   return (
     <FormInputWrapper name={name} description={description}>
       {/* If we can optimize, show the switch control */}
       {canOptimize && (
-        <FormControl error={Boolean(error)}>
+        <FormControl error={errors !== null}>
           <FormControlLabel
-            label={`Optimize hyperparameter "${name}"`}
+            label={t("optimize", { name: label || name })}
             control={
               <Switch
                 name={name}
@@ -79,7 +128,6 @@ function OptimizeNumberInput({
               />
             }
           />
-          <FormHelperText>{error || " "}</FormHelperText>
         </FormControl>
       )}
       {canOptimize && switchState ? (
@@ -87,23 +135,23 @@ function OptimizeNumberInput({
         <>
           <InputWithDebounce
             variant="outlined"
-            label="enter a value for the lower bound of search space"
+            label={t("lowerBound")}
             name={`${name}-lower`}
-            value={mergedLower}
+            value={mergedLower !== null ? mergedLower : ""}
             onChange={handleChangeLower}
-            error={Boolean(error)}
-            helperText={error || " "}
+            error={lowerError !== null}
+            helperText={lowerError || " "}
             type="number"
             margin="dense"
           />
           <InputWithDebounce
             variant="outlined"
-            label="enter a value for the upper bound of search space"
+            label={t("upperBound")}
             name={`${name}-upper`}
-            value={mergedUpper}
+            value={mergedUpper !== null ? mergedUpper : ""}
             onChange={handleChangeUpper}
-            error={Boolean(error)}
-            helperText={error || " "}
+            error={upperError !== null}
+            helperText={upperError || " "}
             type="number"
             margin="dense"
           />
@@ -112,12 +160,12 @@ function OptimizeNumberInput({
         // If "optimize" is off (or we can't optimize), show a single "fixed_value"
         <InputWithDebounce
           variant="outlined"
-          label="enter a value"
+          label={label || t("enterValue")}
           name={`${name}-fixed`}
-          value={mergedFixed}
+          value={mergedFixed !== null ? mergedFixed : ""}
           onChange={handleChangeFixed}
-          error={Boolean(error)}
-          helperText={error || " "}
+          error={fixedError !== null}
+          helperText={fixedError || " "}
           type="number"
           margin="dense"
         />
@@ -128,8 +176,8 @@ function OptimizeNumberInput({
 
 OptimizeNumberInput.propTypes = {
   name: PropTypes.string,
-  label: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
+  label: PropTypes.string,
+  description: PropTypes.string,
   value: PropTypes.shape({
     optimize: PropTypes.bool,
     fixed_value: PropTypes.oneOfType([
@@ -147,7 +195,6 @@ OptimizeNumberInput.propTypes = {
   }),
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.shape({
-    // The original defaults
     optimize: PropTypes.bool,
     fixed_value: PropTypes.number,
     lower_bound: PropTypes.number,
@@ -160,6 +207,7 @@ OptimizeNumberInput.defaultProps = {
   value: {},
   placeholder: {},
   error: undefined,
+  description: "",
 };
 
 export default OptimizeNumberInput;

@@ -21,12 +21,15 @@ const typesLabels = {
   null: "Null",
 };
 
-const getType = (value) => {
+const getType = (value, options) => {
   if (value === null || value === undefined) {
     return "null";
   }
   if (typeof value === "number") {
-    if (Number.isInteger(value)) {
+    if (
+      Number.isInteger(value) &&
+      options.some((opt) => opt.type === "integer")
+    ) {
       return "integer";
     }
     return "number";
@@ -79,7 +82,7 @@ function FormSchemaFieldsWithOptions({
 
   useEffect(() => {
     if (field.value !== undefined && selectedType === null) {
-      setSelectedType(getType(field.value));
+      setSelectedType(getType(field.value, options));
     }
 
     if (selectedType && selectedType !== "null" && fieldProps.paramJsonSchema) {
@@ -97,25 +100,23 @@ function FormSchemaFieldsWithOptions({
   }, [selectedType, field.value, fieldProps.paramJsonSchema]);
 
   return (
-    <>
-      <Box display="flex" gap={2}>
-        <Box flex={1}>
-          <FormSchemaField {...fieldProps} error={errorField} />
-        </Box>
-        <Box pt={2.5}>
-          {selectedType && (
-            <SingleSelectChipGroup
-              options={options.map(({ type }) => ({
-                key: type,
-                label: typesLabels[type],
-              }))}
-              onChange={(type) => handleTypeChange(type)}
-              selected={selectedType}
-            />
-          )}
-        </Box>
+    <Box display="flex" gap={2} width={"100%"}>
+      <Box flex={1}>
+        <FormSchemaField {...fieldProps} error={errorField} />
       </Box>
-    </>
+      <Box pt={2.5}>
+        {selectedType && (
+          <SingleSelectChipGroup
+            options={options.map(({ type }) => ({
+              key: type,
+              label: typesLabels[type],
+            }))}
+            onChange={(type) => handleTypeChange(type)}
+            selected={selectedType}
+          />
+        )}
+      </Box>
+    </Box>
   );
 }
 

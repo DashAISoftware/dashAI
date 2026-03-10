@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Box } from "@mui/material";
-
 import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 import { useSnackbar } from "notistack";
 import ParameterStepExplorer from "./ParameterStepExplorer";
@@ -8,6 +7,7 @@ import ScopeStepExplorer from "./ScopeStepExplorer";
 import { createNotebookExplorer } from "../../../api/explorer";
 import { enqueueExplorerJob } from "../../../api/job";
 import { startJobPolling } from "../../../utils/jobPoller";
+import { useTranslation } from "react-i18next";
 
 export default function FormExplorerSection({
   step,
@@ -35,13 +35,12 @@ export default function FormExplorerSection({
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(["datasets", "common"]);
 
   const handleSaveExplorer = async (params) => {
     try {
-      // Build columns as expected by backend (list of objects with at least columnName)
       const selectedColumns = scopeColumns.map((c) => ({
         columnName: c.columnName,
-        // keep any available metadata if present
         ...(c.valueType ? { valueType: c.valueType } : {}),
         ...(c.dataType ? { dataType: c.dataType } : {}),
         ...(c.id !== undefined ? { id: c.id } : {}),
@@ -57,7 +56,6 @@ export default function FormExplorerSection({
       setExplorersAndConverters((prev) => [...prev, data]);
 
       const response = await enqueueExplorerJob(created.id);
-      console.log("Enqueued job with ID:", response.id);
 
       if (response && response.id) {
         const jobId = response.id;
@@ -65,24 +63,31 @@ export default function FormExplorerSection({
         startJobPolling(
           jobId,
           (result) => {
-            enqueueSnackbar(`Explorer ${tool.name} processed successfully`, {
-              variant: "success",
-            });
+            enqueueSnackbar(
+              t("datasets:message.explorerProcessedSuccessfully", {
+                name: tool.name,
+              }),
+              {
+                variant: "success",
+              },
+            );
           },
           (result) => {
             enqueueSnackbar(
-              `Error processing explorer: ${result.error || "Unknown error"}`,
+              t("datasets:error.errorProcessingExplorer", {
+                error: result.error || t("common:unknownError"),
+              }),
               { variant: "error" },
             );
           },
         );
       }
       handleClose();
-
-      console.log("Enqueued explorer job:", response);
     } catch (error) {
       console.error("Error creating explorer:", error);
-      enqueueSnackbar("Failed to create explorer", { variant: "error" });
+      enqueueSnackbar(t("datasets:error.failedToCreateExplorer"), {
+        variant: "error",
+      });
     }
   };
 
@@ -96,13 +101,13 @@ export default function FormExplorerSection({
   return (
     <Box
       sx={{
-        overflow: "auto",
+        overflow: "visible",
         display: "flex",
         flexDirection: "column",
         flexGrow: 1,
+        maxHeight: "100%",
       }}
     >
-      {/* Step content */}
       {step === 0 && (
         <ScopeStepExplorer
           classColumnInitialValue={classColumnInitialValue}

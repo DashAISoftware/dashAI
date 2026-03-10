@@ -12,6 +12,7 @@ import FormSchema from "../shared/FormSchema";
 import FormSchemaLayout from "../shared/FormSchemaLayout";
 import useSchema from "../../hooks/useSchema";
 import ForecastingExplainerInfo from "./ForecastingExplainerInfo";
+import { useTranslation } from "react-i18next";
 
 function ConfigureExplainerStep({
   newExpl,
@@ -26,6 +27,7 @@ function ConfigureExplainerStep({
 }) {
   const { defaultValues } = useSchema({ modelName: newExpl.explainer_name });
   const [error, setError] = useState(false);
+  const { t } = useTranslation(["explainers"]);
 
   const isParamsEmpty =
     !newExpl.parameters || Object.keys(newExpl.parameters).length === 0;
@@ -88,7 +90,7 @@ function ConfigureExplainerStep({
     >
       <Grid size={{ xs: 12 }}>
         <Typography variant="h5" component="h3">
-          Configure your Explainer
+          {t("explainers:label.configureExplainer")}
         </Typography>
       </Grid>
 
@@ -112,7 +114,9 @@ function ConfigureExplainerStep({
           sx={{ p: 4, maxHeight: "55vh", overflow: "auto" }}
         >
           <Stack spacing={3}>
-            <DialogContentText>Explainer configuration</DialogContentText>
+            <DialogContentText>
+              {t("explainers:label.explainerConfiguration")}
+            </DialogContentText>
 
             <FormSchemaLayout>
               <FormSchema

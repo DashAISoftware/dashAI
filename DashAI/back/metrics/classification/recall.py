@@ -18,6 +18,11 @@ class Recall(ClassificationMetric):
 
     HIGHER_IS_BETTER = True
 
+    DESCRIPTION: str = (
+        "Fraction of actual positives correctly identified, "
+        "important when false negatives are costly."
+    )
+
     @staticmethod
     def score(
         true_labels: DashAIDataset, probs_pred_labels: np.ndarray, multiclass=None

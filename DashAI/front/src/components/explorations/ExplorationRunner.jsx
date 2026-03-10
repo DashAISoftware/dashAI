@@ -79,7 +79,6 @@ function ExplorationRunner({
         getExplorers();
       })
       .catch((error) => {
-        console.log(error);
         enqueueSnackbar("Error while trying to start explorers", {
           variant: "error",
         });
@@ -93,7 +92,6 @@ function ExplorationRunner({
         setRows(explorers);
       })
       .catch((error) => {
-        console.log(error);
         enqueueSnackbar("Error while trying to fetch explorers", {
           variant: "error",
         });
@@ -184,7 +182,7 @@ function ExplorationRunner({
         field: "last_modified",
         headerName: "Last Modified",
         flex: 1,
-        valueFormatter: (params) => formatDate(params.value),
+        valueGetter: (value) => formatDate(value),
       },
     ],
     [explorerTypes],

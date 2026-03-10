@@ -4,9 +4,8 @@ from typing import Type
 from datasets import concatenate_datasets
 
 from DashAI.back.converters.base_converter import BaseConverter
-from DashAI.back.dataloaders.classes.dashai_dataset import (
-    DashAIDataset,
-)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.types.dashai_data_type import DashAIDataType
 
 
 class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
@@ -23,6 +22,14 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
     @abstractmethod
     def _process_batch(self, batch: DashAIDataset) -> DashAIDataset:
         """Process a batch of data through the model."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_output_type(self, column_name: str = None) -> DashAIDataType:
+        """
+        Each HuggingFace converter must implement this method to specify
+        its output type.
+        """
         raise NotImplementedError
 
     def fit(self, x: DashAIDataset, y: DashAIDataset = None) -> Type[BaseConverter]:
@@ -54,4 +61,16 @@ class HuggingFaceWrapper(BaseConverter, metaclass=ABCMeta):
 
         # Concatenate all results
         concatenated_dataset = concatenate_datasets(all_results)
-        return DashAIDataset(concatenated_dataset.data.table)
+        converted_dataset = DashAIDataset(concatenated_dataset.data.table)
+
+        # Set types for each column using the converter's get_output_type method
+        for col in converted_dataset.column_names:
+            try:
+                converted_dataset.types[col] = self.get_output_type(col)
+            except NotImplementedError:
+                print(
+                    f"Warning: Converter {self.__class__.__name__} does not implement "
+                    f"get_output_type. Column {col} type may not be properly set."
+                )
+
+        return converted_dataset

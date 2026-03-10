@@ -5,64 +5,100 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.io as pio
 from beartype.typing import Any, Dict, Union
 
 from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
 
 
 class CovarianceMatrixExplorerSchema(BaseExplorerSchema):
     min_periods: schema_field(
         int_field(gt=0),
         1,
-        (
-            "The minimum number of observations required per pair of columns to"
-            " have a valid result."
+        description=MultilingualString(
+            en=(
+                "Minimum observations required per column pair to have a valid result."
+            ),
+            es=(
+                "Número mínimo de observaciones requeridas por par de columnas "
+                "para obtener un resultado válido."
+            ),
         ),
+        alias=MultilingualString(en="Minimum periods", es="Períodos mínimos"),
     )  # type: ignore
     delta_degree_of_freedom: schema_field(
         int_field(gt=0),
         1,
-        (
-            "The delta degree of freedom to use when calculating the covariance matrix."
-            "Only used if numeric_only is True."
+        description=MultilingualString(
+            en=(
+                "Delta degrees of freedom to use when calculating the covariance "
+                "matrix. Only used if numeric_only is True."
+            ),
+            es=(
+                "Grados de libertad delta a usar al calcular la matriz de "
+                "covarianza. Solo se usa si numeric_only es True."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Delta degrees of freedom",
+            es="Grados de libertad delta",
         ),
     )  # type: ignore
     numeric_only: schema_field(
         bool_field(),
         True,
-        (
-            "If True, only include numeric columns when calculating correlation."
-            "If False, all columns are included."
+        description=MultilingualString(
+            en=(
+                "If True, include only numeric columns in the calculation; "
+                "otherwise include all columns."
+            ),
+            es=(
+                "Si es True, incluye solo columnas numéricas en el cálculo; de "
+                "lo contrario incluye todas las columnas."
+            ),
         ),
+        alias=MultilingualString(en="Numeric only", es="Solo numéricas"),
     )  # type: ignore
     plot: schema_field(
         bool_field(),
         True,
-        ("If True, the result will be plotted."),
+        description=MultilingualString(
+            en=("If True, the result will be plotted."),
+            es=("Si es True, el resultado será graficado."),
+        ),
+        alias=MultilingualString(en="Plot result", es="Graficar resultado"),
     )  # type: ignore
 
 
-class CovarianceMatrixExplorer(BaseExplorer):
+class CovarianceMatrixExplorer(StatisticalExplorer):
     """
     CovarianceExplorer is an explorer that returns the covariance matrix of the dataset.
 
     Its result is a heatmap by default, but can also be returned as a tabular result.
     """
 
-    DISPLAY_NAME = "Covariance Matrix"
-    DESCRIPTION = (
-        "CovarianceExplorer is an explorer that returns the covariance matrix "
-        "of the dataset."
-        "\n"
-        "Its result is a heatmap by default, "
-        "but can also be returned as a tabular result."
+    DISPLAY_NAME = MultilingualString(
+        en="Covariance Matrix",
+        es="Matriz de Covarianza",
     )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Returns the covariance matrix of the dataset. The default output is "
+            "a heatmap, but a tabular result can also be returned."
+        ),
+        es=(
+            "Devuelve la matriz de covarianza del dataset. Por defecto se "
+            "muestra como mapa de calor, pero también puede retornarse en "
+            "formato tabular."
+        ),
+    )
+    IMAGE_PREVIEW = "covariance_matrix.png"
 
     SCHEMA = CovarianceMatrixExplorerSchema
     metadata: Dict[str, Any] = {
@@ -122,16 +158,13 @@ class CovarianceMatrixExplorer(BaseExplorer):
     ) -> Dict[str, Any]:
         if self.plot:
             resultType = "plotly_json"
-            path = pathlib.Path(exploration_path)
-            result = pio.read_json(path).to_json()
+            with open(exploration_path, "r", encoding="utf-8") as f:
+                result = f.read()
             return {"type": resultType, "data": result, "config": {}}
 
         resultType = "tabular"
-        orientation = options.get("orientation", "dict")
-        config = {"orient": orientation}
+        config = {"orient": "dict"}
 
         path = pathlib.Path(exploration_path)
-        result = (
-            pd.read_json(path).replace({np.nan: None}).T.to_dict(orient=orientation)
-        )
+        result = pd.read_json(path).replace({np.nan: None}).T.to_dict(orient="dict")
         return {"type": resultType, "data": result, "config": config}

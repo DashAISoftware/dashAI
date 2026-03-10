@@ -3,79 +3,99 @@ import { initialColumns } from "./initialColumns";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import InfoIcon from "@mui/icons-material/Info";
+import { PlayArrow } from "@mui/icons-material";
+import { Icon } from "@mui/material";
+import { styled } from "@mui/system";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export const extractColumns = (
   rawMetrics,
   rawRuns,
   datasetId,
-  taskName,
+  handleRun,
   handleRunResultsOpen,
   handlePrediction,
   handleExplainer,
+  handleDeleteRun,
 ) => {
-  // extract metrics
-  let metrics = [];
-  for (const metric of rawMetrics) {
-    metrics = [
-      ...metrics,
-      { field: `train_${metric.name}` },
-      { field: `test_${metric.name}` },
-      { field: `val_${metric.name}` },
-    ];
-  }
+  console.log("Extracting columns with metrics:", rawMetrics);
+  // ===== METRICS (only test metrics) =====
+  const metrics = rawMetrics.map((metric) => ({
+    field: `${metric.name}`,
+    headerName: `${metric.name}`,
+    renderCell: ({ row, value }) => {
+      if ([0, 1, 2].includes(row.status))
+        // Not Started, Delivered, Started
+        return "-";
 
-  // extract parameters
-  let distinctParameters = {};
-  for (const run of rawRuns) {
-    distinctParameters = { ...distinctParameters, ...run.parameters };
-  }
-  const parameters = Object.keys(distinctParameters).map((name) => {
-    return { field: name };
-  });
+      return row.test_metrics[metric.name] !== undefined
+        ? Number(row.test_metrics[metric.name]).toFixed(2)
+        : "-";
+    },
+  }));
 
+  // ===== ACTIONS =====
   const actions = actionsColumns([
+    {
+      title: "Run",
+      Icon: PlayArrow,
+      handleAction: handleRun,
+      requiresFinished: false,
+      alwaysEnabled: false,
+    },
     {
       title: "Details",
       Icon: InfoIcon,
       handleAction: handleRunResultsOpen,
+      requiresFinished: false,
+      alwaysEnabled: true,
     },
     {
       title: "Predict",
       Icon: TrendingUpIcon,
       handleAction: (runId) => handlePrediction(runId, datasetId),
+      requiresFinished: true,
+      alwaysEnabled: false,
     },
     {
       title: "Explain",
       Icon: QueryStatsIcon,
-      handleAction: (runId, modelName) =>
-        handleExplainer(runId, modelName, taskName),
-      useRowData: true,
+      handleAction: handleExplainer,
+      requiresFinished: true,
+      alwaysEnabled: false,
+    },
+    {
+      title: "Delete",
+      Icon: styled(DeleteIcon)(({ theme }) => ({
+        color: theme.palette.error.main,
+      })),
+      handleAction: handleDeleteRun,
+      requiresFinished: false,
+      alwaysEnabled: false,
     },
   ]);
 
-  // column grouping
+  // ===== GROUPING =====
   const columnGroupingModel = [
     { groupId: "Info", children: [...initialColumns] },
-    { groupId: "Metrics", children: [...metrics] },
-    { groupId: "Parameters", children: [...parameters] },
+    { groupId: "Test Metrics", children: [...metrics] },
     { groupId: "Actions", children: [...actions] },
   ];
 
-  // column visibility
+  // ===== VISIBILITY (hide everything except test metrics) =====
   let columnVisibilityModel = {
     created: false,
     last_modified: false,
     start_time: false,
     end_time: false,
   };
-  [...metrics, ...parameters].forEach((col) => {
-    if (col.field.includes("test")) {
-      return; // skip this iteration and proceed with the next one
-    }
-    columnVisibilityModel = { ...columnVisibilityModel, [col.field]: false };
+
+  // hide nothing from test metrics (show them all)
+  metrics.forEach((m) => {
+    columnVisibilityModel[m.field] = true;
   });
 
-  const columns = [...initialColumns, ...metrics, ...parameters, ...actions];
+  const columns = [...initialColumns, ...metrics, ...actions];
 
   return { columns, columnGroupingModel, columnVisibilityModel };
 };

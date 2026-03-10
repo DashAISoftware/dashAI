@@ -1,0 +1,370 @@
+import logging
+import os
+from typing import Union
+
+import pyarrow as pa
+import pyarrow.ipc as ipc
+from fastapi import APIRouter, Depends, Response, status
+from fastapi.exceptions import HTTPException
+from kink import di, inject
+from sqlalchemy import exc, select
+from sqlalchemy.orm import sessionmaker
+
+from DashAI.back.api.api_v1.schemas.model_sessions_params import (
+    ColumnsValidationParams,
+    ModelSessionParams,
+)
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.tasks.base_task import BaseTask
+
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
+
+router = APIRouter()
+
+
+@router.get("/")
+@inject
+async def get_model_sessions(
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve a list of the stored model sessions in the database.
+
+    Parameters
+    ----------
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+
+    Returns
+    -------
+    List[dict]
+        A list of dict containing model sessions.
+    """
+    with session_factory() as db:
+        try:
+            all_model_sessions = db.query(ModelSession).all()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        return all_model_sessions
+
+
+@router.get("/{model_session_id}")
+@inject
+async def get_model_session(
+    model_session_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve the model session associated with the provided ID.
+
+    Parameters
+    ----------
+    model_session_id : int
+        ID of the model session to retrieve.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    JSON
+        JSON with the specified model session id.
+    """
+    with session_factory() as db:
+        try:
+            model_session = db.get(ModelSession, model_session_id)
+            if not model_session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        return model_session
+
+
+@router.post("/validation")
+@inject
+async def validate_columns(
+    params: ColumnsValidationParams,
+    component_registry: ComponentRegistry = Depends(lambda: di["component_registry"]),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Validate if dataset columns are compatible with a task."""
+    with session_factory() as db:
+        try:
+            dataset = db.get(Dataset, params.dataset_id)
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found",
+                )
+
+            dataset_path = f"{dataset.file_path}/dataset"
+            data_filepath = os.path.join(dataset_path, "data.arrow")
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = ipc.open_file(source)
+                batch = reader.get_batch(0)
+                sample_size = min(5, batch.num_rows)
+                sample_batch = batch.slice(0, sample_size)
+
+            table = pa.Table.from_batches([sample_batch])
+            minimal_dataset = DashAIDataset(table)
+
+            column_names = minimal_dataset.column_names
+
+            if len(params.inputs_columns + params.outputs_columns) > len(column_names):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Column index out of range",
+                )
+
+            inputs_names = params.inputs_columns
+            outputs_names = params.outputs_columns
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    if params.task_name not in component_registry:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {params.task_name} not found in the registry.",
+        )
+
+    task: BaseTask = component_registry[params.task_name]["class"]()
+    validation_response = {}
+
+    try:
+        # For ForecastingTask, validate BEFORE prepare_for_task
+        # (column names change after prepare, so validate with originals)
+        if params.task_name == "ForecastingTask":
+            task.validate_dataset_for_task(
+                dataset=minimal_dataset,
+                dataset_name=dataset.name,
+                input_columns=inputs_names,
+                output_columns=outputs_names,
+            )
+        task.prepare_for_task(
+            dataset=minimal_dataset,
+            input_columns=inputs_names,
+            output_columns=outputs_names,
+        )
+        validation_response["dataset_status"] = "valid"
+    except (TypeError, ValueError) as e:
+        validation_response["dataset_status"] = "invalid"
+        validation_response["error"] = str(e)
+    return validation_response
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+@inject
+async def create_model_session(
+    params: ModelSessionParams,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Create a new model session.
+
+    Parameters
+    ----------
+    params : ModelSessionParams
+        The new model session parameters.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    ModelSession
+        The created model session.
+
+    Raises
+    ------
+    HTTPException
+        If the dataset with id dataset_id is not registered in the DB.
+    """
+    with session_factory() as db:
+        try:
+            dataset = db.get(Dataset, params.dataset_id)
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+                )
+            dataset_path = f"{dataset.file_path}/dataset"
+            data_filepath = os.path.join(dataset_path, "data.arrow")
+
+            with pa.OSFile(data_filepath, "rb") as source:
+                reader = ipc.open_file(source)
+                schema = reader.schema
+                column_names = schema.names
+
+            if len(params.input_columns + params.output_columns) > len(column_names):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Column index out of range",
+                )
+
+            model_session = ModelSession(
+                dataset_id=params.dataset_id,
+                task_name=params.task_name,
+                name=params.name,
+                input_columns=params.input_columns,
+                output_columns=params.output_columns,
+                train_metrics=params.train_metrics,
+                validation_metrics=params.validation_metrics,
+                test_metrics=params.test_metrics,
+                splits=params.splits,
+            )
+            db.add(model_session)
+            db.commit()
+            db.refresh(model_session)
+            return model_session
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.delete("/{model_session_id}")
+@inject
+async def delete_model_session(
+    model_session_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Delete the model session associated with the provided ID from the database.
+
+    Parameters
+    ----------
+    model_session_id : int
+        ID of the model session to be deleted.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Response with code 204 NO_CONTENT
+    """
+    with session_factory() as db:
+        try:
+            model_session = db.get(ModelSession, model_session_id)
+            if not model_session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
+                )
+            db.delete(model_session)
+            db.commit()
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.patch("/{model_session_id}")
+@inject
+async def update_model_session(
+    model_session_id: int,
+    dataset_id: Union[int, None] = None,
+    task_name: Union[str, None] = None,
+    name: Union[str, None] = None,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Update the model session associated with the provided ID.
+
+    Parameters
+    ----------
+    model_session_id : int
+        ID of the model session to update.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Dict
+        A dictionary containing the updated model session record.
+    """
+    with session_factory() as db:
+        try:
+            model_session = db.get(ModelSession, model_session_id)
+            if model_session is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
+                )
+
+            # Validate name if provided
+            if name is not None:
+                if not name or not name.strip():
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Name cannot be empty",
+                    )
+
+                new_name = name.strip()
+
+                # Check if name is different from current name
+                if new_name != model_session.name:
+                    # Check if name already exists
+                    exists = db.execute(
+                        select(ModelSession.id).where(
+                            ModelSession.name == new_name,
+                            ModelSession.id != model_session_id,
+                        )
+                    ).scalar()
+                    if exists:
+                        raise HTTPException(
+                            status_code=status.HTTP_409_CONFLICT,
+                            detail="Model session name already exists",
+                        )
+                    setattr(model_session, "name", new_name)
+
+            if dataset_id:
+                setattr(model_session, "dataset_id", dataset_id)
+            if task_name:
+                setattr(model_session, "task_name", task_name)
+
+            if dataset_id or task_name or name:
+                db.commit()
+                db.refresh(model_session)
+                return model_session
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_304_NOT_MODIFIED,
+                    detail="Record not modified",
+                )
+        except HTTPException:
+            raise
+        except exc.IntegrityError as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Model session name already exists",
+            ) from e
+        except exc.SQLAlchemyError as e:
+            db.rollback()
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e

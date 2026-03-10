@@ -80,7 +80,6 @@ const JobQueueWidget = () => {
   const [clearingAll, setClearingAll] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const prevActiveJobsCount = useRef(0);
 
   const handleClearAllJobs = () => {
     setConfirmClearAll(true);
@@ -89,9 +88,7 @@ const JobQueueWidget = () => {
   const confirmClearAllJobs = async () => {
     try {
       setClearingAll(true);
-      const result = await deleteAllJobs();
-      console.log(`Deleted ${result.deleted} jobs`);
-
+      await deleteAllJobs();
       refresh();
       setTimeout(() => {
         refresh();
@@ -141,26 +138,38 @@ const JobQueueWidget = () => {
   const finishedJobs = jobs.filter((job) => job.status === "finished");
   const errorJobs = jobs.filter((job) => job.status === "error");
 
+  const hasInitializedRef = useRef(false);
+  const prevActiveCountRef = useRef(0);
+
+  // Snapshot del estado inicial al completar la primera carga (evita tratar
+  // jobs ya existentes como nuevos y disparar el expand al montar)
   useEffect(() => {
-    try {
-      localStorage.setItem("jobQueueWidgetExpanded", expanded.toString());
-    } catch (e) {}
-  }, [expanded]);
+    if (!loading && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      prevActiveCountRef.current = activeJobs.length;
+    }
+  }, [loading, activeJobs.length]);
+
+  // Auto expand/collapse por transiciones reales durante la sesión
+  useEffect(() => {
+    if (!hasInitializedRef.current) return;
+    const prev = prevActiveCountRef.current;
+    const curr = activeJobs.length;
+    if (prev === 0 && curr > 0) {
+      setExpanded(true);
+    } else if (prev > 0 && curr === 0) {
+      setExpanded(false);
+    }
+    prevActiveCountRef.current = curr;
+  }, [activeJobs.length]);
 
   useEffect(() => {
-    if (
-      activeJobs.length > 0 &&
-      activeJobs.length !== prevActiveJobsCount.current &&
-      !expanded
-    ) {
-      setExpanded(true);
-      const toastTimeout = setTimeout(() => {
-        console.log("New active job");
-      }, 100);
-      return () => clearTimeout(toastTimeout);
+    try {
+      localStorage.setItem("jobQueueWidgetExpanded", String(expanded));
+    } catch (e) {
+      // ignore
     }
-    prevActiveJobsCount.current = activeJobs.length;
-  }, [activeJobs.length, expanded]);
+  }, [expanded]);
 
   const handleToggleExpand = () => {
     setExpanded(!expanded);
@@ -175,7 +184,6 @@ const JobQueueWidget = () => {
   };
 
   const handleRefresh = () => {
-    console.log("Manual refresh triggered");
     setForceUpdate((prev) => prev + 1);
     refresh();
   };

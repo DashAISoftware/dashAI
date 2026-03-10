@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -13,34 +13,10 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
 import { Link as RouterLink } from "react-router-dom";
 
+import { useTourContext } from "../tour/TourProvider";
 import { getDatasets as getDatasetsRequest } from "../../api/datasets";
 import { formatDate } from "../../utils";
-
-const columns = [
-  {
-    field: "name",
-    headerName: "Name",
-    minWidth: 250,
-    editable: false,
-  },
-  {
-    field: "created",
-    headerName: "Created",
-    minWidth: 200,
-    type: Date,
-    valueGetter: (value) => formatDate(value),
-
-    editable: false,
-  },
-  {
-    field: "last_modified",
-    headerName: "Last modified",
-    minWidth: 200,
-    type: Date,
-    valueGetter: (value) => formatDate(value),
-    editable: false,
-  },
-];
+import { Trans, useTranslation } from "react-i18next";
 
 function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -49,6 +25,40 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [loading, setLoading] = useState(true);
   const [datasetsSelected, setDatasetsSelected] = useState([]);
   const [requestError, setRequestError] = useState(false);
+  const tourContext = useTourContext();
+  const { t } = useTranslation(["experiments", "common"]);
+
+  const columns = useMemo(
+    () => [
+      {
+        field: "name",
+        headerName: t("common:name"),
+        minWidth: 250,
+        editable: false,
+      },
+      {
+        field: "created",
+        headerName: t("common:createdAt"),
+        minWidth: 200,
+        type: Date,
+        valueGetter: (value) => formatDate(value),
+        editable: false,
+      },
+      {
+        field: "last_modified",
+        headerName: t("common:lastModified"),
+        minWidth: 200,
+        type: Date,
+        valueGetter: (value) => formatDate(value),
+        editable: false,
+      },
+    ],
+    [t],
+  );
+
+  useEffect(() => {
+    setNewExp({ ...newExp, input_columns: [], output_columns: [] });
+  }, []);
 
   const getDatasets = async () => {
     setLoading(true);
@@ -56,7 +66,9 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       const datasets = await getDatasetsRequest();
       setDatasets(datasets);
     } catch (error) {
-      enqueueSnackbar("Error while trying to obtain the datasets list.");
+      enqueueSnackbar(t("experiments:error.errorFetchingDatasets"), {
+        variant: "error",
+      });
       setRequestError(true);
 
       if (error.response) {
@@ -101,6 +113,11 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       );
       setNewExp({ ...newExp, dataset });
       setNextEnabled(true);
+      if (tourContext && tourContext.run) {
+        setTimeout(() => {
+          tourContext.nextStep();
+        }, 300);
+      }
     }
   }, [datasetsSelected]);
 
@@ -115,7 +132,7 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         sx={{ mb: 4 }}
       >
         <Typography variant="subtitle1" component="h3">
-          Select a dataset for the selected task
+          {t("experiments:label.selectDatasetTitle")}
         </Typography>
       </Grid>
 
@@ -124,17 +141,21 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            <AlertTitle>There is no datasets available.</AlertTitle>
-            Go to{" "}
-            <Link component={RouterLink} to="/app/data">
-              data tab
-            </Link>{" "}
-            to upload one first.
+            <AlertTitle>
+              {t("experiments:label.noDatasetsAvailable")}
+            </AlertTitle>
+            <Trans i18nKey="experiments:label.noDatasetsAvailableGoToDataTab">
+              Go to
+              <Link component={RouterLink} to="/app/data">
+                data tab
+              </Link>
+              to upload one first.
+            </Trans>
           </Alert>
           <Typography></Typography>
         </React.Fragment>
       )}
-      <Paper>
+      <Paper data-tour="exp-dataset-selector">
         <DataGrid
           rows={datasets}
           columns={columns}
@@ -166,8 +187,8 @@ SelectDatasetStep.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

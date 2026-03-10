@@ -1,0 +1,10 @@
+{
+  "advancedConfiguration": "Configuración Avanzada",
+  "enterValue": "Ingrese un valor",
+  "error": {
+    "splitsParams": "La suma de los tamaños de las divisiones debe ser 1"
+  },
+  "lowerBound": "Límite inferior del espacio de búsqueda",
+  "optimize": "Optimizar hiperparámetro {{name}}",
+  "upperBound": "Límite superior del espacio de búsqueda"
+}

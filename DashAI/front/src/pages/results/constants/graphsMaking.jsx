@@ -12,13 +12,16 @@ function graphsMaking(
   graphsToView.bar = graphsToView.bar || [];
   graphsToView.pie = graphsToView.pie || [];
 
+  const radarTheta = showCustomMetrics ? selectedParameters : generalParameters;
+  const radarR = relevantNumericValues;
+
   // Radar Graph
   graphsToView.radar.push({
     type: "scatterpolar",
     name: item.name,
     automargin: true,
-    r: relevantNumericValues,
-    theta: showCustomMetrics ? selectedParameters : generalParameters,
+    r: [...radarR, radarR[0]], // Add first value at the end to close the shape
+    theta: [...radarTheta, radarTheta[0]], // Add first label at the end
     fill: "toself",
   });
 

@@ -11,7 +11,7 @@ def session(client: TestClient):
         "parameters": {
             "num_inference_steps": 1,
             "guidance_scale": 6.0,
-            "device": "cpu",
+            "device": "CPU",
             "negative_prompt": "",
             "seed": 42,
             "width": 256,

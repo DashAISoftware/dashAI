@@ -26,6 +26,11 @@ class DatasetUpdateParams(BaseModel):
     name: str = None
 
 
+class DatasetRenameColumnParams(BaseModel):
+    old_name: str
+    new_name: str
+
+
 class DatasetUploadFromNotebookParams(BaseModel):
     name: str
 

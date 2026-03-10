@@ -35,7 +35,9 @@ def test_ter(metric_input: dict):
 
 
 def test_metrics_different_input_sizes(metric_input: dict):
-    err_pattern = "The length of the true and predicted labels must be equal."
+    err_pattern = (
+        r"The length of the true labels and the predicted labels must be equal"
+    )
     with pytest.raises(ValueError, match=err_pattern):
         Bleu.score(metric_input["true_sentences"], metric_input["wrong_size_sentences"])
 

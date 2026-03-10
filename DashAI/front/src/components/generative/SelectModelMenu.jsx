@@ -12,6 +12,7 @@ import { getRelatedComponents } from "../../api/generativeTask";
 import { createGenerativeSession } from "../../api/generativeTask";
 import { preprocessSchema, buildYupSchema } from "./utils";
 import { generateSequentialName } from "../../utils/nameGenerator";
+import { useTranslation } from "react-i18next";
 
 // Helper function to convert TaskName to readable format
 const formatTaskNameForSession = (taskName) => {
@@ -34,6 +35,8 @@ export default function SelectModelMenu({
 
   const [nameError, setNameError] = useState(false);
   const [nameErrorMessage, setNameErrorMessage] = useState("");
+
+  const { t } = useTranslation(["generative", "common"]);
 
   // Generate default name based on task and existing sessions
   const { defaultName } = useMemo(() => {
@@ -82,7 +85,7 @@ export default function SelectModelMenu({
 
     if (event.target.value.trim() === "") {
       setNameError(true);
-      setNameErrorMessage("Name is required");
+      setNameErrorMessage(t("generative:error.nameRequired"));
     } else {
       setNameError(false);
       setNameErrorMessage("");
@@ -99,7 +102,7 @@ export default function SelectModelMenu({
     onSubmit: async (values) => {
       if (!values.name || values.name.trim() === "") {
         setNameError(true);
-        setNameErrorMessage("Name is required");
+        setNameErrorMessage(t("generative:error.nameRequired"));
         return;
       }
 
@@ -147,7 +150,8 @@ export default function SelectModelMenu({
           mb: 4,
         }}
       >
-        {selectedDisplayName}: Select a model and configure parameters
+        {selectedDisplayName}:{" "}
+        {t("generative:label.selectModelAndConfigureParameters")}
       </Typography>
       <Autocomplete
         disablePortal
@@ -164,10 +168,10 @@ export default function SelectModelMenu({
       {!selectedModel && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
           <Button variant="outlined" onClick={goToBackStep} sx={{ mr: 1 }}>
-            Back to Task Selection
+            {t("generative:button.backToTaskSelection")}
           </Button>
           <Button variant="contained" disabled>
-            Create a session
+            {t("generative:button.createSession")}
           </Button>
         </Box>
       )}
@@ -184,7 +188,7 @@ export default function SelectModelMenu({
                   mb: 2,
                 }}
               >
-                Parameters
+                {t("common:parameters")}
               </Typography>
               <FormSchemaRenderFields
                 modelSchema={processedProperties}
@@ -209,12 +213,12 @@ export default function SelectModelMenu({
                 mb: 2,
               }}
             >
-              Name your session
+              {t("generative:label.nameYourSession")}
             </Typography>
             {/* Session name */}
             <TextField
               fullWidth
-              label="Session Name"
+              label={t("generative:label.sessionName")}
               name="name"
               value={formik.values.name}
               onChange={handleNameInputChange}
@@ -225,7 +229,7 @@ export default function SelectModelMenu({
             {/* Session description */}
             <TextField
               fullWidth
-              label="Session Description"
+              label={t("generative:label.sessionDescription")}
               name="description"
               value={formik.values.description}
               onChange={formik.handleChange}
@@ -242,10 +246,10 @@ export default function SelectModelMenu({
               }}
             >
               <Button variant="outlined" onClick={goToBackStep} sx={{ mr: 1 }}>
-                Back to Task Selection
+                {t("generative:button.backToTaskSelection")}
               </Button>
               <Button type="submit" variant="contained">
-                Create a session
+                {t("generative:button.createSession")}
               </Button>
             </Box>
           </Box>

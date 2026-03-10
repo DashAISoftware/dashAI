@@ -7,41 +7,74 @@ from plotly.graph_objs import Figure
 from plotly.io import read_json
 
 from DashAI.back.core.schema_fields import bool_field, enum_field, schema_field
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class BoxPlotSchema(BaseExplorerSchema):
     horizontal: schema_field(
         bool_field(),
         False,
-        ("If True, the box plot will be horizontal, otherwise vertical."),
+        description=MultilingualString(
+            en=("If True, the box plot will be horizontal; otherwise vertical."),
+            es=(
+                "Si es True, el diagrama de caja será horizontal; en caso "
+                "contrario, vertical."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Horizontal plot",
+            es="Gráfico horizontal",
+        ),
     )  # type: ignore
     points: schema_field(
         enum_field(["all", "outliers", "False"]),
         "outliers",
-        ("One of 'all', 'outliers', or 'False'. Determines which points are shown."),
+        description=MultilingualString(
+            en=(
+                "One of 'all', 'outliers', or 'False'. Determines which points "
+                "are shown."
+            ),
+            es=(
+                "Una de 'all', 'outliers' o 'False'. Determina qué puntos se muestran."
+            ),
+        ),
+        alias=MultilingualString(
+            en="Points shown",
+            es="Puntos mostrados",
+        ),
     )  # type: ignore
 
 
-class BoxPlotExplorer(BaseExplorer):
+class BoxPlotExplorer(DistributionExplorer):
     """
     BoxPlotExplorer is an explorer that returns a box plot
     of selected columns of a dataset.
     """
 
-    DISPLAY_NAME = "Box Plot"
-    DESCRIPTION = (
-        "BoxPlotExplorer is an explorer that returns a box plot "
-        "of selected columns of a dataset."
+    DISPLAY_NAME = MultilingualString(en="Box Plot", es="Diagrama de Caja")
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Returns a box plot of selected columns in the dataset to visualize "
+            "distribution and outliers."
+        ),
+        es=(
+            "Devuelve un diagrama de caja de columnas seleccionadas del dataset "
+            "para visualizar distribución y valores atípicos."
+        ),
     )
+    IMAGE_PREVIEW = "box_plot.png"
 
     SCHEMA = BoxPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_dtypes": ["*"],
+        # It should be added, maybe in a own validate_columns method,
+        # that in this case at least one column should be numeric
+        "allowed_dtypes": ["int64", "float64"],
         "restricted_dtypes": [],
         "input_cardinality": {"min": 1, "max": 2},
     }

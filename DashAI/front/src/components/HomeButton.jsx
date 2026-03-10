@@ -20,7 +20,7 @@ function HomeButton({ title, description, to, Icon }) {
         to={to}
         component={RouterLink}
         underline="hover"
-        color="primary.contrastText"
+        color={theme.palette.text.primary}
       >
         {matches && (
           <Grid
@@ -34,7 +34,7 @@ function HomeButton({ title, description, to, Icon }) {
               <Icon color="primary" fontSize="large" sx={{ width: "100%" }} />
             </Grid>
 
-            <Grid size={{ md: 9 }} sx={{ height: "100%" }}>
+            <Grid size={{ md: 9 }} sx={{ height: "100%", pr: 1 }}>
               <Grid
                 container
                 direction="column"
@@ -42,10 +42,15 @@ function HomeButton({ title, description, to, Icon }) {
                 alignItems="stretch"
                 sx={{ height: "100%" }}
               >
-                <Typography variant="h5" sx={{ mb: 1 }}>
+                <Typography variant="h5" color="text.primary" sx={{ mb: 1 }}>
                   {title}
                 </Typography>
-                <Typography sx={{ mb: 2 }} variant="caption" component="p">
+                <Typography
+                  sx={{ mb: 2 }}
+                  variant="caption"
+                  component="p"
+                  color="text.secondary"
+                >
                   {description}
                 </Typography>
               </Grid>
@@ -65,10 +70,20 @@ function HomeButton({ title, description, to, Icon }) {
             </Grid>
 
             <Grid size={{ xs: 12 }} sx={{ mb: 2 }}>
-              <Typography variant="h5" align="center" sx={{ mb: 1 }}>
+              <Typography
+                variant="h5"
+                align="center"
+                color="text.primary"
+                sx={{ mb: 1 }}
+              >
                 {title}
               </Typography>
-              <Typography variant="caption" component="p" align="center">
+              <Typography
+                variant="caption"
+                component="p"
+                align="center"
+                color="text.secondary"
+              >
                 {description}
               </Typography>
             </Grid>

@@ -15,6 +15,7 @@ import {
   Grid,
   Typography,
   IconButton,
+  Box,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTheme } from "@mui/material/styles";
@@ -27,7 +28,7 @@ import {
 } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 import { getRunById } from "../../api/run";
-import { getExperimentById } from "../../api/experiment";
+import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetTemporalInfo } from "../../api/datasets";
 
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
@@ -37,11 +38,7 @@ import { flags } from "../../constants/flags";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
-
-const steps = [
-  { name: "selectExplainer", label: "Set name and explainer" },
-  { name: "configureExplainer", label: "Configure explainer parameters" },
-];
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a modal that takes the user through the process of creating a new explainer.
@@ -53,11 +50,24 @@ export default function NewGlobalExplainerModal({
   open,
   setOpen,
   explainerConfig,
+  onExplainerCreated,
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
   const formSubmitRef = useRef(null);
+  const { t } = useTranslation(["explainers", "common"]);
+
+  const steps = [
+    {
+      name: "selectExplainer",
+      label: t("explainers:label.selectExplainer"),
+    },
+    {
+      name: "configureExplainer",
+      label: t("explainers:label.configureExplainerParameters"),
+    },
+  ];
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -105,7 +115,9 @@ export default function NewGlobalExplainerModal({
       const run = await getRunById(runId.toString());
       setModelName(run.name);
 
-      const experiment = await getExperimentById(run.experiment_id.toString());
+      const experiment = await getModelSessionById(
+        run.model_session_id.toString(),
+      );
 
       // For forecasting, the first input column is the timestamp column
       const inputCols = experiment.input_columns || [];
@@ -141,39 +153,48 @@ export default function NewGlobalExplainerModal({
   const enqueueGlobalExplainerJob = async (explainerId) => {
     try {
       const response = await enqueueExplainerJobRequest(explainerId, "global");
-      enqueueSnackbar("Global explainer job successfully created.", {
+      enqueueSnackbar(t("explainers:message.globalExplainerJobCreated"), {
         variant: "success",
       });
 
       if (response && response.id) {
-        console.log("Starting to track global explainer job:", response.id);
-
         startJobPolling(
           response.id,
           (result) => {
-            console.log("Global explainer job completed successfully:", result);
             enqueueSnackbar(
-              `Explainer "${newGlobalExpl.name}" completed successfully`,
+              t("explainers:message.explainerJobCompleted", {
+                name: newGlobalExpl.name,
+              }),
               {
                 variant: "success",
               },
             );
             updateExplainers();
+            if (onExplainerCreated) {
+              onExplainerCreated();
+            }
           },
           (result) => {
             console.error("Global explainer job failed:", result);
             enqueueSnackbar(
-              `Error processing explainer: ${result.error || "Unknown error"}`,
+              t("explainers:error.globalExplainerJobFailed", {
+                error: result.error || "Unknown error",
+              }),
               { variant: "error" },
             );
             updateExplainers();
+            if (onExplainerCreated) {
+              onExplainerCreated();
+            }
           },
         );
       }
 
       return response;
     } catch (error) {
-      enqueueSnackbar("Error while trying to enqueue global explainer job");
+      enqueueSnackbar(t("explainers:error.globalExplainerJobEnqueueError"), {
+        variant: "error",
+      });
       console.error("Error details:", error);
       throw error;
     }
@@ -192,7 +213,9 @@ export default function NewGlobalExplainerModal({
       await enqueueGlobalExplainerJob(explainerId);
       await loadExistingExplainers();
     } catch (error) {
-      enqueueSnackbar("Error while trying to create a new explainer");
+      enqueueSnackbar(t("explainers:error.globalExplainerCreationError"), {
+        variant: "error",
+      });
       console.error("Error details:", error);
     } finally {
       setIsLoading(false);
@@ -236,7 +259,8 @@ export default function NewGlobalExplainerModal({
       fullScreen={screenSm}
       fullWidth
       maxWidth={"lg"}
-      onClose={handleCloseDialog}
+      onClose={() => {}}
+      disableEscapeKeyDown
       aria-labelledby="new-global-explainer-dialog-title"
       aria-describedby="new-global-explainer-dialog-description"
       scroll="paper"
@@ -273,12 +297,12 @@ export default function NewGlobalExplainerModal({
                   align={matches ? "center" : "left"}
                   sx={{ mb: { sm: 2, md: 0 } }}
                 >
-                  New global explainer
+                  {t("explainers:label.newGlobalExplainer")}
                 </Typography>
               </Grid>
             </Grid>
           </Grid>
-          <Grid size={{ xs: 12, md: 9 }}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Stepper
               nonLinear
               activeStep={activeStep}
@@ -296,6 +320,22 @@ export default function NewGlobalExplainerModal({
                 </Step>
               ))}
             </Stepper>
+          </Grid>
+          <Grid
+            size={{ xs: 12, md: 1 }}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              justifyContent: "flex-end",
+            }}
+          >
+            <IconButton
+              onClick={handleCloseDialog}
+              sx={{
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
           </Grid>
         </Grid>
       </DialogTitle>
@@ -329,7 +369,7 @@ export default function NewGlobalExplainerModal({
       <DialogActions>
         <ButtonGroup size="large">
           <Button onClick={handleBackButton}>
-            {activeStep === 0 ? "Close" : "Back"}
+            {activeStep === 0 ? t("common:close") : t("common:back")}
           </Button>
           <TimestampWrapper
             eventName={
@@ -344,7 +384,7 @@ export default function NewGlobalExplainerModal({
               disabled={!nextEnabled}
               loading={isLoading}
             >
-              {activeStep === 1 ? "Save" : "Next"}
+              {activeStep === 1 ? t("common:save") : t("common:next")}
             </LoadingButton>
           </TimestampWrapper>
         </ButtonGroup>

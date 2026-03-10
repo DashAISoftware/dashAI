@@ -15,11 +15,13 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import (  # ClassLabel, Value,
     DashAIDataset,
 )
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorer, BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 
 
 class HistFunc(enum.Enum):
@@ -42,41 +44,74 @@ class HistogramPlotSchema(BaseExplorerSchema):
     nbins: schema_field(
         none_type(int_field(ge=1)),
         None,
-        ("The number of bins to use for the histogram."),
+        description=MultilingualString(
+            en=("Number of bins to use for the histogram."),
+            es=("Número de bins a usar en el histograma."),
+        ),
+        alias=MultilingualString(en="Number of bins", es="Número de bins"),
     )  # type: ignore
     histfunc: schema_field(
         enum_field([e.value for e in HistFunc]),
         HistFunc.COUNT.value,
-        ("Specifies the binning function used for this histogram trace."),
+        description=MultilingualString(
+            en=("Binning function used for this histogram trace."),
+            es=("Función de agrupación usada para este trazo de histograma."),
+        ),
+        alias=MultilingualString(en="Binning function", es="Función de binning"),
     )  # type: ignore
     histnorm: schema_field(
         enum_field([e.value for e in HistNorm]),
         HistNorm.NONE.value,
-        ("Specifies the type of normalization used for this histogram trace."),
+        description=MultilingualString(
+            en=("Type of normalization used for this histogram trace."),
+            es=("Tipo de normalización usada en este histograma."),
+        ),
+        alias=MultilingualString(en="Normalization", es="Normalización"),
     )  # type: ignore
     color_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping colored points."),
+        description=MultilingualString(
+            en=("Column name or index used to group colored points."),
+            es=("Nombre o índice de columna para agrupar puntos por color."),
+        ),
+        alias=MultilingualString(
+            en="Color group column",
+            es="Columna para grupo de color",
+        ),
     )  # type: ignore
     pattern_group: schema_field(
         none_type(union_type(string_field(), int_field(ge=0))),
         None,
-        ("The columnName or columnIndex to take for grouping pattern of the points."),
+        description=MultilingualString(
+            en=("Column name or index used to group point patterns."),
+            es=("Nombre o índice de columna para agrupar patrones de puntos."),
+        ),
+        alias=MultilingualString(
+            en="Pattern group column",
+            es="Columna para grupo de patrón",
+        ),
     )  # type: ignore
 
 
-class HistogramPlotExplorer(BaseExplorer):
+class HistogramPlotExplorer(DistributionExplorer):
     """
     HistogramPlotExplorer is an explorer that returns a density heatmap
     of a selected column of a dataset.
     """
 
-    DISPLAY_NAME = "Histogram Plot"
-    DESCRIPTION = (
-        "HistogramPlotExplorer is an explorer that returns a density heatmap "
-        "of a selected column of a dataset."
+    DISPLAY_NAME = MultilingualString(
+        en="Histogram Plot",
+        es="Histograma",
     )
+    DESCRIPTION = MultilingualString(
+        en=("Displays a histogram for a selected column to explore its distribution."),
+        es=(
+            "Muestra un histograma de una columna seleccionada para explorar su "
+            "distribución."
+        ),
+    )
+    IMAGE_PREVIEW = "histogram_plot.png"
 
     SCHEMA = HistogramPlotSchema
     metadata: Dict[str, Any] = {

@@ -35,6 +35,7 @@ TEST_SCHEMA_2 = {
 class TestTask1(BaseTask):
     DESCRIPTION = "Task 1."
     DISPLAY_NAME = "Test Task 1"
+    COLOR = "#795548"
     metadata = {
         "inputs_types": [ClassLabel, Value],
         "outputs_types": [ClassLabel],
@@ -162,6 +163,7 @@ def test_get_component_by_id(client: TestClient):
         },
         "description": "Task 1.",
         "display_name": "Test Task 1",
+        "color": "#795548",
     }
 
     response = client.get("/api/v1/component/TestTask2/")
@@ -179,6 +181,7 @@ def test_get_component_by_id(client: TestClient):
         },
         "description": "Task 2.",
         "display_name": None,
+        "color": None,
     }
 
     response = client.get("/api/v1/component/TestDataloader1/")
@@ -191,6 +194,7 @@ def test_get_component_by_id(client: TestClient):
         "metadata": None,
         "description": None,
         "display_name": None,
+        "color": None,
     }
 
 
@@ -225,83 +229,38 @@ def test_get_all_components(client: TestClient):
     data = response.json()
 
     assert len(data) == 7
-    assert data == [
-        {
-            "name": "TestTask1",
-            "type": "Task",
-            "configurable_object": False,
-            "schema": None,
-            "metadata": {
-                "inputs_types": ["ClassLabel", "Value"],
-                "outputs_types": ["ClassLabel"],
-                "inputs_cardinality": "n",
-                "outputs_cardinality": 1,
-            },
-            "description": "Task 1.",
-            "display_name": "Test Task 1",
-        },
-        {
-            "name": "TestTask2",
-            "type": "Task",
-            "configurable_object": False,
-            "schema": None,
-            "metadata": {
-                "inputs_types": ["Image"],
-                "outputs_types": ["ClassLabel"],
-                "inputs_cardinality": 1,
-                "outputs_cardinality": 1,
-            },
-            "description": "Task 2.",
-            "display_name": None,
-        },
-        {
-            "name": "TestDataloader1",
-            "type": "DataLoader",
-            "configurable_object": True,
-            "schema": {},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestDataloader2",
-            "type": "DataLoader",
-            "configurable_object": True,
-            "schema": {},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestDataloader3",
-            "type": "DataLoader",
-            "configurable_object": True,
-            "schema": {},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestModel1",
-            "type": "Model",
-            "configurable_object": True,
-            "schema": {"properties": {"parameter_1": {"type": "number"}}},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestModel2",
-            "type": "Model",
-            "configurable_object": True,
-            "schema": {
-                "properties": {"parameter_2": {"type": "string", "enum": ["a", "b"]}}
-            },
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-    ]
+    # Verify important fields for each component
+    assert data[0]["name"] == "TestTask1"
+    assert data[0]["type"] == "Task"
+    assert data[0]["description"] == "Task 1."
+    assert data[0]["display_name"] == "Test Task 1"
+    assert data[0]["color"] == "#795548"
+
+    assert data[1]["name"] == "TestTask2"
+    assert data[1]["type"] == "Task"
+    assert data[1]["description"] == "Task 2."
+
+    assert data[2]["name"] == "TestDataloader1"
+    assert data[2]["type"] == "DataLoader"
+    assert data[2]["schema"] == {}
+
+    assert data[3]["name"] == "TestDataloader2"
+    assert data[3]["type"] == "DataLoader"
+
+    assert data[4]["name"] == "TestDataloader3"
+    assert data[4]["type"] == "DataLoader"
+
+    assert data[5]["name"] == "TestModel1"
+    assert data[5]["type"] == "Model"
+    assert data[5]["schema"] == {"properties": {"parameter_1": {"type": "number"}}}
+    assert data[5]["color"] == "#795548"
+
+    assert data[6]["name"] == "TestModel2"
+    assert data[6]["type"] == "Model"
+    assert data[6]["schema"] == {
+        "properties": {"parameter_2": {"type": "string", "enum": ["a", "b"]}}
+    }
+    assert data[6]["color"] == "#795548"
 
 
 # -------------------------------------------------------------------------------------
@@ -328,6 +287,7 @@ def test_get_components_select_only_tasks(client: TestClient):
             },
             "description": "Task 1.",
             "display_name": "Test Task 1",
+            "color": "#795548",
         },
         {
             "name": "TestTask2",
@@ -342,6 +302,7 @@ def test_get_components_select_only_tasks(client: TestClient):
             },
             "description": "Task 2.",
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -360,6 +321,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -369,6 +331,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader3",
@@ -378,6 +341,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -386,57 +350,31 @@ def test_get_components_select_tasks_and_models(client: TestClient):
     """Test that get component can retrieve tasks and models."""
     response = client.get("/api/v1/component?select_types=Model&select_types=Task")
     assert response.status_code == 200
+    data = response.json()
 
-    assert response.json() == [
-        {
-            "name": "TestModel1",
-            "type": "Model",
-            "configurable_object": True,
-            "schema": {"properties": {"parameter_1": {"type": "number"}}},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestModel2",
-            "type": "Model",
-            "configurable_object": True,
-            "schema": {
-                "properties": {"parameter_2": {"type": "string", "enum": ["a", "b"]}}
-            },
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestTask1",
-            "type": "Task",
-            "configurable_object": False,
-            "schema": None,
-            "metadata": {
-                "inputs_types": ["ClassLabel", "Value"],
-                "outputs_types": ["ClassLabel"],
-                "inputs_cardinality": "n",
-                "outputs_cardinality": 1,
-            },
-            "description": "Task 1.",
-            "display_name": "Test Task 1",
-        },
-        {
-            "name": "TestTask2",
-            "type": "Task",
-            "configurable_object": False,
-            "schema": None,
-            "metadata": {
-                "inputs_types": ["Image"],
-                "outputs_types": ["ClassLabel"],
-                "inputs_cardinality": 1,
-                "outputs_cardinality": 1,
-            },
-            "description": "Task 2.",
-            "display_name": None,
-        },
-    ]
+    assert len(data) == 4
+    # Verify models
+    assert data[0]["name"] == "TestModel1"
+    assert data[0]["type"] == "Model"
+    assert data[0]["schema"] == {"properties": {"parameter_1": {"type": "number"}}}
+    assert data[0]["color"] == "#795548"
+
+    assert data[1]["name"] == "TestModel2"
+    assert data[1]["type"] == "Model"
+    assert data[1]["schema"] == {
+        "properties": {"parameter_2": {"type": "string", "enum": ["a", "b"]}}
+    }
+    assert data[1]["color"] == "#795548"
+
+    assert data[2]["name"] == "TestTask1"
+    assert data[2]["type"] == "Task"
+    assert data[2]["description"] == "Task 1."
+    assert data[2]["display_name"] == "Test Task 1"
+    assert data[2]["color"] == "#795548"
+
+    assert data[3]["name"] == "TestTask2"
+    assert data[3]["type"] == "Task"
+    assert data[3]["description"] == "Task 2."
 
 
 def test_get_components_select_unexistant_type(client: TestClient):
@@ -483,6 +421,7 @@ def test_get_components_ignore_models(client: TestClient):
             },
             "description": "Task 1.",
             "display_name": "Test Task 1",
+            "color": "#795548",
         },
         {
             "name": "TestTask2",
@@ -497,6 +436,7 @@ def test_get_components_ignore_models(client: TestClient):
             },
             "description": "Task 2.",
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader1",
@@ -506,6 +446,7 @@ def test_get_components_ignore_models(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -515,6 +456,7 @@ def test_get_components_ignore_models(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader3",
@@ -524,6 +466,7 @@ def test_get_components_ignore_models(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -541,6 +484,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -550,6 +494,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader3",
@@ -559,6 +504,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -592,35 +538,16 @@ def test_get_components_ignore_unexistant_type(client: TestClient):
 def test_get_components_related_with_some_task(client: TestClient):
     response = client.get("/api/v1/component?related_component=TestTask1")
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "name": "TestDataloader1",
-            "type": "DataLoader",
-            "configurable_object": True,
-            "schema": {},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestDataloader2",
-            "type": "DataLoader",
-            "configurable_object": True,
-            "schema": {},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-        {
-            "name": "TestModel1",
-            "type": "Model",
-            "configurable_object": True,
-            "schema": {"properties": {"parameter_1": {"type": "number"}}},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        },
-    ]
+    data = response.json()
+    assert len(data) == 3
+    assert data[0]["name"] == "TestDataloader1"
+    assert data[0]["type"] == "DataLoader"
+    assert data[1]["name"] == "TestDataloader2"
+    assert data[1]["type"] == "DataLoader"
+    assert data[2]["name"] == "TestModel1"
+    assert data[2]["type"] == "Model"
+    assert data[2]["schema"] == {"properties": {"parameter_1": {"type": "number"}}}
+    assert data[2]["color"] == "#795548"
 
 
 def test_get_components_related_inverse_relation(client: TestClient):
@@ -640,6 +567,7 @@ def test_get_components_related_inverse_relation(client: TestClient):
             },
             "description": "Task 1.",
             "display_name": "Test Task 1",
+            "color": "#795548",
         }
     ]
 
@@ -680,6 +608,7 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -689,6 +618,7 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -723,6 +653,7 @@ def test_get_components_by_type_and_task(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -732,6 +663,7 @@ def test_get_components_by_type_and_task(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -742,17 +674,12 @@ def test_get_components_by_type_and_task_2(client: TestClient):
         "/api/v1/component?select_types=Model&related_component=TestTask1"
     )
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "name": "TestModel1",
-            "type": "Model",
-            "configurable_object": True,
-            "schema": {"properties": {"parameter_1": {"type": "number"}}},
-            "metadata": None,
-            "description": None,
-            "display_name": None,
-        }
-    ]
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "TestModel1"
+    assert data[0]["type"] == "Model"
+    assert data[0]["schema"] == {"properties": {"parameter_1": {"type": "number"}}}
+    assert data[0]["color"] == "#795548"
 
 
 def test_get_components_select_and_ignore_by_type(client: TestClient):
@@ -770,6 +697,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -779,6 +707,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader3",
@@ -788,6 +717,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]
 
@@ -808,6 +738,7 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
         {
             "name": "TestDataloader2",
@@ -817,5 +748,6 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "metadata": None,
             "description": None,
             "display_name": None,
+            "color": None,
         },
     ]

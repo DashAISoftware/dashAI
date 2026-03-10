@@ -1,6 +1,7 @@
 import { Grid, Typography, Paper } from "@mui/material";
 import PropTypes from "prop-types";
 import ItemSelector from "./ItemSelector";
+import { useTranslation } from "react-i18next";
 /**
  *This component renders a list of items so that the user can select one.
   It also renders a description of the item that the user selects along with images (if any).
@@ -13,13 +14,16 @@ function ItemSelectorWithInfo({
   selectedItem,
   setSelectedItem,
   disabled,
+  ...props
 }) {
+  const { t } = useTranslation("custom");
+
   // Display images that help to describe the item selected by the user
   const displayImages = (images) => {
     const imageElements = images.map((img, i) => (
       <img
         src={img}
-        alt={`${selectedItem.name} info ${i}`}
+        alt={`${selectedItem.display_name || selectedItem.name} info ${i}`}
         key={img}
         style={{ borderRadius: "10px", maxWidth: "400px" }}
       />
@@ -72,7 +76,7 @@ function ItemSelectorWithInfo({
               <>
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" sx={{ mb: 4 }}>
-                    {selectedItem.name}
+                    {selectedItem.display_name || selectedItem.name}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12 }}>
@@ -89,7 +93,7 @@ function ItemSelectorWithInfo({
             ) : (
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle1">
-                  Select an item to see the description.
+                  {t("selectAnItemToShowInfo")}
                 </Typography>
               </Grid>
             )}

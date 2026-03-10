@@ -12,12 +12,14 @@ export default function OptionBox({
   description,
   onClick,
   Icon = null,
+  ...otherProps
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.up("md"));
 
   return (
     <Button
+      data-tour="models-task-selection"
       onClick={onClick}
       sx={{
         p: 0,
@@ -28,6 +30,7 @@ export default function OptionBox({
         textTransform: "none",
         borderRadius: 2,
       }}
+      {...otherProps}
     >
       <Paper
         elevation={2}
@@ -41,7 +44,7 @@ export default function OptionBox({
           justifyContent: matches ? "space-between" : "center",
           textAlign: matches ? "left" : "center",
           "&:hover": {
-            backgroundColor: "#1e1e1e",
+            backgroundColor: theme.palette.action.hover,
           },
         }}
       >
@@ -60,10 +63,14 @@ export default function OptionBox({
             gap: 1,
           }}
         >
-          <Typography variant="h6" sx={{ mb: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1, color: "text.primary" }}>
             {optionName}
           </Typography>
-          <Typography variant="caption" component="p">
+          <Typography
+            variant="caption"
+            component="p"
+            sx={{ color: "text.secondary" }}
+          >
             {description}
           </Typography>
         </Box>

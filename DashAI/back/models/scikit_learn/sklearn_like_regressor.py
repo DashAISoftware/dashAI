@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.scikit_learn.sklearn_like_model import SklearnLikeModel
@@ -20,4 +21,13 @@ class SklearnLikeRegressor(SklearnLikeModel):
         np.ndarray
             Array with the predicted target values for x_pred
         """
-        return super().predict(x_pred.to_pandas())
+        if isinstance(x_pred, DashAIDataset):
+            try:
+                x_prepared = self.prepare_dataset(x_pred, is_fit=False)
+            except ValueError:
+                x_prepared = x_pred
+            x_pred = x_prepared.to_pandas()
+        elif isinstance(x_pred, pd.DataFrame):
+            pass
+
+        return super().predict(x_pred)

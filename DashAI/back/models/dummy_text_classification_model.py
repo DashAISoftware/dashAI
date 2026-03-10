@@ -2,6 +2,7 @@ from typing import Any
 
 from datasets import Dataset
 
+from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 from DashAI.back.models.text_classification_model import TextClassificationModel
 
 
@@ -25,11 +26,11 @@ class DummyTextClassifier(TextClassificationModel):
         self.most_frequent_label = None
         self.is_trained = False
 
-    def tokenize_data(self, dataset: Dataset) -> Dataset:
+    def tokenize_data(self, dataset: DashAIDataset) -> DashAIDataset:
         """Tokenize data."""
         return dataset
 
-    def fit(self, x_train: Dataset, y_train: Dataset) -> None:
+    def fit(self, x_train: DashAIDataset, y_train: DashAIDataset) -> None:
         """Fit the dummy model."""
         if self.strategy == "most_frequent":
             column_name = y_train.column_names[0]
@@ -37,7 +38,7 @@ class DummyTextClassifier(TextClassificationModel):
             self.most_frequent_label = max(set(labels), key=labels.count)
         self.is_trained = True
 
-    def predict(self, x_pred: Dataset) -> Dataset:
+    def predict(self, x_pred: DashAIDataset) -> DashAIDataset:
         """Predict labels for the input dataset."""
         if not self.is_trained:
             raise RuntimeError("The model must be trained before making predictions.")
@@ -59,3 +60,6 @@ class DummyTextClassifier(TextClassificationModel):
             self.strategy = f.readline().strip()
             self.most_frequent_label = f.readline().strip()
         self.is_trained = True
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return dataset

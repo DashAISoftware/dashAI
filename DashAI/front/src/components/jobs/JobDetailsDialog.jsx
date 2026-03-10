@@ -27,7 +27,6 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
       const fetchDetails = async () => {
         try {
           const data = await getJobDetails(job.id);
-          console.log("Job details fetched:", data);
           setJobDetails({ ...job, ...data });
         } catch (error) {
           console.error("Error fetching job details:", error);

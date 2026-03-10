@@ -191,14 +191,19 @@ async def enqueue_job(
             )
             job_type_target = ValueTarget()
             kwargs_target = ValueTarget()
+            n_sample_target = ValueTarget()
             parser.register("job_type", job_type_target)
             parser.register("kwargs", kwargs_target)
+            parser.register("n_sample", n_sample_target)
 
             async for chunk in request.stream():
                 parser.data_received(chunk)
 
             job_type = job_type_target.value.decode() if job_type_target.value else None
             kwargs_str = kwargs_target.value.decode() if kwargs_target.value else None
+            n_sample = (
+                int(n_sample_target.value.decode()) if n_sample_target.value else None
+            )
 
             if not job_type or not kwargs_str:
                 raise HTTPException(
@@ -207,7 +212,12 @@ async def enqueue_job(
                 )
 
             kwargs = json.loads(kwargs_str)
-            kwargs.update(file_path=file_path, temp_dir=temp_dir, filename=filename)
+            kwargs.update(
+                file_path=file_path,
+                temp_dir=temp_dir,
+                filename=filename,
+                n_sample=n_sample,
+            )
 
         # parse regular form data
         else:

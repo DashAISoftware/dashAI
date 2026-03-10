@@ -8,19 +8,23 @@ import {
   CircularProgress,
   IconButton,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Delete } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import Transform from "@mui/icons-material/Transform";
 import { getConverterStatus } from "../../../utils/converterStatus";
 import { getComponentById } from "../../../api/component";
 import { getConverterById } from "../../../api/converter";
+import { useTranslation } from "react-i18next";
 
 export default function ConverterBox({
   converter,
   onStatusChange,
   handleConverterDeleteClick,
 }) {
+  const theme = useTheme();
   const [converterComponent, setConverterComponent] = useState({});
+  const { t } = useTranslation(["common", "datasets"]);
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -33,7 +37,7 @@ export default function ConverterBox({
     };
 
     fetchConverterComponent();
-  }, [converter.converter]);
+  }, [converter.converter, t]);
 
   useEffect(() => {
     let intervalId;
@@ -46,8 +50,9 @@ export default function ConverterBox({
           onStatusChange(updatedConverter.id, updatedConverter.status);
         }
 
-        const status = getConverterStatus(updatedConverter.status);
-        if (status === "Finished" || status === "Error") {
+        const status = updatedConverter.status;
+        if (status === 3 || status === 4) {
+          // Finished or Error
           clearInterval(intervalId);
         }
       } catch (error) {
@@ -56,20 +61,26 @@ export default function ConverterBox({
       }
     };
 
-    const currentStatus = getConverterStatus(converter.status);
-    if (currentStatus !== "Finished" && currentStatus !== "Error") {
+    const currentStatus = converter.status;
+    if (currentStatus !== 3 && currentStatus !== 4) {
+      //  Not Finished and not Error
       intervalId = setInterval(fetchConverterStatus, 1500);
     }
 
     return () => clearInterval(intervalId);
   }, [converter.id, converter.status, onStatusChange]);
 
-  const statusLabel = getConverterStatus(converter.status);
+  const statusLabel = converter.status;
 
   return (
     <Card
       key={converter.id}
-      sx={{ bgcolor: "#212121", borderRadius: 2, height: "100%" }}
+      className="converter-box"
+      sx={{
+        bgcolor: theme.palette.background.box,
+        borderRadius: 2,
+        height: "100%",
+      }}
     >
       <CardContent
         sx={{
@@ -88,37 +99,41 @@ export default function ConverterBox({
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Transform sx={{ color: "#00BEBB", fontSize: 20 }} />
+            <Transform
+              sx={{ color: theme.palette.primary.main, fontSize: 20 }}
+            />
             <Typography variant="h6">
               {converterComponent.display_name}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Chip
-              label={statusLabel}
-              color={statusLabel === "Finished" ? "primary" : "default"}
+              label={getConverterStatus(statusLabel, t)}
+              color={statusLabel === 3 ? "primary" : "default"} // Finished
               size="small"
             />
-            <IconButton
-              size="small"
-              onClick={() => handleConverterDeleteClick(converter)}
-              sx={{
-                width: 24,
-                height: 24,
-                bgcolor: "error.main",
-                "&:hover": { bgcolor: "error.dark" },
-              }}
-            >
-              <Delete sx={{ fontSize: 16 }} />
-            </IconButton>
+            {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
+              <IconButton
+                size="small"
+                onClick={() => handleConverterDeleteClick(converter)}
+                sx={{
+                  width: 24,
+                  height: 24,
+                  bgcolor: "error.main",
+                  "&:hover": { bgcolor: "error.dark" },
+                }}
+              >
+                <Delete sx={{ fontSize: 16 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
 
-        {statusLabel === "Finished" ? (
+        {statusLabel === 3 ? ( // Finished
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               flexDirection: "column",
@@ -137,12 +152,12 @@ export default function ConverterBox({
                 rows={[
                   {
                     id: 2,
-                    key: "Target Column",
+                    key: t("datasets:label.targetColumn"),
                     value: converter.parameters.target?.columnName,
                   },
                   {
                     id: 3,
-                    key: "Scope - Columns",
+                    key: t("datasets:label.scopeColumns"),
                     value:
                       converter.parameters.scope?.columns?.length === 0
                         ? "All"
@@ -152,7 +167,7 @@ export default function ConverterBox({
                   },
                   {
                     id: 4,
-                    key: "Scope - Rows",
+                    key: t("datasets:label.scopeRows"),
                     value:
                       converter.parameters.scope.rows.length === 0
                         ? "All"
@@ -160,8 +175,8 @@ export default function ConverterBox({
                   },
                 ]}
                 columns={[
-                  { field: "key", headerName: "Parameter", flex: 1 },
-                  { field: "value", headerName: "Value", flex: 4 },
+                  { field: "key", headerName: t("common:parameter"), flex: 1 },
+                  { field: "value", headerName: t("common:value"), flex: 4 },
                 ]}
                 hideFooter
                 disableColumnMenu
@@ -181,11 +196,11 @@ export default function ConverterBox({
               />
             )}
           </Box>
-        ) : statusLabel === "Error" ? (
+        ) : statusLabel === 4 ? ( // Error
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "#2e3037",
+              bgcolor: theme.palette.background.default,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
@@ -197,14 +212,14 @@ export default function ConverterBox({
               variant="body2"
               sx={{ color: "error.main", textAlign: "center" }}
             >
-              An error occurred during processing.
+              {t("datasets:error.converterFailed")}
             </Typography>
           </Box>
         ) : (
           <Box
             sx={{
               flexGrow: 1,
-              bgcolor: "rgba(255, 255, 255, 0.05)",
+              bgcolor: theme.palette.ui.hover,
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
@@ -212,7 +227,7 @@ export default function ConverterBox({
             }}
           >
             <CircularProgress size={20} sx={{ mr: 1 }} />
-            <Typography>Processing...</Typography>
+            <Typography>{t("common:processing")}</Typography>
           </Box>
         )}
       </CardContent>

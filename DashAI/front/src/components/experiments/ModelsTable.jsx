@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
-import { Grid, Paper, Typography } from "@mui/material";
+import { Grid, Paper, TextField, Typography } from "@mui/material";
 import DeleteItemModal from "../custom//DeleteItemModal";
 import EditModelDialog from "./EditModelDialog";
 import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
+import { checkIfHaveOptimazers } from "../../utils/schema";
+import { getComponents } from "../../api/component";
+import { useTranslation } from "react-i18next";
 
 /**
  * This component renders a table to display the models that are currently in the experiment
@@ -13,6 +16,20 @@ import ModelsTableSelectMetric from "./ModelsTableSelectMetric";
  */
 function ModelsTable({ newExp, setNewExp }) {
   const [selectedMetric, setSelectedMetric] = useState({});
+  const [models, setModels] = useState([]);
+  const { t } = useTranslation(["experiments", "common"]);
+
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Model"] });
+        setModels(response);
+      } catch (error) {
+        console.error("Error fetching models:", error);
+      }
+    };
+    fetchModels();
+  }, []);
 
   const handleDeleteModel = (id) => {
     setNewExp({
@@ -21,8 +38,6 @@ function ModelsTable({ newExp, setNewExp }) {
     });
   };
   const handleUpdateParameters = (id) => (newValues) => {
-    console.log(id);
-    console.log(newValues);
     setNewExp((prevExp) => {
       return {
         ...prevExp,
@@ -75,18 +90,23 @@ function ModelsTable({ newExp, setNewExp }) {
   const columns = [
     {
       field: "name",
-      headerName: "Name",
+      headerName: t("common:name"),
       flex: 1,
       editable: false,
     },
     {
       field: "model",
-      headerName: "Model",
+      headerName: t("common:model"),
       flex: 1,
       editable: false,
+      valueGetter: (value) => {
+        const model = models.find((model) => model.name === value);
+        return model && model.display_name ? model.display_name : value;
+      },
     },
     {
       field: "actions",
+      headerName: t("common:actions"),
       type: "actions",
       flex: 0.5,
       getActions: (params) => {
@@ -106,17 +126,38 @@ function ModelsTable({ newExp, setNewExp }) {
     },
     {
       field: "metric",
-      headerName: "Optimization Metric (Optional)",
+      headerName: t("experiments:label.optimizerMetric"),
       flex: 1,
-      renderCell: (params) => (
-        <ModelsTableSelectMetric
-          taskName={newExp.task_name}
-          metricName={selectedMetric[params.row.id]}
-          handleSelectedMetric={(metricName) =>
-            handleSelectedMetric(metricName, params.row.id)
-          }
-        />
-      ),
+      renderCell: (params) => {
+        // Check if this specific row has optimizers
+        const rowHasOptimizers = checkIfHaveOptimazers(params.row);
+
+        // Only render the metric selector if the row has optimizers
+        if (!rowHasOptimizers) {
+          return (
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                fontStyle: "italic",
+              }}
+            >
+              {t("experiments:label.noOptimizersNoMetric")}
+            </Typography>
+          );
+        }
+
+        return (
+          <ModelsTableSelectMetric
+            taskName={newExp.task_name}
+            metricName={params.row.goal_metric}
+            handleSelectedMetric={(metricName) =>
+              handleSelectedMetric(metricName, params.row.id)
+            }
+            required
+          />
+        );
+      },
     },
   ];
 
@@ -131,7 +172,7 @@ function ModelsTable({ newExp, setNewExp }) {
         sx={{ mb: 2 }}
       >
         <Typography variant="subtitle1" component="h3">
-          Current models in the experiment
+          {t("experiments:label.modelsInExperiment")}
         </Typography>
       </Grid>
 
@@ -144,6 +185,12 @@ function ModelsTable({ newExp, setNewExp }) {
             paginationModel: {
               pageSize: 5,
             },
+          },
+        }}
+        sx={{
+          "& .MuiDataGrid-cell": {
+            display: "flex",
+            alignItems: "center",
           },
         }}
         pageSizeOptions={[5]}
@@ -162,8 +209,8 @@ ModelsTable.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.number),
-    output_columns: PropTypes.arrayOf(PropTypes.number),
+    input_columns: PropTypes.arrayOf(PropTypes.string),
+    output_columns: PropTypes.arrayOf(PropTypes.string),
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

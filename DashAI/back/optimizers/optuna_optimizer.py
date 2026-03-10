@@ -1,11 +1,13 @@
 import optuna
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 
@@ -13,8 +15,13 @@ class OptunaSchema(BaseSchema):
     n_trials: schema_field(
         int_field(gt=0),
         placeholder=10,
-        description="The parameter 'n_trials' is the quantity of trials"
-        "per study. It must be of type positive integer.",
+        description=MultilingualString(
+            en=(
+                "The quantity of trials per study. It must be of type positive integer."
+            ),
+            es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
+        ),
+        alias=MultilingualString(en="N trials", es="N pruebas"),
     )  # type: ignore
     sampler: schema_field(
         enum_field(
@@ -29,18 +36,48 @@ class OptunaSchema(BaseSchema):
             ]
         ),
         placeholder="TPESampler",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
-        ". Must be in string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en=(
+                "The sampler algorithm to use for hyperparameter optimization. "
+                "Different samplers use different strategies for exploring the "
+                "hyperparameter space."
+            ),
+            es=(
+                "El algoritmo de muestreo a usar para la optimización de "
+                "hiperparámetros. Diferentes muestreadores usan diferentes "
+                "estrategias para explorar el espacio de hiperparámetros."
+            ),
+        ),
+        alias=MultilingualString(en="Sampler", es="Muestreador"),
     )  # type: ignore
     pruner: schema_field(
         enum_field(enum=["MedianPruner", "None"]),
         placeholder="None",
-        description="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels"
-        ". Must be in string format and can be 'scale' or 'auto'.",
+        description=MultilingualString(
+            en=(
+                "The pruner to use for early stopping of unpromising trials. "
+                "'MedianPruner' stops trials below the median. 'None' disables pruning."
+            ),
+            es=(
+                "El podador a usar para detener tempranamente pruebas poco "
+                "prometedoras. 'MedianPruner' detiene pruebas bajo la mediana. "
+                "'None' desactiva la poda."
+            ),
+        ),
+        alias=MultilingualString(en="Pruner", es="Podador"),
     )  # type: ignore
 
 
 class OptunaOptimizer(BaseOptimizer):
+    DISPLAY_NAME: str = MultilingualString(
+        en="Optuna Optimizer",
+        es="Optimizador Optuna",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Hyperparameter optimization using Optuna library.",
+        es="Optimización de hiperparámetros usando la librería Optuna.",
+    )
+    COLOR: str = "#E91E63"
     SCHEMA = OptunaSchema
 
     COMPATIBLE_COMPONENTS = [
@@ -73,53 +110,40 @@ class OptunaOptimizer(BaseOptimizer):
         self.input_dataset = input_dataset
         self.output_dataset = output_dataset
         self.parameters = parameters
-
-        # Determine optimization direction from metric class attribute
-        metric_class = metric["class"]
-        if hasattr(metric_class, "HIGHER_IS_BETTER") and metric_class.HIGHER_IS_BETTER:
-            direction = "maximize"
-        else:
-            direction = "minimize"
-
+        direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(
             direction=direction, sampler=self.sampler(), pruner=self.pruner
         )
 
-        self.metric = metric_class
+        self.metric = metric["class"]
 
-        if task == "TextClassificationTask":
+        def objective(trial):
+            # Set value for each hyperparameter and for each model
+            # (either self or submodels nested inside)
+            for obj, key, bounds, dtype in self.parameters:
+                if dtype == "number":
+                    value = trial.suggest_float(key, bounds[0], bounds[1], log=False)
+                elif dtype == "integer":
+                    value = trial.suggest_int(key, bounds[0], bounds[1], log=False)
+                else:
+                    raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
+                setattr(obj, key, value)
 
-            def objective(trial):
-                classifier_trial = self.model.classifier
-                for hyperparameter, values in self.parameters.items():
-                    value = trial.suggest_int(hyperparameter, values[0], values[-1])
-                    setattr(classifier_trial, hyperparameter, value)
+            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
+            y_pred = self.model.predict(input_dataset["validation"])
 
-                model_trial = self.model
-                model_trial.classifier = classifier_trial
-                model_trial.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_trial.predict(input_dataset["validation"])
-                score = self.metric.score(output_dataset["validation"], y_pred)
+            # Calculate metric for train and validation data each trial
+            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+            self.model.calculate_metrics(
+                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            )
 
-                return score
+            output_dataset_transformed = self.model.prepare_output(
+                output_dataset["validation"], is_fit=False
+            )
+            score = self.metric.score(output_dataset_transformed, y_pred)
 
-        else:
-
-            def objective(trial):
-                model_trial = self.model
-                for hyperparameter, values in self.parameters.items():
-                    value = trial.suggest_int(hyperparameter, values[0], values[-1])
-                    setattr(model_trial, hyperparameter, value)
-
-                model_trial.fit(
-                    self.input_dataset["train"], self.output_dataset["train"]
-                )
-                y_pred = model_trial.predict(input_dataset["validation"])
-                score = self.metric.score(output_dataset["validation"], y_pred)
-
-                return score
+            return score
 
         study.optimize(objective, n_trials=self.n_trials)
 
@@ -127,7 +151,7 @@ class OptunaOptimizer(BaseOptimizer):
         best_model = self.model
         for hyperparameter, value in best_params.items():
             setattr(best_model, hyperparameter, value)
-        best_model.fit(self.input_dataset["train"], self.output_dataset["train"])
+        best_model.train(self.input_dataset["train"], self.output_dataset["train"])
         self.model = best_model
         self.study = study
 
@@ -140,3 +164,7 @@ class OptunaOptimizer(BaseOptimizer):
             if trial.state == optuna.trial.TrialState.COMPLETE:
                 trials.append({"params": trial.params, "value": trial.value})
         return trials
+
+    def get_best_params(self):
+        """Return the best parameters found during optimization."""
+        return self.study.best_params

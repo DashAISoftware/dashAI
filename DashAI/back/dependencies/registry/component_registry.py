@@ -4,6 +4,7 @@ from typing import Any, Union
 from beartype import beartype
 from beartype.typing import Dict, List, Type
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.registry.relationship_manager import RelationshipManager
 
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +29,7 @@ class ComponentRegistry:
         "metadata": {...},  # Component metadata if applies.
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
+        "color": "...",  # A color associated to the component.
     }
     ```
 
@@ -189,19 +191,33 @@ class ComponentRegistry:
                 "object."
             )
 
+        _metadata = (
+            new_component.get_metadata()
+            if hasattr(new_component, "get_metadata")
+            else None
+        )
+
+        # Format description and display_name as MultilingualString if they are str
+        if hasattr(new_component, "DESCRIPTION"):
+            description = new_component.DESCRIPTION
+            if isinstance(description, str):
+                new_component.DESCRIPTION = MultilingualString(en=description)
+
+        if hasattr(new_component, "DISPLAY_NAME"):
+            display_name = new_component.DISPLAY_NAME
+            if isinstance(display_name, str):
+                new_component.DISPLAY_NAME = MultilingualString(en=display_name)
+
         new_register_component = {
             "name": new_component.__name__,
             "type": base_type,
             "class": new_component,
             "configurable_object": is_configurable_object,
             "schema": new_component.get_schema() if is_configurable_object else None,
-            "metadata": (
-                new_component.get_metadata()
-                if hasattr(new_component, "metadata")
-                else None
-            ),
+            "metadata": _metadata,
             "description": getattr(new_component, "DESCRIPTION", None),
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
+            "color": getattr(new_component, "COLOR", None),
         }
 
         if base_type not in self._registry:

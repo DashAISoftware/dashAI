@@ -70,7 +70,20 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             "Optimization modules must implement get_trials_values method."
         )
 
-    def history_objective_plot(self, trials):
+    @abstractmethod
+    def get_best_params(self):
+        """
+        Get the best hyperparameters found during optimization
+
+        Returns
+        -------
+            best_params (dict): Dictionary with the best hyperparameters found.
+        """
+        raise NotImplementedError(
+            "Optimization modules must implement get_best_params method."
+        )
+
+    def history_objective_plot(self, trials, goal_metric):
         """
         Plot for the goal metric achieved per trial.
 
@@ -84,7 +97,11 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         """
         x = list(range(1, len(trials) + 1))
         y = [trial["value"] for trial in trials]
-        max_cumulative = np.maximum.accumulate(y)
+        cumulative = (
+            np.maximum.accumulate(y)
+            if goal_metric["metadata"]["maximize"]
+            else np.minimum.accumulate(y)
+        )
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
@@ -99,21 +116,29 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         fig.add_trace(
             go.Scatter(
                 x=x,
-                y=max_cumulative,
+                y=cumulative,
                 mode="lines",
-                name="Current Max Value",
+                name=(
+                    "Current Max Value"
+                    if goal_metric["metadata"]["maximize"]
+                    else "Current Min Value"
+                ),
                 line_color="red",
                 line_width=2,
             )
         )
         fig.update_layout(
-            title="Optimization History with Current Max Value",
+            title=(
+                "Optimization History with Current Max Value"
+                if goal_metric["metadata"]["maximize"]
+                else "Optimization History with Current Min Value"
+            ),
             xaxis_title="Trial",
-            yaxis_title="Objective Value",
+            yaxis_title=goal_metric["name"],
         )
         return plotly.io.to_json(fig)
 
-    def slice_plot(self, trials):
+    def slice_plot(self, trials, goal_metric):
         """
         Plot that compares the performance in the
         search space of one hyperparameter.
@@ -176,12 +201,12 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             updatemenus=updatemenus,
             title=f"Slice plot for {param_names[0]}",
             xaxis_title=param_names[0],
-            yaxis_title="Objective Value",
+            yaxis_title=goal_metric["name"],
         )
 
         return plotly.io.to_json(fig)
 
-    def contour_plot(self, trials):
+    def contour_plot(self, trials, goal_metric):
         """
         Contour plot between two hyperparameters
         and the goal metric achieved in the search space.
@@ -221,7 +246,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                         y=y_values,
                         z=z_values,
                         colorscale="Blues",
-                        colorbar={"title": "Objective Value"},
+                        colorbar={"title": goal_metric["name"]},
                         showscale=True,
                         name=f"{param_x} vs {param_y}",
                         visible=False,
@@ -236,7 +261,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                             "size": 8,
                             "color": z_values,
                             "colorscale": "Blues",
-                            "colorbar": {"title": "Objective Value"},
+                            "colorbar": {"title": goal_metric["name"]},
                             "showscale": False,
                             "line": {"width": 0.2, "color": "black"},
                         },
@@ -275,7 +300,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         )
         return plotly.io.to_json(fig)
 
-    def importance_plot(self, trials):
+    def importance_plot(self, trials, goal_metric):
         """
         Plot to obtain the importance between all the hyperparameters
         involved in hyperparameter optimization.
@@ -289,13 +314,14 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             fig (json): json with the plot data
         """
         distributions = {}
-        for param, (low, high) in self.parameters.items():
-            if isinstance(low, int):
+        for _, param, (low, high), dtype in self.parameters:
+            if dtype == "integer":
                 distributions[param] = optuna.distributions.IntDistribution(low, high)
-            elif isinstance(low, float):
+            elif dtype == "number":
                 distributions[param] = optuna.distributions.FloatDistribution(low, high)
 
-        study = optuna.create_study(direction="maximize")
+        direction = "maximize" if goal_metric["metadata"]["maximize"] else "minimize"
+        study = optuna.create_study(direction=direction)
         for trial in trials:
             study.add_trial(
                 optuna.trial.create_trial(
@@ -305,14 +331,12 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                     state=optuna.trial.TrialState.COMPLETE,
                 )
             )
-        evaluator = FanovaImportanceEvaluator()
-        importances = evaluator.evaluate(study)
         try:
             evaluator = FanovaImportanceEvaluator()
             importances = evaluator.evaluate(study)
         except RuntimeError:
             importances = {
-                param: 1.0 / len(self.parameters) for param in self.parameters
+                param: 1.0 / len(self.parameters) for _, param, _, _ in self.parameters
             }
             log.warning(
                 "Could not calculate parameter importance using FANOVA. "
@@ -343,7 +367,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         return plotly.io.to_json(fig)
 
-    def create_plots(self, trials, run_id, n_params):
+    def create_plots(self, trials, run_id, n_params, goal_metric):
         """
         List of available plots.
 
@@ -354,6 +378,7 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                             from the experiment.
             n_params (int): Number of the different hyperparameters involved
                             in the process of hyperparameter optimization
+            goal_metric (dict): Metric optimized in the process.
 
         Returns
         -------
@@ -367,10 +392,10 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                 f"importance_plot_{run_id}.pickle",
             ]
             plots_list = [
-                self.history_objective_plot(trials),
-                self.slice_plot(trials),
-                self.contour_plot(trials),
-                self.importance_plot(trials),
+                self.history_objective_plot(trials, goal_metric),
+                self.slice_plot(trials, goal_metric),
+                self.contour_plot(trials, goal_metric),
+                self.importance_plot(trials, goal_metric),
             ]
             return plots_filenames, plots_list
         else:
@@ -378,5 +403,8 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                 f"history_objective_plot_{run_id}.pickle",
                 f"slice_plot_{run_id}.pickle",
             ]
-            plots_list = [self.history_objective_plot(trials), self.slice_plot(trials)]
+            plots_list = [
+                self.history_objective_plot(trials, goal_metric),
+                self.slice_plot(trials, goal_metric),
+            ]
             return plots_filenames, plots_list
