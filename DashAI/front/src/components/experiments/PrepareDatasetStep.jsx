@@ -56,6 +56,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
+  const [columnsValidationError, setColumnsValidationError] = useState("");
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState();
@@ -196,11 +197,13 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       datasetInfo.column_names.length === 0
     ) {
       setColumnsAreValid(false);
+      setColumnsValidationError("");
       return;
     }
 
     if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
       setColumnsAreValid(false);
+      setColumnsValidationError("");
       return;
     }
 
@@ -211,7 +214,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         inputColumnNames,
         outputColumnNames,
       );
-      setColumnsAreValid(validation.dataset_status === "valid");
+      const isValid = validation.dataset_status === "valid";
+      setColumnsAreValid(isValid);
+      setColumnsValidationError(isValid ? "" : validation.error || "");
     } catch (error) {
       enqueueSnackbar(t("experiments:error.errorFetchingColumnsValidation"));
       if (error.response) {
@@ -222,6 +227,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
         console.error("Unknown Error", error.message);
       }
       setColumnsAreValid(false);
+      setColumnsValidationError("");
     }
   };
 
@@ -279,7 +285,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   useEffect(() => {
     if (
       columnsReady &&
-      splitsReady &&
       datasetInfo &&
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
@@ -287,14 +292,9 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       validateColumns();
     } else {
       setColumnsAreValid(false);
+      setColumnsValidationError("");
     }
-  }, [
-    columnsReady,
-    splitsReady,
-    inputColumnNames,
-    outputColumnNames,
-    datasetInfo,
-  ]);
+  }, [columnsReady, inputColumnNames, outputColumnNames, datasetInfo]);
 
   useEffect(() => {
     if (columnsAreValid && splitsReady && columnsReady) {
@@ -328,14 +328,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   useEffect(() => {
     if (isForecastingTask && splitType === "") {
       setSplitType(SPLIT_TYPES.TEMPORAL);
-      setRowsPartitionsPercentage({
-        train: 0.7,
-        validation: 0.15,
-        test: 0.15,
-      });
-      // Note: splitsReady will be set by SplitDatasetTemporal component
     }
-  }, [isForecastingTask, taskRequirements]);
+  }, [isForecastingTask, splitType]);
 
   // Fetch temporal info when input columns change for forecasting tasks
   useEffect(() => {
@@ -407,8 +401,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     );
   };
 
-  // Determine if the issue is with splits rather than column validation
-  const splitIssue = columnsReady && !splitsReady && !columnsAreValid;
+  const alertTitleKey = columnsAreValid
+    ? "experiments:label.columnsValidRequirements"
+    : columnsValidationError
+      ? "experiments:label.datasetInvalidForTask"
+      : "experiments:label.columnsInvalidRequirements";
 
   return (
     <React.Fragment>
@@ -419,12 +416,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       >
         <AlertTitle>
           {taskRequirements
-            ? t(
-                columnsAreValid
-                  ? "experiments:label.columnsValidRequirements"
-                  : "experiments:label.columnsInvalidRequirements",
-                { taskName: taskRequirements.display_name },
-              )
+            ? t(alertTitleKey, { taskName: taskRequirements.display_name })
             : null}
         </AlertTitle>
         <Grid container spacing={2}>
@@ -479,6 +471,17 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
             </Box>
           </Grid>
         </Grid>
+        {!columnsAreValid && columnsValidationError ? (
+          <Box sx={{ mt: 1.5 }}>
+            <strong>{t("experiments:label.validationDetails")}:</strong>{" "}
+            {columnsValidationError}
+          </Box>
+        ) : null}
+        {isForecastingTask ? (
+          <Box sx={{ mt: 1.5 }}>
+            {t("experiments:label.forecastingValidationHint")}
+          </Box>
+        ) : null}
       </Alert>
       {!infoLoading && datasetInfo.nan ? (
         Object.values(datasetInfo.nan).some((v) => v > 0) ? (

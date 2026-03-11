@@ -34,6 +34,7 @@
     "addOptimizersToExperiment": "Agregar Optimizadores a su Experimento",
     "columnsInvalidRequirements": "Las columnas de Entrada y Salida actuales no coinciden con los requisitos de {{taskName}}",
     "columnsValidRequirements": "Las columnas de Entrada y Salida actuales coinciden con los requisitos de {{taskName}}",
+    "datasetInvalidForTask": "El dataset y las columnas seleccionadas no son válidos para {{taskName}}",
     "configureExperimentsSubtitle": "Configure experimentos para entrenar modelos.",
     "configureModels": "Configurar modelos",
     "configureOptimizer": "Configurar optimización de hiperparámetros",
@@ -75,10 +76,12 @@
     "startTime": "Hora de Inicio",
     "stratify": "Estratificar",
     "stratifyDescription": "Define si los datos se separarán proporcionalmente según la distribución de clases en cada conjunto. Shuffle debe ser verdadero para estratificar los datos.",
+    "forecastingValidationHint": "Para forecasting, una columna de entrada debe contener fechas u horas y la columna de salida debe ser numérica. La etiqueta del backend 'Value' es genérica y puede corresponder aquí a columnas mostradas como Text, Float, Integer, Date o Timestamp.",
     "useManualSplittingBySpecifyingRowIndexes": "Usar división manual especificando los índices de fila de cada subconjunto",
     "usePredefinedSplitsFromDataset": "Usar divisiones predefinidas del dataset",
     "usePredefinedSplitsFromDatasetNotAvailable": "Usar divisiones predefinidas del dataset (no disponible)",
-    "useRandomRowsBySpecifyingPortion": "Usar filas aleatorias especificando qué porción del dataset desea usar para cada subconjunto"
+    "useRandomRowsBySpecifyingPortion": "Usar filas aleatorias especificando qué porción del dataset desea usar para cada subconjunto",
+    "validationDetails": "Detalle de validación"
   },
   "message": {
     "confirmDeleteRun": "¿Está seguro de que desea eliminar esta ejecución? Esta acción no se puede deshacer.",

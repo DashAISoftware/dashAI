@@ -432,6 +432,10 @@ class ForecastingTask(BaseTask):
         # --- Soporte para alias `datasetdict` usado por experiments.py ---
         if dataset is None and "datasetdict" in kwargs:
             dataset = kwargs.pop("datasetdict")
+        if inputs_columns is None and "input_columns" in kwargs:
+            inputs_columns = kwargs.pop("input_columns")
+        if outputs_columns is None and "output_columns" in kwargs:
+            outputs_columns = kwargs.pop("output_columns")
 
         # Convertir a DashAIDataset si viene como DatasetDict
         if isinstance(dataset, DatasetDict):

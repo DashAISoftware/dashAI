@@ -1,6 +1,7 @@
 import os
 import pathlib
 
+import pandas as pd
 import PIL
 import pytest
 from datasets import DatasetDict
@@ -15,6 +16,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.forecasting_task import ForecastingTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
@@ -140,6 +142,31 @@ def test_get_tabular_class_task_metadata():
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
     assert metadata["outputs_cardinality"] == 1
+
+
+def test_prepare_forecasting_task_accepts_singular_column_aliases():
+    dataset = to_dashai_dataset(
+        pd.DataFrame(
+            {
+                "date": pd.date_range("2025-01-01", periods=5, freq="D").astype(str),
+                "temperature_C": [20.5, 21.0, 19.8, 22.1, 20.9],
+            }
+        )
+    )
+    forecasting_task = ForecastingTask()
+
+    prepared = forecasting_task.prepare_for_task(
+        dataset=dataset,
+        input_columns=["date"],
+        output_columns=["temperature_C"],
+    )
+
+    temporal_metadata = forecasting_task.get_temporal_metadata()
+
+    assert prepared.num_rows == 5
+    assert temporal_metadata is not None
+    assert temporal_metadata["timestamp_col"] == "date"
+    assert temporal_metadata["target_col"] == "temperature_C"
 
 
 @pytest.fixture(scope="module", name="text_classification_dataset")
