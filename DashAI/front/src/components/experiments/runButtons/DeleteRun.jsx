@@ -37,9 +37,16 @@ export default function DeleteRun({ run, onRunDelete }) {
               });
             } catch (error) {
               console.error("Error deleting run:", error);
-              enqueueSnackbar(t("message.errorDeletingRun"), {
-                variant: "error",
-              });
+              const detail =
+                error?.response?.data?.detail || error?.message || "";
+              enqueueSnackbar(
+                detail
+                  ? `${t("message.errorDeletingRun")}: ${detail}`
+                  : t("message.errorDeletingRun"),
+                {
+                  variant: "error",
+                },
+              );
             } finally {
               setOpen(false);
             }

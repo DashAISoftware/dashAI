@@ -40,7 +40,6 @@ function ResultsDialogLayout({
   showTable,
   handleShowTable,
   handleShowGraphs,
-  handleDeleteExperiment,
 }) {
   const theme = useTheme();
   const screenSm = useMediaQuery(theme.breakpoints.down("sm"));
@@ -120,7 +119,10 @@ function ResultsDialogLayout({
 
   const enqueueRunnerJob = async (runId) => {
     try {
-      const response = await enqueueRunnerJobRequest(runId);
+      const response = await enqueueRunnerJobRequest(
+        runId,
+        experiment.task_name,
+      );
 
       if (response && response.id) {
         setTrackedJobIds((prev) => new Set(prev).add(response.id));
@@ -226,7 +228,10 @@ function ResultsDialogLayout({
       const initialUpdatedRun = await resetRunById(run.id);
 
       // Enqueue the run
-      const response = await enqueueRunnerJobRequest(run.id);
+      const response = await enqueueRunnerJobRequest(
+        run.id,
+        experiment.task_name,
+      );
 
       if (!response || !response.id) {
         enqueueSnackbar(
@@ -403,22 +408,25 @@ function ResultsDialogLayout({
           }}
           onConfirm={async () => {
             try {
+              await deleteRun(runToDelete);
               setRuns((prevRuns) =>
                 prevRuns.filter((run) => run.id !== runToDelete),
               );
-              if (runs.length === 1) {
-                handleDeleteExperiment(experiment.id);
-              } else {
-                await deleteRun(runToDelete);
-              }
               enqueueSnackbar(t("models:message.runDeletedSuccessfully"), {
                 variant: "success",
               });
             } catch (error) {
               console.error("Error deleting run:", error);
-              enqueueSnackbar(t("models:error.errorDeletingRun"), {
-                variant: "error",
-              });
+              const detail =
+                error?.response?.data?.detail || error?.message || "";
+              enqueueSnackbar(
+                detail
+                  ? `${t("models:error.errorDeletingRun")}: ${detail}`
+                  : t("models:error.errorDeletingRun"),
+                {
+                  variant: "error",
+                },
+              );
             } finally {
               setOpenDeleteModal(false);
               setRunToDelete(null);

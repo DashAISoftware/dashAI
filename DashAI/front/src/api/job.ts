@@ -36,9 +36,14 @@ export const getJobStatus = async (jobId: string): Promise<any> => {
   return response.data;
 };
 
-export const enqueueRunnerJob = async (runId: number): Promise<object> => {
+export const enqueueRunnerJob = async (
+  runId: number,
+  taskName?: string,
+): Promise<object> => {
+  const jobType =
+    taskName === "ForecastingTask" ? "ForecastingJob" : "ModelJob";
   const data = {
-    job_type: "ModelJob",
+    job_type: jobType,
     kwargs: { run_id: runId },
   };
   const formData = new FormData();

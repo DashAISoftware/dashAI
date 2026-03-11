@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -7,7 +7,7 @@ import TimestampWrapper from "../../components/shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { useTourContext } from "../../components/tour/TourProvider";
 
-function Results({ experiment, handleDeleteExperiment }) {
+function Results({ experiment }) {
   const [open, setOpen] = useState(false);
   const [showTable, setShowTable] = useState(true);
   const tourContext = useTourContext();
@@ -49,7 +49,6 @@ function Results({ experiment, handleDeleteExperiment }) {
           showTable={showTable}
           handleShowTable={handleShowTable}
           handleShowGraphs={handleShowGraphs}
-          handleDeleteExperiment={handleDeleteExperiment}
         />
       )}
     </>

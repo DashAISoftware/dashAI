@@ -4,6 +4,7 @@ This module defines the common interface for all forecasting models in DashAI.
 It ensures model-agnostic handling of time series data and exogenous variables.
 """
 
+import warnings
 from abc import abstractmethod
 from typing import List, Optional
 
@@ -52,6 +53,8 @@ class ForecastingModel(BaseModel):
     (without "Base" prefix) avoids conflicts with the component registry system
     which looks for classes with "Base" in their name.
     """
+
+    _compatible_tasks = ["ForecastingTask"]
 
     def __init__(self, **kwargs):
         """Initialize forecasting model.
@@ -163,6 +166,32 @@ class ForecastingModel(BaseModel):
         """
         raise NotImplementedError
 
+    def train(
+        self,
+        x_train,
+        y_train,
+        x_validation=None,
+        y_validation=None,
+        **kwargs,
+    ) -> "ForecastingModel":
+        """Compatibility wrapper for the generic DashAI model contract.
+
+        Forecasting jobs train models via ``fit()`` so they can pass
+        ``temporal_metadata`` and other forecasting-specific arguments. This
+        wrapper keeps forecasting models instantiable through ``ModelFactory``,
+        which still expects every model to provide a concrete ``train()`` method.
+        """
+        if x_validation is not None or y_validation is not None:
+            warnings.warn(
+                "ForecastingModel.train() ignores validation datasets. "
+                "Forecasting models should be trained via fit() with the "
+                "appropriate temporal metadata.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        return self.fit(x_train, y_train, **kwargs)
+
     def get_exogenous_columns(self) -> List[str]:
         """Get list of exogenous variable names in original format.
 
@@ -234,8 +263,6 @@ class ForecastingModel(BaseModel):
         >>> model.fit(x_train, y_train)
         >>> model._validate_predict_implementation()  # Ensures correct implementation
         """
-        import warnings
-
         warnings.warn(
             "ForecastingModel.predict() must support both in-sample (x_pred) "
             "and out-of-sample (periods) prediction modes. "

@@ -6,6 +6,7 @@ import shutil
 from typing import List
 
 import datasets
+import pandas as pd
 import pytest
 from datasets import DatasetDict
 from pyarrow.lib import ArrowInvalid
@@ -16,6 +17,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     get_column_names_from_indexes,
     load_dataset,
+    prepare_for_forecasting_experiment,
     save_dataset,
     select_columns,
     split_dataset,
@@ -311,6 +313,48 @@ def test_split_dataset(
     validation_rows = split_datasetdict["validation"].num_rows
 
     assert totals_rows == train_rows + test_rows + validation_rows
+
+
+def test_prepare_for_forecasting_experiment_forces_temporal_split_for_random_type():
+    """Forecasting should never silently fall back to random splitting."""
+    dataframe = pd.DataFrame(
+        {
+            "ds": pd.date_range("2020-01-01", periods=100, freq="D"),
+            "y": list(range(100)),
+        }
+    )
+    dataset = to_dashai_dataset(dataframe)
+
+    prepared_dataset, split_indices = prepare_for_forecasting_experiment(
+        dataset=dataset,
+        splits={
+            "splitType": "random",
+            "train": 0.6,
+            "validation": 0.2,
+            "test": 0.2,
+        },
+        timestamp_col="ds",
+        output_columns=["y"],
+    )
+
+    train_df = prepared_dataset["train"].to_pandas()
+    validation_df = prepared_dataset["validation"].to_pandas()
+    test_df = prepared_dataset["test"].to_pandas()
+
+    assert len(train_df) == 60
+    assert len(validation_df) == 20
+    assert len(test_df) == 20
+
+    assert train_df["ds"].is_monotonic_increasing
+    assert validation_df["ds"].is_monotonic_increasing
+    assert test_df["ds"].is_monotonic_increasing
+
+    assert train_df["ds"].max() < validation_df["ds"].min()
+    assert validation_df["ds"].max() < test_df["ds"].min()
+
+    assert split_indices["train_indexes"] == list(range(60))
+    assert split_indices["val_indexes"] == list(range(60, 80))
+    assert split_indices["test_indexes"] == list(range(80, 100))
 
 
 # ----------------------------------------------------------------------------

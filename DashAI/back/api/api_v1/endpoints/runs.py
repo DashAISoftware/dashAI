@@ -324,22 +324,62 @@ async def delete_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
+
+            # Delete orphan-prone operations that are not linked by FK constraints.
+            global_explainers = (
+                db.query(GlobalExplainer).filter(GlobalExplainer.run_id == run_id).all()
+            )
+            for explainer in global_explainers:
+                if explainer.plot_path and os.path.exists(explainer.plot_path):
+                    remove_path(explainer.plot_path)
+                if explainer.explanation_path and os.path.exists(
+                    explainer.explanation_path
+                ):
+                    remove_path(explainer.explanation_path)
+                db.delete(explainer)
+
+            local_explainers = (
+                db.query(LocalExplainer).filter(LocalExplainer.run_id == run_id).all()
+            )
+            for explainer in local_explainers:
+                if explainer.plots_path and os.path.exists(explainer.plots_path):
+                    remove_path(explainer.plots_path)
+                if explainer.explanation_path and os.path.exists(
+                    explainer.explanation_path
+                ):
+                    remove_path(explainer.explanation_path)
+                db.delete(explainer)
+
+            for prediction in run.predictions:
+                if prediction.results_path and os.path.exists(prediction.results_path):
+                    remove_path(prediction.results_path)
+
+            for path in [
+                run.run_path,
+                run.plot_history_path,
+                run.plot_slice_path,
+                run.plot_contour_path,
+                run.plot_importance_path,
+            ]:
+                if path and os.path.exists(path):
+                    remove_path(path)
+
             db.delete(run)
-            if run.status == RunStatus.FINISHED:
-                os.remove(run.run_path)
             db.commit()
             return Response(status_code=status.HTTP_204_NO_CONTENT)
+        except HTTPException:
+            raise
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal database error",
+                detail=f"Internal database error: {e}",
             ) from e
-        except OSError as e:
+        except (OSError, ValueError) as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete directory",
+                detail=f"Failed to delete run resources: {e}",
             ) from e
 
 

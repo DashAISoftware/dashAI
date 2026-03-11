@@ -1706,8 +1706,22 @@ def prepare_for_forecasting_experiment(
     """
     splitType = splits.get("splitType")
 
-    if splitType == "temporal":
-        # Use temporal splitting
+    if splitType in {"manual", "predefined"}:
+        # Preserve explicit user-defined splits for compatibility.
+        prepared_dataset, split_indices = prepare_for_model_session(
+            dataset, splits, output_columns or []
+        )
+        train_indexes = split_indices["train_indexes"]
+        test_indexes = split_indices["test_indexes"]
+        val_indexes = split_indices["val_indexes"]
+    else:
+        if splitType != "temporal":
+            log.warning(
+                "ForecastingTask received splitType=%r. "
+                "Falling back to temporal split to avoid data leakage.",
+                splitType,
+            )
+
         train_size = splits.get("train", 0.7)
         val_size = splits.get("validation", 0.15)
         test_size = splits.get("test", 0.15)
@@ -1722,26 +1736,17 @@ def prepare_for_forecasting_experiment(
             timestamp_col=timestamp_col,
         )
 
-        # Get indices for compatibility with existing system
-        n = len(dataset)
-        train_end = int(n * train_size)
-        val_start = train_end + gap
-        val_end = val_start + int(n * val_size)
-        test_start = val_end + gap
-        test_end = test_start + int(n * test_size)
+        # Keep compatibility with the rest of the system by exposing indices
+        # relative to the temporally ordered full dataset.
+        train_len = len(prepared_dataset["train"])
+        val_len = len(prepared_dataset["validation"])
+        test_len = len(prepared_dataset["test"])
 
-        train_indexes = list(range(train_end))
-        val_indexes = list(range(val_start, val_end))
-        test_indexes = list(range(test_start, test_end))
-
-    else:
-        # Fallback to existing logic for non-temporal splits
-        prepared_dataset, split_indices = prepare_for_model_session(
-            dataset, splits, output_columns or []
-        )
-        train_indexes = split_indices["train_indexes"]
-        test_indexes = split_indices["test_indexes"]
-        val_indexes = split_indices["val_indexes"]
+        train_indexes = list(range(train_len))
+        val_start = train_len + gap
+        val_indexes = list(range(val_start, val_start + val_len))
+        test_start = val_start + val_len + gap
+        test_indexes = list(range(test_start, test_start + test_len))
 
     return prepared_dataset, {
         "train_indexes": train_indexes,

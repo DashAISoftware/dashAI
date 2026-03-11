@@ -28,8 +28,10 @@ export const extractColumns = (
         // Not Started, Delivered, Started
         return "-";
 
-      return row.test_metrics[metric.name] !== undefined
-        ? Number(row.test_metrics[metric.name]).toFixed(2)
+      const testMetrics = row.test_metrics ?? {};
+
+      return testMetrics[metric.name] !== undefined
+        ? Number(testMetrics[metric.name]).toFixed(2)
         : "-";
     },
   }));

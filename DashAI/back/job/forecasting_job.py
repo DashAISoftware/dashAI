@@ -11,6 +11,7 @@ from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
     load_dataset,
@@ -97,10 +98,6 @@ class ForecastingJob(BaseJob):
     def run(self) -> None:
         from kink import di
 
-        from DashAI.back.api.api_v1.endpoints.components import (
-            _intersect_component_lists,
-        )
-
         component_registry = di["component_registry"]
         session_factory = di["session_factory"]
         config = di["config"]
@@ -156,24 +153,18 @@ class ForecastingJob(BaseJob):
                     )
 
                 try:
-                    # Get all the metrics
-                    components_by_type = component_registry.get_components_by_types(
-                        select="Metric"
-                    )
-                    all_metrics = {
-                        component_dict["name"]: component_dict
-                        for component_dict in components_by_type
-                    }
-                    # Get the intersection between the metrics and the task
-                    # related components
-                    selected_metrics = _intersect_component_lists(
-                        all_metrics,
-                        component_registry.get_related_components(
-                            model_session.task_name
-                        ),
-                    )
-                    metrics: List[BaseMetric] = [
-                        metric["class"] for metric in selected_metrics.values()
+                    # Get metrics selected in the model session
+                    train_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.train_metrics
+                    ]
+                    validation_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.validation_metrics
+                    ]
+                    test_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.test_metrics
                     ]
                 except Exception as e:
                     log.exception(e)
@@ -241,14 +232,18 @@ class ForecastingJob(BaseJob):
                         f"Unable to find Model with name {run.model_name} in registry.",
                     ) from e
 
-                # Validate model is compatible with forecasting
-                if not hasattr(run_model_class, "_compatible_tasks"):
+                # Validate model is compatible with forecasting.
+                compatible_tasks = getattr(run_model_class, "_compatible_tasks", None)
+                if compatible_tasks is None:
+                    compatible_tasks = getattr(
+                        run_model_class, "COMPATIBLE_COMPONENTS", None
+                    )
+
+                if compatible_tasks is None:
                     log.warning(
                         f"Model {run.model_name} does not specify task compatibility"
                     )
-                elif "ForecastingTask" not in getattr(
-                    run_model_class, "_compatible_tasks", []
-                ):
+                elif "ForecastingTask" not in compatible_tasks:
                     raise JobError(
                         f"Model {run.model_name} is not compatible with ForecastingTask"
                     )
@@ -257,6 +252,12 @@ class ForecastingJob(BaseJob):
                     factory = ModelFactory(
                         run_model_class,
                         run.parameters,
+                        run_id,
+                        x,
+                        y,
+                        train_metrics,
+                        validation_metrics,
+                        test_metrics,
                         # No n_labels for forecasting tasks
                         n_labels=None,
                     )
@@ -285,7 +286,7 @@ class ForecastingJob(BaseJob):
 
                     if run.goal_metric != "":
                         try:
-                            goal_metric = selected_metrics[run.goal_metric]
+                            goal_metric = component_registry[run.goal_metric]
                         except Exception as e:
                             log.exception(e)
                             raise JobError(
@@ -315,6 +316,7 @@ class ForecastingJob(BaseJob):
 
                 try:
                     # Forecasting model training
+                    plot_paths = []
                     if not run_optimizable_parameters:
                         # Simple fit with forecasting-specific parameters
                         # Pass temporal metadata to model for column information
@@ -342,7 +344,6 @@ class ForecastingJob(BaseJob):
                         plot_filenames, plots = optimizer.create_plots(
                             trials, run_id, n_params=len(run_optimizable_parameters)
                         )
-                        plot_paths = []
                         for filename, plot in zip(plot_filenames, plots, strict=True):
                             plot_path = os.path.join(config["RUNS_PATH"], filename)
                             with open(plot_path, "wb") as file:
@@ -355,30 +356,20 @@ class ForecastingJob(BaseJob):
                         "Forecasting model training failed",
                     ) from e
 
-                # Save hyperparameter plots if optimization was used
-                if run_optimizable_parameters != {}:
-                    if len(run_optimizable_parameters) >= 2:
-                        try:
-                            run.plot_history_path = plot_paths[0]
-                            run.plot_slice_path = plot_paths[1]
-                            run.plot_contour_path = plot_paths[2]
-                            run.plot_importance_path = plot_paths[3]
-                            db.commit()
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                "Hyperparameter plot path saving failed",
-                            ) from e
-                    else:
-                        try:
-                            run.plot_history_path = plot_paths[0]
-                            run.plot_slice_path = plot_paths[1]
-                            db.commit()
-                        except Exception as e:
-                            log.exception(e)
-                            raise JobError(
-                                "Hyperparameter plot path saving failed",
-                            ) from e
+                try:
+                    paths = plot_paths + [None] * (4 - len(plot_paths))
+                    (
+                        run.plot_history_path,
+                        run.plot_slice_path,
+                        run.plot_contour_path,
+                        run.plot_importance_path,
+                    ) = paths[:4]
+                    db.commit()
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        "Hyperparameter plot path saving failed",
+                    ) from e
 
                 try:
                     run.set_status_as_finished()
@@ -390,28 +381,26 @@ class ForecastingJob(BaseJob):
                     ) from e
 
                 try:
-                    # Evaluate with forecasting-specific metrics
-                    model_metrics = factory.evaluate(x, y, metrics)
-
-                    # Add forecasting-specific metadata to metrics
-                    for split in ["train", "validation", "test"]:
-                        if split in model_metrics:
-                            model_metrics[split]["temporal_metadata"] = {
-                                "frequency": temporal_metadata.get("frequency"),
-                                "n_periods": temporal_metadata.get("n_periods"),
-                                "start_date": str(temporal_metadata.get("start_date")),
-                                "end_date": str(temporal_metadata.get("end_date")),
-                            }
-
+                    if train_metrics:
+                        model.calculate_metrics(
+                            split=SplitEnum.TRAIN,
+                            level=LevelEnum.LAST,
+                        )
+                    if validation_metrics:
+                        model.calculate_metrics(
+                            split=SplitEnum.VALIDATION,
+                            level=LevelEnum.LAST,
+                        )
+                    if test_metrics:
+                        model.calculate_metrics(
+                            split=SplitEnum.TEST,
+                            level=LevelEnum.LAST,
+                        )
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         "Forecasting metrics calculation failed",
                     ) from e
-
-                run.train_metrics = model_metrics["train"]
-                run.validation_metrics = model_metrics["validation"]
-                run.test_metrics = model_metrics["test"]
 
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
@@ -423,7 +412,8 @@ class ForecastingJob(BaseJob):
                             # Save forecast components for interpretation
                             components = model.get_forecast_components(horizon=30)
                             components_path = os.path.join(
-                                run_path, "forecast_components.csv"
+                                config["RUNS_PATH"],
+                                f"{run.id}_forecast_components.csv",
                             )
                             components.to_csv(components_path, index=False)
                             log.info(f"Saved forecast components to {components_path}")

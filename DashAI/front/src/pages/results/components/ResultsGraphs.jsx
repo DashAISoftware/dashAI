@@ -7,6 +7,7 @@ import graphsMaking from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
 import { useTranslation } from "react-i18next";
+import { getNumericMetrics } from "../../../utils/metricUtils";
 
 function ResultsGraphs({ runs }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -59,16 +60,23 @@ function ResultsGraphs({ runs }) {
           const metrics = {};
           Object.keys(item).forEach((key) => {
             if (key.includes("metrics")) {
-              metrics[key] = item[key];
+              const numericMetrics = getNumericMetrics(item[key]);
+              if (Object.keys(numericMetrics).length > 0) {
+                metrics[key] = numericMetrics;
+              }
             }
           });
           return metrics;
         });
 
-        if (extractedMetrics.length > 0) {
-          const metricsOrder = Object.keys(extractedMetrics[0]);
+        const firstMetricsWithValues = extractedMetrics.find(
+          (metricGroup) => Object.keys(metricGroup).length > 0,
+        );
+
+        if (firstMetricsWithValues) {
+          const metricsOrder = Object.keys(firstMetricsWithValues);
           const metricsValuesOrder = Object.keys(
-            extractedMetrics[0][metricsOrder[0]],
+            firstMetricsWithValues[metricsOrder[0]],
           );
 
           const concatenated = metricsOrder

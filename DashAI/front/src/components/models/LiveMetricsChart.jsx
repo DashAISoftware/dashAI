@@ -21,6 +21,10 @@ import {
 } from "recharts";
 import { useEffect, useRef, useState } from "react";
 import { getModelSessionById } from "../../api/modelSession";
+import {
+  formatScalarMetricsForChart,
+  isFiniteMetricValue,
+} from "../../utils/metricUtils";
 
 export function LiveMetricsChart({ run }) {
   const [level, setLevel] = useState(null);
@@ -45,17 +49,9 @@ export function LiveMetricsChart({ run }) {
       setData((prev) => {
         const next = structuredClone(prev);
 
-        const formattedTestMetrics = {};
-        for (const metricName in run.test_metrics) {
-          const value = run.test_metrics[metricName];
-          if (Array.isArray(value)) {
-            formattedTestMetrics[metricName] = value;
-          } else {
-            formattedTestMetrics[metricName] = [
-              { step: 1, value: value, timestamp: new Date().toISOString() },
-            ];
-          }
-        }
+        const formattedTestMetrics = formatScalarMetricsForChart(
+          run.test_metrics,
+        );
 
         next.TEST = {
           TRIAL: formattedTestMetrics,
@@ -112,17 +108,9 @@ export function LiveMetricsChart({ run }) {
         setData((prev) => {
           const next = structuredClone(prev);
 
-          const formattedTestMetrics = {};
-          for (const metricName in run.test_metrics) {
-            const value = run.test_metrics[metricName];
-            if (Array.isArray(value)) {
-              formattedTestMetrics[metricName] = value;
-            } else {
-              formattedTestMetrics[metricName] = [
-                { step: 1, value: value, timestamp: new Date().toISOString() },
-              ];
-            }
-          }
+          const formattedTestMetrics = formatScalarMetricsForChart(
+            run.test_metrics,
+          );
 
           next.TEST = {
             TRIAL: formattedTestMetrics,
@@ -173,7 +161,12 @@ export function LiveMetricsChart({ run }) {
   const allowed = availableMetrics[split] ?? [];
 
   const filteredMetrics = Object.fromEntries(
-    Object.entries(metrics).filter(([name]) => allowed.includes(name)),
+    Object.entries(metrics).filter(
+      ([name, metricValues]) =>
+        allowed.includes(name) &&
+        Array.isArray(metricValues) &&
+        metricValues.some((point) => isFiniteMetricValue(point?.value)),
+    ),
   );
 
   const chartData = (() => {

@@ -22,6 +22,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../../api/modelSession";
+import {
+  formatScalarMetricsForChart,
+  isFiniteMetricValue,
+} from "../../../utils/metricUtils";
 
 export function LiveMetricsChart({ run }) {
   const { t } = useTranslation(["models", "common"]);
@@ -50,20 +54,9 @@ export function LiveMetricsChart({ run }) {
       setData((prev) => {
         const next = structuredClone(prev);
 
-        // Convert old format to new format if needed
-        const formattedTestMetrics = {};
-        for (const metricName in run.test_metrics) {
-          const value = run.test_metrics[metricName];
-          // Check if it's already in new format (array of objects)
-          if (Array.isArray(value)) {
-            formattedTestMetrics[metricName] = value;
-          } else {
-            // Convert old format (single value) to new format
-            formattedTestMetrics[metricName] = [
-              { step: 1, value: value, timestamp: new Date().toISOString() },
-            ];
-          }
-        }
+        const formattedTestMetrics = formatScalarMetricsForChart(
+          run.test_metrics,
+        );
 
         next.TEST = {
           TRIAL: formattedTestMetrics,
@@ -121,20 +114,9 @@ export function LiveMetricsChart({ run }) {
         setData((prev) => {
           const next = structuredClone(prev);
 
-          // Convert old format to new format if needed
-          const formattedTestMetrics = {};
-          for (const metricName in run.test_metrics) {
-            const value = run.test_metrics[metricName];
-            // Check if it's already in new format (array of objects)
-            if (Array.isArray(value)) {
-              formattedTestMetrics[metricName] = value;
-            } else {
-              // Convert old format (single value) to new format
-              formattedTestMetrics[metricName] = [
-                { step: 1, value: value, timestamp: new Date().toISOString() },
-              ];
-            }
-          }
+          const formattedTestMetrics = formatScalarMetricsForChart(
+            run.test_metrics,
+          );
 
           next.TEST = {
             TRIAL: formattedTestMetrics,
@@ -184,7 +166,12 @@ export function LiveMetricsChart({ run }) {
   const allowed = availableMetrics[split] ?? [];
 
   const filteredMetrics = Object.fromEntries(
-    Object.entries(metrics).filter(([name]) => allowed.includes(name)),
+    Object.entries(metrics).filter(
+      ([name, metricValues]) =>
+        allowed.includes(name) &&
+        Array.isArray(metricValues) &&
+        metricValues.some((point) => isFiniteMetricValue(point?.value)),
+    ),
   );
 
   // Transform new data structure to chart format

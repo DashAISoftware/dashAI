@@ -135,7 +135,10 @@ function RunnerDialog({
 
   const enqueueRunnerJob = async (runId) => {
     try {
-      const response = await enqueueRunnerJobRequest(runId);
+      const response = await enqueueRunnerJobRequest(
+        runId,
+        experiment.task_name,
+      );
 
       if (response && response.id) {
         setTrackedJobIds((prev) => new Set(prev).add(response.id));
@@ -238,7 +241,10 @@ function RunnerDialog({
         ),
       );
 
-      const response = await enqueueRunnerJobRequest(run.id);
+      const response = await enqueueRunnerJobRequest(
+        run.id,
+        experiment.task_name,
+      );
 
       if (response && response.id) {
         enqueueSnackbar(`Run ${run.name} started successfully`, {
@@ -359,10 +365,6 @@ function RunnerDialog({
             setRows((prevRows) =>
               prevRows.filter((row) => row.id !== params.row.id),
             );
-            if (rows.length === 1) {
-              setOpen(false);
-              deleteExperiment();
-            }
           }}
         />,
       ],

@@ -240,35 +240,39 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
       return;
     }
 
+    const effectiveSplitType = isForecastingTask
+      ? SPLIT_TYPES.TEMPORAL
+      : splitType;
+
     const updatedExpData = {
       ...newExp,
       input_columns: inputColumnNames,
       output_columns: outputColumnNames,
     };
 
-    if (splitType === SPLIT_TYPES.MANUAL) {
+    if (effectiveSplitType === SPLIT_TYPES.MANUAL) {
       updatedExpData.splits = {
         ...rowsPartitionsIndex,
-        splitType: splitType,
+        splitType: effectiveSplitType,
       };
-    } else if (splitType === SPLIT_TYPES.RANDOM) {
+    } else if (effectiveSplitType === SPLIT_TYPES.RANDOM) {
       updatedExpData.splits = {
         ...rowsPartitionsPercentage,
         shuffle: shuffle,
         stratify: stratify,
         seed: seed === "" || seed == null ? 42 : Number(seed),
-        splitType: splitType,
+        splitType: effectiveSplitType,
       };
-    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
+    } else if (effectiveSplitType === SPLIT_TYPES.PREDEFINED) {
       updatedExpData.splits = {
         ...datasetPartitionsIndex,
-        splitType: splitType,
+        splitType: effectiveSplitType,
       };
-    } else if (splitType === SPLIT_TYPES.TEMPORAL) {
+    } else if (effectiveSplitType === SPLIT_TYPES.TEMPORAL) {
       updatedExpData.splits = {
         ...rowsPartitionsPercentage,
         gap: gap,
-        splitType: splitType,
+        splitType: effectiveSplitType,
       };
     }
     setNewExp(updatedExpData);
@@ -326,7 +330,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
 
   // Set split type to TEMPORAL for forecasting tasks
   useEffect(() => {
-    if (isForecastingTask && splitType === "") {
+    if (isForecastingTask && splitType !== SPLIT_TYPES.TEMPORAL) {
       setSplitType(SPLIT_TYPES.TEMPORAL);
     }
   }, [isForecastingTask, splitType]);

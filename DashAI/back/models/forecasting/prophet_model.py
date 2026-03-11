@@ -25,6 +25,99 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.models.forecasting.base_forecasting_model import ForecastingModel
 
 
+def _patch_prophet_regressor_column_matrix():
+    """Patch Prophet for compatibility with newer pandas versions."""
+    from prophet import Prophet
+
+    if getattr(Prophet, "_dashai_pandas_compat_patch", False):
+        return Prophet
+
+    @staticmethod
+    def _dashai_fourier_series(dates, period, series_order):
+        """Prophet expects nanosecond timestamps, but newer pandas can
+        hand back ``datetime64[us]`` arrays. Force nanosecond precision so
+        weekly/yearly seasonal features keep the correct period.
+        """
+        if not (series_order >= 1):
+            raise ValueError("series_order must be >= 1")
+
+        ns_dates = (
+            pd.to_datetime(dates).to_numpy(dtype="datetime64[ns]").astype(np.int64)
+        )
+        t = ns_dates // 1_000_000_000 / (3600 * 24.0)
+
+        x_T = t * np.pi * 2
+        fourier_components = np.empty((dates.shape[0], 2 * series_order))
+        for i in range(series_order):
+            c = x_T * (i + 1) / period
+            fourier_components[:, 2 * i] = np.sin(c)
+            fourier_components[:, (2 * i) + 1] = np.cos(c)
+        return fourier_components
+
+    def _dashai_regressor_column_matrix(self, seasonal_features, modes):
+        components = pd.DataFrame(
+            {
+                "col": np.arange(seasonal_features.shape[1]),
+                "component": [x.split("_delim_")[0] for x in seasonal_features.columns],
+            }
+        )
+
+        if self.train_holiday_names is not None:
+            components = self.add_group_component(
+                components, "holidays", self.train_holiday_names.unique()
+            )
+
+        for mode in ["additive", "multiplicative"]:
+            components = self.add_group_component(
+                components, mode + "_terms", modes[mode]
+            )
+            regressors_by_mode = [
+                r for r, props in self.extra_regressors.items() if props["mode"] == mode
+            ]
+            components = self.add_group_component(
+                components,
+                "extra_regressors_" + mode,
+                regressors_by_mode,
+            )
+            modes[mode].append(mode + "_terms")
+            modes[mode].append("extra_regressors_" + mode)
+
+        modes[self.holidays_mode].append("holidays")
+
+        clean_components = components.reset_index(drop=True)
+        component_cols = pd.crosstab(
+            pd.Series(clean_components["col"].to_numpy(), name="col"),
+            pd.Series(clean_components["component"].to_numpy(), name="component"),
+        ).sort_index(level="col")
+
+        for name in ["additive_terms", "multiplicative_terms"]:
+            if name not in component_cols:
+                component_cols[name] = 0
+
+        component_cols = component_cols.drop("zeros", axis=1, errors="ignore")
+
+        if (
+            max(
+                component_cols["additive_terms"]
+                + component_cols["multiplicative_terms"]
+            )
+            > 1
+        ):
+            raise Exception("A bug occurred in seasonal components.")
+
+        if self.train_component_cols is not None:
+            component_cols = component_cols[self.train_component_cols.columns]
+            if not component_cols.equals(self.train_component_cols):
+                raise Exception("A bug occurred in constructing regressors.")
+
+        return component_cols, modes
+
+    Prophet.fourier_series = _dashai_fourier_series
+    Prophet.regressor_column_matrix = _dashai_regressor_column_matrix
+    Prophet._dashai_pandas_compat_patch = True
+    return Prophet
+
+
 class ProphetModelSchema(BaseSchema):
     """Schema for Prophet model configuration.
 
@@ -249,7 +342,7 @@ class ProphetModel(ForecastingModel):
             Fitted model instance
         """
         try:
-            from prophet import Prophet
+            Prophet = _patch_prophet_regressor_column_matrix()
         except ImportError as e:
             raise ImportError(
                 "Prophet is required for ProphetModel. "
@@ -311,8 +404,11 @@ class ProphetModel(ForecastingModel):
         self.frequency = frequency
 
         # Build Prophet dataframe (internal conversion to 'ds'/'y')
-        prophet_df = pd.DataFrame()
-        prophet_df["ds"] = pd.to_datetime(x_df[timestamp_col])
+        prophet_df = pd.DataFrame(
+            {
+                "ds": pd.to_datetime(x_df[timestamp_col]).to_numpy(),
+            }
+        )
 
         # Check if target column is in x_train (user might have included it by mistake)
         target_in_inputs = target_col in x_df.columns
@@ -323,31 +419,44 @@ class ProphetModel(ForecastingModel):
                 "[ProphetModel] ℹ️  Target '{}' found in inputs - using it "
                 "from there".format(target_col)
             )
-            prophet_df["y"] = x_df[target_col]
+            prophet_df["y"] = pd.to_numeric(
+                x_df[target_col], errors="coerce"
+            ).to_numpy()
         else:
             # Target is only in y - normal case
-            prophet_df["y"] = y_df[target_col]
+            prophet_df["y"] = pd.to_numeric(
+                y_df[target_col], errors="coerce"
+            ).to_numpy()
 
         # Add exogenous variables (columns that are not timestamp and are numeric)
         # Exclude timestamp and target columns, and only include numeric columns
         # Store in ORIGINAL format (as per BaseForecastingModel contract)
         self.exog_cols = []
-        for col in x_df.columns:
-            if col == timestamp_col:
-                continue  # Skip timestamp
-            if col == target_col:
-                # Skip target - don't use it as exogenous variable
-                if target_in_inputs:
-                    print(
-                        "[ProphetModel] ℹ️  Excluding target '{}' from exogenous "
-                        "variables".format(col)
-                    )
+        if temporal_metadata:
+            candidate_exog_cols = [col for col in exog_cols_from_task if col in x_df]
+            missing_exog_cols = [col for col in exog_cols_from_task if col not in x_df]
+            if missing_exog_cols:
+                print(
+                    "[ProphetModel] ⚠️  Ignoring missing exogenous columns from task: "
+                    f"{missing_exog_cols}"
+                )
+        else:
+            candidate_exog_cols = [
+                col for col in x_df.columns if col not in {timestamp_col, target_col}
+            ]
+
+        for col in candidate_exog_cols:
+            if col == target_col and target_in_inputs:
+                print(
+                    "[ProphetModel] ℹ️  Excluding target '{}' from exogenous "
+                    "variables".format(col)
+                )
                 continue
 
             # Only add numeric columns
             if pd.api.types.is_numeric_dtype(x_df[col]):
                 self.exog_cols.append(col)  # Store ORIGINAL name
-                prophet_df[col] = x_df[col]
+                prophet_df[col] = x_df[col].to_numpy()
             else:
                 print(
                     "[ProphetModel] ⚠️  Skipping non-numeric column: '{}' "
@@ -834,6 +943,8 @@ class ProphetModel(ForecastingModel):
         ProphetModel
             Loaded model instance
         """
+        _patch_prophet_regressor_column_matrix()
+
         with open(filename, "rb") as f:
             model_state = pickle.load(f)
 

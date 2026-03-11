@@ -1,9 +1,11 @@
 import React from "react";
 import { Box, Divider, Paper, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { getNumericMetricEntries } from "../../../utils/metricUtils";
 
 export default function MetricsCard({ title, metrics }) {
   const { t } = useTranslation(["models"]);
+  const numericMetrics = getNumericMetricEntries(metrics);
 
   return (
     <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
@@ -11,8 +13,8 @@ export default function MetricsCard({ title, metrics }) {
         {title}
       </Typography>
       <Divider sx={{ mb: 2 }} />
-      {metrics && Object.keys(metrics).length > 0 ? (
-        Object.entries(metrics).map(([key, value]) => (
+      {numericMetrics.length > 0 ? (
+        numericMetrics.map(([key, value]) => (
           <Box
             key={key}
             sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
