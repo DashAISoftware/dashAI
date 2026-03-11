@@ -31,6 +31,10 @@ export default function ModelsRightBar({ onToggle }) {
     selectedSession: session,
     onRunCreated,
     runs: existingRuns,
+    selectModel,
+    configOpen,
+    selectedModel,
+    closeConfig,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -79,7 +83,6 @@ export default function ModelsRightBar({ onToggle }) {
   }, [searchQuery, models]);
 
   const tourContext = useTourContext();
-  const { selectModel, configOpen, selectedModel, closeConfig } = useModels();
 
   const handleModelClick = (model) => {
     if (!session) {
