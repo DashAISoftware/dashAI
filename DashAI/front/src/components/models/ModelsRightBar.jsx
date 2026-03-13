@@ -18,7 +18,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 
-export default function ModelsRightBar({ existingRuns, onToggle }) {
+export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
   const [models, setModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
@@ -27,7 +27,15 @@ export default function ModelsRightBar({ existingRuns, onToggle }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models"]);
 
-  const { selectedSession: session, onRunCreated } = useModels();
+  const {
+    selectedSession: session,
+    onRunCreated,
+    runs: existingRuns,
+    selectModel,
+    configOpen,
+    selectedModel,
+    closeConfig,
+  } = useModels();
 
   const fetchModels = React.useCallback(async () => {
     try {
@@ -75,7 +83,6 @@ export default function ModelsRightBar({ existingRuns, onToggle }) {
   }, [searchQuery, models]);
 
   const tourContext = useTourContext();
-  const { selectModel, configOpen, selectedModel, closeConfig } = useModels();
 
   const handleModelClick = (model) => {
     if (!session) {
@@ -232,10 +239,5 @@ export default function ModelsRightBar({ existingRuns, onToggle }) {
 }
 
 ModelsRightBar.propTypes = {
-  session: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    task_name: PropTypes.string,
-  }),
   onToggle: PropTypes.func.isRequired,
 };
