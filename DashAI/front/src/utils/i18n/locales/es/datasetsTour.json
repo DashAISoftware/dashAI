@@ -12,5 +12,5 @@
   "selectCsv": "<0><0>Seleccionar DataLoader CSV</0><1>Como nuestro dataset de ejemplo es un archivo CSV, necesitamos seleccionar el <0>CSVDataLoader</0>.</1><2>Los DataLoaders son herramientas que ayudan a DashAI a entender y procesar diferentes formatos de archivo.</2><3><0>Haz clic en \"CSVDataLoader\" para seleccionarlo.</0></3></0>",
   "uploadDataset": "<0><0>Cargar Dataset</0><1>Aquí es donde importas tus propios archivos de varios formatos y fuentes.</1><2>Puedes cargar CSV, Excel y otros formatos de datos comunes.</2></0>",
   "uploadFile": "<0><0>Cargar tu Archivo</0><1>¡Ahora es momento de cargar el archivo que acabas de descargar!</1><2><0>Haz clic en <0>\"Cargar un archivo\"</0> para buscarlo</0></2><3>💡 Busca \"personality_dataset.csv\" en tu carpeta de Descargas.</3></0>",
-  "yourDatasets": "<0><0>Tus Datasets</0><1>El dataset Personality ahora está disponible en tu lista de Datasets.</1><2>Puedes encontrar todos tus datasets y Cuadernos cargados en esta barra lateral.</2></0>"
+  "yourDatasets": "<0><0>Tus Datasets</0><1>El dataset ahora está disponible en tu lista de Datasets.</1><2>Puedes encontrar todos tus datasets y Cuadernos cargados en esta barra lateral.</2></0>"
 }

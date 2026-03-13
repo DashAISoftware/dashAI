@@ -5,6 +5,7 @@ import DataloaderConfigBar from "./DataloaderConfigBar";
 import CustomLayout from "../../custom/CustomLayout";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
+import { useTourContext } from "../../tour/TourProvider";
 
 export default function UploadDatasetSteps({ backHome }) {
   const {
@@ -23,6 +24,7 @@ export default function UploadDatasetSteps({ backHome }) {
   const [error, setError] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const { t } = useTranslation(["datasets"]);
+  const tourContext = useTourContext();
 
   const formSubmitRef = useRef(null);
 
@@ -76,6 +78,11 @@ export default function UploadDatasetSteps({ backHome }) {
     clearSelectedNotebook();
     setRightBarContent(null);
     startDatasetPolling(newDataset, datasetJob);
+
+    if (tourContext?.run) {
+      tourContext.stopTour();
+      sessionStorage.setItem("startDatasetViewTour", "true");
+    }
   };
 
   return (

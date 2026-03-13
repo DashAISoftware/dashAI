@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, CircularProgress } from "@mui/material";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { TourProvider } from "../../components/tour/TourProvider";
 import { TourButton } from "../../components/tour/TourButton";
 import { TOUR_KEYS } from "../../constants/tours";
@@ -20,6 +21,7 @@ export default function ModelsContent() {
   const location = useLocation();
   const threePanelLayout = useThreePanelLayout();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const { t } = useTranslation(["models"]);
 
   const {
     fetchDatasets,
@@ -124,7 +126,7 @@ export default function ModelsContent() {
         <TourButton
           tourKey={TOUR_KEYS.MODELS}
           disabled={step !== 0}
-          disabledMessage="Return to home to start the tour"
+          disabledMessage={t("models:label.tourDisabledMessage")}
         />
       )}
     </ThreePanelLayoutContext.Provider>
