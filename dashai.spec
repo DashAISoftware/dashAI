@@ -47,6 +47,16 @@ exe = EXE(
     argv_emulation=True,
 )
 
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    name="DashAI-launcher-cpu",
+)
+
 if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
@@ -57,14 +67,4 @@ if platform.system() == "Darwin":
             'NSHighResolutionCapable': 'True',
             'LSBackgroundOnly': 'False',
         },
-    )
-else:
-    coll = COLLECT(
-        exe,
-        a.binaries,
-        a.datas,
-        strip=False,
-        upx=False,
-        upx_exclude=[],
-        name="DashAI-launcher-cpu",
     )
