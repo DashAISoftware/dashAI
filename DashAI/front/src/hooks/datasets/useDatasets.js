@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSnackbar } from "notistack";
 import {
   getDatasets,
@@ -7,12 +7,17 @@ import {
   updateDataset,
   createDataset,
 } from "../../api/datasets";
-import { startJobPolling } from "../../utils/jobPoller";
+import { startJobPolling, subscribeJobs } from "../../utils/jobPoller";
 
 export function useDatasets({ t }) {
   const { enqueueSnackbar } = useSnackbar();
   const [datasets, setDatasets] = useState([]);
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
+  const datasetsRef = useRef(datasets);
+
+  useEffect(() => {
+    datasetsRef.current = datasets;
+  }, [datasets]);
 
   // ---------------- helpers ----------------
 
@@ -58,9 +63,31 @@ export function useDatasets({ t }) {
 
   const fetchDatasets = useCallback(async () => {
     const data = await getDatasets();
-    const enriched = await enrichDatasetsWithInfo(data, datasets);
+    const enriched = await enrichDatasetsWithInfo(data, datasetsRef.current);
     setDatasets(enriched);
-  }, [datasets, enrichDatasetsWithInfo]);
+  }, [enrichDatasetsWithInfo]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeJobs((jobs) => {
+      const hasProcessingDatasets = datasetsRef.current.some(
+        (d) => d.status !== 3 && d.status !== 4,
+      );
+
+      if (!hasProcessingDatasets) return;
+
+      const hasActiveJobs = Array.isArray(jobs)
+        ? jobs.some(
+            (job) => job.status === "not_started" || job.status === "started",
+          )
+        : false;
+
+      if (hasActiveJobs) {
+        fetchDatasets();
+      }
+    });
+
+    return unsubscribe;
+  }, [fetchDatasets]);
 
   const selectDataset = (id) => {
     setSelectedDatasetId(id);
@@ -129,7 +156,6 @@ export function useDatasets({ t }) {
           }),
           { variant: "success" },
         );
-        await fetchDatasets();
         setSelectedDatasetId(newDataset.id);
       },
       async () => {

@@ -43,7 +43,6 @@ export default function DatasetVisualization({
   onNewItem,
   newItemButtonText = "New Item",
   tourContextType = null,
-  fetchDatasets = null,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -57,13 +56,6 @@ export default function DatasetVisualization({
 
     setTab(0);
     const fetchDatasetInfo = async () => {
-      const isProcessing = !(dataset.status === 3 || dataset.status === 4);
-      if (isProcessing && fetchDatasets) {
-        setTimeout(() => {
-          fetchDatasets();
-        }, 1000);
-        return;
-      }
       try {
         const info = await getDatasetInfo(Number(dataset.id));
         setDatasetInfo(info);
@@ -72,7 +64,7 @@ export default function DatasetVisualization({
       }
     };
     fetchDatasetInfo();
-  }, [dataset, fetchDatasets]);
+  }, [dataset]);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {
