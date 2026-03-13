@@ -51,7 +51,7 @@ if platform.system() == "Darwin":
     app = BUNDLE(
         coll,
         name='DashAI.app',
-        icon=None, 
+        icon=None,
         bundle_identifier='com.dashai.app',
         info_plist={
             'NSHighResolutionCapable': 'True',
