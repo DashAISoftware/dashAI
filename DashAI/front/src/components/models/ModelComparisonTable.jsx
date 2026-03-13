@@ -21,6 +21,7 @@ function ModelComparisonTable({
   metricSplit = "test",
 }) {
   const [models, setModels] = useState([]);
+  const [metrics, setMetrics] = useState([]);
   const { t } = useTranslation(["models", "common"]);
 
   useEffect(() => {
@@ -33,6 +34,18 @@ function ModelComparisonTable({
       }
     };
     fetchModels();
+  }, []);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const response = await getComponents({ selectTypes: ["Metric"] });
+        setMetrics(response);
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+      }
+    };
+    fetchMetrics();
   }, []);
 
   const getRows = () => {
@@ -84,11 +97,27 @@ function ModelComparisonTable({
 
     return Array.from(metricsSet).map((metricField) => {
       const metricName = metricField.replace(/^(test|train|val)_/, "");
+      const metricInfo = metrics.find((m) => m.name === metricName);
+      const metricDescription = metricInfo?.description || metricName;
 
       return {
         field: metricField,
         headerName: metricName,
         width: 120,
+        renderHeader: (params) => (
+          <Tooltip title={metricDescription} arrow placement="top">
+            <Box
+              sx={{
+                cursor: "help",
+                width: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {metricName}
+            </Box>
+          </Tooltip>
+        ),
         renderCell: (params) => {
           const { statusCode } = params.row;
           const isRunning = statusCode === 1 || statusCode === 2;
