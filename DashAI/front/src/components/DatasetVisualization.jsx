@@ -64,25 +64,26 @@ export default function DatasetVisualization({
     }
   }, [tourContext]);
 
+  const fetchDatasetInfo = async () => {
+    const isProcessing = !(dataset.status === 3 || dataset.status === 4);
+    if (isProcessing && fetchDatasets) {
+      setTimeout(() => {
+        fetchDatasets();
+      }, 1000);
+      return;
+    }
+    try {
+      const info = await getDatasetInfo(Number(dataset.id));
+      setDatasetInfo(info);
+    } catch (error) {
+      setDatasetInfo(null);
+    }
+  };
+
   useEffect(() => {
     if (!dataset) return;
-
     setTab(0);
-    const fetchDatasetInfo = async () => {
-      const isProcessing = !(dataset.status === 3 || dataset.status === 4);
-      if (isProcessing && fetchDatasets) {
-        setTimeout(() => {
-          fetchDatasets();
-        }, 1000);
-        return;
-      }
-      try {
-        const info = await getDatasetInfo(Number(dataset.id));
-        setDatasetInfo(info);
-      } catch (error) {
-        setDatasetInfo(null);
-      }
-    };
+
     fetchDatasetInfo();
   }, [dataset, fetchDatasets]);
 
@@ -118,6 +119,10 @@ export default function DatasetVisualization({
       dataset && dataset.id,
     ],
   );
+
+  const updateDatasetInfo = () => {
+    fetchDatasetInfo();
+  };
 
   if (!dataset) {
     return (
@@ -379,6 +384,7 @@ export default function DatasetVisualization({
                 dtypes={datasetInfo?.general_info?.dtypes}
                 nan={datasetInfo?.nan}
                 total_rows={datasetInfo?.total_rows}
+                onEditColumnName={updateDatasetInfo}
                 fetchDatasetPage={fetchDatasetPage}
               />
             )}
