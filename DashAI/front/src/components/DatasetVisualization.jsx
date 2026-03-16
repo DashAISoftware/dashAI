@@ -52,9 +52,11 @@ export default function DatasetVisualization({
   const tourContext = useTourContext();
 
   useEffect(() => {
-    if (!dataset) return;
+    if (!dataset || dataset.status !== 3) {
+      setDatasetInfo(null);
+      return;
+    }
 
-    setTab(0);
     const fetchDatasetInfo = async () => {
       try {
         const info = await getDatasetInfo(Number(dataset.id));
@@ -63,8 +65,9 @@ export default function DatasetVisualization({
         setDatasetInfo(null);
       }
     };
+
     fetchDatasetInfo();
-  }, [dataset]);
+  }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel) => {

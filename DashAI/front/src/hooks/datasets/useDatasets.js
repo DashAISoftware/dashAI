@@ -19,6 +19,10 @@ export function useDatasets({ t }) {
     datasetsRef.current = datasets;
   }, [datasets]);
 
+  useEffect(() => {
+    fetchDatasets();
+  }, []);
+
   // ---------------- helpers ----------------
 
   const enrichDatasetsWithInfo = useCallback(
@@ -27,17 +31,9 @@ export function useDatasets({ t }) {
         newDatasets.map(async (dataset) => {
           const existing = existingDatasets.find((d) => d.id === dataset.id);
 
-          if (
-            existing &&
-            existing.total_rows !== undefined &&
-            existing.total_columns !== undefined
-          ) {
-            return {
-              ...dataset,
-              total_rows: existing.total_rows,
-              total_columns: existing.total_columns,
-            };
-          }
+          if (existing?.total_rows !== undefined) return existing;
+
+          if (dataset.status !== 3) return dataset;
 
           try {
             const info = await getDatasetInfo(dataset.id);
@@ -47,10 +43,6 @@ export function useDatasets({ t }) {
               total_columns: info.total_columns,
             };
           } catch (error) {
-            console.warn(
-              `Failed to fetch info for dataset ${dataset.id}`,
-              error,
-            );
             return dataset;
           }
         }),
@@ -69,18 +61,7 @@ export function useDatasets({ t }) {
 
   useEffect(() => {
     const unsubscribe = subscribeJobs((jobs) => {
-      const hasProcessingDatasets = datasetsRef.current.some(
-        (d) => d.status !== 3 && d.status !== 4,
-      );
-
-      if (!hasProcessingDatasets) return;
-
-      const hasActiveJobs = Array.isArray(jobs)
-        ? jobs.some(
-            (job) => job.status === "not_started" || job.status === "started",
-          )
-        : false;
-
+      const hasActiveJobs = Array.isArray(jobs) && jobs.length > 0;
       if (hasActiveJobs) {
         fetchDatasets();
       }
@@ -150,6 +131,8 @@ export function useDatasets({ t }) {
     startJobPolling(
       datasetJob.id,
       async () => {
+        await fetchDatasets();
+
         enqueueSnackbar(
           t("datasets:message.datasetCreationSuccess", {
             datasetName: newDataset.name,
@@ -163,9 +146,6 @@ export function useDatasets({ t }) {
           variant: "error",
         });
         setDatasets((prev) => prev.filter((d) => d.id !== newDataset.id));
-        if (newDataset.id === selectedDatasetId) {
-          setSelectedDatasetId(null);
-        }
       },
     );
   };
