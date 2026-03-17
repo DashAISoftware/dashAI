@@ -1,5 +1,7 @@
 """OpusMtEnESTransformer model for english-spanish translation DashAI implementation."""
 
+import shutil
+from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Union
 
 from sklearn.exceptions import NotFittedError
@@ -282,7 +284,7 @@ class OpusMtEnESTransformer(TranslationModel):
         from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
         training_args = Seq2SeqTrainingArguments(
-            output_dir=None,
+            output_dir="DashAI/back/user_models/temp_checkpoints_opus-mt-en-es",
             save_steps=1,
             save_total_limit=1,
             per_device_train_batch_size=self.batch_size,
@@ -314,6 +316,9 @@ class OpusMtEnESTransformer(TranslationModel):
 
         self.fitted = True
         trainer.train()
+        shutil.rmtree(
+            "DashAI/back/user_models/temp_checkpoints_opus-mt-en-es", ignore_errors=True
+        )
         return self
 
     def predict(self, x_pred: "DashAIDataset") -> List:

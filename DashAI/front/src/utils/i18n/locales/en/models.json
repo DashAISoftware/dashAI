@@ -141,6 +141,7 @@
     "train": "Train",
     "trainingMetrics": "Training Metrics",
     "trainSet": "train set",
+    "tourDisabledMessage": "Return to home to start the tour",
     "trial": "Trial",
     "validation": "Validation",
     "validationMetrics": "Validation Metrics",

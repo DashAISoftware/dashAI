@@ -1016,13 +1016,55 @@ async def rename_dataset_column(
             if os.path.exists(splits_path):
                 with open(splits_path, "r", encoding="utf-8") as f:
                     splits_data = json.load(f)
-                if "column_names" in splits_data:
-                    splits_data["column_names"] = [
-                        new_name if name == old_name else name
-                        for name in splits_data["column_names"]
-                    ]
-                if "nan" in splits_data and old_name in splits_data["nan"]:
-                    splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
+                # Update column_names in split file
+                splits_data["column_names"] = [
+                    new_name if name == old_name else name
+                    for name in splits_data["column_names"]
+                ]
+                # Update nan entries
+                splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
+
+                # Update general info
+                splits_data["general_info"]["dtypes"][new_name] = splits_data[
+                    "general_info"
+                ]["dtypes"].pop(old_name)
+
+                # Update quality info nan per ratio
+                splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
+                    splits_data["quality_info"]["nan_ratio_per_column"].pop(old_name)
+                )
+
+                # Update numeric_stats if column is numerical
+                if old_name in splits_data["numeric_stats"]:
+                    splits_data["numeric_stats"][new_name] = splits_data[
+                        "numeric_stats"
+                    ].pop(old_name)
+
+                    # Update correlations
+                    if "correlations" in splits_data:
+                        correlations = splits_data["correlations"]
+
+                        # Rename the main key if needed
+                        if old_name in correlations:
+                            correlations[new_name] = correlations.pop(old_name)
+
+                        # Rename inner keys
+                        for _, corr_values in correlations.items():
+                            if old_name in corr_values:
+                                corr_values[new_name] = corr_values.pop(old_name)
+
+                # Update categorical_stats columns if column is categorical
+                elif old_name in splits_data.get("categorical_stats", {}):
+                    splits_data["categorical_stats"][new_name] = splits_data[
+                        "categorical_stats"
+                    ].pop(old_name)
+
+                # Update text_stats columns if column is textual
+                elif old_name in splits_data.get("text_stats", {}):
+                    splits_data["text_stats"][new_name] = splits_data["text_stats"].pop(
+                        old_name
+                    )
+
                 with open(splits_path, "w", encoding="utf-8") as f:
                     json.dump(
                         splits_data,

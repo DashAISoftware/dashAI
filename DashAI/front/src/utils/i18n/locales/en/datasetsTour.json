@@ -12,5 +12,5 @@
   "selectCsv": "<0><0>Select CSV DataLoader</0><1>Since our sample dataset is a CSV file, we need to select the <0>CSVDataLoader</0>.</1><2>DataLoaders are tools that help DashAI understand and process different file formats.</2><3><0>Click on \"CSVDataLoader\" to select it.</0></3></0>",
   "uploadDataset": "<0><0>Upload Dataset</0><1>This is where you import your own files from various formats and sources.</1><2>You can upload CSV, Excel, and other common data formats.</2></0>",
   "uploadFile": "<0><0>Upload Your File</0><1>Now it's time to upload the file you just downloaded!</1><2><0>Click <0>\"Upload a file\"</0> to browse for it</0></2><3>💡 Look for \"personality_dataset.csv\" in your Downloads folder.</3></0>",
-  "yourDatasets": "<0><0>Your Datasets</0><1>The Personality dataset is now available in your Datasets list.</1><2>You can find all your uploaded datasets and notebooks in this sidebar.</2></0>"
+  "yourDatasets": "<0><0>Your Datasets</0><1>The dataset is now available in your Datasets list.</1><2>You can find all your uploaded datasets and notebooks in this sidebar.</2></0>"
 }

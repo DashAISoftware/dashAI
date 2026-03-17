@@ -141,6 +141,7 @@
     "train": "Entrenamiento",
     "trainingMetrics": "Métricas de Entrenamiento",
     "trainSet": "conjunto de entrenamiento",
+    "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
     "trial": "Ensayo",
     "validation": "Validación",
     "validationMetrics": "Métricas de Validación",

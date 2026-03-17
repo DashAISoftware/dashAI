@@ -27,6 +27,7 @@ const OverviewTab = ({
   nan,
   total_rows,
   fetchDatasetPage,
+  onEditColumnName,
 }) => {
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -60,6 +61,7 @@ const OverviewTab = ({
             initialPageSize={10}
             datasetPath={dataset.file_path}
             datasetId={dataset.id}
+            onEditColumn={onEditColumnName}
             editableColumns={true}
           />
         </CardContent>
