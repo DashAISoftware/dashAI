@@ -425,7 +425,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               {Object.entries(datasetInfo.nan)
                 .filter(([_, count]) => count > 0)
                 .map(([col, count]) => (
-                  <Grid item xs={12} key={col}>
+                  <Grid xs={12} key={col}>
                     - {col}: {count} {t("experiments:label.missingValues")}
                   </Grid>
                 ))}

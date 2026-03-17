@@ -143,7 +143,7 @@ function ResultsTabInfo({ runData, handleRun }) {
             </Box>
             <Grid container spacing={2}>
               {runData.model_name && (
-                <Grid item xs={6} md={3}>
+                <Grid xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
                     {t("common:model")}
                   </Typography>
@@ -153,7 +153,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                 </Grid>
               )}
               {runData.start_time && (
-                <Grid item xs={6} md={3}>
+                <Grid xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
                     {t("common:startTime")}
                   </Typography>
@@ -163,7 +163,7 @@ function ResultsTabInfo({ runData, handleRun }) {
                 </Grid>
               )}
               {runData.end_time && (
-                <Grid item xs={6} md={3}>
+                <Grid xs={6} md={3}>
                   <Typography variant="caption" color="text.secondary">
                     {t("common:endTime")}
                   </Typography>
@@ -174,7 +174,7 @@ function ResultsTabInfo({ runData, handleRun }) {
               )}
               {runData.start_time &&
                 runData.status !== 4 && ( // Not Failed
-                  <Grid item xs={6} md={3}>
+                  <Grid xs={6} md={3}>
                     <Typography variant="caption" color="text.secondary">
                       {t("common:duration")}
                     </Typography>

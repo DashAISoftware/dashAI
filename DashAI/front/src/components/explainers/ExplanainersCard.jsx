@@ -96,7 +96,7 @@ export default function ExplainersCard({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Grid item sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
+              <Grid sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
                 <Typography
                   variant="subtitle2"
                   fontWeight="medium"
@@ -120,7 +120,7 @@ export default function ExplainersCard({
                   </Typography>
                 </Typography>
               </Grid>
-              <Grid item>
+              <Grid>
                 <IconButton
                   size="small"
                   aria-label="delete"
@@ -133,7 +133,7 @@ export default function ExplainersCard({
             </Grid>
 
             {/* Expandable plot section */}
-            <Grid item sx={{ width: "100%" }}>
+            <Grid sx={{ width: "100%" }}>
               <Button
                 size="small"
                 onClick={() => setExpanded(!expanded)}
