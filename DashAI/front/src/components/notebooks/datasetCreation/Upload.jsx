@@ -426,7 +426,7 @@ Upload.propTypes = {
   initialFile: PropTypes.object,
   formSubmitRef: PropTypes.object,
   formValues: PropTypes.object,
-  selectedDataloader: PropTypes.string,
+  selectedDataloader: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onPreviewError: PropTypes.func,
   onTypesChanged: PropTypes.func,
 };
