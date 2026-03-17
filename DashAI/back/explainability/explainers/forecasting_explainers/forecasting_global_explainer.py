@@ -214,14 +214,14 @@ class ForecastingGlobalExplainer(BaseGlobalExplainer):
         if split not in dataset:
             raise ValueError(f"Split '{split}' not found in dataset")
 
-        df = dataset[split].to_pandas()
+        split_df = dataset[split].to_pandas()
 
         # Ensure timestamp column is datetime
         timestamp_col = self._get_timestamp_column()
-        if timestamp_col and timestamp_col in df.columns:
-            df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+        if timestamp_col and timestamp_col in split_df.columns:
+            split_df[timestamp_col] = pd.to_datetime(split_df[timestamp_col])
 
-        return df
+        return split_df
 
     def _validate_has_exogenous_variables(self) -> bool:
         """Check if model uses exogenous variables.

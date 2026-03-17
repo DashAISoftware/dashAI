@@ -179,22 +179,22 @@ class ForecastingLocalExplainer(BaseLocalExplainer):
         if split not in dataset:
             raise ValueError(f"Split '{split}' not found in dataset")
 
-        df = dataset[split].to_pandas()
+        split_df = dataset[split].to_pandas()
 
         # Apply end index
         if end_index is not None:
-            df = df.iloc[:end_index]
+            split_df = split_df.iloc[:end_index]
 
         # Apply window size
-        if window_size is not None and len(df) > window_size:
-            df = df.iloc[-window_size:]
+        if window_size is not None and len(split_df) > window_size:
+            split_df = split_df.iloc[-window_size:]
 
         # Ensure timestamp column is datetime
         timestamp_col = self._get_timestamp_column()
-        if timestamp_col and timestamp_col in df.columns:
-            df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+        if timestamp_col and timestamp_col in split_df.columns:
+            split_df[timestamp_col] = pd.to_datetime(split_df[timestamp_col])
 
-        return df
+        return split_df
 
     def _select_instance_by_timestamp(
         self, dataset: DatasetDict, timestamp: pd.Timestamp, split: str = "test"
@@ -227,15 +227,15 @@ class ForecastingLocalExplainer(BaseLocalExplainer):
                 "Cannot select by timestamp: timestamp column not available"
             )
 
-        df = dataset[split].to_pandas()
-        df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+        split_df = dataset[split].to_pandas()
+        split_df[timestamp_col] = pd.to_datetime(split_df[timestamp_col])
 
-        mask = df[timestamp_col] == timestamp
+        mask = split_df[timestamp_col] == timestamp
 
         if not mask.any():
             raise ValueError(f"Timestamp {timestamp} not found in {split} split")
 
-        return df[mask].iloc[0]
+        return split_df[mask].iloc[0]
 
     def _prepare_dataset_with_timestamps(
         self, dataset: DatasetDict, split: str = "test"
@@ -259,14 +259,14 @@ class ForecastingLocalExplainer(BaseLocalExplainer):
         if split not in dataset:
             raise ValueError(f"Split '{split}' not found in dataset")
 
-        df = dataset[split].to_pandas()
+        split_df = dataset[split].to_pandas()
 
         # Ensure timestamp column is datetime
         timestamp_col = self._get_timestamp_column()
-        if timestamp_col and timestamp_col in df.columns:
-            df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+        if timestamp_col and timestamp_col in split_df.columns:
+            split_df[timestamp_col] = pd.to_datetime(split_df[timestamp_col])
 
-        return df
+        return split_df
 
     def _validate_has_exogenous_variables(self) -> bool:
         """Check if model uses exogenous variables.
