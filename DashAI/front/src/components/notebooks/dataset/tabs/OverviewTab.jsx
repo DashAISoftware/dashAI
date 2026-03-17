@@ -112,7 +112,11 @@ const OverviewTab = ({
           </Typography>
           <Grid container spacing={2}>
             {typeCounts.map(([type, count]) => (
-              <Grid xs={12} sm={6} md={4} key={type} sx={{ width: "150px" }}>
+              <Grid
+                size={{ xs: 12, sm: 6, md: 4 }}
+                key={type}
+                sx={{ width: "150px" }}
+              >
                 <Paper
                   elevation={1}
                   sx={{
