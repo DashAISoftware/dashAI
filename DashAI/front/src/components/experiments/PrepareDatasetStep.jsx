@@ -56,7 +56,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
-  const [seed, setSeed] = useState();
+  const [seed, setSeed] = useState(42);
 
   const defaultParitionsIndex = {
     train: [],
