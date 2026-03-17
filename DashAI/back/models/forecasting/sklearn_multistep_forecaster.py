@@ -220,12 +220,15 @@ class SklearnMultiStepForecaster(ForecastingModel):
         horizon = fit_params.get("horizon", 1)
         self.max_horizon = horizon
 
-        # Store last timestamp for future predictions
+        # Store last timestamp and full date sequence for future predictions
         if self.timestamp_col in x_df.columns:
-            self.last_timestamp = pd.to_datetime(x_df[self.timestamp_col]).max()
+            parsed_dates = pd.to_datetime(x_df[self.timestamp_col])
+            self.last_timestamp = parsed_dates.max()
+            self.training_dates = parsed_dates.to_numpy()
             print(f"[SklearnMultiStepForecaster] Last timestamp: {self.last_timestamp}")
         else:
             self.last_timestamp = pd.Timestamp.now()
+            self.training_dates = None
             print("[SklearnMultiStepForecaster] ⚠️ No timestamp col, default to now()")
 
         # Get target series
@@ -412,66 +415,82 @@ class SklearnMultiStepForecaster(ForecastingModel):
                     "No training history available. Model may not be fitted properly."
                 )
 
-            # Get indices/timestamps from input to know what to predict
-            # (Currently we use indices directly, timestamp matching not yet
-            # implemented)
-            # Get exogenous variables if present
-            exog_df = None
-            if self.exog_cols:
-                missing_cols = [
-                    col for col in self.exog_cols if col not in input_df.columns
-                ]
-                if missing_cols:
-                    raise ValueError(
-                        f"Missing exogenous columns for prediction: {missing_cols}"
-                    )
-                exog_df = input_df[self.exog_cols]
+            # Detect whether timestamps are within training range or beyond.
+            # val/test splits reset their pandas index to 0-based, so index lookup
+            # in training lag features would return wrong rows. Use timestamp
+            # comparison to choose the correct prediction strategy.
+            is_within_training = True
+            if self.timestamp_col and self.timestamp_col in input_df.columns:
+                input_ts = pd.to_datetime(input_df[self.timestamp_col])
+                is_within_training = input_ts.max() <= self.last_timestamp
 
-            # Use the FULL training series to create lag features
-            # This allows us to predict any subset without needing target values
-            target_series = self.training_full_series
-            full_exog_df = (
-                self.training_full_exog if hasattr(self, "training_full_exog") else None
-            )
+            if is_within_training:
+                # True in-sample: build lag features from training data and look
+                # up the matching row positions.
+                exog_df = None
+                if self.exog_cols:
+                    missing_cols = [
+                        col for col in self.exog_cols if col not in input_df.columns
+                    ]
+                    if missing_cols:
+                        raise ValueError(
+                            f"Missing exogenous columns for prediction: {missing_cols}"
+                        )
+                    exog_df = input_df[self.exog_cols]
 
-            # Create lag features from full training data
-            X_with_lags = self._create_lag_features(target_series, full_exog_df)
-
-            # If exog was provided in input, update those columns
-            if self.exog_cols and exog_df is not None:
-                # Update exog values for the requested indices
-                for col in self.exog_cols:
-                    X_with_lags.loc[input_df.index, col] = exog_df[col].to_numpy()
-
-            # Select only the rows we need to predict (matching input indices)
-            X_subset = X_with_lags.loc[input_df.index]
-
-            # Remove rows with NaN (can't predict without full window)
-            mask = X_subset.notna().all(axis=1)
-            X_clean = X_subset[mask]
-
-            if len(X_clean) == 0:
-                # For very small validation/test sets, return NaN predictions
-                # instead of raising an error - this allows metrics to handle gracefully
-                print(
-                    f"[SklearnMultiStepForecaster] ⚠️  No valid samples for in-sample "
-                    f"prediction (need {self.window_size} historical values). "
-                    f"Returning NaN predictions for {len(input_df)} points."
+                target_series = self.training_full_series
+                full_exog_df = (
+                    self.training_full_exog
+                    if hasattr(self, "training_full_exog")
+                    else None
                 )
-                return np.full(len(input_df), np.nan)
 
-            # Use first model (1-step ahead) for in-sample predictions
-            # This is standard practice in time series - we're predicting t+1
-            predictions_full = np.full(len(input_df), np.nan)
-            predictions = self.models[0].predict(X_clean.to_numpy())
-            predictions_full[mask] = predictions.flatten()
+                X_with_lags = self._create_lag_features(target_series, full_exog_df)
 
-            print(
-                f"[SklearnMultiStepForecaster] Generated {mask.sum()} in-sample "
-                f"predictions (first {(~mask).sum()} skipped due to lag window)"
-            )
+                if self.exog_cols and exog_df is not None:
+                    for col in self.exog_cols:
+                        X_with_lags.loc[input_df.index, col] = exog_df[col].to_numpy()
 
-            return predictions_full
+                X_subset = X_with_lags.loc[input_df.index]
+                mask = X_subset.notna().all(axis=1)
+                X_clean = X_subset[mask]
+
+                if len(X_clean) == 0:
+                    print(
+                        f"[SklearnMultiStepForecaster] ⚠️  No valid samples for "
+                        f"in-sample prediction (need {self.window_size} historical "
+                        f"values). Returning NaN predictions for "
+                        f"{len(input_df)} points."
+                    )
+                    return np.full(len(input_df), np.nan)
+
+                predictions_full = np.full(len(input_df), np.nan)
+                predictions = self.models[0].predict(X_clean.to_numpy())
+                predictions_full[mask] = predictions.flatten()
+
+                print(
+                    f"[SklearnMultiStepForecaster] Generated {mask.sum()} in-sample "
+                    f"predictions (first {(~mask).sum()} skipped due to lag window)"
+                )
+                return predictions_full
+
+            else:
+                # Out-of-training (val/test): recursive 1-step-ahead forecast
+                # seeded from the last window_size training values.
+                n_steps = len(input_df)
+                history = list(self.training_history.to_numpy())
+                results = []
+                for _ in range(n_steps):
+                    features = np.array(history[-self.window_size :]).reshape(1, -1)
+                    pred = float(self.models[0].predict(features).flatten()[0])
+                    results.append(pred)
+                    history.append(pred)
+
+                print(
+                    f"[SklearnMultiStepForecaster] Generated {n_steps} recursive "
+                    f"out-of-training predictions"
+                )
+                return np.array(results)
 
         # Out-of-sample forecast
         if periods is not None:
@@ -624,6 +643,217 @@ class SklearnMultiStepForecaster(ForecastingModel):
             "Either x_pred or periods parameter must be provided for prediction."
         )
 
+    def get_forecast_uncertainty(
+        self, horizon: int, confidence_level: float = 0.80
+    ) -> pd.DataFrame:
+        """Get forecast with residual-based prediction intervals.
+
+        Because sklearn regression models have no parametric error distribution,
+        this method estimates prediction uncertainty empirically:
+
+        1. Compute in-sample residuals on the training data using the 1-step
+           ahead model (``models[0]``).
+        2. Use the residual standard deviation as the base prediction error.
+        3. Scale the half-interval by ``sqrt(h)`` for horizon step ``h`` to
+           simulate how uncertainty accumulates over time.
+        4. Apply a z-score corresponding to the requested confidence level.
+
+        The resulting intervals are wider for longer horizons and reflect the
+        actual in-sample accuracy of the model.
+
+        Parameters
+        ----------
+        horizon : int
+            Number of future periods to forecast.
+        confidence_level : float
+            Confidence level (e.g., 0.80 for 80% intervals).
+
+        Returns
+        -------
+        pd.DataFrame
+            Columns: ``ds``, ``yhat``, ``yhat_lower``, ``yhat_upper``.
+
+        Raises
+        ------
+        ValueError
+            If the model was trained with exogenous variables.
+        """
+        if not self.models:
+            raise ValueError("Model must be fitted before getting uncertainty.")
+
+        if self.exog_cols:
+            raise ValueError(
+                f"Cannot generate forecast uncertainty: model was trained with "
+                f"exogenous variables {self.exog_cols}. Future exogenous values "
+                f"are required but not available. "
+                f"Use ForecastFeatureImportance instead."
+            )
+
+        # --- Estimate residual std from in-sample 1-step predictions ---
+        X_with_lags = self._create_lag_features(self.training_full_series)
+        mask = X_with_lags.notna().all(axis=1)
+        X_clean = X_with_lags[mask]
+        actual_clean = self.training_full_series[mask].to_numpy()
+
+        if len(X_clean) > 0:
+            in_sample_preds = self.models[0].predict(X_clean.to_numpy()).flatten()
+            residuals = actual_clean - in_sample_preds
+            residual_std = float(np.std(residuals))
+        else:
+            residual_std = 0.0
+
+        # Guard against zero or near-zero std (perfect in-sample fit)
+        if residual_std < 1e-10:
+            # Fall back to 5% of the mean absolute value of the training series
+            residual_std = float(
+                np.abs(self.training_full_series.to_numpy()).mean() * 0.05
+            )
+            residual_std = max(residual_std, 1e-6)
+
+        # --- z-score for the requested confidence level ---
+        try:
+            from scipy.stats import norm as _norm
+
+            z = float(_norm.ppf(0.5 + confidence_level / 2.0))
+        except ImportError:
+            # Hardcoded fallback for common levels
+            _z_table = {
+                0.80: 1.282,
+                0.85: 1.440,
+                0.90: 1.645,
+                0.95: 1.960,
+                0.99: 2.576,
+            }
+            z = _z_table.get(round(confidence_level, 2), 1.645)
+
+        # --- Point forecast ---
+        predictions = self.predict(periods=horizon)
+
+        # --- Growing intervals: half-width = z * std * sqrt(h) ---
+        horizon_steps = np.arange(1, horizon + 1)
+        half_width = z * residual_std * np.sqrt(horizon_steps)
+
+        freq = self.frequency or "D"
+        future_dates = pd.date_range(
+            start=self.last_timestamp, periods=horizon + 1, freq=freq
+        )[1:]
+
+        return pd.DataFrame(
+            {
+                "ds": future_dates,
+                "yhat": predictions,
+                "yhat_lower": predictions - half_width,
+                "yhat_upper": predictions + half_width,
+            }
+        )
+
+    def get_forecast_components(self, horizon: int) -> pd.DataFrame:
+        """Decompose forecast into trend, seasonal, and residual components.
+
+        Because SklearnMultiStepForecaster is a regression-based model with
+        no intrinsic structural decomposition, this method applies STL
+        (Seasonal-Trend decomposition using LOESS) to the concatenation of
+        the historical training series and the out-of-sample forecast.
+
+        The resulting trend, seasonal, and residual components describe the
+        statistical structure of the full series (history + forecast horizon),
+        and only the forecast portion is returned.
+
+        Parameters
+        ----------
+        horizon : int
+            Number of future periods to forecast and decompose.
+
+        Returns
+        -------
+        pd.DataFrame
+            Columns: ``ds``, ``trend``, ``<seasonality_name>``, ``residual``.
+
+        Raises
+        ------
+        ValueError
+            If the model was trained with exogenous variables.
+        """
+        if not self.models:
+            raise ValueError("Model must be fitted before getting components.")
+
+        if self.exog_cols:
+            raise ValueError(
+                f"Cannot generate forecast components: model was trained with "
+                f"exogenous variables {self.exog_cols}. Future exogenous values "
+                f"are required but not available for decomposition. "
+                f"Use ForecastFeatureImportance instead."
+            )
+
+        try:
+            from statsmodels.tsa.seasonal import STL
+        except ImportError as exc:
+            raise ImportError(
+                "statsmodels is required for STL decomposition. "
+                "Install with: pip install statsmodels"
+            ) from exc
+
+        # Build historical series with a proper DatetimeIndex
+        freq = self.frequency or "D"
+        historical_values = self.training_full_series.to_numpy()
+        n_hist = len(historical_values)
+
+        if self.training_dates is not None:
+            historical_index = pd.DatetimeIndex(self.training_dates)
+        else:
+            # Reconstruct dates ending at last_timestamp
+            historical_index = pd.date_range(
+                end=self.last_timestamp, periods=n_hist, freq=freq
+            )
+
+        historical_series = pd.Series(historical_values, index=historical_index)
+
+        # Out-of-sample forecast
+        predictions = self.predict(periods=horizon)
+        future_dates = pd.date_range(
+            start=self.last_timestamp, periods=horizon + 1, freq=freq
+        )[1:]
+        future_series = pd.Series(predictions, index=future_dates)
+
+        # Combine history + forecast
+        combined = pd.concat([historical_series, future_series])
+
+        # Determine period and run STL decomposition
+        period = self._get_seasonal_period()
+        component_name = self._period_to_seasonality_name(period)
+
+        n = len(combined)
+        if period >= 2 and n >= 2 * period:
+            try:
+                stl = STL(combined, period=period, robust=True)
+                result = stl.fit()
+                trend_vals = result.trend
+                seasonal_vals = result.seasonal
+                residual_vals = result.resid
+            except Exception:
+                window = min(period, max(2, n // 2))
+                trend_vals = combined.rolling(
+                    window=window, center=True, min_periods=1
+                ).mean()
+                seasonal_vals = pd.Series(np.zeros(n), index=combined.index)
+                residual_vals = combined - trend_vals
+        else:
+            window = max(2, min(period, n // 2))
+            trend_vals = combined.rolling(
+                window=window, center=True, min_periods=1
+            ).mean()
+            seasonal_vals = pd.Series(np.zeros(n), index=combined.index)
+            residual_vals = combined - trend_vals
+
+        return pd.DataFrame(
+            {
+                "ds": combined.index[-horizon:],
+                "trend": trend_vals.to_numpy()[-horizon:],
+                component_name: seasonal_vals.to_numpy()[-horizon:],
+                "residual": residual_vals.to_numpy()[-horizon:],
+            }
+        )
+
     def save(self, filename: str) -> None:
         """Save model to file.
 
@@ -641,6 +871,7 @@ class SklearnMultiStepForecaster(ForecastingModel):
             "training_exog_history": self.training_exog_history,
             "training_full_series": self.training_full_series,
             "training_full_exog": self.training_full_exog,
+            "training_dates": getattr(self, "training_dates", None),
             "exog_cols": self.exog_cols,
             "timestamp_col": self.timestamp_col,
             "target_col": self.target_col,
@@ -681,6 +912,7 @@ class SklearnMultiStepForecaster(ForecastingModel):
         self.training_exog_history = model_state.get("training_exog_history")
         self.training_full_series = model_state.get("training_full_series")
         self.training_full_exog = model_state.get("training_full_exog")
+        self.training_dates = model_state.get("training_dates")
         self.exog_cols = model_state["exog_cols"]
         self.timestamp_col = model_state.get("timestamp_col")
         self.target_col = model_state.get("target_col")

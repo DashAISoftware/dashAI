@@ -838,6 +838,59 @@ class ProphetModel(ForecastingModel):
             return forecast.tail(periods)
         return forecast["yhat"].tail(periods).to_numpy()
 
+    def get_forecast_uncertainty(
+        self, horizon: int, confidence_level: float = 0.80
+    ) -> pd.DataFrame:
+        """Get forecast with native Prophet prediction intervals.
+
+        Parameters
+        ----------
+        horizon : int
+            Number of future periods to forecast.
+        confidence_level : float
+            Desired confidence level. Note: Prophet's intervals are controlled
+            by ``interval_width`` set at model creation. This parameter is
+            accepted for interface uniformity but may not match exactly if the
+            model was initialized with a different ``interval_width``.
+
+        Returns
+        -------
+        pd.DataFrame
+            Columns: ``ds``, ``yhat``, ``yhat_lower``, ``yhat_upper``.
+            Intervals come from Prophet's own uncertainty sampling
+            (``uncertainty_samples`` parameter).
+
+        Raises
+        ------
+        ValueError
+            If the model was trained with exogenous variables.
+        """
+        if self.model is None:
+            raise ValueError("Model must be fitted before getting uncertainty.")
+
+        if self.exog_cols:
+            raise ValueError(
+                f"Cannot generate forecast uncertainty: model was trained with "
+                f"exogenous variables {self.exog_cols}. Future exogenous values "
+                f"are required but not available. "
+                f"Use ForecastFeatureImportance instead."
+            )
+
+        freq = self.frequency or "D"
+        future_df = self.model.make_future_dataframe(periods=horizon, freq=freq)
+        future_df = self._add_cap_floor_columns(future_df)
+        forecast = self.model.predict(future_df)
+
+        fc = forecast.tail(horizon)
+        return pd.DataFrame(
+            {
+                "ds": fc["ds"].to_numpy(),
+                "yhat": fc["yhat"].to_numpy(),
+                "yhat_lower": fc["yhat_lower"].to_numpy(),
+                "yhat_upper": fc["yhat_upper"].to_numpy(),
+            }
+        )
+
     def get_forecast_components(self, horizon: int) -> pd.DataFrame:
         """Get forecast decomposition (trend, seasonality, etc.).
 

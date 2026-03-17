@@ -494,7 +494,23 @@ class ForecastingTask(BaseTask):
         # El modelo (ej: Prophet) hará el renombramiento si lo necesita
 
         # Orden temporal
-        dataset_df[timestamp_col] = pd.to_datetime(dataset_df[timestamp_col])
+        # If the timestamp column is numeric (int/float), treat values as
+        # sequential time-step indices rather than nanosecond epoch offsets.
+        if pd.api.types.is_integer_dtype(
+            dataset_df[timestamp_col]
+        ) or pd.api.types.is_float_dtype(dataset_df[timestamp_col]):
+            base_date = pd.Timestamp("2000-01-01")
+            step_vals = dataset_df[timestamp_col]
+            min_val = step_vals.min()
+            dataset_df[timestamp_col] = base_date + pd.to_timedelta(
+                (step_vals - min_val).astype(int), unit="D"
+            )
+            print(
+                f"ℹ️  Column '{timestamp_col}' contains numeric values — "
+                f"converted to day offsets starting from {base_date.date()}"
+            )
+        else:
+            dataset_df[timestamp_col] = pd.to_datetime(dataset_df[timestamp_col])
         dataset_df = dataset_df.sort_values(timestamp_col).reset_index(drop=True)
 
         # Frecuencia
@@ -565,6 +581,10 @@ class ForecastingTask(BaseTask):
             return np.array(predictions)
 
         return predictions
+
+    def num_labels(self, dataset: DashAIDataset, output_column: str) -> None:
+        """Return None — forecasting predicts continuous values, not discrete labels."""
+        return None
 
     def get_temporal_metadata(self) -> Optional[Dict[str, Any]]:
         """Get temporal metadata from the last prepare_for_task call.

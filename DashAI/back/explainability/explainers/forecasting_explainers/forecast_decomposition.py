@@ -1,14 +1,18 @@
 """Forecast Decomposition Explainer for time series models.
 
 This explainer decomposes forecasts into interpretable components (trend,
-seasonality, external regressors) for any forecasting model that supports
-component extraction.
+seasonality, residual) for any forecasting model that implements
+``get_forecast_components()``.
 
 Works with:
-- Prophet (trend, weekly, yearly, holidays, regressors)
-- ARIMA/SARIMA (trend, seasonal, residual)
-- ETS (error, trend, seasonal)
-- Any future model implementing _get_components()
+- Prophet       → trend, weekly, yearly (native structural decomposition)
+- ARIMA         → trend, weekly/yearly, residual  (STL on fitted + forecast)
+- SARIMAX       → trend, weekly/yearly, residual  (STL with explicit period s)
+- SklearnMultiStep → trend, weekly/yearly, residual (STL on history + forecast)
+
+Any future model that implements ``get_forecast_components(horizon)`` and
+returns a DataFrame with at least a ``ds`` column and one component column
+will be automatically supported.
 """
 
 from typing import List, Tuple
@@ -86,26 +90,17 @@ class ForecastDecomposition(BaseGlobalExplainer):
         self.horizon = horizon
         self.include_historical = include_historical
 
-    def _get_prophet_components(self) -> pd.DataFrame:
-        """Extract components from Prophet model."""
+    def _get_native_components(self) -> pd.DataFrame:
+        """Extract components from any model that implements get_forecast_components().
+
+        This covers Prophet, ARIMA, SARIMAX, and SklearnMultiStepForecaster.
+        """
         if not hasattr(self.model, "get_forecast_components"):
             raise AttributeError(
-                "Prophet model must have get_forecast_components() method"
+                f"{type(self.model).__name__} must implement "
+                "get_forecast_components(horizon) to use this path."
             )
-
-        components_df = self.model.get_forecast_components(self.horizon)
-        return components_df
-
-    def _get_arima_components(self, dataset: DatasetDict) -> pd.DataFrame:
-        """Extract components from ARIMA/SARIMA model.
-
-        Note: This is a placeholder for future ARIMA implementation.
-        ARIMA models typically decompose into trend, seasonal, and residual.
-        """
-        # TODO: Implement when ARIMA model is added
-        raise NotImplementedError(
-            "ARIMA decomposition will be available when ARIMA models are implemented"
-        )
+        return self.model.get_forecast_components(self.horizon)
 
     def _get_generic_components(self, dataset: DatasetDict) -> pd.DataFrame:
         """Fallback for models without native decomposition.
@@ -222,21 +217,22 @@ class ForecastDecomposition(BaseGlobalExplainer):
         # Detect model type and extract components
         model_name = type(self.model).__name__
 
+        # Friendly display names for known model classes
+        _display_names = {
+            "ProphetModel": "Prophet",
+            "StatsmodelsARIMAModel": "ARIMA",
+            "StatsmodelsSARIMAXModel": "SARIMAX",
+            "SklearnMultiStepForecaster": "Sklearn MultiStep",
+        }
+
         try:
             if hasattr(self.model, "get_forecast_components"):
-                # Prophet or compatible
-                components_df = self._get_prophet_components()
-                model_type = "Prophet"
-
-            elif hasattr(self.model, "model") and hasattr(
-                self.model.model, "decompose"
-            ):
-                # ARIMA/SARIMA model type
-                components_df = self._get_arima_components(dataset)
-                model_type = "ARIMA"
+                # Prophet, ARIMA, SARIMAX, SklearnMultiStepForecaster
+                components_df = self._get_native_components()
+                model_type = _display_names.get(model_name, model_name)
 
             else:
-                # Generic fallback
+                # Generic fallback for unknown model types
                 components_df = self._get_generic_components(dataset)
                 model_type = "Generic"
 

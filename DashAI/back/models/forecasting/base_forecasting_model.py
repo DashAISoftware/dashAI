@@ -238,6 +238,63 @@ class ForecastingModel(BaseModel):
             "exogenous": self.exog_cols.copy(),
         }
 
+    def _get_seasonal_period(self) -> int:
+        """Infer seasonal period from the model's stored frequency.
+
+        Returns the number of observations per seasonal cycle, used to
+        configure STL decomposition in ``get_forecast_components()``.
+
+        Returns
+        -------
+        int
+            Seasonal period (e.g., 7 for daily data → weekly cycle).
+        """
+        if not self.frequency:
+            return 7  # default: weekly cycle for daily data
+
+        freq = self.frequency.upper().strip()
+
+        if freq.startswith(("T", "MIN")):
+            return 60  # minutely → hourly seasonality
+        if freq.startswith("H"):
+            return 24  # hourly → daily seasonality
+        if freq.startswith("D"):
+            return 7  # daily → weekly seasonality
+        if freq.startswith("W"):
+            return 52  # weekly → yearly seasonality
+        if freq.startswith(("M", "ME", "MS")):
+            return 12  # monthly → yearly seasonality
+        if freq.startswith(("Q", "QE", "QS")):
+            return 4  # quarterly → yearly seasonality
+        if freq.startswith(("A", "Y", "AE", "AS", "YS", "YE")):
+            return 1  # yearly → no sub-annual seasonality
+
+        return 7  # fallback
+
+    def _period_to_seasonality_name(self, period: int) -> str:
+        """Map a seasonal period integer to a human-readable component name.
+
+        Parameters
+        ----------
+        period : int
+            Number of observations per seasonal cycle.
+
+        Returns
+        -------
+        str
+            Name for the seasonal component column (e.g., 'weekly', 'yearly').
+        """
+        mapping = {
+            60: "hourly",
+            24: "daily",
+            7: "weekly",
+            52: "yearly",
+            12: "yearly",
+            4: "yearly",
+            365: "yearly",
+        }
+        return mapping.get(period, "seasonal")
+
     def _validate_predict_implementation(self) -> None:
         """Validate that subclass implements predict() correctly.
 

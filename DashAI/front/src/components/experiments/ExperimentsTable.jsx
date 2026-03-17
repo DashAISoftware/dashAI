@@ -38,7 +38,7 @@ function ExperimentsTable({
 
   const deleteExperiment = async (id) => {
     try {
-      await deleteExperimentRequest(id);
+      await deleteModelSessionRequest(id);
       enqueueSnackbar(t("experiments:message.runDeletedSuccessfully"), {
         variant: "success",
       });

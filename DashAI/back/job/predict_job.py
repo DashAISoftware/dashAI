@@ -14,6 +14,7 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
+    get_arrow_table,
     load_dataset,
     save_dataset,
     to_dashai_dataset,
@@ -379,7 +380,7 @@ class PredictJob(BaseJob):
             # Load Model
             try:
                 model = component_registry[prediction.run.model_name]["class"]
-                trained_model: BaseModel = model.load(prediction.run.run_path)
+                trained_model: BaseModel = model().load(prediction.run.run_path)
             except Exception as e:
                 prediction.set_status_as_error()
                 db.commit()
@@ -402,6 +403,7 @@ class PredictJob(BaseJob):
 
             # Determine if this is a forecasting task
             is_forecasting = model_session.task_name == "ForecastingTask"
+            timestamp_col = "ds"  # default; overwritten inside forecasting block
 
             if is_forecasting:
                 # ============ FORECASTING PREDICTION ============
@@ -417,28 +419,32 @@ class PredictJob(BaseJob):
                         if frequency is None:
                             frequency = "D"
 
-                        # Get last training date from model
-                        last_ds = getattr(trained_model, "last_ds", None)
+                        # Get last training date from the FULL dataset.
+                        # trained_model.last_ds only stores the end of the
+                        # training split, not the end of the full dataset.
+                        last_ds = None
+                        try:
+                            train_df = get_arrow_table(train_dataset).to_pandas()
+                            if "ds" in train_df.columns:
+                                last_ds = pd.to_datetime(train_df["ds"]).max()
+                                timestamp_col = "ds"
+                            else:
+                                for col in train_df.columns:
+                                    try:
+                                        ds_series = pd.to_datetime(train_df[col])
+                                        last_ds = ds_series.max()
+                                        timestamp_col = col
+                                        break
+                                    except Exception:
+                                        continue
+                        except Exception as e:
+                            log.warning(f"Could not read training dataset: {e}")
+
+                        # Fall back to model attribute if dataset read fails
+                        if last_ds is None:
+                            last_ds = getattr(trained_model, "last_ds", None)
                         if last_ds is None:
                             last_ds = getattr(trained_model, "last_timestamp", None)
-
-                        if last_ds is None:
-                            # Try to get from training dataset
-                            try:
-                                train_df = train_dataset.to_pandas()
-                                if "ds" in train_df.columns:
-                                    last_ds = pd.to_datetime(train_df["ds"]).max()
-                                else:
-                                    for col in train_df.columns:
-                                        try:
-                                            ds_series = pd.to_datetime(train_df[col])
-                                            last_ds = ds_series.max()
-                                            timestamp_col = col
-                                            break
-                                        except Exception:
-                                            continue
-                            except Exception as e:
-                                log.warning(f"Could not read training dataset: {e}")
 
                         if last_ds is None:
                             raise JobError(
@@ -594,6 +600,13 @@ class PredictJob(BaseJob):
                                 "yhat_upper"
                             ].to_numpy()
 
+                    # Convert timestamp column to string so DashAI stores it
+                    # consistently (Arrow datetime types lack DashAI metadata).
+                    if pd.api.types.is_datetime64_any_dtype(result_df[timestamp_col]):
+                        result_df[timestamp_col] = result_df[timestamp_col].dt.strftime(
+                            "%Y-%m-%d"
+                        )
+
                     dataset_with_prediction = to_dashai_dataset(result_df)
 
                 except HTTPException:
@@ -683,8 +696,15 @@ class PredictJob(BaseJob):
 
                 # Build schema for the saved dataset
                 if is_forecasting:
-                    # For forecasting, no input/output column type filtering
-                    filtered_schema = {}
+                    # Build a proper schema so the Arrow file has DashAI type
+                    # metadata. Empty schema {} causes transform_dataset_with_schema
+                    # to produce an empty table with no metadata → 404 on read.
+                    filtered_schema = {
+                        col: {"dtype": "string"}
+                        if col == timestamp_col
+                        else {"dtype": "float64"}
+                        for col in dataset_with_prediction.column_names
+                    }
                 else:
                     trained_schema = train_dataset.types
                     filtered_schema = {

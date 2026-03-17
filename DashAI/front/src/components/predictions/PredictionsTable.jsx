@@ -119,7 +119,7 @@ function PredictionsTable({ predictions, onItemClick, onItemDelete }) {
       flex: 1,
       minWidth: 100,
       renderCell: (params) => {
-        const statusText = getPredictionStatus(params?.row?.status);
+        const statusText = getPredictionStatus(params?.row?.status, t);
         return (
           <StyledCell color={getColorByStatus(statusText, theme)}>
             {statusText}

@@ -12,7 +12,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { getPredictionStatus } from "../../utils/predictionStatus";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import { getDatasetFile } from "../../api/datasets";
 import { useTranslation } from "react-i18next";
@@ -22,7 +21,7 @@ const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 function ResultsTable({ selectedPrediction }) {
   const theme = useTheme();
   const [loadingExecution, setLoadingExecution] = useState(
-    RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
+    RUNNING_STATUSES.includes(selectedPrediction?.status),
   );
   const { t } = useTranslation(["prediction"]);
 
@@ -40,11 +39,7 @@ function ResultsTable({ selectedPrediction }) {
 
   useEffect(() => {
     if (!selectedPrediction) return;
-    setLoadingExecution(
-      RUNNING_STATUSES.includes(
-        getPredictionStatus(selectedPrediction?.status),
-      ),
-    );
+    setLoadingExecution(RUNNING_STATUSES.includes(selectedPrediction?.status));
   }, [selectedPrediction]);
 
   return (

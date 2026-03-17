@@ -566,17 +566,15 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
                     )
                 exog = input_df[self.exog_cols].to_numpy()
 
-            # Get in-sample predictions
-            start_idx = 0
-            end_idx = len(dates) - 1
-
+            # Use actual dates so statsmodels predicts the correct period
+            # (works for both in-sample and out-of-sample dates)
             print(
                 f"[StatsmodelsSARIMAXModel] In-sample prediction: {len(dates)} points "
                 f"({dates.min()} to {dates.max()})"
             )
 
             predictions = self.model_fit.predict(
-                start=start_idx, end=end_idx, exog=exog
+                start=dates.iloc[0], end=dates.iloc[-1], exog=exog
             )
 
             print(f"[StatsmodelsSARIMAXModel] Generated {len(predictions)} predictions")
@@ -585,6 +583,163 @@ class StatsmodelsSARIMAXModel(ForecastingModel):
 
         raise ValueError(
             "SARIMAX predict requires either 'x_pred' data or a 'periods' value."
+        )
+
+    def get_forecast_uncertainty(
+        self, horizon: int, confidence_level: float = 0.80
+    ) -> pd.DataFrame:
+        """Get forecast with parametric confidence intervals from SARIMAX.
+
+        Uses statsmodels ``get_forecast().summary_frame()`` to compute
+        analytical confidence intervals derived from the model's error
+        distribution. These are true parametric intervals that reflect both
+        the non-seasonal and seasonal uncertainty of the model.
+
+        Parameters
+        ----------
+        horizon : int
+            Number of future periods to forecast.
+        confidence_level : float
+            Confidence level (e.g., 0.80 for 80% intervals).
+
+        Returns
+        -------
+        pd.DataFrame
+            Columns: ``ds``, ``yhat``, ``yhat_lower``, ``yhat_upper``.
+
+        Raises
+        ------
+        ValueError
+            If the model was trained with exogenous variables.
+        """
+        if self.model_fit is None:
+            raise ValueError("Model must be fitted before getting uncertainty.")
+
+        if self.exog_cols:
+            raise ValueError(
+                f"Cannot generate forecast uncertainty: model was trained with "
+                f"exogenous variables {self.exog_cols}. Future exogenous values "
+                f"are required but not available. "
+                f"Use ForecastFeatureImportance instead."
+            )
+
+        alpha = 1.0 - confidence_level
+        forecast_obj = self.model_fit.get_forecast(steps=horizon)
+        summary = forecast_obj.summary_frame(alpha=alpha)
+        # summary columns: mean, mean_se, mean_ci_lower, mean_ci_upper
+
+        freq = self.frequency or "D"
+        future_dates = pd.date_range(
+            start=self.last_ds, periods=horizon + 1, freq=freq
+        )[1:]
+
+        return pd.DataFrame(
+            {
+                "ds": future_dates,
+                "yhat": summary["mean"].to_numpy(),
+                "yhat_lower": summary["mean_ci_lower"].to_numpy(),
+                "yhat_upper": summary["mean_ci_upper"].to_numpy(),
+            }
+        )
+
+    def get_forecast_components(self, horizon: int) -> pd.DataFrame:
+        """Decompose forecast into trend, seasonal, and residual components.
+
+        Applies STL (Seasonal-Trend decomposition using LOESS) to the
+        combination of in-sample fitted values and out-of-sample forecast.
+
+        When a seasonal order was configured (``s > 1``), the explicit
+        seasonal period ``s`` is used for STL so the decomposition reflects
+        the model's actual seasonal structure. Otherwise the period is
+        inferred from the stored frequency.
+
+        Parameters
+        ----------
+        horizon : int
+            Number of future periods to forecast and decompose.
+
+        Returns
+        -------
+        pd.DataFrame
+            Columns: ``ds``, ``trend``, ``<seasonality_name>``, ``residual``.
+            The seasonality column name depends on the period (e.g. ``weekly``
+            for s=7, ``yearly`` for s=12).
+
+        Raises
+        ------
+        ValueError
+            If the model was trained with exogenous variables.
+        """
+        if self.model_fit is None:
+            raise ValueError("Model must be fitted before getting components.")
+
+        if self.exog_cols:
+            raise ValueError(
+                f"Cannot generate forecast components: model was trained with "
+                f"exogenous variables {self.exog_cols}. Future exogenous values "
+                f"are required but not available for decomposition. "
+                f"Use ForecastFeatureImportance instead."
+            )
+
+        try:
+            from statsmodels.tsa.seasonal import STL
+        except ImportError as exc:
+            raise ImportError("statsmodels is required for STL decomposition.") from exc
+
+        # In-sample fitted values (DatetimeIndex from training)
+        fitted = self.model_fit.fittedvalues.dropna()
+
+        # Out-of-sample forecast
+        freq = self.frequency or "D"
+        forecast_result = self.model_fit.forecast(steps=horizon)
+        future_dates = pd.date_range(
+            start=self.last_ds, periods=horizon + 1, freq=freq
+        )[1:]
+        future_series = pd.Series(forecast_result.to_numpy(), index=future_dates)
+
+        # Combine history + forecast
+        combined = pd.concat([fitted, future_series])
+
+        # Use explicit seasonal period s when seasonality is active;
+        # otherwise infer from frequency
+        explicit_s = (
+            self.seasonal_order[3]
+            if hasattr(self, "seasonal_order") and self.seasonal_order[3] > 1
+            else None
+        )
+        period = explicit_s if explicit_s else self._get_seasonal_period()
+        component_name = self._period_to_seasonality_name(period)
+
+        n = len(combined)
+        if period >= 2 and n >= 2 * period:
+            try:
+                stl = STL(combined, period=period, robust=True)
+                result = stl.fit()
+                trend_vals = result.trend
+                seasonal_vals = result.seasonal
+                residual_vals = result.resid
+            except Exception:
+                window = min(period, max(2, n // 2))
+                trend_vals = combined.rolling(
+                    window=window, center=True, min_periods=1
+                ).mean()
+                seasonal_vals = pd.Series(np.zeros(n), index=combined.index)
+                residual_vals = combined - trend_vals
+        else:
+            window = max(2, min(period, n // 2))
+            trend_vals = combined.rolling(
+                window=window, center=True, min_periods=1
+            ).mean()
+            seasonal_vals = pd.Series(np.zeros(n), index=combined.index)
+            residual_vals = combined - trend_vals
+
+        return pd.DataFrame(
+            {
+                "ds": combined.index[-horizon:],
+                "trend": trend_vals.to_numpy()[-horizon:],
+                component_name: seasonal_vals.to_numpy()[-horizon:],
+                "residual": residual_vals.to_numpy()[-horizon:],
+            }
         )
 
     def save(self, filename: str) -> None:

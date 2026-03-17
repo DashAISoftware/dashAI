@@ -6,13 +6,15 @@ across the forecast horizon. Essential for risk management and decision-making.
 Shows how confidence in predictions degrades over time and helps users understand
 the reliability of forecasts at different time horizons.
 
-Works with models that provide uncertainty estimates:
-- Prophet (yhat_lower, yhat_upper via interval_width)
-- ARIMA (confidence intervals from statsmodels)
-- Any model with prediction intervals
+Works with all forecasting models via ``get_forecast_uncertainty()``:
+- Prophet          → native intervals from Prophet's uncertainty sampling
+- ARIMA            → parametric intervals from statsmodels (analytical CIs)
+- SARIMAX          → parametric intervals from statsmodels (analytical CIs)
+- SklearnMultiStep → empirical intervals: residual std × sqrt(horizon step)
+- Unknown models   → fallback placeholder (±10% of forecast value)
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -88,72 +90,17 @@ class ForecastUncertainty(BaseGlobalExplainer):
         self.horizon = horizon
         self.confidence_level = confidence_level
 
-        # No exogenous variables - can make simple forecast
-        # We need to pass history context if available, but
-        # _get_prophet_uncertainty doesn't receive dataset argument directly.
-        # However, explain() calls this method. We should refactor to pass dataset.
-        # For now, we'll use standard predict but need to update explain()
-        # to call this with context.
-        # Since we can't easily change signature of _get_prophet_uncertainty
-        # without breaking things, we will rely on explain() handling the
-        # context for generic models, but for Prophet native intervals
-        # we need to be careful.
+    def _get_native_uncertainty(self) -> pd.DataFrame:
+        """Get uncertainty from any model that implements get_forecast_uncertainty().
 
-        # Actually, explain() calls this method. We should update this method
-        # to accept dataset or handle it in explain().
-        # Let's update explain() to handle Prophet native intervals differently
-        # or update this method. Updating this method signature is safer
-        # if we update the call site.
-
-    def _get_prophet_uncertainty(
-        self, history_df: Optional[pd.DataFrame] = None
-    ) -> pd.DataFrame:
-        """Get uncertainty estimates from Prophet model."""
-        if not hasattr(self.model, "predict"):
-            raise AttributeError("Model must have predict() method")
-
-        # Check if model has exogenous variables
-        exog_cols = (
-            self.model.get_exogenous_columns()
-            if hasattr(self.model, "get_exogenous_columns")
-            else []
-        )
-
-        if exog_cols:
-            # Model uses exogenous variables - cannot make valid future predictions
-            # without future exogenous values
-            raise ValueError(
-                f"This explainer cannot generate uncertainty estimates for models "
-                f"trained with exogenous variables: {exog_cols}.\n"
-                f"Reason: Future forecasting requires known future values for these "
-                f"variables, which are not available in the explainer context.\n"
-                f"Recommendation: Use ForecastFeatureImportance explainer instead, "
-                f"which evaluates the model on historical test data."
+        This covers Prophet, ARIMA, SARIMAX, and SklearnMultiStepForecaster.
+        """
+        if not hasattr(self.model, "get_forecast_uncertainty"):
+            raise AttributeError(
+                f"{type(self.model).__name__} must implement "
+                "get_forecast_uncertainty(horizon, confidence_level) to use this path."
             )
-
-        # No exogenous variables - can make simple forecast
-        forecast = self.model.predict(
-            x_pred=history_df, periods=self.horizon, return_components=True
-        )
-
-        if not isinstance(forecast, pd.DataFrame):
-            raise TypeError(
-                "Prophet model must return DataFrame from "
-                "predict(return_components=True)"
-            )
-
-        required_cols = ["ds", "yhat", "yhat_lower", "yhat_upper"]
-        missing_cols = [col for col in required_cols if col not in forecast.columns]
-
-        if missing_cols:
-            raise ValueError(
-                f"Prophet forecast missing required columns: {missing_cols}"
-            )
-
-        # Select forecast period only
-        forecast_df = forecast.tail(self.horizon).copy()
-
-        return forecast_df
+        return self.model.get_forecast_uncertainty(self.horizon, self.confidence_level)
 
     def _get_generic_uncertainty(
         self, dataset: Tuple[DatasetDict, DatasetDict]
@@ -256,33 +203,45 @@ class ForecastUncertainty(BaseGlobalExplainer):
         """
         model_name = type(self.model).__name__
 
-        try:
-            # Construct history dataframe
-            history_df = None
-            try:
-                x, y = dataset
-                x_df = x.to_pandas() if hasattr(x, "to_pandas") else pd.DataFrame(x)
-                y_df = y.to_pandas() if hasattr(y, "to_pandas") else pd.DataFrame(y)
-                if len(x_df) == len(y_df):
-                    history_df = x_df.copy()
-                    for col in y_df.columns:
-                        history_df[col] = y_df[col].to_numpy()
-                else:
-                    history_df = x_df.copy()
-            except Exception:
-                pass
+        # Friendly display names for known model classes
+        _display_names = {
+            "ProphetModel": "Prophet",
+            "StatsmodelsARIMAModel": "ARIMA",
+            "StatsmodelsSARIMAXModel": "SARIMAX",
+            "SklearnMultiStepForecaster": "Sklearn MultiStep",
+        }
 
-            if hasattr(self.model, "predict") and model_name == "ProphetModel":
-                # Prophet with native intervals
-                forecast_df = self._get_prophet_uncertainty(history_df)
-                model_type = "Prophet"
-                has_native_intervals = True
+        # Models with true parametric / native intervals
+        _parametric_models = {
+            "ProphetModel",
+            "StatsmodelsARIMAModel",
+            "StatsmodelsSARIMAXModel",
+        }
+
+        # Human-readable description of the interval source
+        _interval_sources = {
+            "ProphetModel": "Native (Prophet uncertainty sampling)",
+            "StatsmodelsARIMAModel": "Parametric (ARIMA analytical CI)",
+            "StatsmodelsSARIMAXModel": "Parametric (SARIMAX analytical CI)",
+            "SklearnMultiStepForecaster": "Empirical (residual std × √horizon)",
+        }
+
+        try:
+            if hasattr(self.model, "get_forecast_uncertainty"):
+                # Prophet, ARIMA, SARIMAX, SklearnMultiStepForecaster
+                forecast_df = self._get_native_uncertainty()
+                model_type = _display_names.get(model_name, model_name)
+                has_native_intervals = model_name in _parametric_models
+                interval_source = _interval_sources.get(
+                    model_name, "Native (model-specific)"
+                )
 
             else:
-                # Generic fallback
+                # Generic fallback for unknown model types
                 forecast_df = self._get_generic_uncertainty(dataset)
                 model_type = "Generic"
                 has_native_intervals = False
+                interval_source = "Placeholder (±10% of forecast)"
 
         except Exception as e:
             raise RuntimeError(
@@ -306,6 +265,7 @@ class ForecastUncertainty(BaseGlobalExplainer):
             "confidence_level": self.confidence_level,
             "horizon": self.horizon,
             "has_native_intervals": has_native_intervals,
+            "interval_source": interval_source,
             "ds": forecast_df["ds"].dt.strftime("%Y-%m-%d %H:%M:%S").tolist(),
             "yhat": np.round(forecast_df["yhat"].to_numpy(), 3).tolist(),
             "yhat_lower": np.round(forecast_df["yhat_lower"].to_numpy(), 3).tolist(),
@@ -387,8 +347,9 @@ class ForecastUncertainty(BaseGlobalExplainer):
             f"Forecast with {int(explanation['confidence_level'] * 100)}% "
             "Confidence Interval"
         )
-        if not explanation["has_native_intervals"]:
-            title += " (Estimated Intervals)"
+        interval_source = explanation.get("interval_source", "")
+        if interval_source:
+            title += f"<br><sub>{interval_source}</sub>"
 
         fig.update_layout(
             title=title,

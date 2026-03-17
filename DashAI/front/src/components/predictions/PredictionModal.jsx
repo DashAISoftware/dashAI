@@ -43,6 +43,7 @@ import { enqueuePredictionJob } from "../../api/job";
 import { getModelSessionById } from "../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
+import { getPredictionStatus } from "../../utils/predictionStatus";
 
 export default function PredictionModal({ isOpen, onClose, run }) {
   const [activeTab, setActiveTab] = useState(0);
@@ -268,7 +269,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
             enqueueSnackbar(
               `${t("prediction:label.prediction")} ${
                 updated.id
-              } ${statusText.toLowerCase()}.`,
+              } ${getPredictionStatus(statusText, t).toLowerCase()}.`,
               {
                 variant: statusText === 3 ? "success" : "error",
               },
