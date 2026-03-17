@@ -26,6 +26,7 @@ import { useTranslation } from "react-i18next";
  * @param {function} onPreviewError callback to notify parent of preview errors
  * @param {function} onTypesChanged callback to notify parent when column types change
  * @param {function} onColumnRename callback to notify parent when columns are renamed
+ * @param {function} onPreviewLoaded callback to notify parent when preview is loaded
  */
 function Upload({
   onFileUpload,
@@ -35,6 +36,7 @@ function Upload({
   onPreviewError,
   onTypesChanged,
   onColumnRename,
+  onPreviewLoaded,
 }) {
   const [EMPTY, LOADING, LOADED] = [0, 1, 2];
   const [datasetState, setDatasetState] = useState(
@@ -332,6 +334,7 @@ function Upload({
                 onPreviewError={onPreviewError}
                 onTypesChanged={onTypesChanged}
                 onColumnRename={onColumnRename}
+                onPreviewLoaded={onPreviewLoaded}
               />
             </Box>
           );
