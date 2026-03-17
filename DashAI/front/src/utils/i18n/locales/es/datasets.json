@@ -131,6 +131,7 @@
     "dimensionTitle": "Título de Dimensión",
     "distributionMetrics": "Métricas de Distribución",
     "dragAndDropFileHere": "Arrastre y suelte el archivo aquí",
+    "dragToResize": "Arrastre para redimensionar y ver más contenido",
     "duplicatedRows": "Filas Duplicadas",
     "editPlotLayout": "Editar Diseño del Gráfico",
     "endIndex": "Índice Final",
@@ -293,7 +294,9 @@
     "valueType": "Tipo de Valor",
     "viewMode": "Modo de Vista",
     "xAxis": "Eje X",
-    "yAxis": "Eje Y"
+    "yAxis": "Eje Y",
+    "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
+    "tourDisabledMessageNotebook": "Regresa a la visualización del dataset para comenzar el tour"
   },
   "message": {
     "columnTypesUpdated": "Tipos de columnas actualizados exitosamente",

@@ -68,7 +68,7 @@ export default function OptionBox({
             {optionName}
           </Typography>
           <Typography
-            variant="caption"
+            variant="body2"
             component="p"
             sx={{ color: "text.secondary" }}
           >
