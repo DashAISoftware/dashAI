@@ -29,6 +29,10 @@ function SelectInput({
     onChange(newValue);
   };
 
+  // Include current value in options if it's not already there
+  const allOptions =
+    value !== null && !options.includes(value) ? [...options, value] : options;
+
   return (
     <FormInputWrapper name={name} description={description}>
       <Input
@@ -41,7 +45,7 @@ function SelectInput({
         helperText={error || " "}
         margin="dense"
       >
-        {options.map((option, index) => (
+        {allOptions.map((option, index) => (
           <MenuItem key={option} value={option}>
             <ListItemText
               slotProps={{
@@ -55,7 +59,11 @@ function SelectInput({
                   },
                 },
               }}
-              primary={optionNames !== undefined ? optionNames[index] : option}
+              primary={
+                optionNames !== undefined && index < options.length
+                  ? optionNames[index]
+                  : option
+              }
             />
           </MenuItem>
         ))}
