@@ -17,7 +17,7 @@ class ClassificationTask(BaseTask):
         "Accuracy",
         "Precision",
         "Recall",
-        "F1Score",
+        "F1",
         "CohenKappa",
         "HammingDistance",
         "LogLoss",
