@@ -164,6 +164,8 @@ class DescribeExplorer(PreviewInspectionExplorer):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> Dict[str, Any]:
+        from pathlib import Path
+
         import numpy as np
         import pandas as pd
 
