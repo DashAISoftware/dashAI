@@ -40,6 +40,7 @@ export default function DatasetTable({
   datasetPath,
   datasetId,
   editableColumns = false,
+  onEditColumn = null,
   density = "compact",
   ...props
 }) {
@@ -118,6 +119,7 @@ export default function DatasetTable({
 
       try {
         const result = await renameDatasetColumn(datasetId, oldName, newName);
+        onEditColumn && (await onEditColumn(result));
 
         const { page, pageSize } = paginationModel;
         const data = await fetchPage(page, pageSize, filterModel);
