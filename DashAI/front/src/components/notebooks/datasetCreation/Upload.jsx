@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  DialogContentText,
   Grid,
   Typography,
   useTheme,
@@ -359,7 +358,7 @@ function Upload({
     >
       {/* state text */}
       <Grid sx={{ textAlign: "center" }}>
-        <DialogContentText sx={{ color: theme.palette.text.primary }}>
+        <Box sx={{ color: theme.palette.text.primary }}>
           {datasetState === EMPTY && t("datasets:label.uploadYourDataset")}
           {datasetState === LOADING && t("datasets:label.datasetLoading")}
           {datasetState === LOADED && t("datasets:label.datasetPreview")}
@@ -368,7 +367,7 @@ function Upload({
               {t("datasets:label.ifYourDatasetHaveSplits")}
             </Typography>
           )}
-        </DialogContentText>
+        </Box>
       </Grid>
 
       {/* Drag and drop */}
