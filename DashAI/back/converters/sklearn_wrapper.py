@@ -107,8 +107,8 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
         """
         import numpy as np
         import pandas as pd
+        import pyarrow as pa
 
-        from DashAI.back.dataloaders.classes.dashai_dataset import pyarrow as pa
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
