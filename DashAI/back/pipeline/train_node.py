@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from kink import di
+from kink import di, inject
 
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
@@ -70,6 +70,7 @@ class Train(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Train executed successfully.")
 
+    @inject
     async def run(
         self,
         context: Dict[str, Any],

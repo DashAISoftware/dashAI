@@ -1,6 +1,8 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict
 
+from kink import inject
+
 from DashAI.back.job.base_job import BaseJob, JobError
 
 if TYPE_CHECKING:
@@ -32,6 +34,7 @@ class DataSelector(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("DataSelector executed successfully.")
 
+    @inject
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         from pathlib import Path
 

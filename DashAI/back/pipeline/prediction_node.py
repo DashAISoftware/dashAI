@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict
 
 from fastapi import HTTPException
-from kink import di
+from kink import di, inject
 
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
@@ -28,6 +28,7 @@ class Prediction(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("Prediction executed successfully.")
 
+    @inject
     async def run(self, context: Dict[str, Any]) -> Dict[str, Any]:
         import json
         import os

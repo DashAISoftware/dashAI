@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, Type
 
-from kink import di
+from kink import di, inject
 
 from DashAI.back.config import DefaultSettings
 from DashAI.back.dependencies.database.models import Explorer
@@ -44,6 +44,7 @@ class DataExploration(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("DataExploration executed successfully.")
 
+    @inject
     async def run(
         self,
         context: Dict[str, Any],
