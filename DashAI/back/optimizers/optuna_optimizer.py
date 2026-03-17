@@ -114,7 +114,7 @@ class OptunaOptimizer(BaseOptimizer):
         self.parameters = parameters
         direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(
-            direction=direction, sampler=sampler, pruner=self.pruner
+            direction=direction, sampler=sampler(), pruner=self.pruner
         )
 
         self.metric = metric["class"]
