@@ -9,6 +9,8 @@ from DashAI.back.config_object import ConfigObject
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from pandas import DataFrame
+
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
@@ -51,7 +53,7 @@ class BaseDataLoader(ConfigObject):
         filepath_or_buffer: str,
         params: Dict[str, Any],
         n_rows: int = 10,
-    ) -> any:
+    ) -> "DataFrame":
         """
         Load a preview of the dataset using streaming.
 
