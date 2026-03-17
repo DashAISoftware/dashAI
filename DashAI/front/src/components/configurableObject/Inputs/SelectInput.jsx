@@ -15,13 +15,13 @@ import { Input } from "./InputStyles";
  */
 function SelectInput({
   name,
-  value,
+  value = null,
   label,
   onChange,
-  error,
+  error = undefined,
   description,
   options,
-  optionNames,
+  optionNames = undefined,
 }) {
   const handleChange = (event) => {
     const inputValue = event.target.value;
@@ -72,11 +72,6 @@ SelectInput.propTypes = {
   error: PropTypes.string,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
   optionNames: PropTypes.arrayOf(PropTypes.string),
-};
-SelectInput.defaultProps = {
-  value: null,
-  error: undefined,
-  optionNames: undefined,
 };
 
 export default SelectInput;

@@ -52,10 +52,13 @@ const columns = [
  * @param {Array} props.datasetColumns - Array of dataset columns
  */
 const ConverterScopeModal = ({
-  elementToConfigure,
+  elementToConfigure = "",
   updateScope,
   scopeInitialValues,
-  datasetInfo,
+  datasetInfo = {
+    total_columns: 0,
+    total_rows: 0,
+  },
   datasetColumns,
 }) => {
   const [open, setOpen] = useState(false);
@@ -361,14 +364,6 @@ ConverterScopeModal.propTypes = {
       dataType: PropTypes.string.isRequired,
     }),
   ).isRequired,
-};
-
-ConverterScopeModal.defaultProps = {
-  elementToConfigure: "",
-  datasetInfo: {
-    total_columns: 0,
-    total_rows: 0,
-  },
 };
 
 export default ConverterScopeModal;
