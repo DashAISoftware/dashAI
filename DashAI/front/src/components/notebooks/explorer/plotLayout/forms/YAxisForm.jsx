@@ -34,7 +34,9 @@ export default function YAxisForm({
   return (
     <>
       {/* Title */}
-      <SectionLabel>{t("datasets:label.axisTitle", { axis: "Y" })}</SectionLabel>
+      <SectionLabel>
+        {t("datasets:label.axisTitle", { axis: "Y" })}
+      </SectionLabel>
 
       <TextField
         label={t("datasets:label.axisTitle", { axis: "Y" })}
@@ -115,7 +117,11 @@ export default function YAxisForm({
         type="number"
         value={layout.yaxis?.tickangle ?? 0}
         onChange={(e) =>
-          handleAxisChange("yaxis", "tickangle", parseInt(e.target.value, 10) || 0)
+          handleAxisChange(
+            "yaxis",
+            "tickangle",
+            parseInt(e.target.value, 10) || 0,
+          )
         }
         fullWidth
         slotProps={{ htmlInput: { min: -360, max: 360 } }}

@@ -13,16 +13,14 @@ export default function DimensionsForm({ data, handleTraceChange }) {
           key={idx}
           sx={{
             p: 2,
-            border: `1px solid ${theme.palette.ui.borderLight || theme.palette.divider}`,
+            border: `1px solid ${
+              theme.palette.ui.borderLight || theme.palette.divider
+            }`,
             borderRadius: 1,
-            bgcolor: theme.palette.ui.panelMedium || theme.palette.background.default,
+            bgcolor: theme.palette.background.default,
           }}
         >
-          <Typography
-            variant="subtitle2"
-            color="text.secondary"
-            sx={{ mb: 2 }}
-          >
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
             {t("datasets:label.dimensionIdx", {
               idx: idx + 1,
               label: dim.label || `Dimension ${idx + 1}`,
