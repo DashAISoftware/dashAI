@@ -6,7 +6,6 @@ import {
   Button,
   Chip,
   Stack,
-  CircularProgress,
   Collapse,
   Tabs,
   Tab,
@@ -39,7 +38,6 @@ export default function RunResults({
   const [globalExplainers, setGlobalExplainers] = useState([]);
   const [localExplainers, setLocalExplainers] = useState([]);
   const [predictions, setPredictions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [resultsVisible, setResultsVisible] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
     return saved ? JSON.parse(saved) : false;
@@ -61,15 +59,15 @@ export default function RunResults({
   const isRunning = run.status === 1 || run.status === 2;
   const { t } = useTranslation("models");
 
+  const runId = run.id;
   const fetchOperations = useCallback(async () => {
-    if (!run || !run.id) return;
+    if (!runId) return;
 
-    setLoading(true);
     try {
       const [globalExpls, localExpls, preds] = await Promise.all([
-        getExplainers(run.id, "global").catch(() => []),
-        getExplainers(run.id, "local").catch(() => []),
-        getPredictions(run.id).catch(() => []),
+        getExplainers(runId, "global").catch(() => []),
+        getExplainers(runId, "local").catch(() => []),
+        getPredictions(runId).catch(() => []),
       ]);
 
       setGlobalExplainers(globalExpls);
@@ -77,10 +75,8 @@ export default function RunResults({
       setPredictions(preds);
     } catch (error) {
       console.error("Error fetching operations:", error);
-    } finally {
-      setLoading(false);
     }
-  }, [run]);
+  }, [runId]);
 
   useEffect(() => {
     fetchOperations();
@@ -98,11 +94,11 @@ export default function RunResults({
   }, [run.id]);
 
   useEffect(() => {
-    if (isRunning && !resultsVisible) {
+    if (isRunning) {
       setResultsVisible(true);
       setActiveTab(0); // Live Metrics tab
     }
-  }, [isRunning, resultsVisible]);
+  }, [isRunning]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -140,14 +136,6 @@ export default function RunResults({
 
   const totalOperations =
     globalExplainers.length + localExplainers.length + predictions.length;
-
-  if (loading && isFinished) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
 
   return (
     <Box id={`run-results-${run.id}`}>
