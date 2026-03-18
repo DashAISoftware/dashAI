@@ -9,9 +9,10 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { Close } from "@mui/icons-material";
+import { Close, UnfoldMore } from "@mui/icons-material";
 import DatasetIcon from "@mui/icons-material/Dataset";
 
 import DatasetTable from "../dataset/DatasetTable";
@@ -51,7 +52,7 @@ export default function ConfigureToolModal({
     const offsetY = e.clientY - rect.top;
 
     // Limit min/max
-    const minHeight = 100;
+    const minHeight = 0;
     const maxHeight = rect.height - 150;
     const newHeight = Math.max(minHeight, Math.min(maxHeight, offsetY));
 
@@ -248,16 +249,37 @@ export default function ConfigureToolModal({
         </Box>
 
         {/* Divider for resizing */}
-        <Box
-          onMouseDown={handleMouseDown}
-          sx={{
-            height: "6px",
-            cursor: "row-resize",
-            backgroundColor: "divider",
-            "&:hover": { backgroundColor: theme.palette.ui.hover },
-            zIndex: 2,
-          }}
-        />
+        <Tooltip title={t("datasets:label.dragToResize")} placement="top" arrow>
+          <Box
+            onMouseDown={handleMouseDown}
+            sx={{
+              height: "24px",
+              cursor: "row-resize",
+              backgroundColor: "divider",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+              transition: "all 0.2s",
+              "&:hover": {
+                backgroundColor: theme.palette.primary.main,
+                "& .drag-icon": {
+                  color: "white",
+                },
+              },
+              zIndex: 2,
+            }}
+          >
+            <UnfoldMore
+              className="drag-icon"
+              sx={{
+                fontSize: 22,
+                color: "text.secondary",
+                transition: "color 0.2s",
+              }}
+            />
+          </Box>
+        </Tooltip>
 
         {/* Bottom section (form) */}
         <Box
