@@ -1,6 +1,5 @@
 import api from "./api";
 
-import type { IDataset } from "../types/dataset";
 import { IParamsFilter } from "../types/predict";
 const predictEndpoint = "/v1/predict";
 
@@ -69,7 +68,9 @@ export const previewManualPrediction = async (
     const cleanObj: Record<string, unknown> = {};
     Object.entries(obj).forEach(([key, value]) => {
       if (value instanceof File) {
-        formData.append(`file_${i}_${key}`, value);
+        const fileFieldKey = `file_${i}_${key}`;
+        formData.append(fileFieldKey, value);
+        cleanObj[key] = fileFieldKey;
       } else {
         cleanObj[key] = value;
       }
@@ -83,7 +84,6 @@ export const previewManualPrediction = async (
   const response = await api.post<{ columns: string[]; rows: unknown[][] }>(
     `${predictEndpoint}/preview`,
     formData,
-    { headers: { "Content-Type": "multipart/form-data" } },
   );
   return response.data;
 };

@@ -123,9 +123,20 @@ export default function RunResults({
 
   const handlePredictionCreated = (prediction) => {
     if (prediction) {
-      setPredictions((prev) => [prediction, ...prev]);
+      setPredictions((prev) => {
+        const index = prev.findIndex((p) => p.id === prediction.id);
+        if (index === -1) {
+          return [prediction, ...prev];
+        }
+
+        const updated = [...prev];
+        updated[index] = prediction;
+        return updated;
+      });
+    } else {
+      fetchOperations();
     }
-    fetchOperations();
+
     if (onRefresh) onRefresh();
   };
 

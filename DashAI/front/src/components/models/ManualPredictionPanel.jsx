@@ -145,7 +145,7 @@ export default function ManualPredictionPanel({
           });
           if (onSaved) onSaved(updatedPrediction || prediction);
         },
-        (result) => {
+        async (result) => {
           console.error("Prediction job failed:", result);
           enqueueSnackbar(
             t("prediction:error.predictionFailed", {
@@ -153,6 +153,19 @@ export default function ManualPredictionPanel({
             }),
             { variant: "error" },
           );
+
+          try {
+            const updatedPredictions = await getPredictions(run.id);
+            const updatedPrediction = updatedPredictions.find(
+              (p) => p.id === prediction.id,
+            );
+            if (onSaved) onSaved(updatedPrediction || prediction);
+          } catch (refreshError) {
+            console.error(
+              "Error refreshing prediction after job failure:",
+              refreshError,
+            );
+          }
         },
       );
     } catch (error) {

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from fastapi import status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from kink import inject
 from sqlalchemy import exc
@@ -139,7 +140,9 @@ def run_manual_prediction(
             row.append(y_pred[i])
             rows.append(row)
 
-        return columns, rows
+        columns_json = jsonable_encoder(columns)
+        rows_json = jsonable_encoder(rows)
+        return columns_json, rows_json
 
 
 class PredictJob(BaseJob):
