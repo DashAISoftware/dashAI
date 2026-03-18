@@ -58,3 +58,32 @@ export const deletePrediction = async (
 ): Promise<void> => {
   await api.delete(`${predictEndpoint}/${prediction_id}`);
 };
+
+export const previewManualPrediction = async (
+  runId: number,
+  manualInputData: Record<string, unknown>[],
+): Promise<{ columns: string[]; rows: unknown[][] }> => {
+  const formData = new FormData();
+
+  const simpleData = manualInputData.map((obj, i) => {
+    const cleanObj: Record<string, unknown> = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(`file_${i}_${key}`, value);
+      } else {
+        cleanObj[key] = value;
+      }
+    });
+    return cleanObj;
+  });
+
+  formData.append("run_id", String(runId));
+  formData.append("manual_input_data", JSON.stringify(simpleData));
+
+  const response = await api.post<{ columns: string[]; rows: unknown[][] }>(
+    `${predictEndpoint}/preview`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+  return response.data;
+};

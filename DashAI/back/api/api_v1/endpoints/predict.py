@@ -1,9 +1,11 @@
+import json
 import logging
 import os
 import shutil
 from pathlib import Path
+from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Form, Query, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy.orm import Session, sessionmaker
@@ -16,6 +18,7 @@ from DashAI.back.dependencies.database.models import (
     Prediction,
     Run,
 )
+from DashAI.back.job.predict_job import run_manual_prediction
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -218,3 +221,42 @@ async def delete_prediction(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while deleting the prediction file",
         ) from e
+
+
+@router.post("/preview")
+@inject
+async def preview_manual_prediction(
+    run_id: int = Form(..., description="The ID of the trained model/run"),
+    manual_input_data: str = Form(..., description="JSON-encoded list of row dicts"),
+    component_registry: Any = Depends(lambda: di["component_registry"]),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Run a synchronous manual prediction and return results without persisting.
+
+    Parameters
+    ----------
+    run_id : int
+        The ID of the trained model/run.
+    manual_input_data : str
+        JSON-encoded list of row dicts (one dict per input row, keyed by column name).
+
+    Returns
+    -------
+    dict
+        ``{"columns": [...], "rows": [[...], ...]}``
+    """
+    try:
+        rows_data: List[Dict] = json.loads(manual_input_data)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid manual_input_data JSON: {e}",
+        ) from e
+
+    columns, rows = run_manual_prediction(
+        run_id=run_id,
+        manual_input_data=rows_data,
+        component_registry=component_registry,
+        session_factory=session_factory,
+    )
+    return {"columns": columns, "rows": rows}

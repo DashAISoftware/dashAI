@@ -1,7 +1,7 @@
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, List
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from fastapi import status
@@ -23,6 +23,123 @@ from DashAI.back.tasks import BaseTask
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+
+def run_manual_prediction(
+    run_id: int,
+    manual_input_data: List[Dict],
+    component_registry: Any,
+    session_factory: sessionmaker,
+) -> Tuple[List[str], List[List]]:
+    """Execute a manual prediction synchronously without persisting results.
+
+    Parameters
+    ----------
+    run_id : int
+        The ID of the trained run.
+    manual_input_data : List[Dict]
+        List of row dicts keyed by input column name.
+    component_registry : Any
+        The DashAI component registry.
+    session_factory : sessionmaker
+        SQLAlchemy session factory.
+
+    Returns
+    -------
+    Tuple[List[str], List[List]]
+        A tuple of (columns, rows) where columns is the ordered list of
+        column names (inputs + output) and rows is a list of value lists.
+
+    Raises
+    ------
+    HTTPException
+        On missing run, model session, or prediction failure.
+    """
+    with session_factory() as db:
+        from DashAI.back.dependencies.database.models import Run
+
+        run = db.get(Run, run_id)
+        if not run:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Run not found for id {run_id}",
+            )
+
+        model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+        if not model_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model session not found",
+            )
+
+        dataset_trained: Dataset = db.get(Dataset, model_session.dataset_id)
+        if not dataset_trained:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Training dataset not found",
+            )
+
+        try:
+            task: BaseTask = component_registry[model_session.task_name]["class"]()
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Task {model_session.task_name} not found in the registry",
+            ) from e
+
+        try:
+            model_cls = component_registry[run.model_name]["class"]
+            trained_model: BaseModel = model_cls.load(run.run_path)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Model {run.model_name} not found in the registry",
+            ) from e
+
+        try:
+            train_dataset: DashAIDataset = load_dataset(
+                str(Path(f"{dataset_trained.file_path}/dataset/"))
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Cannot load training dataset",
+            ) from e
+
+        try:
+            dataset_trained_path = str(Path(f"{dataset_trained.file_path}/dataset/"))
+            loaded_dataset: DashAIDataset = task.process_manual_input(
+                manual_input_data, dataset_trained_path
+            )
+            prepared_dataset = loaded_dataset.select_columns(
+                model_session.input_columns
+            )
+            y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+            y_pred = task.process_predictions(
+                train_dataset, y_pred_proba, model_session.output_columns[0]
+            )
+        except (ValueError, TypeError) as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid input data: {str(e)}",
+            ) from e
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Model prediction failed",
+            ) from e
+
+        output_col = model_session.output_columns[0]
+        columns = list(model_session.input_columns) + [output_col]
+
+        rows: List[List] = []
+        input_data = prepared_dataset.to_dict()
+        for i in range(len(y_pred)):
+            row = [input_data[col][i] for col in model_session.input_columns]
+            row.append(y_pred[i])
+            rows.append(row)
+
+        return columns, rows
 
 
 class PredictJob(BaseJob):
