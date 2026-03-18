@@ -129,26 +129,9 @@ export function startJobPolling(jobId, onSuccess, onError) {
   // Stop existing polling for this job if any
   stopJobPolling(jobId);
 
-  // Create a dedicated interval for this job
-  const intervalId = setInterval(async () => {
-    try {
-      const jobDetails = await getJobStatus(jobId);
-
-      if (jobDetails.status === "finished") {
-        if (typeof onSuccess === "function") onSuccess(jobDetails);
-        stopJobPolling(jobId);
-      } else if (jobDetails.status === "error") {
-        if (typeof onError === "function") onError(jobDetails);
-        stopJobPolling(jobId);
-      }
-    } catch (error) {
-      console.error(`[JobPoller] Error checking job ${jobId}:`, error);
-    }
-  }, POLL_INTERVAL);
-
-  // Store the watcher
+  // Store the watcher - the global polling system will handle callbacks
   state.jobWatchers.set(jobId, {
-    intervalId,
+    intervalId: null,
     onSuccess,
     onError,
   });
