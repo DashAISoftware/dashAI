@@ -89,9 +89,15 @@ function SetNameAndExplainerStep({
   useEffect(() => {
     if (typeof newExpl.name === "string" && newExpl.name.length >= 4) {
       setExplNameOk(true);
+      setExplNameError(false);
       setNModifications(4);
+    } else {
+      setExplNameOk(false);
+      if (nModifications >= 4) {
+        setExplNameError(true);
+      }
     }
-  }, []);
+  }, [newExpl.name]);
 
   useEffect(() => {
     if (explNameOk && selectedExplainerOk) {

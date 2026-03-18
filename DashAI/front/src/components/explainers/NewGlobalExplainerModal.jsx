@@ -22,7 +22,10 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { startJobPolling } from "../../utils/jobPoller";
 
-import { createGlobalExplainer as createGlobalExplainerRequest } from "../../api/explainer";
+import {
+  createGlobalExplainer as createGlobalExplainerRequest,
+  getExplainers,
+} from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
@@ -33,6 +36,24 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+
+const getNextExplainerName = (existingExplainers = []) => {
+  const usedNumbers = new Set(
+    existingExplainers
+      .map((explainer) => {
+        const match = explainer?.name?.match(/^Explainer_global_(\d+)$/);
+        return match ? Number(match[1]) : null;
+      })
+      .filter((value) => Number.isInteger(value) && value > 0),
+  );
+
+  let nextNumber = 1;
+  while (usedNumbers.has(nextNumber)) {
+    nextNumber += 1;
+  }
+
+  return `Explainer_global_${nextNumber}`;
+};
 
 /**
  * This component renders a modal that takes the user through the process of creating a new explainer.
@@ -100,6 +121,17 @@ export default function NewGlobalExplainerModal({
       loadExistingExplainers();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || newGlobalExpl.name.trim()) {
+      return;
+    }
+
+    setNewGlobalExpl((prev) => ({
+      ...prev,
+      name: getNextExplainerName(existingGlobalExplainers),
+    }));
+  }, [open, existingGlobalExplainers, newGlobalExpl.name]);
 
   const enqueueGlobalExplainerJob = async (explainerId) => {
     try {
