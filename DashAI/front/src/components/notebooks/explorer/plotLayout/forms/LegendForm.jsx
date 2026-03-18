@@ -1,5 +1,12 @@
 import React from "react";
-import { TextField, FormControlLabel, Switch, Box, Divider, Typography } from "@mui/material";
+import {
+  TextField,
+  FormControlLabel,
+  Switch,
+  Box,
+  Divider,
+  Typography,
+} from "@mui/material";
 
 import DebouncedColorPicker from "../DebouncedColorPicker";
 import { useTranslation } from "react-i18next";
@@ -52,7 +59,7 @@ export default function LegendForm({ layout, handleChange }) {
       <Divider />
 
       {/* Position */}
-      <SectionLabel>{t("datasets:label.position", "Position")}</SectionLabel>
+      <SectionLabel>{t("datasets:label.position")}</SectionLabel>
 
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
@@ -96,7 +103,7 @@ export default function LegendForm({ layout, handleChange }) {
       <Divider />
 
       {/* Appearance */}
-      <SectionLabel>{t("datasets:label.appearance", "Appearance")}</SectionLabel>
+      <SectionLabel>{t("datasets:label.appearance")}</SectionLabel>
 
       <DebouncedColorPicker
         label={t("datasets:label.legendBackgroundColor")}
