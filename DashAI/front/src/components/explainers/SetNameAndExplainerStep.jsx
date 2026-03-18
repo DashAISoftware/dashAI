@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 
 import { CircularProgress, Grid, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getComponents as getComponentsRequest } from "../../api/component";
-import { generateSequentialName } from "../../utils/nameGenerator";
 import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 import { useTranslation } from "react-i18next";
 
@@ -97,7 +96,7 @@ function SetNameAndExplainerStep({
         setExplNameError(true);
       }
     }
-  }, [newExpl.name]);
+  }, [newExpl.name, nModifications]);
 
   useEffect(() => {
     if (explNameOk && selectedExplainerOk) {

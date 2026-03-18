@@ -35,23 +35,16 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 const getNextExplainerName = (existingExplainers = []) => {
-  const usedNumbers = new Set(
-    existingExplainers
-      .map((explainer) => {
-        const match = explainer?.name?.match(/^Explainer_local_(\d+)$/);
-        return match ? Number(match[1]) : null;
-      })
-      .filter((value) => Number.isInteger(value) && value > 0),
-  );
+  const { defaultName } = generateSequentialName({
+    base: "Explainer_local",
+    items: existingExplainers,
+    getName: (explainer) => explainer?.name,
+  });
 
-  let nextNumber = 1;
-  while (usedNumbers.has(nextNumber)) {
-    nextNumber += 1;
-  }
-
-  return `Explainer_local_${nextNumber}`;
+  return defaultName;
 };
 
 /**
@@ -104,6 +97,8 @@ export default function NewLocalExplainerModal({
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newLocalExpl, setNewLocalExpl] = useState(defaultNewLocalExpl);
   const [existingLocalExplainers, setExistingLocalExplainers] = useState([]);
+  const [existingLocalExplainersLoaded, setExistingLocalExplainersLoaded] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const { updateFlag: updateExplainers } = useUpdateFlag({
@@ -117,17 +112,20 @@ export default function NewLocalExplainerModal({
     } catch (error) {
       console.error("Error loading existing explainers:", error);
       setExistingLocalExplainers([]);
+    } finally {
+      setExistingLocalExplainersLoaded(true);
     }
   };
 
   useEffect(() => {
     if (open) {
+      setExistingLocalExplainersLoaded(false);
       loadExistingExplainers();
     }
   }, [open]);
 
   useEffect(() => {
-    if (!open || newLocalExpl.name.trim()) {
+    if (!open || !existingLocalExplainersLoaded || newLocalExpl.name.trim()) {
       return;
     }
 
@@ -135,7 +133,12 @@ export default function NewLocalExplainerModal({
       ...prev,
       name: getNextExplainerName(existingLocalExplainers),
     }));
-  }, [open, existingLocalExplainers, newLocalExpl.name]);
+  }, [
+    open,
+    existingLocalExplainersLoaded,
+    existingLocalExplainers,
+    newLocalExpl.name,
+  ]);
 
   const enqueueLocalExplainerJob = async (explainerId) => {
     try {

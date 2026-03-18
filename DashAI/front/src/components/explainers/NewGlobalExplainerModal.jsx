@@ -36,23 +36,16 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
+import { generateSequentialName } from "../../utils/nameGenerator";
 
 const getNextExplainerName = (existingExplainers = []) => {
-  const usedNumbers = new Set(
-    existingExplainers
-      .map((explainer) => {
-        const match = explainer?.name?.match(/^Explainer_global_(\d+)$/);
-        return match ? Number(match[1]) : null;
-      })
-      .filter((value) => Number.isInteger(value) && value > 0),
-  );
+  const { defaultName } = generateSequentialName({
+    base: "Explainer_global",
+    items: existingExplainers,
+    getName: (explainer) => explainer?.name,
+  });
 
-  let nextNumber = 1;
-  while (usedNumbers.has(nextNumber)) {
-    nextNumber += 1;
-  }
-
-  return `Explainer_global_${nextNumber}`;
+  return defaultName;
 };
 
 /**
@@ -99,6 +92,8 @@ export default function NewGlobalExplainerModal({
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newGlobalExpl, setNewGlobalExpl] = useState(defaultNewGlobalExpl);
   const [existingGlobalExplainers, setExistingGlobalExplainers] = useState([]);
+  const [existingGlobalExplainersLoaded, setExistingGlobalExplainersLoaded] =
+    useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -113,17 +108,20 @@ export default function NewGlobalExplainerModal({
     } catch (error) {
       console.error("Error loading existing explainers:", error);
       setExistingGlobalExplainers([]);
+    } finally {
+      setExistingGlobalExplainersLoaded(true);
     }
   };
 
   useEffect(() => {
     if (open) {
+      setExistingGlobalExplainersLoaded(false);
       loadExistingExplainers();
     }
   }, [open]);
 
   useEffect(() => {
-    if (!open || newGlobalExpl.name.trim()) {
+    if (!open || !existingGlobalExplainersLoaded || newGlobalExpl.name.trim()) {
       return;
     }
 
@@ -131,7 +129,12 @@ export default function NewGlobalExplainerModal({
       ...prev,
       name: getNextExplainerName(existingGlobalExplainers),
     }));
-  }, [open, existingGlobalExplainers, newGlobalExpl.name]);
+  }, [
+    open,
+    existingGlobalExplainersLoaded,
+    existingGlobalExplainers,
+    newGlobalExpl.name,
+  ]);
 
   const enqueueGlobalExplainerJob = async (explainerId) => {
     try {
