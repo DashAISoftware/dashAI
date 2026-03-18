@@ -26,6 +26,43 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
+def _run_prediction_pipeline(
+    task: BaseTask,
+    trained_model: BaseModel,
+    train_dataset: DashAIDataset,
+    loaded_dataset: DashAIDataset,
+    model_session: ModelSession,
+) -> Tuple[DashAIDataset, Any]:
+    """Run shared prediction steps from prepared input data to final predictions."""
+    prepared_dataset = loaded_dataset.select_columns(model_session.input_columns)
+    y_pred_proba = np.array(trained_model.predict(prepared_dataset))
+    y_pred = task.process_predictions(
+        train_dataset, y_pred_proba, model_session.output_columns[0]
+    )
+    return prepared_dataset, y_pred
+
+
+def _build_preview_rows(
+    prepared_dataset: DashAIDataset,
+    input_columns: List[str],
+    output_col: str,
+    y_pred: Any,
+) -> Tuple[List[str], List[List]]:
+    """Build JSON-safe tabular rows for manual preview responses."""
+    columns = list(input_columns) + [output_col]
+
+    rows: List[List] = []
+    input_data = prepared_dataset.to_dict()
+    for i in range(len(y_pred)):
+        row = [input_data[col][i] for col in input_columns]
+        row.append(y_pred[i])
+        rows.append(row)
+
+    columns_json = jsonable_encoder(columns)
+    rows_json = jsonable_encoder(rows)
+    return columns_json, rows_json
+
+
 def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
@@ -80,6 +117,18 @@ def run_manual_prediction(
                 detail="Training dataset not found",
             )
 
+        if not model_session.input_columns:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Model session has no input columns configured",
+            )
+
+        if not model_session.output_columns:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Model session has no output columns configured",
+            )
+
         try:
             task: BaseTask = component_registry[model_session.task_name]["class"]()
         except Exception as e:
@@ -90,11 +139,20 @@ def run_manual_prediction(
 
         try:
             model_cls = component_registry[run.model_name]["class"]
+        except KeyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Model {run.model_name} not found in the registry",
+            ) from e
+
+        try:
             trained_model: BaseModel = model_cls.load(run.run_path)
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Model {run.model_name} not found in the registry",
+                detail=(
+                    f"Failed to load model {run.model_name} from path {run.run_path}"
+                ),
             ) from e
 
         try:
@@ -112,12 +170,12 @@ def run_manual_prediction(
             loaded_dataset: DashAIDataset = task.process_manual_input(
                 manual_input_data, dataset_trained_path
             )
-            prepared_dataset = loaded_dataset.select_columns(
-                model_session.input_columns
-            )
-            y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-            y_pred = task.process_predictions(
-                train_dataset, y_pred_proba, model_session.output_columns[0]
+            prepared_dataset, y_pred = _run_prediction_pipeline(
+                task=task,
+                trained_model=trained_model,
+                train_dataset=train_dataset,
+                loaded_dataset=loaded_dataset,
+                model_session=model_session,
             )
         except (ValueError, TypeError) as e:
             raise HTTPException(
@@ -131,18 +189,12 @@ def run_manual_prediction(
             ) from e
 
         output_col = model_session.output_columns[0]
-        columns = list(model_session.input_columns) + [output_col]
-
-        rows: List[List] = []
-        input_data = prepared_dataset.to_dict()
-        for i in range(len(y_pred)):
-            row = [input_data[col][i] for col in model_session.input_columns]
-            row.append(y_pred[i])
-            rows.append(row)
-
-        columns_json = jsonable_encoder(columns)
-        rows_json = jsonable_encoder(rows)
-        return columns_json, rows_json
+        return _build_preview_rows(
+            prepared_dataset=prepared_dataset,
+            input_columns=list(model_session.input_columns),
+            output_col=output_col,
+            y_pred=y_pred,
+        )
 
 
 class PredictJob(BaseJob):
@@ -268,6 +320,22 @@ class PredictJob(BaseJob):
                 if dataset_id:
                     dataset: Dataset = db.get(Dataset, dataset_id)
 
+                if not model_session.input_columns:
+                    prediction.set_status_as_error()
+                    db.commit()
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Model session has no input columns configured",
+                    )
+
+                if not model_session.output_columns:
+                    prediction.set_status_as_error()
+                    db.commit()
+                    raise HTTPException(
+                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        detail="Model session has no output columns configured",
+                    )
+
             except exc.SQLAlchemyError as e:
                 log.exception(e)
                 raise HTTPException(
@@ -289,13 +357,23 @@ class PredictJob(BaseJob):
             # Load Model
             try:
                 model = component_registry[prediction.run.model_name]["class"]
+            except KeyError as e:
+                prediction.set_status_as_error()
+                db.commit()
+                log.exception(e)
+                raise JobError(
+                    f"Model {prediction.run.model_name} not found in the registry"
+                ) from e
+
+            try:
                 trained_model: BaseModel = model.load(prediction.run.run_path)
             except Exception as e:
                 prediction.set_status_as_error()
                 db.commit()
                 log.exception(e)
                 raise JobError(
-                    f"Model {prediction.run.model_name} not found in the registry"
+                    f"Failed to load model {prediction.run.model_name} "
+                    f"from path {prediction.run.run_path}"
                 ) from e
 
             # Load Dataset and make Predictions
@@ -325,15 +403,12 @@ class PredictJob(BaseJob):
                         manual_input_data, dataset_trained_path
                     )
 
-                # Select input columns and make prediction
-                prepared_dataset = loaded_dataset.select_columns(
-                    model_session.input_columns
-                )
-                y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-
-                # Process predictions (convert to labels for classification)
-                y_pred = task.process_predictions(
-                    train_dataset, y_pred_proba, model_session.output_columns[0]
+                prepared_dataset, y_pred = _run_prediction_pipeline(
+                    task=task,
+                    trained_model=trained_model,
+                    train_dataset=train_dataset,
+                    loaded_dataset=loaded_dataset,
+                    model_session=model_session,
                 )
 
             except ValueError as ve:

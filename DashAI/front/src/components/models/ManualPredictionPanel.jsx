@@ -128,8 +128,27 @@ export default function ManualPredictionPanel({
         variant: "success",
       });
 
+      let optimisticPrediction = prediction;
+      try {
+        const predictionsAfterEnqueue = await getPredictions(run.id);
+        const freshlyCreated = predictionsAfterEnqueue.find(
+          (p) => p.id === prediction.id,
+        );
+        optimisticPrediction = freshlyCreated || prediction;
+      } catch (refreshError) {
+        console.error(
+          "Error refreshing prediction after enqueueing job:",
+          refreshError,
+        );
+      }
+
+      optimisticPrediction = {
+        ...optimisticPrediction,
+        status: optimisticPrediction.status ?? 1,
+      };
+
       // Optimistically call onSaved so the card appears quickly
-      if (onSaved) onSaved(prediction);
+      if (onSaved) onSaved(optimisticPrediction);
       onClose();
 
       // Poll in the background to update the card status

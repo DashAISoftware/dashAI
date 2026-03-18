@@ -84,7 +84,27 @@ export default function DatasetPredictionPanel({
         variant: "success",
       });
 
-      if (onSaved) onSaved(prediction);
+      let optimisticPrediction = prediction;
+      try {
+        const predictionsAfterEnqueue = await getPredictions(run.id);
+        const freshlyCreated = predictionsAfterEnqueue.find(
+          (p) => p.id === prediction.id,
+        );
+        optimisticPrediction = freshlyCreated || prediction;
+      } catch (refreshError) {
+        console.error(
+          "Error refreshing prediction after enqueueing job:",
+          refreshError,
+        );
+      }
+
+      optimisticPrediction = {
+        ...optimisticPrediction,
+        dataset: optimisticPrediction.dataset || selectedDataset,
+        status: optimisticPrediction.status ?? 1,
+      };
+
+      if (onSaved) onSaved(optimisticPrediction);
       onClose();
 
       startJobPolling(
