@@ -46,34 +46,24 @@ function ResultsTabHyperparameters({ runData }) {
     setLoading(true);
     try {
       if (optimizables >= 2) {
-        const historicalPlot = await getHyperparameterPlotRequest(
-          runData.id,
-          1,
-        );
-        const slicePlot = await getHyperparameterPlotRequest(runData.id, 2);
-        const contourPlot = await getHyperparameterPlotRequest(runData.id, 3);
-        const importancePlot = await getHyperparameterPlotRequest(
-          runData.id,
-          4,
-        );
-        const parsedHistoricalPlot = parsePlot(historicalPlot);
-        const parsedSlicePlot = parsePlot(slicePlot);
-        const parsedContourPlot = parsePlot(contourPlot);
-        const parsedImportancePlot = parsePlot(importancePlot);
-        setHistoricalPlot(parsedHistoricalPlot);
-        setSlicePlot(parsedSlicePlot);
-        setContourPlot(parsedContourPlot);
-        setImportancePlot(parsedImportancePlot);
+        const [historicalPlot, slicePlot, contourPlot, importancePlot] =
+          await Promise.all([
+            getHyperparameterPlotRequest(runData.id, 1),
+            getHyperparameterPlotRequest(runData.id, 2),
+            getHyperparameterPlotRequest(runData.id, 3),
+            getHyperparameterPlotRequest(runData.id, 4),
+          ]);
+        setHistoricalPlot(parsePlot(historicalPlot));
+        setSlicePlot(parsePlot(slicePlot));
+        setContourPlot(parsePlot(contourPlot));
+        setImportancePlot(parsePlot(importancePlot));
       } else if (optimizables === 1) {
-        const historicalPlot = await getHyperparameterPlotRequest(
-          runData.id,
-          1,
-        );
-        const slicePlot = await getHyperparameterPlotRequest(runData.id, 2);
-        const parsedHistoricalPlot = parsePlot(historicalPlot);
-        const parsedSlicePlot = parsePlot(slicePlot);
-        setHistoricalPlot(parsedHistoricalPlot);
-        setSlicePlot(parsedSlicePlot);
+        const [historicalPlot, slicePlot] = await Promise.all([
+          getHyperparameterPlotRequest(runData.id, 1),
+          getHyperparameterPlotRequest(runData.id, 2),
+        ]);
+        setHistoricalPlot(parsePlot(historicalPlot));
+        setSlicePlot(parsePlot(slicePlot));
       }
     } catch (error) {
       enqueueSnackbar(t("models:error.errorFetchingRunData"));

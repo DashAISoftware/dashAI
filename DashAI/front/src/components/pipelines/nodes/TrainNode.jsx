@@ -63,15 +63,17 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   useEffect(() => {
     const fetchComponents = async () => {
       try {
-        const tasks = await getComponentsRequest({ selectTypes: ["Task"] });
-        const models = await getComponentsRequest({
-          selectTypes: ["Model"],
-          relatedComponent: task,
-        });
-        const metrics = await getComponentsRequest({
-          selectTypes: ["Metric"],
-          relatedComponent: task,
-        });
+        const [tasks, models, metrics] = await Promise.all([
+          getComponentsRequest({ selectTypes: ["Task"] }),
+          getComponentsRequest({
+            selectTypes: ["Model"],
+            relatedComponent: task,
+          }),
+          getComponentsRequest({
+            selectTypes: ["Metric"],
+            relatedComponent: task,
+          }),
+        ]);
 
         setAvailableTasks(tasks);
         setAvailableModels(models);
