@@ -19,7 +19,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "../../shared/LazyRecharts";
+} from "../../../components/shared/LazyRecharts";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../../api/modelSession";
