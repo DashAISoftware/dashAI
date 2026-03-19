@@ -186,11 +186,11 @@ class CSVDataloaderSchema(BaseSchema):
         None,
         description=MultilingualString(
             en=(
-                "Number of lines to skip at the beginning of the file. "
+                "Number of data rows to skip after reading the header. "
                 "Leave empty to skip none."
             ),
             es=(
-                "Número de líneas a omitir al inicio del archivo. "
+                "Número de filas de datos a omitir después de leer el encabezado. "
                 "Deje vacío para no omitir ninguna."
             ),
         ),
@@ -237,7 +237,7 @@ class CSVDataLoader(BaseDataLoader):
     def _check_params(
         self,
         params: Dict[str, Any],
-    ) -> None:
+    ) -> Dict[str, Any]:
         if "separator" not in params:
             raise ValueError(
                 "Error trying to load the CSV dataset: "
@@ -270,7 +270,7 @@ class CSVDataLoader(BaseDataLoader):
             if param in params and params[param] is not None:
                 clean_params[param] = params[param]
 
-        int_params = ["skiprows", "nrows"]
+        int_params = ["nrows"]
         for param in int_params:
             if param in params and params[param] is not None:
                 if not isinstance(params[param], int):
@@ -278,6 +278,15 @@ class CSVDataLoader(BaseDataLoader):
                         f"Param {param} should be an integer, got {type(params[param])}"
                     )
                 clean_params[param] = params[param]
+
+        if params.get("skiprows") is not None:
+            if not isinstance(params["skiprows"], int):
+                raise TypeError(
+                    "Param skiprows should be an integer, "
+                    f"got {type(params['skiprows'])}"
+                )
+            if params["skiprows"] < 0:
+                raise ValueError("Param skiprows should be greater than or equal to 0")
 
         if "encoding" in params and params["encoding"]:
             valid_encodings = ["utf-8", "latin1", "cp1252", "iso-8859-1"]
@@ -316,6 +325,7 @@ class CSVDataLoader(BaseDataLoader):
             A HuggingFace's Dataset with the loaded data.
         """
         clean_params = self._check_params(params)
+        data_skiprows = params.get("skiprows") or 0
         prepared_path = self.prepare_files(filepath_or_buffer, temp_path)
         if prepared_path[1] == "file":
             dataset = load_dataset(
@@ -335,7 +345,17 @@ class CSVDataLoader(BaseDataLoader):
         if n_sample:
             if type(dataset) is IterableDatasetDict:
                 dataset = dataset["train"]
+            if data_skiprows > 0:
+                dataset = dataset.skip(data_skiprows)
             dataset = Dataset.from_list(list(dataset.take(n_sample)))
+        elif data_skiprows > 0:
+            train_dataset = dataset["train"]
+            if data_skiprows >= train_dataset.num_rows:
+                dataset["train"] = train_dataset.select([])
+            else:
+                dataset["train"] = train_dataset.select(
+                    range(data_skiprows, train_dataset.num_rows)
+                )
         return to_dashai_dataset(dataset)
 
     def load_preview(
@@ -362,6 +382,7 @@ class CSVDataLoader(BaseDataLoader):
             A DataFrame containing the preview rows.
         """
         clean_params = self._check_params(params)
+        data_skiprows = params.get("skiprows") or 0
 
         dataset_stream = load_dataset(
             "csv",
@@ -370,6 +391,8 @@ class CSVDataLoader(BaseDataLoader):
             split="train",
             **clean_params,
         )
+        if data_skiprows > 0:
+            dataset_stream = dataset_stream.skip(data_skiprows)
 
         sample_rows = list(islice(dataset_stream, n_rows))
 
