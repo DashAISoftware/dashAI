@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -64,6 +64,21 @@ const statusText = {
   deleted: "Deleted",
 };
 
+// Reducer for the "clear all" confirmation dialog state machine:
+// idle → confirming → clearing → idle
+function clearAllReducer(state, action) {
+  switch (action.type) {
+    case "OPEN_CONFIRM":
+      return { confirming: true, clearing: false };
+    case "START_CLEARING":
+      return { confirming: true, clearing: true };
+    case "DONE":
+      return { confirming: false, clearing: false };
+    default:
+      return state;
+  }
+}
+
 const JobQueueWidget = () => {
   const [expanded, setExpanded] = useState(() => {
     try {
@@ -76,34 +91,34 @@ const JobQueueWidget = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [showFinished, setShowFinished] = useState(false);
   const [jobToDelete, setJobToDelete] = useState(null);
-  const [confirmClearAll, setConfirmClearAll] = useState(false);
-  const [clearingAll, setClearingAll] = useState(false);
+  const [clearAllState, dispatchClearAll] = useReducer(clearAllReducer, {
+    confirming: false,
+    clearing: false,
+  });
   const [forceUpdate, setForceUpdate] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClearAllJobs = () => {
-    setConfirmClearAll(true);
+    dispatchClearAll({ type: "OPEN_CONFIRM" });
   };
 
   const confirmClearAllJobs = async () => {
     try {
-      setClearingAll(true);
+      dispatchClearAll({ type: "START_CLEARING" });
       await deleteAllJobs();
       refresh();
       setTimeout(() => {
         refresh();
-        setClearingAll(false);
-        setConfirmClearAll(false);
+        dispatchClearAll({ type: "DONE" });
       }, 500);
     } catch (error) {
       console.error("Error clearing all jobs:", error);
-      setClearingAll(false);
-      setConfirmClearAll(false);
+      dispatchClearAll({ type: "DONE" });
     }
   };
 
   const cancelClearAllJobs = () => {
-    setConfirmClearAll(false);
+    dispatchClearAll({ type: "DONE" });
   };
 
   const handleDeleteJob = (job) => {
@@ -527,7 +542,7 @@ const JobQueueWidget = () => {
       </Dialog>
 
       <Dialog
-        open={confirmClearAll}
+        open={clearAllState.confirming}
         onClose={cancelClearAllJobs}
         aria-labelledby="clear-all-dialog-title"
       >
@@ -544,17 +559,17 @@ const JobQueueWidget = () => {
           <Button
             onClick={cancelClearAllJobs}
             color="primary"
-            disabled={clearingAll}
+            disabled={clearAllState.clearing}
           >
             Cancel
           </Button>
           <Button
             onClick={confirmClearAllJobs}
             color="error"
-            disabled={clearingAll}
-            startIcon={clearingAll ? <CircularProgress size={20} /> : null}
+            disabled={clearAllState.clearing}
+            startIcon={clearAllState.clearing ? <CircularProgress size={20} /> : null}
           >
-            {clearingAll ? "Clearing..." : "Clear All"}
+            {clearAllState.clearing ? "Clearing..." : "Clear All"}
           </Button>
         </DialogActions>
       </Dialog>

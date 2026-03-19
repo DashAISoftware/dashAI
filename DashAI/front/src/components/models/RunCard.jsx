@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useReducer } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -46,6 +46,45 @@ import { useTranslation } from "react-i18next";
 
 const EMPTY_ARRAY = [];
 
+function makeEditState(run) {
+  return {
+    isEditing: false,
+    name: run.name || "",
+    parameters: run.parameters || {},
+    optimizer: run.optimizer_name || "",
+    optimizerParams: run.optimizer_parameters || {},
+    goalMetric: run.goal_metric || "",
+  };
+}
+
+function editReducer(state, action) {
+  switch (action.type) {
+    case "START":
+      return { ...state, isEditing: true };
+    case "CANCEL":
+      return makeEditState(action.run);
+    case "SYNC_RUN":
+      // Only sync when not actively editing
+      return state.isEditing ? state : makeEditState(action.run);
+    case "SET_NAME":
+      return { ...state, name: action.value };
+    case "SET_PARAMETERS":
+      return { ...state, parameters: action.value };
+    case "SET_OPTIMIZER":
+      return { ...state, optimizer: action.value };
+    case "SET_OPTIMIZER_PARAMS":
+      return { ...state, optimizerParams: action.value };
+    case "MERGE_OPTIMIZER_PARAMS":
+      return { ...state, optimizerParams: { ...state.optimizerParams, ...action.value } };
+    case "SET_GOAL_METRIC":
+      return { ...state, goalMetric: action.value };
+    case "SAVED":
+      return { ...state, isEditing: false };
+    default:
+      return state;
+  }
+}
+
 /**
  * Card component displaying a model run with actions and details
  */
@@ -65,20 +104,10 @@ function RunCard({
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [expanded, setExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(run.name || "");
-  const [editedParameters, setEditedParameters] = useState(
-    run.parameters || {},
-  );
-  const [editedOptimizer, setEditedOptimizer] = useState(
-    run.optimizer_name || "",
-  );
-  const [editedOptimizerParams, setEditedOptimizerParams] = useState(
-    run.optimizer_parameters || {},
-  );
-  const [editedGoalMetric, setEditedGoalMetric] = useState(
-    run.goal_metric || "",
-  );
+  const [editState, dispatchEdit] = useReducer(editReducer, run, makeEditState);
+  const { isEditing, name: editedName, parameters: editedParameters,
+    optimizer: editedOptimizer, optimizerParams: editedOptimizerParams,
+    goalMetric: editedGoalMetric } = editState;
   const [operationsCount, setOperationsCount] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
@@ -88,14 +117,8 @@ function RunCard({
   });
 
   useEffect(() => {
-    if (!isEditing) {
-      setEditedName(run.name || "");
-      setEditedParameters(run.parameters || {});
-      setEditedOptimizer(run.optimizer_name || "");
-      setEditedOptimizerParams(run.optimizer_parameters || {});
-      setEditedGoalMetric(run.goal_metric || "");
-    }
-  }, [run, isEditing]);
+    dispatchEdit({ type: "SYNC_RUN", run });
+  }, [run]);
 
   useEffect(() => {
     const fetchOperationsCount = async () => {
@@ -124,29 +147,20 @@ function RunCard({
     if (
       editedOptimizer &&
       defaultOptimizerParams &&
-      Object.keys(defaultOptimizerParams).length > 0
+      Object.keys(defaultOptimizerParams).length > 0 &&
+      Object.keys(editedOptimizerParams).length === 0
     ) {
-      setEditedOptimizerParams((prev) => {
-        if (Object.keys(prev).length === 0) {
-          return defaultOptimizerParams;
-        }
-        return prev;
-      });
+      dispatchEdit({ type: "SET_OPTIMIZER_PARAMS", value: defaultOptimizerParams });
     }
   }, [editedOptimizer, defaultOptimizerParams]);
 
   const handleStartEdit = () => {
-    setIsEditing(true);
+    dispatchEdit({ type: "START" });
     setExpanded(true);
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedName(run.name || "");
-    setEditedParameters(run.parameters || {});
-    setEditedOptimizer(run.optimizer_name || "");
-    setEditedOptimizerParams(run.optimizer_parameters || {});
-    setEditedGoalMetric(run.goal_metric || "");
+    dispatchEdit({ type: "CANCEL", run });
   };
 
   const doSave = async () => {
@@ -167,7 +181,7 @@ function RunCard({
         { variant: "success" },
       );
 
-      setIsEditing(false);
+      dispatchEdit({ type: "SAVED" });
 
       if (onRefresh) {
         await onRefresh();
@@ -233,17 +247,17 @@ function RunCard({
   };
 
   const handleParametersChange = useCallback((values) => {
-    setEditedParameters(values);
+    dispatchEdit({ type: "SET_PARAMETERS", value: values });
   }, []);
 
   const handleOptimizerParamsChange = useCallback((values) => {
-    setEditedOptimizerParams((prev) => ({ ...prev, ...values }));
+    dispatchEdit({ type: "MERGE_OPTIMIZER_PARAMS", value: values });
   }, []);
 
   const handleOptimizerSelected = (optimizerName, defaultValues) => {
-    setEditedOptimizer(optimizerName);
+    dispatchEdit({ type: "SET_OPTIMIZER", value: optimizerName });
     if (defaultValues && Object.keys(defaultValues).length > 0) {
-      setEditedOptimizerParams(defaultValues);
+      dispatchEdit({ type: "SET_OPTIMIZER_PARAMS", value: defaultValues });
     }
   };
 
@@ -517,7 +531,7 @@ function RunCard({
                 <TextField
                   label={t("models:label.runName")}
                   value={editedName}
-                  onChange={(e) => setEditedName(e.target.value)}
+                  onChange={(e) => dispatchEdit({ type: "SET_NAME", value: e.target.value })}
                   fullWidth
                   required
                   size="small"
@@ -560,7 +574,7 @@ function RunCard({
                       <ModelsTableSelectMetric
                         taskName={session?.task_name}
                         metricName={editedGoalMetric}
-                        handleSelectedMetric={setEditedGoalMetric}
+                        handleSelectedMetric={(v) => dispatchEdit({ type: "SET_GOAL_METRIC", value: v })}
                         required
                       />
                     </Box>
@@ -582,7 +596,7 @@ function RunCard({
                             modelToConfigure={editedOptimizer}
                             initialValues={editedOptimizerParams}
                             onFormSubmit={(values) =>
-                              setEditedOptimizerParams(values)
+                              dispatchEdit({ type: "SET_OPTIMIZER_PARAMS", value: values })
                             }
                             onValuesChange={handleOptimizerParamsChange}
                             onCancel={() => {}}
