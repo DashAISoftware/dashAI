@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
+
 
 def _get_gpu_info() -> list[dict]:
     """Collect GPU info from NVIDIA (via pynvml) and AMD (via rocm-smi)."""
@@ -169,7 +171,7 @@ def _parse_int(value) -> int | None:
 def _collect_stats() -> dict:
     """Collect a snapshot of hardware stats."""
     cpu_percent = psutil.cpu_percent(interval=None)
-    cpu_freq = psutil.cpu_freq()
+    cpu_freq = psutil.cpu_freq() if _HAS_CPU_FREQ else None
     cpu_count = psutil.cpu_count(logical=True)
     cpu_count_physical = psutil.cpu_count(logical=False)
     per_cpu = psutil.cpu_percent(interval=None, percpu=True)

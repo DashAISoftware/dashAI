@@ -1,6 +1,10 @@
 from fastapi.testclient import TestClient
 
 
+def _is_number_or_none(value) -> bool:
+    return value is None or isinstance(value, (int, float))
+
+
 class TestGetHardwareStats:
     def test_get_snapshot(self, client: TestClient):
         response = client.get("/api/v1/hardware/")
@@ -14,10 +18,14 @@ class TestGetHardwareStats:
         assert isinstance(data["cpu"]["percent"], (int, float))
         assert isinstance(data["cpu"]["per_cpu"], list)
         assert isinstance(data["cpu"]["cores_logical"], int)
+        assert isinstance(data["cpu"]["cores_physical"], int)
+        assert _is_number_or_none(data["cpu"]["frequency_mhz"])
 
         assert isinstance(data["ram"]["percent"], (int, float))
         assert isinstance(data["ram"]["used"], int)
         assert isinstance(data["ram"]["total"], int)
+        assert isinstance(data["ram"]["available"], int)
+        assert data["ram"]["used"] <= data["ram"]["total"]
 
         assert isinstance(data["gpus"], list)
 
@@ -31,3 +39,5 @@ class TestGetHardwareStats:
 
             assert isinstance(data["cpu"]["percent"], (int, float))
             assert isinstance(data["ram"]["percent"], (int, float))
+            assert isinstance(data["ram"]["used"], int)
+            assert isinstance(data["ram"]["total"], int)
