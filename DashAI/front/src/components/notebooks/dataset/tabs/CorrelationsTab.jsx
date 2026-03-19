@@ -58,9 +58,9 @@ const CorrelationsTab = ({ correlations }) => {
                 name={t("datasets:label.correlation")}
                 fill={theme.palette.info.main}
               >
-                {corrData.map((entry, index) => (
+                {corrData.map((entry) => (
                   <Cell
-                    key={index}
+                    key={entry.pair}
                     fill={
                       entry.correlation > 0
                         ? theme.palette.success.main
@@ -80,9 +80,9 @@ const CorrelationsTab = ({ correlations }) => {
           <Box display="flex" flexDirection="column" gap={1}>
             {corrData
               .filter((d) => Math.abs(d.correlation) > 0.5)
-              .map((d, idx) => (
+              .map((d) => (
                 <Box
-                  key={idx}
+                  key={d.pair}
                   display="flex"
                   alignItems="center"
                   justifyContent="space-between"

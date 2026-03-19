@@ -65,8 +65,8 @@ export default function ExplainersGrid(explainerConfig) {
       justifyContent="center"
       alignItems="stretch"
     >
-      {getFilteredExplainers(explainers).map((explainer, i) => (
-        <ExplainersCard explainer={explainer} key={i} scope={scope} />
+      {getFilteredExplainers(explainers).map((explainer) => (
+        <ExplainersCard explainer={explainer} key={explainer.id} scope={scope} />
       ))}
     </Grid>
   );

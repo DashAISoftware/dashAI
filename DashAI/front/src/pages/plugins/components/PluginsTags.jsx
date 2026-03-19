@@ -10,8 +10,8 @@ import PropTypes from "prop-types";
 function PluginTags({ tags }) {
   return (
     <Grid container columnGap={1}>
-      {tags.map((tag, i) => (
-        <Chip key={i} size="small" label={tag.name} />
+      {tags.map((tag) => (
+        <Chip key={tag.id} size="small" label={tag.name} />
       ))}
     </Grid>
   );

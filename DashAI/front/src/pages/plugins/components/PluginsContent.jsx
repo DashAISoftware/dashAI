@@ -92,9 +92,9 @@ function PluginsContent({
       {/* Plugins Grid */}
       {!loading && !!pluginsToShow.length && (
         <Grid container spacing={cardView ? 4 : 2}>
-          {pluginsToShow.map((plugin, i) => (
+          {pluginsToShow.map((plugin) => (
             <Grid
-              key={i}
+              key={plugin.id}
               size={{ xs: cardView ? 4 : 12 }}
               height={cardView ? "250px" : "auto"}
             >

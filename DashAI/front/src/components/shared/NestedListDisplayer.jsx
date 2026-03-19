@@ -76,13 +76,16 @@ function NestedListDisplayer({
 
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List sx={{ pl: 4 }} dense>
-            {value.map((item, index) => (
-              <NestedListDisplayer
-                key={`${name}-${index}`}
-                name={item.name || item.key || item.columnName || index}
-                value={item}
-              />
-            ))}
+            {value.map((item, index) => {
+              const itemKey = item.name || item.key || item.columnName;
+              return (
+                <NestedListDisplayer
+                  key={itemKey != null ? `${name}-${itemKey}` : `${name}-${index}`}
+                  name={itemKey ?? index}
+                  value={item}
+                />
+              );
+            })}
           </List>
         </Collapse>
       </List>

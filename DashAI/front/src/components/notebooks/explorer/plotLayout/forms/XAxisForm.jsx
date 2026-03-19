@@ -164,7 +164,7 @@ export default function XAxisForm({
           const rawTicktext = data[0].x[idx];
 
           return (
-            <Box key={idx}>
+            <Box key={`xtick-${tick}`}>
               {/* Label input */}
               <TextField
                 label={t("datasets:label.axisTickLabel", { axis: "X", tick })}

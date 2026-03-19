@@ -31,7 +31,7 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
             {tabs.map(({ label, to }, i) => (
               <Tab
                 component={Link}
-                key={i}
+                key={label}
                 label={label}
                 value={i.toString()}
                 to={to}
@@ -40,7 +40,7 @@ function PluginsTab({ refreshPluginsFlag, setRefreshPluginsFlag }) {
           </Tabs>
         </Box>
         {tabs.map(({ label, plugins }, i) => (
-          <TabPanel key={i} value={i.toString()} sx={{ p: 0 }}>
+          <TabPanel key={label} value={i.toString()} sx={{ p: 0 }}>
             <Grid
               container
               alignItems={"center"}

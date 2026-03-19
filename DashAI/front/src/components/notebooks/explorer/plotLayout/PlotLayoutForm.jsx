@@ -119,7 +119,7 @@ export default function PlotLayoutForm({
       {Array.isArray(data) &&
         data.map((trace, index) => (
           <Accordion
-            key={index}
+            key={trace.name != null ? `trace-${trace.name}` : `trace-${index}`}
             sx={{
               bgcolor: theme.palette.ui.panelMedium,
               color: "text.primary",

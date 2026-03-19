@@ -164,7 +164,7 @@ export default function YAxisForm({
           const rawTicktext = data[0].y[idx];
 
           return (
-            <Box key={idx}>
+            <Box key={`ytick-${tick}`}>
               {/* Label input */}
               <TextField
                 label={t("datasets:label.axisTickLabel", { axis: "Y", tick })}

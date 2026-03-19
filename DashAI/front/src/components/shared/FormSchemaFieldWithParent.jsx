@@ -65,8 +65,8 @@ function FormSchemaFieldWithParent({
         value={getModelFromCurrentProperty(name)}
         onChange={handleOnChange}
       >
-        {models?.map((model, index) => (
-          <MenuItem key={index} value={model.name}>
+        {models?.map((model) => (
+          <MenuItem key={model.name} value={model.name}>
             {model.name}
           </MenuItem>
         ))}

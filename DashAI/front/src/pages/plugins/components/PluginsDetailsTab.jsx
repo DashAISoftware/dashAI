@@ -20,12 +20,12 @@ function PluginsDetailsTab({ tabs }) {
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={value} onChange={handleTabChange} aria-label="tabs">
             {tabs.map(({ label, to }, i) => (
-              <Tab key={i} label={label} value={i.toString()} />
+              <Tab key={label} label={label} value={i.toString()} />
             ))}
           </Tabs>
         </Box>
         {tabs.map(({ label, component }, i) => (
-          <TabPanel key={i} value={i.toString()} sx={{ p: 0 }}>
+          <TabPanel key={label} value={i.toString()} sx={{ p: 0 }}>
             {component}
           </TabPanel>
         ))}

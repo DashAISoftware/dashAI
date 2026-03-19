@@ -46,8 +46,8 @@ function FormSchemaModelSelect({ parent, selectedModel, onChange }) {
         value={selectedModel}
         onChange={handleOnChange}
       >
-        {models?.map((model, index) => (
-          <MenuItem key={index} value={model.name}>
+        {models?.map((model) => (
+          <MenuItem key={model.name} value={model.name}>
             {model.name}
           </MenuItem>
         ))}
