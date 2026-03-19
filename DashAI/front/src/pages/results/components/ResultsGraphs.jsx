@@ -57,6 +57,10 @@ function ResultsGraphs({ runs, selectedSplit: splitProp, onSplitChange }) {
     else if (availableMetrics.train.length > 0) setInternalSplit("train");
   }, [availableMetrics, splitProp]);
 
+  // Not derived: user can toggle/select/clear metrics independently via handleToggleMetric,
+  // handleSelectAll, and handleClearAll. This effect only re-initialises selection when the
+  // split or available metrics change, but selectedMetrics diverges from availableMetrics
+  // during normal interaction.
   useEffect(() => {
     setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
   }, [selectedSplit, availableMetrics]);
