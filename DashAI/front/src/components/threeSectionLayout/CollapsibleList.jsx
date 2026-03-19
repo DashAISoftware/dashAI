@@ -22,7 +22,7 @@ export default function CollapsibleList({
   getItemDescription,
 }) {
   const theme = useTheme();
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(defaultOpen); // Initial value only — not synced with prop
   const count = items?.length ?? 0;
   const prevCountRef = useRef(count);
   const lastItemRef = useRef(null);

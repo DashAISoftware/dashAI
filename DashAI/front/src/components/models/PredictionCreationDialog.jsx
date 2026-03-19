@@ -43,7 +43,7 @@ export default function PredictionCreationDialog({
   defaultMode = "dataset",
 }) {
   const [activeStep, setActiveStep] = useState(0);
-  const [predictionMode, setPredictionMode] = useState(defaultMode);
+  const [predictionMode, setPredictionMode] = useState(defaultMode); // Initial value only — not synced with prop
   const [datasets, setDatasets] = useState([]);
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [manualRows, setManualRows] = useState([]);

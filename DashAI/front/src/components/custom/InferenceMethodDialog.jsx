@@ -26,7 +26,7 @@ function InferenceMethodDialog({
   onConfirm,
   defaultSelected = EMPTY_ARRAY,
 }) {
-  const [selectedMethods, setSelectedMethods] = useState(defaultSelected);
+  const [selectedMethods, setSelectedMethods] = useState(defaultSelected); // Initial value only — not synced with prop
   const { t } = useTranslation(["custom", "common"]);
 
   const handleCheckboxChange = (method) => {

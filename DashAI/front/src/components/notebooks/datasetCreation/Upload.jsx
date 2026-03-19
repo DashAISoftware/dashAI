@@ -41,7 +41,7 @@ function Upload({
     initialFile ? LOADED : EMPTY,
   );
   const [dragActive, setDragActive] = useState(false);
-  const [file, setFile] = useState(initialFile);
+  const [file, setFile] = useState(initialFile); // Initial value only — not synced with prop
   const inputRef = useRef(null);
 
   const uploadDataset = async (file) => {

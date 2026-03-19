@@ -9,7 +9,7 @@ function OptimizationTableSelectOptimizer({
   handleSelectedOptimizer,
 }) {
   const { compatibleModels } = useOptimizersByTask({ taskName });
-  const [selectedOptimizer, setSelectedOptimizer] = useState(optimizerName);
+  const [selectedOptimizer, setSelectedOptimizer] = useState(optimizerName); // Initial value only — not synced with prop
 
   useSchemaWithCallback({ modelName: selectedOptimizer }, (defaultValues) => {
     if (

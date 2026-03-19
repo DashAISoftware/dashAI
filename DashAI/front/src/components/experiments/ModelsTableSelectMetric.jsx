@@ -9,7 +9,7 @@ function ModelsTableSelectMetric({
   required = false,
 }) {
   const { compatibleMetrics } = useMetricsByTask({ taskName });
-  const [selectedMetric, setSelectedMetric] = useState(metricName);
+  const [selectedMetric, setSelectedMetric] = useState(metricName); // Initial value only — not synced with prop
 
   const handleChange = (e) => {
     const goalMetric = e.target.value;

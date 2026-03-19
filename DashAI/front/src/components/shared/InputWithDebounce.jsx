@@ -18,7 +18,7 @@ export default function InputWithDebounce({
   value,
   ...rest
 }) {
-  const [inputValue, setInputValue] = useState(value);
+  const [inputValue, setInputValue] = useState(value); // Initial value only — external sync handled by the useEffect below
   const debouncedValue = useDebounce(inputValue, delay);
 
   const handleChange = (event) => {

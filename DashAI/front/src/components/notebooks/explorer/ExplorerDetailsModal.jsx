@@ -36,7 +36,7 @@ export default function ExplorerDetailsModal({
   loading,
 }) {
   const [currentTab, setCurrentTab] = useState(3);
-  const [localData, setLocalData] = useState(data);
+  const [localData, setLocalData] = useState(data); // Initial value only — diverges as user edits layout locally
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
 

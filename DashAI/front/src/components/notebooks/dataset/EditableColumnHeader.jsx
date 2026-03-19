@@ -17,7 +17,7 @@ export default function EditableColumnHeader({
   disabled = false,
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(columnName);
+  const [editValue, setEditValue] = useState(columnName); // Initial value only — reset to columnName on each edit session via handleEditClick
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef(null);

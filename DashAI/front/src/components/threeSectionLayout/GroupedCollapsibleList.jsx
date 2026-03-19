@@ -19,7 +19,7 @@ export default function GroupedCollapsibleList({
   initialOpenGroups = {},
 }) {
   const theme = useTheme();
-  const [openGroups, setOpenGroups] = useState(initialOpenGroups);
+  const [openGroups, setOpenGroups] = useState(initialOpenGroups); // Initial value only — not synced with prop
   const selectedItemRef = useRef(null);
 
   // Auto-open group when an item is selected
