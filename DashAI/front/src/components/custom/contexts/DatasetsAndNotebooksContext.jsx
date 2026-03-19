@@ -5,6 +5,11 @@ import { useDatasets } from "../../../hooks/datasets/useDatasets";
 import { useNotebooks } from "../../../hooks/datasets/useNotebooks";
 
 const DatasetsAndNotebooksContext = createContext();
+const OptionsEnum = Object.freeze({
+  NEW: "new",
+  DATASET: "dataset",
+  NOTEBOOK: "notebook",
+});
 
 export const useDatasetsAndNotebooks = () =>
   useContext(DatasetsAndNotebooksContext);
