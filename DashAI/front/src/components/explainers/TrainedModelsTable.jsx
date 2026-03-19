@@ -79,7 +79,7 @@ function TrainedModelsTable() {
       type: "actions",
       mindWidth: 170,
       getActions: (params) => [
-        <TimestampWrapper eventName={TIMESTAMP_KEYS.explainer.enterDashboard}>
+        <TimestampWrapper key="enter-dashboard" eventName={TIMESTAMP_KEYS.explainer.enterDashboard}>
           <GridActionsCellItem
             key="specific-results-button"
             icon={<QueryStatsIcon />}
