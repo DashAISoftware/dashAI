@@ -188,3 +188,4 @@ job_queue.db-wal
 
 db.sqlite
 trained_models/
+.worktrees/
