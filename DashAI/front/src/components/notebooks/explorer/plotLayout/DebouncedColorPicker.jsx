@@ -78,6 +78,7 @@ export default function DebouncedColorPicker({
     return color || "#000000";
   };
 
+  // Intentional: debounce synchronization — keeps local color in sync when parent value changes externally
   useEffect(() => {
     setLocalValue(value || "#000000");
   }, [value]);

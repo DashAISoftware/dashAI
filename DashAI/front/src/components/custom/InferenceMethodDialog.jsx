@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -26,10 +26,6 @@ function InferenceMethodDialog({
 }) {
   const [selectedMethods, setSelectedMethods] = useState(defaultSelected);
   const { t } = useTranslation(["custom", "common"]);
-
-  useEffect(() => {
-    setSelectedMethods(defaultSelected);
-  }, [defaultSelected]);
 
   const handleCheckboxChange = (method) => {
     setSelectedMethods((prev) => {

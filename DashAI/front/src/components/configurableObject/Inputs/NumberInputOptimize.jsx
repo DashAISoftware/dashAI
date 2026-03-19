@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import FormInputWrapper from "./FormInputWrapper";
 import {
@@ -56,18 +56,9 @@ function OptimizeNumberInput({
   const mergedUpper = value?.upper_bound ?? placeholder?.upper_bound ?? null;
   const mergedFixed = value?.fixed_value ?? placeholder?.fixed_value ?? null;
 
-  // 2) Keep local state for the switch, so toggling is immediate in the UI
-  const [switchState, setSwitchState] = useState(mergedOptimize);
-
-  // If the parent changes value.optimize from outside, sync local switch state:
-  useEffect(() => {
-    setSwitchState(mergedOptimize);
-  }, [mergedOptimize]);
-
-  // 3) Handlers to reflect user input back into the parent form data
+  // 2) Handlers to reflect user input back into the parent form data
   const handleSwitchChange = () => {
-    const toggled = !switchState;
-    setSwitchState(toggled);
+    const toggled = !mergedOptimize;
 
     // If switching modes and there was an error, use placeholder values
     const shouldUseePlaceholder = error !== undefined;
@@ -123,14 +114,14 @@ function OptimizeNumberInput({
             control={
               <Switch
                 name={name}
-                checked={switchState}
+                checked={mergedOptimize}
                 onChange={handleSwitchChange}
               />
             }
           />
         </FormControl>
       )}
-      {canOptimize && switchState ? (
+      {canOptimize && mergedOptimize ? (
         // If user toggled "optimize", show lower/upper bound
         <>
           <InputWithDebounce

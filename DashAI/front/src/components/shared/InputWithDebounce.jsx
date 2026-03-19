@@ -31,6 +31,7 @@ export default function InputWithDebounce({
     }
   }, [debouncedValue]);
 
+  // Intentional: debounce synchronization — keeps local input in sync when parent value changes externally
   useEffect(() => {
     setInputValue(value);
   }, [value]);

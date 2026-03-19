@@ -44,7 +44,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   const [metrics, setMetrics] = useState(savedConfig?.metrics || []);
   const [openSettings, setOpenSettings] = useState(false);
   const [modelParams, setModelParams] = useState(savedConfig?.parameters || {});
-  const [initialized, setInitialized] = useState(false);
+  const initializedForModelRef = useRef(null);
   const [availableTasks, setAvailableTasks] = useState([]);
   const [availableModels, setAvailableModels] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState([]);
@@ -113,11 +113,7 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
   }, [savedConfig, datasetInfo]);
 
   useEffect(() => {
-    setInitialized(false);
-  }, [model]);
-
-  useEffect(() => {
-    if (loading || initialized) return;
+    if (loading || initializedForModelRef.current === model) return;
 
     if (
       savedConfig?.model === model &&
@@ -131,8 +127,8 @@ const Train = ({ open, onClose, onSave, savedConfig, prevNodes }) => {
       setModelParams({});
     }
 
-    setInitialized(true);
-  }, [loading, model, defaultValues, savedConfig, initialized]);
+    initializedForModelRef.current = model;
+  }, [loading, model, defaultValues, savedConfig]);
 
   const handleChange = (newValues) => {
     setModelParams(newValues);

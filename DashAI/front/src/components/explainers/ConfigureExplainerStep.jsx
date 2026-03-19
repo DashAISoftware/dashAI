@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   DialogContentText,
   Grid,
@@ -21,8 +21,11 @@ function ConfigureExplainerStep({
   scope,
 }) {
   const { defaultValues } = useSchema({ modelName: newExpl.explainer_name });
-  const [error, setError] = useState(false);
   const { t } = useTranslation(["explainers"]);
+
+  const handleSetError = (newError) => {
+    setNextEnabled(!newError);
+  };
 
   const isParamsEmpty =
     !newExpl.parameters || Object.keys(newExpl.parameters).length === 0;
@@ -71,10 +74,6 @@ function ConfigureExplainerStep({
     }
   }, [isParamsEmpty, defaultValues]);
 
-  useEffect(() => {
-    setNextEnabled(!error);
-  }, [error]);
-
   return (
     <Grid
       container
@@ -106,7 +105,7 @@ function ConfigureExplainerStep({
                 onFormSubmit={(values) => {
                   handleUpdateParameters(values);
                 }}
-                setError={setError}
+                setError={handleSetError}
                 formSubmitRef={formSubmitRef}
               />
             </FormSchemaLayout>
