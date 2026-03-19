@@ -57,24 +57,12 @@ function Home() {
               Icon={ScienceIcon}
             />
           </Grid>
-          <Grid
-            size={{ md: 4, sm: 6, xs: 12 }}
-            data-tour="explainability-button"
-          >
+          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="generative-button">
             <HomeButton
-              title={t("common:explainers")}
-              description={t("home:description.explainers")}
-              to="/app/explainers"
-              Icon={InsightsIcon}
-            />
-          </Grid>
-          {/* Pipelines button */}
-          <Grid size={{ md: 4, sm: 6, xs: 12 }} data-tour="pipelines-button">
-            <HomeButton
-              title={t("common:pipelines")}
-              description={t("home:description.pipelines")}
-              to="/app/pipelines"
-              Icon={MergeIcon}
+              title={t("common:generative")}
+              description={t("home:description.generative")}
+              to="/app/generative"
+              Icon={AutoAwesomeIcon}
             />
           </Grid>
         </Grid>
