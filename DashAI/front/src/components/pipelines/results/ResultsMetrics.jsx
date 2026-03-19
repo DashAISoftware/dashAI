@@ -4,7 +4,9 @@ import { Grid, Typography } from "@mui/material";
 
 import ResultsTabMetricsToggle from "../../../pages/results/components/ResultsTabMetricsToggle";
 
-function PipelineResultsMetrics({ metricsData = {} }) {
+const EMPTY_METRICS_DATA = {};
+
+function PipelineResultsMetrics({ metricsData = EMPTY_METRICS_DATA }) {
   const [displaySet, setDisplaySet] = useState("test_metrics");
 
   const displaySetMap = {

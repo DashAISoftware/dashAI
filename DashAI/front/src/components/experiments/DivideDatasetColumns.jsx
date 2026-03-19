@@ -12,9 +12,11 @@ import { useTheme } from "@mui/material/styles";
 import { getColorByColumnType } from "../../utils";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_COLUMN_TYPES = {};
+
 function DivideDatasetColumns({
   allColumnNames,
-  columnTypes = {},
+  columnTypes = EMPTY_COLUMN_TYPES,
   selectedInputColumnNames,
   onInputColumnNamesChange,
   selectedOutputColumnNames,

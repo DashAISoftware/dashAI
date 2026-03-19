@@ -10,11 +10,13 @@ import {
   MenuItem,
 } from "@mui/material";
 
+const EMPTY_SAVED_CONFIG = {};
+
 function ConfigurableNode({
   open,
   onClose,
   onSave,
-  savedConfig = {},
+  savedConfig = EMPTY_SAVED_CONFIG,
   configSchema,
 }) {
   const [formValues, setFormValues] = useState({});
