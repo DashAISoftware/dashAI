@@ -127,9 +127,7 @@ function ExplorationVisualizer({ type, dataObj }) {
 
   if (type === visualizersKeys.tabular) {
     const data = getDataFromOrientation(dataObj.data, dataObj.config.orient);
-    return (
-      <TabularVisualizer columns={data.columns} rows={data.rows} />
-    );
+    return <TabularVisualizer columns={data.columns} rows={data.rows} />;
   }
 
   if (type === visualizersKeys.plotly_json) {
@@ -137,9 +135,7 @@ function ExplorationVisualizer({ type, dataObj }) {
   }
 
   if (type === visualizersKeys.image_base64) {
-    return (
-      <ImageVisualizer data={`data:image/png;base64,${dataObj.data}`} />
-    );
+    return <ImageVisualizer data={`data:image/png;base64,${dataObj.data}`} />;
   }
 
   if (type === visualizersKeys.image_url) {
@@ -188,7 +184,10 @@ function Results({ pipelineId }) {
               {i}: {result.exploration_type}
               {result.name ? ` | ${result.name}` : ""}
             </Typography>
-            <ExplorationVisualizer type={result.results.type} dataObj={result.results} />
+            <ExplorationVisualizer
+              type={result.results.type}
+              dataObj={result.results}
+            />
           </Box>
         ),
       )}

@@ -40,4 +40,3 @@ export const getGenerativeSession = async (
   );
   return response.data;
 };
-

@@ -1,5 +1,11 @@
 import React, { Suspense } from "react";
-import { Box, CircularProgress, Typography, Card, CardContent } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Card,
+  CardContent,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {

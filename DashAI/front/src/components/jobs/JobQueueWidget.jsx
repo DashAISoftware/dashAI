@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useReducer } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useReducer,
+} from "react";
 import {
   Dialog,
   DialogTitle,
@@ -273,7 +279,8 @@ const JobQueueWidget = () => {
           style={{
             opacity: `${isHovered || expanded ? 1 : 0.5}`,
             filter: `brightness(${isHovered || expanded ? 1 : 0.5})`,
-            transition: "opacity 0.2s ease, filter 0.2s ease, background-color 0.2s ease",
+            transition:
+              "opacity 0.2s ease, filter 0.2s ease, background-color 0.2s ease",
           }}
         >
           <Box
@@ -567,7 +574,9 @@ const JobQueueWidget = () => {
             onClick={confirmClearAllJobs}
             color="error"
             disabled={clearAllState.clearing}
-            startIcon={clearAllState.clearing ? <CircularProgress size={20} /> : null}
+            startIcon={
+              clearAllState.clearing ? <CircularProgress size={20} /> : null
+            }
           >
             {clearAllState.clearing ? "Clearing..." : "Clear All"}
           </Button>

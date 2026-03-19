@@ -1,5 +1,11 @@
 import React, { Suspense } from "react";
-import { Box, CircularProgress, Typography, CardContent, Card } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  CardContent,
+  Card,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   LazyBarChart,
@@ -44,7 +50,12 @@ const CorrelationsTab = ({ correlations }) => {
             <ResponsiveContainer width="100%" height={300}>
               <LazyBarChart data={corrData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="pair" angle={-45} textAnchor="end" height={100} />
+                <XAxis
+                  dataKey="pair"
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                />
                 <YAxis domain={[-1, 1]} />
                 <Tooltip
                   contentStyle={{

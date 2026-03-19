@@ -12,7 +12,13 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { useTranslation } from "react-i18next";
 
-function ExplainersTable({ runId, scope, title, handleNewExplainer, description }) {
+function ExplainersTable({
+  runId,
+  scope,
+  title,
+  handleNewExplainer,
+  description,
+}) {
   const { t } = useTranslation(["explainers"]);
   return (
     <Grid size={{ xs: 12 }}>

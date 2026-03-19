@@ -21,7 +21,9 @@ import { useTranslation } from "react-i18next";
  * @param {bool} disabled true to disable the item selection, false to enable it
  */
 function ItemSelector({ itemsList, selectedItem, setSelectedItem, disabled }) {
-  const [itemsToShow, setItemsToShow] = useState(() => itemsList.map(() => true));
+  const [itemsToShow, setItemsToShow] = useState(() =>
+    itemsList.map(() => true),
+  );
   const [searchField, setSearchField] = React.useState("");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const { t } = useTranslation("common");

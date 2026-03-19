@@ -4,13 +4,13 @@ import { lazy } from "react";
 // These are the top-level chart wrappers; wrapping them in React.lazy defers
 // the entire recharts bundle until a chart is first rendered.
 export const LazyLineChart = lazy(() =>
-  import("recharts").then((mod) => ({ default: mod.LineChart }))
+  import("recharts").then((mod) => ({ default: mod.LineChart })),
 );
 export const LazyBarChart = lazy(() =>
-  import("recharts").then((mod) => ({ default: mod.BarChart }))
+  import("recharts").then((mod) => ({ default: mod.BarChart })),
 );
 export const LazyPieChart = lazy(() =>
-  import("recharts").then((mod) => ({ default: mod.PieChart }))
+  import("recharts").then((mod) => ({ default: mod.PieChart })),
 );
 
 // Re-exported recharts primitives — available once the lazy chunk loads.

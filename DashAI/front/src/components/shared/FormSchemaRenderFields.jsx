@@ -7,7 +7,15 @@ import FormSchemaFieldWithParent from "./FormSchemaFieldWithParent";
 import { getModelFromSubform } from "../../utils/schema";
 import { Stack } from "@mui/material";
 
-function SubField({ objName, subField, fieldSubschema, subValue, subError, handleChange, setError }) {
+function SubField({
+  objName,
+  subField,
+  fieldSubschema,
+  subValue,
+  subError,
+  handleChange,
+  setError,
+}) {
   const field = {
     value: subValue,
     error: subError,
@@ -25,7 +33,14 @@ function SubField({ objName, subField, fieldSubschema, subValue, subError, handl
   );
 }
 
-function FieldList({ modelSchema, values, errors, handleChange, setError, errorsMessage }) {
+function FieldList({
+  modelSchema,
+  values,
+  errors,
+  handleChange,
+  setError,
+  errorsMessage,
+}) {
   if (!modelSchema) return null;
 
   const fields = [];

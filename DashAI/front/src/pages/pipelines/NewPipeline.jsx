@@ -21,7 +21,13 @@ import {
   nodeRegistry,
 } from "../../components/pipelines";
 
-function NodeDialogContent({ selectedNode, nodeData, getConnectedNodeData, onClose, onSave }) {
+function NodeDialogContent({
+  selectedNode,
+  nodeData,
+  getConnectedNodeData,
+  onClose,
+  onSave,
+}) {
   if (!selectedNode) return null;
 
   const { type, id, data } = selectedNode;

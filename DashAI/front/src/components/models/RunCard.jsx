@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useReducer } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useReducer,
+} from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -75,7 +81,10 @@ function editReducer(state, action) {
     case "SET_OPTIMIZER_PARAMS":
       return { ...state, optimizerParams: action.value };
     case "MERGE_OPTIMIZER_PARAMS":
-      return { ...state, optimizerParams: { ...state.optimizerParams, ...action.value } };
+      return {
+        ...state,
+        optimizerParams: { ...state.optimizerParams, ...action.value },
+      };
     case "SET_GOAL_METRIC":
       return { ...state, goalMetric: action.value };
     case "SAVED":
@@ -105,9 +114,14 @@ function RunCard({
   const { enqueueSnackbar } = useSnackbar();
   const [expanded, setExpanded] = useState(false);
   const [editState, dispatchEdit] = useReducer(editReducer, run, makeEditState);
-  const { isEditing, name: editedName, parameters: editedParameters,
-    optimizer: editedOptimizer, optimizerParams: editedOptimizerParams,
-    goalMetric: editedGoalMetric } = editState;
+  const {
+    isEditing,
+    name: editedName,
+    parameters: editedParameters,
+    optimizer: editedOptimizer,
+    optimizerParams: editedOptimizerParams,
+    goalMetric: editedGoalMetric,
+  } = editState;
   const [operationsCount, setOperationsCount] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
@@ -150,7 +164,10 @@ function RunCard({
       Object.keys(defaultOptimizerParams).length > 0 &&
       Object.keys(editedOptimizerParams).length === 0
     ) {
-      dispatchEdit({ type: "SET_OPTIMIZER_PARAMS", value: defaultOptimizerParams });
+      dispatchEdit({
+        type: "SET_OPTIMIZER_PARAMS",
+        value: defaultOptimizerParams,
+      });
     }
   }, [editedOptimizer, defaultOptimizerParams]);
 
@@ -531,7 +548,9 @@ function RunCard({
                 <TextField
                   label={t("models:label.runName")}
                   value={editedName}
-                  onChange={(e) => dispatchEdit({ type: "SET_NAME", value: e.target.value })}
+                  onChange={(e) =>
+                    dispatchEdit({ type: "SET_NAME", value: e.target.value })
+                  }
                   fullWidth
                   required
                   size="small"
@@ -574,7 +593,9 @@ function RunCard({
                       <ModelsTableSelectMetric
                         taskName={session?.task_name}
                         metricName={editedGoalMetric}
-                        handleSelectedMetric={(v) => dispatchEdit({ type: "SET_GOAL_METRIC", value: v })}
+                        handleSelectedMetric={(v) =>
+                          dispatchEdit({ type: "SET_GOAL_METRIC", value: v })
+                        }
                         required
                       />
                     </Box>
@@ -596,7 +617,10 @@ function RunCard({
                             modelToConfigure={editedOptimizer}
                             initialValues={editedOptimizerParams}
                             onFormSubmit={(values) =>
-                              dispatchEdit({ type: "SET_OPTIMIZER_PARAMS", value: values })
+                              dispatchEdit({
+                                type: "SET_OPTIMIZER_PARAMS",
+                                value: values,
+                              })
                             }
                             onValuesChange={handleOptimizerParamsChange}
                             onCancel={() => {}}

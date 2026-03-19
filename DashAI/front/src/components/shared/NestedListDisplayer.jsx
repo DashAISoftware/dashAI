@@ -80,7 +80,9 @@ function NestedListDisplayer({
               const itemKey = item.name || item.key || item.columnName;
               return (
                 <NestedListDisplayer
-                  key={itemKey != null ? `${name}-${itemKey}` : `${name}-${index}`}
+                  key={
+                    itemKey != null ? `${name}-${itemKey}` : `${name}-${index}`
+                  }
                   name={itemKey ?? index}
                   value={item}
                 />

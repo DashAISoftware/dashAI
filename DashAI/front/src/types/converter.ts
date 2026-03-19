@@ -5,4 +5,3 @@ export interface IConverter {
   created: Date;
   converters: Object;
 }
-

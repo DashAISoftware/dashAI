@@ -41,4 +41,3 @@ export function TextInput({ onSendMessage, isLoading }) {
     </Box>
   );
 }
-

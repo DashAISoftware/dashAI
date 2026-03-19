@@ -1,16 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Typography, Paper, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
@@ -21,8 +10,8 @@ const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 function ResultsTable({ selectedPrediction }) {
   const theme = useTheme();
-  const [loadingExecution, setLoadingExecution] = useState(
-    () => RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
+  const [loadingExecution, setLoadingExecution] = useState(() =>
+    RUNNING_STATUSES.includes(getPredictionStatus(selectedPrediction?.status)),
   );
   const { t } = useTranslation(["prediction"]);
 

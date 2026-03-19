@@ -381,7 +381,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
                 <span>The input columns must be of the types</span>
                 {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types, t)
+                  ? renderTypesAsChips(
+                      taskRequirements.metadata.inputs_types,
+                      t,
+                    )
                   : null}
                 <span>
                   , and they should have a cardinality of
@@ -407,7 +410,10 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
                 <span>The output columns must be of the types</span>
                 {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types, t)
+                  ? renderTypesAsChips(
+                      taskRequirements.metadata.outputs_types,
+                      t,
+                    )
                   : null}
                 <span>
                   , and they should have a cardinality of

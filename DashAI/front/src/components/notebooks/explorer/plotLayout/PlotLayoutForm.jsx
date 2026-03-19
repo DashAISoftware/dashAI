@@ -30,8 +30,12 @@ export default function PlotLayoutForm({
 }) {
   const theme = useTheme();
   const [modified, setModified] = useState(false);
-  const [localLayout, setLocalLayout] = useState(() => layout ? structuredClone(layout) : null);
-  const [localData, setLocalData] = useState(() => data ? structuredClone(data) : null);
+  const [localLayout, setLocalLayout] = useState(() =>
+    layout ? structuredClone(layout) : null,
+  );
+  const [localData, setLocalData] = useState(() =>
+    data ? structuredClone(data) : null,
+  );
   const { t } = useTranslation(["datasets", "common"]);
 
   if (!layout) return null;

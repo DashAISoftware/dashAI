@@ -4,7 +4,11 @@ import { formatDate } from "../../../pages/results/constants/formatDate";
 import { getDatasetInfo } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 
-const fetchInfoInitialState = { datasetInfo: null, loadingInfo: false, infoError: null };
+const fetchInfoInitialState = {
+  datasetInfo: null,
+  loadingInfo: false,
+  infoError: null,
+};
 
 function fetchInfoReducer(state, action) {
   switch (action.type) {
@@ -26,10 +30,8 @@ export default function DatasetAutocomplete({
   selectedDataset,
   setSelectedDataset,
 }) {
-  const [{ datasetInfo, loadingInfo, infoError }, dispatchFetchInfo] = useReducer(
-    fetchInfoReducer,
-    fetchInfoInitialState,
-  );
+  const [{ datasetInfo, loadingInfo, infoError }, dispatchFetchInfo] =
+    useReducer(fetchInfoReducer, fetchInfoInitialState);
   const [infosById, setInfosById] = useState({});
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -44,7 +46,8 @@ export default function DatasetAutocomplete({
       dispatchFetchInfo({ type: "FETCH_START" });
       try {
         const info = await getDatasetInfo(selectedDataset.id);
-        if (!cancelled) dispatchFetchInfo({ type: "FETCH_SUCCESS", data: info });
+        if (!cancelled)
+          dispatchFetchInfo({ type: "FETCH_SUCCESS", data: info });
       } catch (e) {
         console.error("Failed to fetch dataset info:", e);
         if (!cancelled)

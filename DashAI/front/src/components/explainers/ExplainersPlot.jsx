@@ -85,7 +85,10 @@ export default function ExplainersPlot({ explainer, scope }) {
           >
             {explainersPlots.map((_, i) => (
               // key uses explainer.id + instance number (1-based) — no stable id on plot items
-              <MenuItem key={`plot-${explainer.id}-instance-${i + 1}`} value={i}>
+              <MenuItem
+                key={`plot-${explainer.id}-instance-${i + 1}`}
+                value={i}
+              >
                 {t("explainers:label.instanceNumber", { number: i + 1 })}
               </MenuItem>
             ))}

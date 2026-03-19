@@ -62,7 +62,9 @@ export default function RunInfoModal({
   onEditParameters,
   onOptimize,
 }) {
-  const [localRun, setLocalRun] = useState(() => run ? structuredClone(run) : null);
+  const [localRun, setLocalRun] = useState(() =>
+    run ? structuredClone(run) : null,
+  );
   const [metrics, setMetrics] = useState([]);
   const [optimizers, setOptimizers] = useState([]);
   const { t } = useTranslation(["experiments", "common"]);

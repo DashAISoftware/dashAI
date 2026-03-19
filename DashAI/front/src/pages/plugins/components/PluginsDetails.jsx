@@ -22,7 +22,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Trans, useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 
-function PluginsActions({ installLoading, plugin, updatePlugin, upgradePlugin }) {
+function PluginsActions({
+  installLoading,
+  plugin,
+  updatePlugin,
+  upgradePlugin,
+}) {
   const { t } = useTranslation(["plugins"]);
   return (
     <Grid container columnGap={2}>
@@ -31,11 +36,7 @@ function PluginsActions({ installLoading, plugin, updatePlugin, upgradePlugin })
           <CircularProgress size={24} />
         </Button>
       ) : (
-        <Button
-          onClick={() => updatePlugin()}
-          size="medium"
-          variant="outlined"
-        >
+        <Button onClick={() => updatePlugin()} size="medium" variant="outlined">
           {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
             plugin.status,
           )

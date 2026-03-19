@@ -36,4 +36,3 @@ export function parseRangeToIndex(range, maxValue) {
   });
   return indexArray;
 }
-
