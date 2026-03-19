@@ -64,7 +64,7 @@ function SetNameAndTaskStep({
   const handleNameInputChange = (event) => {
     const inputValue = event.target.value;
     setNewExp({ ...newExp, name: inputValue });
-    setNModifications(nModifications + 1);
+    setNModifications((prev) => prev + 1);
 
     const isEmpty = !inputValue.trim();
     const isTooShort =

@@ -59,7 +59,7 @@ function SetNameAndExplainerStep({
 
   const handleNameInputChange = (event) => {
     setNewExpl({ ...newExpl, name: event.target.value });
-    setNModifications(nModifications + 1);
+    setNModifications((prev) => prev + 1);
 
     if (nModifications + 1 >= 4) {
       if (event.target.value.length < 4) {

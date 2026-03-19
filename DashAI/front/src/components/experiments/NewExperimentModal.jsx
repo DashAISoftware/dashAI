@@ -197,7 +197,7 @@ export default function NewExperimentModal({
     if (activeStep === 0) {
       handleCloseDialog();
     } else {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 

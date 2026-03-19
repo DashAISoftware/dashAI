@@ -178,7 +178,7 @@ function CreateSessionSteps({
     if (activeStep === 0) {
       backHome();
     } else {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 

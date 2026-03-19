@@ -202,7 +202,7 @@ function AddModelDialog({
 
   const handleBack = () => {
     if (activeStep > 0) {
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => prev - 1);
     }
   };
 
