@@ -39,7 +39,7 @@ import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import { deleteAllJobs } from "../../api/job";
 import { useJobManager } from "../../hooks/useJobPolling";
 
-export const StatusIcon = ({ status }) => {
+const StatusIcon = ({ status }) => {
   switch (status) {
     case "not_started":
       return <HourglassEmptyIcon fontSize="small" />;
@@ -56,7 +56,7 @@ export const StatusIcon = ({ status }) => {
   }
 };
 
-export const statusText = {
+const statusText = {
   not_started: "Queued",
   started: "Running",
   finished: "Completed",

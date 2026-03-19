@@ -12,12 +12,6 @@ const ModelsContext = createContext(null);
 
 export const useModels = () => useContext(ModelsContext);
 
-export const OptionsEnum = Object.freeze({
-  DATASET: "dataset",
-  SESSION: "session",
-  NEW: "new",
-});
-
 export function ModelsProvider({ children }) {
   const { t } = useTranslation(["models", "datasets", "common"]);
 

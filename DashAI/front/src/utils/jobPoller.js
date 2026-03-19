@@ -1,4 +1,4 @@
-import { getJobs, getJobStatus, isQueueEmpty, getJobChanges } from "../api/job";
+import { getJobs, isQueueEmpty, getJobChanges } from "../api/job";
 
 const POLL_INTERVAL = 1000; // Default polling interval (2 seconds)
 
@@ -16,7 +16,7 @@ const state = {
 /**
  * Start the global job polling system
  */
-export function startJobPoller() {
+function startJobPoller() {
   if (state.active) return;
   state.active = true;
 
@@ -33,7 +33,7 @@ export function startJobPoller() {
 /**
  * Stop the global job polling system
  */
-export function stopJobPoller() {
+function stopJobPoller() {
   if (!state.active) return;
 
   if (state.intervalId) {
@@ -218,7 +218,7 @@ export async function checkQueueAndMaybeStartPolling() {
 /**
  * Clean up all resources (call on app shutdown or navigation)
  */
-export function cleanupJobPoller() {
+function cleanupJobPoller() {
   // Clear main interval
   if (state.intervalId) {
     clearInterval(state.intervalId);

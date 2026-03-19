@@ -15,11 +15,6 @@ export const getNotebooks = async (): Promise<INotebook[]> => {
   return response.data;
 };
 
-export const getNotebook = async (id: string): Promise<INotebook> => {
-  const response = await api.get<INotebook>(`${notebookEndpoint}/${id}`);
-  return response.data;
-};
-
 export const getExplorersByNotebookId = async (
   notebookId: string,
 ): Promise<IExplorer[]> => {

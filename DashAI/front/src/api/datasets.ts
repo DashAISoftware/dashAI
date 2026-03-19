@@ -3,11 +3,6 @@ import type { IDataset } from "../types/dataset";
 
 const datasetEndpoint = "/v1/dataset";
 
-export const copyDataset = async (formData: object): Promise<object> => {
-  const response = await api.post<object>(`${datasetEndpoint}/copy`, formData);
-  return response.data;
-};
-
 export const getDatasets = async (): Promise<IDataset[]> => {
   const response = await api.get<IDataset[]>(datasetEndpoint);
   return response.data;
@@ -15,15 +10,6 @@ export const getDatasets = async (): Promise<IDataset[]> => {
 
 export const getDatasetSample = async (id: number): Promise<object> => {
   const response = await api.get<object>(`${datasetEndpoint}/${id}/sample`);
-  return response.data;
-};
-
-export const getDatasetSampleByFilePath = async (
-  path: string,
-): Promise<object> => {
-  const response = await api.get<object>(`${datasetEndpoint}/sample/file`, {
-    params: { path },
-  });
   return response.data;
 };
 
@@ -52,13 +38,6 @@ export const getDatasetInfoByFilePath = async (
   const response = await api.get<object>(`${datasetEndpoint}/file/info`, {
     params: { path },
   });
-  return response.data;
-};
-
-export const getModelSessionsExist = async (id: number): Promise<object> => {
-  const response = await api.get(
-    `${datasetEndpoint}/${id}/model-sessions-exist`,
-  );
   return response.data;
 };
 
@@ -104,13 +83,6 @@ export const deleteDataset = async (id: string): Promise<object> => {
 export const getDatasetFile = async (path: string, page = 0, pageSize = 5) => {
   const response = await api.get(`${datasetEndpoint}/file/`, {
     params: { path, page, page_size: pageSize },
-  });
-  return response.data;
-};
-
-export const exportDatasetCsvById = async (id: number): Promise<Blob> => {
-  const response = await api.get(`${datasetEndpoint}/${id}/export/csv`, {
-    responseType: "blob",
   });
   return response.data;
 };

@@ -29,43 +29,6 @@ export default function useJobPolling(callback) {
   }, []);
 }
 
-/**
- * Hook to track a specific job with callbacks
- * @param {string} jobId - ID of the job to track
- * @param {function} onSuccess - Callback when job succeeds
- * @param {function} onError - Callback when job fails
- */
-export function useJobTracker(jobId, onSuccess, onError) {
-  const onSuccessRef = useRef(onSuccess);
-  const onErrorRef = useRef(onError);
-
-  // Keep callbacks updated
-  onSuccessRef.current = onSuccess;
-  onErrorRef.current = onError;
-
-  useEffect(() => {
-    if (!jobId) return;
-
-    _startJobPolling(
-      jobId,
-      (result) => {
-        if (typeof onSuccessRef.current === "function") {
-          onSuccessRef.current(result);
-        }
-      },
-      (result) => {
-        if (typeof onErrorRef.current === "function") {
-          onErrorRef.current(result);
-        }
-      },
-    );
-
-    return () => {
-      _stopJobPolling(jobId);
-    };
-  }, [jobId]);
-}
-
 export function useJobManager() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);

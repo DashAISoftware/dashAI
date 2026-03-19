@@ -45,11 +45,3 @@ export const extractRows = (rawRuns, models) => {
   });
   return rows;
 };
-
-export const replaceModelNameForRuns = async (runs) => {
-  const models = await getModels();
-  return runs.map((run) => ({
-    ...run,
-    model_name: models.find((m) => m.name === run.model_name) || run.model_name,
-  }));
-};

@@ -1,13 +1,6 @@
 import api from "./api";
 import type { IGenerativeTask } from "../types/generativeTask";
-import type { ISession, ISessionParameterHistory } from "../types/session";
-
-export const getGenerativeTask = async (): Promise<IGenerativeTask[]> => {
-  const response = await api.get<IGenerativeTask[]>(
-    "/v1/component/?select_types=GenerativeTask",
-  );
-  return response.data;
-};
+import type { ISession } from "../types/session";
 
 export const getRelatedComponents = async (
   relatedComponent: string,
@@ -48,11 +41,3 @@ export const getGenerativeSession = async (
   return response.data;
 };
 
-export const getGenerativeSessionParametersHistory = async (
-  sessionId: number,
-): Promise<ISessionParameterHistory[]> => {
-  const response = await api.get<ISessionParameterHistory[]>(
-    `/v1/generative-session/${sessionId}/parameters-history`,
-  );
-  return response.data;
-};

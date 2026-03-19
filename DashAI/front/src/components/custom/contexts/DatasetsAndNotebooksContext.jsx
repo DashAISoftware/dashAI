@@ -9,12 +9,6 @@ const DatasetsAndNotebooksContext = createContext();
 export const useDatasetsAndNotebooks = () =>
   useContext(DatasetsAndNotebooksContext);
 
-export const OptionsEnum = Object.freeze({
-  DATASET: "dataset",
-  NOTEBOOK: "notebook",
-  NEW: "new",
-});
-
 export const DatasetsAndNotebooksProvider = ({ children }) => {
   const { t } = useTranslation(["datasets", "common"]);
   const {

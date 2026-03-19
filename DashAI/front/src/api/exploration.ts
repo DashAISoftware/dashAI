@@ -18,15 +18,6 @@ export const getExplorations = async (
   return response.data;
 };
 
-export const getExplorationById = async (
-  explorationId: number,
-): Promise<IExploration> => {
-  const response = await api.get<IExploration>(
-    `${explorationEndpoint}/${explorationId}/`,
-  );
-  return response.data;
-};
-
 export const getExplorationsByDatasetId = async (
   datasetId: number,
   skip: number | null = null,
@@ -40,36 +31,6 @@ export const getExplorationsByDatasetId = async (
   const response = await api.get<IExploration[]>(
     `${explorationEndpoint}/dataset/${datasetId}/`,
     { params },
-  );
-  return response.data;
-};
-
-export const createExploration = async (
-  datasetId: number,
-  name: string,
-  description: string,
-): Promise<IExploration> => {
-  const data = {
-    dataset_id: datasetId,
-    name,
-    description,
-  };
-  const response = await api.post<IExploration>(explorationEndpoint, data);
-  return response.data;
-};
-
-export const updateExploration = async (
-  explorationId: number,
-  name: string,
-  description: string,
-): Promise<IExploration> => {
-  const data = {
-    name,
-    description,
-  };
-  const response = await api.patch<IExploration>(
-    `${explorationEndpoint}/${explorationId}/`,
-    data,
   );
   return response.data;
 };

@@ -12,7 +12,7 @@ export function groupByCategory(tools) {
   return groups;
 }
 
-export const PREFERRED_ORDER = [
+const PREFERRED_ORDER = [
   "Basic Preprocessing",
   "Encoding",
   "Scaling & Normalization",

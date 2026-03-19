@@ -12,24 +12,6 @@ export const saveConverterList = async (
   return response.data;
 };
 
-export const getDatasetConverterList = async (
-  datasetId: number,
-): Promise<IConverter> => {
-  const response = await api.get<IConverter>(
-    `${converterEndpoint}/${datasetId}`,
-  );
-  return response.data;
-};
-
-export const getConvertersByNotebook = async (
-  notebookId: number,
-): Promise<IConverter[]> => {
-  const response = await api.get<IConverter[]>(
-    `${converterEndpoint}/notebook/${notebookId}`,
-  );
-  return response.data;
-};
-
 export const getConverterById = async (id: number): Promise<IConverter> => {
   const response = await api.get<IConverter>(`${converterEndpoint}/${id}`);
   return response.data;
