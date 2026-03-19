@@ -99,7 +99,7 @@ export default function HardwareMonitorPanel({ stats, connected }) {
             {t("common:hardwareMonitor.gpu")}
           </Typography>
           {gpus.map((gpu, idx) => (
-            <Box key={idx} sx={{ mb: idx < gpus.length - 1 ? 2 : 0 }}>
+            <Box key={gpu.name} sx={{ mb: idx < gpus.length - 1 ? 2 : 0 }}>
               <Box
                 sx={{
                   display: "flex",
