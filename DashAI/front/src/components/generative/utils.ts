@@ -1,6 +1,6 @@
 import * as Yup from "yup";
 
-export type SchemaProperty = {
+type SchemaProperty = {
   type: string | string[];
   title?: string;
   nullable?: boolean;
@@ -13,7 +13,7 @@ export type SchemaProperty = {
   [key: string]: any;
 };
 
-export type SchemaProperties = {
+type SchemaProperties = {
   [key: string]: SchemaProperty;
 };
 

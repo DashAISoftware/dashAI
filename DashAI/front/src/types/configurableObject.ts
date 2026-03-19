@@ -1,6 +1,4 @@
 export type IPropertiesObject = Record<string, { oneOf: IOneOfItem[] }>;
-export type IDefaultValues = Record<string, any>;
-
 export interface IOneOfItem {
   default?: any;
   parent?: string;

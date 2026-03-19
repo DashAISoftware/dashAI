@@ -42,4 +42,3 @@ export function TextInput({ onSendMessage, isLoading }) {
   );
 }
 
-export default TextInput;

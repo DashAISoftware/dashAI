@@ -23,7 +23,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 
-export function LiveMetricsChart({ run }) {
+function LiveMetricsChart({ run }) {
   const { t } = useTranslation("models");
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");

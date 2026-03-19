@@ -6,10 +6,3 @@ export interface IConverter {
   converters: Object;
 }
 
-export enum ConverterListStatus {
-  NOT_STARTED,
-  DELIVERED,
-  STARTED,
-  FINISHED,
-  ERROR,
-}
