@@ -1,8 +1,8 @@
-import React from "react";
-import { Box, Typography, CardContent, Card } from "@mui/material";
+import React, { Suspense } from "react";
+import { Box, CircularProgress, Typography, CardContent, Card } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
-  BarChart,
+  LazyBarChart,
   Bar,
   Cell,
   XAxis,
@@ -10,7 +10,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
+} from "../../../shared/LazyRecharts";
 import { useTranslation } from "react-i18next";
 
 const CorrelationsTab = ({ correlations }) => {
@@ -40,37 +40,39 @@ const CorrelationsTab = ({ correlations }) => {
         </Typography>
 
         <Box mb={4}>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={corrData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="pair" angle={-45} textAnchor="end" height={100} />
-              <YAxis domain={[-1, 1]} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: theme.palette.background.paper,
-                  borderRadius: 4,
-                  color: theme.palette.text.primary,
-                }}
-                labelStyle={{ color: theme.palette.text.primary }}
-              />
-              <Bar
-                dataKey="correlation"
-                name={t("datasets:label.correlation")}
-                fill={theme.palette.info.main}
-              >
-                {corrData.map((entry) => (
-                  <Cell
-                    key={entry.pair}
-                    fill={
-                      entry.correlation > 0
-                        ? theme.palette.success.main
-                        : theme.palette.error.main
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <Suspense fallback={<CircularProgress size={24} />}>
+            <ResponsiveContainer width="100%" height={300}>
+              <LazyBarChart data={corrData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="pair" angle={-45} textAnchor="end" height={100} />
+                <YAxis domain={[-1, 1]} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: theme.palette.background.paper,
+                    borderRadius: 4,
+                    color: theme.palette.text.primary,
+                  }}
+                  labelStyle={{ color: theme.palette.text.primary }}
+                />
+                <Bar
+                  dataKey="correlation"
+                  name={t("datasets:label.correlation")}
+                  fill={theme.palette.info.main}
+                >
+                  {corrData.map((entry) => (
+                    <Cell
+                      key={entry.pair}
+                      fill={
+                        entry.correlation > 0
+                          ? theme.palette.success.main
+                          : theme.palette.error.main
+                      }
+                    />
+                  ))}
+                </Bar>
+              </LazyBarChart>
+            </ResponsiveContainer>
+          </Suspense>
         </Box>
 
         <Box>

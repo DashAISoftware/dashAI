@@ -1,19 +1,19 @@
-import React from "react";
-import { Box, Typography, Card, CardContent } from "@mui/material";
+import React, { Suspense } from "react";
+import { Box, CircularProgress, Typography, Card, CardContent } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TitleIcon from "@mui/icons-material/Title";
 import {
   ResponsiveContainer,
-  BarChart,
+  LazyBarChart,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   Bar,
-  PieChart,
+  LazyPieChart,
   Pie,
   Cell,
-} from "recharts";
+} from "../../../shared/LazyRecharts";
 import { StatBox } from "../StatBox";
 import { useTranslation } from "react-i18next";
 
@@ -68,32 +68,34 @@ export const CategoricalTab = ({ categoricalStats }) => {
                   {t("datasets:label.valueDistribution")}
                 </Typography>
                 <Box sx={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.top_5}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="value"
-                        angle={-45}
-                        textAnchor="end"
-                        height={80}
-                      />
-                      <YAxis />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: theme.palette.background.paper,
-                          borderRadius: 4,
-                          color: theme.palette.text.primary,
-                          border: `1px solid ${theme.palette.divider}`,
-                        }}
-                        labelStyle={{ color: theme.palette.text.primary }}
-                      />
-                      <Bar
-                        dataKey="count"
-                        fill="rgba(136, 132, 216, 0.7)"
-                        name={t("common:count")}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<CircularProgress size={24} />}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LazyBarChart data={stats.top_5}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="value"
+                          angle={-45}
+                          textAnchor="end"
+                          height={80}
+                        />
+                        <YAxis />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: theme.palette.background.paper,
+                            borderRadius: 4,
+                            color: theme.palette.text.primary,
+                            border: `1px solid ${theme.palette.divider}`,
+                          }}
+                          labelStyle={{ color: theme.palette.text.primary }}
+                        />
+                        <Bar
+                          dataKey="count"
+                          fill="rgba(136, 132, 216, 0.7)"
+                          name={t("common:count")}
+                        />
+                      </LazyBarChart>
+                    </ResponsiveContainer>
+                  </Suspense>
                 </Box>
               </Box>
 
@@ -107,43 +109,45 @@ export const CategoricalTab = ({ categoricalStats }) => {
                   {t("datasets:label.proportion")}
                 </Typography>
                 <Box sx={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={stats.top_5}
-                        dataKey="count"
-                        nameKey="value"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label
-                      >
-                        {stats.top_5.map((entry, index) => (
-                          <Cell
-                            key={`cat-${entry.value}`}
-                            fill={
-                              [
-                                theme.palette.secondary.main,
-                                theme.palette.info.main,
-                                theme.palette.primary.main,
-                                theme.palette.success.light,
-                                theme.palette.warning.main,
-                              ][index]
-                            }
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: theme.palette.background.paper,
-                          borderRadius: 4,
-                          border: `1px solid ${theme.palette.divider}`,
-                        }}
-                        labelStyle={{ color: theme.palette.text.primary }}
-                        itemStyle={{ color: theme.palette.text.primary }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<CircularProgress size={24} />}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LazyPieChart>
+                        <Pie
+                          data={stats.top_5}
+                          dataKey="count"
+                          nameKey="value"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          label
+                        >
+                          {stats.top_5.map((entry, index) => (
+                            <Cell
+                              key={`cat-${entry.value}`}
+                              fill={
+                                [
+                                  theme.palette.secondary.main,
+                                  theme.palette.info.main,
+                                  theme.palette.primary.main,
+                                  theme.palette.success.light,
+                                  theme.palette.warning.main,
+                                ][index]
+                              }
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: theme.palette.background.paper,
+                            borderRadius: 4,
+                            border: `1px solid ${theme.palette.divider}`,
+                          }}
+                          labelStyle={{ color: theme.palette.text.primary }}
+                          itemStyle={{ color: theme.palette.text.primary }}
+                        />
+                      </LazyPieChart>
+                    </ResponsiveContainer>
+                  </Suspense>
                 </Box>
               </Box>
             </Box>

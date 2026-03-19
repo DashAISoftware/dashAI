@@ -1,5 +1,6 @@
 import {
   Box,
+  CircularProgress,
   FormControl,
   InputLabel,
   MenuItem,
@@ -11,15 +12,15 @@ import {
   ButtonGroup,
 } from "@mui/material";
 import {
-  LineChart,
+  LazyLineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
-import { useEffect, useMemo, useRef, useState } from "react";
+} from "../shared/LazyRecharts";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 
@@ -321,33 +322,35 @@ function LiveMetricsChart({ run }) {
           </Typography>
         </Box>
       ) : (
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={chartData}>
-            <XAxis
-              dataKey="x"
-              label={{
-                value: levelLabel,
-                position: "insideBottom",
-                offset: -5,
-              }}
-            />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-
-            {selectedMetrics.map((metric, idx) => (
-              <Line
-                key={metric}
-                type="monotone"
-                dataKey={metric}
-                dot={false}
-                stroke={`hsl(${(idx * 137.5) % 360}, 70%, 50%)`}
-                strokeWidth={2}
-                isAnimationActive={false}
+        <Suspense fallback={<CircularProgress size={24} />}>
+          <ResponsiveContainer width="100%" height={350}>
+            <LazyLineChart data={chartData}>
+              <XAxis
+                dataKey="x"
+                label={{
+                  value: levelLabel,
+                  position: "insideBottom",
+                  offset: -5,
+                }}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+              <YAxis />
+              <Tooltip />
+              <Legend />
+
+              {selectedMetrics.map((metric, idx) => (
+                <Line
+                  key={metric}
+                  type="monotone"
+                  dataKey={metric}
+                  dot={false}
+                  stroke={`hsl(${(idx * 137.5) % 360}, 70%, 50%)`}
+                  strokeWidth={2}
+                  isAnimationActive={false}
+                />
+              ))}
+            </LazyLineChart>
+          </ResponsiveContainer>
+        </Suspense>
       )}
 
       <Box display="flex" justifyContent="flex-end" mt={2}>

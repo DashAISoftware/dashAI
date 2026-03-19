@@ -1,6 +1,7 @@
-import React from "react";
+import React, { Suspense } from "react";
 import {
   Box,
+  CircularProgress,
   Typography,
   Card,
   CardContent,
@@ -11,13 +12,13 @@ import {
 import { useTheme } from "@mui/material/styles";
 import {
   ResponsiveContainer,
-  BarChart,
+  LazyBarChart,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
   Bar,
-} from "recharts";
+} from "../../../shared/LazyRecharts";
 import DatasetTable from "../DatasetTable";
 import { useTranslation } from "react-i18next";
 
@@ -74,27 +75,29 @@ const OverviewTab = ({
           </Typography>
           {missingData.some((data) => data.missing > 0) ? (
             <Box sx={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={missingData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="column" />
-                  <YAxis />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: theme.palette.background.paper,
-                      borderRadius: 4,
-                      color: theme.palette.text.primary,
-                      border: `1px solid ${theme.palette.divider}`,
-                    }}
-                    labelStyle={{ color: theme.palette.text.primary }}
-                  />
-                  <Bar
-                    dataKey="missing"
-                    fill="rgba(136, 132, 216, 0.7)"
-                    name={t("common:missing")}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <Suspense fallback={<CircularProgress size={24} />}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LazyBarChart data={missingData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="column" />
+                    <YAxis />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: theme.palette.background.paper,
+                        borderRadius: 4,
+                        color: theme.palette.text.primary,
+                        border: `1px solid ${theme.palette.divider}`,
+                      }}
+                      labelStyle={{ color: theme.palette.text.primary }}
+                    />
+                    <Bar
+                      dataKey="missing"
+                      fill="rgba(136, 132, 216, 0.7)"
+                      name={t("common:missing")}
+                    />
+                  </LazyBarChart>
+                </ResponsiveContainer>
+              </Suspense>
             </Box>
           ) : (
             <Alert severity="success">

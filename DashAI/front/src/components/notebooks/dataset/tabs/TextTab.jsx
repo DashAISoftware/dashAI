@@ -1,6 +1,7 @@
-import React from "react";
+import React, { Suspense } from "react";
 import {
   Box,
+  CircularProgress,
   Typography,
   Card,
   CardContent,
@@ -12,14 +13,14 @@ import { useTheme } from "@mui/material/styles";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
 import {
   ResponsiveContainer,
-  BarChart,
+  LazyBarChart,
   CartesianGrid,
   XAxis,
   YAxis,
   Tooltip as RechartsTooltip,
   Bar,
   Cell,
-} from "recharts";
+} from "../../../shared/LazyRecharts";
 import { StatBox } from "../StatBox";
 import { MetricRow } from "../MetricRow";
 import { useTranslation } from "react-i18next";
@@ -182,27 +183,29 @@ export const TextTab = ({ textStats }) => {
                   {t("datasets:label.lengthDistribution")}
                 </Typography>
                 <Box sx={{ width: "100%", height: 250 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={lengthData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="label" />
-                      <YAxis />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: theme.palette.background.paper,
-                          borderRadius: 4,
-                          color: theme.palette.text.primary,
-                          border: `1px solid ${theme.palette.divider}`,
-                        }}
-                        labelStyle={{ color: theme.palette.text.primary }}
-                      />
-                      <Bar
-                        dataKey="value"
-                        fill="rgba(136, 132, 216, 0.7)"
-                        name={t("common:value")}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <Suspense fallback={<CircularProgress size={24} />}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LazyBarChart data={lengthData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="label" />
+                        <YAxis />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: theme.palette.background.paper,
+                            borderRadius: 4,
+                            color: theme.palette.text.primary,
+                            border: `1px solid ${theme.palette.divider}`,
+                          }}
+                          labelStyle={{ color: theme.palette.text.primary }}
+                        />
+                        <Bar
+                          dataKey="value"
+                          fill="rgba(136, 132, 216, 0.7)"
+                          name={t("common:value")}
+                        />
+                      </LazyBarChart>
+                    </ResponsiveContainer>
+                  </Suspense>
                 </Box>
               </Box>
             </CardContent>
