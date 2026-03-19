@@ -14,7 +14,7 @@ function ArrayInput({
   itemType,
   ...props
 }) {
-  const [inputValue, setInputValue] = useState(value.join(","));
+  const [inputValue, setInputValue] = useState(() => value.join(","));
 
   const convertValue = (val) => {
     switch (itemType) {
