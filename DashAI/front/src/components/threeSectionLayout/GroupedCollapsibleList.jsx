@@ -6,8 +6,11 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ItemBox from "./ItemBox";
 import { t } from "i18next";
 
+const EMPTY_GROUPS = {};
+const EMPTY_OPEN_GROUPS = {};
+
 export default function GroupedCollapsibleList({
-  groups = {}, // Object with group names as keys and items arrays as values
+  groups = EMPTY_GROUPS, // Object with group names as keys and items arrays as values
   selectedItemId,
   onItemClick,
   onItemDelete,
@@ -16,7 +19,7 @@ export default function GroupedCollapsibleList({
   title = t("common:items", "Items"),
   Icon,
   getItemDescription,
-  initialOpenGroups = {},
+  initialOpenGroups = EMPTY_OPEN_GROUPS,
 }) {
   const theme = useTheme();
   const [openGroups, setOpenGroups] = useState(initialOpenGroups); // Initial value only — not synced with prop

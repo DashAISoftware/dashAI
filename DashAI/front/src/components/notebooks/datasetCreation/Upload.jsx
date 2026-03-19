@@ -27,10 +27,12 @@ import { useTranslation } from "react-i18next";
  * @param {function} onTypesChanged callback to notify parent when column types change
  * @param {function} onColumnRename callback to notify parent when columns are renamed
  */
+const EMPTY_FORM_VALUES = {};
+
 function Upload({
   onFileUpload,
   initialFile = null,
-  formValues = {},
+  formValues = EMPTY_FORM_VALUES,
   selectedDataloader = null,
   onPreviewError,
   onTypesChanged,

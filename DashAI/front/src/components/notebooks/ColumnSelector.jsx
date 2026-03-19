@@ -29,10 +29,11 @@ import { Trans, useTranslation } from "react-i18next";
 
  */
 const EMPTY_ARRAY = [];
+const EMPTY_CARDINALITY = {};
 
 function ColumnSelector({
   file_path,
-  inputCardinality = {},
+  inputCardinality = EMPTY_CARDINALITY,
   allowedDtypes = EMPTY_ARRAY,
   restrictedDtypes = EMPTY_ARRAY,
   onSelectionChange = () => {},
