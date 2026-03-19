@@ -21,6 +21,49 @@ import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
+
+/**
+ * Renders a list of column type names as colored chips joined by "or".
+ * @param {string[]} typesList - List of type names to render
+ * @param {function} t - i18next translation function
+ */
+function renderTypesAsChips(typesList, t) {
+  if (!typesList || typesList.length === 0) {
+    return <span>{t("common:any")}</span>;
+  }
+
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: "inline-flex",
+        gap: 0.5,
+        flexWrap: "wrap",
+        alignItems: "center",
+      }}
+    >
+      {typesList.map((type, index) => (
+        <React.Fragment key={type}>
+          <Chip
+            label={type}
+            size="small"
+            sx={{
+              backgroundColor: getColorByColumnType(type),
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              height: "22px",
+            }}
+          />
+          {index < typesList.length - 1 && (
+            <span style={{ margin: "0 4px" }}>{t("common:or")}</span>
+          )}
+        </React.Fragment>
+      ))}
+    </Box>
+  );
+}
+
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing
@@ -308,43 +351,6 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
     getTaskRequirements();
   }, []);
 
-  const renderTypesAsChips = (typesList) => {
-    if (!typesList || typesList.length === 0) {
-      return <span>{t("common:any")}</span>;
-    }
-
-    return (
-      <Box
-        component="span"
-        sx={{
-          display: "inline-flex",
-          gap: 0.5,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        {typesList.map((type, index) => (
-          <React.Fragment key={type}>
-            <Chip
-              label={type}
-              size="small"
-              sx={{
-                backgroundColor: getColorByColumnType(type),
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: "0.75rem",
-                height: "22px",
-              }}
-            />
-            {index < typesList.length - 1 && (
-              <span style={{ margin: "0 4px" }}>{t("common:or")}</span>
-            )}
-          </React.Fragment>
-        ))}
-      </Box>
-    );
-  };
-
   return (
     <React.Fragment>
       <Alert
@@ -375,7 +381,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
                 <span>The input columns must be of the types</span>
                 {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
+                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types, t)
                   : null}
                 <span>
                   , and they should have a cardinality of
@@ -401,7 +407,7 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled }) {
               <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
                 <span>The output columns must be of the types</span>
                 {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
+                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types, t)
                   : null}
                 <span>
                   , and they should have a cardinality of
