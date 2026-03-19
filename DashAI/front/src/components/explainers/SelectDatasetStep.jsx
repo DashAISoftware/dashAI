@@ -94,18 +94,20 @@ export default function SelectDatasetStep({
     }
   };
 
-  const validateDataset = async () => {
+  const validateDataset = async (datasetId) => {
     try {
       const validation = await validateDatasetRequest(
         newExpl.run_id,
-        selectedDatasetId,
+        datasetId,
       );
-      setIsValidDataset(validation.dataset_status === "valid");
-      if (validation.dataset_status === "invalid") {
+      const valid = validation.dataset_status === "valid";
+      setIsValidDataset(valid);
+      if (!valid) {
         enqueueSnackbar(t("explainers:error.invalidDataset"), {
           variant: "error",
         });
       }
+      return valid;
     } catch (error) {
       enqueueSnackbar(t("explainers:error.validateDataset"), {
         variant: "error",
@@ -117,16 +119,17 @@ export default function SelectDatasetStep({
       } else {
         console.error("Unknown Error", error.message);
       }
+      return false;
     }
   };
 
-  const getTotalRows = async () => {
-    if (selectedDatasetId) {
+  const getTotalRows = async (datasetId) => {
+    if (datasetId) {
       try {
-        const datasetInfo = await getDatasetInfo(selectedDatasetId);
+        const datasetInfo = await getDatasetInfo(datasetId);
         setTotalRows(datasetInfo.total_rows);
       } catch {
-        console.error(`Error fetching dataset info for ${selectedDatasetId}`);
+        console.error(`Error fetching dataset info for ${datasetId}`);
       }
     }
   };
@@ -135,10 +138,6 @@ export default function SelectDatasetStep({
   useEffect(() => {
     getDatasets();
   }, []);
-
-  useEffect(() => {
-    getTotalRows();
-  }, [selectedDatasetId]);
 
   const getRuninfo = async () => {
     if (newExpl.run_id) {
@@ -158,37 +157,35 @@ export default function SelectDatasetStep({
     }
   };
 
+  // Prop-driven effect — cannot move to handler
   useEffect(() => {
     getRuninfo();
   }, [newExpl.run_id]);
 
-  useEffect(() => {
-    if (rowSelectedDataset.length > 0) {
-      const selectedDatasetId = rowSelectedDataset[0];
-      const dataset = datasets.find(
-        (dataset) => dataset.id === selectedDatasetId,
-      );
+  const handleDatasetRowSelection = async (newRowSelectionModel) => {
+    setRowSelectedDataset(newRowSelectionModel);
+    if (newRowSelectionModel.length > 0) {
+      const id = newRowSelectionModel[0];
+      const dataset = datasets.find((d) => d.id === id);
+      if (!dataset) return;
       setSelectedDatasetId(dataset.id);
-    }
-  }, [rowSelectedDataset]);
-
-  useEffect(() => {
-    if (selectedDatasetId) {
-      validateDataset();
-    }
-  }, [selectedDatasetId]);
-
-  useEffect(() => {
-    if (isValidDataset && selectedDatasetId) {
-      setNewExpl((prevExpl) => ({
-        ...prevExpl,
-        dataset_id: selectedDatasetId,
-      }));
-      setNextEnabled(true);
+      await getTotalRows(dataset.id);
+      const valid = await validateDataset(dataset.id);
+      if (valid) {
+        setNewExpl((prevExpl) => ({
+          ...prevExpl,
+          dataset_id: dataset.id,
+        }));
+        setNextEnabled(true);
+      } else {
+        setNextEnabled(false);
+      }
     } else {
+      setSelectedDatasetId(false);
+      setIsValidDataset(false);
       setNextEnabled(false);
     }
-  }, [isValidDataset, selectedDatasetId]);
+  };
 
   return (
     <React.Fragment>
@@ -232,9 +229,7 @@ export default function SelectDatasetStep({
               },
             },
           }}
-          onRowSelectionModelChange={(newRowSelectionModel) => {
-            setRowSelectedDataset(newRowSelectionModel);
-          }}
+          onRowSelectionModelChange={handleDatasetRowSelection}
           rowSelectionModel={rowSelectedDataset}
           density="compact"
           pageSizeOptions={[10]}
