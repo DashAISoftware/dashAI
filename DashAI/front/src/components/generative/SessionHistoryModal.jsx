@@ -143,9 +143,9 @@ export default function SessionHistoryModal({
               </AccordionSummary>
               <AccordionDetails sx={{ pt: 1, pb: 2 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {event.changes.map((change, index) => (
+                  {event.changes.map((change) => (
                     <Card
-                      key={`${event.id}-change-${index}`}
+                      key={`${event.id}-${change.parameter}`}
                       variant="outlined"
                       sx={{
                         bgcolor: "background.default",
