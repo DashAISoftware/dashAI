@@ -84,7 +84,7 @@ export default function ExplainersPlot({ explainer, scope }) {
             autoWidth
           >
             {explainersPlots.map((_, i) => (
-              <MenuItem key={`plot-${i}`} value={i}>
+              <MenuItem key={`plot-${explainer.id}-${i}`} value={i}>
                 {t("explainers:label.instanceNumber", { number: i + 1 })}
               </MenuItem>
             ))}

@@ -68,7 +68,7 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
                 <>
                   {help.description.split("\n").map((paragraph, idx) => (
                     <Typography
-                      key={`para-${idx}-${paragraph.slice(0, 20)}`}
+                      key={paragraph || String(idx)}
                       variant="body1"
                       sx={{ mb: 1, color: theme.palette.text.secondary }}
                     >
