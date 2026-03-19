@@ -1,17 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { Box, Typography, Autocomplete, TextField, Chip } from "@mui/material";
 import { formatDate } from "../../../pages/results/constants/formatDate";
 import { getDatasetInfo } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
+
+const fetchInfoInitialState = { datasetInfo: null, loadingInfo: false, infoError: null };
+
+function fetchInfoReducer(state, action) {
+  switch (action.type) {
+    case "RESET":
+      return fetchInfoInitialState;
+    case "FETCH_START":
+      return { datasetInfo: null, loadingInfo: true, infoError: null };
+    case "FETCH_SUCCESS":
+      return { datasetInfo: action.data, loadingInfo: false, infoError: null };
+    case "FETCH_ERROR":
+      return { ...state, loadingInfo: false, infoError: action.error };
+    default:
+      return state;
+  }
+}
 
 export default function DatasetAutocomplete({
   datasets,
   selectedDataset,
   setSelectedDataset,
 }) {
-  const [datasetInfo, setDatasetInfo] = useState(null);
-  const [loadingInfo, setLoadingInfo] = useState(false);
-  const [infoError, setInfoError] = useState(null);
+  const [{ datasetInfo, loadingInfo, infoError }, dispatchFetchInfo] = useReducer(
+    fetchInfoReducer,
+    fetchInfoInitialState,
+  );
   const [infosById, setInfosById] = useState({});
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -20,28 +38,27 @@ export default function DatasetAutocomplete({
     let cancelled = false;
     const fetchInfo = async () => {
       if (!selectedDataset?.id) {
-        setDatasetInfo(null);
-        setInfoError(null);
+        dispatchFetchInfo({ type: "RESET" });
         return;
       }
+      dispatchFetchInfo({ type: "FETCH_START" });
       try {
-        setLoadingInfo(true);
-        setInfoError(null);
         const info = await getDatasetInfo(selectedDataset.id);
-        if (!cancelled) setDatasetInfo(info);
+        if (!cancelled) dispatchFetchInfo({ type: "FETCH_SUCCESS", data: info });
       } catch (e) {
         console.error("Failed to fetch dataset info:", e);
         if (!cancelled)
-          setInfoError(t("datasets:error.failedToLoadDatasetInfo"));
-      } finally {
-        if (!cancelled) setLoadingInfo(false);
+          dispatchFetchInfo({
+            type: "FETCH_ERROR",
+            error: t("datasets:error.failedToLoadDatasetInfo"),
+          });
       }
     };
     fetchInfo();
     return () => {
       cancelled = true;
     };
-  }, [selectedDataset?.id]);
+  }, [selectedDataset?.id, t]);
 
   const fetchMissingInfos = async (items) => {
     const missing = items.filter((d) => d?.id != null && !infosById[d.id]);
