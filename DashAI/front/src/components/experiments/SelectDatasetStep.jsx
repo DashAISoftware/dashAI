@@ -57,8 +57,8 @@ function SelectDatasetStep({ newExp, setNewExp, setNextEnabled }) {
   );
 
   useEffect(() => {
-    setNewExp({ ...newExp, input_columns: [], output_columns: [] });
-  }, []);
+    setNewExp((prev) => ({ ...prev, input_columns: [], output_columns: [] }));
+  }, [setNewExp]);
 
   const getDatasets = async () => {
     setLoading(true);

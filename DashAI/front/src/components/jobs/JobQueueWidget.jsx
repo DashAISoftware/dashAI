@@ -258,7 +258,7 @@ const JobQueueWidget = () => {
           style={{
             opacity: `${isHovered || expanded ? 1 : 0.5}`,
             filter: `brightness(${isHovered || expanded ? 1 : 0.5})`,
-            transition: "all 0.2s ease",
+            transition: "opacity 0.2s ease, filter 0.2s ease, background-color 0.2s ease",
           }}
         >
           <Box
