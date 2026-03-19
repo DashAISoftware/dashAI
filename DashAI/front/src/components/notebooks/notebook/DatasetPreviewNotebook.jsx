@@ -49,22 +49,6 @@ export default function DatasetPreviewNotebook({
   } = useDatasetsAndNotebooks();
 
   const theme = useTheme();
-  if (!notebook) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress color="primary" />
-        <Typography>{t("common:loading")}...</Typography>
-      </Box>
-    );
-  }
-
   const [showSaveDatasetModal, setShowSaveDatasetModal] = useState(false);
   const [showNotebookHistoryModal, setShowNotebookHistoryModal] =
     useState(false);
@@ -72,23 +56,16 @@ export default function DatasetPreviewNotebook({
   const { explorersAndConverters } = useExplorersAndConverters();
   const tourContext = useTourContext();
 
-  const getDatasetName = () => {
-    if (!notebook.dataset_id || !existingDatasets.length) {
-      return "Dataset";
-    }
-    const dataset = existingDatasets.find((d) => d.id === notebook.dataset_id);
-    return dataset ? dataset.name : "Dataset";
-  };
-
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+      const data = await getDatasetFile(notebook?.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
     [notebook, converters],
   );
 
   useEffect(() => {
+    if (!notebook) return;
     let intervalId;
 
     const fetchConverters = async () => {
@@ -119,6 +96,30 @@ export default function DatasetPreviewNotebook({
       clearInterval(intervalId);
     };
   }, [notebook, explorersAndConverters]);
+
+  if (!notebook) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}...</Typography>
+      </Box>
+    );
+  }
+
+  const getDatasetName = () => {
+    if (!notebook.dataset_id || !existingDatasets.length) {
+      return "Dataset";
+    }
+    const dataset = existingDatasets.find((d) => d.id === notebook.dataset_id);
+    return dataset ? dataset.name : "Dataset";
+  };
 
   const pollForDataset = ({ datasetId, datasetName }, { jobId }) => {
     if (!jobId) return;

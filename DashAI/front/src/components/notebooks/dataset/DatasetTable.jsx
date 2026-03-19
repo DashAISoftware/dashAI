@@ -221,6 +221,7 @@ export default function DatasetTable({
   // Custom CSV Export Button
   function CsvExportButton() {
     const [anchorEl, setAnchorEl] = useState(null);
+    const apiRef = useGridApiContext();
     const open = Boolean(anchorEl);
 
     const handleClick = (event) => {
@@ -252,7 +253,6 @@ export default function DatasetTable({
           window.URL.revokeObjectURL(url);
         } else {
           // Fallback to original DataGrid method
-          const apiRef = useGridApiContext();
           apiRef.current.exportDataAsCsv({
             fileName: "dataset-export",
             delimiter: ",",
@@ -262,7 +262,6 @@ export default function DatasetTable({
       } catch (error) {
         console.error("Error exporting CSV:", error);
         // Fallback to original method in case of error
-        const apiRef = useGridApiContext();
         apiRef.current.exportDataAsCsv({
           fileName: "dataset-export",
           delimiter: ",",

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import FormSchemaField from "./FormSchemaField";
 import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
@@ -6,6 +6,24 @@ import FormSchemaFieldWithOptimizers from "./FormSchemaFieldWithOptimizers";
 import FormSchemaFieldWithParent from "./FormSchemaFieldWithParent";
 import { getModelFromSubform } from "../../utils/schema";
 import { Stack } from "@mui/material";
+
+function SubField({ objName, subField, fieldSubschema, subValue, subError, handleChange, setError }) {
+  const field = {
+    value: subValue,
+    error: subError,
+    onChange: handleChange(objName, subField),
+  };
+
+  return (
+    <FormSchemaField
+      key={`${objName}.${subField}`}
+      objName={`${objName}.${subField}`}
+      setError={setError}
+      paramJsonSchema={fieldSubschema}
+      field={field}
+    />
+  );
+}
 
 function FormSchemaRenderFields({
   modelSchema,
@@ -17,8 +35,6 @@ function FormSchemaRenderFields({
   errorsMessage,
   spacing = 2,
 }) {
-  if (!modelSchema) return null;
-
   // Handler to update formik values and trigger schema update
   const handleChange = useCallback(
     (name, subName) => (value) => {
@@ -33,6 +49,8 @@ function FormSchemaRenderFields({
   );
 
   const renderFields = useCallback(() => {
+    if (!modelSchema) return null;
+
     const fields = [];
 
     for (const key in modelSchema) {
@@ -97,22 +115,16 @@ function FormSchemaRenderFields({
                   const subValue = value?.[subField];
                   const subError = error?.[subField];
 
-                  const subFieldObj = useMemo(
-                    () => ({
-                      value: subValue,
-                      error: subError,
-                      onChange: handleChange(objName, subField),
-                    }),
-                    [subValue, subError, objName, subField, handleChange],
-                  );
-
                   return (
-                    <FormSchemaField
+                    <SubField
                       key={`${objName}.${subField}`}
-                      objName={`${objName}.${subField}`}
+                      objName={objName}
+                      subField={subField}
+                      fieldSubschema={fieldSubschema}
+                      subValue={subValue}
+                      subError={subError}
+                      handleChange={handleChange}
                       setError={setError}
-                      paramJsonSchema={fieldSubschema}
-                      field={subFieldObj}
                     />
                   );
                 })}
@@ -140,6 +152,8 @@ function FormSchemaRenderFields({
     setError,
     errorsMessage,
   ]);
+
+  if (!modelSchema) return null;
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
 }

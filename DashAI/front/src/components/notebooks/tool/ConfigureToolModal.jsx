@@ -30,8 +30,6 @@ export default function ConfigureToolModal({
   FormSection,
 }) {
   const theme = useTheme();
-  if (!tool) return null;
-
   const [activeTab, setActiveTab] = useState(0);
   const [step, setStep] = useState(0);
   const containerRef = useRef(null);
@@ -76,11 +74,13 @@ export default function ConfigureToolModal({
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize) => {
-      const data = await getDatasetFile(notebook.file_path, page, pageSize);
+      const data = await getDatasetFile(notebook?.file_path, page, pageSize);
       return { rows: data.rows ?? [], total: data.total ?? 0 };
     },
-    [notebook.file_path],
+    [notebook?.file_path],
   );
+
+  if (!tool) return null;
 
   const steps =
     Object.values(tool.schema.properties).length > 0

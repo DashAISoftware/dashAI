@@ -18,13 +18,13 @@ import FormSchemaFieldWithParent from "../../components/shared/FormSchemaFieldWi
 import { getModelFromSubform } from "../../utils/schema";
 
 function ParamsSettings({ open, modelSchema, values, onChange, onClose }) {
-  if (!modelSchema) return null;
-
   const [localValues, setLocalValues] = React.useState(values || {});
 
   React.useEffect(() => {
     setLocalValues(values || {});
   }, [values]);
+
+  if (!modelSchema) return null;
 
   const handleFieldChange = (fieldName, fieldValue) => {
     setLocalValues((prev) => {

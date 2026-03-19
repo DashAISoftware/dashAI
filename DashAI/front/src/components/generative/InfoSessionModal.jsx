@@ -15,11 +15,11 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 
 export default function InfoSessionModal({ sessionData, open, onClose }) {
-  // If no session data is provided, don't render anything
-  if (!sessionData) return null;
-
   const { t } = useTranslation(["generative", "common"]);
   const theme = useTheme();
+
+  // If no session data is provided, don't render anything
+  if (!sessionData) return null;
 
   return (
     <Modal

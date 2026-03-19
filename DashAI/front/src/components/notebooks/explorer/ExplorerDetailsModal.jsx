@@ -35,12 +35,13 @@ export default function ExplorerDetailsModal({
   dataType,
   loading,
 }) {
-  if (!explorer) return null;
-  if (!data) return null;
   const [currentTab, setCurrentTab] = useState(3);
   const [localData, setLocalData] = useState(data);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
+
+  if (!explorer) return null;
+  if (!data) return null;
 
   const tabs = [
     { label: t("common:info"), value: 0, icon: <InfoOutlined /> },

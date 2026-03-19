@@ -67,17 +67,6 @@ export default function NotebookView({ notebook }) {
     }
   }, [tourContext]);
 
-  if (!notebook) {
-    return (
-      <Box
-        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-      >
-        <CircularProgress color="primary" />
-        <Typography>{t("common:loading")}</Typography>
-      </Box>
-    );
-  }
-
   const { explorersAndConverters, setExplorersAndConverters } =
     useExplorersAndConverters();
   const [openDeleteExplorerConfirmation, setOpenDeleteExplorerConfirmation] =
@@ -92,6 +81,7 @@ export default function NotebookView({ notebook }) {
   const listBoxRef = useRef(null);
 
   const fetchExplorersAndConverters = useCallback(async () => {
+    if (!notebook) return;
     try {
       const [explorersData, convertersData] = await Promise.all([
         getExplorersByNotebookId(notebook.id),
@@ -112,7 +102,7 @@ export default function NotebookView({ notebook }) {
     } catch (error) {
       console.error("Failed to fetch explorers and converters:", error);
     }
-  }, [notebook.id, setExplorersAndConverters]);
+  }, [notebook?.id, setExplorersAndConverters]);
 
   const getItemsToDelete = useCallback(
     (converterToDelete) => {
@@ -235,6 +225,17 @@ export default function NotebookView({ notebook }) {
   useEffect(() => {
     setListSize(explorersAndConverters.length);
   }, [explorersAndConverters]);
+
+  if (!notebook) {
+    return (
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <CircularProgress color="primary" />
+        <Typography>{t("common:loading")}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box

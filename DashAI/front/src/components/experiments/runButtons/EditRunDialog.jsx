@@ -7,11 +7,12 @@ import { useTranslation } from "react-i18next";
 
 export default function EditRunDialog({ experiment, run, setRun }) {
   const isRunning = run.status === 1 || run.status === 2;
+  const [open, setOpen] = useState(false);
+  const { t } = useTranslation("experiments");
+
   if (isRunning) {
     return null;
   }
-  const [open, setOpen] = useState(false);
-  const { t } = useTranslation("experiments");
 
   return (
     <>

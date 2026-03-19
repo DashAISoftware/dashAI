@@ -3,9 +3,9 @@ import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 const ItemsToDeleteList = React.memo(function ItemsToDeleteList({ items }) {
-  if (!items || items.length === 0) return null;
-
   const { t } = useTranslation(["common", "datasets"]);
+
+  if (!items || items.length === 0) return null;
 
   return (
     <Box

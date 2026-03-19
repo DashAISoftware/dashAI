@@ -37,13 +37,13 @@ export default function RunInfoModal({
   onEditParameters,
   onOptimize,
 }) {
-  if (!run || !experiment) return null;
-  const [localRun, setLocalRun] = useState(structuredClone(run));
+  const [localRun, setLocalRun] = useState(() => run ? structuredClone(run) : null);
   const [metrics, setMetrics] = useState([]);
   const [optimizers, setOptimizers] = useState([]);
   const { t } = useTranslation(["experiments", "common"]);
 
   useEffect(() => {
+    if (!run || !experiment) return;
     const fetchMetricsAndOptimizers = async () => {
       try {
         const components = await getComponents({
@@ -61,7 +61,9 @@ export default function RunInfoModal({
       }
     };
     fetchMetricsAndOptimizers();
-  }, []);
+  }, [run, experiment]);
+
+  if (!run || !experiment) return null;
 
   const getStatusColor = (status) => {
     switch (status) {
