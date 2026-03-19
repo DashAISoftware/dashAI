@@ -97,10 +97,6 @@ export default function GenerativeChat() {
   }, [sessionId, paramsVersion]);
 
   useEffect(() => {
-    setMessages([]);
-  }, [taskName]);
-
-  useEffect(() => {
     scrollToBottom();
   }, [messagesWithHistory]);
 

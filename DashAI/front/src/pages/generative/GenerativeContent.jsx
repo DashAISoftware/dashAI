@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 
 export default function GenerativeContent() {
   const threePanelLayout = useThreePanelLayout();
-  const { stepIndex, selectedSessionId } = useGenerative();
+  const { stepIndex, selectedSessionId, selectedTaskName } = useGenerative();
   const { t } = useTranslation(["generative"]);
 
   return (
@@ -27,7 +27,7 @@ export default function GenerativeContent() {
         </LeftPanel>
         <CenterPanel data-tour="task-gallery">
           {selectedSessionId ? (
-            <GenerativeChat />
+            <GenerativeChat key={selectedTaskName} />
           ) : stepIndex === 0 ? (
             <SelectTaskMenu />
           ) : (
