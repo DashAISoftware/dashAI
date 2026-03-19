@@ -66,7 +66,6 @@ export function ModelsProvider({ children }) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(OptionsEnum.NEW);
 
   const selectModel = useCallback((model) => {
     setSelectedModel(model);
