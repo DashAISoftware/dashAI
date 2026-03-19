@@ -79,7 +79,6 @@ function ResponsiveAppBar() {
                 vertical: "bottom",
                 horizontal: "left",
               }}
-              autoFocus
               keepMounted
               transformOrigin={{
                 vertical: "top",

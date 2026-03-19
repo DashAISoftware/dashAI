@@ -17,7 +17,6 @@ const SelectTypeCell = ({ id, value, field, options, updateValue }) => {
       onChange={handleChange}
       size="small"
       sx={{ height: 1 }}
-      autoFocus
     >
       {options.map((option) => (
         <option key={option} value={option}>
