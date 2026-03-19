@@ -7,12 +7,14 @@ import { getRunStatus } from "../../utils/runStatus";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 /**
  * Compact comparison table showing all runs in a session
  * Designed for sticky header display with fixed height
  */
 function ModelComparisonTable({
-  runs = [],
+  runs = EMPTY_ARRAY,
   session,
   onTrain,
   onViewDetails,

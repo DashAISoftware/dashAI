@@ -3,10 +3,12 @@ import PropTypes from "prop-types";
 
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 
+const EMPTY_ARRAY = [];
+
 function TabularVisualizer({
   loading = false,
-  rows = [],
-  columns = [],
+  rows = EMPTY_ARRAY,
+  columns = EMPTY_ARRAY,
   ...props
 }) {
   return (

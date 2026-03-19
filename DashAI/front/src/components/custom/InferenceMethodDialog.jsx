@@ -18,11 +18,13 @@ const AVAILABLE_METHODS = [
   { name: "Image File Detection", value: "Image" },
 ];
 
+const EMPTY_ARRAY = [];
+
 function InferenceMethodDialog({
   open,
   onClose,
   onConfirm,
-  defaultSelected = [],
+  defaultSelected = EMPTY_ARRAY,
 }) {
   const [selectedMethods, setSelectedMethods] = useState(defaultSelected);
   const { t } = useTranslation(["custom", "common"]);

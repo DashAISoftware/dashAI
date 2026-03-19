@@ -26,6 +26,8 @@ import { createRun } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 
+const EMPTY_ARRAY = [];
+
 /**
  * Dialog for adding a new model run to a session
  * Step 1: Configure model name and parameters
@@ -36,7 +38,7 @@ function AddModelDialog({
   onClose,
   session,
   preselectedModel,
-  existingRuns = [],
+  existingRuns = EMPTY_ARRAY,
   onRunCreated,
 }) {
   const { enqueueSnackbar } = useSnackbar();

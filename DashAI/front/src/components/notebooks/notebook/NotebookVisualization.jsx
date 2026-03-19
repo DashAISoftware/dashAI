@@ -3,9 +3,11 @@ import { Box, Divider } from "@mui/material";
 import NotebookView from "./NotebookView";
 import DatasetPreviewNotebook from "./DatasetPreviewNotebook";
 
+const EMPTY_ARRAY = [];
+
 export default function NotebookVisualization({
   notebook,
-  existingDatasets = [],
+  existingDatasets = EMPTY_ARRAY,
 }) {
   const [isAccordionExpanded, setIsAccordionExpanded] = useState(true);
 

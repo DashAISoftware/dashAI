@@ -11,11 +11,13 @@ import NoteBox from "../NoteBox";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 export default function UploadNotebookSteps({
   backHome,
   datasets,
   handleNotebookCreated,
-  existingNotebooks = [],
+  existingNotebooks = EMPTY_ARRAY,
   preselectedDatasetId = null,
 }) {
   const [selectedDataset, setSelectedDataset] = useState(

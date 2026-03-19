@@ -11,12 +11,14 @@ import ItemSelectorWithInfo from "../custom/ItemSelectorWithInfo";
 import { useTourContext } from "../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 function SetNameAndTaskStep({
   newExp,
   setNewExp,
   setNextEnabled,
   defaultExperimentName,
-  existingExperiments = [],
+  existingExperiments = EMPTY_ARRAY,
 }) {
   const { enqueueSnackbar } = useSnackbar();
 

@@ -17,12 +17,14 @@ import { generateSequentialName } from "../../../utils/nameGenerator";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 export function SaveDatasetModal({
   open,
   onClose,
   onSaveDataset,
   appliedConverters,
-  existingDatasets = [],
+  existingDatasets = EMPTY_ARRAY,
 }) {
   const [name, setName] = useState("");
   const [frozenDefaultName, setFrozenDefaultName] = useState("");

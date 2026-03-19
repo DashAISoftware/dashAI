@@ -29,13 +29,15 @@ import { useTourContext } from "../tour/TourProvider";
 import { renderStep } from "./renderStep";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 export default function NewExperimentModal({
   open,
   setOpen,
   updateExperiments,
   preselectedDataset,
   setPreselectedDataset,
-  existingExperiments = [],
+  existingExperiments = EMPTY_ARRAY,
 }) {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down("md"));

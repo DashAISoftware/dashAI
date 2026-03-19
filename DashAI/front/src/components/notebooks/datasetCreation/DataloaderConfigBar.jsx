@@ -8,6 +8,8 @@ import FormInputWrapper from "../../configurableObject/Inputs/FormInputWrapper";
 import InputWithDebounce from "../../shared/InputWithDebounce";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 /**
  * Right sidebar component for configuring dataloader parameters
  * Similar to ParamsBar in Generative section
@@ -22,7 +24,7 @@ export default function DataloaderConfigBar({
   selectedDataloader,
   formSubmitRef,
   setError,
-  existingDatasets = [],
+  existingDatasets = EMPTY_ARRAY,
   onValuesChange,
 }) {
   const [inferenceRows, setInferenceRows] = useState(1000);

@@ -28,11 +28,13 @@ import { Trans, useTranslation } from "react-i18next";
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
  */
+const EMPTY_ARRAY = [];
+
 function ColumnSelector({
   file_path,
   inputCardinality = {},
-  allowedDtypes = [],
-  restrictedDtypes = [],
+  allowedDtypes = EMPTY_ARRAY,
+  restrictedDtypes = EMPTY_ARRAY,
   onSelectionChange = () => {},
   onValidationChange = () => {},
 }) {

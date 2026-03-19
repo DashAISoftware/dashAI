@@ -7,8 +7,10 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import ItemBox from "./ItemBox";
 import { t } from "i18next";
 
+const EMPTY_ARRAY = [];
+
 export default function CollapsibleList({
-  items = [],
+  items = EMPTY_ARRAY,
   selectedItemId,
   onItemClick,
   onItemDelete,

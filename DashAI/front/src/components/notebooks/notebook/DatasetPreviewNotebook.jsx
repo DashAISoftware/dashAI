@@ -26,9 +26,11 @@ import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 
+const EMPTY_ARRAY = [];
+
 export default function DatasetPreviewNotebook({
   notebook,
-  existingDatasets = [],
+  existingDatasets = EMPTY_ARRAY,
   onAccordionChange,
 }) {
   const { t } = useTranslation(["datasets", "common"]);

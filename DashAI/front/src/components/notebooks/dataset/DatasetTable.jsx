@@ -134,13 +134,16 @@ CustomToolbar.propTypes = {
  * - datasetId?: number (optional) - Dataset ID for column renaming
  * - editableColumns?: boolean (default false) - Enable column name editing
  */
+const EMPTY_DEPS = [];
+const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 25];
+
 export default function DatasetTable({
   fetchPage,
   initialPageSize = 5,
   columns: columnsProp,
-  deps = [],
+  deps = EMPTY_DEPS,
   autoHeight = true,
-  pageSizeOptions = [5, 10, 25],
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   datasetPath,
   datasetId,
   editableColumns = false,

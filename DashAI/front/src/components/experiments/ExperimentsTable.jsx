@@ -19,10 +19,12 @@ import { getComponents } from "../../api/component";
 import DeleteItemModal from "../custom/DeleteItemModal";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 function ExperimentsTable({
   handleOpenNewExperimentModal,
-  experiments = [],
-  datasets = [],
+  experiments = EMPTY_ARRAY,
+  datasets = EMPTY_ARRAY,
   loading = false,
   onUpdateExperiments,
 }) {

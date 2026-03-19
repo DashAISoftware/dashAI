@@ -13,9 +13,11 @@ import TableRow from "@mui/material/TableRow";
 import { formatDate } from "../../../utils";
 import { useTranslation } from "react-i18next";
 
+const EMPTY_ARRAY = [];
+
 export default function InfoNotebookModal({
   notebookData,
-  datasets = [],
+  datasets = EMPTY_ARRAY,
   open,
   onClose,
 }) {
