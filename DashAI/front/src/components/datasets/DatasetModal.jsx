@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import {
   Dialog,
@@ -78,6 +78,8 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     } catch (error) {
       console.error(error);
       setRequestError(true);
+      setActiveStep(1);
+      setNextEnabled(false);
       enqueueSnackbar("Error when trying to upload the dataset.");
     } finally {
       setUploaded(true);
@@ -110,8 +112,9 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
         "Error while trying to obtain preview of the uploaded file",
       );
       setRequestError(true);
-      setPreviewData(null);
+      setActiveStep(1);
       setNextEnabled(false);
+      setPreviewData(null);
     }
   };
 
@@ -223,13 +226,6 @@ function DatasetModal({ open, setOpen, updateDatasets }) {
     }
   };
 
-  useEffect(() => {
-    if (requestError) {
-      setActiveStep(1);
-      setNextEnabled(false);
-      setRequestError(false);
-    }
-  }, [requestError]);
   return (
     <Dialog
       open={open}
