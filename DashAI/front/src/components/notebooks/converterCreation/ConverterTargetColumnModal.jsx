@@ -54,7 +54,7 @@ const ConverterTargetColumnModal = ({
   ];
 
   const handleOpen = () => {
-    setSelectedColumn(classColumnInitialValue - 1);
+    setSelectedColumn(() => classColumnInitialValue - 1);
     fetchDatasetColumns();
     setOpen(true);
   };
