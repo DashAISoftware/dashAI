@@ -17,6 +17,110 @@ import {
 } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 import EditableColumnHeader from "./EditableColumnHeader";
+import PropTypes from "prop-types";
+
+function CsvExportButton({ datasetPath }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const apiRef = useGridApiContext();
+  const open = Boolean(anchorEl);
+  const { t } = useTranslation(["common"]);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      if (datasetPath) {
+        // Use our custom endpoint
+        const blob = await exportDatasetCsvByPath(datasetPath);
+
+        // Create temporary URL and download
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+
+        // Extract dataset name from path
+        const datasetName = datasetPath.split("/").pop() || "dataset";
+        link.download = `${datasetName}.csv`;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // Fallback to original DataGrid method
+        apiRef.current.exportDataAsCsv({
+          fileName: "dataset-export",
+          delimiter: ",",
+          utf8WithBom: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      // Fallback to original method in case of error
+      apiRef.current.exportDataAsCsv({
+        fileName: "dataset-export",
+        delimiter: ",",
+        utf8WithBom: true,
+      });
+    } finally {
+      handleClose();
+    }
+  };
+
+  return (
+    <>
+      <Button
+        size="small"
+        startIcon={<Download />}
+        onClick={handleClick}
+        aria-controls={open ? "export-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+      >
+        {t("common:export")}
+      </Button>
+      <Menu
+        id="export-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        slotProps={{
+          list: {
+            "aria-labelledby": "export-button",
+          },
+        }}
+      >
+        <MenuItem onClick={handleExportCsv}>
+          <Download sx={{ mr: 1, fontSize: 16 }} />
+          {t("common:exportAsCSV")}
+        </MenuItem>
+      </Menu>
+    </>
+  );
+}
+CsvExportButton.propTypes = {
+  datasetPath: PropTypes.string,
+};
+
+function CustomToolbar({ datasetPath }) {
+  return (
+    <GridToolbarContainer>
+      <GridToolbarColumnsButton />
+      <GridToolbarFilterButton />
+      <GridToolbarDensitySelector />
+      <CsvExportButton datasetPath={datasetPath} />
+    </GridToolbarContainer>
+  );
+}
+CustomToolbar.propTypes = {
+  datasetPath: PropTypes.string,
+};
 
 /**
  * Props:
@@ -218,104 +322,6 @@ export default function DatasetTable({
     t,
   ]);
 
-  // Custom CSV Export Button
-  function CsvExportButton() {
-    const [anchorEl, setAnchorEl] = useState(null);
-    const apiRef = useGridApiContext();
-    const open = Boolean(anchorEl);
-
-    const handleClick = (event) => {
-      setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
-
-    const handleExportCsv = async () => {
-      try {
-        if (datasetPath) {
-          // Use our custom endpoint
-          const blob = await exportDatasetCsvByPath(datasetPath);
-
-          // Create temporary URL and download
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-
-          // Extract dataset name from path
-          const datasetName = datasetPath.split("/").pop() || "dataset";
-          link.download = `${datasetName}.csv`;
-
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        } else {
-          // Fallback to original DataGrid method
-          apiRef.current.exportDataAsCsv({
-            fileName: "dataset-export",
-            delimiter: ",",
-            utf8WithBom: true,
-          });
-        }
-      } catch (error) {
-        console.error("Error exporting CSV:", error);
-        // Fallback to original method in case of error
-        apiRef.current.exportDataAsCsv({
-          fileName: "dataset-export",
-          delimiter: ",",
-          utf8WithBom: true,
-        });
-      } finally {
-        handleClose();
-      }
-    };
-
-    return (
-      <>
-        <Button
-          size="small"
-          startIcon={<Download />}
-          onClick={handleClick}
-          aria-controls={open ? "export-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-        >
-          {t("common:export")}
-        </Button>
-        <Menu
-          id="export-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          slotProps={{
-            list: {
-              "aria-labelledby": "export-button",
-            },
-          }}
-        >
-          <MenuItem onClick={handleExportCsv}>
-            <Download sx={{ mr: 1, fontSize: 16 }} />
-            {t("common:exportAsCSV")}
-          </MenuItem>
-        </Menu>
-      </>
-    );
-  }
-
-  // Custom toolbar with CSV-only export
-  function CustomToolbar() {
-    return (
-      <GridToolbarContainer>
-        <GridToolbarColumnsButton />
-        <GridToolbarFilterButton />
-        <GridToolbarDensitySelector />
-        <CsvExportButton />
-      </GridToolbarContainer>
-    );
-  }
-
   // DEBUG: Log filterModel changes to see what is sent to the backend
   useEffect(() => {
     if (filterModel && filterModel.items && filterModel.items.length > 0) {
@@ -348,6 +354,9 @@ export default function DatasetTable({
         slots={{
           toolbar: CustomToolbar,
           loadingOverlay: LinearProgress,
+        }}
+        slotProps={{
+          toolbar: { datasetPath },
         }}
         columnHeaderHeight={editableColumns ? 95 : 85}
         {...props}

@@ -12,6 +12,54 @@ import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import { useTranslation } from "react-i18next";
 
+function ExplainersTable({ runId, scope, title, handleNewExplainer, description }) {
+  const { t } = useTranslation(["explainers"]);
+  return (
+    <Grid size={{ xs: 12 }}>
+      <Paper sx={{ py: 2, px: 2 }}>
+        <Grid
+          container
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
+        >
+          <Typography variant="h4" component="h2">
+            {title}
+          </Typography>
+          <Grid>
+            <TimestampWrapper
+              eventName={
+                TIMESTAMP_KEYS.explainer[
+                  `configure${scope.charAt(0).toUpperCase() + scope.slice(1)}`
+                ]
+              }
+            >
+              <Button
+                variant="contained"
+                onClick={handleNewExplainer}
+                endIcon={<AddIcon />}
+              >
+                {t("explainers:button.addExplainer")}
+              </Button>
+            </TimestampWrapper>
+          </Grid>
+        </Grid>
+        <Typography variant="h6" component="h2">
+          {description}
+        </Typography>
+        <ExplainersGrid runId={runId} scope={scope} />
+      </Paper>
+    </Grid>
+  );
+}
+ExplainersTable.propTypes = {
+  runId: PropTypes.string.isRequired,
+  scope: PropTypes.string.isRequired,
+  handleNewExplainer: PropTypes.func.isRequired,
+  description: PropTypes.string.isRequired,
+};
+
 export default function ExplainersDashboard() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,57 +102,6 @@ export default function ExplainersDashboard() {
   const explainerConfig = {
     runId: id,
     taskName: taskName,
-  };
-
-  const ExplainersTable = ({
-    scope,
-    title,
-    handleNewExplainer,
-    description,
-  }) => {
-    return (
-      <Grid size={{ xs: 12 }}>
-        <Paper sx={{ py: 2, px: 2 }}>
-          <Grid
-            container
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 4 }}
-          >
-            <Typography variant="h4" component="h2">
-              {title}
-            </Typography>
-            <Grid>
-              <TimestampWrapper
-                eventName={
-                  TIMESTAMP_KEYS.explainer[
-                    `configure${scope.charAt(0).toUpperCase() + scope.slice(1)}`
-                  ]
-                }
-              >
-                <Button
-                  variant="contained"
-                  onClick={handleNewExplainer}
-                  endIcon={<AddIcon />}
-                >
-                  {t("explainers:button.addExplainer")}
-                </Button>
-              </TimestampWrapper>
-            </Grid>
-          </Grid>
-          <Typography variant="h6" component="h2">
-            {description}
-          </Typography>
-          <ExplainersGrid runId={id} scope={scope} />
-        </Paper>
-      </Grid>
-    );
-  };
-  ExplainersTable.propTypes = {
-    scope: PropTypes.string.isRequired,
-    handleNewExplainer: PropTypes.func.isRequired,
-    description: PropTypes.string.isRequired,
   };
 
   return (
@@ -151,6 +148,7 @@ export default function ExplainersDashboard() {
       <Grid container spacing={2}>
         {currentTab === 0 && (
           <ExplainersTable
+            runId={id}
             scope={"global"}
             title={t("explainers:label.globalExplanations")}
             handleNewExplainer={handleNewGlobalExplainerModal}
@@ -159,6 +157,7 @@ export default function ExplainersDashboard() {
         )}
         {currentTab === 1 && (
           <ExplainersTable
+            runId={id}
             scope={"local"}
             title={t("explainers:label.localExplanations")}
             handleNewExplainer={handleNewLocalExplainerModal}

@@ -20,6 +20,50 @@ import usePluginsUpgrade from "../hooks/usePluginsUpgrade";
 import Markdown from "react-markdown";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Trans, useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
+
+function PluginsActions({ installLoading, plugin, updatePlugin, upgradePlugin }) {
+  const { t } = useTranslation(["plugins"]);
+  return (
+    <Grid container columnGap={2}>
+      {installLoading ? (
+        <Button size="medium" variant="outlined" disabled>
+          <CircularProgress size={24} />
+        </Button>
+      ) : (
+        <Button
+          onClick={() => updatePlugin()}
+          size="medium"
+          variant="outlined"
+        >
+          {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
+            plugin.status,
+          )
+            ? t("plugins:button.uninstall")
+            : t("plugins:button.install")}
+        </Button>
+      )}
+      {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
+        plugin.status,
+      ) && (
+        <Button
+          onClick={() => upgradePlugin()}
+          size="medium"
+          variant="outlined"
+          disabled={plugin.installed_version === plugin.lastest_version}
+        >
+          {t("plugins:button.upgrade")}
+        </Button>
+      )}
+    </Grid>
+  );
+}
+PluginsActions.propTypes = {
+  installLoading: PropTypes.bool.isRequired,
+  plugin: PropTypes.object.isRequired,
+  updatePlugin: PropTypes.func.isRequired,
+  upgradePlugin: PropTypes.func.isRequired,
+};
 
 /**
  * component for plugin details
@@ -55,42 +99,6 @@ function PluginsDetails() {
   const { upgradePlugin } = usePluginsUpgrade({
     pluginId: plugin.id,
   });
-
-  function PluginsActions() {
-    return (
-      <Grid container columnGap={2}>
-        {installLoading ? (
-          <Button size="medium" variant="outlined" disabled>
-            <CircularProgress size={24} />
-          </Button>
-        ) : (
-          <Button
-            onClick={() => updatePlugin()}
-            size="medium"
-            variant="outlined"
-          >
-            {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
-              plugin.status,
-            )
-              ? t("plugins:button.uninstall")
-              : t("plugins:button.install")}
-          </Button>
-        )}
-        {[PluginStatus.INSTALLED, PluginStatus.DOWNLOADED].includes(
-          plugin.status,
-        ) && (
-          <Button
-            onClick={() => upgradePlugin()}
-            size="medium"
-            variant="outlined"
-            disabled={plugin.installed_version === plugin.lastest_version}
-          >
-            {t("plugins:button.upgrade")}
-          </Button>
-        )}
-      </Grid>
-    );
-  }
 
   const tabs = [
     {
@@ -175,7 +183,12 @@ function PluginsDetails() {
               }}
             />
             <CardContent sx={{ pb: 0 }}>
-              {PluginsActions(plugin.status === PluginStatus.INSTALLED)}
+              <PluginsActions
+                installLoading={installLoading}
+                plugin={plugin}
+                updatePlugin={updatePlugin}
+                upgradePlugin={upgradePlugin}
+              />
             </CardContent>
           </Card>
           <PluginsDetailsTab tabs={tabs}></PluginsDetailsTab>
