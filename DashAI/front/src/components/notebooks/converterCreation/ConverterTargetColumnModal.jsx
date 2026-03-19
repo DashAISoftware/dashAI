@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import PropTypes from "prop-types";
 import {
@@ -53,12 +53,11 @@ const ConverterTargetColumnModal = ({
     },
   ];
 
-  useEffect(() => {
-    if (open) {
-      setSelectedColumn(classColumnInitialValue - 1);
-      fetchDatasetColumns();
-    }
-  }, [open, classColumnInitialValue]);
+  const handleOpen = () => {
+    setSelectedColumn(classColumnInitialValue - 1);
+    fetchDatasetColumns();
+    setOpen(true);
+  };
 
   const fetchDatasetColumns = async () => {
     setLoading(true);
@@ -108,7 +107,7 @@ const ConverterTargetColumnModal = ({
     <React.Fragment>
       <Button
         startIcon={<ViewColumn />}
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         variant="outlined"
         size="small"
         sx={{

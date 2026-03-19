@@ -31,19 +31,20 @@ export default function ConfigureAndUploadDatasetStep({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
 
-  useEffect(() => {
-    if (onPreviewError) {
-      onPreviewError(previewError);
-    }
-  }, [previewError, onPreviewError]);
-
-  useEffect(() => {
-    if (previewError) {
-      enqueueSnackbar(t("datasets:error.loadingDatasetPreview"), {
-        variant: "error",
-      });
-    }
-  }, [previewError, enqueueSnackbar]);
+  const handlePreviewError = useCallback(
+    (hasError) => {
+      setPreviewError(hasError);
+      if (onPreviewError) {
+        onPreviewError(hasError);
+      }
+      if (hasError) {
+        enqueueSnackbar(t("datasets:error.loadingDatasetPreview"), {
+          variant: "error",
+        });
+      }
+    },
+    [onPreviewError, enqueueSnackbar, t],
+  );
 
   const submitNewDataset = useCallback(async () => {
     if (!datasetFileToUpload || !datasetFileToUpload.file) {
@@ -181,7 +182,7 @@ export default function ConfigureAndUploadDatasetStep({
           onColumnRename={handleColumnRename}
           formValues={formValues}
           selectedDataloader={selectedDataloader}
-          onPreviewError={setPreviewError}
+          onPreviewError={handlePreviewError}
           onTypesChanged={handleTypesChanged}
         />
       </Grid>
