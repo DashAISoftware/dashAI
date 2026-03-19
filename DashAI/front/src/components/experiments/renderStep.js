@@ -6,14 +6,14 @@ import ConfigureModelsStep from "./ConfigureModelsStep";
 import HyperparameterOptimizationStep from "./HyperparameterOptimizationStep";
 import MetricsSelector from "./metrics/MetricsSelector";
 
-export function renderStep(
+export function StepContent({
   stepName,
   newExp,
   setNewExp,
   setNextEnabled,
   defaultName,
   existingExperiments,
-) {
+}) {
   switch (stepName) {
     case "selectTask":
       return (

@@ -25,6 +25,104 @@ function SubField({ objName, subField, fieldSubschema, subValue, subError, handl
   );
 }
 
+function FieldList({ modelSchema, values, errors, handleChange, setError, errorsMessage }) {
+  if (!modelSchema) return null;
+
+  const fields = [];
+
+  for (const key in modelSchema) {
+    const fieldSchema = modelSchema[key];
+    const objName = key;
+    const value = values?.[objName];
+    const error = errors?.[objName];
+    const isOptimizable = fieldSchema.placeholder?.optimize !== undefined;
+
+    const baseField = {
+      value,
+      error,
+      onChange: handleChange(objName),
+    };
+
+    if ("anyOf" in fieldSchema) {
+      fields.push(
+        <FormSchemaFieldWithOptions
+          key={objName}
+          title={fieldSchema.title}
+          description={fieldSchema.description}
+          options={fieldSchema.anyOf}
+          required={fieldSchema.required}
+          objName={objName}
+          setError={setError}
+          field={baseField}
+        />,
+      );
+    } else if (isOptimizable) {
+      fields.push(
+        <FormSchemaFieldWithOptimizers
+          key={objName}
+          objName={objName}
+          paramJsonSchema={fieldSchema}
+          field={baseField}
+        />,
+      );
+    } else if (fieldSchema.type === "object") {
+      if (Boolean(fieldSchema?.parent)) {
+        fields.push(
+          <FormSchemaFieldWithParent
+            key={objName}
+            name={objName}
+            field={baseField}
+            selectedModel={getModelFromSubform(value)}
+            label={fieldSchema.title}
+            description={fieldSchema.description}
+          />,
+        );
+      } else {
+        fields.push(
+          <FormSchemaFieldWithCollapse
+            key={objName}
+            name={objName}
+            label={fieldSchema.title}
+            description={fieldSchema.description}
+            errorMessage={errorsMessage?.[objName]?.message}
+          >
+            {fieldSchema?.properties &&
+              Object.keys(fieldSchema.properties).map((subField) => {
+                const fieldSubschema = fieldSchema.properties[subField];
+                const subValue = value?.[subField];
+                const subError = error?.[subField];
+
+                return (
+                  <SubField
+                    key={`${objName}.${subField}`}
+                    objName={objName}
+                    subField={subField}
+                    fieldSubschema={fieldSubschema}
+                    subValue={subValue}
+                    subError={subError}
+                    handleChange={handleChange}
+                    setError={setError}
+                  />
+                );
+              })}
+          </FormSchemaFieldWithCollapse>,
+        );
+      }
+    } else {
+      fields.push(
+        <FormSchemaField
+          key={objName}
+          objName={objName}
+          paramJsonSchema={fieldSchema}
+          field={baseField}
+        />,
+      );
+    }
+  }
+
+  return fields;
+}
+
 function FormSchemaRenderFields({
   modelSchema,
   formik,
@@ -48,114 +146,20 @@ function FormSchemaRenderFields({
     [formik, handleUpdateSchema, autoSave, onFormSubmit],
   );
 
-  const renderFields = useCallback(() => {
-    if (!modelSchema) return null;
-
-    const fields = [];
-
-    for (const key in modelSchema) {
-      const fieldSchema = modelSchema[key];
-      const objName = key;
-      const value = formik?.values?.[objName];
-      const error = formik?.errors?.[objName];
-      const isOptimizable = fieldSchema.placeholder?.optimize !== undefined;
-
-      const baseField = {
-        value,
-        error,
-        onChange: handleChange(objName),
-      };
-
-      if ("anyOf" in fieldSchema) {
-        fields.push(
-          <FormSchemaFieldWithOptions
-            key={objName}
-            title={fieldSchema.title}
-            description={fieldSchema.description}
-            options={fieldSchema.anyOf}
-            required={fieldSchema.required}
-            objName={objName}
-            setError={setError}
-            field={baseField}
-          />,
-        );
-      } else if (isOptimizable) {
-        fields.push(
-          <FormSchemaFieldWithOptimizers
-            key={objName}
-            objName={objName}
-            paramJsonSchema={fieldSchema}
-            field={baseField}
-          />,
-        );
-      } else if (fieldSchema.type === "object") {
-        if (Boolean(fieldSchema?.parent)) {
-          fields.push(
-            <FormSchemaFieldWithParent
-              key={objName}
-              name={objName}
-              field={baseField}
-              selectedModel={getModelFromSubform(value)}
-              label={fieldSchema.title}
-              description={fieldSchema.description}
-            />,
-          );
-        } else {
-          fields.push(
-            <FormSchemaFieldWithCollapse
-              key={objName}
-              name={objName}
-              label={fieldSchema.title}
-              description={fieldSchema.description}
-              errorMessage={errorsMessage?.[objName]?.message}
-            >
-              {fieldSchema?.properties &&
-                Object.keys(fieldSchema.properties).map((subField) => {
-                  const fieldSubschema = fieldSchema.properties[subField];
-                  const subValue = value?.[subField];
-                  const subError = error?.[subField];
-
-                  return (
-                    <SubField
-                      key={`${objName}.${subField}`}
-                      objName={objName}
-                      subField={subField}
-                      fieldSubschema={fieldSubschema}
-                      subValue={subValue}
-                      subError={subError}
-                      handleChange={handleChange}
-                      setError={setError}
-                    />
-                  );
-                })}
-            </FormSchemaFieldWithCollapse>,
-          );
-        }
-      } else {
-        fields.push(
-          <FormSchemaField
-            key={objName}
-            objName={objName}
-            paramJsonSchema={fieldSchema}
-            field={baseField}
-          />,
-        );
-      }
-    }
-
-    return fields;
-  }, [
-    modelSchema,
-    formik.values,
-    formik.errors,
-    handleChange,
-    setError,
-    errorsMessage,
-  ]);
-
   if (!modelSchema) return null;
 
-  return <Stack spacing={spacing}>{renderFields()}</Stack>;
+  return (
+    <Stack spacing={spacing}>
+      <FieldList
+        modelSchema={modelSchema}
+        values={formik?.values}
+        errors={formik?.errors}
+        handleChange={handleChange}
+        setError={setError}
+        errorsMessage={errorsMessage}
+      />
+    </Stack>
+  );
 }
 
 export default FormSchemaRenderFields;

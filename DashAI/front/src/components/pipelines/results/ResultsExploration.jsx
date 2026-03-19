@@ -119,6 +119,36 @@ const getDataFromOrientation = (data, orientation) => {
   return res;
 };
 
+function ExplorationVisualizer({ type, dataObj }) {
+  if (!Object.keys(visualizers).includes(type)) {
+    console.error(`No visualizer found for type: ${type}`);
+    return null;
+  }
+
+  if (type === visualizersKeys.tabular) {
+    const data = getDataFromOrientation(dataObj.data, dataObj.config.orient);
+    return (
+      <TabularVisualizer columns={data.columns} rows={data.rows} />
+    );
+  }
+
+  if (type === visualizersKeys.plotly_json) {
+    return <PlotlyJsonVisualizer data={JSON.parse(dataObj.data)} />;
+  }
+
+  if (type === visualizersKeys.image_base64) {
+    return (
+      <ImageVisualizer data={`data:image/png;base64,${dataObj.data}`} />
+    );
+  }
+
+  if (type === visualizersKeys.image_url) {
+    return <ImageVisualizer data={dataObj.data} />;
+  }
+
+  return null;
+}
+
 function Results({ pipelineId }) {
   const [explorationResults, setExplorationResults] = useState(null);
 
@@ -136,41 +166,6 @@ function Results({ pipelineId }) {
       fetchResults();
     }
   }, [pipelineId]);
-
-  const renderVisualizer = (type, dataObj) => {
-    if (!Object.keys(visualizers).includes(type)) {
-      console.error(`No visualizer found for type: ${type}`);
-      return null;
-    }
-
-    if (type === visualizersKeys.tabular) {
-      const data = getDataFromOrientation(dataObj.data, dataObj.config.orient);
-      return (
-        <TabularVisualizer key={type} columns={data.columns} rows={data.rows} />
-      );
-    }
-
-    if (type === visualizersKeys.plotly_json) {
-      return (
-        <PlotlyJsonVisualizer key={type} data={JSON.parse(dataObj.data)} />
-      );
-    }
-
-    if (type === visualizersKeys.image_base64) {
-      return (
-        <ImageVisualizer
-          key={type}
-          data={`data:image/png;base64,${dataObj.data}`}
-        />
-      );
-    }
-
-    if (type === visualizersKeys.image_url) {
-      return <ImageVisualizer key={type} data={dataObj.data} />;
-    }
-
-    return null;
-  };
 
   if (!explorationResults) {
     return <Typography variant="body2">Loading...</Typography>;
@@ -193,7 +188,7 @@ function Results({ pipelineId }) {
               {i}: {result.exploration_type}
               {result.name ? ` | ${result.name}` : ""}
             </Typography>
-            {renderVisualizer(result.results.type, result.results)}
+            <ExplorationVisualizer type={result.results.type} dataObj={result.results} />
           </Box>
         ),
       )}

@@ -26,7 +26,7 @@ import { checkIfHaveOptimazers } from "../../utils/schema";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { useTourContext } from "../tour/TourProvider";
-import { renderStep } from "./renderStep";
+import { StepContent } from "./renderStep";
 import { useTranslation } from "react-i18next";
 
 const EMPTY_ARRAY = [];
@@ -356,14 +356,14 @@ export default function NewExperimentModal({
       </DialogTitle>
       {/* Main content - steps */}
       <DialogContent dividers>
-        {renderStep(
-          steps[activeStep].name,
-          newExp,
-          setNewExp,
-          setNextEnabled,
-          defaultName,
-          existingExperiments,
-        )}
+        <StepContent
+          stepName={steps[activeStep].name}
+          newExp={newExp}
+          setNewExp={setNewExp}
+          setNextEnabled={setNextEnabled}
+          defaultName={defaultName}
+          existingExperiments={existingExperiments}
+        />
       </DialogContent>
       {/* Actions - Back and Next */}
       <DialogActions>

@@ -21,6 +21,33 @@ import {
   nodeRegistry,
 } from "../../components/pipelines";
 
+function NodeDialogContent({ selectedNode, nodeData, getConnectedNodeData, onClose, onSave }) {
+  if (!selectedNode) return null;
+
+  const { type, id, data } = selectedNode;
+  const { configType, configSchema } = data;
+  let NodeComponent = null;
+
+  if (configType === "custom") {
+    NodeComponent = nodeRegistry[type];
+  } else if (configType === "generic") {
+    NodeComponent = nodeRegistry["Configurable"];
+  }
+
+  if (!NodeComponent) return null;
+
+  return (
+    <NodeComponent
+      open={!!selectedNode}
+      onClose={onClose}
+      onSave={(data) => onSave(id, data)}
+      savedConfig={nodeData[id]}
+      prevNodes={getConnectedNodeData(selectedNode)}
+      configSchema={configSchema}
+    />
+  );
+}
+
 function NewPipeline() {
   const location = useLocation();
   const { pipelineId } = useParams();
@@ -76,33 +103,6 @@ function NewPipeline() {
   } = usePipelineState(pipelineId, location, navigate);
 
   const { getConnectedNodeData } = useConnectedNodeData(nodes, nodeData, edges);
-
-  const renderNodeDialogContent = () => {
-    if (!selectedNode) return null;
-
-    const { type, id, data } = selectedNode;
-    const { configType, configSchema } = data;
-    let NodeComponent = null;
-
-    if (configType === "custom") {
-      NodeComponent = nodeRegistry[type];
-    } else if (configType === "generic") {
-      NodeComponent = nodeRegistry["Configurable"];
-    }
-
-    if (!NodeComponent) return null;
-
-    return (
-      <NodeComponent
-        open={!!selectedNode}
-        onClose={handleCloseDialog}
-        onSave={(data) => handleSaveNodeData(id, data)}
-        savedConfig={nodeData[id]}
-        prevNodes={getConnectedNodeData(selectedNode)}
-        configSchema={configSchema}
-      />
-    );
-  };
 
   return (
     <CustomLayout
@@ -160,7 +160,7 @@ function NewPipeline() {
                 />
               </Box>
 
-              {renderNodeDialogContent() && (
+              {selectedNode && (
                 <Dialog
                   open={true}
                   onClose={() => {}}
@@ -189,7 +189,13 @@ function NewPipeline() {
                       </IconButton>
                     </Box>
                   </DialogTitle>
-                  {renderNodeDialogContent()}
+                  <NodeDialogContent
+                    selectedNode={selectedNode}
+                    nodeData={nodeData}
+                    getConnectedNodeData={getConnectedNodeData}
+                    onClose={handleCloseDialog}
+                    onSave={handleSaveNodeData}
+                  />
                 </Dialog>
               )}
             </Box>
