@@ -447,7 +447,7 @@ def _render_index_mdx(type_label: str, components: list) -> str:
     lines.append("| Name | Description |")
     lines.append("|------|-------------|")
     for comp in sorted_components:
-        short = comp["short_description"].replace("|", "\\|")
+        short = _escape_table_cell(comp["short_description"])
         lines.append(f"| [{comp['class_name']}](./{comp['class_name']}) | {short} |")
     lines.append("")
 

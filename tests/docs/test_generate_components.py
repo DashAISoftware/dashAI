@@ -432,3 +432,50 @@ def test_is_pipeline_node_returns_false_for_other_module():
     FakeCls.__module__ = "DashAI.back.models.svc"
 
     assert _is_pipeline_node(FakeCls) is False
+
+
+# ------------------------------------------------------------------ #
+# _format_default: reads 'placeholder' key before 'default'          #
+# ------------------------------------------------------------------ #
+
+def test_format_default_reads_placeholder_key():
+    from generate_components import _format_default
+
+    prop = {"placeholder": "rbf", "description": "Kernel type"}
+    assert _format_default(prop) == "rbf"
+
+
+def test_format_default_falls_back_to_default_key():
+    from generate_components import _format_default
+
+    prop = {"default": "linear", "description": "Kernel type"}
+    assert _format_default(prop) == "linear"
+
+
+def test_format_default_returns_dash_when_neither():
+    from generate_components import _format_default
+
+    prop = {"description": "No default"}
+    assert _format_default(prop) == "—"
+
+
+# ------------------------------------------------------------------ #
+# _escape_table_cell: escapes all MDX-sensitive characters           #
+# ------------------------------------------------------------------ #
+
+def test_escape_table_cell_escapes_pipe():
+    from generate_components import _escape_table_cell
+
+    assert _escape_table_cell("a|b") == "a\\|b"
+
+
+def test_escape_table_cell_escapes_curly_braces():
+    from generate_components import _escape_table_cell
+
+    assert _escape_table_cell("{array}") == "&#123;array&#125;"
+
+
+def test_escape_table_cell_escapes_angle_brackets():
+    from generate_components import _escape_table_cell
+
+    assert _escape_table_cell("a < b > c") == "a &lt; b &gt; c"
