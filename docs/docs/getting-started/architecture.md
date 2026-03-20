@@ -27,16 +27,19 @@ more. This document describes how DashAI works internally.
 
 DashAI follows a client-server architecture with three main runtime processes:
 
-1. **FastAPI backend** — serves the REST API on port 8000.
+1. **FastAPI backend** — serves the REST API on port 8000. In production it also serves
+   the compiled React SPA at `/app/`.
 2. **Huey consumer** — a background worker that processes long-running jobs (training,
    exploration, prediction, etc.).
 3. **React frontend** — a single-page application that communicates with the backend
-   through the REST API.
+   through the REST API. In development it runs separately on port 3000 (`yarn start`);
+   in production it is compiled and served by FastAPI.
 
 The entry point is `DashAI/__main__.py`, which uses Typer as CLI. On startup it:
 
 1. Resolves the local data path (defaults to `~/.DashAI`).
-2. Starts the Huey consumer thread (background job processing).
+2. Starts the Huey consumer. In development (normal Python install) this is an external
+   **subprocess**; in bundled mode (PyInstaller) it runs as an in-process **thread**.
 3. Starts the FastAPI server via Uvicorn.
 4. Optionally opens a browser or a PyWebView window.
 
