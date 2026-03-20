@@ -1,9 +1,7 @@
 name: Docs
 on:
   push:
-    branches:
-      - production
-      - develop
+    branches: [production, develop]
 
 permissions:
   contents: read
@@ -22,8 +20,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -33,28 +30,24 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
-            docs/requirements.txt
 
-      - name: Install system build tools (gcc, g++, cmake, ninja)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build
+      - name: Install DashAI (needed for component introspection)
+        run: pip install -e .
 
-      - name: Build docs
-        env:
-          CC: gcc
-          CXX: g++
-          PIP_DISABLE_PIP_VERSION_CHECK: "1"
-        run: |
-          python -m pip install -U pip setuptools wheel scikit-build-core
-          # Dependencias SOLO de docs
-          pip install -r docs/requirements.txt
-          # Instalación normal del proyecto (con todas las deps)
-          pip install -e .
-          # (opcional) limpia stubs viejos por si quedaron versionados
-          rm -rf docs/source/api/generated || true
-          # Construir HTML directamente (sin action)
-          sphinx-build -b html docs/source docs/build/html
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "yarn"
+          cache-dependency-path: docs/yarn.lock
+
+      - name: Install Docusaurus dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: docs
+
+      - name: Build docs (generates components + Docusaurus build)
+        run: yarn build
+        working-directory: docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v2
@@ -62,7 +55,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "docs/build/html"
+          path: "docs/build"
           retention-days: 1
 
       - name: Deploy to GitHub Pages
