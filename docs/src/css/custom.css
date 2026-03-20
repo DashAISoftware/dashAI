@@ -53,8 +53,9 @@
   text-align: center;
 }
 .dashai-hero__logo {
-  width: 64px;
   height: 64px;
+  width: auto;
+  max-width: 100%;
   margin-bottom: 16px;
 }
 .dashai-hero__title {
