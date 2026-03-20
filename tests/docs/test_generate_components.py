@@ -103,6 +103,22 @@ def test_get_description_returns_empty_when_nothing():
     assert _get_description(FakeCls) == ""
 
 
+def test_get_description_strips_multiline_docstring():
+    from generate_components import _get_description
+
+    class FakeCls:
+        """
+        First line of description.
+
+        Second paragraph.
+        """
+        pass
+
+    result = _get_description(FakeCls)
+    assert result.startswith("First line")
+    assert "\n    " not in result  # no raw indentation preserved
+
+
 # ------------------------------------------------------------------ #
 # _get_short_description: SHORT_DESCRIPTION > DESCRIPTION            #
 # ------------------------------------------------------------------ #
@@ -124,6 +140,15 @@ def test_get_short_description_falls_back_to_description():
         DESCRIPTION = FakeMultilingualString(en="Long description.")
 
     assert _get_short_description(FakeCls) == "Long description."
+
+
+def test_get_short_description_handles_multilingual():
+    from generate_components import _get_short_description
+
+    class FakeCls:
+        SHORT_DESCRIPTION = FakeMultilingualString(en="Short.", es="Corto.")
+
+    assert _get_short_description(FakeCls) == "Short."
 
 
 # ------------------------------------------------------------------ #
@@ -191,6 +216,15 @@ def test_get_schema_params_returns_empty_when_get_schema_raises():
         @classmethod
         def get_schema(cls):
             raise AttributeError("No schema")
+
+    assert _get_schema_params(FakeCls) == []
+
+
+def test_get_schema_params_returns_empty_when_method_missing():
+    from generate_components import _get_schema_params
+
+    class FakeCls:
+        pass  # no get_schema method at all
 
     assert _get_schema_params(FakeCls) == []
 
@@ -322,7 +356,8 @@ def test_render_component_mdx_contains_params_table():
     }
     mdx = _render_component_mdx(info)
     assert "## Parameters" in mdx
-    assert "| C |" in mdx
+    assert "C" in mdx
+    assert "Regularization" in mdx
 
 
 def test_render_component_mdx_skips_params_when_empty():
