@@ -10,8 +10,6 @@
 build/
 develop-eggs/
 dist/
-docs/.docusaurus/
-docs/node_modules/
 downloads/
 eggs/
 .eggs/
@@ -193,3 +191,8 @@ trained_models/
 
 # Docusaurus auto-generated component reference (rebuilt on every yarn build/start)
 docs/docs/components/
+
+# Docusaurus cache and build output
+docs/.docusaurus/
+docs/build/
+docs/node_modules/
