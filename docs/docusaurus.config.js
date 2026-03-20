@@ -88,10 +88,6 @@ const config = {
             label: 'Plugin Development',
           },
           {
-            type: 'localeDropdown',
-            position: 'right',
-          },
-          {
             href: 'https://github.com/DashAISoftware/DashAI',
             label: 'GitHub',
             position: 'right',
