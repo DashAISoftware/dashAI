@@ -6,6 +6,12 @@ import shutil
 import sys
 from pathlib import Path
 
+
+def _escape_table_cell(text: str) -> str:
+    """Escape pipe characters so they don't break Markdown table columns."""
+    return str(text).replace("|", "\\|").replace("\n", " ")
+
+
 SCRIPT_DIR = Path(__file__).parent
 DOCS_ROOT = SCRIPT_DIR.parent          # docs/
 COMPONENTS_OUT = DOCS_ROOT / "docs" / "components"
@@ -60,6 +66,28 @@ def _get_compatible_components(cls) -> list:
     return list(getattr(cls, "COMPATIBLE_COMPONENTS", None) or [])
 
 
+def _format_default(prop: dict) -> str:
+    """Extract a human-readable default value from a JSON Schema property dict.
+
+    DashAI stores defaults under the 'placeholder' key (json_schema_extra).
+    Falls back to 'default' for forward compatibility.
+    """
+    # DashAI primary location
+    if "placeholder" in prop:
+        val = prop["placeholder"]
+        if isinstance(val, dict):
+            # Optimizer placeholder dicts: show the fixed_value if present
+            fixed = val.get("fixed_value")
+            if fixed is not None:
+                return str(fixed)
+            return "—"
+        return str(val)
+    # Standard JSON Schema fallback
+    if "default" in prop:
+        return str(prop["default"])
+    return "—"
+
+
 def _get_schema_params(cls) -> list:
     """Parse the JSON Schema from get_schema() into a list of param dicts."""
     try:
@@ -76,7 +104,7 @@ def _get_schema_params(cls) -> list:
             params.append({
                 "name": name,
                 "type": prop.get("type", ""),
-                "default": str(prop["default"]) if "default" in prop else "—",
+                "default": _format_default(prop),
                 "description": description,
             })
         return params
@@ -108,13 +136,21 @@ def _parse_numpy_docstring(docstring: str) -> dict:
 
     lines = docstring.splitlines()
 
-    # --- Extract summary: first block of non-empty lines before a blank line ---
+    # Extract summary: lines up to the first blank line OR first section header
     summary_lines = []
     i = 0
     for i, line in enumerate(lines):
-        if line.strip() == "":
+        stripped = line.strip()
+        # Stop at blank line
+        if stripped == "" and summary_lines:
             break
-        summary_lines.append(line.strip())
+        # Stop if next line is a section underline (----)
+        if i + 1 < len(lines) and lines[i + 1].strip().startswith("---"):
+            if stripped:
+                summary_lines.append(stripped)
+            break
+        if stripped:
+            summary_lines.append(stripped)
     result["summary"] = " ".join(summary_lines)
 
     # --- Scan for sections ---
@@ -213,7 +249,6 @@ def _get_methods(cls) -> list:
     Returns own methods (defined on cls) sorted alphabetically, followed by
     inherited methods sorted alphabetically.
     """
-    seen = set()
     collected = {}  # name -> method dict (child wins over parent)
 
     # Walk MRO in reverse so child definitions overwrite parent ones
@@ -228,7 +263,7 @@ def _get_methods(cls) -> list:
                 func = obj.__func__
             elif isinstance(obj, staticmethod):
                 func = obj.__func__
-            elif callable(obj):
+            elif inspect.isfunction(obj):
                 func = obj
             else:
                 continue
@@ -293,7 +328,7 @@ def _render_method_section(method) -> str:
         lines.append("| Name | Type | Description |")
         lines.append("|------|------|-------------|")
         for p in method["parameters"]:
-            lines.append(f"| `{p['name']}` | {p['type']} | {p['desc']} |")
+            lines.append(f"| {_escape_table_cell(p['name'])} | {_escape_table_cell(p['type'])} | {_escape_table_cell(p['desc'])} |")
         lines.append("")
 
     if method["returns"]:
@@ -302,7 +337,7 @@ def _render_method_section(method) -> str:
         lines.append("| Type | Description |")
         lines.append("|------|-------------|")
         for r in method["returns"]:
-            lines.append(f"| {r['type']} | {r['desc']} |")
+            lines.append(f"| {_escape_table_cell(r['type'])} | {_escape_table_cell(r['desc'])} |")
         lines.append("")
 
     return "\n".join(lines)
@@ -320,8 +355,10 @@ def _render_component_mdx(info) -> str:
 
     lines = []
     lines.append("---")
-    lines.append(f"title: {class_name}")
-    lines.append(f"sidebar_label: {display_name}")
+    title = info['class_name'].replace('"', '\\"')
+    sidebar = (info['display_name'] or info['class_name']).replace('"', '\\"')
+    lines.append(f'title: "{title}"')
+    lines.append(f'sidebar_label: "{sidebar}"')
     lines.append("---")
     lines.append("")
     lines.append(f"# {class_name}")
@@ -342,7 +379,7 @@ def _render_component_mdx(info) -> str:
         lines.append("|------|------|---------|-------------|")
         for p in params:
             lines.append(
-                f"| `{p['name']}` | {p['type']} | {p['default']} | {p['description']} |"
+                f"| {_escape_table_cell(p['name'])} | {_escape_table_cell(p['type'])} | {_escape_table_cell(p['default'])} | {_escape_table_cell(p['description'])} |"
             )
         lines.append("")
 
@@ -399,16 +436,19 @@ def _render_index_mdx(type_label: str, components: list) -> str:
 # Category configuration
 # ---------------------------------------------------------------------------
 
-CATEGORY_CONFIG = {
-    "task":       {"label": "Tasks",        "position": 1},
-    "model":      {"label": "Models",       "position": 2},
-    "dataloader": {"label": "Data Loaders", "position": 3},
-    "metric":     {"label": "Metrics",      "position": 4},
-    "optimizer":  {"label": "Optimizers",   "position": 5},
-    "explorer":   {"label": "Explorers",    "position": 6},
-    "explainer":  {"label": "Explainers",   "position": 7},
-    "converter":  {"label": "Converters",   "position": 8},
-    "job":        {"label": "Jobs",         "position": 9},
+CATEGORY_CONFIG: dict[str, dict] = {
+    "task":            {"label": "Tasks",             "position": 1},
+    "model":           {"label": "Models",            "position": 2},
+    "generativemodel": {"label": "Generative Models", "position": 3},
+    "dataloader":      {"label": "Data Loaders",      "position": 4},
+    "metric":          {"label": "Metrics",           "position": 5},
+    "optimizer":       {"label": "Optimizers",        "position": 6},
+    "explorer":        {"label": "Explorers",         "position": 7},
+    "globalexplainer": {"label": "Global Explainers", "position": 8},
+    "localexplainer":  {"label": "Local Explainers",  "position": 9},
+    "converter":       {"label": "Converters",        "position": 10},
+    "job":             {"label": "Jobs",              "position": 11},
+    "generativetask":  {"label": "Generative Tasks",  "position": 12},
 }
 
 

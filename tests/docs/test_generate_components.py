@@ -335,7 +335,7 @@ def test_render_component_mdx_contains_title():
         "compatible": ["TabularClassificationTask"],
     }
     mdx = _render_component_mdx(info)
-    assert "title: StandardScaler" in mdx
+    assert 'title: "StandardScaler"' in mdx
     assert "# StandardScaler" in mdx
     assert "**Type:** Converter" in mdx
 
