@@ -188,3 +188,6 @@ job_queue.db-wal
 
 db.sqlite
 trained_models/
+
+# Docusaurus auto-generated component reference (rebuilt on every yarn build/start)
+docs/docs/components/
