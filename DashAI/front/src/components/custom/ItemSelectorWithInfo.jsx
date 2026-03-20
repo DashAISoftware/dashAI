@@ -11,9 +11,9 @@ import { useTranslation } from "react-i18next";
  */
 function ItemSelectorWithInfo({
   itemsList,
-  selectedItem,
+  selectedItem = undefined,
   setSelectedItem,
-  disabled,
+  disabled = false,
   ...props
 }) {
   const { t } = useTranslation("custom");
@@ -119,8 +119,4 @@ ItemSelectorWithInfo.propTypes = {
   disabled: PropTypes.bool,
 };
 
-ItemSelectorWithInfo.defaultProps = {
-  selectedItem: undefined,
-  disabled: false,
-};
 export default ItemSelectorWithInfo;

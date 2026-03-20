@@ -112,7 +112,7 @@ function PipelinesTable({
         <Typography variant="h5">Current Pipelines</Typography>
         <Grid>
           <Grid container spacing={2}>
-            <Grid item>
+            <Grid>
               <Button
                 variant="contained"
                 onClick={() => navigate("/app/pipelines/new")}

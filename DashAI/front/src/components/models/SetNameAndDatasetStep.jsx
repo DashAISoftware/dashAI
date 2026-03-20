@@ -31,7 +31,7 @@ function SetNameAndDatasetStep({
         padding: 2,
       }}
     >
-      <Grid item>
+      <Grid>
         <Typography
           variant="h6"
           sx={{
@@ -49,7 +49,7 @@ function SetNameAndDatasetStep({
         />
       </Grid>
 
-      <Grid item>
+      <Grid>
         <Typography
           variant="h6"
           sx={{

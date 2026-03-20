@@ -171,7 +171,7 @@ function HyperparameterPlots({ run }) {
     <Box sx={{ p: 2 }}>
       <Grid container spacing={2} direction="column">
         {historicalPlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`historical-${run.id}`}
               data={historicalPlot.data}
@@ -187,7 +187,7 @@ function HyperparameterPlots({ run }) {
         )}
 
         {slicePlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`slice-${run.id}`}
               data={slicePlot.data}
@@ -199,7 +199,7 @@ function HyperparameterPlots({ run }) {
         )}
 
         {optimizables >= 2 && contourPlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`contour-${run.id}`}
               data={contourPlot.data}
@@ -211,7 +211,7 @@ function HyperparameterPlots({ run }) {
         )}
 
         {optimizables >= 2 && importancePlot && (
-          <Grid item sx={{ width: "100%" }}>
+          <Grid sx={{ width: "100%" }}>
             <Plot
               key={`importance-${run.id}`}
               data={importancePlot.data}

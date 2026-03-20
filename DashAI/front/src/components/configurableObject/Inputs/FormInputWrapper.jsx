@@ -20,7 +20,6 @@ function FormInputWrapper({ description, disabledPadding = false, children }) {
   );
 }
 FormInputWrapper.propTypes = {
-  name: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   disabledPadding: PropTypes.bool,
   children: PropTypes.node.isRequired,
