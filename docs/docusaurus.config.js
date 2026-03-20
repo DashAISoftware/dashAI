@@ -18,7 +18,11 @@ const config = {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'es'],
+    localeConfigs: {
+      en: { label: 'English' },
+      es: { label: 'Español' },
+    },
   },
 
   presets: [
@@ -53,6 +57,10 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
+        logo: {
+          alt: 'DashAI',
+          src: 'img/logo.png',
+        },
         title: 'DashAI',
         items: [
           {
