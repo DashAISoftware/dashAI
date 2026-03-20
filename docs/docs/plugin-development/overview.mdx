@@ -1,0 +1,673 @@
+---
+title: Plugin Overview
+sidebar_label: Plugin Overview
+---
+
+# Plugin Example: Image Classification Package
+
+Package available:
+
+[image-classification-package](https://test.pypi.org/project/image-classification-package/)
+
+Tree folder of the package:
+
+```bash
+image_classification_package
+│   LICENSE
+│   pyproject.toml
+│   README.md
+└───src
+    └───image_classification_package
+            BasicFinetunnedModels.json
+            basic_finetunned_models.py
+            ImageDataLoader.json
+            image_classification_model.py
+            image_classification_task.py
+            image_dataloader.json
+            image_dataloader.py
+            __init__.py
+```
+
+<details>
+<summary>LICENSE</summary>
+
+```text
+Copyright (c) 2018 The Python Packaging Authority
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+</details>
+
+<details>
+<summary>pyproject.toml</summary>
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "image_classification_package"
+version = "0.0.2"
+dependencies = [
+    'torchvision == 0.14.0',
+    'dashai',
+]
+
+authors = [
+    { name="dashai", email="dashaisoftware@gmail.com" },
+]
+
+description = "This package includes all the necessary components to classify images using a pre-trained models."
+readme = "README.md"
+requires-python = ">=3.8"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+keywords = [
+    "image classification",
+    "pytorch",
+    "torchvision",
+    "dashai",
+    "package"
+]
+
+[project.entry-points.'dashai.plugins']
+image_task = 'image_classification_package.image_classification_task:ImageClassificationTask'
+image_dataloader = 'image_classification_package.image_dataloader:ImageDataLoader'
+image_model = 'image_classification_package.image_classification_model:ImageClassificationModel'
+basic_finetunned_models = 'image_classification_package.basic_finetunned_models:BasicFinetunnedModels'
+
+[project.urls]
+Homepage = "https://github.com/DashAISoftware/DashAI"
+Issues = "https://github.com/DashAISoftware/DashAI/issues"
+```
+
+</details>
+
+<details>
+<summary>README.md</summary>
+
+```markdown
+# **Image Classification Package**
+
+This package include all the necessary components (Task, Models, Dataloader) to perform image classification task.
+
+## **Task**
+
+**ImageClassificationTask**
+
+The task of this package is to perform image classification. The task is defined in the `image_classification_task.py` file. The task is to classify the images into different classes. The task is defined as a class `ImageClassificationTask` which is inherited from the `BaseTask`.
+
+## **Dataloader**
+
+**ImageDataLoader**
+
+This module is a dataloader for the images. The module is defined in the `image_dataloader.py` file. The module is defined as a class `ImageDataLoader` which is inherited from the `BaseDataLoader`. The module uses the `load_dataset` method from the library `datasets` to load the dataset.
+
+## **Models**
+
+**BasicFinetunnedModels**
+
+This module is a image classification model which uses the pre-trained models from the `torchvision.models` and finetunes them on the given dataset. The module is defined in the `basic_finetunned_models.py` file. The module is defined as a class `BasicFinetunnedModels` which is inherited from the `ImageClassificationModel`.
+
+The pretrained models available are:
+
+- resnet18
+- resnet34
+- resnext50_32x4d
+- vgg16
+- maxvit_t
+- densenet121
+- efficientnet_b0
+- googlenet
+- mnasnet0_5
+- mobilenet_v2
+- regnet_x_16gf
+```
+
+</details>
+
+<details>
+<summary>src/image_classification_package</summary>
+
+<details>
+<summary>BasicFinetunnedModels.json</summary>
+
+Json file of **BasicFinetunnedModels** model parameters
+
+```json
+{
+    "additionalProperties": false,
+    "error_msg": "BasicFinetunnedModel parameters must be one(s) of ['pretrained_model', 'epochs', 'batch size', 'weight decay', 'learning_rate', 'device'].",
+    "description": "BasicFinetunnedModel use pre-trained models to classify images.",
+    "properties": {
+    "pretrained_model": {
+        "oneOf": [
+        {
+            "error_msg": "The 'pretrained_model' parameter should be one of 'vgg16', 'resnet18', 'resnet34', 'resnext50_32x4d', 'maxvit_t', 'densenet121', 'efficientnet_b0', 'googlenet', 'mnasnet0_5', 'mobilenet_v2', 'regnet_x_16gf'.",
+            "description": "The name of the pre-trained model to use. You can find the list of available models at https://pytorch.org/vision/stable/models.html in the Classification section. The default model is 'resnet18'.",
+            "type": "string",
+            "default": "resnet18",
+            "enum": [
+            "resnet18",
+            "resnet34",
+            "resnext50_32x4d",
+            "vgg16",
+            "maxvit_t",
+            "densenet121",
+            "efficientnet_b0",
+            "googlenet",
+            "mnasnet0_5",
+            "mobilenet_v2",
+            "regnet_x_16gf"
+            ]
+        }
+        ]
+    },
+    "batch_size": {
+        "oneOf": [
+        {
+            "error_msg": "A whole number greater than or equal to 1 must be entered.",
+            "description": "The batch size per GPU/TPU core/CPU for training",
+            "type": "integer",
+            "minimum": 1,
+            "default": 8
+        }
+        ]
+    },
+    "shuffle": {
+        "oneOf": [
+        {
+            "error_msg": "Need to select 'true' if you have folders that define the splits, otherwise 'false'.",
+            "description": "If you want to shuffle the splits select 'true', otherwise 'false'.",
+            "type": "boolean",
+            "default": true
+        }
+        ]
+    },
+    "learning_rate": {
+        "oneOf": [
+        {
+            "error_msg": "Must be a positive number. A number between 10e-6 and 1 is recommended.",
+            "description": "The initial learning rate for AdamW optimizer",
+            "type": "number",
+            "minimum": 0,
+            "default": 1e-3
+        }
+        ]
+    },
+    "epochs": {
+        "oneOf": [
+        {
+            "error_msg": "A whole number greater than or equal to 1 must be entered.",
+            "description": "Total number of training epochs to perform.",
+            "type": "integer",
+            "minimum": 1,
+            "default": 5
+        }
+        ]
+    },
+    "momentum": {
+        "oneOf": [
+        {
+            "error_msg": "A number between 0 and 1 must be entered.",
+            "description": "Weight decay is a regularization technique used in training neural networks to prevent overfitting.",
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+        }
+        ]
+    },
+    "weight_decay": {
+        "oneOf": [
+        {
+            "error_msg": "A number between 0 and 1 must be entered.",
+            "description": "Weight decay is a regularization technique used in training neural networks to prevent overfitting.",
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+        }
+        ]
+    },
+    "step_size": {
+        "oneOf": [
+        {
+            "error_msg": "A number between 0 and 1 must be entered.",
+            "description": "Step size for the learning rate scheduler.",
+            "type": "integer",
+            "minimum": 0,
+            "default": 6
+        }
+        ]
+    },
+    "gamma": {
+        "oneOf": [
+        {
+            "error_msg": "A number between 0 and 1 must be entered.",
+            "description": "Gamma for the learning rate scheduler.",
+            "type": "number",
+            "minimum": 0,
+            "default": 0.1
+        }
+        ]
+    }
+    },
+    "type": "object"
+}
+```
+
+</details>
+
+<details>
+<summary>basic_finetunned_models.py</summary>
+
+Python file of **BasicFinetunnedModels** class.
+
+```python
+"""DashAI implementation of DistilBERT model for image classification."""
+
+import json
+import os
+from typing import Any, Dict
+
+import datasets
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import models, transforms
+
+from .image_classification_model import ImageClassificationModel
+
+def fit(
+    model: torch.nn.Module,
+    train_loader: DataLoader,
+    criterion: torch.nn.Module,
+    optimizer: torch.optim.Optimizer,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    device: torch.device,
+    num_epochs: int,
+    dataset_len: int,
+):
+    for epoch in range(num_epochs):
+        print("Epoch {}/{}".format(epoch, num_epochs - 1))
+        print("-" * 10)
+
+        # Train model
+        scheduler.step()
+        model.train()
+
+        running_loss = 0.0
+        running_corrects = 0.0
+
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            optimizer.zero_grad()
+
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            loss: torch.Tensor = criterion(outputs, labels)
+
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item() * inputs.size(0)
+            running_corrects += torch.sum(preds == labels.data)
+
+        epoch_loss = running_loss / dataset_len
+        epoch_acc = running_corrects.double() / dataset_len
+
+        print("Train Loss: {:.4f} Acc: {:.4f}".format(epoch_loss, epoch_acc))
+    return model
+
+def predict(
+    model: torch.nn.Module,
+    test_dataloader: DataLoader,
+    device: torch.device,
+    criterion: torch.nn.Module,
+    test_dataset_len: int,
+):
+    model.eval()
+    running_loss = 0.0
+    running_corrects = 0.0
+    preds_without_processing = []
+
+    for inputs, labels in test_dataloader:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        with torch.set_grad_enabled(False):
+            outputs: torch.Tensor = model(inputs)
+            preds_without_processing += outputs.tolist()
+            _, preds = torch.max(outputs, 1)
+            loss = criterion(outputs, labels)
+
+        running_loss += loss.item() * inputs.size(0)
+        running_corrects += torch.sum(preds == labels.data)
+
+    epoch_loss = running_loss / test_dataset_len
+    epoch_acc = running_corrects.double() / test_dataset_len
+
+    print("Val Loss: {:.4f} Acc: {:.4f}".format(epoch_loss, epoch_acc))
+    return preds_without_processing
+
+class BasicFinetunnedModels(ImageClassificationModel):
+    class ImagePytorchDataset(torch.utils.data.Dataset):
+        def __init__(self, dataset: datasets.Dataset):
+            self.dataset = dataset
+            self.transform = transforms.Compose(
+                [
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    ),
+                ]
+            )
+
+            column_names = list(self.dataset.features.keys())
+            self.image_col_name = column_names[0]
+            self.label_col_name = column_names[1]
+
+        def __len__(self):
+            return len(self.dataset)
+
+        def __getitem__(self, idx):
+            image = self.dataset[idx][self.image_col_name]
+            image = self.transform(image)
+            label = self.dataset[idx][self.label_col_name]
+            return image, label
+
+    def __init__(
+        self,
+        pretrained_model: str,
+        batch_size: int = 8,
+        shuffle: bool = True,
+        learning_rate: float = 0.001,
+        epochs: int = 5,
+        momentum: float = 0.9,
+        weight_decay: float = 1e-4,
+        step_size: int = 6,
+        gamma: float = 0.1,
+    ) -> None:
+        self.model_name = pretrained_model
+        self.learning_rate = learning_rate
+        self.momentum = momentum
+        self.weight_decay = weight_decay
+        self.step_size = step_size
+        self.gamma = gamma
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.epochs = epochs
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.model = models.get_model(self.model_name, weights="DEFAULT")
+
+        print(self.model._modules.keys())
+        self.last_key = list(self.model._modules.keys())[-1]
+
+        self.criterion: nn.CrossEntropyLoss = nn.CrossEntropyLoss()
+
+    def determine_num_classes(self, dataset: datasets.Dataset):
+        label_col_name = list(dataset.features.keys())[-1]
+        label_values = dataset[label_col_name]
+        return len(list(set(label_values)))
+
+    def fit(self, dataset: datasets.Dataset):
+        # 1. Determine the num of classes
+        num_classes = self.determine_num_classes(dataset)
+
+        # 2. Change the last layer of the model to have the correct number of classes
+        try:
+            in_features = self.model._modules[self.last_key][-1].in_features
+            self.model._modules[self.last_key][-1] = nn.Linear(
+                in_features, num_classes, bias=True
+            )
+        except TypeError:
+            in_features = self.model._modules[self.last_key].in_features
+            self.model._modules[self.last_key] = nn.Linear(
+                in_features, num_classes, bias=True
+            )
+        self.model = self.model.to(self.device)
+
+        # 3. Create the optimizer and scheduler
+        optimizer: optim.SGD = optim.SGD(
+            self.model.parameters(),
+            lr=self.learning_rate,
+            momentum=self.momentum,
+            weight_decay=self.weight_decay,
+        )
+        scheduler: optim.lr_scheduler.StepLR = optim.lr_scheduler.StepLR(
+            optimizer, step_size=self.step_size, gamma=self.gamma
+        )
+
+        # 4. Create the dataloader
+        img_dataset = self.ImagePytorchDataset(dataset)
+        self.train_dataloader = DataLoader(
+            img_dataset, batch_size=self.batch_size, shuffle=self.shuffle
+        )
+
+        # 5. Train the model
+        self.model = fit(
+            self.model,
+            self.train_dataloader,
+            self.criterion,
+            optimizer,
+            scheduler,
+            self.device,
+            self.epochs,
+            len(dataset),
+        )
+
+    def predict(self, dataset: datasets.Dataset):
+        img_dataset = self.ImagePytorchDataset(dataset)
+        dataloader = DataLoader(img_dataset, batch_size=self.batch_size, shuffle=False)
+        preds = predict(
+            self.model, dataloader, self.device, self.criterion, len(dataset)
+        )
+        return preds
+
+    def save(self, filename: str):
+        torch.save(self.model.state_dict(), filename)
+
+    def load(self, filename: str):
+        self.model.load_state_dict(torch.load(filename))
+
+    @classmethod
+    def get_schema(cls) -> Dict[str, Any]:
+        path = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(path, f"{cls.__name__}.json")) as f:
+            return json.load(f)
+```
+
+</details>
+
+<details>
+<summary>ImageDataLoader.json</summary>
+
+Json file of ImageDataLoader
+
+```json
+{
+    "class": "ImageDataLoader",
+    "name": "Image Data",
+    "help": "Use Image files to upload the data.",
+    "description": "You can upload your images in a .zip file. The images labels should be the name of the folder where the images are located.\nThe zip should contain a folder named 'train' and inside it, the folders with the images.",
+    "images": [],
+    "type": "object"
+}
+```
+
+</details>
+
+<details>
+<summary>image_classification_model.py</summary>
+
+```python
+from DashAI.back.models.base_model import BaseModel
+
+class ImageClassificationModel(BaseModel):
+    """Class for models associated to ImageClassificationTask."""
+
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+```
+
+</details>
+
+<details>
+<summary>image_classification_task.py</summary>
+
+```python
+from datasets import ClassLabel, DatasetDict, Image
+
+from DashAI.back.tasks.base_task import BaseTask
+
+class ImageClassificationTask(BaseTask):
+    """Base class for image classification tasks.
+
+    Here you can change the methods provided by class Task.
+    """
+
+    schema: dict = {
+        "inputs_types": [Image],
+        "outputs_types": [ClassLabel],
+        "inputs_cardinality": 1,
+        "outputs_cardinality": 1,
+    }
+
+    def prepare_for_task(self, datasetdict: DatasetDict):
+        """Change the column types to suit the tabular classification task.
+
+        A copy of the dataset is created.
+
+        Parameters
+        ----------
+        datasetdict : DatasetDict
+            Dataset to be changed
+
+        Returns
+        -------
+        DatasetDict
+            Dataset with the new types
+        """
+        outputs_columns = datasetdict["train"].outputs_columns
+        types = {outputs_columns[0]: "Categorical"}
+        for split in datasetdict:
+            datasetdict[split] = datasetdict[split].change_columns_type(types)
+        return datasetdict
+```
+
+</details>
+
+<details>
+<summary>image_dataloader.py</summary>
+
+```python
+"""DashAI Image Dataloader."""
+
+import json
+import logging
+import os
+from typing import Any, Dict, Union
+
+from beartype import beartype
+from datasets import DatasetDict, load_dataset
+from starlette.datastructures import UploadFile
+
+from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
+
+logger = logging.getLogger(__name__)
+
+class ImageDataLoader(BaseDataLoader):
+    """Data loader for data from image files."""
+
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+
+    @beartype
+    def load_data(
+        self,
+        filepath_or_buffer: Union[UploadFile, str],
+        temp_path: str,
+        params: Dict[str, Any],
+    ) -> DatasetDict:
+        """Load an image dataset.
+
+        Parameters
+        ----------
+        filepath_or_buffer : Union[UploadFile, str], optional
+            An URL where the dataset is located or a FastAPI/Uvicorn uploaded file
+            object.
+        temp_path : str
+            The temporary path where the files will be extracted and then uploaded.
+        params : Dict[str, Any]
+            Dict with the dataloader parameters.
+
+        Returns
+        -------
+        DatasetDict
+            A HuggingFace's Dataset with the loaded data.
+        """
+        if isinstance(filepath_or_buffer, str):
+            dataset = load_dataset("imagefolder", data_files=filepath_or_buffer)
+        elif isinstance(filepath_or_buffer, UploadFile):
+            if filepath_or_buffer.content_type == "application/zip":
+                extracted_files_path = self.extract_files(temp_path, filepath_or_buffer)
+                dataset = load_dataset(
+                    "imagefolder",
+                    data_dir=extracted_files_path,
+                )
+            else:
+                raise Exception(
+                    "The image dataloader requires the input file to be a zip file. "
+                    f"The following content type was delivered: "
+                    f"{filepath_or_buffer.content_type}"
+                )
+
+        return dataset
+
+    @classmethod
+    def get_schema(cls) -> Dict[str, Any]:
+        """Load the JSON schema associated to the dataloader."""
+        try:
+            path = os.path.dirname(os.path.realpath(__file__))
+            with open(
+                os.path.join(path, "ImageDataLoader.json"),
+            ) as f:
+                schema = json.load(f)
+            return schema
+
+        except FileNotFoundError:
+            logger.exception(
+                f"Could not load the schema for {cls.__name__} : File not found.",
+            )
+            return {}
+```
+
+</details>
+
+</details>

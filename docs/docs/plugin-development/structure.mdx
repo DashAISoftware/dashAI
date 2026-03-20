@@ -1,0 +1,65 @@
+---
+title: Plugin Structure
+sidebar_label: Plugin Structure
+---
+
+# Plugin Structure
+
+## What is a Plugin Composed of?
+
+A plugin is composed of 4 parts:
+
+1. **src**: This folder contains the folder with the **name of the plugin or package**. It is important that this is fulfilled.
+
+   The folder with the name of the plugin or package must contain all the necessary **Python** and **JSON** files to extend the software.
+
+2. **pyproject.toml**: Configuration file. This is responsible for determining how the package is created and what metadata it contains.
+
+3. **readme.md**: Contains the long description of the package or plugin.
+
+4. **LICENSE**: Determines the type of license the package will have.
+
+The folder structure should be as follows:
+
+```text
+plugin_name
+│   LICENSE
+│   pyproject.toml
+│   readme.md
+└───src
+    └───plugin_name
+        │  example_model.py
+        │  ExampleModel.json
+```
+
+## Required Parts
+
+For the software to integrate the plugin when installed, it is necessary to meet the following requirements:
+
+1. **pyproject.toml** MUST contain an **entrypoint** for each Python class that you want to add to the software.
+
+   ```toml
+   [project.entry-points.'dashai.plugins']
+   ExampleClass = 'plugin_name.example_class:ExampleClass'
+   ```
+
+2. **pyproject.toml** MUST contain a **keywords** section, where the TAGs that will be displayed when showing the package or plugin in the DashAI plugin interface will be specified.
+
+   The ONLY possible tags are:
+
+   ```python
+   "DashAI", "Package", "Task", "Model", "Dataloaders", "Converter", "Explainer"
+   ```
+
+   A possible keywords section would be as follows:
+
+   ```toml
+   [project]
+   keywords = [
+       "DashAI",
+       "Package",
+       "Task",
+       "Model",
+       "Dataloader"
+   ]
+   ```
