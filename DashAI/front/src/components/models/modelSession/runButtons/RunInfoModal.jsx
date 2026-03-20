@@ -23,9 +23,9 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
-import FormSchemaDialog from "../../shared/FormSchemaDialog";
-import FormSchemaWithSelectedModel from "../../shared/FormSchemaWithSelectedModel";
-import { getComponents } from "../../../api/component";
+import FormSchemaDialog from "../../../shared/FormSchemaDialog";
+import FormSchemaWithSelectedModel from "../../../shared/FormSchemaWithSelectedModel";
+import { getComponents } from "../../../../api/component";
 import { useTranslation } from "react-i18next";
 
 export default function RunInfoModal({
