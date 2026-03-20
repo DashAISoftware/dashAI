@@ -1,0 +1,98 @@
+---
+title: Desarrollar un Plugin
+sidebar_label: Desarrollar un Plugin
+---
+
+# Desarrollo de Plugins
+
+Lo primero y más importante es entender qué es un plugin y cuál es su estructura.
+
+[Estructura de un Plugin](./structure)
+
+Después de revisar toda esta guía, puedes consultar esta página que te enseña cómo subir tu plugin a PyPI.
+
+[Subir un Plugin](./upload)
+
+## ¿Qué Necesito para Crear un Plugin?
+
+Para crear un plugin necesitas tener disponibles las clases Python del software. Estas pueden estar disponibles de 2 maneras:
+
+1. DashAI está instalado como biblioteca en el entorno virtual de Python (opción no recomendada, no permite probar el plugin).
+
+2. Tener el repositorio clonado en el computador. En este caso, para desarrollar un plugin, la mejor opción es crear una carpeta llamada "plugins" en la carpeta principal de DashAI.
+
+   ```text
+   DashAI
+   |— DashAI
+   |…
+   |— images
+   |— plugins <--- Crear esta carpeta
+   |— tests
+   | …
+   ```
+
+   En esta carpeta se deben crear los archivos asociados al plugin que deseas crear.
+
+## Creando Nuevos Componentes
+
+Lo primero al crear un plugin es **identificar qué tipos de componentes deseas crear**. Estos pueden ser Modelos de Machine Learning, Dataloaders, Objetos Configurables, entre otros.
+
+Para asegurarse de que esto funcione, debes extender las clases proporcionadas por DashAI.
+
+Por ejemplo, si queremos crear un modelo de clasificación tabular, tendríamos algo como esto:
+
+```python
+from DashAI.back.models.tabular_classification_model import TabularClassificationModel
+
+class MyTabularClassificationModel(TabularClassificationModel):
+    ...
+```
+
+## Recomendaciones al Crear Plugins
+
+1. **Revisar otros ejemplos de plugins**
+
+   Observa ejemplos de otros plugins en el software. Tanto en los archivos Python como en el archivo de configuración.
+
+   [Descripción General de Plugins](./overview)
+
+2. **Probar el plugin**
+
+   La mejor manera de probar el plugin durante su desarrollo es **clonar el repositorio** y comenzar creando solo los **archivos Python y JSON**. Luego, mueve estos archivos a donde correspondan dentro del repositorio para que estén disponibles al iniciar el software. Con esto, puedes iniciar el software y probar si tus implementaciones realmente funcionan.
+
+3. **Revisar los requisitos para un plugin**
+
+4. **Revisar conflictos entre bibliotecas**
+
+   Al instalar nuevas bibliotecas con pip, asegúrate de que su instalación no genere un mensaje de conflicto que indique que alguna biblioteca fue desinstalada.
+
+   ```text
+   ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+   fastapi 0.106.0 requires starlette<0.28.0,>=0.27.0, but you have starlette 0.20.0 which is incompatible.
+   ```
+
+   Para verificar esto, después de instalar un nuevo paquete, puedes ejecutar el comando:
+
+   ```bash
+   pip check
+   ```
+
+   Si hay conflictos, mostrará un mensaje como este:
+
+   ```text
+   fastapi 0.106.0 has requirement starlette<0.28.0,>=0.27.0, but you have starlette 0.20.0.
+   ```
+
+   De lo contrario, el mensaje será:
+
+   ```text
+   No broken requirements found.
+   ```
+
+   y todo estará bien.
+
+   **Es importante que al instalar una nueva biblioteca para un plugin o paquete, esta deba incluirse entre las dependencias del plugin o paquete.**
+
+5. **Usar prints en el flujo de los componentes agregados**
+
+   Incluir prints en el flujo del componente que creaste puede ser muy útil para verificar el correcto funcionamiento del componente que has creado en el software.
