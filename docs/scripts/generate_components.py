@@ -8,8 +8,30 @@ from pathlib import Path
 
 
 def _escape_table_cell(text: str) -> str:
-    """Escape pipe characters so they don't break Markdown table columns."""
-    return str(text).replace("|", "\\|").replace("\n", " ")
+    """Escape characters that would break Markdown table columns or MDX parsing.
+
+    MDX (used by Docusaurus) parses ``{`` / ``}`` as JSX expressions and
+    ``<`` / ``>`` as JSX tags even inside Markdown table cells.  We replace
+    them with HTML entities so the rendered output is correct while the MDX
+    source remains valid.
+    """
+    s = str(text)
+    s = s.replace("\n", " ")
+    s = s.replace("|", "\\|")
+    s = s.replace("{", "&#123;").replace("}", "&#125;")
+    s = s.replace("<", "&lt;").replace(">", "&gt;")
+    return s
+
+
+def _escape_mdx_text(text: str) -> str:
+    """Escape ``<`` and ``>`` in plain MDX prose (outside of table cells).
+
+    Curly braces in prose text are less common; we only escape angle brackets
+    here because MDX/JSX will try to parse ``<word>`` as a JSX element.
+    """
+    s = str(text)
+    s = s.replace("<", "&lt;").replace(">", "&gt;")
+    return s
 
 
 SCRIPT_DIR = Path(__file__).parent
@@ -319,7 +341,7 @@ def _render_method_section(method) -> str:
     )
     lines.append("")
     if method["summary"]:
-        lines.append(method["summary"])
+        lines.append(_escape_mdx_text(method["summary"]))
         lines.append("")
 
     if method["parameters"]:
