@@ -22,7 +22,8 @@ import ExplainersCard from "../explainers/ExplanainersCard";
 import PredictionCard from "./PredictionCard";
 import NewGlobalExplainerModal from "../explainers/NewGlobalExplainerModal";
 import NewLocalExplainerModal from "../explainers/NewLocalExplainerModal";
-import PredictionCreationDialog from "./PredictionCreationDialog";
+import DatasetPredictionPanel from "./DatasetPredictionPanel";
+import ManualPredictionPanel from "./ManualPredictionPanel";
 import LiveMetricsChart from "./LiveMetricsChart";
 import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
@@ -51,10 +52,8 @@ export default function RunResults({
 
   const [globalDialogOpen, setGlobalDialogOpen] = useState(false);
   const [localDialogOpen, setLocalDialogOpen] = useState(false);
-  const [datasetPredictionDialogOpen, setDatasetPredictionDialogOpen] =
-    useState(false);
-  const [manualPredictionDialogOpen, setManualPredictionDialogOpen] =
-    useState(false);
+  const [showDatasetPanel, setShowDatasetPanel] = useState(false);
+  const [showManualPanel, setShowManualPanel] = useState(false);
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
@@ -89,7 +88,9 @@ export default function RunResults({
   useEffect(() => {
     const handleOpenDialog = (event) => {
       if (event.detail.runId === run.id) {
-        setDatasetPredictionDialogOpen(true);
+        setResultsVisible(true);
+        setActiveTab(2);
+        setShowDatasetPanel(true);
       }
     };
     window.addEventListener("openPredictionDialog", handleOpenDialog);
@@ -122,9 +123,20 @@ export default function RunResults({
 
   const handlePredictionCreated = (prediction) => {
     if (prediction) {
-      setPredictions((prev) => [prediction, ...prev]);
+      setPredictions((prev) => {
+        const index = prev.findIndex((p) => p.id === prediction.id);
+        if (index === -1) {
+          return [prediction, ...prev];
+        }
+
+        const updated = [...prev];
+        updated[index] = prediction;
+        return updated;
+      });
+    } else {
+      fetchOperations();
     }
-    fetchOperations();
+
     if (onRefresh) onRefresh();
   };
 
@@ -385,36 +397,61 @@ export default function RunResults({
                     </Box>
                   </Box>
                   <Stack spacing={2}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<TrendingUpIcon />}
-                      onClick={() => setDatasetPredictionDialogOpen(true)}
-                      fullWidth
-                    >
-                      {t("models:button.newDatasetPrediction")}
-                    </Button>
-                    {predictions.filter((p) => p.dataset_id).length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
+                    {!showDatasetPanel && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<TrendingUpIcon />}
+                        onClick={() => setShowDatasetPanel(true)}
+                        fullWidth
                       >
-                        {t("models:label.noDatasetPredictionsYet")}
-                      </Typography>
-                    ) : (
-                      predictions
-                        .filter((p) => p.dataset_id)
-                        .map((prediction) => (
-                          <PredictionCard
-                            key={prediction.id}
-                            prediction={prediction}
-                            onDelete={handlePredictionDeleted}
-                            onUpdate={fetchOperations}
-                          />
-                        ))
+                        {t("models:button.newDatasetPrediction")}
+                      </Button>
                     )}
+
+                    <Collapse in={showDatasetPanel} unmountOnExit>
+                      <Box
+                        sx={{
+                          border: 1,
+                          borderColor: "primary.main",
+                          borderRadius: 1,
+                          p: 2,
+                          bgcolor: "background.default",
+                        }}
+                      >
+                        <DatasetPredictionPanel
+                          run={run}
+                          session={session}
+                          onSaved={(prediction) => {
+                            handlePredictionCreated(prediction);
+                            setShowDatasetPanel(false);
+                          }}
+                          onClose={() => setShowDatasetPanel(false)}
+                        />
+                      </Box>
+                    </Collapse>
+
+                    {predictions.filter((p) => p.dataset_id).length === 0
+                      ? !showDatasetPanel && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            align="center"
+                            sx={{ py: 3 }}
+                          >
+                            {t("models:label.noDatasetPredictionsYet")}
+                          </Typography>
+                        )
+                      : predictions
+                          .filter((p) => p.dataset_id)
+                          .map((prediction) => (
+                            <PredictionCard
+                              key={prediction.id}
+                              prediction={prediction}
+                              onDelete={handlePredictionDeleted}
+                              onUpdate={fetchOperations}
+                            />
+                          ))}
                   </Stack>
                 </Box>
               </Grid>
@@ -449,36 +486,61 @@ export default function RunResults({
                     </Box>
                   </Box>
                   <Stack spacing={2}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<TrendingUpIcon />}
-                      onClick={() => setManualPredictionDialogOpen(true)}
-                      fullWidth
-                    >
-                      {t("models:button.newManualPrediction")}
-                    </Button>
-                    {predictions.filter((p) => !p.dataset_id).length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
+                    {!showManualPanel && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<TrendingUpIcon />}
+                        onClick={() => setShowManualPanel(true)}
+                        fullWidth
                       >
-                        {t("models:label.noManualPredictionsYet")}
-                      </Typography>
-                    ) : (
-                      predictions
-                        .filter((p) => !p.dataset_id)
-                        .map((prediction) => (
-                          <PredictionCard
-                            key={prediction.id}
-                            prediction={prediction}
-                            onDelete={handlePredictionDeleted}
-                            onUpdate={fetchOperations}
-                          />
-                        ))
+                        {t("models:button.newManualPrediction")}
+                      </Button>
                     )}
+
+                    <Collapse in={showManualPanel} unmountOnExit>
+                      <Box
+                        sx={{
+                          border: 1,
+                          borderColor: "primary.main",
+                          borderRadius: 1,
+                          p: 2,
+                          bgcolor: "background.default",
+                        }}
+                      >
+                        <ManualPredictionPanel
+                          run={run}
+                          session={session}
+                          onSaved={(prediction) => {
+                            handlePredictionCreated(prediction);
+                            setShowManualPanel(false);
+                          }}
+                          onClose={() => setShowManualPanel(false)}
+                        />
+                      </Box>
+                    </Collapse>
+
+                    {predictions.filter((p) => !p.dataset_id).length === 0
+                      ? !showManualPanel && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            align="center"
+                            sx={{ py: 3 }}
+                          >
+                            {t("models:label.noManualPredictionsYet")}
+                          </Typography>
+                        )
+                      : predictions
+                          .filter((p) => !p.dataset_id)
+                          .map((prediction) => (
+                            <PredictionCard
+                              key={prediction.id}
+                              prediction={prediction}
+                              onDelete={handlePredictionDeleted}
+                              onUpdate={fetchOperations}
+                            />
+                          ))}
                   </Stack>
                 </Box>
               </Grid>
@@ -512,24 +574,6 @@ export default function RunResults({
           taskName: session?.task_name,
         }}
         onExplainerCreated={handleExplainerCreated}
-      />
-
-      <PredictionCreationDialog
-        open={datasetPredictionDialogOpen}
-        onClose={() => setDatasetPredictionDialogOpen(false)}
-        run={run}
-        session={session}
-        onPredictionCreated={handlePredictionCreated}
-        defaultMode="dataset"
-      />
-
-      <PredictionCreationDialog
-        open={manualPredictionDialogOpen}
-        onClose={() => setManualPredictionDialogOpen(false)}
-        run={run}
-        session={session}
-        onPredictionCreated={handlePredictionCreated}
-        defaultMode="manual"
       />
     </Box>
   );
