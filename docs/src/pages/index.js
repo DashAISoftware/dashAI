@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 
@@ -32,6 +33,7 @@ const CARDS = [
 
 export default function Home() {
   const { siteConfig } = useDocusaurusContext();
+  const logoSrc = useBaseUrl('/img/logo.png');
   return (
     <Layout title="Documentation" description={siteConfig.tagline}>
       <div className="dashai-home">
@@ -39,7 +41,7 @@ export default function Home() {
         <div className="dashai-hero">
           <img
             className="dashai-hero__logo"
-            src="/img/logo.png"
+            src={logoSrc}
             alt="DashAI"
           />
           <h1 className="dashai-hero__title">DashAI Documentation</h1>
