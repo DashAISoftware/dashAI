@@ -136,6 +136,13 @@
   font-size: 0.8125rem;
   color: var(--dashai-text-muted);
 }
+.dashai-ack__logos {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  margin: 0 0 12px;
+}
 .dashai-ack p {
   margin: 0;
 }
