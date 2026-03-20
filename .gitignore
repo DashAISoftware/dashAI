@@ -10,6 +10,8 @@
 build/
 develop-eggs/
 dist/
+docs/.docusaurus/
+docs/node_modules/
 downloads/
 eggs/
 .eggs/
