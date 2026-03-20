@@ -1,5 +1,4 @@
 ---
-slug: /
 title: About DashAI
 sidebar_label: About DashAI
 ---
