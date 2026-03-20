@@ -87,8 +87,11 @@ export function ModelsProvider({ children }) {
   useEffect(() => {
     fetchDatasets();
     fetchSessions();
-    fetchTasks();
   }, []);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [t]);
 
   const value = {
     selectedModel,
