@@ -1,0 +1,14 @@
+{
+  "sidebar.gettingStartedSidebar.category.Getting Started": {
+    "message": "Primeros Pasos",
+    "description": "The label for category Getting Started in sidebar gettingStartedSidebar"
+  },
+  "sidebar.tutorialsSidebar.category.Tutorials": {
+    "message": "Tutoriales",
+    "description": "The label for category Tutorials in sidebar tutorialsSidebar"
+  },
+  "sidebar.pluginsSidebar.category.Plugin Development": {
+    "message": "Desarrollo de Plugins",
+    "description": "The label for category Plugin Development in sidebar pluginsSidebar"
+  }
+}

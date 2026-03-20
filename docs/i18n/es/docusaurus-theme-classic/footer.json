@@ -1,0 +1,26 @@
+{
+  "footer.link.title.Docs": {
+    "message": "Documentación",
+    "description": "The title of the footer links column with title=Docs"
+  },
+  "footer.link.item.label.Getting Started": {
+    "message": "Primeros Pasos",
+    "description": "The label of footer link with label=Getting Started"
+  },
+  "footer.link.item.label.Components": {
+    "message": "Componentes",
+    "description": "The label of footer link with label=Components"
+  },
+  "footer.link.title.Community": {
+    "message": "Comunidad",
+    "description": "The title of the footer links column with title=Community"
+  },
+  "footer.link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub"
+  },
+  "footer.copyright": {
+    "message": "Copyright © 2024 DashAI. Licenciado bajo Apache 2.0.",
+    "description": "The footer copyright"
+  }
+}
