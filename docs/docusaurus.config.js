@@ -13,6 +13,7 @@ const config = {
   organizationName: 'DashAISoftware',
   projectName: 'DashAI',
 
+  // TODO(Task 10): change to 'throw' once all sidebar doc IDs have corresponding files
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
