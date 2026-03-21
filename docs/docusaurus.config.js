@@ -1,43 +1,44 @@
 // @ts-check
-const { themes: prismThemes } = require('prism-react-renderer');
+const { themes: prismThemes } = require("prism-react-renderer");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'DashAI Documentation',
-  tagline: 'Open-source ML platform for developers',
-  favicon: 'img/favicon.ico',
+  title: "DashAI Documentation",
+  tagline: "Open-source ML platform for developers",
+  favicon: "img/favicon.ico",
 
-  url: 'https://DashAISoftware.github.io',
-  baseUrl: '/DashAI/',
+  url: "https://DashAISoftware.github.io",
+  baseUrl: "/DashAI/",
 
-  organizationName: 'DashAISoftware',
-  projectName: 'DashAI',
+  organizationName: "DashAISoftware",
+  projectName: "DashAI",
 
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "warn",
 
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'es'],
+    defaultLocale: "en",
+    locales: ["en", "es"],
     localeConfigs: {
-      en: { label: 'English' },
-      es: { label: 'Español' },
+      en: { label: "English" },
+      es: { label: "Español" },
     },
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/DashAISoftware/DashAI/tree/develop/docs/',
-          routeBasePath: '/',
+          sidebarPath: require.resolve("./sidebars.js"),
+          editUrl:
+            "https://github.com/DashAISoftware/DashAI/tree/develop/docs/",
+          routeBasePath: "/",
         },
         blog: false,
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve("./src/css/custom.css"),
         },
       }),
     ],
@@ -45,10 +46,10 @@ const config = {
 
   plugins: [
     [
-      require.resolve('@easyops-cn/docusaurus-search-local'),
+      require.resolve("@easyops-cn/docusaurus-search-local"),
       {
         hashed: true,
-        docsRouteBasePath: '/',
+        docsRouteBasePath: "/",
       },
     ],
   ],
@@ -58,56 +59,58 @@ const config = {
     ({
       navbar: {
         logo: {
-          alt: 'DashAI',
-          src: 'img/logo.png',
+          alt: "DashAI",
+          src: "img/logo.png",
         },
-        title: 'DashAI',
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'gettingStartedSidebar',
-            position: 'left',
-            label: 'Getting Started',
+            type: "docSidebar",
+            sidebarId: "gettingStartedSidebar",
+            position: "left",
+            label: "Getting Started",
           },
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialsSidebar',
-            position: 'left',
-            label: 'Tutorials',
+            type: "docSidebar",
+            sidebarId: "tutorialsSidebar",
+            position: "left",
+            label: "Tutorials",
           },
           {
-            type: 'docSidebar',
-            sidebarId: 'componentsSidebar',
-            position: 'left',
-            label: 'Components',
+            type: "docSidebar",
+            sidebarId: "componentsSidebar",
+            position: "left",
+            label: "Components",
           },
           {
-            type: 'docSidebar',
-            sidebarId: 'pluginsSidebar',
-            position: 'left',
-            label: 'Plugin Development',
+            type: "docSidebar",
+            sidebarId: "pluginsSidebar",
+            position: "left",
+            label: "Plugin Development",
           },
           {
-            href: 'https://github.com/DashAISoftware/DashAI',
-            label: 'GitHub',
-            position: 'right',
+            href: "https://github.com/DashAISoftware/DashAI",
+            label: "GitHub",
+            position: "right",
           },
         ],
       },
       footer: {
-        style: 'dark',
+        style: "dark",
         links: [
           {
-            title: 'Docs',
+            title: "Docs",
             items: [
-              { label: 'Getting Started', to: '/getting-started/installation' },
-              { label: 'Components', to: '/components/tasks' },
+              { label: "Getting Started", to: "/getting-started/installation" },
+              { label: "Components", to: "/components/tasks" },
             ],
           },
           {
-            title: 'Community',
+            title: "Community",
             items: [
-              { label: 'GitHub', href: 'https://github.com/DashAISoftware/DashAI' },
+              {
+                label: "GitHub",
+                href: "https://github.com/DashAISoftware/DashAI",
+              },
             ],
           },
         ],
@@ -116,10 +119,10 @@ const config = {
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
-        additionalLanguages: ['python', 'bash', 'json'],
+        additionalLanguages: ["python", "bash", "json"],
       },
       colorMode: {
-        defaultMode: 'light',
+        defaultMode: "light",
         disableSwitch: false,
       },
     }),
