@@ -151,3 +151,11 @@
   .dashai-hero { padding: 32px 20px; }
   .dashai-hero__title { font-size: 1.5rem; }
 }
+
+.navbar__brand {
+  margin-right: 0;
+}
+
+.navbar__logo {
+  margin: 0 12px;
+}
