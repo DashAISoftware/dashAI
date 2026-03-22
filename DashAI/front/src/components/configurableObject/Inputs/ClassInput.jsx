@@ -37,7 +37,7 @@ function ClassInput({
   name,
   paramJsonSchema,
   setFieldValue,
-  formDefaultValues,
+  formDefaultValues = { emptyDefaultValues: true },
 }) {
   const modal = true;
   const [options, setOptions] = useState([]);
@@ -202,10 +202,6 @@ ClassInput.propTypes = {
       PropTypes.object,
     ]),
   ),
-};
-
-ClassInput.defaultProps = {
-  formDefaultValues: { emptyDefaultValues: true },
 };
 
 export default ClassInput;

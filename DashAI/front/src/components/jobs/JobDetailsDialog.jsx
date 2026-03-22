@@ -75,7 +75,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
           </Box>
         ) : (
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
@@ -93,7 +93,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
@@ -111,7 +111,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
@@ -132,7 +132,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
@@ -150,7 +150,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
@@ -168,7 +168,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="subtitle2"
                 sx={{ fontWeight: "bold", color: "text.secondary" }}
@@ -187,7 +187,7 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
             </Grid>
 
             {displayJob.error_msg && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box mt={2}>
                   <Divider />
                   <Typography
