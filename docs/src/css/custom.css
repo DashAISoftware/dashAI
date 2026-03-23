@@ -170,23 +170,27 @@ code, kbd, samp {
 }
 
 /* GitHub navbar link — bordered button like JSX */
-.navbar__items--right .navbar__item a[href*="github"] {
+.navbar__items--right .navbar__link {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  border: 1px solid var(--dashai-border);
+  margin-left: 12px;
+  border: 1px solid var(--dashai-border) !important;
   border-radius: 6px;
   font-size: 0.8125rem;
   color: var(--dashai-text-secondary);
   transition: border-color 0.15s, color 0.15s;
-}
-
-.navbar__items--right .navbar__item a[href*="github"]:hover {
   border-color: var(--dashai-border-hover);
   color: var(--dashai-text-primary);
   text-decoration: none;
 }
+
+.navbar__items--right .navbar__link:hover {
+  border-color: var(--dashai-border-hover) !important;
+  text-decoration: none;
+}
+
 
 /* Theme toggle button — bordered icon button */
 .navbar__items--right [class*="colorModeToggle"] button,
