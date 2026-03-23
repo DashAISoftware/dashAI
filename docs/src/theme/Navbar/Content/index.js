@@ -2,12 +2,10 @@ import React from 'react';
 import {ErrorCauseBoundary, useThemeConfig} from '@docusaurus/theme-common';
 import {
   splitNavbarItems,
-  useNavbarMobileSidebar,
 } from '@docusaurus/theme-common/internal';
 import NavbarItem from '@theme/NavbarItem';
 import NavbarColorModeToggle from '@theme/Navbar/ColorModeToggle';
 import SearchBar from '@theme/SearchBar';
-import NavbarMobileSidebarToggle from '@theme/Navbar/MobileSidebar/Toggle';
 import NavbarLogo from '@theme/Navbar/Logo';
 import NavbarSearch from '@theme/Navbar/Search';
 
@@ -46,7 +44,6 @@ function NavbarContentLayout({left, right}) {
 }
 
 export default function NavbarContent() {
-  const mobileSidebar = useNavbarMobileSidebar();
   const items = useNavbarItems();
   const [leftItems, rightItems] = splitNavbarItems(items);
   const searchBarItem = items.find((item) => item.type === 'search');
@@ -55,7 +52,6 @@ export default function NavbarContent() {
     <NavbarContentLayout
       left={
         <>
-          {!mobileSidebar.disabled && <NavbarMobileSidebarToggle />}
           <NavbarLogo />
           <NavbarItems items={leftItems} />
         </>

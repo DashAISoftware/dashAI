@@ -990,17 +990,6 @@ tr:nth-child(even) {
     padding: 2px 5px !important;
   }
 
-  /* Mobile hamburger toggle — prevent overlap with logo */
-  .navbar__toggle {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    padding: 4px;
-    margin-right: 4px;
-  }
 
   /* Ensure inner items don't overflow */
   .navbar__inner {
