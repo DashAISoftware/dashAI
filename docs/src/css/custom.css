@@ -485,68 +485,34 @@ pre code {
   --ifm-alert-color: var(--dashai-discover);
 }
 
-/* ── Footer ── */
+/* ── Footer — minimal single bar ── */
 .footer {
   background: var(--dashai-bg-surface);
   border-top: 1px solid var(--dashai-border);
-  padding: 40px 24px 24px;
+  padding: 16px 24px;
 }
 
-/* Dark footer always uses JSX dark surface tokens */
 .footer--dark {
   --ifm-footer-background-color: #1a202c;
-  --ifm-footer-color: #a0aec0;
   background: #1a202c;
   border-top: 1px solid #2d3748;
 }
 
-.footer__title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dashai-text-primary);
-  margin-bottom: 12px;
-}
-
-.footer--dark .footer__title {
-  color: #e2e8f0;
-}
-
-.footer__link-item {
-  color: var(--dashai-text-muted);
-  font-size: 0.8125rem;
-  transition: color 0.12s;
-}
-
-.footer--dark .footer__link-item {
-  color: #718096;
-}
-
-.footer__link-item:hover {
-  color: var(--dashai-text-primary);
-  text-decoration: none;
-}
-
-.footer--dark .footer__link-item:hover {
-  color: #e2e8f0;
+/* Hide the links section entirely (no columns) */
+.footer__links {
+  display: none;
 }
 
 .footer__copyright {
-  font-size: 0.75rem;
+  font-size: 0.71875rem; /* 11.5px */
   color: var(--dashai-text-dim);
-  border-top: 1px solid var(--dashai-border);
-  padding-top: 16px;
-  margin-top: 8px;
+  text-align: center;
+  padding: 0;
+  margin: 0;
 }
 
 .footer--dark .footer__copyright {
   color: #4a5568;
-  border-top-color: #2d3748;
-}
-
-.footer__col {
-  padding: 0 16px;
 }
 
 /* ── Homepage ── */
@@ -556,44 +522,181 @@ pre code {
   padding: 40px 24px;
 }
 
-.dashai-hero {
-  background: linear-gradient(135deg, var(--dashai-accent-glow), rgba(128, 90, 213, 0.05));
+/* Landing hero gradient banner */
+.dashai-landing-hero {
+  background: linear-gradient(135deg, var(--dashai-accent-glow) 0%, rgba(128, 90, 213, 0.06) 100%);
   border: 1px solid var(--dashai-accent-border);
-  border-radius: 14px;
-  padding: 48px 40px;
-  margin-bottom: 24px;
-  text-align: center;
+  border-radius: 12px;
+  padding: 40px 36px;
+  margin-bottom: 28px;
 }
 
-.dashai-hero__logo {
-  height: 64px;
-  width: auto;
-  max-width: 100%;
-  margin-bottom: 16px;
-}
-
-.dashai-hero__title {
-  font-size: 2rem;
+.dashai-landing-hero__title {
+  font-size: 1.857rem; /* 26px */
   font-weight: 700;
+  font-family: var(--ifm-heading-font-family);
+  color: var(--dashai-text-primary);
   margin-bottom: 12px;
+}
+
+.dashai-landing-hero__subtitle {
+  font-size: 0.9375rem;
+  color: var(--dashai-text-secondary);
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0;
+}
+
+/* 4 macro-section cards */
+.dashai-landing-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.dashai-landing-card {
+  display: block;
+  padding: 20px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--dashai-border);
+  background: rgba(247, 248, 250, 0.5);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+[data-theme='dark'] .dashai-landing-card {
+  background: rgba(26, 32, 44, 0.5);
+}
+
+.dashai-landing-card:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
+.dashai-landing-card--discover:hover { border-color: var(--dashai-discover); background: var(--dashai-discover-bg); }
+.dashai-landing-card--learn:hover    { border-color: var(--dashai-learn);    background: var(--dashai-learn-bg); }
+.dashai-landing-card--deep-dive:hover{ border-color: var(--dashai-deep-dive);background: var(--dashai-deep-dive-bg); }
+.dashai-landing-card--build:hover    { border-color: var(--dashai-build);    background: var(--dashai-build-bg); }
+
+.dashai-landing-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.dashai-landing-card__bar {
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.dashai-landing-card__label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: var(--ifm-heading-font-family);
   color: var(--dashai-text-primary);
 }
 
-.dashai-hero__subtitle {
-  font-size: 1rem;
+.dashai-landing-card__desc {
+  font-size: 0.8125rem;
   color: var(--dashai-text-muted);
-  max-width: 480px;
-  margin: 0 auto 24px;
-  line-height: 1.65;
+  line-height: 1.5;
+  padding-left: 12px;
+  margin: 0;
 }
 
-.dashai-hero__actions {
+/* "New to DashAI?" CTA strip */
+.dashai-cta {
   display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: var(--dashai-discover-bg);
+  border: 1px solid rgba(56, 161, 105, 0.2);
 }
 
+.dashai-cta__icon {
+  color: var(--dashai-discover);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.dashai-cta__body {
+  flex: 1;
+}
+
+.dashai-cta__heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dashai-text-primary);
+  margin-bottom: 2px;
+}
+
+.dashai-cta__text {
+  font-size: 0.8125rem;
+  color: var(--dashai-text-muted);
+}
+
+.dashai-cta__btn {
+  padding: 7px 18px;
+  border-radius: 6px;
+  background: var(--dashai-discover);
+  color: white !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none !important;
+  transition: opacity 0.15s;
+}
+
+.dashai-cta__btn:hover {
+  opacity: 0.88;
+  text-decoration: none !important;
+  color: white !important;
+}
+
+/* Acknowledgments */
+.dashai-ack {
+  padding: 16px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--dashai-border);
+  background: rgba(247, 248, 250, 0.6);
+}
+
+[data-theme='dark'] .dashai-ack {
+  background: rgba(26, 32, 44, 0.6);
+}
+
+.dashai-ack__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--dashai-text-muted);
+  margin-bottom: 8px;
+}
+
+.dashai-ack__text {
+  font-size: 0.8125rem;
+  color: var(--dashai-text-secondary);
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+
+.dashai-ack__logos {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+/* kept for legacy compatibility */
 .dashai-info {
   border-left: 3px solid var(--ifm-color-primary);
   background: var(--dashai-accent-glow);

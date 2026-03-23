@@ -106,31 +106,8 @@ const config = {
       },
       footer: {
         style: "dark",
-        links: [
-          {
-            title: 'Discover',
-            items: [
-              { label: 'Overview', to: '/discover/overview' },
-              { label: 'Installation', to: '/discover/installation' },
-            ],
-          },
-          {
-            title: 'Learn',
-            items: [
-              { label: 'Tutorials', to: '/learn/tutorials/upload-dataset' },
-              { label: 'Module Guides', to: '/learn/guides/datasets' },
-            ],
-          },
-          {
-            title: 'Build',
-            items: [
-              { label: 'REST API', to: '/build/rest-api' },
-              { label: 'Plugin Development', to: '/build/plugin-development/overview' },
-              { label: 'GitHub', href: 'https://github.com/DashAISoftware/DashAI' },
-            ],
-          },
-        ],
-        copyright: `Copyright © ${new Date().getFullYear()} DashAI. Licensed under Apache 2.0.`,
+        links: [],
+        copyright: `© ${new Date().getFullYear()} DashAI — Open Source Platform · Apache 2.0`,
       },
       prism: {
         theme: prismThemes.github,
