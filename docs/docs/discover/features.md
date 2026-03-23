@@ -1,0 +1,61 @@
+---
+title: Key Features
+sidebar_label: Key Features
+sidebar_position: 2
+---
+
+# Key Features
+
+## Dataset Management
+
+Upload and manage datasets in multiple formats — CSV, Excel, JSON, and zipped image sets. Each dataset shows a summary of rows, columns, data types, and distributions. From the dataset view you can directly launch EDA explorations and apply data converters.
+
+**Supported formats:** `.csv`, `.xlsx` / `.xls`, `.json`, `.zip` (images)
+
+## Data Exploration (EDA)
+
+Analyze your data visually with built-in explorers before committing to a model. Available explorers include:
+
+| Explorer | Purpose |
+|----------|---------|
+| BoxPlotExplorer | Distribution of values per column |
+| CorrelationMatrixExplorer | Correlation between variables (Pearson, Kendall, Spearman) |
+| DescribeExplorer | Descriptive statistics (mean, median, std dev, etc.) |
+| ScatterPlotExplorer | Visual relationship between pairs of variables |
+| HistogramPlotExplorer | Frequency distributions |
+| WordcloudExplorer | Word frequency for text columns |
+
+## Model Training
+
+Create experiments that associate a dataset with a task, then train one or more models in parallel. Configure hyperparameters through auto-generated forms — no schema files to write. Supported tasks:
+
+- **Tabular Classification** — predict a category from structured data
+- **Regression** — predict a continuous value
+- **Text Classification** — assign categories to text
+- **Translation** — sequence-to-sequence language translation
+- **Text-to-Image Generation** — generative image synthesis
+- **Text-to-Text Generation** — conversational and summarization models
+
+## Data Converters
+
+Transform your data with a library of 30+ converters before training — normalization, encoding, dimensionality reduction, imputation, and more. Converters are composable into chains and powered by Scikit-learn and imbalanced-learn.
+
+## Predictions
+
+Once a model is trained, run predictions on new data and download the results. The prediction interface works for all supported tasks.
+
+## Explainability
+
+Understand model decisions with built-in explainability tools:
+
+- **Kernel SHAP** — per-instance feature contributions
+- **Permutation Feature Importance** — global feature ranking via permutation
+- **Partial Dependence Plots** — relationship between a feature and the model's output
+
+## Hyperparameter Optimization
+
+Automatically search for the best hyperparameter configuration using Optuna or HyperOpt optimizers. Optimization history, parallel coordinate plots, and feature importance plots are generated per run.
+
+## Plugin System
+
+Extend DashAI with third-party plugins distributed as PyPI packages. Install directly from the UI — new components appear automatically in their respective sections.
