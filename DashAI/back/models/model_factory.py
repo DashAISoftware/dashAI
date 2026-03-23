@@ -213,20 +213,21 @@ class ModelFactory:
             in the same format as old_parameters.
 
         """
+
+        def recursive_update(params, param_name, new_value):
+            for key, val in params.items():
+                if isinstance(val, dict):
+                    if key == param_name and "fixed_value" in val:
+                        val["fixed_value"] = new_value
+                        return True  # Stop searching after updating
+                    if recursive_update(val, param_name, new_value):
+                        return True
+            return False
+
         updated_parameters = old_parameters.copy()
         for param_name, new_value in new_params.items():
             # Recursively search for the parameter in the old parameters dict
-            def recursive_update(params):
-                for key, val in params.items():
-                    if isinstance(val, dict):
-                        if key == param_name and "fixed_value" in val:
-                            val["fixed_value"] = new_value
-                            return True  # Stop searching after updating
-                        if recursive_update(val):
-                            return True
-                return False
-
-            recursive_update(updated_parameters)
+            recursive_update(updated_parameters, param_name, new_value)
 
         return updated_parameters
 
