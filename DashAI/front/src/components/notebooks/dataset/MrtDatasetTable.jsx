@@ -36,7 +36,7 @@ export default function MrtDatasetTable({
   useEffect(() => {
     setColumnFilters([]);
     setSorting([]);
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setPagination({ pageIndex: 0, pageSize: initialPageSize });
   }, deps); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cargar datos (server-side)
