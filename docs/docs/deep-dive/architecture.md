@@ -74,6 +74,7 @@ for each resource:
 | `plugins.py`           | `/plugin`             | Manage plugins                                      |
 | `pipelines.py`         | `/pipeline`           | Orchestrate complex workflows                       |
 | `generative_session.py`| `/generative-session` | Generative model sessions                           |
+| `generative_process.py`| `/generative-process` | Generative process execution and results            |
 
 ### Dependency injection in endpoints
 
@@ -112,15 +113,16 @@ Each component class declares a `TYPE` class attribute that determines its categ
 
 | TYPE          | Base class        | Purpose                                   | Examples                                     |
 | ------------- | ----------------- | ----------------------------------------- | -------------------------------------------- |
-| `Model`       | `BaseModel`       | Train and predict                         | SVC, RandomForest, DistilBertTransformer     |
-| `Task`        | `BaseTask`        | Define ML task semantics                  | TextClassification, Regression, Translation  |
-| `Metric`      | `BaseMetric`      | Evaluate model performance                | Accuracy, F1, RMSE, MAE                      |
-| `Explorer`    | `BaseExplorer`    | Visualize and analyze data                | ScatterPlotExplorer, HistogramPlotExplorer   |
-| `Explainer`   | `BaseExplainer`   | Interpret model predictions               | KernelShap, PermutationFeatureImportance     |
-| `Converter`   | `BaseConverter`   | Transform features                        | StandardScaler, OneHotEncoder, PCA, SMOTE    |
-| `DataLoader`  | `BaseDataLoader`  | Load datasets from files                  | CSVDataLoader, ExcelDataLoader               |
-| `Optimizer`   | `BaseOptimizer`   | Hyperparameter optimization               | Optuna-based optimizers                      |
-| `Job`         | `BaseJob`         | Background task execution                 | ModelJob, ExplorerJob, PredictJob            |
+| `Model`            | `BaseModel`            | Train and predict                         | SVC, RandomForest, DistilBertTransformer     |
+| `GenerativeModel`  | `BaseGenerativeModel`  | Generate outputs from prompts/inputs      | QwenModel, StableDiffusionV2Model            |
+| `Task`             | `BaseTask`             | Define ML task semantics                  | TextClassification, Regression, Translation  |
+| `Metric`           | `BaseMetric`           | Evaluate model performance                | Accuracy, F1, RMSE, MAE                      |
+| `Explorer`         | `BaseExplorer`         | Visualize and analyze data                | ScatterPlotExplorer, HistogramPlotExplorer   |
+| `Explainer`        | `BaseExplainer`        | Interpret model predictions               | KernelShap, PermutationFeatureImportance     |
+| `Converter`        | `BaseConverter`        | Transform features                        | StandardScaler, OneHotEncoder, PCA, SMOTE    |
+| `DataLoader`       | `BaseDataLoader`       | Load datasets from files                  | CSVDataLoader, ExcelDataLoader               |
+| `Optimizer`        | `BaseOptimizer`        | Hyperparameter optimization               | Optuna-based optimizers                      |
+| `Job`              | `BaseJob`              | Background task execution                 | ModelJob, ExplorerJob, PredictJob            |
 
 ### Component metadata
 
