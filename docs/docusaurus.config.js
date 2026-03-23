@@ -104,11 +104,6 @@ const config = {
           },
         ],
       },
-      footer: {
-        style: "dark",
-        links: [],
-        copyright: `© ${new Date().getFullYear()} DashAI — Open Source Platform · Apache 2.0`,
-      },
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
