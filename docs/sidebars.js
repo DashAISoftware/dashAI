@@ -47,6 +47,7 @@ const sidebars = {
         'learn/flows/tabular-classification',
         'learn/flows/eda-model-decision',
         'learn/flows/text-classification',
+        'learn/flows/generative-process',
       ],
     },
   ],

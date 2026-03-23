@@ -1,0 +1,39 @@
+---
+title: "GenerativeModel"
+sidebar_label: "GenerativeModel (base)"
+sidebar_position: 0
+---
+
+# GenerativeModel
+
+**Type:** GenerativeModel
+**Module:** `DashAI.back.models.base_generative_model`
+
+## Description
+
+`BaseGenerativeModel` is the abstract base class for all generative models in DashAI. Any component registered with `TYPE = "GenerativeModel"` must inherit from this class and implement its abstract methods.
+
+## Abstract Methods
+
+### `__init__(**kwargs)`
+
+Initialize the generative model with configuration parameters. Concrete subclasses receive their parameters through the DashAI component schema system.
+
+### `generate(input) -> List[Any]`
+
+Generate output from the model given an input.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `input` | `Any \| Tuple[Any, Any]` | Input data to generate from (prompt string, image tensor, etc.) |
+
+**Returns:** `List[Any]` — list of generated outputs.
+
+## Implementations
+
+| Component | Description |
+|-----------|-------------|
+| [QwenModel](./QwenModel) | Text generation via llama.cpp |
+| [StableDiffusionV2Model](./StableDiffusionV2Model) | Text-to-image (SD 2.x) |
+| [StableDiffusionV3Model](./StableDiffusionV3Model) | Text-to-image (SD 3.x) |
+| [StableDiffusionXLV1ControlNet](./StableDiffusionXLV1ControlNet) | Controlled image generation (SDXL + ControlNet) |
