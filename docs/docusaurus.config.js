@@ -68,24 +68,28 @@ const config = {
             sidebarId: 'discoverSidebar',
             position: 'left',
             label: 'Discover',
+            className: 'navbar-item--discover',
           },
           {
             type: 'docSidebar',
             sidebarId: 'learnSidebar',
             position: 'left',
             label: 'Learn',
+            className: 'navbar-item--learn',
           },
           {
             type: 'docSidebar',
             sidebarId: 'deepDiveSidebar',
             position: 'left',
             label: 'Deep Dive',
+            className: 'navbar-item--deep-dive',
           },
           {
             type: 'docSidebar',
             sidebarId: 'buildSidebar',
             position: 'left',
             label: 'Build',
+            className: 'navbar-item--build',
           },
           {
             type: 'docSidebar',
@@ -136,6 +140,12 @@ const config = {
       colorMode: {
         defaultMode: "light",
         disableSwitch: false,
+      },
+      docs: {
+        sidebar: {
+          hideable: true,
+          autoCollapseCategories: false,
+        },
       },
     }),
 };
