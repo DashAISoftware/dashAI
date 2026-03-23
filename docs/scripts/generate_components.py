@@ -336,7 +336,7 @@ def _render_method_section(method) -> str:
     lines = []
     defined_on = method["defined_on"]
     lines.append(
-        f"### `{method['name']}{method['signature']}` "
+        f" `{method['name']}{method['signature']}` "
         f"<small>defined on `{defined_on}`</small>"
     )
     lines.append("")
