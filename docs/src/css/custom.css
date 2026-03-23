@@ -379,51 +379,49 @@ code, kbd, samp {
   letter-spacing: 0.05em;
 }
 
-/* ── Sidebar collapse button — moved to top, minimal icon ── */
+/* ── Swizzled sidebar — hamburger in header row ── */
 
-/* The sidebar inner wrapper is a flex-column; order:-1 floats button to top */
-[class*="sidebarViewport_"] > [class*="sidebar_"],
-.theme-doc-sidebar-container > div > [class*="sidebar_"] {
-  display: flex !important;
-  flex-direction: column !important;
+.dashai-sidebar-desktop {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--dashai-bg-surface);
+  overflow: hidden;
 }
 
-.collapseSidebarButton {
-  order: -1 !important;           /* move to top */
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 10 !important;
-  /* minimal look */
-  height: 40px !important;
-  width: 40px !important;
-  min-width: unset !important;
-  margin: 8px !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 6px !important;
-  background: transparent !important;
-  color: var(--dashai-text-muted) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background 0.12s, color 0.12s !important;
-  flex-shrink: 0 !important;
+/* Header row: same height as navbar, visually "in the header" */
+.dashai-sidebar-header-row {
+  height: var(--ifm-navbar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--dashai-border);
+  background: var(--ifm-navbar-background-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
-.collapseSidebarButton:hover {
-  background: var(--dashai-bg-elevated) !important;
-  color: var(--dashai-text-primary) !important;
+/* Minimal hamburger toggle — matches HTML exactly */
+.dashai-sidebar-toggle-btn {
+  border: none;
+  background: none;
+  color: var(--dashai-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
 }
 
-/* Hide the text label, keep only the SVG icon */
-.collapseSidebarButton svg {
-  width: 20px !important;
-  height: 20px !important;
-}
-
-[class*="collapseSidebarButtonIcon_"],
-.collapseSidebarButtonIcon {
-  display: none !important;
+.dashai-sidebar-toggle-btn:hover {
+  background: var(--dashai-bg-elevated);
+  color: var(--dashai-text-primary);
 }
 
 /* ── Main content ── */
