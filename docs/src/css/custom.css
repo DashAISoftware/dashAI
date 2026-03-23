@@ -169,6 +169,105 @@ code, kbd, samp {
   margin: 0 12px;
 }
 
+/* GitHub navbar link — bordered button like JSX */
+.navbar__items--right .navbar__item a[href*="github"] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--dashai-border);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: var(--dashai-text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.navbar__items--right .navbar__item a[href*="github"]:hover {
+  border-color: var(--dashai-border-hover);
+  color: var(--dashai-text-primary);
+  text-decoration: none;
+}
+
+/* Theme toggle button — bordered icon button */
+.navbar__items--right [class*="colorModeToggle"] button,
+.navbar__items--right [class*="toggle_"] button {
+  border: 1px solid var(--dashai-border) !important;
+  border-radius: 6px !important;
+  padding: 5px 8px !important;
+  background: none !important;
+  color: var(--dashai-text-secondary) !important;
+  transition: border-color 0.15s, color 0.15s !important;
+}
+
+.navbar__items--right [class*="colorModeToggle"] button:hover,
+.navbar__items--right [class*="toggle_"] button:hover {
+  border-color: var(--dashai-border-hover) !important;
+  color: var(--dashai-text-primary) !important;
+  background: none !important;
+}
+
+/* Search bar — local search plugin */
+[class*="searchBarContainer"],
+.navbar__search {
+  flex: 1;
+  max-width: 320px;
+  margin-left: auto;
+}
+
+[class*="searchBar_"] input,
+[class*="searchBar_"] .searchBarInput,
+.navbar__search-input {
+  background: rgba(247, 248, 250, 0.8) !important;
+  border: 1px solid var(--dashai-border) !important;
+  border-radius: 8px !important;
+  color: var(--dashai-text-primary) !important;
+  font-size: 0.8125rem !important;
+  font-family: var(--ifm-font-family-base) !important;
+  padding: 6px 14px !important;
+  transition: border-color 0.2s, background 0.2s !important;
+}
+
+[data-theme='dark'] [class*="searchBar_"] input,
+[data-theme='dark'] [class*="searchBar_"] .searchBarInput,
+[data-theme='dark'] .navbar__search-input {
+  background: rgba(26, 32, 44, 0.8) !important;
+}
+
+[class*="searchBar_"] input:focus,
+.navbar__search-input:focus {
+  border-color: var(--dashai-border-hover) !important;
+  background: var(--dashai-bg-surface) !important;
+}
+
+[class*="searchBar_"] input::placeholder,
+.navbar__search-input::placeholder {
+  color: var(--dashai-text-muted) !important;
+}
+
+/* Kbd hint in search */
+[class*="searchBar_"] kbd {
+  border: 1px solid var(--dashai-border-hover);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  color: var(--dashai-text-muted);
+  background: none;
+  padding: 1px 5px;
+}
+
+/* Search results dropdown */
+[class*="searchResultsContainer"],
+[class*="dropdownMenu_"] {
+  background: var(--dashai-bg-surface) !important;
+  border: 1px solid var(--dashai-border) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--dashai-shadow) !important;
+}
+
+[class*="searchResult_"]:hover,
+[class*="searchResultItem_"]:hover {
+  background: var(--dashai-accent-glow) !important;
+}
+
 /* Navbar section tab colors — bottom border accent */
 .navbar__link {
   font-size: 0.8125rem;
@@ -390,14 +489,64 @@ pre code {
 .footer {
   background: var(--dashai-bg-surface);
   border-top: 1px solid var(--dashai-border);
+  padding: 40px 24px 24px;
+}
+
+/* Dark footer always uses JSX dark surface tokens */
+.footer--dark {
+  --ifm-footer-background-color: #1a202c;
+  --ifm-footer-color: #a0aec0;
+  background: #1a202c;
+  border-top: 1px solid #2d3748;
+}
+
+.footer__title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dashai-text-primary);
+  margin-bottom: 12px;
+}
+
+.footer--dark .footer__title {
+  color: #e2e8f0;
 }
 
 .footer__link-item {
   color: var(--dashai-text-muted);
+  font-size: 0.8125rem;
+  transition: color 0.12s;
+}
+
+.footer--dark .footer__link-item {
+  color: #718096;
 }
 
 .footer__link-item:hover {
   color: var(--dashai-text-primary);
+  text-decoration: none;
+}
+
+.footer--dark .footer__link-item:hover {
+  color: #e2e8f0;
+}
+
+.footer__copyright {
+  font-size: 0.75rem;
+  color: var(--dashai-text-dim);
+  border-top: 1px solid var(--dashai-border);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.footer--dark .footer__copyright {
+  color: #4a5568;
+  border-top-color: #2d3748;
+}
+
+.footer__col {
+  padding: 0 16px;
 }
 
 /* ── Homepage ── */
