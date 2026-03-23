@@ -4,30 +4,34 @@ import useBaseUrl from "@docusaurus/useBaseUrl";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 
-const CARDS = [
+const SECTIONS = [
   {
-    emoji: "🚀",
-    title: "Getting Started",
-    desc: "Installation, quick start, and architecture overview",
-    to: "/getting-started/installation",
+    id: "discover",
+    label: "Discover",
+    title: "What is DashAI?",
+    desc: "Overview, key features, installation, and use cases — for new users",
+    to: "/discover/overview",
   },
   {
-    emoji: "📖",
-    title: "Tutorials",
-    desc: "Step-by-step guides: upload data, train models, predict, explore",
-    to: "/tutorials/upload-dataset",
+    id: "learn",
+    label: "Learn",
+    title: "Tutorials & Guides",
+    desc: "Step-by-step tutorials, module guides, and complete ML flows",
+    to: "/learn/tutorials/upload-dataset",
   },
   {
-    emoji: "📦",
-    title: "Component Reference",
-    desc: "112 models, converters, metrics, explorers and more — auto-generated from source",
-    to: "/components/models",
+    id: "deep-dive",
+    label: "Deep Dive",
+    title: "Architecture & Internals",
+    desc: "Platform architecture, component registry, metrics, and explainability",
+    to: "/deep-dive/architecture",
   },
   {
-    emoji: "🔌",
-    title: "Plugin Development",
-    desc: "Build and publish your own DashAI components",
-    to: "/plugin-development/overview",
+    id: "build",
+    label: "Build",
+    title: "API & Development",
+    desc: "REST API reference, plugin development, dev setup, and contributing",
+    to: "/build/rest-api",
   },
 ];
 
@@ -48,7 +52,7 @@ export default function Home() {
           <div className="dashai-hero__actions">
             <Link
               className="button button--primary button--lg"
-              to="/getting-started/installation"
+              to="/discover/installation"
             >
               Get Started →
             </Link>
@@ -62,20 +66,23 @@ export default function Home() {
         </div>
 
         <div className="dashai-info">
-          <strong>ℹ Info:</strong> DashAI v0.3.0 — open source under Apache 2.0.
-          Component reference pages are auto-generated from source code on every
-          build.
+          <strong>ℹ Info:</strong> DashAI v0.3.0 — open source under Apache
+          2.0. Component reference pages are auto-generated from source code on
+          every build.
         </div>
 
         <div className="dashai-section-title">Explore the documentation</div>
 
-        <div className="dashai-cards">
-          {CARDS.map((card) => (
-            <Link key={card.title} to={card.to} className="dashai-card">
-              <div className="dashai-card__title">
-                {card.emoji} {card.title}
-              </div>
-              <div className="dashai-card__desc">{card.desc}</div>
+        <div className="dashai-section-cards">
+          {SECTIONS.map((sec) => (
+            <Link
+              key={sec.id}
+              to={sec.to}
+              className={`dashai-section-card dashai-section-card--${sec.id}`}
+            >
+              <div className="dashai-section-card__label">{sec.label}</div>
+              <div className="dashai-section-card__title">{sec.title}</div>
+              <div className="dashai-section-card__desc">{sec.desc}</div>
             </Link>
           ))}
         </div>

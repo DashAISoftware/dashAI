@@ -159,3 +159,92 @@
 .navbar__logo {
   margin: 0 12px;
 }
+
+/* ── 4 Macro-Section Colors ── */
+:root {
+  --dashai-discover: #38a169;
+  --dashai-discover-bg: rgba(56, 161, 105, 0.06);
+  --dashai-discover-border: rgba(56, 161, 105, 0.2);
+  --dashai-learn: #3182ce;
+  --dashai-learn-bg: rgba(49, 130, 206, 0.06);
+  --dashai-learn-border: rgba(49, 130, 206, 0.2);
+  --dashai-deep-dive: #d69e2e;
+  --dashai-deep-dive-bg: rgba(214, 158, 46, 0.06);
+  --dashai-deep-dive-border: rgba(214, 158, 46, 0.2);
+  --dashai-build: #805ad5;
+  --dashai-build-bg: rgba(128, 90, 213, 0.06);
+  --dashai-build-border: rgba(128, 90, 213, 0.2);
+}
+
+[data-theme='dark'] {
+  --dashai-discover-bg: rgba(56, 161, 105, 0.08);
+  --dashai-learn-bg: rgba(49, 130, 206, 0.08);
+  --dashai-deep-dive-bg: rgba(214, 158, 46, 0.08);
+  --dashai-build-bg: rgba(128, 90, 213, 0.08);
+}
+
+/* ── Section Cards (homepage) ── */
+.dashai-section-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.dashai-section-card {
+  display: block;
+  padding: 20px 22px;
+  border-radius: 10px;
+  border: 1px solid var(--dashai-border);
+  background: var(--dashai-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.dashai-section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+  color: inherit;
+}
+
+[data-theme='dark'] .dashai-section-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dashai-section-card--discover { border-left-color: var(--dashai-discover); background: var(--dashai-discover-bg); }
+.dashai-section-card--learn    { border-left-color: var(--dashai-learn);    background: var(--dashai-learn-bg); }
+.dashai-section-card--deep-dive{ border-left-color: var(--dashai-deep-dive);background: var(--dashai-deep-dive-bg); }
+.dashai-section-card--build    { border-left-color: var(--dashai-build);    background: var(--dashai-build-bg); }
+
+.dashai-section-card__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+
+.dashai-section-card--discover .dashai-section-card__label { color: var(--dashai-discover); }
+.dashai-section-card--learn    .dashai-section-card__label { color: var(--dashai-learn); }
+.dashai-section-card--deep-dive .dashai-section-card__label { color: var(--dashai-deep-dive); }
+.dashai-section-card--build    .dashai-section-card__label { color: var(--dashai-build); }
+
+.dashai-section-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 5px;
+}
+
+.dashai-section-card__desc {
+  font-size: 0.8125rem;
+  color: var(--dashai-text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .dashai-section-cards { grid-template-columns: 1fr; }
+}
