@@ -971,6 +971,53 @@ tr:nth-child(even) {
   border-color: var(--dashai-border-active);
 }
 
+/* ── Navbar mobile ── */
+@media (max-width: 996px) {
+  /* Hide search bar — accessible via mobile sidebar */
+  .navbar__search,
+  [class*="searchBarContainer"] {
+    display: none !important;
+  }
+
+  /* Hide GitHub link — accessible via mobile sidebar */
+  .navbar__items--right .navbar__link {
+    display: none !important;
+  }
+
+  /* Keep theme toggle visible but compact */
+  .navbar__items--right [class*="colorModeToggle"] button,
+  .navbar__items--right [class*="toggle_"] button {
+    padding: 2px 5px !important;
+  }
+
+  /* Mobile hamburger toggle — prevent overlap with logo */
+  .navbar__toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    margin-right: 4px;
+  }
+
+  /* Ensure inner items don't overflow */
+  .navbar__inner {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .navbar__items {
+    flex-shrink: 0;
+  }
+
+  .navbar__items--right {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .dashai-section-cards { grid-template-columns: 1fr; }
