@@ -430,12 +430,12 @@ code, kbd, samp {
 }
 
 .container {
-  max-width: 860px;
+  max-width: 1100px;
 }
 
 article {
-  max-width: 760px;
-  padding: 32px 40px;
+  max-width: 960px;
+  padding: 32px 48px;
 }
 
 /* ── Table of Contents (right) ── */
@@ -552,9 +552,9 @@ pre code {
 
 /* ── Homepage ── */
 .dashai-home {
-  max-width: 860px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 40px 32px;
 }
 
 /* Landing hero gradient banner */
