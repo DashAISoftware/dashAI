@@ -23,6 +23,7 @@ export default function MrtDatasetTable({
   const [data, setData] = useState([]);
   const [rowCount, setRowCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [columnOrder, setColumnOrder] = useState([]);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -58,8 +59,12 @@ export default function MrtDatasetTable({
           sorting,
         );
 
-        setData(response?.rows ?? []);
+        const rows = response?.rows ?? [];
+        setData(rows);
         setRowCount(response?.total ?? 0);
+        if (rows.length > 0) {
+          setColumnOrder(Object.keys(rows[0]).filter((k) => k !== "id"));
+        }
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -84,6 +89,11 @@ export default function MrtDatasetTable({
       const result = await renameDatasetColumn(datasetId, oldName, newName);
       onEditColumn && (await onEditColumn(result));
 
+      // Actualizar el orden de columnas preservando la posición del rename
+      setColumnOrder((prev) =>
+        prev.map((col) => (col === oldName ? newName : col)),
+      );
+
       // Refrescar datos para reflejar el nuevo nombre de columna
       const muiFormattedFilters = {
         items: columnFilters.map((f) => ({
@@ -97,7 +107,8 @@ export default function MrtDatasetTable({
         pagination.pageSize,
         muiFormattedFilters,
       );
-      setData(response?.rows ?? []);
+      const rows = response?.rows ?? [];
+      setData(rows);
       setRowCount(response?.total ?? 0);
 
       return result;
@@ -159,6 +170,7 @@ export default function MrtDatasetTable({
       pagination,
       columnFilters,
       sorting,
+      columnOrder,
       isLoading,
     },
   });
