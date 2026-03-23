@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Union
 
+import numpy as np
 import torch
 from sklearn.exceptions import NotFittedError
 from torch.utils.data import DataLoader
@@ -374,9 +375,9 @@ class DistilBertTransformer(TextClassificationModel):
 
             outputs = self.model(**inputs)
             probs = outputs.logits.softmax(dim=-1)
-            probabilities.extend(probs.detach().cpu().numpy())
+            probabilities.append(probs.detach().cpu().numpy())
 
-        return probabilities
+        return np.vstack(probabilities)
 
     def prepare_dataset(
         self, dataset: DashAIDataset, is_fit: bool = False
@@ -470,6 +471,10 @@ class DistilBertTransformer(TextClassificationModel):
             learning_rate=custom_params.get("learning_rate"),
             device=custom_params.get("device"),
             weight_decay=custom_params.get("weight_decay"),
+            log_train_every_n_epochs=None,
+            log_train_every_n_steps=None,
+            log_validation_every_n_epochs=None,
+            log_validation_every_n_steps=None,
         )
         loaded_model.fitted = custom_params.get("fitted")
 
