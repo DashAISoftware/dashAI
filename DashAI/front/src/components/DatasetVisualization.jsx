@@ -12,11 +12,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
-import {
-  getDatasetFile,
-  getDatasetInfo,
-  getDatasetFileFiltered,
-} from "../api/datasets";
+import { getDatasetInfo, getDatasetFileFiltered } from "../api/datasets";
 import { useTourContext } from "./tour/TourProvider";
 import { formatDate } from "../pages/results/constants/formatDate";
 import Header from "./notebooks/dataset/header/Header";
@@ -98,26 +94,18 @@ export default function DatasetVisualization({
   }, [dataset?.id, dataset?.status]);
 
   const fetchDatasetPage = useCallback(
-    async (page, pageSize, filterModel) => {
+    async (page, pageSize, filterModel, sortModel) => {
       const isProcessing =
         dataset && !(dataset.status === 3 || dataset.status === 4);
       if (!dataset || isProcessing) return { rows: [], total: 0 };
       try {
-        const hasFilters =
-          filterModel &&
-          Array.isArray(filterModel.items) &&
-          filterModel.items.length > 0;
-        let data;
-        if (hasFilters) {
-          data = await getDatasetFileFiltered(
-            dataset.file_path,
-            page,
-            pageSize,
-            filterModel,
-          );
-        } else {
-          data = await getDatasetFile(dataset.file_path, page, pageSize);
-        }
+        const data = await getDatasetFileFiltered(
+          dataset.file_path,
+          page,
+          pageSize,
+          filterModel,
+          sortModel,
+        );
         return { rows: data.rows ?? [], total: data.total ?? 0 };
       } catch (error) {
         return { rows: [], total: 0 };

@@ -48,6 +48,7 @@ async def filter_dataset_file(
     page: int = 0,
     page_size: int = 10,
     filter_model: str = Query(None, alias="filterModel"),
+    sort_model: str = Query(None, alias="sortModel"),
 ):
     """
     Fetch filtered and paginated dataset rows based on the provided
@@ -170,6 +171,21 @@ async def filter_dataset_file(
     filtered = (
         filter_dict and filter_dict.get("items") and len(filter_dict["items"]) > 0
     )
+
+    # Apply sorting before pagination
+    if sort_model:
+        try:
+            sort_list = json.loads(sort_model)
+            sort_keys = [
+                (item["id"], "descending" if item.get("desc") else "ascending")
+                for item in sort_list
+                if "id" in item
+            ]
+            if sort_keys:
+                table = table.sort_by(sort_keys)
+        except Exception as e:
+            logger.error(f"[SORT DEBUG] Error parsing sort_model: {e}")
+
     start = page * page_size
     paged_table = table.slice(start, page_size)
     rows = [
@@ -180,8 +196,7 @@ async def filter_dataset_file(
         total_for_pagination = table.num_rows
     else:
         try:
-            info = get_dataset_info(path)
-            total_for_pagination = info["total_rows"]
+            total_for_pagination = get_dataset_info(f"{path}/dataset")["total_rows"]
         except Exception:
             total_for_pagination = table.num_rows
 
