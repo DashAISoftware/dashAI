@@ -14,7 +14,7 @@ kink
 
 # NumPy & Pandas stack
 numpy
-pandas
+pandas<3.0.0
 joblib
 
 # Config & validation
