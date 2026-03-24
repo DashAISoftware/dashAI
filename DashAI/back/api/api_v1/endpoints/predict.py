@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from starlette.datastructures import UploadFile
 
 from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
 from DashAI.back.dependencies.database.models import (
@@ -265,6 +264,8 @@ async def preview_manual_prediction(
     dict
         ``{"columns": [...], "rows": [[...], ...]}``
     """
+    from starlette.datastructures import UploadFile
+
     form = await request.form()
 
     run_id = form.get("run_id")
